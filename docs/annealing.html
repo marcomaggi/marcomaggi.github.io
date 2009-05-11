@@ -1,0 +1,2962 @@
+<html lang="en">
+<head>
+<title>Annealing</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Annealing">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="top" href="#Top">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.4a0 of Annealing, a C
+language library extension the for GSL, the GNU Scientific
+Library, attempting a redesign of the simulated annealing module.
+
+The package is distributed under the terms of the GNU General Public
+License (GPL) and can be downloaded from:
+
+                  `http://gna.org/projects/annealing'
+         `http://github.com/marcomaggi/annealing/tree/master'
+
+
+Copyright (C) 1996, 1997, 1998, 1999, 2000 by Mark Galassi
+
+Copyright (C) 2007, 2009 by Marco Maggi <marcomaggi@gna.org>
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with Invariant Sections being ``GNU Free Documentation
+     License'' and ``GNU General Public License'', no Front--Cover
+     Texts, and no Back--Cover Texts.  A copy of the license is
+     included in the section entitled ``GNU Free Documentation
+     License''.
+   -->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<h1 class="settitle">Annealing</h1>
+<div class="node">
+<a name="Top"></a>
+<p><hr>
+Next:&nbsp;<a rel="next" accesskey="n" href="#overview">overview</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#dir">(dir)</a>
+
+</div>
+
+<h2 class="unnumbered">Annealing</h2>
+
+<p>This document describes version 0.4a0 of Annealing, a C
+language library extension the for <acronym>GSL</acronym>, the <acronym>GNU</acronym> Scientific
+Library, attempting a redesign of the simulated annealing module.
+
+   <p>The package is distributed under the terms of the <acronym>GNU</acronym> General Public
+License (<acronym>GPL</acronym>) and can be downloaded from:
+
+<div align="center"><a href="http://gna.org/projects/annealing">http://gna.org/projects/annealing</a></div>
+<div align="center"><a href="http://github.com/marcomaggi/annealing/tree/master">http://github.com/marcomaggi/annealing/tree/master</a></div>
+
+<p class="noindent">Copyright &copy; 1996, 1997, 1998, 1999, 2000 by Mark Galassi<br>
+Copyright &copy; 2007, 2009 by Marco Maggi <a href="mailto:marcomaggi@gna.org">marcomaggi@gna.org</a>
+
+   <blockquote>
+Permission is granted to copy, distribute and/or modify this document
+under the terms of the <acronym>GNU</acronym> Free Documentation License, Version 1.3 or
+any later version published by the Free Software Foundation; with
+Invariant Sections being &ldquo;<acronym>GNU</acronym> Free Documentation License&rdquo; and
+&ldquo;<acronym>GNU</acronym> General Public License&rdquo;, no Front&ndash;Cover Texts, and no
+Back&ndash;Cover Texts.  A copy of the license is included in the section
+entitled &ldquo;<acronym>GNU</acronym> Free Documentation License&rdquo;. 
+</blockquote>
+
+<ul class="menu">
+<li><a accesskey="1" href="#overview">overview</a>:                     Overview of the package. 
+<li><a accesskey="2" href="#annealing">annealing</a>:                    Simulated annealing. 
+<li><a accesskey="3" href="#misc">misc</a>:                         Miscellaneous functions.
+
+</li></ul>
+<p>Appendices
+
+</p>
+<ul class="menu">
+<li><a accesskey="4" href="#References">References</a>:                   Bibliography and references. 
+<li><a accesskey="5" href="#Documentation-License">Documentation License</a>:        GNU Free Documentation License. 
+<li><a accesskey="6" href="#Package-License">Package License</a>:              GNU General Public License. 
+<li><a accesskey="7" href="#library-version">library version</a>:              How to interpret the library version.
+
+</li></ul>
+<p>Indexes
+
+</p>
+<ul class="menu">
+<li><a accesskey="8" href="#Concept-Index">Concept Index</a>:                An entry for each concept. 
+<li><a accesskey="9" href="#Function-Index">Function Index</a>:               An entry for each function. 
+<li><a href="#Variable-Index">Variable Index</a>:               An entry for each variable. 
+<li><a href="#Type-Index">Type Index</a>:                   An entry for each type.
+
+</li></ul>
+<p>--- The Detailed Node Listing ---
+
+<p>Overview of the package
+
+</p>
+<ul class="menu">
+<li><a href="#overview-using">overview using</a>:               Using the library. 
+<li><a href="#overview-autoconf">overview autoconf</a>:            Using <acronym>GNU</acronym> Autoconf. 
+<li><a href="#overview-pkgconfig">overview pkgconfig</a>:           Using pkgconfig.
+
+</li></ul>
+<p>Simulated annealing
+
+</p>
+<ul class="menu">
+<li><a href="#annealing-algorithm">annealing algorithm</a>:          The basic algorithm. 
+<li><a href="#annealing-types">annealing types</a>:              Data types. 
+<li><a href="#annealing-basic">annealing basic</a>:              Interface to the basic algorithm. 
+<li><a href="#annealing-multi">annealing multi</a>:              Interface to the multi-best algorithm. 
+<li><a href="#annealing-many">annealing many</a>:               Interface to the many-tries algorithm.
+
+</li></ul>
+<p>Miscellaneous functions
+
+</p>
+<ul class="menu">
+<li><a href="#misc-version">misc version</a>:                 Version functions.
+
+   </ul>
+
+<!-- page -->
+<div class="node">
+<a name="overview"></a>
+<p><hr>
+Next:&nbsp;<a rel="next" accesskey="n" href="#annealing">annealing</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#Top">Top</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
+
+</div>
+
+<h2 class="chapter">1 Overview of the package</h2>
+
+<p>Annealing is a C language extension library for <acronym>GSL</acronym>, the <acronym>GNU</acronym>
+Scientific Library, attempting a redesign of the simulated annealing
+module.
+
+   <p>The library is developed and tested under the Linux+<acronym>GNU</acronym> system and
+officially it supports only the <acronym>GNU</acronym> infrastructure: requires the
+<acronym>GNU</acronym> C library and compiles fine with the <acronym>GNU</acronym> C compiler
+(<code>-std=c99 -pedantic</code> switches).  The building infrastructure
+requires <acronym>GNU</acronym> Make, <acronym>GNU</acronym> Bash and the other common tools
+(<samp><span class="command">rm</span></samp>, <samp><span class="command">mkdir</span></samp>, <small class="dots">...</small>).
+
+   <p>Notice that Annealing's <acronym>API</acronym> violates the <acronym>GSL</acronym>'s Design Document;
+specifically the requirement of section 3.18: &ldquo;Algorithm
+decomposition&rdquo;.  Annealing uses callbacks everywhere, while the Document
+requires for the algorithm to be split into an initialise, iterate, test
+form.
+
+<ul class="menu">
+<li><a accesskey="1" href="#overview-using">overview using</a>:               Using the library. 
+<li><a accesskey="2" href="#overview-autoconf">overview autoconf</a>:            Using <acronym>GNU</acronym> Autoconf. 
+<li><a accesskey="3" href="#overview-pkgconfig">overview pkgconfig</a>:           Using pkgconfig. 
+</ul>
+
+<!-- page -->
+<div class="node">
+<a name="overview-using"></a>
+<p><hr>
+Next:&nbsp;<a rel="next" accesskey="n" href="#overview-autoconf">overview autoconf</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#overview">overview</a>
+
+</div>
+
+<h3 class="section">1.1 Using the library</h3>
+
+<p>In the following we assume that the library is installed under the
+<samp><span class="file">/usr/local</span></samp> hierarchy.
+
+   <p>A shell script is installed on the system to provide informations about
+version numbers and installation directories; it should be
+<samp><span class="file">/usr/local/bin/annealing-config</span></samp>.  Run <samp><span class="command">annealing-config</span></samp> without
+arguments for the usage screen.  An example of output for the important
+options is:
+
+<pre class="example">     $ annealing-config --package-version
+     0.2.0
+     
+     $ annealing-config --library-interface-version
+     1.0
+     
+     $ annealing-config --pkgincludedir
+     /usr/local/include/annealing/0.2a1
+     
+     $ annealing-config --libdir
+     /usr/local/lib
+     
+     $ annealing-config --library-id
+     annealing1.0
+</pre>
+   <p>There is a single header file that must be included in C sources:
+<samp><span class="file">annealing.h</span></samp>; in our source code we can put:
+
+<pre class="example">     #include &lt;annealing.h&gt;
+</pre>
+   <p class="noindent">and use the output of <code>annealing-config --pkgincludedir</code> as argument to
+the <code>-I</code> option of the C preprocessor.
+
+   <p>The libraries (shared and static) are installed under the directory
+obtained by running <code>annealing-config --libdir</code>; we can use its
+output as argument of the <code>-L</code> option to the linker.
+
+   <p>If we want to link with the shared or static library we take the output
+of <code>annealing-config --library-id</code> and use it as value for the <code>-l</code>
+option to the linker.
+
+<!-- ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+<!-- page -->
+<div class="node">
+<a name="overview-autoconf"></a>
+<p><hr>
+Next:&nbsp;<a rel="next" accesskey="n" href="#overview-pkgconfig">overview pkgconfig</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#overview-using">overview using</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#overview">overview</a>
+
+</div>
+
+<h3 class="section">1.2 Using <acronym>GNU</acronym> Autoconf</h3>
+
+<p>If we use <acronym>GNU</acronym> Autoconf to configure our application we can embed in
+our project the file <samp><span class="file">annealing.m4</span></samp>, installed under
+<samp><span class="file">$prefix/share/aclocal</span></samp>, and load it in our <samp><span class="file">configure.ac</span></samp> by
+putting:
+
+<pre class="example">     m4_include(annealing.m4)
+</pre>
+   <p class="noindent">in <samp><span class="file">aclocal.m4</span></samp>.  Notice that <acronym>GSL</acronym> distributes its own Autoconf
+plug&ndash;in, a file named <samp><span class="file">gsl.m4</span></samp>.  The <samp><span class="file">annealing.m4</span></samp> macro
+file defines a macro that can be invoked with:
+
+<pre class="example">     ANNEALING_LIBRARY(1,0)
+</pre>
+   <p class="noindent">it finds and invokes <samp><span class="command">annealing-config</span></samp> to acquire installation
+directories and library names.  The macro accepts two arguments: the
+major and minor interface version numbers that are needed (<a href="#library-version">library version</a>); both of the arguments are optional, but it is recommended to
+specify them.
+
+   <p><code>ANNEALING_LIBRARY</code> defines the following symbols:
+
+     <dl>
+<dt><code>@ANNEALING_INCLUDEDIR@</code><dd>The directory under which header files are installed, example:
+
+     <pre class="example">          /usr/local/include/annealing/0.2a1
+</pre>
+     <br><dt><code>@ANNEALING_CPPFLAGS@</code><dd>The preprocessor option <samp><span class="option">-I</span></samp> with the value of
+<code>@ANNEALING_INCLUDEDIR@</code> attached, example:
+
+     <pre class="example">          -I/usr/local/include/annealing/0.2a1
+</pre>
+     <br><dt><code>@ANNEALING_LIBDIR@</code><dd>The directory under which shared and static libraries are installed,
+example: <samp><span class="file">/usr/local/lib</span></samp>.
+
+     <br><dt><code>@ANNEALING_LDFLAGS@</code><dd>The linker option <code>-L</code> with the value of
+<code>@ANNEALING_LIBDIR@</code> appended, example: <samp><span class="file">-L/usr/local/lib</span></samp>.
+
+     <br><dt><code>@ANNEALING_LIBRARY_ID@</code><dd>The identifier of the shared or static library, example:
+<code>annealing1.0</code>.
+
+     <br><dt><code>@ANNEALING_LIBS@</code><dd>The linker option <code>-l</code> with the value of
+<code>@ANNEALING_LIBRARY_ID@</code> appended, example:
+<code>-lannealing1.0</code>. 
+</dl>
+
+<!-- page -->
+<div class="node">
+<a name="overview-pkgconfig"></a>
+<p><hr>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#overview-autoconf">overview autoconf</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#overview">overview</a>
+
+</div>
+
+<h3 class="section">1.3 Using pkgconfig</h3>
+
+<p><samp><span class="command">pkg-config</span></samp> is a program (a compiled executable) that inspects a
+database of package meta informations and prints to its standard output
+channel informations about installed packages and libraries.  Annealing
+installs a meta data file for use with <samp><span class="command">pkg-config</span></samp>, it should be:
+
+<pre class="example">     ${libdir}/pkgconfig/annealing.pc
+</pre>
+   <p class="noindent">notice that the <acronym>GSL</acronym> distributes its own <samp><span class="command">pkg-config</span></samp> meta file, a
+file named <samp><span class="file">gsl.pc</span></samp>.
+
+   <p>For the full list of available informations look in the file itself, and
+remember that the value of all the variables set in the meta file can be
+printed with:
+
+<pre class="example">     $ pkg-config annealing --variable=&lt;VARNAME&gt;
+</pre>
+   <p class="noindent">an example of output for the important variables is:
+
+<pre class="example">     $ pkg-config annealing --variable=PACKAGE_VERSION
+     0.2.0
+     
+     $ pkg-config annealing --variable=library_interface_version
+     1.0
+     
+     $ pkg-config annealing --variable=pkgincludedir
+     /usr/local/include/annealing/0.2a1
+     
+     $ pkg-config annealing --variable=libdir
+     /usr/local/lib
+     
+     $ pkg-config annealing --variable=library_id
+     annealing1.0
+</pre>
+   <p>The <samp><span class="option">--libs</span></samp> option outputs something like:
+
+<pre class="example">     $ pkg-config annealing --libs
+     -L/usr/local/lib -lannealing1.0 -lgsl -lgslcblas -lm
+</pre>
+   <p class="noindent">while the list of preprocessor options is:
+
+<pre class="example">     $ pkg-config annealing --cflags
+     -I/usr/local/include/annealing/0.2a1 -I/usr/local/include
+</pre>
+   <p>Notice that:
+
+<pre class="example">     $ pkg-config annealing --modversion
+     1.0
+</pre>
+   <p class="noindent">because what matters is the version of the <acronym>API</acronym>, not the package
+distribution version.
+
+<!-- ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+<!-- page -->
+<div class="node">
+<a name="annealing"></a>
+<p><hr>
+Next:&nbsp;<a rel="next" accesskey="n" href="#misc">misc</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#overview">overview</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
+
+</div>
+
+<h2 class="chapter">2 Simulated annealing</h2>
+
+<p>Stochastic search techniques are used when the structure of a space is
+not well understood or is not smooth, so that techniques like Newton's
+method (which requires calculating Jacobian derivative matrices) cannot
+be used.  In particular, these techniques are frequently used to solve
+combinatorial optimization problems, such as the traveling salesman
+problem.
+
+   <p>The goal is to find a point in the space at which a real valued &ldquo;energy
+function&rdquo; (or &ldquo;cost function&rdquo;) is minimized.  Simulated annealing is
+a minimization technique which has given good results in avoiding local
+minima; it is based on the idea of taking a random walk through the
+space at successively lower temperatures, where the probability of
+taking a step is given by a Boltzmann distribution.
+
+<ul class="menu">
+<li><a accesskey="1" href="#annealing-algorithm">annealing algorithm</a>:          The basic algorithm. 
+<li><a accesskey="2" href="#annealing-types">annealing types</a>:              Data types. 
+<li><a accesskey="3" href="#annealing-basic">annealing basic</a>:              Interface to the basic algorithm. 
+<li><a accesskey="4" href="#annealing-multi">annealing multi</a>:              Interface to the multi-best algorithm. 
+<li><a accesskey="5" href="#annealing-many">annealing many</a>:               Interface to the many-tries algorithm. 
+</ul>
+
+<!-- page -->
+<div class="node">
+<a name="annealing-algorithm"></a>
+<p><hr>
+Next:&nbsp;<a rel="next" accesskey="n" href="#annealing-types">annealing types</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#annealing">annealing</a>
+
+</div>
+
+<h3 class="section">2.1 The basic algorithm</h3>
+
+<p>Here is an explanation of the basic algorithm.  The idea is to generate
+at random new configurations in the solution's space, and apply two
+criteria to decide if the a new configuration must be accepted or
+not.  The criteria are: if lower energy accept, if upper energy accept
+with a probability from a Boltzmann distribution.
+
+   <p>It goes like this:
+
+     <ol type=1 start=1>
+<li>interpret the start configuration as <em>current</em> and also register it
+as <em>best so far</em>;
+
+     <li>start a number of iterations at fixed temperature:
+
+          <ol type=a start=1>
+<li>compute a <em>new</em> configuration by taking a random step from the
+<em>current</em> configuration;
+
+          <li>evaluate <em>new</em> configuration's energy:
+
+               <ul>
+<li>if <code>new_E &lt;= best_E</code>: register the <em>new</em> configuration as both
+<em>best so far</em> and <em>current</em>;
+
+               <li>else if <code>new_E &lt;= current_E</code>: register the <em>new</em> configuration
+as <em>current</em>;
+
+               <li>else compute:
+
+               <pre class="example">                    R = exp(-(new_E - best_E)/(k * T))
+</pre>
+               <p class="noindent">where <code>T</code> is the current temperature and <code>k</code> the Boltzmann
+constant; if <code>R</code> is greater than a random number in the range
+<code>[0, 1)</code>: register the <em>new</em> configuration as <em>current</em>;
+
+               <li>else: discard the <em>new</em> configuration;
+</ul>
+
+          <li>if not done all the iterations: go back to <code>a</code>;
+          </ol>
+
+     <li>cool the temperature, the new value is:
+
+     <pre class="example">          T_new = T / mu
+</pre>
+     <p class="noindent">where <code>mu</code> is the damping factor: it must be a number greater than
+<code>1</code>;
+
+     <li>if the new temperature is less than the selected minimum value: stop and
+report the better configuration as result;
+
+     <li>go to 2.
+        </ol>
+
+   <p>Additionally some algorithms allow restarting, between steps 4 and 5: if
+the new temperature is less than the selected restart value, discard the
+<em>current</em> configuration replacing it with the <em>best so far</em>.
+
+   <p>Notes:
+
+     <ul>
+<li>there are two nested loops: the outer does as many iterations as
+required to cool the temperature from the initial value to the minimum;
+the inner does a fixed number of iterations at the same temperature;
+
+     <li>at least one outer iteration is performed, so the number of outer
+iterations can be computed like this:
+
+     <pre class="example">          initial = 100;
+          minimum = 1;
+          damping = 1.005;
+          count   = 1;
+          
+          for (l = initial; l &gt;= miminum; l /= damping, ++count)
+            ;
+          /* count = 925 */
+</pre>
+     <li>the cooling waveform of the temperature is somewhat like an exponential;
+for the example above the application of nonlinear multifitting with the
+exponential model returns the following:
+
+     <pre class="example">          T(x) = A exp(-lam x)    A=99.9999999173883  lam=4.60350080940739
+</pre>
+     <p class="noindent">which fits very well the curve;
+
+     <li>the value:
+
+     <pre class="example">          R = exp(-(new_E - best_E)/(k * T))
+</pre>
+     <p class="noindent">is computed only if <code>new_E &gt; best_E</code>, so it is always:
+
+     <pre class="example">          new_E - best_E &gt; 0  =&gt; R \in [0, 1)
+</pre>
+     <p class="noindent">with <code>R</code> near <code>1</code> when <code>k * T</code> is high, and near <code>0</code>
+when <code>k * T</code> is low;
+
+     <li>during the first iterations: the temperature drops rapidly and its value
+is high; this means that a worse configuration is more likely to be
+accepted;
+
+     <li>during the last iterations: the temperature drops slowly and its value
+is low; this means that a worse configuration is less likely to be
+accepted;
+
+     <li>with the basic algorithm only three configuration objects are in
+existence at any instant: <em>current</em>, <em>best so far</em>,
+<em>new</em>; so the memory space required to hold them can be allocated
+at the beginning of the algorithm and released at the end by the user
+code;
+
+     <li>the algorithm as no need to report errors if:
+
+          <ol type=1 start=1>
+<li>we avoid memory allocation in the code that builds new configurations;
+
+          <li>building a new configuration from an existent one cannot fail.
+          </ol>
+</ul>
+
+<!-- ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+<!-- page -->
+<div class="node">
+<a name="annealing-types"></a>
+<p><hr>
+Next:&nbsp;<a rel="next" accesskey="n" href="#annealing-basic">annealing basic</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#annealing-algorithm">annealing algorithm</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#annealing">annealing</a>
+
+</div>
+
+<h3 class="section">2.2 Data types</h3>
+
+<h4 class="subsection">2.2.1 Data structures</h4>
+
+<div class="defun">
+&mdash; Struct Typedef: <b>annealing_configuration_t</b><var><a name="index-annealing_005fconfiguration_005ft-1"></a></var><br>
+<blockquote><p>A container for the configuration object.  Public fields:
+
+          <dl>
+<dt><code>void * data</code><dd>pointer to a block of memory holding the configuration data; it can be
+any type of data: the annealing code does not access it directly, it is
+handled only by the user supplied functions;
+
+          <br><dt><code>double energy</code><dd>the energy level associated to the configuration; it is computed by a
+user supplied function. 
+</dl>
+        </p></blockquote></div>
+
+<h4 class="subsection">2.2.2 User supplied functions</h4>
+
+<p class="noindent">In the following function types:
+
+     <ul>
+<li>when the function is invoked by <code>annealing_simple_solve()</code>
+the argument <var>S</var> references a structure of type
+<code>annealing_simple_workspace_t</code>.
+
+     <li>when the function is invoked by <code>annealing_multibest_solve()</code>
+the argument <var>S</var> references a structure of type
+<code>annealing_multibest_workspace_t</code>;
+
+     <li>when the function is invoked by <code>annealing_manytries_solve()</code>
+the argument <var>S</var> references a structure of type
+<code>annealing_manytries_workspace_t</code>. 
+</ul>
+
+   <p>The <var>configuration</var> parameters are the values in the <code>data</code>
+field of <code>annealing_configuration_t</code> structures.
+
+<div class="defun">
+&mdash; Function: double <b>annealing_energy_fun_t</b> (<var>void * S, void * configuration</var>)<var><a name="index-annealing_005fenergy_005ffun_005ft-2"></a></var><br>
+<blockquote><p>Must compute and return the energy value of <var>configuration</var>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: void <b>annealing_step_fun_t</b> (<var>void * S, void * configuration</var>)<var><a name="index-annealing_005fstep_005ffun_005ft-3"></a></var><br>
+<blockquote><p>Must use the data in <var>S</var> to transform <var>configuration</var> to a new value. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: double <b>annealing_metric_fun_t</b> (<var>void * S, void * configuration_a, void * configuration_b</var>)<var><a name="index-annealing_005fmetric_005ffun_005ft-4"></a></var><br>
+<blockquote><p>Must compute and return the distance between the two configurations.  The
+metric should be such that: the order in which the configurations are
+handed to this function is not important. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: void <b>annealing_cooling_fun_t</b> (<var>void * S</var>)<var><a name="index-annealing_005fcooling_005ffun_005ft-5"></a></var><br>
+<blockquote><p>Invoked to cool the temperature.  Must update the <code>temperature</code>
+field of the workspace structure. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: void <b>annealing_log_fun_t</b> (<var>void * S</var>)<var><a name="index-annealing_005flog_005ffun_005ft-6"></a></var><br>
+<blockquote><p>Invoked once before the first iteration and then at the end of each
+internal loop. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: void <b>annealing_copy_fun_t</b> (<var>void * S, void * dst_configuration, void * src_configuration</var>)<var><a name="index-annealing_005fcopy_005ffun_005ft-7"></a></var><br>
+<blockquote><p>Invoked to clone a configuration.
+
+        <p>It is responsibility of this function to free resources in
+<var>dst_configuration</var> before overwriting them with values from
+<var>src_configuration</var>. 
+</p></blockquote></div>
+
+<!-- ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+<!-- page -->
+<div class="node">
+<a name="annealing-basic"></a>
+<p><hr>
+Next:&nbsp;<a rel="next" accesskey="n" href="#annealing-multi">annealing multi</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#annealing-types">annealing types</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#annealing">annealing</a>
+
+</div>
+
+<h3 class="section">2.3 Interface to the basic algorithm</h3>
+
+<div class="defun">
+&mdash; Struct Typedef: <b>annealing_simple_workspace_t</b><var><a name="index-annealing_005fsimple_005fworkspace_005ft-8"></a></var><br>
+<blockquote><p>Holds all the data required to run a basic simulated annealing
+algorithm.  It must be allocated and freed by the user code. Public
+fields:
+
+          <dl>
+<dt><code>size_t number_of_iterations_at_fixed_temperature</code><dd>self explaining;
+
+          <br><dt><code>void * max_step_value</code><dd>pointer to the value used to limit the &ldquo;distance&rdquo; between new
+configurations and the current configuration; it can reference any type
+of value, it is accessed only by the user supplied functions;
+
+          <br><dt><code>double boltzmann_constant</code><dd>the constant used in the energy computation; it must be positive; when
+tuning the parameters for a search a good start value is <code>1.0</code>;
+
+          <br><dt><code>double temperature</code><dd>the initial value for the temperature;
+
+          <br><dt><code>double minimum_temperature</code><dd>the minimum value for the temperature: when the value in the field
+<code>temperature</code> drops below this level the outer loop stops;
+
+          <br><dt><code>double restart_temperature</code><dd>the temperature level that causes the <em>current</em> configuration to be
+reset to the <em>best so far</em>;
+
+          <p>restarting is useful to prevent the search to get lost at low
+temperature in a region with no interesting minima;
+
+          <p>restarting is optional: if we select <code>DBL_MIN</code> as value, it is
+never <code>temperature &lt; restart_temperature</code> and the configuration is
+never reset (<code>DBL_MIN</code> is defined in <samp><span class="file">float.h</span></samp>, but any
+negative value will do);
+
+          <p>the value must be less than <code>temperature</code>, or the algorithm will
+restart at each iteration;
+
+          <br><dt><code>int restart_flag</code><dd>initially set to <code>0</code> by <code>annealing_simple_solve()</code>, it
+is set to <code>1</code> if/when the algorithm is restarted from the best
+configuration;
+
+          <br><dt><code>double damping_factor</code><dd>the coefficient used to cool the temperature; it must be a number
+slightly above <code>1.0</code>;
+
+          <br><dt><code>annealing_configuration_t current_configuration</code><dd>holds the <em>current</em> configuration value; its <code>data</code> field must
+be initialised with a pointer to the start configuration;
+
+          <br><dt><code>annealing_configuration_t best_configuration</code><dd>holds the <em>best so far</em> configuration value; its <code>data</code> field
+must be initialised with a pointer to a memory block large enough to
+hold a configuration value; the memory block must be initialised with an
+invalid value that can be recognised by <code>copy_function</code>;
+
+          <br><dt><code>annealing_configuration_t new_configuration</code><dd>holds the <em>new</em> configuration value; its <code>data</code> field must be
+initialised with a pointer to a memory block large enough to hold a
+configuration value; the memory block must be initialised with an
+invalid value that can be recognised by <code>copy_function</code>;
+
+          <br><dt><code>gsl_rng * numbers_generator</code><dd>the random number generator used to apply the Boltzmann distribution
+acceptance criterion; it can be used also to generate the random step;
+
+          <br><dt><code>annealing_energy_fun_t * energy_function</code><dd>the user supplied function used to compute the energy of a
+configuration;
+
+          <br><dt><code>annealing_step_fun_t * step_function</code><dd>the user supplied function used to compute the <em>new</em> configuration
+from the <em>current</em> configuration;
+
+          <br><dt><code>annealing_cooling_fun_t * cooling_function</code><dd>the user supplied function used to cool the temperature; it can be
+<code>NULL</code> to select the default cooling algorithm;
+
+          <br><dt><code>annealing_log_fun_t * log_function</code><dd>the user supplied function used to log the search path; it can be
+<code>NULL</code> if no logging is required;
+
+          <br><dt><code>annealing_copy_fun_t * copy_function</code><dd>the user supplied function used to copy a configuration from an
+allocation space to another;
+
+          <br><dt><code>void * params</code><dd>this is a free field that can be used to hand data to the user supplied
+functions. 
+</dl>
+        </p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: void <b>annealing_simple_solve</b> (<var>annealing_simple_workspace_t * S</var>)<var><a name="index-annealing_005fsimple_005fsolve-9"></a></var><br>
+<blockquote><p>Does the search.
+
+        <p>The structure referenced by <var>S</var> must be allocated and initialised by
+the user before invoking this function, and freed by the user after this
+function has returned.
+
+        <p>Space for the data referenced by the <code>current_configuration</code>,
+<code>best_configuration</code> and <code>new_configuration</code> fields in <var>S</var>
+must be allocated by the user before invoking this function, and freed
+by the user after this function has returned.
+
+        <p>This function does no resource allocation, so it is perfectly all right
+if the user supplied functions use a dynamic wind mechanism, like
+<code>setjmp()</code> and <code>longjmp()</code>, to report errors.
+
+        <p>When this function returns: the best configuration found is in the
+<code>best_configuration</code> field. 
+</p></blockquote></div>
+
+<h4 class="subsection">2.3.1 Examples</h4>
+
+<p class="noindent">Find the minimum of <code>f(t) = -sin(t)/t</code>.
+
+<pre class="example">     /** ------------------------------------------------------------
+      ** Headers.
+      ** ----------------------------------------------------------*/
+     
+     #include &lt;stdio.h&gt;
+     #include &lt;stdlib.h&gt;
+     #include &lt;math.h&gt;
+     #include &lt;float.h&gt;
+     #include &lt;gsl/gsl_rng.h&gt;
+     #include "annealing.h"
+     
+     
+     static  annealing_energy_fun_t      energy_function;
+     static  annealing_step_fun_t        step_function;
+     static  annealing_log_fun_t         log_function;
+     static  annealing_copy_fun_t        copy_function;
+     
+     /** ------------------------------------------------------------
+      ** Main.
+      ** ----------------------------------------------------------*/
+     
+     int
+     main (void)
+     {
+       annealing_simple_workspace_t      S;
+       double        configurations[3];
+       double        max_step = 10.0;
+     
+     
+       printf("sinc minimisation with simulated annealing\n");
+     
+       S.number_of_iterations_at_fixed_temperature = 10;
+       S.max_step_value              = &amp;max_step;
+     
+       S.temperature                 = 10.0;
+       S.minimum_temperature         = 1.0e-6;
+       S.restart_temperature         = DBL_MIN; /* do not restart */
+       S.boltzmann_constant          = 1.0;
+       S.damping_factor              = 1.005;
+     
+       S.energy_function             = energy_function;
+       S.step_function               = step_function;
+       S.copy_function               = copy_function;
+       S.log_function                = log_function;
+       S.cooling_function            = NULL;
+     
+       S.numbers_generator           = gsl_rng_alloc(gsl_rng_rand);
+       gsl_rng_set(S.numbers_generator, 15);
+     
+       S.current_configuration.data  = &amp;(configurations[0]);
+       S.best_configuration.data     = &amp;(configurations[1]);
+       S.new_configuration.data      = &amp;(configurations[2]);
+     
+       configurations[0] = 100.0;
+     
+       annealing_simple_solve(&amp;S);
+     
+       printf("final best solution: %f, expected 0.0\n",
+              configurations[1]);
+     
+       gsl_rng_free(S.numbers_generator);
+       exit(EXIT_SUCCESS);
+     }
+     
+     /** ------------------------------------------------------------
+      ** Iteration functions.
+      ** ----------------------------------------------------------*/
+     
+     static double
+     alea (annealing_simple_workspace_t * S)
+     {
+       double        max_step = *((double *)S-&gt;max_step_value);
+     
+       return (2.0 * gsl_rng_uniform(S-&gt;numbers_generator) - 1.0) * max_step;
+     }
+     
+     /* ------------------------------------------------------------ */
+     
+     double
+     energy_function (void * dummy, void * configuration)
+     {
+       double        C = *((double *)configuration);
+     
+       return -sin(C)/C;
+     }
+     void
+     step_function (void * W, void * configuration)
+     {
+       annealing_simple_workspace_t * S = W;
+       double *      C = (double *)configuration;
+       double        c;
+     
+       do c = *C + alea(S); while (fabs(c) &gt; 120.0);
+       *C = c;
+     }
+     void
+     log_function (void * W)
+     {
+       annealing_simple_workspace_t * S = W;
+       double        current = *((double *)S-&gt;current_configuration.data);
+       double        best    = *((double *)S-&gt;best_configuration.data);
+     
+       printf("current %f (energy %f), best %f (energy %f)\n",
+              current, S-&gt;current_configuration.energy,
+              best,    S-&gt;best_configuration.energy);
+     }
+     
+     /** ------------------------------------------------------------
+      ** Configuration handling functions.
+      ** ----------------------------------------------------------*/
+     
+     void
+     copy_function (void * dummy,
+                    void * dst_configuration, void * src_configuration)
+     {
+       double *      dst = dst_configuration;
+       double *      src = src_configuration;
+     
+       *dst = *src;
+     }
+     
+     /* end of file */
+</pre>
+   <!-- ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+<!-- page -->
+<div class="node">
+<a name="annealing-multi"></a>
+<p><hr>
+Next:&nbsp;<a rel="next" accesskey="n" href="#annealing-many">annealing many</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#annealing-basic">annealing basic</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#annealing">annealing</a>
+
+</div>
+
+<h3 class="section">2.4 Interface to the multi&ndash;best algorithm</h3>
+
+<p>To understand this section you have to read <a href="#annealing-algorithm">annealing algorithm</a>
+first.
+
+   <p>The multi&ndash;best algorithm works like the simple one, but keeps as result
+a number of best configurations.  It allows a two step search:
+
+     <ol type=1 start=1>
+<li>find <code>N</code> promising configurations using <code>annealing_multibest_solve()</code>;
+
+     <li>explore the neighbourhood of each of the best configurations using
+<code>annealing_simple_solve()</code>;
+        </ol>
+
+   <p>When using the multi&ndash;best algorithm there is no restart option.
+
+<div class="defun">
+&mdash; Struct Typedef: <b>annealing_multibest_workspace_t</b><var><a name="index-annealing_005fmultibest_005fworkspace_005ft-10"></a></var><br>
+<blockquote><p>Holds all the data required to run a multi&ndash;best simulated annealing
+algorithm.  It must be allocated and freed by the user code.  Public
+fields:
+
+          <dl>
+<dt><code>size_t number_of_iterations_at_fixed_temperature</code><dd>self explaining;
+
+          <br><dt><code>size_t max_number_of_best_configurations</code><dd>maximum number of best configurations to register;
+
+          <br><dt><code>size_t best_configurations_count</code><dd>number of best configurations currently registered; at the beginning of
+the search this field is set to <code>1</code>, to account that the start
+configuration is registered as best so far;
+
+          <br><dt><code>void * max_step_value</code><dd>pointer to the value used to limit the &ldquo;distance&rdquo; between new
+configurations and the current configuration; it can reference any type
+of value, it is accessed only by the user supplied functions;
+
+          <br><dt><code>double minimum_acceptance_distance</code><dd>when evaluating a new promising configuration: the vector of better
+configurations is split in two: better than the promising, worse than
+the promising; the promising configuration is accepted if its distance
+from the better configurations is greater than this value;
+
+          <br><dt><code>double boltzmann_constant</code><dd>the constant used in the energy computation; it must be positive; when
+tuning the parameters for a search a good start value is <code>1.0</code>;
+
+          <br><dt><code>double temperature</code><dd>the initial value for the temperature;
+
+          <br><dt><code>double minimum_temperature</code><dd>the minimum value for the temperature: when the value in the field
+<code>temperature</code> drops below this level the outer loop stops;
+
+          <br><dt><code>double damping_factor</code><dd>the coefficient used to cool the temperature; it must be a number
+slightly above <code>1.0</code>;
+
+          <br><dt><code>annealing_configuration_t current_configuration</code><dd>holds the <em>current</em> configuration value; its <code>data</code> field must
+be initialised with a pointer to the start configuration;
+
+          <br><dt><code>annealing_configuration_t new_configuration</code><dd>holds the <em>new</em> configuration value; its <code>data</code> field must be
+initialised with a pointer to a memory block large enough to hold a
+configuration value; the memory block must be initialised with an
+invalid value that can be recognised by <code>copy_function</code>;
+
+          <br><dt><code>annealing_configuration_t * best_configurations</code><dd>pointer to an array of <code>max_number_of_best_configurations</code>
+structures, allocated by the user, that will reference the <em>best so
+far</em> configurations; the <code>data</code> fields of each structure must be
+initialised with a pointer to a memory block large enough to hold a
+configuration value; the memory block must be initialised with an
+invalid value that can be recognised by <code>copy_function</code>;
+
+          <br><dt><code>gsl_rng * numbers_generator</code><dd>the random number generator used to apply the Boltmann distribution
+acceptance criterion; it can be used also to generate the random step;
+
+          <br><dt><code>annealing_energy_fun_t * energy_function</code><dd>the user supplied function used to compute the energy of a
+configuration;
+
+          <br><dt><code>annealing_step_fun_t * step_function</code><dd>the user supplied function used to compute the <em>new</em> configuration
+from the <em>current</em> configuration;
+
+          <br><dt><code>annealing_cooling_fun_t * cooling_function</code><dd>the user supplied function used to cool the temperature; it can be
+<code>NULL</code> to select the default cooling algorithm;
+
+          <br><dt><code>annealing_log_fun_t * log_function</code><dd>the user supplied function used to log the search path; it can be
+<code>NULL</code> if no logging is required;
+
+          <br><dt><code>annealing_copy_fun_t * copy_function</code><dd>the user supplied function used to copy a configuration from an
+allocation space to another;
+
+          <br><dt><code>annealing_metric_fun_t * metric_function</code><dd>the user supplied function used to compute the distance between two
+configurations;
+
+          <br><dt><code>void * params</code><dd>this is a free field that can be used to hand data to the user supplied
+functions. 
+</dl>
+        </p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: void <b>annealing_multibest_solve</b> (<var>annealing_multibest_workspace_t * S</var>)<var><a name="index-annealing_005fmultibest_005fsolve-11"></a></var><br>
+<blockquote><p>Does the search.
+
+        <p>The structure referenced by <var>S</var> must be allocated and initialised by
+the user before invoking this function, and freed by the user after this
+function has returned.
+
+        <p>Space for <code>current_configuration</code>, <code>new_configuration</code> and the
+<code>best_configurations</code> array in <var>S</var> must be allocated by the
+user before invoking this function, and freed by the user after this
+function has returned.
+
+        <p>This function does no resource allocation, so it is perfectly all right
+if the user supplied functions use a dynamic wind mechanism, like
+<code>setjmp()</code> and <code>longjmp()</code>, to report errors.
+
+        <p>When this function returns: the best configurations found are in the
+<code>best_configurations</code> array. 
+</p></blockquote></div>
+
+<h4 class="subsection">2.4.1 Examples</h4>
+
+<p class="noindent">Find 4 local minima of <code>f(t) = -sin(t)/t</code>.
+
+<pre class="example">     /** ------------------------------------------------------------
+      ** Headers.
+      ** ----------------------------------------------------------*/
+     
+     #include &lt;stdio.h&gt;
+     #include &lt;stdlib.h&gt;
+     #include &lt;math.h&gt;
+     #include &lt;float.h&gt;
+     #include &lt;gsl/gsl_rng.h&gt;
+     #include "annealing.h"
+     
+     
+     static  annealing_energy_fun_t      energy_function;
+     static  annealing_step_fun_t        step_function;
+     static  annealing_metric_fun_t      metric_function;
+     static  annealing_log_fun_t         log_function;
+     static  annealing_copy_fun_t        copy_function;
+     
+     /** ------------------------------------------------------------
+      ** Main.
+      ** ----------------------------------------------------------*/
+     
+     int
+     main (void)
+     {
+       annealing_multibest_workspace_t   S;
+       annealing_configuration_t         array[4];
+       double        configurations[2+4]; /* new, current and 4 best */
+       double        max_step = 10.0;
+     
+     
+       printf("multi-best sinc minimisation with simulated annealing\n");
+     
+       S.number_of_iterations_at_fixed_temperature = 10;
+       S.max_step_value              = &amp;max_step;
+       S.minimum_acceptance_distance = 2.0;
+     
+       S.temperature                 = 10.0;
+       S.minimum_temperature         = 1.0e-6;
+       S.boltzmann_constant          = 1.0;
+       S.damping_factor              = 1.005;
+     
+       S.energy_function             = energy_function;
+       S.step_function               = step_function;
+       S.copy_function               = copy_function;
+       S.log_function                = log_function;
+       S.metric_function             = metric_function;
+       S.cooling_function            = NULL;
+     
+       S.numbers_generator           = gsl_rng_alloc(gsl_rng_rand);
+       gsl_rng_set(S.numbers_generator, 15);
+     
+       S.max_number_of_best_configurations = 4;
+       S.current_configuration.data  = &amp;(configurations[0]);
+       S.new_configuration.data      = &amp;(configurations[1]);
+       S.best_configurations         = array;
+     
+       array[0].data         = &amp;(configurations[2]);
+       array[1].data         = &amp;(configurations[3]);
+       array[2].data         = &amp;(configurations[4]);
+       array[3].data         = &amp;(configurations[5]);
+       configurations[0] = 100.0;
+     
+       annealing_multibest_solve(&amp;S);
+     
+       printf("found %u best solutions:", S.best_configurations_count);
+       for (size_t i=0; i&lt;S.best_configurations_count; ++i)
+         {
+           double *	value = array[i].data;
+           printf(" %.5f", *value);
+         }
+     
+       gsl_rng_free(S.numbers_generator);
+       exit(EXIT_SUCCESS);
+     }
+     
+     /** ------------------------------------------------------------
+      ** Iteration functions.
+      ** ----------------------------------------------------------*/
+     
+     static double
+     alea (annealing_multibest_workspace_t * S)
+     {
+       double        max_step = *((double *)S-&gt;max_step_value);
+     
+       return (2.0 * gsl_rng_uniform(S-&gt;numbers_generator) - 1.0) * max_step;
+     }
+     
+     /* ------------------------------------------------------------ */
+     
+     double
+     energy_function (void * dummy, void * configuration)
+     {
+       double        C = *((double *)configuration);
+     
+       return -sin(C)/C;
+     }
+     void
+     step_function (void * W, void * configuration)
+     {
+       annealing_multibest_workspace_t * S = W;
+       double *      C = (double *)configuration;
+       double        c;
+     
+       do c = *C + alea(S); while (fabs(c) &gt; 120.0);
+       *C = c;
+     }
+     double
+     metric_function (void * dummy, void * configuration_a, void * configuration_b)
+     {
+       double        A = *((double *)configuration_a);
+       double        B = *((double *)configuration_b);
+     
+       return fabs(A - B);
+     }
+     void
+     log_function (void * W)
+     {
+       annealing_multibest_workspace_t * S = W;
+       double        current = *((double *)S-&gt;current_configuration.data);
+     
+     
+       printf("current %5.5g (energy %.4f), worst best energy %.4f, best (%u):",
+              current, S-&gt;current_configuration.energy,
+              S-&gt;best_configurations[S-&gt;best_configurations_count-1].energy,
+              S-&gt;best_configurations_count);
+       for (size_t i=0; i&lt;S-&gt;best_configurations_count; ++i)
+         {
+           double *	value = S-&gt;best_configurations[i].data;
+           printf(" %.5f", *value);
+         }
+       printf("\n");
+     }
+     
+     /** ------------------------------------------------------------
+      ** Configuration handling functions.
+      ** ----------------------------------------------------------*/
+     
+     void
+     copy_function (void * dummy, void * dst_configuration, void * src_configuration)
+     {
+       double *      dst = dst_configuration;
+       double *      src = src_configuration;
+     
+       *dst = *src;
+     }
+     
+     /* end of file */
+</pre>
+   <!-- ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+<!-- page -->
+<div class="node">
+<a name="annealing-many"></a>
+<p><hr>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#annealing-multi">annealing multi</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#annealing">annealing</a>
+
+</div>
+
+<h3 class="section">2.5 Interface to the many&ndash;tries algorithm</h3>
+
+<p>To understand this section you have to read <a href="#annealing-algorithm">annealing algorithm</a>
+first.
+
+   <p>The many&ndash;tries algorithm makes use of the Monte Carlo method to select
+the new configuration.  The algorithm itself is very simple, but its
+meaning is not immediate to understand if one does not know the
+Boltzmann distribution.
+
+<h4 class="subsection">2.5.1 The Boltzmann distribution</h4>
+
+<p class="noindent">Let's consider a volume of gas composed by <code>N</code> particles at a
+temperature <code>T</code>.  We can partition the particles in <code>I</code> sets,
+indexed by <code>i \in [1, I]</code>, such that the number of particles in the
+<code>i</code>&ndash;th set is <code>N_i</code> and:
+
+<pre class="example">         I
+     N = S N_i
+        i=1
+</pre>
+   <p class="noindent">We do the partition so that: in each set all the particles share the
+same energy level <code>E_i</code>.
+
+   <p>The Boltzmann distribution equation is:
+
+<pre class="example">              g_i exp(-E_i / (k T))
+     N_i/N = ------------------------
+              I
+              S g_j exp(-E_j / (k T))
+             j=1
+</pre>
+   <p class="noindent">where <code>k</code> is the Boltzmann constant; if we know the temperature
+<code>T</code> and all the possible energy states <code>E_i</code>, we can compute
+the fraction of particles in each state.
+
+   <p>Altenatively: the fraction <code>N_i/N</code> is the probability that a
+particle randomly selected in the gas is in the state <code>E_i</code>.
+
+   <p>Given two numbers <code>N_i</code> and <code>N_j</code>, and assuming <code>g_i =
+g_j</code>, we can write:
+
+<pre class="example">               g_i exp(-E_i / (k T))
+     N_i/N_j = --------------------- = exp(-(E_i - E_j) / (k T))
+               g_j exp(-E_j / (k T))
+</pre>
+   <p class="noindent">which gives us the probability centred around the state <code>E_j</code>.
+
+<h4 class="subsection">2.5.2 Monte Carlo method</h4>
+
+<p class="noindent">Let's say that we have a gas with <code>I</code> possible states, for which we
+can compute the energies <code>E_i</code>, <code>i \in [1, I]</code>.  Using the
+Boltzmann distribution centred around a known level <code>E</code> having
+<code>N</code> particles:
+
+<pre class="example">     N_i/N = exp(-(E_i - E) / (k T))            i \in [1, I]
+</pre>
+   <p class="noindent">we can compute the fractions <code>N_i/N</code>.
+
+   <p>The Monte Carlo method simulates the random extraction of a particle and
+the determination of its energy state:
+
+     <ol type=1 start=1>
+<li>compute samples of a coordinate <code>X</code>:
+
+     <pre class="example">          X_0 = 0      X_i = N_i/N + X_{i-1}       i \in [1, I]
+</pre>
+     <li>generate a random number <code>x</code> from a uniform distribution in the
+range <code>[0, X_I]</code>;
+
+     <li>select the interval for which <code>x \in [X_{i-1}, X_i]</code>;
+        </ol>
+
+<p class="noindent">the result of the simulation is that the particle has energy state
+<code>E_i</code>, so it is in the state <code>i</code>.
+
+<h4 class="subsection">2.5.3 Application to simulated annealing</h4>
+
+<p class="noindent">To apply the method we substitute the number of iterations at fixed
+temperature with the following process:
+
+     <ol type=1 start=1>
+<li>create a number <code>I-1</code> of new configurations; add the current
+configuration, obtaining a set of <code>I</code> configurations;
+
+     <li>for each configuration: compute the energy level <code>E_i</code> centred
+around the energy of the current configuration;
+
+     <li>apply the Monte Carlo method to select a state;
+        </ol>
+
+<p class="noindent">the configuration associated to the selected state is the new
+configuration.
+
+   <p>We notice that:
+
+     <ul>
+<li>the fraction associated to the current configuration is:
+
+     <pre class="example">          N_cur/N = exp(-(E - E) / (k T)) = 1
+</pre>
+     <li>the fraction associated to a configuration with energy higher than
+<code>E</code> is:
+
+     <pre class="example">          E_hi &gt; E     =&gt;      (E_hi - E) &gt; 0
+                       =&gt;      N_hi/N = exp(-(E_hi - E) / (k T)) &lt; 1
+</pre>
+     <p class="noindent">when the temperature is low the exponential becomes infinitesimal and
+the library forces the fraction to the value of <code>0.0</code>;
+
+     <li>the fraction associated to a configuration with energy lower than
+<code>E</code> is:
+
+     <pre class="example">          E_lo &lt; E     =&gt;      (E_lo - E) &lt; 0
+                       =&gt;      N_lo/N = exp(-(E_lo - E) / (k T)) &gt; 1
+</pre>
+     <p class="noindent">when the temperature is low the exponential becomes huge and the
+library forces the fraction to the value of <code>10.0</code>;
+</ul>
+
+<p class="noindent">so the lower energy configurations have more probability to be selected
+than the current and higher energy ones, but still there is the
+possibility to select a higher energy configuration.
+
+<h4 class="subsection">2.5.4 Interface</h4>
+
+<div class="defun">
+&mdash; Struct Typedef: <b>annealing_manytries_workspace_t</b><var><a name="index-annealing_005fmanytries_005fworkspace_005ft-12"></a></var><br>
+<blockquote><p>Holds all the data required to run a many-tries simulated annealing
+algorithm.  It must be allocated and freed by the user code.  Public
+fields:
+
+          <dl>
+<dt><code>size_t number_of_tries</code><dd>the number of new configurations to generate at fixed temperature; this
+is the <code>I-1</code> number;
+
+          <br><dt><code>void * max_step_value</code><dd>pointer to the value used to limit the &ldquo;distance&rdquo; between new
+configurations and the current configuration; it can reference any type
+of value, it is accessed only by the user supplied functions;
+
+          <br><dt><code>double boltzmann_constant</code><dd>the constant used in the energy computation; it must be positive; when
+tuning the parameters for a search a good start value is <code>1.0</code>;
+
+          <br><dt><code>double temperature</code><dd>the initial value for the temperature;
+
+          <br><dt><code>double minimum_temperature</code><dd>the minimum value for the temperature: when the value in the field
+<code>temperature</code> drops below this level the loop stops;
+
+          <br><dt><code>double restart_temperature</code><dd>the temperature level that causes the <em>current</em> configuration to be
+reset to the <em>best so far</em>;
+
+          <p>restarting is useful to prevent the search to get lost at low
+temperature in a region with no interesting minima;
+
+          <p>restarting is optional: if we select <code>DBL_MIN</code> as value, it is
+never <code>temperature &lt; restart_temperature</code> and the configuration is
+never reset (<code>DBL_MIN</code> is defined in <samp><span class="file">float.h</span></samp>, but any
+negative value will do);
+
+          <p>the value must be less than <code>temperature</code>, or the algorithm will
+restart at each iteration;
+
+          <br><dt><code>int restart_flag</code><dd>initially set to <code>0</code> by <code>annealing_manytries_solve()</code>, it
+is set to <code>1</code> if/when the algorithm is restarted from the best
+configuration;
+
+          <br><dt><code>double damping_factor</code><dd>the coefficient used to cool the temperature; it must be a number
+slightly above <code>1.0</code>;
+
+          <br><dt><code>annealing_configuration_t current_configuration</code><dd>holds the <em>current</em> configuration value; its <code>data</code> field must
+be initialised with a pointer to the start configuration;
+
+          <br><dt><code>annealing_configuration_t best_configuration</code><dd>holds the <em>best so far</em> configuration value; its <code>data</code> field
+must be initialised with a pointer to a memory block large enough to
+hold a configuration value; the memory block must be initialised with an
+invalid value that can be recognised by <code>copy_function</code>;
+
+          <br><dt><code>annealing_configuration_t * new_configurations</code><dd>pointer to an array of <code>number_of_tries</code> structures used to hold
+references to the <em>new</em> configurations; the <code>data</code> field of
+the structures must be initialised with a pointer to a memory block
+large enough to hold a configuration value; the memory block must be
+initialised with an invalid value that can be recognised by
+<code>copy_function</code>;
+
+          <br><dt><code>double * monte_carlo_coordinates</code><dd>pointer to an array of <code>number_of_tries</code> values used to store the
+Monte Carlo method coordinates for the new configurations (the
+coordinate for the current configuration is always <code>1.0</code>, so it
+does not need a variable);
+
+          <br><dt><code>gsl_rng * numbers_generator</code><dd>the random number generator used to apply the Boltzmann distribution
+acceptance criterion; it can be used also to generate the random step;
+
+          <br><dt><code>annealing_energy_fun_t * energy_function</code><dd>the user supplied function used to compute the energy of a
+configuration;
+
+          <br><dt><code>annealing_step_fun_t * step_function</code><dd>the user supplied function used to compute the <em>new</em> configuration
+from the <em>current</em> configuration;
+
+          <br><dt><code>annealing_cooling_fun_t * cooling_function</code><dd>the user supplied function used to cool the temperature; it can be
+<code>NULL</code> to select the default cooling algorithm;
+
+          <br><dt><code>annealing_log_fun_t * log_function</code><dd>the user supplied function used to log the search path; it can be
+<code>NULL</code> if no logging is required;
+
+          <br><dt><code>annealing_copy_fun_t * copy_function</code><dd>the user supplied function used to copy a configuration from an
+allocation space to another;
+
+          <br><dt><code>void * params</code><dd>this is a free field that can be used to hand data to the user supplied
+functions. 
+</dl>
+        </p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: void <b>annealing_manytries_solve</b> (<var>annealing_manytries_workspace_t * S</var>)<var><a name="index-annealing_005fmanytries_005fsolve-13"></a></var><br>
+<blockquote><p>Does the search.
+
+        <p>The structure referenced by <var>S</var> must be allocated and initialised by
+the user before invoking this function, and freed by the user after this
+function has returned.
+
+        <p>Space for the data referenced by the <code>current_configuration</code>,
+<code>best_configuration</code> and <code>new_configurations</code> fields in <var>S</var>
+must be allocated by the user before invoking this function, and freed
+by the user after this function has returned.
+
+        <p>This function does no resource allocation, so it is perfectly all right
+if the user supplied functions use a dynamic wind mechanism, like
+<code>setjmp()</code> and <code>longjmp()</code>, to report errors.
+
+        <p>When this function returns: the best configuration found is in the
+<code>best_configuration</code> field. 
+</p></blockquote></div>
+
+<h4 class="subsection">2.5.5 Examples</h4>
+
+<p class="noindent">Find minimum of <code>f(t) = -sin(t)/t</code>.
+
+<pre class="example">     /** ------------------------------------------------------------
+      ** Headers.
+      ** ----------------------------------------------------------*/
+     
+     #include &lt;stdio.h&gt;
+     #include &lt;stdlib.h&gt;
+     #include &lt;math.h&gt;
+     #include &lt;float.h&gt;
+     #include &lt;gsl/gsl_rng.h&gt;
+     #include "annealing.h"
+     
+     
+     static	annealing_energy_fun_t	energy_function;
+     static	annealing_step_fun_t	step_function;
+     static	annealing_log_fun_t		log_function;
+     static	annealing_copy_fun_t	copy_function;
+     
+     /** ------------------------------------------------------------
+      ** Main.
+      ** ----------------------------------------------------------*/
+     
+     #define TRIES   10
+     
+     int
+     main (int argc, char ** argv)
+     {
+       annealing_manytries_workspace_t   S;
+       annealing_configuration_t         array[TRIES];
+       double        configurations[2 + TRIES]; /* best, current and new tries */
+       double        monte_carlo_coordinates[TRIES];
+       double        max_step = 10.0;
+     
+     
+       printf("many-tries sinc minimisation with simulated annealing\n");
+     
+       S.max_step_value              = &amp;max_step;
+     
+       S.temperature                 = 10.0;
+       S.minimum_temperature         = 1.0e-6;
+       S.restart_temperature         = DBL_MIN; /* do not restart */
+       S.boltzmann_constant          = 1.0;
+       S.damping_factor              = 1.005;
+     
+       S.energy_function             = energy_function;
+       S.step_function               = step_function;
+       S.copy_function               = copy_function;
+       S.log_function                = log_function;
+       S.cooling_function            = NULL;
+     
+       S.numbers_generator           = gsl_rng_alloc(gsl_rng_rand);
+       gsl_rng_set(S.numbers_generator, 15);
+     
+       S.current_configuration.data  = &amp;(configurations[0]);
+       S.best_configuration.data     = &amp;(configurations[1]);
+       S.new_configurations          = array;
+       S.monte_carlo_coordinates     = monte_carlo_coordinates;
+       S.number_of_tries             = TRIES;
+     
+       for (size_t i=0; i&lt;S.number_of_tries; ++i)
+         array[i].data = &amp;(configurations[i+2]);
+     
+       configurations[0] = 100.0;
+     
+       annealing_manytries_solve(&amp;S);
+     
+       printf("final best solution: %f, global 0.0\n", configurations[1]);
+     
+       gsl_rng_free(S.numbers_generator);
+       exit(EXIT_SUCCESS);
+     }
+     
+     /** ------------------------------------------------------------
+      ** Iteration functions.
+      ** ----------------------------------------------------------*/
+     
+     static double
+     alea (annealing_manytries_workspace_t * S)
+     {
+       double        max_step = *((double *)S-&gt;max_step_value);
+     
+       return (2.0 * gsl_rng_uniform(S-&gt;numbers_generator) - 1.0) * max_step;
+     }
+     
+     /* ------------------------------------------------------------ */
+     
+     double
+     energy_function (void * dummy, void * configuration)
+     {
+       double        C = *((double *)configuration);
+     
+       return -sin(C)/C;
+     }
+     void
+     step_function (void * W, void * configuration)
+     {
+       annealing_manytries_workspace_t * S = W;
+       double *      C = (double *)configuration;
+       double        c;
+     
+       do c = *C + alea(S); while (fabs(c) &gt; 120.0);
+       *C = c;
+     }
+     void
+     log_function (void * W)
+     {
+       annealing_manytries_workspace_t * S = W;
+       double *      current = (double *)S-&gt;current_configuration.data;
+       double *      best    = (double *)S-&gt;best_configuration.data;
+     
+       printf("current %f (energy %f), best %f (energy %f)\n",
+              *current, S-&gt;current_configuration.energy,
+              *best,    S-&gt;best_configuration.energy);
+     }
+     
+     /** ------------------------------------------------------------
+      ** Configuration handling functions.
+      ** ----------------------------------------------------------*/
+     
+     void
+     copy_function (void * dummy, void * dst_configuration, void * src_configuration)
+     {
+       double *      dst = dst_configuration;
+       double *      src = src_configuration;
+     
+       *dst = *src;
+     }
+     
+     /* end of file */
+</pre>
+   <!-- ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+<!-- page -->
+<div class="node">
+<a name="misc"></a>
+<p><hr>
+Next:&nbsp;<a rel="next" accesskey="n" href="#References">References</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#annealing">annealing</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
+
+</div>
+
+<h2 class="chapter">3 Miscellaneous functions</h2>
+
+<ul class="menu">
+<li><a accesskey="1" href="#misc-version">misc version</a>:                 Version functions. 
+</ul>
+
+<!-- page -->
+<div class="node">
+<a name="misc-version"></a>
+<p><hr>
+Up:&nbsp;<a rel="up" accesskey="u" href="#misc">misc</a>
+
+</div>
+
+<h3 class="section">3.1 Version functions</h3>
+
+<p><a href="#library-version">library version</a> for details on version numbers.
+
+<div class="defun">
+&mdash; Function: const char * <b>annealing_version</b> (<var>void</var>)<var><a name="index-annealing_005fversion-14"></a></var><br>
+<blockquote><p>Return a statically allocated string representing the package version. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: int <b>annealing_library_major_version</b> (<var>void</var>)<var><a name="index-annealing_005flibrary_005fmajor_005fversion-15"></a></var><br>
+<blockquote><p>Return an integer representing the interface major number version. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: int <b>annealing_library_minor_version</b> (<var>void</var>)<var><a name="index-annealing_005flibrary_005fminor_005fversion-16"></a></var><br>
+<blockquote><p>Return an integer representing the interface minor number version. 
+</p></blockquote></div>
+
+<!-- page -->
+<div class="node">
+<a name="References"></a>
+<p><hr>
+Next:&nbsp;<a rel="next" accesskey="n" href="#Documentation-License">Documentation License</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#misc">misc</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
+
+</div>
+
+<h2 class="appendix">Appendix A Bibliography and references</h2>
+
+<p class="noindent">&ldquo;Boltzmann distribution.&rdquo; Wikipedia, The Free Encyclopedia.  24 Jan
+2007, 14:52 UTC.  Wikimedia Foundation, Inc. 26 Feb 2007
+<a href="http://en.wikipedia.org/w/index.php?title=Boltzmann_distribution&amp;oldid=102908405">http://en.wikipedia.org/w/index.php?title=Boltzmann_distribution&amp;oldid=102908405</a>.
+
+<!-- page -->
+<div class="node">
+<a name="Documentation-License"></a>
+<p><hr>
+Next:&nbsp;<a rel="next" accesskey="n" href="#Package-License">Package License</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#References">References</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
+
+</div>
+
+<h2 class="appendix">Appendix B GNU Free Documentation License</h2>
+
+<p><a name="index-FDL_002c-GNU-Free-Documentation-License-17"></a><div align="center">Version 1.3, 3 November 2008</div>
+
+<!-- This file is intended to be included within another document, -->
+<!-- hence no sectioning command or @node. -->
+<pre class="display">     Copyright &copy; 2000, 2001, 2002, 2007, 2008 Free Software Foundation, Inc.
+     <a href="http://fsf.org/">http://fsf.org/</a>
+     
+     Everyone is permitted to copy and distribute verbatim copies
+     of this license document, but changing it is not allowed.
+</pre>
+     <ol type=1 start=0>
+<li>PREAMBLE
+
+     <p>The purpose of this License is to make a manual, textbook, or other
+functional and useful document <dfn>free</dfn> in the sense of freedom: to
+assure everyone the effective freedom to copy and redistribute it,
+with or without modifying it, either commercially or noncommercially. 
+Secondarily, this License preserves for the author and publisher a way
+to get credit for their work, while not being considered responsible
+for modifications made by others.
+
+     <p>This License is a kind of &ldquo;copyleft&rdquo;, which means that derivative
+works of the document must themselves be free in the same sense.  It
+complements the GNU General Public License, which is a copyleft
+license designed for free software.
+
+     <p>We have designed this License in order to use it for manuals for free
+software, because free software needs free documentation: a free
+program should come with manuals providing the same freedoms that the
+software does.  But this License is not limited to software manuals;
+it can be used for any textual work, regardless of subject matter or
+whether it is published as a printed book.  We recommend this License
+principally for works whose purpose is instruction or reference.
+
+     <li>APPLICABILITY AND DEFINITIONS
+
+     <p>This License applies to any manual or other work, in any medium, that
+contains a notice placed by the copyright holder saying it can be
+distributed under the terms of this License.  Such a notice grants a
+world-wide, royalty-free license, unlimited in duration, to use that
+work under the conditions stated herein.  The &ldquo;Document&rdquo;, below,
+refers to any such manual or work.  Any member of the public is a
+licensee, and is addressed as &ldquo;you&rdquo;.  You accept the license if you
+copy, modify or distribute the work in a way requiring permission
+under copyright law.
+
+     <p>A &ldquo;Modified Version&rdquo; of the Document means any work containing the
+Document or a portion of it, either copied verbatim, or with
+modifications and/or translated into another language.
+
+     <p>A &ldquo;Secondary Section&rdquo; is a named appendix or a front-matter section
+of the Document that deals exclusively with the relationship of the
+publishers or authors of the Document to the Document's overall
+subject (or to related matters) and contains nothing that could fall
+directly within that overall subject.  (Thus, if the Document is in
+part a textbook of mathematics, a Secondary Section may not explain
+any mathematics.)  The relationship could be a matter of historical
+connection with the subject or with related matters, or of legal,
+commercial, philosophical, ethical or political position regarding
+them.
+
+     <p>The &ldquo;Invariant Sections&rdquo; are certain Secondary Sections whose titles
+are designated, as being those of Invariant Sections, in the notice
+that says that the Document is released under this License.  If a
+section does not fit the above definition of Secondary then it is not
+allowed to be designated as Invariant.  The Document may contain zero
+Invariant Sections.  If the Document does not identify any Invariant
+Sections then there are none.
+
+     <p>The &ldquo;Cover Texts&rdquo; are certain short passages of text that are listed,
+as Front-Cover Texts or Back-Cover Texts, in the notice that says that
+the Document is released under this License.  A Front-Cover Text may
+be at most 5 words, and a Back-Cover Text may be at most 25 words.
+
+     <p>A &ldquo;Transparent&rdquo; copy of the Document means a machine-readable copy,
+represented in a format whose specification is available to the
+general public, that is suitable for revising the document
+straightforwardly with generic text editors or (for images composed of
+pixels) generic paint programs or (for drawings) some widely available
+drawing editor, and that is suitable for input to text formatters or
+for automatic translation to a variety of formats suitable for input
+to text formatters.  A copy made in an otherwise Transparent file
+format whose markup, or absence of markup, has been arranged to thwart
+or discourage subsequent modification by readers is not Transparent. 
+An image format is not Transparent if used for any substantial amount
+of text.  A copy that is not &ldquo;Transparent&rdquo; is called &ldquo;Opaque&rdquo;.
+
+     <p>Examples of suitable formats for Transparent copies include plain
+<span class="sc">ascii</span> without markup, Texinfo input format, LaTeX input
+format, <acronym>SGML</acronym> or <acronym>XML</acronym> using a publicly available
+<acronym>DTD</acronym>, and standard-conforming simple <acronym>HTML</acronym>,
+PostScript or <acronym>PDF</acronym> designed for human modification.  Examples
+of transparent image formats include <acronym>PNG</acronym>, <acronym>XCF</acronym> and
+<acronym>JPG</acronym>.  Opaque formats include proprietary formats that can be
+read and edited only by proprietary word processors, <acronym>SGML</acronym> or
+<acronym>XML</acronym> for which the <acronym>DTD</acronym> and/or processing tools are
+not generally available, and the machine-generated <acronym>HTML</acronym>,
+PostScript or <acronym>PDF</acronym> produced by some word processors for
+output purposes only.
+
+     <p>The &ldquo;Title Page&rdquo; means, for a printed book, the title page itself,
+plus such following pages as are needed to hold, legibly, the material
+this License requires to appear in the title page.  For works in
+formats which do not have any title page as such, &ldquo;Title Page&rdquo; means
+the text near the most prominent appearance of the work's title,
+preceding the beginning of the body of the text.
+
+     <p>The &ldquo;publisher&rdquo; means any person or entity that distributes copies
+of the Document to the public.
+
+     <p>A section &ldquo;Entitled XYZ&rdquo; means a named subunit of the Document whose
+title either is precisely XYZ or contains XYZ in parentheses following
+text that translates XYZ in another language.  (Here XYZ stands for a
+specific section name mentioned below, such as &ldquo;Acknowledgements&rdquo;,
+&ldquo;Dedications&rdquo;, &ldquo;Endorsements&rdquo;, or &ldquo;History&rdquo;.)  To &ldquo;Preserve the Title&rdquo;
+of such a section when you modify the Document means that it remains a
+section &ldquo;Entitled XYZ&rdquo; according to this definition.
+
+     <p>The Document may include Warranty Disclaimers next to the notice which
+states that this License applies to the Document.  These Warranty
+Disclaimers are considered to be included by reference in this
+License, but only as regards disclaiming warranties: any other
+implication that these Warranty Disclaimers may have is void and has
+no effect on the meaning of this License.
+
+     <li>VERBATIM COPYING
+
+     <p>You may copy and distribute the Document in any medium, either
+commercially or noncommercially, provided that this License, the
+copyright notices, and the license notice saying this License applies
+to the Document are reproduced in all copies, and that you add no other
+conditions whatsoever to those of this License.  You may not use
+technical measures to obstruct or control the reading or further
+copying of the copies you make or distribute.  However, you may accept
+compensation in exchange for copies.  If you distribute a large enough
+number of copies you must also follow the conditions in section 3.
+
+     <p>You may also lend copies, under the same conditions stated above, and
+you may publicly display copies.
+
+     <li>COPYING IN QUANTITY
+
+     <p>If you publish printed copies (or copies in media that commonly have
+printed covers) of the Document, numbering more than 100, and the
+Document's license notice requires Cover Texts, you must enclose the
+copies in covers that carry, clearly and legibly, all these Cover
+Texts: Front-Cover Texts on the front cover, and Back-Cover Texts on
+the back cover.  Both covers must also clearly and legibly identify
+you as the publisher of these copies.  The front cover must present
+the full title with all words of the title equally prominent and
+visible.  You may add other material on the covers in addition. 
+Copying with changes limited to the covers, as long as they preserve
+the title of the Document and satisfy these conditions, can be treated
+as verbatim copying in other respects.
+
+     <p>If the required texts for either cover are too voluminous to fit
+legibly, you should put the first ones listed (as many as fit
+reasonably) on the actual cover, and continue the rest onto adjacent
+pages.
+
+     <p>If you publish or distribute Opaque copies of the Document numbering
+more than 100, you must either include a machine-readable Transparent
+copy along with each Opaque copy, or state in or with each Opaque copy
+a computer-network location from which the general network-using
+public has access to download using public-standard network protocols
+a complete Transparent copy of the Document, free of added material. 
+If you use the latter option, you must take reasonably prudent steps,
+when you begin distribution of Opaque copies in quantity, to ensure
+that this Transparent copy will remain thus accessible at the stated
+location until at least one year after the last time you distribute an
+Opaque copy (directly or through your agents or retailers) of that
+edition to the public.
+
+     <p>It is requested, but not required, that you contact the authors of the
+Document well before redistributing any large number of copies, to give
+them a chance to provide you with an updated version of the Document.
+
+     <li>MODIFICATIONS
+
+     <p>You may copy and distribute a Modified Version of the Document under
+the conditions of sections 2 and 3 above, provided that you release
+the Modified Version under precisely this License, with the Modified
+Version filling the role of the Document, thus licensing distribution
+and modification of the Modified Version to whoever possesses a copy
+of it.  In addition, you must do these things in the Modified Version:
+
+          <ol type=A start=1>
+<li>Use in the Title Page (and on the covers, if any) a title distinct
+from that of the Document, and from those of previous versions
+(which should, if there were any, be listed in the History section
+of the Document).  You may use the same title as a previous version
+if the original publisher of that version gives permission.
+
+          <li>List on the Title Page, as authors, one or more persons or entities
+responsible for authorship of the modifications in the Modified
+Version, together with at least five of the principal authors of the
+Document (all of its principal authors, if it has fewer than five),
+unless they release you from this requirement.
+
+          <li>State on the Title page the name of the publisher of the
+Modified Version, as the publisher.
+
+          <li>Preserve all the copyright notices of the Document.
+
+          <li>Add an appropriate copyright notice for your modifications
+adjacent to the other copyright notices.
+
+          <li>Include, immediately after the copyright notices, a license notice
+giving the public permission to use the Modified Version under the
+terms of this License, in the form shown in the Addendum below.
+
+          <li>Preserve in that license notice the full lists of Invariant Sections
+and required Cover Texts given in the Document's license notice.
+
+          <li>Include an unaltered copy of this License.
+
+          <li>Preserve the section Entitled &ldquo;History&rdquo;, Preserve its Title, and add
+to it an item stating at least the title, year, new authors, and
+publisher of the Modified Version as given on the Title Page.  If
+there is no section Entitled &ldquo;History&rdquo; in the Document, create one
+stating the title, year, authors, and publisher of the Document as
+given on its Title Page, then add an item describing the Modified
+Version as stated in the previous sentence.
+
+          <li>Preserve the network location, if any, given in the Document for
+public access to a Transparent copy of the Document, and likewise
+the network locations given in the Document for previous versions
+it was based on.  These may be placed in the &ldquo;History&rdquo; section. 
+You may omit a network location for a work that was published at
+least four years before the Document itself, or if the original
+publisher of the version it refers to gives permission.
+
+          <li>For any section Entitled &ldquo;Acknowledgements&rdquo; or &ldquo;Dedications&rdquo;, Preserve
+the Title of the section, and preserve in the section all the
+substance and tone of each of the contributor acknowledgements and/or
+dedications given therein.
+
+          <li>Preserve all the Invariant Sections of the Document,
+unaltered in their text and in their titles.  Section numbers
+or the equivalent are not considered part of the section titles.
+
+          <li>Delete any section Entitled &ldquo;Endorsements&rdquo;.  Such a section
+may not be included in the Modified Version.
+
+          <li>Do not retitle any existing section to be Entitled &ldquo;Endorsements&rdquo; or
+to conflict in title with any Invariant Section.
+
+          <li>Preserve any Warranty Disclaimers.
+          </ol>
+
+     <p>If the Modified Version includes new front-matter sections or
+appendices that qualify as Secondary Sections and contain no material
+copied from the Document, you may at your option designate some or all
+of these sections as invariant.  To do this, add their titles to the
+list of Invariant Sections in the Modified Version's license notice. 
+These titles must be distinct from any other section titles.
+
+     <p>You may add a section Entitled &ldquo;Endorsements&rdquo;, provided it contains
+nothing but endorsements of your Modified Version by various
+parties&mdash;for example, statements of peer review or that the text has
+been approved by an organization as the authoritative definition of a
+standard.
+
+     <p>You may add a passage of up to five words as a Front-Cover Text, and a
+passage of up to 25 words as a Back-Cover Text, to the end of the list
+of Cover Texts in the Modified Version.  Only one passage of
+Front-Cover Text and one of Back-Cover Text may be added by (or
+through arrangements made by) any one entity.  If the Document already
+includes a cover text for the same cover, previously added by you or
+by arrangement made by the same entity you are acting on behalf of,
+you may not add another; but you may replace the old one, on explicit
+permission from the previous publisher that added the old one.
+
+     <p>The author(s) and publisher(s) of the Document do not by this License
+give permission to use their names for publicity for or to assert or
+imply endorsement of any Modified Version.
+
+     <li>COMBINING DOCUMENTS
+
+     <p>You may combine the Document with other documents released under this
+License, under the terms defined in section 4 above for modified
+versions, provided that you include in the combination all of the
+Invariant Sections of all of the original documents, unmodified, and
+list them all as Invariant Sections of your combined work in its
+license notice, and that you preserve all their Warranty Disclaimers.
+
+     <p>The combined work need only contain one copy of this License, and
+multiple identical Invariant Sections may be replaced with a single
+copy.  If there are multiple Invariant Sections with the same name but
+different contents, make the title of each such section unique by
+adding at the end of it, in parentheses, the name of the original
+author or publisher of that section if known, or else a unique number. 
+Make the same adjustment to the section titles in the list of
+Invariant Sections in the license notice of the combined work.
+
+     <p>In the combination, you must combine any sections Entitled &ldquo;History&rdquo;
+in the various original documents, forming one section Entitled
+&ldquo;History&rdquo;; likewise combine any sections Entitled &ldquo;Acknowledgements&rdquo;,
+and any sections Entitled &ldquo;Dedications&rdquo;.  You must delete all
+sections Entitled &ldquo;Endorsements.&rdquo;
+
+     <li>COLLECTIONS OF DOCUMENTS
+
+     <p>You may make a collection consisting of the Document and other documents
+released under this License, and replace the individual copies of this
+License in the various documents with a single copy that is included in
+the collection, provided that you follow the rules of this License for
+verbatim copying of each of the documents in all other respects.
+
+     <p>You may extract a single document from such a collection, and distribute
+it individually under this License, provided you insert a copy of this
+License into the extracted document, and follow this License in all
+other respects regarding verbatim copying of that document.
+
+     <li>AGGREGATION WITH INDEPENDENT WORKS
+
+     <p>A compilation of the Document or its derivatives with other separate
+and independent documents or works, in or on a volume of a storage or
+distribution medium, is called an &ldquo;aggregate&rdquo; if the copyright
+resulting from the compilation is not used to limit the legal rights
+of the compilation's users beyond what the individual works permit. 
+When the Document is included in an aggregate, this License does not
+apply to the other works in the aggregate which are not themselves
+derivative works of the Document.
+
+     <p>If the Cover Text requirement of section 3 is applicable to these
+copies of the Document, then if the Document is less than one half of
+the entire aggregate, the Document's Cover Texts may be placed on
+covers that bracket the Document within the aggregate, or the
+electronic equivalent of covers if the Document is in electronic form. 
+Otherwise they must appear on printed covers that bracket the whole
+aggregate.
+
+     <li>TRANSLATION
+
+     <p>Translation is considered a kind of modification, so you may
+distribute translations of the Document under the terms of section 4. 
+Replacing Invariant Sections with translations requires special
+permission from their copyright holders, but you may include
+translations of some or all Invariant Sections in addition to the
+original versions of these Invariant Sections.  You may include a
+translation of this License, and all the license notices in the
+Document, and any Warranty Disclaimers, provided that you also include
+the original English version of this License and the original versions
+of those notices and disclaimers.  In case of a disagreement between
+the translation and the original version of this License or a notice
+or disclaimer, the original version will prevail.
+
+     <p>If a section in the Document is Entitled &ldquo;Acknowledgements&rdquo;,
+&ldquo;Dedications&rdquo;, or &ldquo;History&rdquo;, the requirement (section 4) to Preserve
+its Title (section 1) will typically require changing the actual
+title.
+
+     <li>TERMINATION
+
+     <p>You may not copy, modify, sublicense, or distribute the Document
+except as expressly provided under this License.  Any attempt
+otherwise to copy, modify, sublicense, or distribute it is void, and
+will automatically terminate your rights under this License.
+
+     <p>However, if you cease all violation of this License, then your license
+from a particular copyright holder is reinstated (a) provisionally,
+unless and until the copyright holder explicitly and finally
+terminates your license, and (b) permanently, if the copyright holder
+fails to notify you of the violation by some reasonable means prior to
+60 days after the cessation.
+
+     <p>Moreover, your license from a particular copyright holder is
+reinstated permanently if the copyright holder notifies you of the
+violation by some reasonable means, this is the first time you have
+received notice of violation of this License (for any work) from that
+copyright holder, and you cure the violation prior to 30 days after
+your receipt of the notice.
+
+     <p>Termination of your rights under this section does not terminate the
+licenses of parties who have received copies or rights from you under
+this License.  If your rights have been terminated and not permanently
+reinstated, receipt of a copy of some or all of the same material does
+not give you any rights to use it.
+
+     <li>FUTURE REVISIONS OF THIS LICENSE
+
+     <p>The Free Software Foundation may publish new, revised versions
+of the GNU Free Documentation License from time to time.  Such new
+versions will be similar in spirit to the present version, but may
+differ in detail to address new problems or concerns.  See
+<a href="http://www.gnu.org/copyleft/">http://www.gnu.org/copyleft/</a>.
+
+     <p>Each version of the License is given a distinguishing version number. 
+If the Document specifies that a particular numbered version of this
+License &ldquo;or any later version&rdquo; applies to it, you have the option of
+following the terms and conditions either of that specified version or
+of any later version that has been published (not as a draft) by the
+Free Software Foundation.  If the Document does not specify a version
+number of this License, you may choose any version ever published (not
+as a draft) by the Free Software Foundation.  If the Document
+specifies that a proxy can decide which future versions of this
+License can be used, that proxy's public statement of acceptance of a
+version permanently authorizes you to choose that version for the
+Document.
+
+     <li>RELICENSING
+
+     <p>&ldquo;Massive Multiauthor Collaboration Site&rdquo; (or &ldquo;MMC Site&rdquo;) means any
+World Wide Web server that publishes copyrightable works and also
+provides prominent facilities for anybody to edit those works.  A
+public wiki that anybody can edit is an example of such a server.  A
+&ldquo;Massive Multiauthor Collaboration&rdquo; (or &ldquo;MMC&rdquo;) contained in the
+site means any set of copyrightable works thus published on the MMC
+site.
+
+     <p>&ldquo;CC-BY-SA&rdquo; means the Creative Commons Attribution-Share Alike 3.0
+license published by Creative Commons Corporation, a not-for-profit
+corporation with a principal place of business in San Francisco,
+California, as well as future copyleft versions of that license
+published by that same organization.
+
+     <p>&ldquo;Incorporate&rdquo; means to publish or republish a Document, in whole or
+in part, as part of another Document.
+
+     <p>An MMC is &ldquo;eligible for relicensing&rdquo; if it is licensed under this
+License, and if all works that were first published under this License
+somewhere other than this MMC, and subsequently incorporated in whole
+or in part into the MMC, (1) had no cover texts or invariant sections,
+and (2) were thus incorporated prior to November 1, 2008.
+
+     <p>The operator of an MMC Site may republish an MMC contained in the site
+under CC-BY-SA on the same site at any time before August 1, 2009,
+provided the MMC is eligible for relicensing.
+
+        </ol>
+
+<h3 class="heading">ADDENDUM: How to use this License for your documents</h3>
+
+<p>To use this License in a document you have written, include a copy of
+the License in the document and put the following copyright and
+license notices just after the title page:
+
+<pre class="smallexample">       Copyright (C)  <var>year</var>  <var>your name</var>.
+       Permission is granted to copy, distribute and/or modify this document
+       under the terms of the GNU Free Documentation License, Version 1.3
+       or any later version published by the Free Software Foundation;
+       with no Invariant Sections, no Front-Cover Texts, and no Back-Cover
+       Texts.  A copy of the license is included in the section entitled ``GNU
+       Free Documentation License''.
+</pre>
+   <p>If you have Invariant Sections, Front-Cover Texts and Back-Cover Texts,
+replace the &ldquo;with<small class="dots">...</small>Texts.&rdquo; line with this:
+
+<pre class="smallexample">         with the Invariant Sections being <var>list their titles</var>, with
+         the Front-Cover Texts being <var>list</var>, and with the Back-Cover Texts
+         being <var>list</var>.
+</pre>
+   <p>If you have Invariant Sections without Cover Texts, or some other
+combination of the three, merge those two alternatives to suit the
+situation.
+
+   <p>If your document contains nontrivial examples of program code, we
+recommend releasing these examples in parallel under your choice of
+free software license, such as the GNU General Public License,
+to permit their use in free software.
+
+<!-- Local Variables: -->
+<!-- ispell-local-pdict: "ispell-dict" -->
+<!-- End: -->
+<div class="node">
+<a name="Package-License"></a>
+<p><hr>
+Next:&nbsp;<a rel="next" accesskey="n" href="#library-version">library version</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#Documentation-License">Documentation License</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
+
+</div>
+
+<h2 class="appendix">Appendix C <acronym>GNU</acronym> General Public License</h2>
+
+<!-- The GNU General Public License. -->
+<div align="center">Version 3, 29 June 2007</div>
+
+<!-- This file is intended to be included within another document, -->
+<!-- hence no sectioning command or @node. -->
+<pre class="display">     Copyright &copy; 2007 Free Software Foundation, Inc. <a href="http://fsf.org/">http://fsf.org/</a>
+     
+     Everyone is permitted to copy and distribute verbatim copies of this
+     license document, but changing it is not allowed.
+</pre>
+   <h3 class="heading">Preamble</h3>
+
+<p>The GNU General Public License is a free, copyleft license for
+software and other kinds of works.
+
+   <p>The licenses for most software and other practical works are designed
+to take away your freedom to share and change the works.  By contrast,
+the GNU General Public License is intended to guarantee your freedom
+to share and change all versions of a program&mdash;to make sure it remains
+free software for all its users.  We, the Free Software Foundation,
+use the GNU General Public License for most of our software; it
+applies also to any other work released this way by its authors.  You
+can apply it to your programs, too.
+
+   <p>When we speak of free software, we are referring to freedom, not
+price.  Our General Public Licenses are designed to make sure that you
+have the freedom to distribute copies of free software (and charge for
+them if you wish), that you receive source code or can get it if you
+want it, that you can change the software or use pieces of it in new
+free programs, and that you know you can do these things.
+
+   <p>To protect your rights, we need to prevent others from denying you
+these rights or asking you to surrender the rights.  Therefore, you
+have certain responsibilities if you distribute copies of the
+software, or if you modify it: responsibilities to respect the freedom
+of others.
+
+   <p>For example, if you distribute copies of such a program, whether
+gratis or for a fee, you must pass on to the recipients the same
+freedoms that you received.  You must make sure that they, too,
+receive or can get the source code.  And you must show them these
+terms so they know their rights.
+
+   <p>Developers that use the GNU GPL protect your rights with two steps:
+(1) assert copyright on the software, and (2) offer you this License
+giving you legal permission to copy, distribute and/or modify it.
+
+   <p>For the developers' and authors' protection, the GPL clearly explains
+that there is no warranty for this free software.  For both users' and
+authors' sake, the GPL requires that modified versions be marked as
+changed, so that their problems will not be attributed erroneously to
+authors of previous versions.
+
+   <p>Some devices are designed to deny users access to install or run
+modified versions of the software inside them, although the
+manufacturer can do so.  This is fundamentally incompatible with the
+aim of protecting users' freedom to change the software.  The
+systematic pattern of such abuse occurs in the area of products for
+individuals to use, which is precisely where it is most unacceptable. 
+Therefore, we have designed this version of the GPL to prohibit the
+practice for those products.  If such problems arise substantially in
+other domains, we stand ready to extend this provision to those
+domains in future versions of the GPL, as needed to protect the
+freedom of users.
+
+   <p>Finally, every program is threatened constantly by software patents. 
+States should not allow patents to restrict development and use of
+software on general-purpose computers, but in those that do, we wish
+to avoid the special danger that patents applied to a free program
+could make it effectively proprietary.  To prevent this, the GPL
+assures that patents cannot be used to render the program non-free.
+
+   <p>The precise terms and conditions for copying, distribution and
+modification follow.
+
+<h3 class="heading">TERMS AND CONDITIONS</h3>
+
+     <ol type=1 start=0>
+<li>Definitions.
+
+     <p>&ldquo;This License&rdquo; refers to version 3 of the GNU General Public License.
+
+     <p>&ldquo;Copyright&rdquo; also means copyright-like laws that apply to other kinds
+of works, such as semiconductor masks.
+
+     <p>&ldquo;The Program&rdquo; refers to any copyrightable work licensed under this
+License.  Each licensee is addressed as &ldquo;you&rdquo;.  &ldquo;Licensees&rdquo; and
+&ldquo;recipients&rdquo; may be individuals or organizations.
+
+     <p>To &ldquo;modify&rdquo; a work means to copy from or adapt all or part of the work
+in a fashion requiring copyright permission, other than the making of
+an exact copy.  The resulting work is called a &ldquo;modified version&rdquo; of
+the earlier work or a work &ldquo;based on&rdquo; the earlier work.
+
+     <p>A &ldquo;covered work&rdquo; means either the unmodified Program or a work based
+on the Program.
+
+     <p>To &ldquo;propagate&rdquo; a work means to do anything with it that, without
+permission, would make you directly or secondarily liable for
+infringement under applicable copyright law, except executing it on a
+computer or modifying a private copy.  Propagation includes copying,
+distribution (with or without modification), making available to the
+public, and in some countries other activities as well.
+
+     <p>To &ldquo;convey&rdquo; a work means any kind of propagation that enables other
+parties to make or receive copies.  Mere interaction with a user
+through a computer network, with no transfer of a copy, is not
+conveying.
+
+     <p>An interactive user interface displays &ldquo;Appropriate Legal Notices&rdquo; to
+the extent that it includes a convenient and prominently visible
+feature that (1) displays an appropriate copyright notice, and (2)
+tells the user that there is no warranty for the work (except to the
+extent that warranties are provided), that licensees may convey the
+work under this License, and how to view a copy of this License.  If
+the interface presents a list of user commands or options, such as a
+menu, a prominent item in the list meets this criterion.
+
+     <li>Source Code.
+
+     <p>The &ldquo;source code&rdquo; for a work means the preferred form of the work for
+making modifications to it.  &ldquo;Object code&rdquo; means any non-source form
+of a work.
+
+     <p>A &ldquo;Standard Interface&rdquo; means an interface that either is an official
+standard defined by a recognized standards body, or, in the case of
+interfaces specified for a particular programming language, one that
+is widely used among developers working in that language.
+
+     <p>The &ldquo;System Libraries&rdquo; of an executable work include anything, other
+than the work as a whole, that (a) is included in the normal form of
+packaging a Major Component, but which is not part of that Major
+Component, and (b) serves only to enable use of the work with that
+Major Component, or to implement a Standard Interface for which an
+implementation is available to the public in source code form.  A
+&ldquo;Major Component&rdquo;, in this context, means a major essential component
+(kernel, window system, and so on) of the specific operating system
+(if any) on which the executable work runs, or a compiler used to
+produce the work, or an object code interpreter used to run it.
+
+     <p>The &ldquo;Corresponding Source&rdquo; for a work in object code form means all
+the source code needed to generate, install, and (for an executable
+work) run the object code and to modify the work, including scripts to
+control those activities.  However, it does not include the work's
+System Libraries, or general-purpose tools or generally available free
+programs which are used unmodified in performing those activities but
+which are not part of the work.  For example, Corresponding Source
+includes interface definition files associated with source files for
+the work, and the source code for shared libraries and dynamically
+linked subprograms that the work is specifically designed to require,
+such as by intimate data communication or control flow between those
+subprograms and other parts of the work.
+
+     <p>The Corresponding Source need not include anything that users can
+regenerate automatically from other parts of the Corresponding Source.
+
+     <p>The Corresponding Source for a work in source code form is that same
+work.
+
+     <li>Basic Permissions.
+
+     <p>All rights granted under this License are granted for the term of
+copyright on the Program, and are irrevocable provided the stated
+conditions are met.  This License explicitly affirms your unlimited
+permission to run the unmodified Program.  The output from running a
+covered work is covered by this License only if the output, given its
+content, constitutes a covered work.  This License acknowledges your
+rights of fair use or other equivalent, as provided by copyright law.
+
+     <p>You may make, run and propagate covered works that you do not convey,
+without conditions so long as your license otherwise remains in force. 
+You may convey covered works to others for the sole purpose of having
+them make modifications exclusively for you, or provide you with
+facilities for running those works, provided that you comply with the
+terms of this License in conveying all material for which you do not
+control copyright.  Those thus making or running the covered works for
+you must do so exclusively on your behalf, under your direction and
+control, on terms that prohibit them from making any copies of your
+copyrighted material outside their relationship with you.
+
+     <p>Conveying under any other circumstances is permitted solely under the
+conditions stated below.  Sublicensing is not allowed; section 10
+makes it unnecessary.
+
+     <li>Protecting Users' Legal Rights From Anti-Circumvention Law.
+
+     <p>No covered work shall be deemed part of an effective technological
+measure under any applicable law fulfilling obligations under article
+11 of the WIPO copyright treaty adopted on 20 December 1996, or
+similar laws prohibiting or restricting circumvention of such
+measures.
+
+     <p>When you convey a covered work, you waive any legal power to forbid
+circumvention of technological measures to the extent such
+circumvention is effected by exercising rights under this License with
+respect to the covered work, and you disclaim any intention to limit
+operation or modification of the work as a means of enforcing, against
+the work's users, your or third parties' legal rights to forbid
+circumvention of technological measures.
+
+     <li>Conveying Verbatim Copies.
+
+     <p>You may convey verbatim copies of the Program's source code as you
+receive it, in any medium, provided that you conspicuously and
+appropriately publish on each copy an appropriate copyright notice;
+keep intact all notices stating that this License and any
+non-permissive terms added in accord with section 7 apply to the code;
+keep intact all notices of the absence of any warranty; and give all
+recipients a copy of this License along with the Program.
+
+     <p>You may charge any price or no price for each copy that you convey,
+and you may offer support or warranty protection for a fee.
+
+     <li>Conveying Modified Source Versions.
+
+     <p>You may convey a work based on the Program, or the modifications to
+produce it from the Program, in the form of source code under the
+terms of section 4, provided that you also meet all of these
+conditions:
+
+          <ol type=a start=1>
+<li>The work must carry prominent notices stating that you modified it,
+and giving a relevant date.
+
+          <li>The work must carry prominent notices stating that it is released
+under this License and any conditions added under section 7.  This
+requirement modifies the requirement in section 4 to &ldquo;keep intact all
+notices&rdquo;.
+
+          <li>You must license the entire work, as a whole, under this License to
+anyone who comes into possession of a copy.  This License will
+therefore apply, along with any applicable section 7 additional terms,
+to the whole of the work, and all its parts, regardless of how they
+are packaged.  This License gives no permission to license the work in
+any other way, but it does not invalidate such permission if you have
+separately received it.
+
+          <li>If the work has interactive user interfaces, each must display
+Appropriate Legal Notices; however, if the Program has interactive
+interfaces that do not display Appropriate Legal Notices, your work
+need not make them do so.
+          </ol>
+
+     <p>A compilation of a covered work with other separate and independent
+works, which are not by their nature extensions of the covered work,
+and which are not combined with it such as to form a larger program,
+in or on a volume of a storage or distribution medium, is called an
+&ldquo;aggregate&rdquo; if the compilation and its resulting copyright are not
+used to limit the access or legal rights of the compilation's users
+beyond what the individual works permit.  Inclusion of a covered work
+in an aggregate does not cause this License to apply to the other
+parts of the aggregate.
+
+     <li>Conveying Non-Source Forms.
+
+     <p>You may convey a covered work in object code form under the terms of
+sections 4 and 5, provided that you also convey the machine-readable
+Corresponding Source under the terms of this License, in one of these
+ways:
+
+          <ol type=a start=1>
+<li>Convey the object code in, or embodied in, a physical product
+(including a physical distribution medium), accompanied by the
+Corresponding Source fixed on a durable physical medium customarily
+used for software interchange.
+
+          <li>Convey the object code in, or embodied in, a physical product
+(including a physical distribution medium), accompanied by a written
+offer, valid for at least three years and valid for as long as you
+offer spare parts or customer support for that product model, to give
+anyone who possesses the object code either (1) a copy of the
+Corresponding Source for all the software in the product that is
+covered by this License, on a durable physical medium customarily used
+for software interchange, for a price no more than your reasonable
+cost of physically performing this conveying of source, or (2) access
+to copy the Corresponding Source from a network server at no charge.
+
+          <li>Convey individual copies of the object code with a copy of the written
+offer to provide the Corresponding Source.  This alternative is
+allowed only occasionally and noncommercially, and only if you
+received the object code with such an offer, in accord with subsection
+6b.
+
+          <li>Convey the object code by offering access from a designated place
+(gratis or for a charge), and offer equivalent access to the
+Corresponding Source in the same way through the same place at no
+further charge.  You need not require recipients to copy the
+Corresponding Source along with the object code.  If the place to copy
+the object code is a network server, the Corresponding Source may be
+on a different server (operated by you or a third party) that supports
+equivalent copying facilities, provided you maintain clear directions
+next to the object code saying where to find the Corresponding Source. 
+Regardless of what server hosts the Corresponding Source, you remain
+obligated to ensure that it is available for as long as needed to
+satisfy these requirements.
+
+          <li>Convey the object code using peer-to-peer transmission, provided you
+inform other peers where the object code and Corresponding Source of
+the work are being offered to the general public at no charge under
+subsection 6d.
+
+          </ol>
+
+     <p>A separable portion of the object code, whose source code is excluded
+from the Corresponding Source as a System Library, need not be
+included in conveying the object code work.
+
+     <p>A &ldquo;User Product&rdquo; is either (1) a &ldquo;consumer product&rdquo;, which means any
+tangible personal property which is normally used for personal,
+family, or household purposes, or (2) anything designed or sold for
+incorporation into a dwelling.  In determining whether a product is a
+consumer product, doubtful cases shall be resolved in favor of
+coverage.  For a particular product received by a particular user,
+&ldquo;normally used&rdquo; refers to a typical or common use of that class of
+product, regardless of the status of the particular user or of the way
+in which the particular user actually uses, or expects or is expected
+to use, the product.  A product is a consumer product regardless of
+whether the product has substantial commercial, industrial or
+non-consumer uses, unless such uses represent the only significant
+mode of use of the product.
+
+     <p>&ldquo;Installation Information&rdquo; for a User Product means any methods,
+procedures, authorization keys, or other information required to
+install and execute modified versions of a covered work in that User
+Product from a modified version of its Corresponding Source.  The
+information must suffice to ensure that the continued functioning of
+the modified object code is in no case prevented or interfered with
+solely because modification has been made.
+
+     <p>If you convey an object code work under this section in, or with, or
+specifically for use in, a User Product, and the conveying occurs as
+part of a transaction in which the right of possession and use of the
+User Product is transferred to the recipient in perpetuity or for a
+fixed term (regardless of how the transaction is characterized), the
+Corresponding Source conveyed under this section must be accompanied
+by the Installation Information.  But this requirement does not apply
+if neither you nor any third party retains the ability to install
+modified object code on the User Product (for example, the work has
+been installed in ROM).
+
+     <p>The requirement to provide Installation Information does not include a
+requirement to continue to provide support service, warranty, or
+updates for a work that has been modified or installed by the
+recipient, or for the User Product in which it has been modified or
+installed.  Access to a network may be denied when the modification
+itself materially and adversely affects the operation of the network
+or violates the rules and protocols for communication across the
+network.
+
+     <p>Corresponding Source conveyed, and Installation Information provided,
+in accord with this section must be in a format that is publicly
+documented (and with an implementation available to the public in
+source code form), and must require no special password or key for
+unpacking, reading or copying.
+
+     <li>Additional Terms.
+
+     <p>&ldquo;Additional permissions&rdquo; are terms that supplement the terms of this
+License by making exceptions from one or more of its conditions. 
+Additional permissions that are applicable to the entire Program shall
+be treated as though they were included in this License, to the extent
+that they are valid under applicable law.  If additional permissions
+apply only to part of the Program, that part may be used separately
+under those permissions, but the entire Program remains governed by
+this License without regard to the additional permissions.
+
+     <p>When you convey a copy of a covered work, you may at your option
+remove any additional permissions from that copy, or from any part of
+it.  (Additional permissions may be written to require their own
+removal in certain cases when you modify the work.)  You may place
+additional permissions on material, added by you to a covered work,
+for which you have or can give appropriate copyright permission.
+
+     <p>Notwithstanding any other provision of this License, for material you
+add to a covered work, you may (if authorized by the copyright holders
+of that material) supplement the terms of this License with terms:
+
+          <ol type=a start=1>
+<li>Disclaiming warranty or limiting liability differently from the terms
+of sections 15 and 16 of this License; or
+
+          <li>Requiring preservation of specified reasonable legal notices or author
+attributions in that material or in the Appropriate Legal Notices
+displayed by works containing it; or
+
+          <li>Prohibiting misrepresentation of the origin of that material, or
+requiring that modified versions of such material be marked in
+reasonable ways as different from the original version; or
+
+          <li>Limiting the use for publicity purposes of names of licensors or
+authors of the material; or
+
+          <li>Declining to grant rights under trademark law for use of some trade
+names, trademarks, or service marks; or
+
+          <li>Requiring indemnification of licensors and authors of that material by
+anyone who conveys the material (or modified versions of it) with
+contractual assumptions of liability to the recipient, for any
+liability that these contractual assumptions directly impose on those
+licensors and authors.
+          </ol>
+
+     <p>All other non-permissive additional terms are considered &ldquo;further
+restrictions&rdquo; within the meaning of section 10.  If the Program as you
+received it, or any part of it, contains a notice stating that it is
+governed by this License along with a term that is a further
+restriction, you may remove that term.  If a license document contains
+a further restriction but permits relicensing or conveying under this
+License, you may add to a covered work material governed by the terms
+of that license document, provided that the further restriction does
+not survive such relicensing or conveying.
+
+     <p>If you add terms to a covered work in accord with this section, you
+must place, in the relevant source files, a statement of the
+additional terms that apply to those files, or a notice indicating
+where to find the applicable terms.
+
+     <p>Additional terms, permissive or non-permissive, may be stated in the
+form of a separately written license, or stated as exceptions; the
+above requirements apply either way.
+
+     <li>Termination.
+
+     <p>You may not propagate or modify a covered work except as expressly
+provided under this License.  Any attempt otherwise to propagate or
+modify it is void, and will automatically terminate your rights under
+this License (including any patent licenses granted under the third
+paragraph of section 11).
+
+     <p>However, if you cease all violation of this License, then your license
+from a particular copyright holder is reinstated (a) provisionally,
+unless and until the copyright holder explicitly and finally
+terminates your license, and (b) permanently, if the copyright holder
+fails to notify you of the violation by some reasonable means prior to
+60 days after the cessation.
+
+     <p>Moreover, your license from a particular copyright holder is
+reinstated permanently if the copyright holder notifies you of the
+violation by some reasonable means, this is the first time you have
+received notice of violation of this License (for any work) from that
+copyright holder, and you cure the violation prior to 30 days after
+your receipt of the notice.
+
+     <p>Termination of your rights under this section does not terminate the
+licenses of parties who have received copies or rights from you under
+this License.  If your rights have been terminated and not permanently
+reinstated, you do not qualify to receive new licenses for the same
+material under section 10.
+
+     <li>Acceptance Not Required for Having Copies.
+
+     <p>You are not required to accept this License in order to receive or run
+a copy of the Program.  Ancillary propagation of a covered work
+occurring solely as a consequence of using peer-to-peer transmission
+to receive a copy likewise does not require acceptance.  However,
+nothing other than this License grants you permission to propagate or
+modify any covered work.  These actions infringe copyright if you do
+not accept this License.  Therefore, by modifying or propagating a
+covered work, you indicate your acceptance of this License to do so.
+
+     <li>Automatic Licensing of Downstream Recipients.
+
+     <p>Each time you convey a covered work, the recipient automatically
+receives a license from the original licensors, to run, modify and
+propagate that work, subject to this License.  You are not responsible
+for enforcing compliance by third parties with this License.
+
+     <p>An &ldquo;entity transaction&rdquo; is a transaction transferring control of an
+organization, or substantially all assets of one, or subdividing an
+organization, or merging organizations.  If propagation of a covered
+work results from an entity transaction, each party to that
+transaction who receives a copy of the work also receives whatever
+licenses to the work the party's predecessor in interest had or could
+give under the previous paragraph, plus a right to possession of the
+Corresponding Source of the work from the predecessor in interest, if
+the predecessor has it or can get it with reasonable efforts.
+
+     <p>You may not impose any further restrictions on the exercise of the
+rights granted or affirmed under this License.  For example, you may
+not impose a license fee, royalty, or other charge for exercise of
+rights granted under this License, and you may not initiate litigation
+(including a cross-claim or counterclaim in a lawsuit) alleging that
+any patent claim is infringed by making, using, selling, offering for
+sale, or importing the Program or any portion of it.
+
+     <li>Patents.
+
+     <p>A &ldquo;contributor&rdquo; is a copyright holder who authorizes use under this
+License of the Program or a work on which the Program is based.  The
+work thus licensed is called the contributor's &ldquo;contributor version&rdquo;.
+
+     <p>A contributor's &ldquo;essential patent claims&rdquo; are all patent claims owned
+or controlled by the contributor, whether already acquired or
+hereafter acquired, that would be infringed by some manner, permitted
+by this License, of making, using, or selling its contributor version,
+but do not include claims that would be infringed only as a
+consequence of further modification of the contributor version.  For
+purposes of this definition, &ldquo;control&rdquo; includes the right to grant
+patent sublicenses in a manner consistent with the requirements of
+this License.
+
+     <p>Each contributor grants you a non-exclusive, worldwide, royalty-free
+patent license under the contributor's essential patent claims, to
+make, use, sell, offer for sale, import and otherwise run, modify and
+propagate the contents of its contributor version.
+
+     <p>In the following three paragraphs, a &ldquo;patent license&rdquo; is any express
+agreement or commitment, however denominated, not to enforce a patent
+(such as an express permission to practice a patent or covenant not to
+sue for patent infringement).  To &ldquo;grant&rdquo; such a patent license to a
+party means to make such an agreement or commitment not to enforce a
+patent against the party.
+
+     <p>If you convey a covered work, knowingly relying on a patent license,
+and the Corresponding Source of the work is not available for anyone
+to copy, free of charge and under the terms of this License, through a
+publicly available network server or other readily accessible means,
+then you must either (1) cause the Corresponding Source to be so
+available, or (2) arrange to deprive yourself of the benefit of the
+patent license for this particular work, or (3) arrange, in a manner
+consistent with the requirements of this License, to extend the patent
+license to downstream recipients.  &ldquo;Knowingly relying&rdquo; means you have
+actual knowledge that, but for the patent license, your conveying the
+covered work in a country, or your recipient's use of the covered work
+in a country, would infringe one or more identifiable patents in that
+country that you have reason to believe are valid.
+
+     <p>If, pursuant to or in connection with a single transaction or
+arrangement, you convey, or propagate by procuring conveyance of, a
+covered work, and grant a patent license to some of the parties
+receiving the covered work authorizing them to use, propagate, modify
+or convey a specific copy of the covered work, then the patent license
+you grant is automatically extended to all recipients of the covered
+work and works based on it.
+
+     <p>A patent license is &ldquo;discriminatory&rdquo; if it does not include within the
+scope of its coverage, prohibits the exercise of, or is conditioned on
+the non-exercise of one or more of the rights that are specifically
+granted under this License.  You may not convey a covered work if you
+are a party to an arrangement with a third party that is in the
+business of distributing software, under which you make payment to the
+third party based on the extent of your activity of conveying the
+work, and under which the third party grants, to any of the parties
+who would receive the covered work from you, a discriminatory patent
+license (a) in connection with copies of the covered work conveyed by
+you (or copies made from those copies), or (b) primarily for and in
+connection with specific products or compilations that contain the
+covered work, unless you entered into that arrangement, or that patent
+license was granted, prior to 28 March 2007.
+
+     <p>Nothing in this License shall be construed as excluding or limiting
+any implied license or other defenses to infringement that may
+otherwise be available to you under applicable patent law.
+
+     <li>No Surrender of Others' Freedom.
+
+     <p>If conditions are imposed on you (whether by court order, agreement or
+otherwise) that contradict the conditions of this License, they do not
+excuse you from the conditions of this License.  If you cannot convey
+a covered work so as to satisfy simultaneously your obligations under
+this License and any other pertinent obligations, then as a
+consequence you may not convey it at all.  For example, if you agree
+to terms that obligate you to collect a royalty for further conveying
+from those to whom you convey the Program, the only way you could
+satisfy both those terms and this License would be to refrain entirely
+from conveying the Program.
+
+     <li>Use with the GNU Affero General Public License.
+
+     <p>Notwithstanding any other provision of this License, you have
+permission to link or combine any covered work with a work licensed
+under version 3 of the GNU Affero General Public License into a single
+combined work, and to convey the resulting work.  The terms of this
+License will continue to apply to the part which is the covered work,
+but the special requirements of the GNU Affero General Public License,
+section 13, concerning interaction through a network will apply to the
+combination as such.
+
+     <li>Revised Versions of this License.
+
+     <p>The Free Software Foundation may publish revised and/or new versions
+of the GNU General Public License from time to time.  Such new
+versions will be similar in spirit to the present version, but may
+differ in detail to address new problems or concerns.
+
+     <p>Each version is given a distinguishing version number.  If the Program
+specifies that a certain numbered version of the GNU General Public
+License &ldquo;or any later version&rdquo; applies to it, you have the option of
+following the terms and conditions either of that numbered version or
+of any later version published by the Free Software Foundation.  If
+the Program does not specify a version number of the GNU General
+Public License, you may choose any version ever published by the Free
+Software Foundation.
+
+     <p>If the Program specifies that a proxy can decide which future versions
+of the GNU General Public License can be used, that proxy's public
+statement of acceptance of a version permanently authorizes you to
+choose that version for the Program.
+
+     <p>Later license versions may give you additional or different
+permissions.  However, no additional obligations are imposed on any
+author or copyright holder as a result of your choosing to follow a
+later version.
+
+     <li>Disclaimer of Warranty.
+
+     <p>THERE IS NO WARRANTY FOR THE PROGRAM, TO THE EXTENT PERMITTED BY
+APPLICABLE LAW.  EXCEPT WHEN OTHERWISE STATED IN WRITING THE COPYRIGHT
+HOLDERS AND/OR OTHER PARTIES PROVIDE THE PROGRAM &ldquo;AS IS&rdquo; WITHOUT
+WARRANTY OF ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE.  THE ENTIRE RISK AS TO THE QUALITY AND
+PERFORMANCE OF THE PROGRAM IS WITH YOU.  SHOULD THE PROGRAM PROVE
+DEFECTIVE, YOU ASSUME THE COST OF ALL NECESSARY SERVICING, REPAIR OR
+CORRECTION.
+
+     <li>Limitation of Liability.
+
+     <p>IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
+WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MODIFIES AND/OR
+CONVEYS THE PROGRAM AS PERMITTED ABOVE, BE LIABLE TO YOU FOR DAMAGES,
+INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL OR CONSEQUENTIAL DAMAGES
+ARISING OUT OF THE USE OR INABILITY TO USE THE PROGRAM (INCLUDING BUT
+NOT LIMITED TO LOSS OF DATA OR DATA BEING RENDERED INACCURATE OR
+LOSSES SUSTAINED BY YOU OR THIRD PARTIES OR A FAILURE OF THE PROGRAM
+TO OPERATE WITH ANY OTHER PROGRAMS), EVEN IF SUCH HOLDER OR OTHER
+PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+
+     <li>Interpretation of Sections 15 and 16.
+
+     <p>If the disclaimer of warranty and limitation of liability provided
+above cannot be given local legal effect according to their terms,
+reviewing courts shall apply local law that most closely approximates
+an absolute waiver of all civil liability in connection with the
+Program, unless a warranty or assumption of liability accompanies a
+copy of the Program in return for a fee.
+
+     </ol>
+
+<h3 class="heading">END OF TERMS AND CONDITIONS</h3>
+
+<h3 class="heading">How to Apply These Terms to Your New Programs</h3>
+
+<p>If you develop a new program, and you want it to be of the greatest
+possible use to the public, the best way to achieve this is to make it
+free software which everyone can redistribute and change under these
+terms.
+
+   <p>To do so, attach the following notices to the program.  It is safest
+to attach them to the start of each source file to most effectively
+state the exclusion of warranty; and each file should have at least
+the &ldquo;copyright&rdquo; line and a pointer to where the full notice is found.
+
+<pre class="smallexample">     <var>one line to give the program's name and a brief idea of what it does.</var>
+     Copyright (C) <var>year</var> <var>name of author</var>
+     
+     This program is free software: you can redistribute it and/or modify
+     it under the terms of the GNU General Public License as published by
+     the Free Software Foundation, either version 3 of the License, or (at
+     your option) any later version.
+     
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+     
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see <a href="http://www.gnu.org/licenses/">http://www.gnu.org/licenses/</a>.
+</pre>
+   <p>Also add information on how to contact you by electronic and paper mail.
+
+   <p>If the program does terminal interaction, make it output a short
+notice like this when it starts in an interactive mode:
+
+<pre class="smallexample">     <var>program</var> Copyright (C) <var>year</var> <var>name of author</var>
+     This program comes with ABSOLUTELY NO WARRANTY; for details type &lsquo;<samp><span class="samp">show w</span></samp>&rsquo;.
+     This is free software, and you are welcome to redistribute it
+     under certain conditions; type &lsquo;<samp><span class="samp">show c</span></samp>&rsquo; for details.
+</pre>
+   <p>The hypothetical commands &lsquo;<samp><span class="samp">show w</span></samp>&rsquo; and &lsquo;<samp><span class="samp">show c</span></samp>&rsquo; should show
+the appropriate parts of the General Public License.  Of course, your
+program's commands might be different; for a GUI interface, you would
+use an &ldquo;about box&rdquo;.
+
+   <p>You should also get your employer (if you work as a programmer) or school,
+if any, to sign a &ldquo;copyright disclaimer&rdquo; for the program, if necessary. 
+For more information on this, and how to apply and follow the GNU GPL, see
+<a href="http://www.gnu.org/licenses/">http://www.gnu.org/licenses/</a>.
+
+   <p>The GNU General Public License does not permit incorporating your
+program into proprietary programs.  If your program is a subroutine
+library, you may consider it more useful to permit linking proprietary
+applications with the library.  If this is what you want to do, use
+the GNU Lesser General Public License instead of this License.  But
+first, please read <a href="http://www.gnu.org/philosophy/why-not-lgpl.html">http://www.gnu.org/philosophy/why-not-lgpl.html</a>.
+
+<!-- page -->
+<div class="node">
+<a name="library-version"></a>
+<p><hr>
+Next:&nbsp;<a rel="next" accesskey="n" href="#Concept-Index">Concept Index</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#Package-License">Package License</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
+
+</div>
+
+<h2 class="appendix">Appendix D How to interpret the library version</h2>
+
+<blockquote>
+<strong>NOTE</strong> This section is not specific to this package; it is an
+explanation of library interface version numbering that the author uses
+for all its C libraries. 
+</blockquote>
+
+<p class="noindent">This package is distributing one or more libraries; this package has a
+version number and each library has an interface version number, package
+and interface versions are independent.
+
+<h3 class="appendixsec">D.1 Package version</h3>
+
+<p class="noindent">The package version tracks the development of the source code: every
+time the source code is modified the package version is
+incremented.  There are three numbers: major, minor, patch level.
+
+     <dl>
+<dt><code>major</code><dd>Incremented before big rewritings or additions. 
+<br><dt><code>minor</code><dd>Incremented to track incremental development of the code. 
+<br><dt><code>patch level</code><dd>For stable versions: incremented for bug fixes and very small additions
+that were forgotten in the last minor update. 
+</dl>
+
+   <p>The package has also a letter that indicates the status of the release:
+<code>a</code> for experimental or &ldquo;alpha&rdquo;, <code>b</code> for testing or
+&ldquo;beta&rdquo;, <code>.</code> for stable.
+
+   <p>A full version number looks like this:
+
+     <dl>
+<dt><code>1.2a3</code><dd>major <code>1</code>, minor <code>2</code>, patch level <code>3</code>, status alpha;
+<br><dt><code>10.23b34</code><dd>major <code>10</code>, minor <code>23</code>, patch level <code>34</code>, status beta;
+<br><dt><code>1.2.3</code><dd>major <code>1</code>, minor <code>2</code>, patch level <code>3</code>, status stable. 
+</dl>
+
+   <p>The reason for the letter to be between the minor number and the patch
+level is that it is more important:
+
+     <ul>
+<li>when starting to develop version <code>1.2</code> (major <code>1</code>, minor
+<code>2</code>), the last stable version of the <code>1.1</code> branch is taken and
+the project starts with alpha versions; each alpha has a patch level:
+<code>1.2a0</code>, <code>1.2a1</code>, <small class="dots">...</small>;
+<li>when experimental development, is finished the package is moved to
+testing and the status to beta: <code>1.2b0</code>, <code>1.2b1</code>, <small class="dots">...</small> so
+the first beta version is newer than the last alpha version;
+<li>when testing is finished, the package is moved to stable status:
+<code>1.2.0</code>, <code>1.2.1</code>, <small class="dots">...</small> so the first stable version is newer
+than the last beta version. 
+</ul>
+
+<p class="noindent">summary:
+
+<pre class="example">     1.1.x &lt; 1.2a0 &lt; 1.2a1 &lt; ... &lt; 1.2b0 &lt; 1.2b1 &lt; ... &lt; 1.2.0 &lt; 1.2.1
+</pre>
+   <h3 class="appendixsec">D.2 Interface version</h3>
+
+<p class="noindent">The interface version changes only when the public interface of a
+library (public function prototypes and data types) is modified.  There
+are two numbers: major and minor.
+
+     <dl>
+<dt><code>major</code><dd>Establishes a set of: functions, data types, code behaviour that will
+not change until the next major number update.  Code written for the
+first release of the library with a major interface number (<code>1.0</code>),
+will work unchanged with all the libraries with the same major interface
+number (<code>1.1</code>, <code>1.2</code>, <small class="dots">...</small>); if it does not: it is a
+library bug, please signal this to the author using the bug tracking
+system.
+
+     <p>The only exception to this rule is the wrong behaviour caused by bugs;
+code that relies on buggy behaviour of a package version may not work
+with subsequent package versions with the same major interface number.
+
+     <br><dt><code>minor</code><dd>Establishes a set of: functions, data types, code behaviour that will
+not change until the next major number update.  This set is added to the
+set of the previous interface version. 
+</dl>
+
+   <p>The library file installed on our system has name composed with the
+interface number; example: if the package has version <code>1.2.3</code> and
+the interface has version <code>1.1</code>, the library file is called
+<samp><span class="file">libmy1.1.so</span></samp>.
+
+   <p>Even if the interface number has not changed, and the library file has
+the same name: when an installed shared library is updated to a new
+package version, programs and libraries depending on it will have to be
+recompiled, because the internals of the library file will have changed.
+
+<!-- ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+<!-- page -->
+<div class="node">
+<a name="Concept-Index"></a>
+<p><hr>
+Next:&nbsp;<a rel="next" accesskey="n" href="#Function-Index">Function Index</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#library-version">library version</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
+
+</div>
+
+<h2 class="appendix">Appendix E An entry for each concept</h2>
+
+<ul class="index-cp" compact>
+<li><a href="#index-FDL_002c-GNU-Free-Documentation-License-17">FDL, GNU Free Documentation License</a>: <a href="#Documentation-License">Documentation License</a></li>
+</ul><div class="node">
+<a name="Function-Index"></a>
+<p><hr>
+Next:&nbsp;<a rel="next" accesskey="n" href="#Variable-Index">Variable Index</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#Concept-Index">Concept Index</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
+
+</div>
+
+<h2 class="appendix">Appendix F An entry for each function.</h2>
+
+
+
+<ul class="index-fn" compact>
+<li><a href="#index-annealing_005fcooling_005ffun_005ft-5"><code>annealing_cooling_fun_t</code></a>: <a href="#annealing-types">annealing types</a></li>
+<li><a href="#index-annealing_005fcopy_005ffun_005ft-7"><code>annealing_copy_fun_t</code></a>: <a href="#annealing-types">annealing types</a></li>
+<li><a href="#index-annealing_005fenergy_005ffun_005ft-2"><code>annealing_energy_fun_t</code></a>: <a href="#annealing-types">annealing types</a></li>
+<li><a href="#index-annealing_005flibrary_005fmajor_005fversion-15"><code>annealing_library_major_version</code></a>: <a href="#misc-version">misc version</a></li>
+<li><a href="#index-annealing_005flibrary_005fminor_005fversion-16"><code>annealing_library_minor_version</code></a>: <a href="#misc-version">misc version</a></li>
+<li><a href="#index-annealing_005flog_005ffun_005ft-6"><code>annealing_log_fun_t</code></a>: <a href="#annealing-types">annealing types</a></li>
+<li><a href="#index-annealing_005fmanytries_005fsolve-13"><code>annealing_manytries_solve</code></a>: <a href="#annealing-many">annealing many</a></li>
+<li><a href="#index-annealing_005fmetric_005ffun_005ft-4"><code>annealing_metric_fun_t</code></a>: <a href="#annealing-types">annealing types</a></li>
+<li><a href="#index-annealing_005fmultibest_005fsolve-11"><code>annealing_multibest_solve</code></a>: <a href="#annealing-multi">annealing multi</a></li>
+<li><a href="#index-annealing_005fsimple_005fsolve-9"><code>annealing_simple_solve</code></a>: <a href="#annealing-basic">annealing basic</a></li>
+<li><a href="#index-annealing_005fstep_005ffun_005ft-3"><code>annealing_step_fun_t</code></a>: <a href="#annealing-types">annealing types</a></li>
+<li><a href="#index-annealing_005fversion-14"><code>annealing_version</code></a>: <a href="#misc-version">misc version</a></li>
+   </ul><div class="node">
+<a name="Variable-Index"></a>
+<p><hr>
+Next:&nbsp;<a rel="next" accesskey="n" href="#Type-Index">Type Index</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#Function-Index">Function Index</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
+
+</div>
+
+<h2 class="appendix">Appendix G An entry for each variable.</h2>
+
+
+
+<ul class="index-vr" compact>
+   </ul><div class="node">
+<a name="Type-Index"></a>
+<p><hr>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#Variable-Index">Variable Index</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
+
+</div>
+
+<h2 class="appendix">Appendix H An entry for each type.</h2>
+
+
+
+<ul class="index-tp" compact>
+<li><a href="#index-annealing_005fconfiguration_005ft-1"><code>annealing_configuration_t</code></a>: <a href="#annealing-types">annealing types</a></li>
+<li><a href="#index-annealing_005fmanytries_005fworkspace_005ft-12"><code>annealing_manytries_workspace_t</code></a>: <a href="#annealing-many">annealing many</a></li>
+<li><a href="#index-annealing_005fmultibest_005fworkspace_005ft-10"><code>annealing_multibest_workspace_t</code></a>: <a href="#annealing-multi">annealing multi</a></li>
+<li><a href="#index-annealing_005fsimple_005fworkspace_005ft-8"><code>annealing_simple_workspace_t</code></a>: <a href="#annealing-basic">annealing basic</a></li>
+   </ul>
+<div class="contents">
+<h2>Table of Contents</h2>
+<ul>
+<li><a name="toc_Top" href="#Top">Annealing</a>
+<li><a name="toc_overview" href="#overview">1 Overview of the package</a>
+<ul>
+<li><a href="#overview-using">1.1 Using the library</a>
+<li><a href="#overview-autoconf">1.2 Using <acronym>GNU</acronym> Autoconf</a>
+<li><a href="#overview-pkgconfig">1.3 Using pkgconfig</a>
+</li></ul>
+<li><a name="toc_annealing" href="#annealing">2 Simulated annealing</a>
+<ul>
+<li><a href="#annealing-algorithm">2.1 The basic algorithm</a>
+<li><a href="#annealing-types">2.2 Data types</a>
+<ul>
+<li><a href="#annealing-types">2.2.1 Data structures</a>
+<li><a href="#annealing-types">2.2.2 User supplied functions</a>
+</li></ul>
+<li><a href="#annealing-basic">2.3 Interface to the basic algorithm</a>
+<ul>
+<li><a href="#annealing-basic">2.3.1 Examples</a>
+</li></ul>
+<li><a href="#annealing-multi">2.4 Interface to the multi&ndash;best algorithm</a>
+<ul>
+<li><a href="#annealing-multi">2.4.1 Examples</a>
+</li></ul>
+<li><a href="#annealing-many">2.5 Interface to the many&ndash;tries algorithm</a>
+<ul>
+<li><a href="#annealing-many">2.5.1 The Boltzmann distribution</a>
+<li><a href="#annealing-many">2.5.2 Monte Carlo method</a>
+<li><a href="#annealing-many">2.5.3 Application to simulated annealing</a>
+<li><a href="#annealing-many">2.5.4 Interface</a>
+<li><a href="#annealing-many">2.5.5 Examples</a>
+</li></ul>
+</li></ul>
+<li><a name="toc_misc" href="#misc">3 Miscellaneous functions</a>
+<ul>
+<li><a href="#misc-version">3.1 Version functions</a>
+</li></ul>
+<li><a name="toc_References" href="#References">Appendix A Bibliography and references</a>
+<li><a name="toc_Documentation-License" href="#Documentation-License">Appendix B GNU Free Documentation License</a>
+<li><a name="toc_Package-License" href="#Package-License">Appendix C <acronym>GNU</acronym> General Public License</a>
+<li><a name="toc_library-version" href="#library-version">Appendix D How to interpret the library version</a>
+<ul>
+<li><a href="#library-version">D.1 Package version</a>
+<li><a href="#library-version">D.2 Interface version</a>
+</li></ul>
+<li><a name="toc_Concept-Index" href="#Concept-Index">Appendix E An entry for each concept</a>
+<li><a name="toc_Function-Index" href="#Function-Index">Appendix F An entry for each function.</a>
+<li><a name="toc_Variable-Index" href="#Variable-Index">Appendix G An entry for each variable.</a>
+<li><a name="toc_Type-Index" href="#Type-Index">Appendix H An entry for each type.</a>
+</li></ul>
+</div>
+
+</body></html>
+
