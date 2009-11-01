@@ -137,12 +137,6 @@ the <acronym>R6RS</acronym> Scheme implementations supported by Nausicaa.  It is
 upon the Nausicaa/Scheme package, making use of its foreign functions
 interface; as such, it currently supports only <acronym>GNU</acronym>+Linux systems.
 
-   <blockquote>
-<strong>NOTE</strong> At present the Cairo functions requiring callbacks are not
-supported by Larceny Scheme.  Any attempt to create a callback will
-result in an &lsquo;<samp><span class="samp">&amp;unimplemented</span></samp>&rsquo; exception. 
-</blockquote>
-
    <p>The installed libraries are:
 
      <dl>
@@ -1240,26 +1234,19 @@ required to save a <acronym>PNG</acronym> file are available only if
 
 <pre class="example">     (import (rnrs)
        (foreign cairo)
-       (foreign cairo sizeof)
        (foreign cstrings)
        (compensations))
      
      (with-compensations
-       (letrec* ((surface (compensate
-                              (cairo_image_surface_create
-                                 CAIRO_FORMAT_ARGB32 390 60)
-                            (with
-                             (cairo_surface_destroy surface))))
-                 (cr      (compensate
-                              (cairo_create surface)
-                            (with
-                             (cairo_destroy cr)))))
+       (letrec* ((surface (cairo-image-surface-create/c
+                            CAIRO_FORMAT_ARGB32 390 60))
+                 (cr      (cairo-create/c surface)))
      
          ;; draw in black ink
-         (cairo_set_source_rgb cr 0. 0. 0.)
+         (cairo-set-source-rgb cr 0. 0. 0.)
      
          ;; select the font
-         (cairo_select_font_face cr (string-&gt;cstring/c "Sans")
+         (cairo-select-font-face cr "Sans"
                                  CAIRO_FONT_SLANT_NORMAL
                                  CAIRO_FONT_WEIGHT_NORMAL)
          (cairo_set_font_size cr 40.0)
@@ -1268,12 +1255,10 @@ required to save a <acronym>PNG</acronym> file are available only if
          (cairo_move_to cr 10.0 50.0)
      
          ;; draw text
-         (cairo_show_text cr
-           (string-&gt;cstring/c "Disziplin ist Macht."))
+         (cairo_show_text cr "Disziplin ist Macht.")
      
          ;; draw the image on the output
-         (cairo_surface_write_to_png surface
-           (string-&gt;cstring/c "image.png"))))
+         (cairo-surface-write-to-png surface "image.png")))
 </pre>
    <p>The following example does the same but outputs a <acronym>PDF</acronym> file. 
 Notice that the functions required to create a <acronym>PDF</acronym> surface are
@@ -1281,30 +1266,21 @@ available only if &lsquo;<samp><span class="samp">CAIRO_HAS_PDF_SURFACE</span></
 
 <pre class="example">     (import (rnrs)
        (foreign cairo)
-       (foreign cairo sizeof)
        (foreign cstrings)
        (compensations))
      
      (with-compensations
-       (letrec* ((surface (compensate
-                              (cairo_pdf_surface_create
-                                 (string-&gt;cstring/c "image.pdf")
-                                 390. 60.)
-                            (with
-                             (cairo_surface_destroy surface))))
-                 (cr      (compensate
-                              (cairo_create surface)
-                            (with
-                             (cairo_destroy cr)))))
-         (cairo_set_source_rgb cr 0. 0. 0.)
-         (cairo_select_font_face cr (string-&gt;cstring/c "Sans")
+       (letrec* ((surface (cairo-pdf-surface-create/c "image.pdf"
+                            390. 60.))
+                 (cr      (cairo-create/c surface)))
+         (cairo-set-source-rgb cr 0. 0. 0.)
+         (cairo-select-font-face cr "Sans"
                                  CAIRO_FONT_SLANT_NORMAL
                                  CAIRO_FONT_WEIGHT_NORMAL)
-         (cairo_set_font_size cr 40.0)
-         (cairo_move_to cr 10.0 50.0)
-         (cairo_show_text cr
-           (string-&gt;cstring/c "Disziplin ist Macht."))
-         (cairo_show_page cr)))
+         (cairo-set-font-size cr 40.0)
+         (cairo-move-to cr 10.0 50.0)
+         (cairo-show-text cr "Disziplin ist Macht.")
+         (cairo-show-page cr)))
 </pre>
    <!-- page -->
 <div class="node">
@@ -1322,19 +1298,17 @@ in it and saves it to a file in <acronym>PNG</acronym> format.  Notice that the
 functions required to save a <acronym>PNG</acronym> file are available only if
 &lsquo;<samp><span class="samp">CAIRO_HAS_PNG_FUNCTIONS</span></samp>&rsquo; is bound to <code>#t</code>.
 
-<pre class="example">     (with-compensations
-       (letrec* ((surface (compensate
-                              (cairo_image_surface_create
-                                CAIRO_FORMAT_ARGB32 300 300)
-                            (with
-                             (cairo_surface_destroy surface))))
-                 (cr      (compensate
-                              (cairo_create surface)
-                            (with
-                             (cairo_destroy cr)))))
+<pre class="example">     (import (rnrs)
+       (foreign cairo)
+       (compensations))
      
-         (cairo_set_source_rgb cr 100. 0. 0.)
-         (cairo_set_line_width cr 1.)
+     (with-compensations
+       (letrec* ((surface (cairo-image-surface-create/c
+                            CAIRO_FORMAT_ARGB32 300 300))
+                 (cr      (cairo-create/c surface)))
+     
+         (cairo-set-source-rgb cr 100. 0. 0.)
+         (cairo-set-line-width cr 1.)
      
          (cairo-move-to cr 10. 10.)
          (cairo-line-to cr 290. 10.)
@@ -1343,8 +1317,7 @@ functions required to save a <acronym>PNG</acronym> file are available only if
          (cairo-line-to cr 10. 10.)
          (cairo-stroke cr)
      
-         (cairo_surface_write_to_png surface
-           (string-&gt;cstring/c "test-line.png"))))
+         (cairo-surface-write-to-png surface "test-line.png")))
 </pre>
    <p>To fill the square we just change:
 
