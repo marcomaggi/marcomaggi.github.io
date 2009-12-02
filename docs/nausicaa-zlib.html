@@ -7,8 +7,11 @@
 <link title="Top" rel="top" href="#Top">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
-This document describes version 0.1b1 of Nausicaa/Zlib, a library
-for R6RS Scheme that exposes the Zlib programming interface.
+This document describes version 0.1b2 of Nausicaa/Zlib, a library
+for R6RS Scheme that exposes the Zlib programming interface.  It is
+built upon the Nausicaa/Scheme package, making use of its
+foreign--functions interface.  It supports Ikarus, Mosh and Ypsilon
+Scheme.
 
 The package is distributed under the terms of the GNU General Public
 License (GPL); the project home page of Nausicaa is at:
@@ -21,7 +24,7 @@ development of Nausicaa takes place at:
           `http://github.com/marcomaggi/nausicaa/tree/master'
 
 
-Copyright (C) 2008, 2009 by Marco Maggi <marcomaggi@gna.org>
+Copyright (C) 2008, 2009 by Marco Maggi <marco.maggi-ipsu@poste.it>
 
      Permission is granted to copy, distribute and/or modify this
      document under the terms of the GNU Free Documentation License,
@@ -55,8 +58,11 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#dir">(dir)</a>
 
 <h2 class="unnumbered">Zlib for Nausicaa</h2>
 
-<p class="noindent">This document describes version 0.1b1 of Nausicaa/Zlib, a library
-for <acronym>R6RS</acronym> Scheme that exposes the Zlib programming interface.
+<p class="noindent">This document describes version 0.1b2 of Nausicaa/Zlib, a library
+for <acronym>R6RS</acronym> Scheme that exposes the Zlib programming interface.  It is
+built upon the Nausicaa/Scheme package, making use of its
+foreign&ndash;functions interface.  It supports Ikarus, Mosh and Ypsilon
+Scheme.
 
    <p>The package is distributed under the terms of the <acronym>GNU</acronym> General Public
 License (<acronym>GPL</acronym>); the project home page of Nausicaa is at:
@@ -67,7 +73,7 @@ License (<acronym>GPL</acronym>); the project home page of Nausicaa is at:
 
 <div align="center"><a href="http://github.com/marcomaggi/nausicaa/tree/master">http://github.com/marcomaggi/nausicaa/tree/master</a></div>
 
-<p class="noindent">Copyright &copy; 2008, 2009 by Marco Maggi <a href="mailto:marcomaggi@gna.org">marcomaggi@gna.org</a>
+<p class="noindent">Copyright &copy; 2008, 2009 by Marco Maggi <a href="mailto:marco.maggi-ipsu@poste.it">marco.maggi-ipsu@poste.it</a>
 
    <blockquote>
 Permission is granted to copy, distribute and/or modify this document
@@ -122,22 +128,29 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 <h2 class="chapter">1 Overview of the package</h2>
 
 <p>Nausicaa/Zlib is a part of the Nausicaa distribution of libraries for
-<acronym>R6RS</acronym> Scheme implementations.  It exposes the <acronym>API</acronym> of the popular
-Zlib compression library at the Scheme level.  The installed libraries
-are:
+<acronym>R6RS</acronym> Scheme implementations, exposing the <acronym>API</acronym> of the popular Zlib
+compression library at the Scheme level.  It is built upon the
+Nausicaa/Scheme package, making use of its foreign&ndash;functions interface. 
+It supports Ikarus, Mosh and Ypsilon Scheme.
 
-<pre class="example">     (foreign zlib)
-     (foreign zlib sizeof)
-     (foreign zlib shared-object)
-</pre>
-   <p class="noindent">the exported <acronym>API</acronym> is a map between foreign C language functions and
-Scheme functions, so the original documentation of ZLib can be used as
-reference.  <a href="#zlib">Zlib compression library</a>
+   <p>The installed libraries are:
 
-   <p>The <code>(foreign zlib)</code> library exports bindings for the functions,
-while <code>(foreign zlib sizeof)</code> exports bindings for the constants
-(like &lsquo;<samp><span class="samp">Z_STREAM_END</span></samp>&rsquo; etc.) and the data structure accessors and
-mutators.
+     <dl>
+<dt><code>(foreign compression zlib shared-object)</code><dd>Exports the single binding <code>zlib-shared-object</code> which references
+the Zlib shared library.
+
+     <br><dt><code>(foreign compression zlib sizeof)</code><dd>Exports bindings to constant values and data structure accessors.
+
+     <br><dt><code>(foreign compression zlib platform)</code><dd>Exports a binding for each foreign function; this library makes the
+original Zlib documentation relevant for this package.  <a href="#zlib">Zlib compression library</a>.
+
+     <br><dt><code>(foreign compression zlib primitives)</code><dd>Reexports bindings from <code>(foreign compression zlib platform)</code>
+along with some functions implementing marshaling of arguments and
+return values.
+
+     <br><dt><code>(foreign compression zlib)</code><dd>Compound library reexporting bindings from the primitives and sizeof
+libraries. 
+</dl>
 
    <p>The Scheme documentation focuses on providing usage example to
 familiarise with the mapping and with methods to handle resources.
@@ -154,12 +167,12 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 
 <h2 class="chapter">2 Constant values</h2>
 
-<p>The following bindings are exported by <code>(foreign zlib sizeof)</code>. 
-<a href="#zlib-constants">Constants</a>
+<p>The following bindings are exported by <code>(foreign compression zlib
+sizeof)</code> and reexported by <code>(foreign compression zlib)</code>.  <a href="#zlib-constants">Constants</a>.
 
 <div class="defun">
-&mdash; Constant: <b>sizeof-zstream</b><var><a name="index-sizeof_002dzstream-1"></a></var><br>
-&mdash; Constant: <b>sizeof-gzheader</b><var><a name="index-sizeof_002dgzheader-2"></a></var><br>
+&mdash; Constant: <b>sizeof-z_stream</b><var><a name="index-sizeof_002dz_005fstream-1"></a></var><br>
+&mdash; Constant: <b>sizeof-gz_header</b><var><a name="index-sizeof_002dgz_005fheader-2"></a></var><br>
 <blockquote><p>Size of the &lsquo;<samp><span class="samp">z_stream</span></samp>&rsquo; and &lsquo;<samp><span class="samp">gz_header</span></samp>&rsquo; data structures. 
 </p></blockquote></div>
 
@@ -233,65 +246,65 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 
 <h2 class="chapter">3 Data structure accessors and mutators</h2>
 
-<p>The following bindings are exported by <code>(foreign zlib sizeof)</code>. 
-<a href="#zlib-types">Data types</a>
+<p>The following bindings are exported by <code>(foreign compression zlib
+sizeof)</code> and reexported by <code>(foreign compression zlib)</code>.  <a href="#zlib-types">Data types</a>.
 
 <div class="defun">
-&mdash; Syntax: <b>zstream-next_in-set!</b><var> pointer value<a name="index-zstream_002dnext_005fin_002dset_0021-33"></a></var><br>
-&mdash; Syntax: <b>zstream-next_in-ref</b><var> pointer<a name="index-zstream_002dnext_005fin_002dref-34"></a></var><br>
-&mdash; Syntax: <b>zstream-avail_in-set!</b><var> pointer value<a name="index-zstream_002davail_005fin_002dset_0021-35"></a></var><br>
-&mdash; Syntax: <b>zstream-avail_in-ref</b><var> pointer<a name="index-zstream_002davail_005fin_002dref-36"></a></var><br>
-&mdash; Syntax: <b>zstream-total_in-set!</b><var> pointer value<a name="index-zstream_002dtotal_005fin_002dset_0021-37"></a></var><br>
-&mdash; Syntax: <b>zstream-total_in-ref</b><var> pointer<a name="index-zstream_002dtotal_005fin_002dref-38"></a></var><br>
-&mdash; Syntax: <b>zstream-next_out-set!</b><var> pointer value<a name="index-zstream_002dnext_005fout_002dset_0021-39"></a></var><br>
-&mdash; Syntax: <b>zstream-next_out-ref</b><var> pointer<a name="index-zstream_002dnext_005fout_002dref-40"></a></var><br>
-&mdash; Syntax: <b>zstream-avail_out-set!</b><var> pointer value<a name="index-zstream_002davail_005fout_002dset_0021-41"></a></var><br>
-&mdash; Syntax: <b>zstream-avail_out-ref</b><var> pointer<a name="index-zstream_002davail_005fout_002dref-42"></a></var><br>
-&mdash; Syntax: <b>zstream-total_out-set!</b><var> pointer value<a name="index-zstream_002dtotal_005fout_002dset_0021-43"></a></var><br>
-&mdash; Syntax: <b>zstream-total_out-ref</b><var> pointer<a name="index-zstream_002dtotal_005fout_002dref-44"></a></var><br>
-&mdash; Syntax: <b>zstream-msg-set!</b><var> pointer value<a name="index-zstream_002dmsg_002dset_0021-45"></a></var><br>
-&mdash; Syntax: <b>zstream-msg-ref</b><var> pointer<a name="index-zstream_002dmsg_002dref-46"></a></var><br>
-&mdash; Syntax: <b>zstream-data_type-set!</b><var> pointer value<a name="index-zstream_002ddata_005ftype_002dset_0021-47"></a></var><br>
-&mdash; Syntax: <b>zstream-data_type-ref</b><var> pointer<a name="index-zstream_002ddata_005ftype_002dref-48"></a></var><br>
-&mdash; Syntax: <b>zstream-adler-set!</b><var> pointer value<a name="index-zstream_002dadler_002dset_0021-49"></a></var><br>
-&mdash; Syntax: <b>zstream-adler-ref</b><var> pointer<a name="index-zstream_002dadler_002dref-50"></a></var><br>
-&mdash; Syntax: <b>zstream-zalloc-set!</b><var> pointer value<a name="index-zstream_002dzalloc_002dset_0021-51"></a></var><br>
-&mdash; Syntax: <b>zstream-zalloc-ref</b><var> pointer<a name="index-zstream_002dzalloc_002dref-52"></a></var><br>
-&mdash; Syntax: <b>zstream-zfree-set!</b><var> pointer value<a name="index-zstream_002dzfree_002dset_0021-53"></a></var><br>
-&mdash; Syntax: <b>zstream-zfree-ref</b><var> pointer<a name="index-zstream_002dzfree_002dref-54"></a></var><br>
-&mdash; Syntax: <b>zstream-opaque-set!</b><var> pointer value<a name="index-zstream_002dopaque_002dset_0021-55"></a></var><br>
-&mdash; Syntax: <b>zstream-opaque-ref</b><var> pointer<a name="index-zstream_002dopaque_002dref-56"></a></var><br>
+&mdash; Syntax: <b>struct-z_stream-next_in-set!</b><var> pointer value<a name="index-struct_002dz_005fstream_002dnext_005fin_002dset_0021-33"></a></var><br>
+&mdash; Syntax: <b>struct-z_stream-next_in-ref</b><var> pointer<a name="index-struct_002dz_005fstream_002dnext_005fin_002dref-34"></a></var><br>
+&mdash; Syntax: <b>struct-z_stream-avail_in-set!</b><var> pointer value<a name="index-struct_002dz_005fstream_002davail_005fin_002dset_0021-35"></a></var><br>
+&mdash; Syntax: <b>struct-z_stream-avail_in-ref</b><var> pointer<a name="index-struct_002dz_005fstream_002davail_005fin_002dref-36"></a></var><br>
+&mdash; Syntax: <b>struct-z_stream-total_in-set!</b><var> pointer value<a name="index-struct_002dz_005fstream_002dtotal_005fin_002dset_0021-37"></a></var><br>
+&mdash; Syntax: <b>struct-z_stream-total_in-ref</b><var> pointer<a name="index-struct_002dz_005fstream_002dtotal_005fin_002dref-38"></a></var><br>
+&mdash; Syntax: <b>struct-z_stream-next_out-set!</b><var> pointer value<a name="index-struct_002dz_005fstream_002dnext_005fout_002dset_0021-39"></a></var><br>
+&mdash; Syntax: <b>struct-z_stream-next_out-ref</b><var> pointer<a name="index-struct_002dz_005fstream_002dnext_005fout_002dref-40"></a></var><br>
+&mdash; Syntax: <b>struct-z_stream-avail_out-set!</b><var> pointer value<a name="index-struct_002dz_005fstream_002davail_005fout_002dset_0021-41"></a></var><br>
+&mdash; Syntax: <b>struct-z_stream-avail_out-ref</b><var> pointer<a name="index-struct_002dz_005fstream_002davail_005fout_002dref-42"></a></var><br>
+&mdash; Syntax: <b>struct-z_stream-total_out-set!</b><var> pointer value<a name="index-struct_002dz_005fstream_002dtotal_005fout_002dset_0021-43"></a></var><br>
+&mdash; Syntax: <b>struct-z_stream-total_out-ref</b><var> pointer<a name="index-struct_002dz_005fstream_002dtotal_005fout_002dref-44"></a></var><br>
+&mdash; Syntax: <b>struct-z_stream-msg-set!</b><var> pointer value<a name="index-struct_002dz_005fstream_002dmsg_002dset_0021-45"></a></var><br>
+&mdash; Syntax: <b>struct-z_stream-msg-ref</b><var> pointer<a name="index-struct_002dz_005fstream_002dmsg_002dref-46"></a></var><br>
+&mdash; Syntax: <b>struct-z_stream-data_type-set!</b><var> pointer value<a name="index-struct_002dz_005fstream_002ddata_005ftype_002dset_0021-47"></a></var><br>
+&mdash; Syntax: <b>struct-z_stream-data_type-ref</b><var> pointer<a name="index-struct_002dz_005fstream_002ddata_005ftype_002dref-48"></a></var><br>
+&mdash; Syntax: <b>struct-z_stream-adler-set!</b><var> pointer value<a name="index-struct_002dz_005fstream_002dadler_002dset_0021-49"></a></var><br>
+&mdash; Syntax: <b>struct-z_stream-adler-ref</b><var> pointer<a name="index-struct_002dz_005fstream_002dadler_002dref-50"></a></var><br>
+&mdash; Syntax: <b>struct-z_stream-zalloc-set!</b><var> pointer value<a name="index-struct_002dz_005fstream_002dzalloc_002dset_0021-51"></a></var><br>
+&mdash; Syntax: <b>struct-z_stream-zalloc-ref</b><var> pointer<a name="index-struct_002dz_005fstream_002dzalloc_002dref-52"></a></var><br>
+&mdash; Syntax: <b>struct-z_stream-zfree-set!</b><var> pointer value<a name="index-struct_002dz_005fstream_002dzfree_002dset_0021-53"></a></var><br>
+&mdash; Syntax: <b>struct-z_stream-zfree-ref</b><var> pointer<a name="index-struct_002dz_005fstream_002dzfree_002dref-54"></a></var><br>
+&mdash; Syntax: <b>struct-z_stream-opaque-set!</b><var> pointer value<a name="index-struct_002dz_005fstream_002dopaque_002dset_0021-55"></a></var><br>
+&mdash; Syntax: <b>struct-z_stream-opaque-ref</b><var> pointer<a name="index-struct_002dz_005fstream_002dopaque_002dref-56"></a></var><br>
 <blockquote><p>Accessors and mutators for structures of type &lsquo;<samp><span class="samp">z_stream</span></samp>&rsquo;. 
 <var>pointer</var> must be a pointer to such a data strcture. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Syntax: <b>gzheader-text-set!</b><var> pointer value<a name="index-gzheader_002dtext_002dset_0021-57"></a></var><br>
-&mdash; Syntax: <b>gzheader-text-ref</b><var> pointer<a name="index-gzheader_002dtext_002dref-58"></a></var><br>
-&mdash; Syntax: <b>gzheader-time-set!</b><var> pointer value<a name="index-gzheader_002dtime_002dset_0021-59"></a></var><br>
-&mdash; Syntax: <b>gzheader-time-ref</b><var> pointer<a name="index-gzheader_002dtime_002dref-60"></a></var><br>
-&mdash; Syntax: <b>gzheader-xflags-set!</b><var> pointer value<a name="index-gzheader_002dxflags_002dset_0021-61"></a></var><br>
-&mdash; Syntax: <b>gzheader-xflags-ref</b><var> pointer<a name="index-gzheader_002dxflags_002dref-62"></a></var><br>
-&mdash; Syntax: <b>gzheader-os-set!</b><var> pointer value<a name="index-gzheader_002dos_002dset_0021-63"></a></var><br>
-&mdash; Syntax: <b>gzheader-os-ref</b><var> pointer<a name="index-gzheader_002dos_002dref-64"></a></var><br>
-&mdash; Syntax: <b>gzheader-extra-set!</b><var> pointer value<a name="index-gzheader_002dextra_002dset_0021-65"></a></var><br>
-&mdash; Syntax: <b>gzheader-extra-ref</b><var> pointer<a name="index-gzheader_002dextra_002dref-66"></a></var><br>
-&mdash; Syntax: <b>gzheader-extra_len-set!</b><var> pointer value<a name="index-gzheader_002dextra_005flen_002dset_0021-67"></a></var><br>
-&mdash; Syntax: <b>gzheader-extra_len-ref</b><var> pointer<a name="index-gzheader_002dextra_005flen_002dref-68"></a></var><br>
-&mdash; Syntax: <b>gzheader-extra_max-set!</b><var> pointer value<a name="index-gzheader_002dextra_005fmax_002dset_0021-69"></a></var><br>
-&mdash; Syntax: <b>gzheader-extra_max-ref</b><var> pointer<a name="index-gzheader_002dextra_005fmax_002dref-70"></a></var><br>
-&mdash; Syntax: <b>gzheader-name-set!</b><var> pointer value<a name="index-gzheader_002dname_002dset_0021-71"></a></var><br>
-&mdash; Syntax: <b>gzheader-name-ref</b><var> pointer<a name="index-gzheader_002dname_002dref-72"></a></var><br>
-&mdash; Syntax: <b>gzheader-name_max-set!</b><var> pointer value<a name="index-gzheader_002dname_005fmax_002dset_0021-73"></a></var><br>
-&mdash; Syntax: <b>gzheader-name_max-ref</b><var> pointer<a name="index-gzheader_002dname_005fmax_002dref-74"></a></var><br>
-&mdash; Syntax: <b>gzheader-comment-set!</b><var> pointer value<a name="index-gzheader_002dcomment_002dset_0021-75"></a></var><br>
-&mdash; Syntax: <b>gzheader-comment-ref</b><var> pointer<a name="index-gzheader_002dcomment_002dref-76"></a></var><br>
-&mdash; Syntax: <b>gzheader-comm_max-set!</b><var> pointer value<a name="index-gzheader_002dcomm_005fmax_002dset_0021-77"></a></var><br>
-&mdash; Syntax: <b>gzheader-comm_max-ref</b><var> pointer<a name="index-gzheader_002dcomm_005fmax_002dref-78"></a></var><br>
-&mdash; Syntax: <b>gzheader-hcrc-set!</b><var> pointer value<a name="index-gzheader_002dhcrc_002dset_0021-79"></a></var><br>
-&mdash; Syntax: <b>gzheader-hcrc-ref</b><var> pointer<a name="index-gzheader_002dhcrc_002dref-80"></a></var><br>
-&mdash; Syntax: <b>gzheader-done-set!</b><var> pointer value<a name="index-gzheader_002ddone_002dset_0021-81"></a></var><br>
-&mdash; Syntax: <b>gzheader-done-ref</b><var> pointer<a name="index-gzheader_002ddone_002dref-82"></a></var><br>
+&mdash; Syntax: <b>struct-gz_header-text-set!</b><var> pointer value<a name="index-struct_002dgz_005fheader_002dtext_002dset_0021-57"></a></var><br>
+&mdash; Syntax: <b>struct-gz_header-text-ref</b><var> pointer<a name="index-struct_002dgz_005fheader_002dtext_002dref-58"></a></var><br>
+&mdash; Syntax: <b>struct-gz_header-time-set!</b><var> pointer value<a name="index-struct_002dgz_005fheader_002dtime_002dset_0021-59"></a></var><br>
+&mdash; Syntax: <b>struct-gz_header-time-ref</b><var> pointer<a name="index-struct_002dgz_005fheader_002dtime_002dref-60"></a></var><br>
+&mdash; Syntax: <b>struct-gz_header-xflags-set!</b><var> pointer value<a name="index-struct_002dgz_005fheader_002dxflags_002dset_0021-61"></a></var><br>
+&mdash; Syntax: <b>struct-gz_header-xflags-ref</b><var> pointer<a name="index-struct_002dgz_005fheader_002dxflags_002dref-62"></a></var><br>
+&mdash; Syntax: <b>struct-gz_header-os-set!</b><var> pointer value<a name="index-struct_002dgz_005fheader_002dos_002dset_0021-63"></a></var><br>
+&mdash; Syntax: <b>struct-gz_header-os-ref</b><var> pointer<a name="index-struct_002dgz_005fheader_002dos_002dref-64"></a></var><br>
+&mdash; Syntax: <b>struct-gz_header-extra-set!</b><var> pointer value<a name="index-struct_002dgz_005fheader_002dextra_002dset_0021-65"></a></var><br>
+&mdash; Syntax: <b>struct-gz_header-extra-ref</b><var> pointer<a name="index-struct_002dgz_005fheader_002dextra_002dref-66"></a></var><br>
+&mdash; Syntax: <b>struct-gz_header-extra_len-set!</b><var> pointer value<a name="index-struct_002dgz_005fheader_002dextra_005flen_002dset_0021-67"></a></var><br>
+&mdash; Syntax: <b>struct-gz_header-extra_len-ref</b><var> pointer<a name="index-struct_002dgz_005fheader_002dextra_005flen_002dref-68"></a></var><br>
+&mdash; Syntax: <b>struct-gz_header-extra_max-set!</b><var> pointer value<a name="index-struct_002dgz_005fheader_002dextra_005fmax_002dset_0021-69"></a></var><br>
+&mdash; Syntax: <b>struct-gz_header-extra_max-ref</b><var> pointer<a name="index-struct_002dgz_005fheader_002dextra_005fmax_002dref-70"></a></var><br>
+&mdash; Syntax: <b>struct-gz_header-name-set!</b><var> pointer value<a name="index-struct_002dgz_005fheader_002dname_002dset_0021-71"></a></var><br>
+&mdash; Syntax: <b>struct-gz_header-name-ref</b><var> pointer<a name="index-struct_002dgz_005fheader_002dname_002dref-72"></a></var><br>
+&mdash; Syntax: <b>struct-gz_header-name_max-set!</b><var> pointer value<a name="index-struct_002dgz_005fheader_002dname_005fmax_002dset_0021-73"></a></var><br>
+&mdash; Syntax: <b>struct-gz_header-name_max-ref</b><var> pointer<a name="index-struct_002dgz_005fheader_002dname_005fmax_002dref-74"></a></var><br>
+&mdash; Syntax: <b>struct-gz_header-comment-set!</b><var> pointer value<a name="index-struct_002dgz_005fheader_002dcomment_002dset_0021-75"></a></var><br>
+&mdash; Syntax: <b>struct-gz_header-comment-ref</b><var> pointer<a name="index-struct_002dgz_005fheader_002dcomment_002dref-76"></a></var><br>
+&mdash; Syntax: <b>struct-gz_header-comm_max-set!</b><var> pointer value<a name="index-struct_002dgz_005fheader_002dcomm_005fmax_002dset_0021-77"></a></var><br>
+&mdash; Syntax: <b>struct-gz_header-comm_max-ref</b><var> pointer<a name="index-struct_002dgz_005fheader_002dcomm_005fmax_002dref-78"></a></var><br>
+&mdash; Syntax: <b>struct-gz_header-hcrc-set!</b><var> pointer value<a name="index-struct_002dgz_005fheader_002dhcrc_002dset_0021-79"></a></var><br>
+&mdash; Syntax: <b>struct-gz_header-hcrc-ref</b><var> pointer<a name="index-struct_002dgz_005fheader_002dhcrc_002dref-80"></a></var><br>
+&mdash; Syntax: <b>struct-gz_header-done-set!</b><var> pointer value<a name="index-struct_002dgz_005fheader_002ddone_002dset_0021-81"></a></var><br>
+&mdash; Syntax: <b>struct-gz_header-done-ref</b><var> pointer<a name="index-struct_002dgz_005fheader_002ddone_002dref-82"></a></var><br>
 <blockquote><p>Accessors and mutators for structures of type &lsquo;<samp><span class="samp">gz_header</span></samp>&rsquo;. 
 <var>pointer</var> must be a pointer to such a data strcture. 
 </p></blockquote></div>
@@ -308,6 +321,9 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 
 <h2 class="chapter">4 Error messages</h2>
 
+<p>The following bindings are exported by <code>(foreign compression zlib
+primitives)</code> and reexported by <code>(foreign compression zlib)</code>.
+
 <div class="defun">
 &mdash; Function: <b>zError*</b><var> error-code<a name="index-zError_002a-83"></a></var><br>
 &mdash; Function: <b>zError</b><var> error-code<a name="index-zError-84"></a></var><br>
@@ -315,8 +331,8 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 defined by Zlib (&lsquo;<samp><span class="samp">Z_OK</span></samp>&rsquo;, &lsquo;<samp><span class="samp">Z_BUF_ERROR</span></samp>&rsquo;, <small class="dots">...</small>) and return a
 string describing the error.
 
-        <p><code>zError</code> returns a Scheme string.  <code>primitive-zError</code> returns
-a pointer value referencing a statically allocated, <acronym>ASCII</acronym> coded, zero
+        <p><code>zError*</code> returns a Scheme string.  <code>zError</code> returns a pointer
+value referencing a statically allocated, <acronym>ASCII</acronym> coded, zero
 terminated C string. 
 </p></blockquote></div>
 
@@ -335,12 +351,12 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 <p>The utility functions <code>compress</code>, <code>compress2</code> and
 <code>uncompress</code> are the simplest and less configurable interface to
 the compression features of Zlib; they can compress and uncompress a
-block of data in memory.  <a href="#zlib-utility">Utility functions</a>
+block of data in memory.  <a href="#zlib-utility">Utility functions</a>.
 
    <p>Let's start a program with:
 
 <pre class="example">     (import (rnrs)
-       (foreign zlib)
+       (foreign compression zlib)
        (only (compensations)
              with-compensations)
        (only (foreign ffi peekers-and-pokers)
@@ -354,8 +370,9 @@ block of data in memory.  <a href="#zlib-utility">Utility functions</a>
              string-&gt;cstring/c))
 </pre>
    <p class="noindent">we will make use of the <code>(compensations)</code> library, from
-Nausicaa/Scheme, to handle memory allocation.  Let's say we want to
-compress a Scheme string:
+Nausicaa/Scheme, to handle memory allocation.  <a href="nausicaa.html#compensations">Compensation stacks</a>.
+
+   <p>Let's say we want to compress a Scheme string:
 
 <pre class="example">     (define original "Is this the real life?
                        Is this just fantasy?
@@ -363,7 +380,7 @@ compress a Scheme string:
                        No escape from reality.
                        ...")
 </pre>
-   <p class="noindent">first we convert it to a C string, the we can use <code>compress</code>:
+   <p class="noindent">first we convert it to a C string, then we can use <code>compress</code>:
 
 <pre class="example">     (with-compensations
        (let* ((input.len     (string-length original))
@@ -442,19 +459,21 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 <h2 class="chapter">6 Basic functions</h2>
 
 <p>The basic functions allow us to compress and decompress data one block
-at a time.  <a href="#zlib-basic">Basic functions</a>
+at a time.  <a href="#zlib-basic">Basic functions</a>.
 
    <p>Let's start a program with:
 
 <pre class="example">     (import (rnrs)
-       (foreign zlib)
+       (foreign compression zlib)
        (only (compensations)
              with-compensations)
        (only (foreign memory)
              malloc-block/c))
 </pre>
    <p class="noindent">we will use the <code>(compensations)</code> library from Nausicaa/Scheme to
-handle memory allocation.  To compress a block of data we do:
+handle memory allocation.  <a href="nausicaa.html#compensations">Compensation stacks</a>.
+
+   <p>To compress a block of data we do:
 
 <pre class="example">     (with-compensations
        (let* ((input.len   ---)
@@ -463,21 +482,21 @@ handle memory allocation.  To compress a block of data we do:
               (output.ptr  (malloc-block/c output.len))
               (zstream     (malloc-block/c sizeof-zstream)))
      
-         (zstream-next_in-set!   zstream input.ptr)
-         (zstream-avail_in-set!  zstream input.len)
+         (struct-z_stream-next_in-set!   zstream input.ptr)
+         (struct-z_stream-avail_in-set!  zstream input.len)
      
-         (zstream-next_out-set!  zstream output.ptr)
-         (zstream-avail_out-set! zstream output.len)
+         (struct-z_stream-next_out-set!  zstream output.ptr)
+         (struct-z_stream-avail_out-set! zstream output.len)
      
-         (zstream-zalloc-set! zstream pointer-null)
-         (zstream-zfree-set!  zstream pointer-null)
-         (zstream-opaque-set! zstream pointer-null)
+         (struct-z_stream-zalloc-set! zstream pointer-null)
+         (struct-z_stream-zfree-set!  zstream pointer-null)
+         (struct-z_stream-opaque-set! zstream pointer-null)
      
          (deflateInit zstream Z_BEST_COMPRESSION)
          (deflate zstream Z_FINISH)
          (deflateEnd zstream)
      
-         (let ((compressed.len (zstream-total_out-ref zstream)))
+         (let ((compressed.len (struct-z_stream-total_out-ref zstream)))
            ;; The compressed data is bound to "output.ptr".
            ;; The size of the compressed data is bound to
            ;; "compressed.len".
@@ -498,21 +517,21 @@ block:
               (output.ptr  (malloc-block/c output.len))
               (zstream     (malloc-block/c sizeof-zstream)))
      
-         (zstream-next_in-set!   zstream input.ptr)
-         (zstream-avail_in-set!  zstream input.len)
+         (struct-z_stream-next_in-set!   zstream input.ptr)
+         (struct-z_stream-avail_in-set!  zstream input.len)
      
-         (zstream-next_out-set!  zstream output.ptr)
-         (zstream-avail_out-set! zstream output.len)
+         (struct-z_stream-next_out-set!  zstream output.ptr)
+         (struct-z_stream-avail_out-set! zstream output.len)
      
-         (zstream-zalloc-set! zstream pointer-null)
-         (zstream-zfree-set!  zstream pointer-null)
-         (zstream-opaque-set! zstream pointer-null)
+         (struct-z_stream-zalloc-set! zstream pointer-null)
+         (struct-z_stream-zfree-set!  zstream pointer-null)
+         (struct-z_stream-opaque-set! zstream pointer-null)
      
          (inflateInit zstream)
          (inflate zstream Z_FINISH)
          (inflateEnd zstream)
      
-         (let ((decompressed.len (zstream-total_out-ref zstream)))
+         (let ((decompressed.len (struct-z_stream-total_out-ref zstream)))
            ;; The compressed data is bound to "output.ptr".
            ;; The size of the compressed data is bound to
            ;; "decompressed.len".
@@ -536,19 +555,21 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 <h2 class="chapter">7 Advanced functions</h2>
 
 <p>The advanced functions allow us to compress and decompress data one
-block at a time, using customised compression options.  <a href="#zlib-advanced">Advanced functions</a>
+block at a time, using customised compression options.  <a href="#zlib-advanced">Advanced functions</a>.
 
    <p>Let's start a program with:
 
 <pre class="example">     (import (rnrs)
-       (foreign zlib)
+       (foreign compression zlib)
        (only (compensations)
              with-compensations)
        (only (foreign memory)
              malloc-block/c))
 </pre>
    <p class="noindent">we will use the <code>(compensations)</code> library from Nausicaa/Scheme to
-handle memory allocation.  To compress a block of data we do:
+handle memory allocation.  <a href="nausicaa.html#compensations">Compensation stacks</a>.
+
+   <p>To compress a block of data we do:
 
 <pre class="example">     (define dictionary.len ---)
      (define dictionary.ptr ---)
@@ -560,15 +581,15 @@ handle memory allocation.  To compress a block of data we do:
               (output.ptr    (malloc-block/c output.len))
               (zstream       (malloc-block/c sizeof-zstream)))
      
-         (zstream-next_in-set!   zstream input.ptr)
-         (zstream-avail_in-set!  zstream input.len)
+         (struct-z_stream-next_in-set!   zstream input.ptr)
+         (struct-z_stream-avail_in-set!  zstream input.len)
      
-         (zstream-next_out-set!  zstream output.ptr)
-         (zstream-avail_out-set! zstream output.len)
+         (struct-z_stream-next_out-set!  zstream output.ptr)
+         (struct-z_stream-avail_out-set! zstream output.len)
      
-         (zstream-zalloc-set! zstream pointer-null)
-         (zstream-zfree-set!  zstream pointer-null)
-         (zstream-opaque-set! zstream pointer-null)
+         (struct-z_stream-zalloc-set! zstream pointer-null)
+         (struct-z_stream-zfree-set!  zstream pointer-null)
+         (struct-z_stream-opaque-set! zstream pointer-null)
      
          (deflateInit2 zstream Z_BEST_COMPRESSION
            Z_DEFLATED          ; method
@@ -580,7 +601,7 @@ handle memory allocation.  To compress a block of data we do:
          (deflate zstream Z_FINISH)
          (deflateEnd zstream)
      
-         (let ((compressed.len (zstream-total_out-ref zstream)))
+         (let ((compressed.len (struct-z_stream-total_out-ref zstream)))
            ;; The compressed data is bound to "output.ptr".
            ;; The size of the compressed data is bound to
            ;; "compressed.len".
@@ -604,11 +625,11 @@ block and the dictionary:
               (output.ptr    (malloc-block/c output.len))
               (zstream       (malloc-block/c sizeof-zstream)))
      
-         (zstream-next_in-set!   zstream input.ptr)
-         (zstream-avail_in-set!  zstream input.len)
+         (struct-z_stream-next_in-set!   zstream input.ptr)
+         (struct-z_stream-avail_in-set!  zstream input.len)
      
-         (zstream-next_out-set!  zstream output.ptr)
-         (zstream-avail_out-set! zstream output.len)
+         (struct-z_stream-next_out-set!  zstream output.ptr)
+         (struct-z_stream-avail_out-set! zstream output.len)
      
          (inflateInit2 zstream 10)
          (assert (= Z_NEED_DICT (inflate zstream Z_FINISH)))
@@ -616,7 +637,7 @@ block and the dictionary:
          (inflate zstream Z_FINISH)
          (inflateEnd zstream)
      
-         (let ((decompressed.len (zstream-total_out-ref zstream)))
+         (let ((decompressed.len (struct-z_stream-total_out-ref zstream)))
            ;; The compressed data is bound to "output.ptr".
            ;; The size of the compressed data is bound to
            ;; "decompressed.len".
@@ -640,10 +661,9 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 <h2 class="chapter">8 File functions</h2>
 
 <p>The file functions allow us to read and write files compressed with the
-Gzip format.  The <acronym>API</acronym> provided by <code>(foreign zlib)</code> has two
-parts: the low level one is a simple map between foreign functions and
-Scheme function; the high level one implements marshaling of arguments. 
-<a href="#zlib-file">File functions</a>
+Gzip format.  The following bindings are exported by <code>(foreign
+compression zlib primitives)</code> and reexported by <code>(foreign
+compression zlib)</code>.  <a href="#zlib-file">File functions</a>.
 
    <p>For the low level <acronym>API</acronym> see the original documentation of Zlib, but
 notice that:
@@ -4112,32 +4132,6 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 <li><a href="#index-gzflush-167"><code>gzflush</code></a>: <a href="#zlib-file-write">zlib file write</a></li>
 <li><a href="#index-gzgetc-170"><code>gzgetc</code></a>: <a href="#zlib-file-read">zlib file read</a></li>
 <li><a href="#index-gzgets-169"><code>gzgets</code></a>: <a href="#zlib-file-read">zlib file read</a></li>
-<li><a href="#index-gzheader_002dcomm_005fmax_002dref-78"><code>gzheader-comm_max-ref</code></a>: <a href="#struct">struct</a></li>
-<li><a href="#index-gzheader_002dcomm_005fmax_002dset_0021-77"><code>gzheader-comm_max-set!</code></a>: <a href="#struct">struct</a></li>
-<li><a href="#index-gzheader_002dcomment_002dref-76"><code>gzheader-comment-ref</code></a>: <a href="#struct">struct</a></li>
-<li><a href="#index-gzheader_002dcomment_002dset_0021-75"><code>gzheader-comment-set!</code></a>: <a href="#struct">struct</a></li>
-<li><a href="#index-gzheader_002ddone_002dref-82"><code>gzheader-done-ref</code></a>: <a href="#struct">struct</a></li>
-<li><a href="#index-gzheader_002ddone_002dset_0021-81"><code>gzheader-done-set!</code></a>: <a href="#struct">struct</a></li>
-<li><a href="#index-gzheader_002dextra_002dref-66"><code>gzheader-extra-ref</code></a>: <a href="#struct">struct</a></li>
-<li><a href="#index-gzheader_002dextra_002dset_0021-65"><code>gzheader-extra-set!</code></a>: <a href="#struct">struct</a></li>
-<li><a href="#index-gzheader_002dextra_005flen_002dref-68"><code>gzheader-extra_len-ref</code></a>: <a href="#struct">struct</a></li>
-<li><a href="#index-gzheader_002dextra_005flen_002dset_0021-67"><code>gzheader-extra_len-set!</code></a>: <a href="#struct">struct</a></li>
-<li><a href="#index-gzheader_002dextra_005fmax_002dref-70"><code>gzheader-extra_max-ref</code></a>: <a href="#struct">struct</a></li>
-<li><a href="#index-gzheader_002dextra_005fmax_002dset_0021-69"><code>gzheader-extra_max-set!</code></a>: <a href="#struct">struct</a></li>
-<li><a href="#index-gzheader_002dhcrc_002dref-80"><code>gzheader-hcrc-ref</code></a>: <a href="#struct">struct</a></li>
-<li><a href="#index-gzheader_002dhcrc_002dset_0021-79"><code>gzheader-hcrc-set!</code></a>: <a href="#struct">struct</a></li>
-<li><a href="#index-gzheader_002dname_002dref-72"><code>gzheader-name-ref</code></a>: <a href="#struct">struct</a></li>
-<li><a href="#index-gzheader_002dname_002dset_0021-71"><code>gzheader-name-set!</code></a>: <a href="#struct">struct</a></li>
-<li><a href="#index-gzheader_002dname_005fmax_002dref-74"><code>gzheader-name_max-ref</code></a>: <a href="#struct">struct</a></li>
-<li><a href="#index-gzheader_002dname_005fmax_002dset_0021-73"><code>gzheader-name_max-set!</code></a>: <a href="#struct">struct</a></li>
-<li><a href="#index-gzheader_002dos_002dref-64"><code>gzheader-os-ref</code></a>: <a href="#struct">struct</a></li>
-<li><a href="#index-gzheader_002dos_002dset_0021-63"><code>gzheader-os-set!</code></a>: <a href="#struct">struct</a></li>
-<li><a href="#index-gzheader_002dtext_002dref-58"><code>gzheader-text-ref</code></a>: <a href="#struct">struct</a></li>
-<li><a href="#index-gzheader_002dtext_002dset_0021-57"><code>gzheader-text-set!</code></a>: <a href="#struct">struct</a></li>
-<li><a href="#index-gzheader_002dtime_002dref-60"><code>gzheader-time-ref</code></a>: <a href="#struct">struct</a></li>
-<li><a href="#index-gzheader_002dtime_002dset_0021-59"><code>gzheader-time-set!</code></a>: <a href="#struct">struct</a></li>
-<li><a href="#index-gzheader_002dxflags_002dref-62"><code>gzheader-xflags-ref</code></a>: <a href="#struct">struct</a></li>
-<li><a href="#index-gzheader_002dxflags_002dset_0021-61"><code>gzheader-xflags-set!</code></a>: <a href="#struct">struct</a></li>
 <li><a href="#index-gzopen-159"><code>gzopen</code></a>: <a href="#zlib-file-open">zlib file open</a></li>
 <li><a href="#index-gzopen_002a-85"><code>gzopen*</code></a>: <a href="#file">file</a></li>
 <li><a href="#index-gzprintf-164"><code>gzprintf</code></a>: <a href="#zlib-file-write">zlib file write</a></li>
@@ -4165,6 +4159,56 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 <li><a href="#index-inflateSetDictionary-144"><code>inflateSetDictionary</code></a>: <a href="#zlib-advanced-inflate">zlib advanced inflate</a></li>
 <li><a href="#index-inflateSync-145"><code>inflateSync</code></a>: <a href="#zlib-advanced-inflate">zlib advanced inflate</a></li>
 <li><a href="#index-inflateSyncPoint-185"><code>inflateSyncPoint</code></a>: <a href="#zlib-misc">zlib misc</a></li>
+<li><a href="#index-struct_002dgz_005fheader_002dcomm_005fmax_002dref-78"><code>struct-gz_header-comm_max-ref</code></a>: <a href="#struct">struct</a></li>
+<li><a href="#index-struct_002dgz_005fheader_002dcomm_005fmax_002dset_0021-77"><code>struct-gz_header-comm_max-set!</code></a>: <a href="#struct">struct</a></li>
+<li><a href="#index-struct_002dgz_005fheader_002dcomment_002dref-76"><code>struct-gz_header-comment-ref</code></a>: <a href="#struct">struct</a></li>
+<li><a href="#index-struct_002dgz_005fheader_002dcomment_002dset_0021-75"><code>struct-gz_header-comment-set!</code></a>: <a href="#struct">struct</a></li>
+<li><a href="#index-struct_002dgz_005fheader_002ddone_002dref-82"><code>struct-gz_header-done-ref</code></a>: <a href="#struct">struct</a></li>
+<li><a href="#index-struct_002dgz_005fheader_002ddone_002dset_0021-81"><code>struct-gz_header-done-set!</code></a>: <a href="#struct">struct</a></li>
+<li><a href="#index-struct_002dgz_005fheader_002dextra_002dref-66"><code>struct-gz_header-extra-ref</code></a>: <a href="#struct">struct</a></li>
+<li><a href="#index-struct_002dgz_005fheader_002dextra_002dset_0021-65"><code>struct-gz_header-extra-set!</code></a>: <a href="#struct">struct</a></li>
+<li><a href="#index-struct_002dgz_005fheader_002dextra_005flen_002dref-68"><code>struct-gz_header-extra_len-ref</code></a>: <a href="#struct">struct</a></li>
+<li><a href="#index-struct_002dgz_005fheader_002dextra_005flen_002dset_0021-67"><code>struct-gz_header-extra_len-set!</code></a>: <a href="#struct">struct</a></li>
+<li><a href="#index-struct_002dgz_005fheader_002dextra_005fmax_002dref-70"><code>struct-gz_header-extra_max-ref</code></a>: <a href="#struct">struct</a></li>
+<li><a href="#index-struct_002dgz_005fheader_002dextra_005fmax_002dset_0021-69"><code>struct-gz_header-extra_max-set!</code></a>: <a href="#struct">struct</a></li>
+<li><a href="#index-struct_002dgz_005fheader_002dhcrc_002dref-80"><code>struct-gz_header-hcrc-ref</code></a>: <a href="#struct">struct</a></li>
+<li><a href="#index-struct_002dgz_005fheader_002dhcrc_002dset_0021-79"><code>struct-gz_header-hcrc-set!</code></a>: <a href="#struct">struct</a></li>
+<li><a href="#index-struct_002dgz_005fheader_002dname_002dref-72"><code>struct-gz_header-name-ref</code></a>: <a href="#struct">struct</a></li>
+<li><a href="#index-struct_002dgz_005fheader_002dname_002dset_0021-71"><code>struct-gz_header-name-set!</code></a>: <a href="#struct">struct</a></li>
+<li><a href="#index-struct_002dgz_005fheader_002dname_005fmax_002dref-74"><code>struct-gz_header-name_max-ref</code></a>: <a href="#struct">struct</a></li>
+<li><a href="#index-struct_002dgz_005fheader_002dname_005fmax_002dset_0021-73"><code>struct-gz_header-name_max-set!</code></a>: <a href="#struct">struct</a></li>
+<li><a href="#index-struct_002dgz_005fheader_002dos_002dref-64"><code>struct-gz_header-os-ref</code></a>: <a href="#struct">struct</a></li>
+<li><a href="#index-struct_002dgz_005fheader_002dos_002dset_0021-63"><code>struct-gz_header-os-set!</code></a>: <a href="#struct">struct</a></li>
+<li><a href="#index-struct_002dgz_005fheader_002dtext_002dref-58"><code>struct-gz_header-text-ref</code></a>: <a href="#struct">struct</a></li>
+<li><a href="#index-struct_002dgz_005fheader_002dtext_002dset_0021-57"><code>struct-gz_header-text-set!</code></a>: <a href="#struct">struct</a></li>
+<li><a href="#index-struct_002dgz_005fheader_002dtime_002dref-60"><code>struct-gz_header-time-ref</code></a>: <a href="#struct">struct</a></li>
+<li><a href="#index-struct_002dgz_005fheader_002dtime_002dset_0021-59"><code>struct-gz_header-time-set!</code></a>: <a href="#struct">struct</a></li>
+<li><a href="#index-struct_002dgz_005fheader_002dxflags_002dref-62"><code>struct-gz_header-xflags-ref</code></a>: <a href="#struct">struct</a></li>
+<li><a href="#index-struct_002dgz_005fheader_002dxflags_002dset_0021-61"><code>struct-gz_header-xflags-set!</code></a>: <a href="#struct">struct</a></li>
+<li><a href="#index-struct_002dz_005fstream_002dadler_002dref-50"><code>struct-z_stream-adler-ref</code></a>: <a href="#struct">struct</a></li>
+<li><a href="#index-struct_002dz_005fstream_002dadler_002dset_0021-49"><code>struct-z_stream-adler-set!</code></a>: <a href="#struct">struct</a></li>
+<li><a href="#index-struct_002dz_005fstream_002davail_005fin_002dref-36"><code>struct-z_stream-avail_in-ref</code></a>: <a href="#struct">struct</a></li>
+<li><a href="#index-struct_002dz_005fstream_002davail_005fin_002dset_0021-35"><code>struct-z_stream-avail_in-set!</code></a>: <a href="#struct">struct</a></li>
+<li><a href="#index-struct_002dz_005fstream_002davail_005fout_002dref-42"><code>struct-z_stream-avail_out-ref</code></a>: <a href="#struct">struct</a></li>
+<li><a href="#index-struct_002dz_005fstream_002davail_005fout_002dset_0021-41"><code>struct-z_stream-avail_out-set!</code></a>: <a href="#struct">struct</a></li>
+<li><a href="#index-struct_002dz_005fstream_002ddata_005ftype_002dref-48"><code>struct-z_stream-data_type-ref</code></a>: <a href="#struct">struct</a></li>
+<li><a href="#index-struct_002dz_005fstream_002ddata_005ftype_002dset_0021-47"><code>struct-z_stream-data_type-set!</code></a>: <a href="#struct">struct</a></li>
+<li><a href="#index-struct_002dz_005fstream_002dmsg_002dref-46"><code>struct-z_stream-msg-ref</code></a>: <a href="#struct">struct</a></li>
+<li><a href="#index-struct_002dz_005fstream_002dmsg_002dset_0021-45"><code>struct-z_stream-msg-set!</code></a>: <a href="#struct">struct</a></li>
+<li><a href="#index-struct_002dz_005fstream_002dnext_005fin_002dref-34"><code>struct-z_stream-next_in-ref</code></a>: <a href="#struct">struct</a></li>
+<li><a href="#index-struct_002dz_005fstream_002dnext_005fin_002dset_0021-33"><code>struct-z_stream-next_in-set!</code></a>: <a href="#struct">struct</a></li>
+<li><a href="#index-struct_002dz_005fstream_002dnext_005fout_002dref-40"><code>struct-z_stream-next_out-ref</code></a>: <a href="#struct">struct</a></li>
+<li><a href="#index-struct_002dz_005fstream_002dnext_005fout_002dset_0021-39"><code>struct-z_stream-next_out-set!</code></a>: <a href="#struct">struct</a></li>
+<li><a href="#index-struct_002dz_005fstream_002dopaque_002dref-56"><code>struct-z_stream-opaque-ref</code></a>: <a href="#struct">struct</a></li>
+<li><a href="#index-struct_002dz_005fstream_002dopaque_002dset_0021-55"><code>struct-z_stream-opaque-set!</code></a>: <a href="#struct">struct</a></li>
+<li><a href="#index-struct_002dz_005fstream_002dtotal_005fin_002dref-38"><code>struct-z_stream-total_in-ref</code></a>: <a href="#struct">struct</a></li>
+<li><a href="#index-struct_002dz_005fstream_002dtotal_005fin_002dset_0021-37"><code>struct-z_stream-total_in-set!</code></a>: <a href="#struct">struct</a></li>
+<li><a href="#index-struct_002dz_005fstream_002dtotal_005fout_002dref-44"><code>struct-z_stream-total_out-ref</code></a>: <a href="#struct">struct</a></li>
+<li><a href="#index-struct_002dz_005fstream_002dtotal_005fout_002dset_0021-43"><code>struct-z_stream-total_out-set!</code></a>: <a href="#struct">struct</a></li>
+<li><a href="#index-struct_002dz_005fstream_002dzalloc_002dref-52"><code>struct-z_stream-zalloc-ref</code></a>: <a href="#struct">struct</a></li>
+<li><a href="#index-struct_002dz_005fstream_002dzalloc_002dset_0021-51"><code>struct-z_stream-zalloc-set!</code></a>: <a href="#struct">struct</a></li>
+<li><a href="#index-struct_002dz_005fstream_002dzfree_002dref-54"><code>struct-z_stream-zfree-ref</code></a>: <a href="#struct">struct</a></li>
+<li><a href="#index-struct_002dz_005fstream_002dzfree_002dset_0021-53"><code>struct-z_stream-zfree-set!</code></a>: <a href="#struct">struct</a></li>
 <li><a href="#index-uncompress-158"><code>uncompress</code></a>: <a href="#zlib-utility">zlib utility</a></li>
 <li><a href="#index-Z_005fASCII-122"><code>Z_ASCII</code></a>: <a href="#zlib-constants">zlib constants</a></li>
 <li><a href="#index-Z_005fBEST_005fCOMPRESSION-114"><code>Z_BEST_COMPRESSION</code></a>: <a href="#zlib-constants">zlib constants</a></li>
@@ -4201,30 +4245,6 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 <li><a href="#index-ZLIB_005fVERSION-126"><code>ZLIB_VERSION</code></a>: <a href="#zlib-constants">zlib constants</a></li>
 <li><a href="#index-zlibCompileFlags-187"><code>zlibCompileFlags</code></a>: <a href="#zlib-misc">zlib misc</a></li>
 <li><a href="#index-zlibVersion-183"><code>zlibVersion</code></a>: <a href="#zlib-misc">zlib misc</a></li>
-<li><a href="#index-zstream_002dadler_002dref-50"><code>zstream-adler-ref</code></a>: <a href="#struct">struct</a></li>
-<li><a href="#index-zstream_002dadler_002dset_0021-49"><code>zstream-adler-set!</code></a>: <a href="#struct">struct</a></li>
-<li><a href="#index-zstream_002davail_005fin_002dref-36"><code>zstream-avail_in-ref</code></a>: <a href="#struct">struct</a></li>
-<li><a href="#index-zstream_002davail_005fin_002dset_0021-35"><code>zstream-avail_in-set!</code></a>: <a href="#struct">struct</a></li>
-<li><a href="#index-zstream_002davail_005fout_002dref-42"><code>zstream-avail_out-ref</code></a>: <a href="#struct">struct</a></li>
-<li><a href="#index-zstream_002davail_005fout_002dset_0021-41"><code>zstream-avail_out-set!</code></a>: <a href="#struct">struct</a></li>
-<li><a href="#index-zstream_002ddata_005ftype_002dref-48"><code>zstream-data_type-ref</code></a>: <a href="#struct">struct</a></li>
-<li><a href="#index-zstream_002ddata_005ftype_002dset_0021-47"><code>zstream-data_type-set!</code></a>: <a href="#struct">struct</a></li>
-<li><a href="#index-zstream_002dmsg_002dref-46"><code>zstream-msg-ref</code></a>: <a href="#struct">struct</a></li>
-<li><a href="#index-zstream_002dmsg_002dset_0021-45"><code>zstream-msg-set!</code></a>: <a href="#struct">struct</a></li>
-<li><a href="#index-zstream_002dnext_005fin_002dref-34"><code>zstream-next_in-ref</code></a>: <a href="#struct">struct</a></li>
-<li><a href="#index-zstream_002dnext_005fin_002dset_0021-33"><code>zstream-next_in-set!</code></a>: <a href="#struct">struct</a></li>
-<li><a href="#index-zstream_002dnext_005fout_002dref-40"><code>zstream-next_out-ref</code></a>: <a href="#struct">struct</a></li>
-<li><a href="#index-zstream_002dnext_005fout_002dset_0021-39"><code>zstream-next_out-set!</code></a>: <a href="#struct">struct</a></li>
-<li><a href="#index-zstream_002dopaque_002dref-56"><code>zstream-opaque-ref</code></a>: <a href="#struct">struct</a></li>
-<li><a href="#index-zstream_002dopaque_002dset_0021-55"><code>zstream-opaque-set!</code></a>: <a href="#struct">struct</a></li>
-<li><a href="#index-zstream_002dtotal_005fin_002dref-38"><code>zstream-total_in-ref</code></a>: <a href="#struct">struct</a></li>
-<li><a href="#index-zstream_002dtotal_005fin_002dset_0021-37"><code>zstream-total_in-set!</code></a>: <a href="#struct">struct</a></li>
-<li><a href="#index-zstream_002dtotal_005fout_002dref-44"><code>zstream-total_out-ref</code></a>: <a href="#struct">struct</a></li>
-<li><a href="#index-zstream_002dtotal_005fout_002dset_0021-43"><code>zstream-total_out-set!</code></a>: <a href="#struct">struct</a></li>
-<li><a href="#index-zstream_002dzalloc_002dref-52"><code>zstream-zalloc-ref</code></a>: <a href="#struct">struct</a></li>
-<li><a href="#index-zstream_002dzalloc_002dset_0021-51"><code>zstream-zalloc-set!</code></a>: <a href="#struct">struct</a></li>
-<li><a href="#index-zstream_002dzfree_002dref-54"><code>zstream-zfree-ref</code></a>: <a href="#struct">struct</a></li>
-<li><a href="#index-zstream_002dzfree_002dset_0021-53"><code>zstream-zfree-set!</code></a>: <a href="#struct">struct</a></li>
    </ul><div class="node">
 <a name="variable-index"></a>
 <p><hr>
@@ -4239,8 +4259,8 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 
 
 <ul class="index-vr" compact>
-<li><a href="#index-sizeof_002dgzheader-2"><code>sizeof-gzheader</code></a>: <a href="#constants">constants</a></li>
-<li><a href="#index-sizeof_002dzstream-1"><code>sizeof-zstream</code></a>: <a href="#constants">constants</a></li>
+<li><a href="#index-sizeof_002dgz_005fheader-2"><code>sizeof-gz_header</code></a>: <a href="#constants">constants</a></li>
+<li><a href="#index-sizeof_002dz_005fstream-1"><code>sizeof-z_stream</code></a>: <a href="#constants">constants</a></li>
 <li><a href="#index-Z_005fASCII-29"><code>Z_ASCII</code></a>: <a href="#constants">constants</a></li>
 <li><a href="#index-Z_005fBEST_005fCOMPRESSION-5"><code>Z_BEST_COMPRESSION</code></a>: <a href="#constants">constants</a></li>
 <li><a href="#index-Z_005fBEST_005fSPEED-4"><code>Z_BEST_SPEED</code></a>: <a href="#constants">constants</a></li>
