@@ -41,7 +41,7 @@ development of Nausicaa takes place at:
           `http://github.com/marcomaggi/nausicaa/tree/master'
 
 
-Copyright (C) 2008, 2009 by Marco Maggi <marcomaggi@gna.org>
+Copyright (C) 2008, 2009, 2010 by Marco Maggi <marcomaggi@gna.org>
 
      Permission is granted to copy, distribute and/or modify this
      document under the terms of the GNU Free Documentation License,
@@ -100,7 +100,7 @@ License (<acronym>GPL</acronym>); the project home page of Nausicaa is at:
 
 <div align="center"><a href="http://github.com/marcomaggi/nausicaa/tree/master">http://github.com/marcomaggi/nausicaa/tree/master</a></div>
 
-<p class="noindent">Copyright &copy; 2008, 2009 by Marco Maggi <a href="mailto:marcomaggi@gna.org">marcomaggi@gna.org</a>
+<p class="noindent">Copyright &copy; 2008, 2009, 2010 by Marco Maggi <a href="mailto:marcomaggi@gna.org">marcomaggi@gna.org</a>
 
    <blockquote>
 Permission is granted to copy, distribute and/or modify this document
@@ -190,6 +190,8 @@ Documentation License&rdquo;.
 
 </p>
 <ul class="menu">
+<li><a href="#mpfr-basic">mpfr basic</a>:                   Basic example. 
+<li><a href="#mpfr-dynwind">mpfr dynwind</a>:                 Using dynamic wind. 
 <li><a href="#mpfr-compensations">mpfr compensations</a>:           Compensating memory allocation. 
 <li><a href="#mpfr-factory">mpfr factory</a>:                 Object factory. 
 <li><a href="#mpfr-string">mpfr string</a>:                  Conversion to string.
@@ -199,6 +201,8 @@ Documentation License&rdquo;.
 
 </p>
 <ul class="menu">
+<li><a href="#mpfi-basic">mpfi basic</a>:                   Basic example. 
+<li><a href="#mpfi-dynwind">mpfi dynwind</a>:                 Using dynamic wind. 
 <li><a href="#mpfi-compensations">mpfi compensations</a>:           Compensating memory allocation. 
 <li><a href="#mpfi-factory">mpfi factory</a>:                 Object factory. 
 <li><a href="#mpfi-string">mpfi string</a>:                  Conversion to string.
@@ -208,9 +212,23 @@ Documentation License&rdquo;.
 
 </p>
 <ul class="menu">
+<li><a href="#mpc-basic">mpc basic</a>:                   Basic example. 
+<li><a href="#mpc-dynwind">mpc dynwind</a>:                 Using dynamic wind. 
 <li><a href="#mpc-compensations">mpc compensations</a>:           Compensating memory allocation. 
 <li><a href="#mpc-factory">mpc factory</a>:                 Object factory. 
 <li><a href="#mpc-string">mpc string</a>:                  Conversion to string.
+
+</li></ul>
+<p>Multiple precision polynomials
+
+</p>
+<ul class="menu">
+<li><a href="#mpfrcx-intro">mpfrcx intro</a>:                 Introduction. 
+<li><a href="#mpfrcx-init">mpfrcx init</a>:                  Initialisation functions. 
+<li><a href="#mpfrcx-basic">mpfrcx basic</a>:                 Basic example. 
+<li><a href="#mpfrcx-dynwind">mpfrcx dynwind</a>:               Using dynamic wind. 
+<li><a href="#mpfrcx-compensations">mpfrcx compensations</a>:         Compensating memory allocation. 
+<li><a href="#mpfrcx-string">mpfrcx string</a>:                Conversion to string.
 
    </ul>
 
@@ -228,8 +246,8 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 
 <p>Nausicaa/<acronym>MP</acronym> implements a binding to various multiple precision
 numbers C language libraries for the Scheme implementations supported by
-Nausicaa.  The bindings make use of the foreign functions interface from
-the Nausicaa/Scheme package.  The installed libraries are:
+Nausicaa.  The bindings make use of the foreign&ndash;functions interface
+from the Nausicaa/Scheme package.  The installed libraries are:
 
 <pre class="example">     (foreign math mp sizeof)
      (foreign math mp mpz)
@@ -238,7 +256,7 @@ the Nausicaa/Scheme package.  The installed libraries are:
      (foreign math mp mpfr)
      (foreign math mp mpfi)
      (foreign math mp mpc)
-     (foreign math mp mpfcx)
+     (foreign math mp mpfrcx)
      (foreign math mp random)
 </pre>
    <p>The bindings attempt to be one&ndash;to&ndash;one maps between foreign functions
@@ -248,6 +266,19 @@ libraries applies to the bindings, too.
    <p>This document gives only a brief description of some functions, and
 focuses on providing some usage example to get a feeling about how to
 manage resources allocation in a Scheme program.
+
+   <p>The original libraries can be found at the following sites (<acronym>URL</acronym> last
+verified Mon Dec 21, 2009):
+
+<div align="center"><a href="http://gmplib.org/">http://gmplib.org/</a></div>
+
+<div align="center"><a href="http://www.mpfr.org/">http://www.mpfr.org/</a></div>
+
+<div align="center"><a href="http://gforge.inria.fr/projects/mpfi/">http://gforge.inria.fr/projects/mpfi/</a></div>
+
+<div align="center"><a href="http://www.multiprecision.org/index.php?prog=mpc">http://www.multiprecision.org/index.php?prog=mpc</a></div>
+
+<div align="center"><a href="http://www.multiprecision.org/index.php?prog=mpfrcx">http://www.multiprecision.org/index.php?prog=mpfrcx</a></div>
 
 <!-- page -->
 <div class="node">
@@ -421,9 +452,11 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 <h2 class="chapter">3 Accessing foreign structures</h2>
 
 <p>The following syntaxes allow us to access fields of the multiple
-precision numbers data structures; they are exported by <code>(foreign
-math mp sizeof)</code> library.  Notice that for normal usage of the libraries,
-we are <strong>not</strong> meant to use these accessors.
+precision numbers data structures; unles otherwise specified, they are
+exported by <code>(foreign math mp sizeof)</code> library.
+
+   <p>Notice that, with the exception of <acronym>MPFRCX</acronym>, for normal usage of the
+libraries, we are <strong>not</strong> meant to use these accessors.
 
 <div class="defun">
 &mdash; Syntax: <b>struct-mpq-num-ref</b><var> struct-pointer<a name="index-struct_002dmpq_002dnum_002dref-98"></a></var><br>
@@ -497,14 +530,22 @@ we are <strong>not</strong> meant to use these accessors.
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>array-ref-c-mpz_t</b><var> pointer index<a name="index-array_002dref_002dc_002dmpz_005ft-128"></a></var><br>
-&mdash; Function: <b>array-ref-c-mpq_t</b><var> pointer index<a name="index-array_002dref_002dc_002dmpq_005ft-129"></a></var><br>
-&mdash; Function: <b>array-ref-c-mpf_t</b><var> pointer index<a name="index-array_002dref_002dc_002dmpf_005ft-130"></a></var><br>
-&mdash; Function: <b>array-ref-c-mpfr_t</b><var> pointer index<a name="index-array_002dref_002dc_002dmpfr_005ft-131"></a></var><br>
-&mdash; Function: <b>array-ref-c-mpc_t</b><var> pointer index<a name="index-array_002dref_002dc_002dmpc_005ft-132"></a></var><br>
-&mdash; Function: <b>array-ref-c-mpfi_t</b><var> pointer index<a name="index-array_002dref_002dc_002dmpfi_005ft-133"></a></var><br>
-&mdash; Function: <b>array-ref-c-mpfrx_t</b><var> pointer index<a name="index-array_002dref_002dc_002dmpfrx_005ft-134"></a></var><br>
-&mdash; Function: <b>array-ref-c-mpcx_t</b><var> pointer index<a name="index-array_002dref_002dc_002dmpcx_005ft-135"></a></var><br>
+&mdash; Syntax: <b>struct-mpfrx_t-coeff-ptr-ref</b><var> pointer index<a name="index-struct_002dmpfrx_005ft_002dcoeff_002dptr_002dref-128"></a></var><br>
+&mdash; Syntax: <b>struct-mpcx_t-coeff-ptr-ref</b><var> pointer index<a name="index-struct_002dmpcx_005ft_002dcoeff_002dptr_002dref-129"></a></var><br>
+<blockquote><p>Given a <var>pointer</var> to the array of coefficients, return a pointer to
+the coefficient at <var>index</var>.  These bindings are exported by the
+<code>(foreign math mp mpfrcx)</code> library. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>array-ref-c-mpz_t</b><var> pointer index<a name="index-array_002dref_002dc_002dmpz_005ft-130"></a></var><br>
+&mdash; Function: <b>array-ref-c-mpq_t</b><var> pointer index<a name="index-array_002dref_002dc_002dmpq_005ft-131"></a></var><br>
+&mdash; Function: <b>array-ref-c-mpf_t</b><var> pointer index<a name="index-array_002dref_002dc_002dmpf_005ft-132"></a></var><br>
+&mdash; Function: <b>array-ref-c-mpfr_t</b><var> pointer index<a name="index-array_002dref_002dc_002dmpfr_005ft-133"></a></var><br>
+&mdash; Function: <b>array-ref-c-mpc_t</b><var> pointer index<a name="index-array_002dref_002dc_002dmpc_005ft-134"></a></var><br>
+&mdash; Function: <b>array-ref-c-mpfi_t</b><var> pointer index<a name="index-array_002dref_002dc_002dmpfi_005ft-135"></a></var><br>
+&mdash; Function: <b>array-ref-c-mpfrx_t</b><var> pointer index<a name="index-array_002dref_002dc_002dmpfrx_005ft-136"></a></var><br>
+&mdash; Function: <b>array-ref-c-mpcx_t</b><var> pointer index<a name="index-array_002dref_002dc_002dmpcx_005ft-137"></a></var><br>
 <blockquote><p>Return pointer to the element at <var>index</var> in the array referenced by
 <var>pointer</var>. 
 </p></blockquote></div>
@@ -618,7 +659,7 @@ allocation and release of &lsquo;<samp><span class="samp">mpz_t</span></samp>&rs
              (do-something-with A))
            (lambda ()
              (mpz_clear A)
-             (primitive-free A)))))))
+             (primitive-free A))))
 </pre>
    <p class="noindent">of course we can wrap this mechanism into a macro:
 
@@ -890,7 +931,7 @@ allocation and release of &lsquo;<samp><span class="samp">mpq_t</span></samp>&rs
              (do-something-with A))
            (lambda ()
              (mpq_clear A)
-             (primitive-free A)))))))
+             (primitive-free A))))
 </pre>
    <p class="noindent">of course we can wrap this mechanism into a macro:
 
@@ -1161,7 +1202,7 @@ allocation and release of &lsquo;<samp><span class="samp">mpf_t</span></samp>&rs
              (do-something-with A))
            (lambda ()
              (mpf_clear A)
-             (primitive-free A)))))))
+             (primitive-free A))))
 </pre>
    <p class="noindent">of course we can wrap this mechanism into a macro:
 
@@ -1476,7 +1517,7 @@ allocation and release of &lsquo;<samp><span class="samp">mpfr_t</span></samp>&r
              (do-something-with A))
            (lambda ()
              (mpfr_clear A)
-             (primitive-free A)))))))
+             (primitive-free A))))
 </pre>
    <p class="noindent">of course we can wrap this mechanism into a macro:
 
@@ -1752,7 +1793,7 @@ allocation and release of &lsquo;<samp><span class="samp">mpfi_t</span></samp>&r
              (do-something-with A))
            (lambda ()
              (mpfi_clear A)
-             (primitive-free A)))))))
+             (primitive-free A))))
 </pre>
    <p class="noindent">of course we can wrap this mechanism into a macro:
 
@@ -1981,7 +2022,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 handle memory allocation.
 
 <div class="defun">
-&mdash; Function: <b>mpc_init</b><var> pointer<a name="index-mpc_005finit-136"></a></var><br>
+&mdash; Function: <b>mpc_init</b><var> pointer<a name="index-mpc_005finit-138"></a></var><br>
 <blockquote><p><acronym>MPC</acronym> version 0.7+ does not export a <code>mpc_init()</code> function, so
 <code>(foreign math mp mpc)</code> defines one like this:
 
@@ -2063,7 +2104,7 @@ allocation and release of &lsquo;<samp><span class="samp">mpc_t</span></samp>&rs
              (do-something-with A))
            (lambda ()
              (mpc_clear A)
-             (primitive-free A)))))))
+             (primitive-free A))))
 </pre>
    <p class="noindent">of course we can wrap this mechanism into a macro:
 
@@ -2273,6 +2314,390 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 
 <p>The polynomials <acronym>API</acronym> is exported by the <code>(foreign math mp
 mpfrcx)</code> library.  We discuss multiple ways to handle memory allocation.
+
+<ul class="menu">
+<li><a accesskey="1" href="#mpfrcx-intro">mpfrcx intro</a>:                 Introduction. 
+<li><a accesskey="2" href="#mpfrcx-init">mpfrcx init</a>:                  Initialisation functions. 
+<li><a accesskey="3" href="#mpfrcx-basic">mpfrcx basic</a>:                 Basic example. 
+<li><a accesskey="4" href="#mpfrcx-dynwind">mpfrcx dynwind</a>:               Using dynamic wind. 
+<li><a accesskey="5" href="#mpfrcx-compensations">mpfrcx compensations</a>:         Compensating memory allocation. 
+<li><a accesskey="6" href="#mpfrcx-string">mpfrcx string</a>:                Conversion to string. 
+</ul>
+
+<!-- page -->
+<div class="node">
+<a name="mpfrcx-intro"></a>
+<p><hr>
+Next:&nbsp;<a rel="next" accesskey="n" href="#mpfrcx-init">mpfrcx init</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#mpfrcx">mpfrcx</a>
+
+</div>
+
+<h3 class="section">8.1 Introduction</h3>
+
+<p>As of version 0.2 of <acronym>MPFRCX</acronym>, the <acronym>API</acronym> and the documentation is
+still under development; here we discuss some details which is not
+documented but whose knowledge is mandatory to use the library at the C
+language level.
+
+   <p>The following program shows how to initialise three polynomials with
+real coefficients, set the coefficients of two of them and perform
+addition; using the <acronym>GNU</acronym> C Compiler, we can produce an executable
+with:
+
+<pre class="example">     gcc -std=c99 -Wall                          \
+         -L/usr/local/lib -lmpfr -lmpc -lmpfrcx  \
+         -o poly-add poly-add.c
+</pre>
+   <p class="noindent">the program prints the resulting polynomial coefficients.
+
+<pre class="example">     #include &lt;stdio.h&gt;
+     #include &lt;stdlib.h&gt;
+     #include &lt;mpfr.h&gt;
+     #include &lt;mpc.h&gt;
+     #include &lt;mpfrcx.h&gt;
+     
+     int
+     main (void)
+     {
+       mpfrx_t       a, b, c;
+       mpfrx_init(a, 5, 50); a-&gt;deg = 4;
+       mpfrx_init(b, 5, 50); b-&gt;deg = 4;
+       mpfrx_init(c, 5, 50); c-&gt;deg = 4;
+       {
+         mpfr_set_d(a-&gt;coeff[0], 0.1, GMP_RNDN);
+         mpfr_set_d(a-&gt;coeff[1], 0.2, GMP_RNDN);
+         mpfr_set_d(a-&gt;coeff[2], 0.3, GMP_RNDN);
+         mpfr_set_d(a-&gt;coeff[3], 0.4, GMP_RNDN);
+         mpfr_set_d(a-&gt;coeff[4], 0.5, GMP_RNDN);
+     
+         mpfr_set_d(b-&gt;coeff[0], 1., GMP_RNDN);
+         mpfr_set_d(b-&gt;coeff[1], 2., GMP_RNDN);
+         mpfr_set_d(b-&gt;coeff[2], 3., GMP_RNDN);
+         mpfr_set_d(b-&gt;coeff[3], 4., GMP_RNDN);
+         mpfr_set_d(b-&gt;coeff[4], 5., GMP_RNDN);
+     
+         mpfrx_add(c, a, b);
+     
+         for (int i=0; i&lt;5; ++i)
+           mpfr_printf("%Rf\n", c-&gt;coeff[i]);
+       }
+       mpfrx_clear(a);
+       mpfrx_clear(b);
+       mpfrx_clear(c);
+       exit(EXIT_SUCCESS);
+     }
+</pre>
+   <p>We see that calling <code>mpfrx_init()</code> is not enough to initialise
+values of type <code>mpfrx_t</code>: we also have to explicitly set the degree
+of the polynomial be mutating the <code>deg</code> field.  Access to the
+coefficients is possible neither through C functions nor through C
+macros, we have to access directly the <code>coeff</code> field.
+
+   <p>In the <code>coeff</code> array: the item of index 0 is the coefficient
+of degree zero of the polynomial, the item of index 1 is the
+coefficient of degree 1 of the polynomial, etc.
+
+<!-- page -->
+<div class="node">
+<a name="mpfrcx-init"></a>
+<p><hr>
+Next:&nbsp;<a rel="next" accesskey="n" href="#mpfrcx-basic">mpfrcx basic</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#mpfrcx-intro">mpfrcx intro</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#mpfrcx">mpfrcx</a>
+
+</div>
+
+<h3 class="section">8.2 Initialisation functions</h3>
+
+<p>We have to select the appropriate way to initialise the polynomials;
+among several possibilities, Nausicaa/<acronym>MP</acronym> proposes the following
+functions.  They exist as templates to be customised.
+
+<div class="defun">
+&mdash; Parameter: <b>mpfrcx-precision</b><var><a name="index-mpfrcx_002dprecision-139"></a></var><br>
+<blockquote><p>Holds the &ldquo;current&rdquo; initialisation precision for <code>mpfrx_t</code> and
+<code>mpcx_t</code> polynomials.  It is initialised to 50. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>mpfrx_init*</b><var> poly coeffs setter<a name="index-mpfrx_005finit_002a-140"></a></var><br>
+&mdash; Function: <b>mpfrx_init*</b><var> poly coeffs setter degree<a name="index-mpfrx_005finit_002a-141"></a></var><br>
+<blockquote><p>Initialises an already allocated real polynomial and sets the
+coefficients from the real numbers in the Scheme vector <var>coeffs</var>.
+
+     <pre class="example">          (define mpfrx_init*
+            (case-lambda
+          
+             ((poly coeffs setter)
+              (mpfrx_init* poly coeffs setter
+                           (- (vector-length coeffs) 1)))
+          
+             ((poly coeffs setter degree)
+              (mpfrx_init poly (+ 1 degree) (mpfrcx-precision))
+              (struct-mpfrx_t-deg-set! poly degree)
+              (do ((i 0 (+ 1 i)))
+                  ((= i degree))
+                (setter (struct-mpfrx_t-coeff-ptr-ref poly i)
+                        (vector-ref coeffs i)
+                        GMP_RNDN)))))
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>mpcx_init*</b><var> poly coeffs setter<a name="index-mpcx_005finit_002a-142"></a></var><br>
+&mdash; Function: <b>mpcx_init*</b><var> poly coeffs setter degree<a name="index-mpcx_005finit_002a-143"></a></var><br>
+<blockquote><p>Initialises an already allocated complex polynomial and sets the
+coefficients from the real numbers in the Scheme vector <var>coeffs</var>.
+
+     <pre class="example">          (define mpcx_init*
+            (case-lambda
+          
+             ((poly coeffs setter)
+              (mpcx_init* poly coeffs setter
+                          (- (vector-length coeffs) 1)))
+          
+             ((poly coeffs setter degree)
+              (mpcx_init poly (+ 1 degree) (mpfrcx-precision))
+              (struct-mpcx_t-deg-set! poly degree)
+              (do ((i 0 (+ 1 i)))
+                  ((= i degree))
+                (setter (struct-mpcx_t-coeff-ptr-ref poly i)
+                        (vector-ref coeffs i)
+                        GMP_RNDN)))))
+</pre>
+        </blockquote></div>
+
+<!-- page -->
+<div class="node">
+<a name="mpfrcx-basic"></a>
+<p><hr>
+Next:&nbsp;<a rel="next" accesskey="n" href="#mpfrcx-dynwind">mpfrcx dynwind</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#mpfrcx-init">mpfrcx init</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#mpfrcx">mpfrcx</a>
+
+</div>
+
+<h3 class="section">8.3 Basic example</h3>
+
+<p>To use &lsquo;<samp><span class="samp">mpfrx_t</span></samp>&rsquo; polynomials we basically have to do:
+
+<pre class="example">     (import (rnrs)
+       (foreign memory)
+       (foreign math mp mpfr)
+       (foreign math mp mpfrx)
+       (foreign math mp sizeof))
+     
+     (let ((a (malloc sizeof-mpfrx_t))
+           (b (malloc sizeof-mpfrx_t))
+           (c (malloc sizeof-mpfrx_t)))
+     
+       (mpfrx_init* a '#( 1.2 3.4 5.6 7.8 9.0) mpfr_set_d)
+       (mpfrx_init* b '#(-1. -3. -5. -7. -9.)  mpfr_set_d)
+       (mpfrx_init c 5 50)
+     
+       (mpfrx_add c a b)
+     
+       (mpfrx_clear a)
+       (mpfrx_clear b)
+       (primitive-free a)
+       (primitive-free b)
+     
+       (do-something-with c)
+     
+       (mpfrx_clear c)
+       (primitive-free c))
+</pre>
+   <!-- page -->
+<div class="node">
+<a name="mpfrcx-dynwind"></a>
+<p><hr>
+Next:&nbsp;<a rel="next" accesskey="n" href="#mpfrcx-compensations">mpfrcx compensations</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#mpfrcx-basic">mpfrcx basic</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#mpfrcx">mpfrcx</a>
+
+</div>
+
+<h3 class="section">8.4 Using dynamic wind</h3>
+
+<p>Scheme provides the <code>dynamic-wind</code> syntax to allow evaluation of
+<dfn>in guard</dfn> and <dfn>out guard</dfn> thunks for each evaluation of a third
+&ldquo;body&rdquo; thunk.  We can leverage this mechanism to handle safe
+allocation and release of &lsquo;<samp><span class="samp">mpfrx_t</span></samp>&rsquo; numbers as follows:
+
+<pre class="example">     (let ((A #f))
+       (dynamic-wind
+           (lambda ()
+             (set! A (malloc sizeof-mpfr_t))
+             (mpfrx_init A 5 50))
+           (lambda ()
+             (do-something-with A))
+           (lambda ()
+             (mpfrx_clear A)
+             (primitive-free A))))
+</pre>
+   <p class="noindent">of course we can wrap this mechanism into a more sophisticated macro:
+
+<pre class="example">     (define-syntax with-mpfrx
+       (syntax-rules ()
+     
+         ((_ () ?form0 ?form ...)
+          (begin ?form0 ?form ...))
+     
+         ((_ ((?id ?degree) ?init ...) ?form0 ?form ...)
+          (let ((?id #f))
+            (dynamic-wind
+                (lambda ()
+                  (set! ?id (malloc sizeof-mpfrx_t))
+                  (mpfrx_init ?id (+ 1 ?degree) (mpfrcx-precision)))
+                (lambda ()
+                  (with-mpfrx (?init ...) ?form0 ?form ...))
+                (lambda ()
+                  (mpfrx_clear ?id)
+                  (primitive-free ?id)))))
+     
+         ((_ ((?id ?coeffs ?setter) ?init ...) ?form0 ?form ...)
+          (let ((?id #f))
+            (dynamic-wind
+                (lambda ()
+                  (set! ?id (malloc sizeof-mpfrx_t))
+                  (mpfrx_init* ?id ?coeffs ?setter))
+                (lambda ()
+                  (with-mpfrx (?init ...) ?form0 ?form ...))
+                (lambda ()
+                  (mpfrx_clear ?id)
+                  (primitive-free ?id)))))))
+</pre>
+   <p class="noindent">with which we can do:
+
+<pre class="example">     (with-mpfrx ((a '#(1.2 3.4 5.6 7.8 9.0) mpfr_set_d)
+                  (b '#(-1. -3. -5. -7. -9.) mpfr_set_d)
+                  (c 4))
+       (mpfrx_add c a b)
+       (do-something-with c))
+</pre>
+   <!-- page -->
+<div class="node">
+<a name="mpfrcx-compensations"></a>
+<p><hr>
+Next:&nbsp;<a rel="next" accesskey="n" href="#mpfrcx-string">mpfrcx string</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#mpfrcx-dynwind">mpfrcx dynwind</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#mpfrcx">mpfrcx</a>
+
+</div>
+
+<h3 class="section">8.5 Compensating memory allocation</h3>
+
+<p>The <code>(compensations)</code> library from Nausicaa/Scheme exports the
+compensation stacks <acronym>API</acronym> as a mean to automatically release
+synchronous resources, even in case of raised exceptions. 
+<a href="nausicaa.html#compensations">Compensation stacks</a>
+
+   <p>Let's start a program with:
+
+<pre class="example">     (import (rnrs)
+       (compensations)
+       (foreign memory)
+       (foreign math mp mpfrx)
+       (foreign math mp sizeof))
+</pre>
+   <p class="noindent">to allocate a &lsquo;<samp><span class="samp">mpfrx_t</span></samp>&rsquo; number with a compensation we can use the
+following functions:
+
+<pre class="example">     (define (mpfrx/c degree)
+       (letrec ((p (compensate
+                       (malloc sizeof-mpfrx_t)
+                     (with
+                      (mpfrx_clear p)
+                      (primitive-free p)))))
+         (mpfrx_init p (+ 1 degree) (mpfrcx-precision))
+         p))
+     
+     (define (mpfrx*/c coeffs setter)
+       (letrec ((p (compensate
+                       (malloc sizeof-mpfrx_t)
+                     (with
+                      (mpfrx_clear p)
+                      (primitive-free p)))))
+         (mpfrx_init* p coeffs setter)
+         p))
+</pre>
+   <p class="noindent">now to add two numbers we can use a compensated allocation and
+initialisation for the two operands:
+
+<pre class="example">     (with-compensations
+        (let ((c (mpfrx/c 4)))
+          (with-compensations
+            (let ((a (mpfrx*/c '#(1.2 3.4 5.6 7.8 9.0) mpfr_set_d))
+                  (b (mpfrx*/c '#(-1. -3. -5. -7. -9.) mpfr_set_d)))
+              (mpfrx_add c a b)))
+          (do-something-with c)))
+</pre>
+   <p>The advantage of compensations, over the <code>dynamic-wind</code> solution,
+is that we can nest at will allocation of numbers, without keeping track
+of them in an enclosing form.
+
+<!-- page -->
+<div class="node">
+<a name="mpfrcx-string"></a>
+<p><hr>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#mpfrcx-compensations">mpfrcx compensations</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#mpfrcx">mpfrcx</a>
+
+</div>
+
+<h3 class="section">8.6 Conversion to string</h3>
+
+<p>After having computed a result, we will probably desire to see it.  The
+easiest way is to convert the &lsquo;<samp><span class="samp">mpfrx_t</span></samp>&rsquo; number to a string.  Let's
+start the program with:
+
+<pre class="example">     (import (rnrs)
+       (foreign memory)
+       (foreign cstrings)
+       (foreign math mp mpfr)
+       (foreign math mp mpfrcx))
+</pre>
+   <p class="noindent">the following functions do a basic conversion from an &lsquo;<samp><span class="samp">mpfrx_t</span></samp>&rsquo; to
+a string:
+
+<pre class="example">     (define (mpfr-&gt;string o digits)
+       (with-compensations
+         (letrec*
+             ((l (malloc-small/c))
+              (str (compensate
+                       (mpfr_get_str pointer-null l 10 digits
+                                     o GMP_RNDN)
+                     (with
+                      (primitive-free str))))
+              (s (cstring-&gt;string str))
+              (x (let ((x (pointer-ref-c-signed-long l 0)))
+                   (if (char=? #\- (string-ref s 0))
+                       (+ 1 x)
+                     x)))
+              (i (substring s 0 x))
+              (f (substring s x (strlen str))))
+           (string-append i "." f))))
+     
+     (define (mpfrx-&gt;string poly digits)
+       (let-values (((port getter) (open-string-output-port)))
+         (let ((degree (struct-mpfrx_t-deg-ref poly)))
+           (display #\( port)
+           (display degree port)
+           (display #\; port)
+           (do ((i degree (- i 1)))
+               ((= i -1)
+                (display #\) port)
+                (getter))
+             (display #\space port)
+             (display (mpfr-&gt;string
+                         (struct-mpfrx_t-coeff-ptr-ref poly i)
+                         digits)
+                      port)))))
+</pre>
+   <p class="noindent">where using &lsquo;<samp><span class="samp">pointer-null</span></samp>&rsquo; as first argument to <code>mpfr_get_str</code>
+will make it allocate memory using the <acronym>GMP</acronym> allocation functions
+(which default to the standard C language functions).
 
 <!-- page -->
 <div class="node">
@@ -2993,7 +3418,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 
 <h2 class="appendix">Appendix B GNU Free Documentation License</h2>
 
-<p><a name="index-FDL_002c-GNU-Free-Documentation-License-137"></a><div align="center">Version 1.3, 3 November 2008</div>
+<p><a name="index-FDL_002c-GNU-Free-Documentation-License-144"></a><div align="center">Version 1.3, 3 November 2008</div>
 
 <!-- This file is intended to be included within another document, -->
 <!-- hence no sectioning command or @node. -->
@@ -3499,7 +3924,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 <h2 class="appendix">Appendix D An entry for each concept</h2>
 
 <ul class="index-cp" compact>
-<li><a href="#index-FDL_002c-GNU-Free-Documentation-License-137">FDL, GNU Free Documentation License</a>: <a href="#Documentation-License">Documentation License</a></li>
+<li><a href="#index-FDL_002c-GNU-Free-Documentation-License-144">FDL, GNU Free Documentation License</a>: <a href="#Documentation-License">Documentation License</a></li>
 </ul><div class="node">
 <a name="function-index"></a>
 <p><hr>
@@ -3514,15 +3939,18 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 
 
 <ul class="index-fn" compact>
-<li><a href="#index-array_002dref_002dc_002dmpc_005ft-132"><code>array-ref-c-mpc_t</code></a>: <a href="#accessors">accessors</a></li>
-<li><a href="#index-array_002dref_002dc_002dmpcx_005ft-135"><code>array-ref-c-mpcx_t</code></a>: <a href="#accessors">accessors</a></li>
-<li><a href="#index-array_002dref_002dc_002dmpf_005ft-130"><code>array-ref-c-mpf_t</code></a>: <a href="#accessors">accessors</a></li>
-<li><a href="#index-array_002dref_002dc_002dmpfi_005ft-133"><code>array-ref-c-mpfi_t</code></a>: <a href="#accessors">accessors</a></li>
-<li><a href="#index-array_002dref_002dc_002dmpfr_005ft-131"><code>array-ref-c-mpfr_t</code></a>: <a href="#accessors">accessors</a></li>
-<li><a href="#index-array_002dref_002dc_002dmpfrx_005ft-134"><code>array-ref-c-mpfrx_t</code></a>: <a href="#accessors">accessors</a></li>
-<li><a href="#index-array_002dref_002dc_002dmpq_005ft-129"><code>array-ref-c-mpq_t</code></a>: <a href="#accessors">accessors</a></li>
-<li><a href="#index-array_002dref_002dc_002dmpz_005ft-128"><code>array-ref-c-mpz_t</code></a>: <a href="#accessors">accessors</a></li>
-<li><a href="#index-mpc_005finit-136"><code>mpc_init</code></a>: <a href="#mpc">mpc</a></li>
+<li><a href="#index-array_002dref_002dc_002dmpc_005ft-134"><code>array-ref-c-mpc_t</code></a>: <a href="#accessors">accessors</a></li>
+<li><a href="#index-array_002dref_002dc_002dmpcx_005ft-137"><code>array-ref-c-mpcx_t</code></a>: <a href="#accessors">accessors</a></li>
+<li><a href="#index-array_002dref_002dc_002dmpf_005ft-132"><code>array-ref-c-mpf_t</code></a>: <a href="#accessors">accessors</a></li>
+<li><a href="#index-array_002dref_002dc_002dmpfi_005ft-135"><code>array-ref-c-mpfi_t</code></a>: <a href="#accessors">accessors</a></li>
+<li><a href="#index-array_002dref_002dc_002dmpfr_005ft-133"><code>array-ref-c-mpfr_t</code></a>: <a href="#accessors">accessors</a></li>
+<li><a href="#index-array_002dref_002dc_002dmpfrx_005ft-136"><code>array-ref-c-mpfrx_t</code></a>: <a href="#accessors">accessors</a></li>
+<li><a href="#index-array_002dref_002dc_002dmpq_005ft-131"><code>array-ref-c-mpq_t</code></a>: <a href="#accessors">accessors</a></li>
+<li><a href="#index-array_002dref_002dc_002dmpz_005ft-130"><code>array-ref-c-mpz_t</code></a>: <a href="#accessors">accessors</a></li>
+<li><a href="#index-mpc_005finit-138"><code>mpc_init</code></a>: <a href="#mpc">mpc</a></li>
+<li><a href="#index-mpcx_005finit_002a-142"><code>mpcx_init*</code></a>: <a href="#mpfrcx-init">mpfrcx init</a></li>
+<li><a href="#index-mpfrcx_002dprecision-139"><code>mpfrcx-precision</code></a>: <a href="#mpfrcx-init">mpfrcx init</a></li>
+<li><a href="#index-mpfrx_005finit_002a-140"><code>mpfrx_init*</code></a>: <a href="#mpfrcx-init">mpfrcx init</a></li>
 <li><a href="#index-sizeof_002dmpc_005ft_002darray-25"><code>sizeof-mpc_t-array</code></a>: <a href="#constants">constants</a></li>
 <li><a href="#index-sizeof_002dmpcx_005ft_002darray-27"><code>sizeof-mpcx_t-array</code></a>: <a href="#constants">constants</a></li>
 <li><a href="#index-sizeof_002dmpf_005ft_002darray-22"><code>sizeof-mpf_t-array</code></a>: <a href="#constants">constants</a></li>
@@ -3533,6 +3961,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 <li><a href="#index-sizeof_002dmpz_005ft_002darray-20"><code>sizeof-mpz_t-array</code></a>: <a href="#constants">constants</a></li>
 <li><a href="#index-struct_002dmpc_002dim_002dref-111"><code>struct-mpc-im-ref</code></a>: <a href="#accessors">accessors</a></li>
 <li><a href="#index-struct_002dmpc_002dre_002dref-110"><code>struct-mpc-re-ref</code></a>: <a href="#accessors">accessors</a></li>
+<li><a href="#index-struct_002dmpcx_005ft_002dcoeff_002dptr_002dref-129"><code>struct-mpcx_t-coeff-ptr-ref</code></a>: <a href="#accessors">accessors</a></li>
 <li><a href="#index-struct_002dmpcx_005ft_002dcoeff_002dref-119"><code>struct-mpcx_t-coeff-ref</code></a>: <a href="#accessors">accessors</a></li>
 <li><a href="#index-struct_002dmpcx_005ft_002dcoeff_002dset_0021-118"><code>struct-mpcx_t-coeff-set!</code></a>: <a href="#accessors">accessors</a></li>
 <li><a href="#index-struct_002dmpcx_005ft_002ddeg_002dref-115"><code>struct-mpcx_t-deg-ref</code></a>: <a href="#accessors">accessors</a></li>
@@ -3551,6 +3980,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 <li><a href="#index-struct_002dmpfr_002dprec_002dset_0021-100"><code>struct-mpfr-prec-set!</code></a>: <a href="#accessors">accessors</a></li>
 <li><a href="#index-struct_002dmpfr_002dsign_002dref-103"><code>struct-mpfr-sign-ref</code></a>: <a href="#accessors">accessors</a></li>
 <li><a href="#index-struct_002dmpfr_002dsign_002dset_0021-102"><code>struct-mpfr-sign-set!</code></a>: <a href="#accessors">accessors</a></li>
+<li><a href="#index-struct_002dmpfrx_005ft_002dcoeff_002dptr_002dref-128"><code>struct-mpfrx_t-coeff-ptr-ref</code></a>: <a href="#accessors">accessors</a></li>
 <li><a href="#index-struct_002dmpfrx_005ft_002dcoeff_002dref-127"><code>struct-mpfrx_t-coeff-ref</code></a>: <a href="#accessors">accessors</a></li>
 <li><a href="#index-struct_002dmpfrx_005ft_002dcoeff_002dset_0021-126"><code>struct-mpfrx_t-coeff-set!</code></a>: <a href="#accessors">accessors</a></li>
 <li><a href="#index-struct_002dmpfrx_005ft_002ddeg_002dref-123"><code>struct-mpfrx_t-deg-ref</code></a>: <a href="#accessors">accessors</a></li>
@@ -3738,6 +4168,14 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 <li><a href="#mpc-string">7.5 Conversion to string</a>
 </li></ul>
 <li><a name="toc_mpfrcx" href="#mpfrcx">8 Multiple precision polynomials</a>
+<ul>
+<li><a href="#mpfrcx-intro">8.1 Introduction</a>
+<li><a href="#mpfrcx-init">8.2 Initialisation functions</a>
+<li><a href="#mpfrcx-basic">8.3 Basic example</a>
+<li><a href="#mpfrcx-dynwind">8.4 Using dynamic wind</a>
+<li><a href="#mpfrcx-compensations">8.5 Compensating memory allocation</a>
+<li><a href="#mpfrcx-string">8.6 Conversion to string</a>
+</li></ul>
 <li><a name="toc_Package-License" href="#Package-License">Appendix A <acronym>GNU</acronym> General Public License</a>
 <li><a name="toc_Documentation-License" href="#Documentation-License">Appendix B GNU Free Documentation License</a>
 <li><a name="toc_references" href="#references">Appendix C Bibliography and references</a>
