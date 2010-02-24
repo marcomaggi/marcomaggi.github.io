@@ -20,7 +20,7 @@ or:
                     `https://launchpad.net/ikarus'
 
 
-Copyright (C) 2007, 2008, 2009 by Abdulaziz Ghuloum.
+Copyright (C) 2007, 2008, 2009, 2010 by Abdulaziz Ghuloum.
 
      This program is free software: you can redistribute it and/or
      modify it under the terms of the GNU General Public License
@@ -140,7 +140,7 @@ authors.-->
 <li><a href="#ikaruslib-printing">3.10 Printing</a>
 <li><a href="#ikaruslib-tracing">3.11 Tracing</a>
 <li><a href="#ikaruslib-timing">3.12 Timing</a>
-<li><a href="#ikaruslib-guardians">3.13 Guardians</a>
+<li><a href="#ikaruslib-guardians">3.13 Guardians and garbage collection</a>
 <ul>
 <li><a href="#ikaruslib-guardians-examples">3.13.1 Usage examples for guardians</a>
 <li><a href="#ikaruslib-guardians-api">3.13.2 Guardians programming interface</a>
@@ -222,7 +222,7 @@ License (<acronym>GPL</acronym>) and can be downloaded from:
 
 <div align="center"><a href="https://launchpad.net/ikarus">https://launchpad.net/ikarus</a></div>
 
-<p class="noindent">Copyright &copy; 2007, 2008, 2009 by Abdulaziz Ghuloum.
+<p class="noindent">Copyright &copy; 2007, 2008, 2009, 2010 by Abdulaziz Ghuloum.
 
    <blockquote>
 This program is free software: you can redistribute it and/or modify it
@@ -1496,7 +1496,8 @@ chapter attempts to describe a few of these useful extensions.
 Extensions to Scheme's lexical syntax are also documented.
 
 <ul class="menu">
-<li><a accesskey="1" href="#ikaruslib-cross">ikaruslib cross</a>:              Writing cross--implementation libraries. 
+<li><a accesskey="1" href="#ikaruslib-cross">ikaruslib cross</a>:              Writing cross--implementation
+                                libraries. 
 <li><a accesskey="2" href="#ikaruslib-reader">ikaruslib reader</a>:             Reader. 
 <li><a accesskey="3" href="#ikaruslib-cafe">ikaruslib cafe</a>:               Cafe. 
 <li><a accesskey="4" href="#ikaruslib-environment">ikaruslib environment</a>:        Environments. 
@@ -1508,7 +1509,7 @@ Extensions to Scheme's lexical syntax are also documented.
 <li><a href="#ikaruslib-printing">ikaruslib printing</a>:           Printing. 
 <li><a href="#ikaruslib-tracing">ikaruslib tracing</a>:            Tracing. 
 <li><a href="#ikaruslib-timing">ikaruslib timing</a>:             Timing. 
-<li><a href="#ikaruslib-guardians">ikaruslib guardians</a>:          Guardians. 
+<li><a href="#ikaruslib-guardians">ikaruslib guardians</a>:          Guardians and garbage collection. 
 <li><a href="#ikaruslib-io">ikaruslib io</a>:                 Input/output library. 
 <li><a href="#ikaruslib-posix">ikaruslib posix</a>:              <acronym>POSIX</acronym> functions. 
 <li><a href="#ikaruslib-foreign">ikaruslib foreign</a>:            Foreign interface library. 
@@ -2984,9 +2985,10 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#ikaruslib">ikaruslib</a>
 
 </div>
 
-<h3 class="section">3.13 Guardians</h3>
+<h3 class="section">3.13 Guardians and garbage collection</h3>
 
-<p>Quoting <code>[DYBGUA]</code>:
+<p>Guardians are available in the <code>(ikarus)</code> library; quoting
+[DYBGUA]:
 
    <blockquote>
 Guardians provide a means to protect objects from destruction by the
@@ -2996,7 +2998,12 @@ destruction can be retrieved, one at a time, at the convenience of the
 program. 
 </blockquote>
 
-   <p>Guardians are available in the <code>(ikarus)</code> library.
+<div class="defun">
+&mdash; Function: <b>collect</b><var><a name="index-collect-63"></a></var><br>
+<blockquote><p>Run the garbage collector.  If post&ndash;garbage collection hooks are
+registered, they are run.  This binding is exported by the
+<code>(ikarus)</code> library. 
+</p></blockquote></div>
 
 <ul class="menu">
 <li><a accesskey="1" href="#ikaruslib-guardians-examples">ikaruslib guardians examples</a>:         Usage examples for guardians. 
@@ -3020,21 +3027,23 @@ allocated with <code>malloc</code> are not released by the Ikarus garbage
 collector: we have to explicitly apply <code>free</code> to the pointer value
 referencing them.
 
-   <p>If we use the blocks synchronously with the evaluation of forms, we do:
+   <p>If we use the blocks synchronously with the evaluation of forms, we do
+(assuming we do not use continuations, so this use of
+<code>dynamic-wind</code> is fine):
 
 <pre class="example">     (import (ikarus)
-             (ikarus foreign))
+       (ikarus foreign))
      
      (define (do-something-with . args)
        (display args)
        (newline))
      
-     (let ([p        #f]
-           [size     4096])
+     (let ((p        #f)
+           (size     4096))
        (dynamic-wind
            (lambda ()
              (set! p (malloc size))
-             (unless p (error "memory allocation")))
+             (unless p (error #f "memory allocation")))
            (lambda ()
              (do-something-with p))
            (lambda ()
@@ -3043,7 +3052,7 @@ referencing them.
    <p class="noindent">and we can define a syntax for it:
 
 <pre class="example">     (import (ikarus)
-             (ikarus foreign))
+       (ikarus foreign))
      
      (define (do-something-with . args)
        (display args)
@@ -3051,16 +3060,16 @@ referencing them.
      
      (define-syntax with-block
        (syntax-rules ()
-         [(_ ?pointer ?size ?body ...)
-          (let ([?pointer    #f])
+         ((_ ?pointer ?size ?body ...)
+          (let ((?pointer    #f))
             (dynamic-wind
                 (lambda ()
                   (set! ?pointer (malloc ?size))
-                  (unless ?pointer (error "memory allocation")))
+                  (unless ?pointer (error #f "memory allocation")))
                 (lambda ()
                   ?body ...)
                 (lambda ()
-                  (free ?pointer))))]))
+                  (free ?pointer)))))))
      
      (with-block p 2048
        (do-something-with p))
@@ -3077,19 +3086,18 @@ store the pointer value that references a block in a thunk (a closure
 that takes no arguments):
 
 <pre class="example">     (import (ikarus)
-             (ikarus foreign))
+       (ikarus foreign))
      
-     ;; This queue does not scale.
      (define *event-source* '())
      
      (define (enqueue-event event)
        (set! *event-source*
-             [reverse (cons event (reverse *event-source*))]))
+             (reverse (cons event (reverse *event-source*)))))
      
      (define (pop-event)
        (if (null? *event-source*)
            #f
-         (let ([event (car *event-source*)])
+         (let ((event (car *event-source*)))
            (set! *event-source* (cdr *event-source*))
            event)))
      
@@ -3099,8 +3107,8 @@ that takes no arguments):
        (display args)
        (newline))
      
-     (let ([p (malloc 4096)])
-       (unless p (error "memory allocation"))
+     (let ((p (malloc 4096)))
+       (unless p (error #f "memory allocation"))
        (enqueue-event (lambda ()
                         (do-something-with p)))
        (enqueue-event (lambda ()
@@ -3108,8 +3116,8 @@ that takes no arguments):
        (enqueue-event (lambda ()
                         (do-something-with p))))
      
-     (do ([event (pop-event) (pop-event)])
-         ([not event])
+     (do ((event (pop-event) (pop-event)))
+         ((not event))
        (event))
 </pre>
    <p class="noindent">once the thunks have been evaluated, the pointer value is garbage
@@ -3121,21 +3129,21 @@ that we can apply <code>free</code> to it; this is the job for guardians.
 block:
 
 <pre class="example">     (import (ikarus)
-             (ikarus foreign))
+       (ikarus foreign))
      
      (define g (make-guardian))
      
-     (let ([a (malloc (expt 2 20))])
-       (unless p (error "memory allocation"))
+     (let ((a (malloc (expt 2 20))))
+       (unless p (error #f "memory allocation"))
        (g a)
        (printf "value ~s~%" a))
      
      (printf "value from guardian ~s~%" (g))
      
-     ;; This triggers a garbage collection (do not ask).
-     (foreign-call "ik_collect" 5)
+     ;; This triggers a garbage collection.
+     (collect)
      
-     (let ([p (g)])
+     (let ((p (g)))
        (printf "value from guardian ~s~%" p)
        (free p))
 </pre>
@@ -3144,7 +3152,7 @@ into the guardian, and then periodically enqueue as event a call to the
 guardian:
 
 <pre class="example">     (import (ikarus)
-       	(ikarus foreign))
+       (ikarus foreign))
      
      ;; Event source handling.
      
@@ -3152,12 +3160,12 @@ guardian:
      
      (define (enqueue-event event)
        (set! *event-source*
-             [reverse (cons event (reverse *event-source*))]))
+             (reverse (cons event (reverse *event-source*)))))
      
      (define (pop-event)
        (if (null? *event-source*)
            #f
-         (let ([event (car *event-source*)])
+         (let ((event (car *event-source*)))
            (set! *event-source* (cdr *event-source*))
            event)))
      
@@ -3166,13 +3174,10 @@ guardian:
      (define block-guardian (make-guardian))
      
      (define (run-block-guardian)
-       (do ([p (block-guardian) (block-guardian)])
-            [not p])
+       (do ((p (block-guardian) (block-guardian)))
+           ((not p))
          (printf "collecting ~s~%" p)
          (free p)))
-     
-     (define (run-garbage-collection)
-       (foreign-call "ik_collect" 5))
      
      ;; Application follows.
      
@@ -3180,21 +3185,21 @@ guardian:
        (display args)
        (newline))
      
-     (let ([p (malloc (expt 2 20))])
-       (unless p (error "memory allocation"))
+     (let ((p (malloc (expt 2 20))))
+       (unless p (error #f "memory allocation"))
        (block-guardian p)
        (enqueue-event (lambda () (do-something-with p)))
        (enqueue-event (lambda () (do-something-with 123)))
        (enqueue-event (lambda () (do-something-with p)))
        (enqueue-event (lambda () (do-something-with 456))))
      
-     (do ([event (pop-event) (pop-event)]
-          [i 1 (+ i 1)])
-         ([= i 20])
+     (do ((event (pop-event) (pop-event))
+          (i 1 (+ i 1)))
+         ((= i 20))
        (when event
          (event))
        (when (= 0 (modulo i 10))
-         (run-garbage-collection)
+         (collect)
          (enqueue-event run-block-guardian)))
 </pre>
    <!-- page -->
@@ -3209,7 +3214,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#ikaruslib-guardians">ikaruslib guardia
 <h4 class="subsection">3.13.2 Guardians programming interface</h4>
 
 <div class="defun">
-&mdash; Function: <b>make-guardian</b><var><a name="index-make_002dguardian-63"></a></var><br>
+&mdash; Function: <b>make-guardian</b><var><a name="index-make_002dguardian-64"></a></var><br>
 <blockquote><p>Build and return a new guardian object: a closure that can be called
 with one or zero arguments, and that is interfaced with the garbage
 collector of the Scheme implementation (in a non&ndash;portable way).
@@ -3249,6 +3254,23 @@ may lead to invalid finalisation operations, it is the responsibility of
 the programmer to avoid this. 
 </blockquote>
         </p></blockquote></div>
+
+<div class="defun">
+&mdash; Parameter: <b>post-gc-hooks</b><var><a name="index-post_002dgc_002dhooks-65"></a></var><br>
+<blockquote><p>Hold a list of thunks evaluated after each garbage collection run.  It
+can be used to run a guardian cleanup function like this (using the
+example in the previous section):
+
+     <pre class="example">          (define (run-block-guardian)
+            (do ((p (block-guardian) (block-guardian)))
+                ((not p))
+              (free p)))
+          
+          (post-gc-hooks
+           (cons run-block-guardian
+            (post-gc-hooks)))
+</pre>
+        </blockquote></div>
 
 <!-- page -->
 <div class="node">
@@ -3290,7 +3312,7 @@ Ikarus revision 1661, so it may change in the future.
 </blockquote>
 
 <div class="defun">
-&mdash; Function: <b>process</b><var> command . options<a name="index-process-64"></a></var><br>
+&mdash; Function: <b>process</b><var> command . options<a name="index-process-66"></a></var><br>
 <blockquote><p>Run a subprocess with a set of command line options.  <var>command</var> is a
 string selecting the executable pathname.  <var>options</var> is a list of
 strings interpreted as command line options.
@@ -3339,7 +3361,7 @@ variable.
         </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>process-nonblocking</b><var> command . options<a name="index-process_002dnonblocking-65"></a></var><br>
+&mdash; Function: <b>process-nonblocking</b><var> command . options<a name="index-process_002dnonblocking-67"></a></var><br>
 <blockquote><p>Like <code>process</code> but the returned ports have their underlying file
 descriptors configured to non&ndash;blocking mode (<a href="#ikaruslib-io-non_002dblock">ikaruslib io non-block</a>). 
 </p></blockquote></div>
@@ -3384,10 +3406,10 @@ Ikarus revision 1661, so it may change in the future.
 </blockquote>
 
 <div class="defun">
-&mdash; Function: <b>tcp-connect</b><var> hostname service<a name="index-tcp_002dconnect-66"></a></var><br>
-&mdash; Function: <b>udp-connect</b><var> hostname service<a name="index-udp_002dconnect-67"></a></var><br>
-&mdash; Function: <b>tcp-connect-nonblocking</b><var> hostname service<a name="index-tcp_002dconnect_002dnonblocking-68"></a></var><br>
-&mdash; Function: <b>udp-connect-nonblocking</b><var> hostname service<a name="index-udp_002dconnect_002dnonblocking-69"></a></var><br>
+&mdash; Function: <b>tcp-connect</b><var> hostname service<a name="index-tcp_002dconnect-68"></a></var><br>
+&mdash; Function: <b>udp-connect</b><var> hostname service<a name="index-udp_002dconnect-69"></a></var><br>
+&mdash; Function: <b>tcp-connect-nonblocking</b><var> hostname service<a name="index-tcp_002dconnect_002dnonblocking-70"></a></var><br>
+&mdash; Function: <b>udp-connect-nonblocking</b><var> hostname service<a name="index-udp_002dconnect_002dnonblocking-71"></a></var><br>
 <blockquote><p>Establish a network connection using the <acronym>TCP</acronym> or <acronym>UDP</acronym> protocol, to
 the host selected by the string <var>hostname</var>, port/service selected by
 the string <var>service</var>.  The <code>-nonblocking</code> version sets the
@@ -3428,8 +3450,8 @@ Ikarus revision 1661, so it may change in the future.
 </blockquote>
 
 <div class="defun">
-&mdash; Function: <b>tcp-server-socket</b><var> server-port-number<a name="index-tcp_002dserver_002dsocket-70"></a></var><br>
-&mdash; Function: <b>tcp-server-socket-nonblocking</b><var> server-port-number<a name="index-tcp_002dserver_002dsocket_002dnonblocking-71"></a></var><br>
+&mdash; Function: <b>tcp-server-socket</b><var> server-port-number<a name="index-tcp_002dserver_002dsocket-72"></a></var><br>
+&mdash; Function: <b>tcp-server-socket-nonblocking</b><var> server-port-number<a name="index-tcp_002dserver_002dsocket_002dnonblocking-73"></a></var><br>
 <blockquote><p>Build a new <acronym>TCP</acronym> server object for the selected port number (which
 must be an exact integer).  The <code>-nonblocking</code> versions set the
 underlying socket descriptor to non&ndash;blocking mode (<a href="#ikaruslib-io-non_002dblock">ikaruslib io non-block</a>).  Upon success, return a server&ndash;object; if an error occurs
@@ -3450,8 +3472,8 @@ The socket is configured with the <code>AF_INET</code>, <code>INADDR_ANY</code>,
         </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>accept-connection</b><var> server-object<a name="index-accept_002dconnection-72"></a></var><br>
-&mdash; Function: <b>accept-connection-nonblocking</b><var> server-object<a name="index-accept_002dconnection_002dnonblocking-73"></a></var><br>
+&mdash; Function: <b>accept-connection</b><var> server-object<a name="index-accept_002dconnection-74"></a></var><br>
+&mdash; Function: <b>accept-connection-nonblocking</b><var> server-object<a name="index-accept_002dconnection_002dnonblocking-75"></a></var><br>
 <blockquote><p>Accept the next incoming connection to the selected server.  If success
 return two values:
 
@@ -3481,7 +3503,7 @@ non&ndash;blocking?</strong>
         </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>close-tcp-server-socket</b><var> server-object<a name="index-close_002dtcp_002dserver_002dsocket-74"></a></var><br>
+&mdash; Function: <b>close-tcp-server-socket</b><var> server-object<a name="index-close_002dtcp_002dserver_002dsocket-76"></a></var><br>
 <blockquote><p>Close a server socket causing it to stop listening.
 
         <blockquote>
@@ -3494,7 +3516,7 @@ See also the <code>shutdown()</code> manual page.
         </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>register-callback</b><var> server-object proc<a name="index-register_002dcallback-75"></a></var><br>
+&mdash; Function: <b>register-callback</b><var> server-object proc<a name="index-register_002dcallback-77"></a></var><br>
 <blockquote><p>Register a callback function to be invoked whenever a new incoming
 connection request happens on <var>server-object</var>.  The callback will be
 invoked by the Ikarus event loop.
@@ -3506,13 +3528,13 @@ invoked by the Ikarus event loop.
         </p></blockquote></div>
 
 <div class="defun">
-&mdash; Parameter: <b>input-socket-buffer-size</b><var><a name="index-input_002dsocket_002dbuffer_002dsize-76"></a></var><br>
+&mdash; Parameter: <b>input-socket-buffer-size</b><var><a name="index-input_002dsocket_002dbuffer_002dsize-78"></a></var><br>
 <blockquote><p>Select the size in bytes of the input buffer for server sockets.  The
 value must be a fixnum greater or equal to 128. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Parameter: <b>output-socket-buffer-size</b><var><a name="index-output_002dsocket_002dbuffer_002dsize-77"></a></var><br>
+&mdash; Parameter: <b>output-socket-buffer-size</b><var><a name="index-output_002dsocket_002dbuffer_002dsize-79"></a></var><br>
 <blockquote><p>Select the size in bytes of the output buffer for server sockets.  The
 value must be a fixnum greater than zero. 
 </p></blockquote></div>
@@ -3580,7 +3602,7 @@ Ikarus revision 1661, so it may change in the future.
 </blockquote>
 
 <div class="defun">
-&mdash; Function: <b>fork</b><var> parent-proc child-thunk<a name="index-fork-78"></a></var><br>
+&mdash; Function: <b>fork</b><var> parent-proc child-thunk<a name="index-fork-80"></a></var><br>
 <blockquote><p>Fork a new process using the system <code>fork()</code> function.
 
         <p>If the operation is successful: in the parent process <var>parent-proc</var>
@@ -3604,7 +3626,7 @@ pid; in the child process <var>child-thunk</var> is evaluated.
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>system</b><var> command-string<a name="index-system-79"></a></var><br>
+&mdash; Function: <b>system</b><var> command-string<a name="index-system-81"></a></var><br>
 <blockquote><p>Executes a command using the <code>system()</code> function, which uses the
 system shell.  If success: return the exit code of the process.  If
 error: raise an exception.
@@ -3634,7 +3656,7 @@ Ikarus revision 1661, so it may change in the future.
 </blockquote>
 
 <div class="defun">
-&mdash; Function: <b>waitpid</b> [<var>pid </var>[<var>block? </var>[<var>want-error?</var>]]]<var><a name="index-waitpid-80"></a></var><br>
+&mdash; Function: <b>waitpid</b> [<var>pid </var>[<var>block? </var>[<var>want-error?</var>]]]<var><a name="index-waitpid-82"></a></var><br>
 <blockquote><p>Wait for another process termination using the system <code>waitpid()</code>
 function and return informations about its status.
 
@@ -3698,18 +3720,18 @@ is not suspended and the return value is <code>#f</code>.
 <h5 class="subsubheading">Status record interface</h5>
 
 <div class="defun">
-&mdash; Function: <b>wstatus-pid</b><var> status<a name="index-wstatus_002dpid-81"></a></var><br>
+&mdash; Function: <b>wstatus-pid</b><var> status<a name="index-wstatus_002dpid-83"></a></var><br>
 <blockquote><p>Return the pid of the process extracting it from <var>status</var>. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>wstatus-exit-status</b><var> status<a name="index-wstatus_002dexit_002dstatus-82"></a></var><br>
+&mdash; Function: <b>wstatus-exit-status</b><var> status<a name="index-wstatus_002dexit_002dstatus-84"></a></var><br>
 <blockquote><p>Return the exit code of the process extracting it from <var>status</var>.  If
 the process was stopped by a signal: the return value is <code>#f</code>. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>wstatus-received-signal</b><var> status<a name="index-wstatus_002dreceived_002dsignal-83"></a></var><br>
+&mdash; Function: <b>wstatus-received-signal</b><var> status<a name="index-wstatus_002dreceived_002dsignal-85"></a></var><br>
 <blockquote><p>Return a symbol representing the signal that caused the termination of
 the child process.  If no signal was received: return <code>#f</code>. 
 </p></blockquote></div>
@@ -3726,7 +3748,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#ikaruslib-posix">ikaruslib posix</a>
 
 <h4 class="subsection">3.15.3 Delivering signals to processes</h4>
 
-<p><a name="index-g_t_0040code_007bSIGABRT_007d-84"></a><a name="index-g_t_0040code_007bSIGALRM_007d-85"></a><a name="index-g_t_0040code_007bSIGBUS_007d-86"></a><a name="index-g_t_0040code_007bSIGCHLD_007d-87"></a><a name="index-g_t_0040code_007bSIGCONT_007d-88"></a><a name="index-g_t_0040code_007bSIGFPE_007d-89"></a><a name="index-g_t_0040code_007bSIGHUP_007d-90"></a><a name="index-g_t_0040code_007bSIGILL_007d-91"></a><a name="index-g_t_0040code_007bSIGINT_007d-92"></a><a name="index-g_t_0040code_007bSIGKILL_007d-93"></a><a name="index-g_t_0040code_007bSIGPIPE_007d-94"></a><a name="index-g_t_0040code_007bSIGQUIT_007d-95"></a><a name="index-g_t_0040code_007bSIGSEGV_007d-96"></a><a name="index-g_t_0040code_007bSIGSTOP_007d-97"></a><a name="index-g_t_0040code_007bSIGTERM_007d-98"></a><a name="index-g_t_0040code_007bSIGTSTP_007d-99"></a><a name="index-g_t_0040code_007bSIGTTIN_007d-100"></a><a name="index-g_t_0040code_007bSIGTTOU_007d-101"></a><a name="index-g_t_0040code_007bSIGUSR1_007d-102"></a><a name="index-g_t_0040code_007bSIGUSR2_007d-103"></a><a name="index-g_t_0040code_007bSIGPOLL_007d-104"></a><a name="index-g_t_0040code_007bSIGPROF_007d-105"></a><a name="index-g_t_0040code_007bSIGSYS_007d-106"></a><a name="index-g_t_0040code_007bSIGTRAP_007d-107"></a><a name="index-g_t_0040code_007bSIGURG_007d-108"></a><a name="index-g_t_0040code_007bSIGVTALRM_007d-109"></a><a name="index-g_t_0040code_007bSIGXCPU_007d-110"></a><a name="index-g_t_0040code_007bSIGXFSZ_007d-111"></a>
+<p><a name="index-g_t_0040code_007bSIGABRT_007d-86"></a><a name="index-g_t_0040code_007bSIGALRM_007d-87"></a><a name="index-g_t_0040code_007bSIGBUS_007d-88"></a><a name="index-g_t_0040code_007bSIGCHLD_007d-89"></a><a name="index-g_t_0040code_007bSIGCONT_007d-90"></a><a name="index-g_t_0040code_007bSIGFPE_007d-91"></a><a name="index-g_t_0040code_007bSIGHUP_007d-92"></a><a name="index-g_t_0040code_007bSIGILL_007d-93"></a><a name="index-g_t_0040code_007bSIGINT_007d-94"></a><a name="index-g_t_0040code_007bSIGKILL_007d-95"></a><a name="index-g_t_0040code_007bSIGPIPE_007d-96"></a><a name="index-g_t_0040code_007bSIGQUIT_007d-97"></a><a name="index-g_t_0040code_007bSIGSEGV_007d-98"></a><a name="index-g_t_0040code_007bSIGSTOP_007d-99"></a><a name="index-g_t_0040code_007bSIGTERM_007d-100"></a><a name="index-g_t_0040code_007bSIGTSTP_007d-101"></a><a name="index-g_t_0040code_007bSIGTTIN_007d-102"></a><a name="index-g_t_0040code_007bSIGTTOU_007d-103"></a><a name="index-g_t_0040code_007bSIGUSR1_007d-104"></a><a name="index-g_t_0040code_007bSIGUSR2_007d-105"></a><a name="index-g_t_0040code_007bSIGPOLL_007d-106"></a><a name="index-g_t_0040code_007bSIGPROF_007d-107"></a><a name="index-g_t_0040code_007bSIGSYS_007d-108"></a><a name="index-g_t_0040code_007bSIGTRAP_007d-109"></a><a name="index-g_t_0040code_007bSIGURG_007d-110"></a><a name="index-g_t_0040code_007bSIGVTALRM_007d-111"></a><a name="index-g_t_0040code_007bSIGXCPU_007d-112"></a><a name="index-g_t_0040code_007bSIGXFSZ_007d-113"></a>
 
    <blockquote>
 <strong>Undocumented feature:</strong> this feature is still undocumented in
@@ -3734,7 +3756,7 @@ Ikarus revision 1661, so it may change in the future.
 </blockquote>
 
 <div class="defun">
-&mdash; Function: <b>kill</b><var> pid signame<a name="index-kill-112"></a></var><br>
+&mdash; Function: <b>kill</b><var> pid signame<a name="index-kill-114"></a></var><br>
 <blockquote><p>Send the signal selected by <var>signame</var> to the process or group of
 processes selected by <var>pid</var>.  Make use of the system <code>kill()</code>
 function.  If an error occurs: an exception is raised.
@@ -3792,7 +3814,7 @@ Ikarus revision 1661, so it may change in the future.
 <h5 class="subsubheading">Current working directory</h5>
 
 <div class="defun">
-&mdash; Function: <b>current-directory</b> [<var>pathname</var>]<var><a name="index-current_002ddirectory-113"></a></var><br>
+&mdash; Function: <b>current-directory</b> [<var>pathname</var>]<var><a name="index-current_002ddirectory-115"></a></var><br>
 <blockquote><p>When invoked with an argument, change the current working directory to
 the one selected by the string <var>pathname</var>.  Make use of the system
 <code>chdir()</code> function.
@@ -3810,7 +3832,7 @@ function.
 <h5 class="subsubheading">Inspecting the file system</h5>
 
 <div class="defun">
-&mdash; Function: <b>directory-list</b><var> pathname<a name="index-directory_002dlist-114"></a></var><br>
+&mdash; Function: <b>directory-list</b><var> pathname<a name="index-directory_002dlist-116"></a></var><br>
 <blockquote><p>Build and return the list of strings representing the entries in the
 directory selected by the string <var>pathname</var>.  Make use of the
 <code>opendir()</code>, <code>readdir()</code>, <code>closedir()</code> system functions.
@@ -3822,7 +3844,7 @@ directory selected by the string <var>pathname</var>.  Make use of the
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>file-ctime</b><var> pathname<a name="index-file_002dctime-115"></a></var><br>
+&mdash; Function: <b>file-ctime</b><var> pathname<a name="index-file_002dctime-117"></a></var><br>
 <blockquote><p>Return the time of the last modification to the attributes of the file;
 makes use of the <code>stat()</code> system function, and return the
 <code>st_ctime</code> field of the <code>stat</code> data structure.
@@ -3846,27 +3868,27 @@ make use of the <code>stat()</code> system function; if <var>follow</var> is
    <p><a href="libc.html#Reading-Attributes">Reading Attributes</a>
 
 <div class="defun">
-&mdash; Function: <b>file-exists?</b><var> pathname </var>[<var>follow</var>]<var><a name="index-file_002dexists_003f-116"></a></var><br>
+&mdash; Function: <b>file-exists?</b><var> pathname </var>[<var>follow</var>]<var><a name="index-file_002dexists_003f-118"></a></var><br>
 <blockquote><p>Return <code>#t</code> if <var>pathname</var> exists on the file system; otherwise
 return <code>#f</code>.  If an error occurs, an exception is raised. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>file-regular?</b><var> pathname </var>[<var>follow</var>]<var><a name="index-file_002dregular_003f-117"></a></var><br>
+&mdash; Function: <b>file-regular?</b><var> pathname </var>[<var>follow</var>]<var><a name="index-file_002dregular_003f-119"></a></var><br>
 <blockquote><p>Return <code>#t</code> if <var>pathname</var> exists on the file system and it is a
 regular file; otherwise return <code>#f</code>.  If an error occurs, an
 exception is raised. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>file-directory?</b><var> pathname </var>[<var>follow</var>]<var><a name="index-file_002ddirectory_003f-118"></a></var><br>
+&mdash; Function: <b>file-directory?</b><var> pathname </var>[<var>follow</var>]<var><a name="index-file_002ddirectory_003f-120"></a></var><br>
 <blockquote><p>Return <code>#t</code> if <var>pathname</var> exists on the file system and it is a
 directory; otherwise return <code>#f</code>.  If an error occurs, an exception
 is raised. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>file-symbolic-link?</b><var> pathname </var>[<var>follow</var>]<var><a name="index-file_002dsymbolic_002dlink_003f-119"></a></var><br>
+&mdash; Function: <b>file-symbolic-link?</b><var> pathname </var>[<var>follow</var>]<var><a name="index-file_002dsymbolic_002dlink_003f-121"></a></var><br>
 <blockquote><p>Return <code>#t</code> if <var>pathname</var> exists on the file system and it is a
 symbolic link; otherwise return <code>#f</code>.  If an error occurs, an
 exception is raised. 
@@ -3876,7 +3898,7 @@ exception is raised.
 <h5 class="subsubheading">Creation</h5>
 
 <div class="defun">
-&mdash; Function: <b>make-symbolic-link</b><var> to pathname<a name="index-make_002dsymbolic_002dlink-120"></a></var><br>
+&mdash; Function: <b>make-symbolic-link</b><var> to pathname<a name="index-make_002dsymbolic_002dlink-122"></a></var><br>
 <blockquote><p>Create a symbolic link whose pathname is the string <var>pathname</var>
 referencing the <var>to</var> string pathname.  Make use of the
 <code>symlink()</code> system function.  If an error occurs, an exception is
@@ -3886,7 +3908,7 @@ raised.
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>make-directory</b><var> pathname </var>[<var>mode</var>]<var><a name="index-make_002ddirectory-121"></a></var><br>
+&mdash; Function: <b>make-directory</b><var> pathname </var>[<var>mode</var>]<var><a name="index-make_002ddirectory-123"></a></var><br>
 <blockquote><p>Create a directory with name selected by the string <var>pathname</var>. 
 Make use of the <code>mkdir()</code> system function.  If an error occurs, an
 exception is raised.
@@ -3901,7 +3923,7 @@ for the directory; it defaults to &lsquo;<samp><span class="samp">#o755</span></
 <h5 class="subsubheading">Deletion</h5>
 
 <div class="defun">
-&mdash; Function: <b>delete-file</b><var> pathname<a name="index-delete_002dfile-122"></a></var><br>
+&mdash; Function: <b>delete-file</b><var> pathname<a name="index-delete_002dfile-124"></a></var><br>
 <blockquote><p>Remove from the system the file selected by the <var>pathname</var> string. 
 Make use of the <code>unlink()</code> system function.  If an error occurs, an
 exception is raised.
@@ -3910,7 +3932,7 @@ exception is raised.
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>delete-directory</b><var> pathname<a name="index-delete_002ddirectory-123"></a></var><br>
+&mdash; Function: <b>delete-directory</b><var> pathname<a name="index-delete_002ddirectory-125"></a></var><br>
 <blockquote><p>Remove from the system the directory selected by the <var>pathname</var>
 string.  Make use of the <code>rmdir()</code> system function.  If an error
 occurs, an exception is raised.
@@ -3922,7 +3944,7 @@ occurs, an exception is raised.
 <h5 class="subsubheading">Permissions</h5>
 
 <div class="defun">
-&mdash; Function: <b>change-mode</b><var> pathname mode<a name="index-change_002dmode-124"></a></var><br>
+&mdash; Function: <b>change-mode</b><var> pathname mode<a name="index-change_002dmode-126"></a></var><br>
 <blockquote><p>Change the access permissions of the file or directory selected by the
 <var>pathname</var> string.  Make use of the <code>chmod()</code> system function. 
 If an error occurs, an exception is raised.
@@ -3950,7 +3972,7 @@ Ikarus revision 1661, so it may change in the future.
 </blockquote>
 
 <div class="defun">
-&mdash; Function: <b>getenv</b><var> varname<a name="index-getenv-125"></a></var><br>
+&mdash; Function: <b>getenv</b><var> varname<a name="index-getenv-127"></a></var><br>
 <blockquote><p>Return the current value, as a string, of the system environment
 variable selected by the string <var>varname</var>.  If the variable is not
 set: <code>#f</code> is returned.
@@ -3983,7 +4005,7 @@ Ikarus revision 1661, so it may change in the future.
 </blockquote>
 
 <div class="defun">
-&mdash; Function: <b>strerror</b><var> error-code<a name="index-strerror-126"></a></var><br>
+&mdash; Function: <b>strerror</b><var> error-code<a name="index-strerror-128"></a></var><br>
 <blockquote><p>Return a string describing the <code>errno</code> code <var>error-code</var>. 
 Makes use of the system function <code>strerror()</code>.  If <var>error-code</var>
 is not a valid <code>errno</code> value: return a string telling it.
@@ -3992,7 +4014,7 @@ is not a valid <code>errno</code> value: return a string telling it.
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>nanosleep</b><var> seconds nanoseconds<a name="index-nanosleep-127"></a></var><br>
+&mdash; Function: <b>nanosleep</b><var> seconds nanoseconds<a name="index-nanosleep-129"></a></var><br>
 <blockquote><p>Suspend the process for the selected time; it makes use of the system
 <code>nanosleep()</code> function.  <var>seconds</var> and <var>nanoseconds</var> must be
 positive exact integers.  If an error occurs an exception is raised.
@@ -4188,7 +4210,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#ikaruslib-foreign-memops">ikaruslib fo
 <h5 class="subsubsection">3.16.3.1 Allocating and freeing memory</h5>
 
 <div class="defun">
-&mdash; Procedure: <b>malloc</b><var> number-of-bytes<a name="index-malloc-128"></a></var><br>
+&mdash; Procedure: <b>malloc</b><var> number-of-bytes<a name="index-malloc-130"></a></var><br>
 <blockquote><p>Allocate a block of memory and return a pointer to it.  The
 <code>malloc</code> Scheme procedure is implemented using the host&ndash;provided
 <code>malloc()</code> system procedure (often found in <code>libc</code>).  The
@@ -4203,7 +4225,7 @@ number of bytes must be a positive exact integer.
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Procedure: <b>free</b><var> pointer-to-memory-block<a name="index-free-129"></a></var><br>
+&mdash; Procedure: <b>free</b><var> pointer-to-memory-block<a name="index-free-131"></a></var><br>
 <blockquote><p>Release the memory region at the given address.  The memory region must
 have been allocated with <code>malloc()</code>, <code>calloc()</code>, or a similar
 system procedure.  Once freed, memory operations on the given address
@@ -4228,13 +4250,13 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#ikaruslib-foreign-memops">ikaruslib fo
 <code>equal?</code> on pointer values is unspecified.
 
 <div class="defun">
-&mdash; Procedure: <b>pointer-&gt;integer</b><var> pointer<a name="index-pointer_002d_003einteger-130"></a></var><br>
+&mdash; Procedure: <b>pointer-&gt;integer</b><var> pointer<a name="index-pointer_002d_003einteger-132"></a></var><br>
 <blockquote><p>Convert the value of <var>pointer</var> to an exact integer value.  The
 result may be a fixnum or a bignum depending on the pointer. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Procedure: <b>integer-&gt;pointer</b><var> exact-integer<a name="index-integer_002d_003epointer-131"></a></var><br>
+&mdash; Procedure: <b>integer-&gt;pointer</b><var> exact-integer<a name="index-integer_002d_003epointer-133"></a></var><br>
 <blockquote><p>Convert <var>exact-integer</var> to a pointer value.  The lower 32 bits (or
 64 bits on 64-bit systems) of the argument are significant in computing
 the pointer value.  It is guaranteed that <code>(integer-&gt;pointer
@@ -4242,13 +4264,13 @@ the pointer value.  It is guaranteed that <code>(integer-&gt;pointer
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Procedure: <b>pointer?</b><var> x<a name="index-pointer_003f-132"></a></var><br>
+&mdash; Procedure: <b>pointer?</b><var> x<a name="index-pointer_003f-134"></a></var><br>
 <blockquote><p>Return <code>#t</code> if the value of <var>x</var> is a pointer, return <code>#f</code>
 otherwise. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Procedure: <b>pointer-size</b><var><a name="index-pointer_002dsize-133"></a></var><br>
+&mdash; Procedure: <b>pointer-size</b><var><a name="index-pointer_002dsize-135"></a></var><br>
 <blockquote><p>Return the number of bytes required to hold a pointer on the underlying
 platform. 
 </p></blockquote></div>
@@ -4275,28 +4297,28 @@ value.  Pointer arithmetics is performed with byte offsets.
 <h5 class="subsubheading">Poking exact integers</h5>
 
 <div class="defun">
-&mdash; Procedure: <b>pointer-set-c-char!</b><var> pointer offset value<a name="index-pointer_002dset_002dc_002dchar_0021-134"></a></var><br>
+&mdash; Procedure: <b>pointer-set-c-char!</b><var> pointer offset value<a name="index-pointer_002dset_002dc_002dchar_0021-136"></a></var><br>
 <blockquote><p>Set to <var>value</var> the single byte of memory located at <var>offset</var> from
 <var>pointer</var>.  Only the 8 lowermost bits of <var>value</var> are used
 in the operation and the remaining bits are ignored. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Procedure: <b>pointer-set-c-short!</b><var> pointer offset value<a name="index-pointer_002dset_002dc_002dshort_0021-135"></a></var><br>
+&mdash; Procedure: <b>pointer-set-c-short!</b><var> pointer offset value<a name="index-pointer_002dset_002dc_002dshort_0021-137"></a></var><br>
 <blockquote><p>Set to <var>value</var> the two bytes of memory located at <var>offset</var> from
 <var>pointer</var>.  Only the 16 lowermost bits of <var>value</var> are used
 in the operation and the remaining bits are ignored. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Procedure: <b>pointer-set-c-int!</b><var> pointer offset value<a name="index-pointer_002dset_002dc_002dint_0021-136"></a></var><br>
+&mdash; Procedure: <b>pointer-set-c-int!</b><var> pointer offset value<a name="index-pointer_002dset_002dc_002dint_0021-138"></a></var><br>
 <blockquote><p>Set to <var>value</var> the four bytes of memory located at <var>offset</var> from
 <var>pointer</var>.  Only the 32 lowermost bits of <var>value</var> are used
 in the operation and the remaining bits are ignored. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Procedure: <b>pointer-set-c-long!</b><var> pointer offset value<a name="index-pointer_002dset_002dc_002dlong_0021-137"></a></var><br>
+&mdash; Procedure: <b>pointer-set-c-long!</b><var> pointer offset value<a name="index-pointer_002dset_002dc_002dlong_0021-139"></a></var><br>
 <blockquote><p>On 64-bit systems: Set to <var>value</var> the eight bytes of memory located at <var>offset</var> from
 <var>pointer</var>.  Only the 64 lowermost bits of <var>value</var> are used
 in the operation and the remaining bits are ignored.
@@ -4305,7 +4327,7 @@ in the operation and the remaining bits are ignored.
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Procedure: <b>pointer-set-c-long-long!</b><var> pointer offset value<a name="index-pointer_002dset_002dc_002dlong_002dlong_0021-138"></a></var><br>
+&mdash; Procedure: <b>pointer-set-c-long-long!</b><var> pointer offset value<a name="index-pointer_002dset_002dc_002dlong_002dlong_0021-140"></a></var><br>
 <blockquote><p>Set to <var>value</var> a number of bytes corresponding to the <code>long
 long</code> type located at <var>offset</var> from <var>pointer</var>. 
 </p></blockquote></div>
@@ -4314,7 +4336,7 @@ long</code> type located at <var>offset</var> from <var>pointer</var>.
 <h5 class="subsubheading">Poking floating point numbers</h5>
 
 <div class="defun">
-&mdash; Procedure: <b>pointer-set-c-float!</b><var> pointer offset flonum<a name="index-pointer_002dset_002dc_002dfloat_0021-139"></a></var><br>
+&mdash; Procedure: <b>pointer-set-c-float!</b><var> pointer offset flonum<a name="index-pointer_002dset_002dc_002dfloat_0021-141"></a></var><br>
 <blockquote><p>Convert the Scheme floating point number <var>flonum</var> (represented in
 Ikarus as an <acronym>IEEE</acronym> 754 double precision floating point number) to a
 float (an <acronym>IEEE</acronym> 754 single precision floating point number) and store
@@ -4322,7 +4344,7 @@ the result in the four bytes at <var>offset</var> from <var>pointer</var>.
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Procedure: <b>pointer-set-c-double!</b><var> pointer offset flonum<a name="index-pointer_002dset_002dc_002ddouble_0021-140"></a></var><br>
+&mdash; Procedure: <b>pointer-set-c-double!</b><var> pointer offset flonum<a name="index-pointer_002dset_002dc_002ddouble_0021-142"></a></var><br>
 <blockquote><p>Store the double precision <acronym>IEEE</acronym> 754 floating point value of the
 Scheme <var>flonum</var> in the eight bytes at <var>offset</var> from
 <var>pointer</var>. 
@@ -4332,7 +4354,7 @@ Scheme <var>flonum</var> in the eight bytes at <var>offset</var> from
 <h5 class="subsubheading">Poking pointers</h5>
 
 <div class="defun">
-&mdash; Procedure: <b>pointer-set-c-pointer!</b><var> pointer offset value<a name="index-pointer_002dset_002dc_002dpointer_0021-141"></a></var><br>
+&mdash; Procedure: <b>pointer-set-c-pointer!</b><var> pointer offset value<a name="index-pointer_002dset_002dc_002dpointer_0021-143"></a></var><br>
 <blockquote><p>On 64-bit systems: set the eight bytes at <var>offset</var> from
 <var>pointer</var> to the 64-bit pointer <var>value</var>.
 
@@ -4361,7 +4383,7 @@ arithmetics is performed with byte offsets.
 <h5 class="subsubheading">Peeking exact integers</h5>
 
 <div class="defun">
-&mdash; Procedure: <b>pointer-ref-c-signed-char</b><var> pointer offset<a name="index-pointer_002dref_002dc_002dsigned_002dchar-142"></a></var><br>
+&mdash; Procedure: <b>pointer-ref-c-signed-char</b><var> pointer offset<a name="index-pointer_002dref_002dc_002dsigned_002dchar-144"></a></var><br>
 <blockquote><p>Peek the single byte located at <var>offset</var> from <var>pointer</var> and
 return an exact integer representing the sign&ndash;extended integer value of
 that byte. The resulting value is in the inclusive range <code>[-128,
@@ -4369,7 +4391,7 @@ that byte. The resulting value is in the inclusive range <code>[-128,
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Procedure: <b>pointer-ref-c-unsigned-char</b><var> pointer offset<a name="index-pointer_002dref_002dc_002dunsigned_002dchar-143"></a></var><br>
+&mdash; Procedure: <b>pointer-ref-c-unsigned-char</b><var> pointer offset<a name="index-pointer_002dref_002dc_002dunsigned_002dchar-145"></a></var><br>
 <blockquote><p>Peek the single byte located at <var>offset</var> from <var>pointer</var> and
 return an exact integer representing the unsigned integer value of that
 byte.  The resulting value is in the inclusive range <code>[0, 255]</code>. 
@@ -4394,33 +4416,33 @@ above:
      (127 -128 -1 127 128 255)
 </pre>
    <div class="defun">
-&mdash; Procedure: <b>pointer-ref-c-signed-short</b><var> pointer offset<a name="index-pointer_002dref_002dc_002dsigned_002dshort-144"></a></var><br>
+&mdash; Procedure: <b>pointer-ref-c-signed-short</b><var> pointer offset<a name="index-pointer_002dref_002dc_002dsigned_002dshort-146"></a></var><br>
 <blockquote><p>Peek two bytes at <var>offset</var> from <var>pointer</var> and return an exact
 integer representing the sign&ndash;extended integer value of the sequence. 
 The resulting value is in the inclusive range <code>[-32768, 32767]</code>. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Procedure: <b>pointer-ref-c-unsigned-short</b><var> pointer offset<a name="index-pointer_002dref_002dc_002dunsigned_002dshort-145"></a></var><br>
+&mdash; Procedure: <b>pointer-ref-c-unsigned-short</b><var> pointer offset<a name="index-pointer_002dref_002dc_002dunsigned_002dshort-147"></a></var><br>
 <blockquote><p>Peek two bytes at <var>offset</var> from <var>pointer</var> and return an exact
 integer representing the unsigned integer value of the sequence.  The
 resulting value is in the inclusive range <code>[0, 65535]</code>. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Procedure: <b>pointer-ref-c-signed-int</b><var> pointer offset<a name="index-pointer_002dref_002dc_002dsigned_002dint-146"></a></var><br>
+&mdash; Procedure: <b>pointer-ref-c-signed-int</b><var> pointer offset<a name="index-pointer_002dref_002dc_002dsigned_002dint-148"></a></var><br>
 <blockquote><p>Peek four bytes at <var>offset</var> from <var>pointer</var> and return an exact
 integer in the inclusive range <code>[-2^31, 2^31-1]</code>. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Procedure: <b>pointer-ref-c-unsigned-int</b><var> pointer offset<a name="index-pointer_002dref_002dc_002dunsigned_002dint-147"></a></var><br>
+&mdash; Procedure: <b>pointer-ref-c-unsigned-int</b><var> pointer offset<a name="index-pointer_002dref_002dc_002dunsigned_002dint-149"></a></var><br>
 <blockquote><p>Peek four bytes at <var>offset</var> from <var>pointer</var> and return an exact
 integer in the inclusive range <code>[0, 2^32-1]</code>. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Procedure: <b>pointer-ref-c-signed-long</b><var> pointer offset<a name="index-pointer_002dref_002dc_002dsigned_002dlong-148"></a></var><br>
+&mdash; Procedure: <b>pointer-ref-c-signed-long</b><var> pointer offset<a name="index-pointer_002dref_002dc_002dsigned_002dlong-150"></a></var><br>
 <blockquote><p>On 64-bit systems: peek eight bytes at <var>offset</var> from <var>pointer</var>
 and return an integer in the inclusive range <code>[-2^63, 2^63-1]</code>.
 
@@ -4429,7 +4451,7 @@ and return an integer in the inclusive range <code>[-2^63, 2^63-1]</code>.
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Procedure: <b>pointer-ref-c-unsigned-long</b><var> pointer offset<a name="index-pointer_002dref_002dc_002dunsigned_002dlong-149"></a></var><br>
+&mdash; Procedure: <b>pointer-ref-c-unsigned-long</b><var> pointer offset<a name="index-pointer_002dref_002dc_002dunsigned_002dlong-151"></a></var><br>
 <blockquote><p>On 64-bit systems: peek eight bytes at <var>offset</var> from <var>pointer</var>
 and return an integer in the inclusive range <code>[0, 2^64-1]</code>.
 
@@ -4438,13 +4460,13 @@ and return an integer in the inclusive range <code>[0, 2^64-1]</code>.
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Procedure: <b>pointer-ref-c-signed-long-long</b><var> pointer offset<a name="index-pointer_002dref_002dc_002dsigned_002dlong_002dlong-150"></a></var><br>
+&mdash; Procedure: <b>pointer-ref-c-signed-long-long</b><var> pointer offset<a name="index-pointer_002dref_002dc_002dsigned_002dlong_002dlong-152"></a></var><br>
 <blockquote><p>Peek a number of bytes corresponding to the native <code>long long</code> type
 at <var>offset</var> from <var>pointer</var> and return an integer. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Procedure: <b>pointer-ref-c-unsigned-long-long</b><var> pointer offset<a name="index-pointer_002dref_002dc_002dunsigned_002dlong_002dlong-151"></a></var><br>
+&mdash; Procedure: <b>pointer-ref-c-unsigned-long-long</b><var> pointer offset<a name="index-pointer_002dref_002dc_002dunsigned_002dlong_002dlong-153"></a></var><br>
 <blockquote><p>Peek a number of bytes corresponding to the native <code>unsigned long
 long</code> type at <var>offset</var> from <var>pointer</var> and return an integer. 
 </p></blockquote></div>
@@ -4453,7 +4475,7 @@ long</code> type at <var>offset</var> from <var>pointer</var> and return an inte
 <h5 class="subsubheading">Peeking floating point numbers</h5>
 
 <div class="defun">
-&mdash; Procedure: <b>pointer-ref-c-float</b><var> pointer offset<a name="index-pointer_002dref_002dc_002dfloat-152"></a></var><br>
+&mdash; Procedure: <b>pointer-ref-c-float</b><var> pointer offset<a name="index-pointer_002dref_002dc_002dfloat-154"></a></var><br>
 <blockquote><p>Return the four&ndash;byte float (represented as <acronym>IEEE</acronym> 754 single precision
 floating point number) stored at <var>offset</var> from <var>pointer</var>.  The
 value is extended to an <acronym>IEEE</acronym> 754 double precision floating point
@@ -4461,7 +4483,7 @@ number that Ikarus uses to represent inexact numbers.
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Procedure: <b>pointer-ref-c-double</b><var> pointer offset<a name="index-pointer_002dref_002dc_002ddouble-153"></a></var><br>
+&mdash; Procedure: <b>pointer-ref-c-double</b><var> pointer offset<a name="index-pointer_002dref_002dc_002ddouble-155"></a></var><br>
 <blockquote><p>Return the eight&ndash;byte float (represented as <acronym>IEEE</acronym> 754 double
 precision floating point number) stored at <var>offset</var> from
 <var>pointer</var>. 
@@ -4471,7 +4493,7 @@ precision floating point number) stored at <var>offset</var> from
 <h5 class="subsubheading">Peeking pointers</h5>
 
 <div class="defun">
-&mdash; Procedure: <b>pointer-ref-c-pointer</b><var> pointer offset<a name="index-pointer_002dref_002dc_002dpointer-154"></a></var><br>
+&mdash; Procedure: <b>pointer-ref-c-pointer</b><var> pointer offset<a name="index-pointer_002dref_002dc_002dpointer-156"></a></var><br>
 <blockquote><p>Return the pointer stored at <var>offset</var> from <var>pointer</var>.  The size
 of the pointer (also the number of bytes loaded) depends on the
 architecture: it is 4 bytes on 32-bit systems and 8 bytes on 64-bit
@@ -4491,9 +4513,9 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#ikaruslib-foreign">ikaruslib foreign</
 <h4 class="subsection">3.16.4 Accessing foreign objects from Scheme</h4>
 
 <div class="defun">
-&mdash; Procedure: <b>dlopen</b><var><a name="index-dlopen-155"></a></var><br>
-&mdash; Procedure: <b>dlopen</b><var> library-name<a name="index-dlopen-156"></a></var><br>
-&mdash; Procedure: <b>dlopen</b><var> library-name lazy? global?<a name="index-dlopen-157"></a></var><br>
+&mdash; Procedure: <b>dlopen</b><var><a name="index-dlopen-157"></a></var><br>
+&mdash; Procedure: <b>dlopen</b><var> library-name<a name="index-dlopen-158"></a></var><br>
+&mdash; Procedure: <b>dlopen</b><var> library-name lazy? global?<a name="index-dlopen-159"></a></var><br>
 <blockquote><p>Take the string <var>library-name</var> representing a system library and
 call the system procedure <code>dlopen()</code> which dynamically loads the
 given library into the running process.
@@ -4531,7 +4553,7 @@ details.
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Procedure: <b>dlclose</b><var> library-pointer<a name="index-dlclose-158"></a></var><br>
+&mdash; Procedure: <b>dlclose</b><var> library-pointer<a name="index-dlclose-160"></a></var><br>
 <blockquote><p>A wrapper for the system procedure of the same name.  It receives a
 library pointer (e.g. one obtained from <code>dlopen</code>) and releases the
 resources loaded from that library.  Closing a library renders all
@@ -4554,7 +4576,7 @@ details.
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Procedure: <b>dlsym</b><var> library-pointer string<a name="index-dlsym-159"></a></var><br>
+&mdash; Procedure: <b>dlsym</b><var> library-pointer string<a name="index-dlsym-161"></a></var><br>
 <blockquote><p>Take a library pointer (e.g. one obtained by a call to <code>dlopen</code>)
 and a string representing the name of a symbol that the library exports
 and return a pointer to the location of that symbol in memory.  If
@@ -4566,7 +4588,7 @@ details.
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Procedure: <b>dlerror</b><var><a name="index-dlerror-160"></a></var><br>
+&mdash; Procedure: <b>dlerror</b><var><a name="index-dlerror-162"></a></var><br>
 <blockquote><p>If any of the dynamic loading operations (i.e., <code>dlopen</code>,
 <code>dlclose</code>, <code>dlsym</code>) fails, the cause of the error can be
 obtained by calling <code>dlerror</code> which returns a string describing the
@@ -4642,7 +4664,7 @@ function takes no arguments: the parameter types must be the empty list;
 a parameter type.
 
 <div class="defun">
-&mdash; Procedure: <b>make-c-callout</b><var> return-type parameter-types<a name="index-make_002dc_002dcallout-161"></a></var><br>
+&mdash; Procedure: <b>make-c-callout</b><var> return-type parameter-types<a name="index-make_002dc_002dcallout-163"></a></var><br>
 <blockquote><p>The procedure <code>make-c-callout</code> is the primary facility for making
 foreign procedures callable from Scheme.  It works as follows:
 
@@ -4814,7 +4836,7 @@ Scheme procedure returns back to native format.  The signature format is
 similar to the one used for call outs (<a href="#ikaruslib-foreign-call-out-types">ikaruslib foreign call out types</a> for details).
 
 <div class="defun">
-&mdash; Procedure: <b>make-c-callback</b><var> return-type parameter-types<a name="index-make_002dc_002dcallback-162"></a></var><br>
+&mdash; Procedure: <b>make-c-callback</b><var> return-type parameter-types<a name="index-make_002dc_002dcallback-164"></a></var><br>
 <blockquote><p>The procedure <code>make-c-callback</code> is similar to the procedure
 <code>make-c-callout</code> except that it provides a bridge from native
 procedures back into Scheme.  While the procedure <code>make-c-callout</code>
@@ -4857,7 +4879,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#ikaruslib">ikaruslib</a>
 <h3 class="section">3.17 Miscellaneous functions</h3>
 
 <div class="defun">
-&mdash; Function: <b>void</b><var><a name="index-void-163"></a></var><br>
+&mdash; Function: <b>void</b><var><a name="index-void-165"></a></var><br>
 <blockquote><p>Return the void value.  It is the value returned by forms that do not
 return a meaningful value. 
 </p></blockquote></div>
@@ -5790,7 +5812,7 @@ Anton Van Straaten (Editors). 2007.
 <p class="noindent"><em>Scheme Request for Implementation 41: Streams.</em>  Philip L. Bewig. 
 2007.  <a href="http://srfi.schemers.org/srfi-41/srfi-41.html">http://srfi.schemers.org/srfi-41/srfi-41.html</a>
 
-<p class="noindent"><code>[DYBGUA]</code> <em>Guardians in a generation&ndash;based garbage
+<p class="noindent">[DYBGUA] <em>Guardians in a generation&ndash;based garbage
 collector</em>.  R. Kent Dybvig and Carl Bruggeman and David Eby.  PLDI '93,
 pages 207&ndash;216, June 1993.  Introduces guardians and describes the
 implementation of guardians and weak pairs in Chez Scheme.
@@ -5848,34 +5870,34 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 <li><a href="#index-Ikarus_002c-uninstalling-5">Ikarus, uninstalling</a>: <a href="#overview-install">overview install</a></li>
 <li><a href="#index-Installing-Ikarus-1">Installing Ikarus</a>: <a href="#overview-install">overview install</a></li>
 <li><a href="#index-Invoking-Ikarus-12">Invoking Ikarus</a>: <a href="#using">using</a></li>
-<li><a href="#index-g_t_0040code_007bSIGABRT_007d-84"><code>SIGABRT</code></a>: <a href="#ikaruslib-posix-signal">ikaruslib posix signal</a></li>
-<li><a href="#index-g_t_0040code_007bSIGALRM_007d-85"><code>SIGALRM</code></a>: <a href="#ikaruslib-posix-signal">ikaruslib posix signal</a></li>
-<li><a href="#index-g_t_0040code_007bSIGBUS_007d-86"><code>SIGBUS</code></a>: <a href="#ikaruslib-posix-signal">ikaruslib posix signal</a></li>
-<li><a href="#index-g_t_0040code_007bSIGCHLD_007d-87"><code>SIGCHLD</code></a>: <a href="#ikaruslib-posix-signal">ikaruslib posix signal</a></li>
-<li><a href="#index-g_t_0040code_007bSIGCONT_007d-88"><code>SIGCONT</code></a>: <a href="#ikaruslib-posix-signal">ikaruslib posix signal</a></li>
-<li><a href="#index-g_t_0040code_007bSIGFPE_007d-89"><code>SIGFPE</code></a>: <a href="#ikaruslib-posix-signal">ikaruslib posix signal</a></li>
-<li><a href="#index-g_t_0040code_007bSIGHUP_007d-90"><code>SIGHUP</code></a>: <a href="#ikaruslib-posix-signal">ikaruslib posix signal</a></li>
-<li><a href="#index-g_t_0040code_007bSIGILL_007d-91"><code>SIGILL</code></a>: <a href="#ikaruslib-posix-signal">ikaruslib posix signal</a></li>
-<li><a href="#index-g_t_0040code_007bSIGINT_007d-92"><code>SIGINT</code></a>: <a href="#ikaruslib-posix-signal">ikaruslib posix signal</a></li>
-<li><a href="#index-g_t_0040code_007bSIGKILL_007d-93"><code>SIGKILL</code></a>: <a href="#ikaruslib-posix-signal">ikaruslib posix signal</a></li>
-<li><a href="#index-g_t_0040code_007bSIGPIPE_007d-94"><code>SIGPIPE</code></a>: <a href="#ikaruslib-posix-signal">ikaruslib posix signal</a></li>
-<li><a href="#index-g_t_0040code_007bSIGPOLL_007d-104"><code>SIGPOLL</code></a>: <a href="#ikaruslib-posix-signal">ikaruslib posix signal</a></li>
-<li><a href="#index-g_t_0040code_007bSIGPROF_007d-105"><code>SIGPROF</code></a>: <a href="#ikaruslib-posix-signal">ikaruslib posix signal</a></li>
-<li><a href="#index-g_t_0040code_007bSIGQUIT_007d-95"><code>SIGQUIT</code></a>: <a href="#ikaruslib-posix-signal">ikaruslib posix signal</a></li>
-<li><a href="#index-g_t_0040code_007bSIGSEGV_007d-96"><code>SIGSEGV</code></a>: <a href="#ikaruslib-posix-signal">ikaruslib posix signal</a></li>
-<li><a href="#index-g_t_0040code_007bSIGSTOP_007d-97"><code>SIGSTOP</code></a>: <a href="#ikaruslib-posix-signal">ikaruslib posix signal</a></li>
-<li><a href="#index-g_t_0040code_007bSIGSYS_007d-106"><code>SIGSYS</code></a>: <a href="#ikaruslib-posix-signal">ikaruslib posix signal</a></li>
-<li><a href="#index-g_t_0040code_007bSIGTERM_007d-98"><code>SIGTERM</code></a>: <a href="#ikaruslib-posix-signal">ikaruslib posix signal</a></li>
-<li><a href="#index-g_t_0040code_007bSIGTRAP_007d-107"><code>SIGTRAP</code></a>: <a href="#ikaruslib-posix-signal">ikaruslib posix signal</a></li>
-<li><a href="#index-g_t_0040code_007bSIGTSTP_007d-99"><code>SIGTSTP</code></a>: <a href="#ikaruslib-posix-signal">ikaruslib posix signal</a></li>
-<li><a href="#index-g_t_0040code_007bSIGTTIN_007d-100"><code>SIGTTIN</code></a>: <a href="#ikaruslib-posix-signal">ikaruslib posix signal</a></li>
-<li><a href="#index-g_t_0040code_007bSIGTTOU_007d-101"><code>SIGTTOU</code></a>: <a href="#ikaruslib-posix-signal">ikaruslib posix signal</a></li>
-<li><a href="#index-g_t_0040code_007bSIGURG_007d-108"><code>SIGURG</code></a>: <a href="#ikaruslib-posix-signal">ikaruslib posix signal</a></li>
-<li><a href="#index-g_t_0040code_007bSIGUSR1_007d-102"><code>SIGUSR1</code></a>: <a href="#ikaruslib-posix-signal">ikaruslib posix signal</a></li>
-<li><a href="#index-g_t_0040code_007bSIGUSR2_007d-103"><code>SIGUSR2</code></a>: <a href="#ikaruslib-posix-signal">ikaruslib posix signal</a></li>
-<li><a href="#index-g_t_0040code_007bSIGVTALRM_007d-109"><code>SIGVTALRM</code></a>: <a href="#ikaruslib-posix-signal">ikaruslib posix signal</a></li>
-<li><a href="#index-g_t_0040code_007bSIGXCPU_007d-110"><code>SIGXCPU</code></a>: <a href="#ikaruslib-posix-signal">ikaruslib posix signal</a></li>
-<li><a href="#index-g_t_0040code_007bSIGXFSZ_007d-111"><code>SIGXFSZ</code></a>: <a href="#ikaruslib-posix-signal">ikaruslib posix signal</a></li>
+<li><a href="#index-g_t_0040code_007bSIGABRT_007d-86"><code>SIGABRT</code></a>: <a href="#ikaruslib-posix-signal">ikaruslib posix signal</a></li>
+<li><a href="#index-g_t_0040code_007bSIGALRM_007d-87"><code>SIGALRM</code></a>: <a href="#ikaruslib-posix-signal">ikaruslib posix signal</a></li>
+<li><a href="#index-g_t_0040code_007bSIGBUS_007d-88"><code>SIGBUS</code></a>: <a href="#ikaruslib-posix-signal">ikaruslib posix signal</a></li>
+<li><a href="#index-g_t_0040code_007bSIGCHLD_007d-89"><code>SIGCHLD</code></a>: <a href="#ikaruslib-posix-signal">ikaruslib posix signal</a></li>
+<li><a href="#index-g_t_0040code_007bSIGCONT_007d-90"><code>SIGCONT</code></a>: <a href="#ikaruslib-posix-signal">ikaruslib posix signal</a></li>
+<li><a href="#index-g_t_0040code_007bSIGFPE_007d-91"><code>SIGFPE</code></a>: <a href="#ikaruslib-posix-signal">ikaruslib posix signal</a></li>
+<li><a href="#index-g_t_0040code_007bSIGHUP_007d-92"><code>SIGHUP</code></a>: <a href="#ikaruslib-posix-signal">ikaruslib posix signal</a></li>
+<li><a href="#index-g_t_0040code_007bSIGILL_007d-93"><code>SIGILL</code></a>: <a href="#ikaruslib-posix-signal">ikaruslib posix signal</a></li>
+<li><a href="#index-g_t_0040code_007bSIGINT_007d-94"><code>SIGINT</code></a>: <a href="#ikaruslib-posix-signal">ikaruslib posix signal</a></li>
+<li><a href="#index-g_t_0040code_007bSIGKILL_007d-95"><code>SIGKILL</code></a>: <a href="#ikaruslib-posix-signal">ikaruslib posix signal</a></li>
+<li><a href="#index-g_t_0040code_007bSIGPIPE_007d-96"><code>SIGPIPE</code></a>: <a href="#ikaruslib-posix-signal">ikaruslib posix signal</a></li>
+<li><a href="#index-g_t_0040code_007bSIGPOLL_007d-106"><code>SIGPOLL</code></a>: <a href="#ikaruslib-posix-signal">ikaruslib posix signal</a></li>
+<li><a href="#index-g_t_0040code_007bSIGPROF_007d-107"><code>SIGPROF</code></a>: <a href="#ikaruslib-posix-signal">ikaruslib posix signal</a></li>
+<li><a href="#index-g_t_0040code_007bSIGQUIT_007d-97"><code>SIGQUIT</code></a>: <a href="#ikaruslib-posix-signal">ikaruslib posix signal</a></li>
+<li><a href="#index-g_t_0040code_007bSIGSEGV_007d-98"><code>SIGSEGV</code></a>: <a href="#ikaruslib-posix-signal">ikaruslib posix signal</a></li>
+<li><a href="#index-g_t_0040code_007bSIGSTOP_007d-99"><code>SIGSTOP</code></a>: <a href="#ikaruslib-posix-signal">ikaruslib posix signal</a></li>
+<li><a href="#index-g_t_0040code_007bSIGSYS_007d-108"><code>SIGSYS</code></a>: <a href="#ikaruslib-posix-signal">ikaruslib posix signal</a></li>
+<li><a href="#index-g_t_0040code_007bSIGTERM_007d-100"><code>SIGTERM</code></a>: <a href="#ikaruslib-posix-signal">ikaruslib posix signal</a></li>
+<li><a href="#index-g_t_0040code_007bSIGTRAP_007d-109"><code>SIGTRAP</code></a>: <a href="#ikaruslib-posix-signal">ikaruslib posix signal</a></li>
+<li><a href="#index-g_t_0040code_007bSIGTSTP_007d-101"><code>SIGTSTP</code></a>: <a href="#ikaruslib-posix-signal">ikaruslib posix signal</a></li>
+<li><a href="#index-g_t_0040code_007bSIGTTIN_007d-102"><code>SIGTTIN</code></a>: <a href="#ikaruslib-posix-signal">ikaruslib posix signal</a></li>
+<li><a href="#index-g_t_0040code_007bSIGTTOU_007d-103"><code>SIGTTOU</code></a>: <a href="#ikaruslib-posix-signal">ikaruslib posix signal</a></li>
+<li><a href="#index-g_t_0040code_007bSIGURG_007d-110"><code>SIGURG</code></a>: <a href="#ikaruslib-posix-signal">ikaruslib posix signal</a></li>
+<li><a href="#index-g_t_0040code_007bSIGUSR1_007d-104"><code>SIGUSR1</code></a>: <a href="#ikaruslib-posix-signal">ikaruslib posix signal</a></li>
+<li><a href="#index-g_t_0040code_007bSIGUSR2_007d-105"><code>SIGUSR2</code></a>: <a href="#ikaruslib-posix-signal">ikaruslib posix signal</a></li>
+<li><a href="#index-g_t_0040code_007bSIGVTALRM_007d-111"><code>SIGVTALRM</code></a>: <a href="#ikaruslib-posix-signal">ikaruslib posix signal</a></li>
+<li><a href="#index-g_t_0040code_007bSIGXCPU_007d-112"><code>SIGXCPU</code></a>: <a href="#ikaruslib-posix-signal">ikaruslib posix signal</a></li>
+<li><a href="#index-g_t_0040code_007bSIGXFSZ_007d-113"><code>SIGXFSZ</code></a>: <a href="#ikaruslib-posix-signal">ikaruslib posix signal</a></li>
 <li><a href="#index-Uninstalling-Ikarus-10">Uninstalling Ikarus</a>: <a href="#overview-install-uninstall">overview install uninstall</a></li>
 <li><a href="#index-Uninstalling-Ikarus-2">Uninstalling Ikarus</a>: <a href="#overview-install">overview install</a></li>
    </ul><div class="node">
@@ -5898,104 +5920,106 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 <li><a href="#index-g_t_0023_0040_007bgensym_0040_007d-32"><code>#{gensym}</code></a>: <a href="#ikaruslib-gensym">ikaruslib gensym</a></li>
 <li><a href="#index-g_t_0023_0040_007bpretty_002dname-unique_002dname_0040_007d-34"><code>#{pretty-name unique-name}</code></a>: <a href="#ikaruslib-gensym">ikaruslib gensym</a></li>
 <li><a href="#index-g_t_0023_0040_007bunique_002dname_0040_007d-33"><code>#{unique-name}</code></a>: <a href="#ikaruslib-gensym">ikaruslib gensym</a></li>
-<li><a href="#index-accept_002dconnection-72"><code>accept-connection</code></a>: <a href="#ikaruslib-io-socket-server">ikaruslib io socket server</a></li>
-<li><a href="#index-accept_002dconnection_002dnonblocking-73"><code>accept-connection-nonblocking</code></a>: <a href="#ikaruslib-io-socket-server">ikaruslib io socket server</a></li>
-<li><a href="#index-change_002dmode-124"><code>change-mode</code></a>: <a href="#ikaruslib-posix-file">ikaruslib posix file</a></li>
-<li><a href="#index-close_002dtcp_002dserver_002dsocket-74"><code>close-tcp-server-socket</code></a>: <a href="#ikaruslib-io-socket-server">ikaruslib io socket server</a></li>
-<li><a href="#index-current_002ddirectory-113"><code>current-directory</code></a>: <a href="#ikaruslib-posix-file">ikaruslib posix file</a></li>
-<li><a href="#index-delete_002ddirectory-123"><code>delete-directory</code></a>: <a href="#ikaruslib-posix-file">ikaruslib posix file</a></li>
-<li><a href="#index-delete_002dfile-122"><code>delete-file</code></a>: <a href="#ikaruslib-posix-file">ikaruslib posix file</a></li>
-<li><a href="#index-directory_002dlist-114"><code>directory-list</code></a>: <a href="#ikaruslib-posix-file">ikaruslib posix file</a></li>
-<li><a href="#index-dlclose-158"><code>dlclose</code></a>: <a href="#ikaruslib-foreign-dl">ikaruslib foreign dl</a></li>
-<li><a href="#index-dlerror-160"><code>dlerror</code></a>: <a href="#ikaruslib-foreign-dl">ikaruslib foreign dl</a></li>
-<li><a href="#index-dlopen-155"><code>dlopen</code></a>: <a href="#ikaruslib-foreign-dl">ikaruslib foreign dl</a></li>
-<li><a href="#index-dlsym-159"><code>dlsym</code></a>: <a href="#ikaruslib-foreign-dl">ikaruslib foreign dl</a></li>
-<li><a href="#index-file_002dctime-115"><code>file-ctime</code></a>: <a href="#ikaruslib-posix-file">ikaruslib posix file</a></li>
-<li><a href="#index-file_002ddirectory_003f-118"><code>file-directory?</code></a>: <a href="#ikaruslib-posix-file">ikaruslib posix file</a></li>
-<li><a href="#index-file_002dexists_003f-116"><code>file-exists?</code></a>: <a href="#ikaruslib-posix-file">ikaruslib posix file</a></li>
-<li><a href="#index-file_002dregular_003f-117"><code>file-regular?</code></a>: <a href="#ikaruslib-posix-file">ikaruslib posix file</a></li>
-<li><a href="#index-file_002dsymbolic_002dlink_003f-119"><code>file-symbolic-link?</code></a>: <a href="#ikaruslib-posix-file">ikaruslib posix file</a></li>
-<li><a href="#index-fork-78"><code>fork</code></a>: <a href="#ikaruslib-posix-process">ikaruslib posix process</a></li>
+<li><a href="#index-accept_002dconnection-74"><code>accept-connection</code></a>: <a href="#ikaruslib-io-socket-server">ikaruslib io socket server</a></li>
+<li><a href="#index-accept_002dconnection_002dnonblocking-75"><code>accept-connection-nonblocking</code></a>: <a href="#ikaruslib-io-socket-server">ikaruslib io socket server</a></li>
+<li><a href="#index-change_002dmode-126"><code>change-mode</code></a>: <a href="#ikaruslib-posix-file">ikaruslib posix file</a></li>
+<li><a href="#index-close_002dtcp_002dserver_002dsocket-76"><code>close-tcp-server-socket</code></a>: <a href="#ikaruslib-io-socket-server">ikaruslib io socket server</a></li>
+<li><a href="#index-collect-63"><code>collect</code></a>: <a href="#ikaruslib-guardians">ikaruslib guardians</a></li>
+<li><a href="#index-current_002ddirectory-115"><code>current-directory</code></a>: <a href="#ikaruslib-posix-file">ikaruslib posix file</a></li>
+<li><a href="#index-delete_002ddirectory-125"><code>delete-directory</code></a>: <a href="#ikaruslib-posix-file">ikaruslib posix file</a></li>
+<li><a href="#index-delete_002dfile-124"><code>delete-file</code></a>: <a href="#ikaruslib-posix-file">ikaruslib posix file</a></li>
+<li><a href="#index-directory_002dlist-116"><code>directory-list</code></a>: <a href="#ikaruslib-posix-file">ikaruslib posix file</a></li>
+<li><a href="#index-dlclose-160"><code>dlclose</code></a>: <a href="#ikaruslib-foreign-dl">ikaruslib foreign dl</a></li>
+<li><a href="#index-dlerror-162"><code>dlerror</code></a>: <a href="#ikaruslib-foreign-dl">ikaruslib foreign dl</a></li>
+<li><a href="#index-dlopen-157"><code>dlopen</code></a>: <a href="#ikaruslib-foreign-dl">ikaruslib foreign dl</a></li>
+<li><a href="#index-dlsym-161"><code>dlsym</code></a>: <a href="#ikaruslib-foreign-dl">ikaruslib foreign dl</a></li>
+<li><a href="#index-file_002dctime-117"><code>file-ctime</code></a>: <a href="#ikaruslib-posix-file">ikaruslib posix file</a></li>
+<li><a href="#index-file_002ddirectory_003f-120"><code>file-directory?</code></a>: <a href="#ikaruslib-posix-file">ikaruslib posix file</a></li>
+<li><a href="#index-file_002dexists_003f-118"><code>file-exists?</code></a>: <a href="#ikaruslib-posix-file">ikaruslib posix file</a></li>
+<li><a href="#index-file_002dregular_003f-119"><code>file-regular?</code></a>: <a href="#ikaruslib-posix-file">ikaruslib posix file</a></li>
+<li><a href="#index-file_002dsymbolic_002dlink_003f-121"><code>file-symbolic-link?</code></a>: <a href="#ikaruslib-posix-file">ikaruslib posix file</a></li>
+<li><a href="#index-fork-80"><code>fork</code></a>: <a href="#ikaruslib-posix-process">ikaruslib posix process</a></li>
 <li><a href="#index-format-40"><code>format</code></a>: <a href="#ikaruslib-printing">ikaruslib printing</a></li>
 <li><a href="#index-fprintf-42"><code>fprintf</code></a>: <a href="#ikaruslib-printing">ikaruslib printing</a></li>
-<li><a href="#index-free-129"><code>free</code></a>: <a href="#ikaruslib-foreign-memops-alloc">ikaruslib foreign memops alloc</a></li>
+<li><a href="#index-free-131"><code>free</code></a>: <a href="#ikaruslib-foreign-memops-alloc">ikaruslib foreign memops alloc</a></li>
 <li><a href="#index-gensym-27"><code>gensym</code></a>: <a href="#ikaruslib-gensym">ikaruslib gensym</a></li>
 <li><a href="#index-gensym_002d_003eunique_002dstring-31"><code>gensym-&gt;unique-string</code></a>: <a href="#ikaruslib-gensym">ikaruslib gensym</a></li>
 <li><a href="#index-gensym_002dcount-55"><code>gensym-count</code></a>: <a href="#ikaruslib-printing">ikaruslib printing</a></li>
 <li><a href="#index-gensym_002dprefix-53"><code>gensym-prefix</code></a>: <a href="#ikaruslib-printing">ikaruslib printing</a></li>
 <li><a href="#index-gensym_003f-30"><code>gensym?</code></a>: <a href="#ikaruslib-gensym">ikaruslib gensym</a></li>
-<li><a href="#index-getenv-125"><code>getenv</code></a>: <a href="#ikaruslib-posix-env">ikaruslib posix env</a></li>
+<li><a href="#index-getenv-127"><code>getenv</code></a>: <a href="#ikaruslib-posix-env">ikaruslib posix env</a></li>
 <li><a href="#index-import-21"><code>import</code></a>: <a href="#ikaruslib-import">ikaruslib import</a></li>
-<li><a href="#index-input_002dsocket_002dbuffer_002dsize-76"><code>input-socket-buffer-size</code></a>: <a href="#ikaruslib-io-socket-server">ikaruslib io socket server</a></li>
-<li><a href="#index-integer_002d_003epointer-131"><code>integer-&gt;pointer</code></a>: <a href="#ikaruslib-foreign-memops-pointer">ikaruslib foreign memops pointer</a></li>
+<li><a href="#index-input_002dsocket_002dbuffer_002dsize-78"><code>input-socket-buffer-size</code></a>: <a href="#ikaruslib-io-socket-server">ikaruslib io socket server</a></li>
+<li><a href="#index-integer_002d_003epointer-133"><code>integer-&gt;pointer</code></a>: <a href="#ikaruslib-foreign-memops-pointer">ikaruslib foreign memops pointer</a></li>
 <li><a href="#index-interaction_002denvironment-19"><code>interaction-environment</code></a>: <a href="#ikaruslib-environment">ikaruslib environment</a></li>
-<li><a href="#index-kill-112"><code>kill</code></a>: <a href="#ikaruslib-posix-signal">ikaruslib posix signal</a></li>
+<li><a href="#index-kill-114"><code>kill</code></a>: <a href="#ikaruslib-posix-signal">ikaruslib posix signal</a></li>
 <li><a href="#index-load-20"><code>load</code></a>: <a href="#ikaruslib-load">ikaruslib load</a></li>
-<li><a href="#index-make_002dc_002dcallback-162"><code>make-c-callback</code></a>: <a href="#ikaruslib-foreign-call-back">ikaruslib foreign call back</a></li>
-<li><a href="#index-make_002dc_002dcallout-161"><code>make-c-callout</code></a>: <a href="#ikaruslib-foreign-call-out-api">ikaruslib foreign call out api</a></li>
-<li><a href="#index-make_002ddirectory-121"><code>make-directory</code></a>: <a href="#ikaruslib-posix-file">ikaruslib posix file</a></li>
-<li><a href="#index-make_002dguardian-63"><code>make-guardian</code></a>: <a href="#ikaruslib-guardians-api">ikaruslib guardians api</a></li>
+<li><a href="#index-make_002dc_002dcallback-164"><code>make-c-callback</code></a>: <a href="#ikaruslib-foreign-call-back">ikaruslib foreign call back</a></li>
+<li><a href="#index-make_002dc_002dcallout-163"><code>make-c-callout</code></a>: <a href="#ikaruslib-foreign-call-out-api">ikaruslib foreign call out api</a></li>
+<li><a href="#index-make_002ddirectory-123"><code>make-directory</code></a>: <a href="#ikaruslib-posix-file">ikaruslib posix file</a></li>
+<li><a href="#index-make_002dguardian-64"><code>make-guardian</code></a>: <a href="#ikaruslib-guardians-api">ikaruslib guardians api</a></li>
 <li><a href="#index-make_002dparameter-24"><code>make-parameter</code></a>: <a href="#ikaruslib-parameters">ikaruslib parameters</a></li>
-<li><a href="#index-make_002dsymbolic_002dlink-120"><code>make-symbolic-link</code></a>: <a href="#ikaruslib-posix-file">ikaruslib posix file</a></li>
+<li><a href="#index-make_002dsymbolic_002dlink-122"><code>make-symbolic-link</code></a>: <a href="#ikaruslib-posix-file">ikaruslib posix file</a></li>
 <li><a href="#index-make_002dtraced_002dprocedure-60"><code>make-traced-procedure</code></a>: <a href="#ikaruslib-tracing">ikaruslib tracing</a></li>
-<li><a href="#index-malloc-128"><code>malloc</code></a>: <a href="#ikaruslib-foreign-memops-alloc">ikaruslib foreign memops alloc</a></li>
+<li><a href="#index-malloc-130"><code>malloc</code></a>: <a href="#ikaruslib-foreign-memops-alloc">ikaruslib foreign memops alloc</a></li>
 <li><a href="#index-module-22"><code>module</code></a>: <a href="#ikaruslib-modules-api">ikaruslib modules api</a></li>
-<li><a href="#index-nanosleep-127"><code>nanosleep</code></a>: <a href="#ikaruslib-posix-misc">ikaruslib posix misc</a></li>
+<li><a href="#index-nanosleep-129"><code>nanosleep</code></a>: <a href="#ikaruslib-posix-misc">ikaruslib posix misc</a></li>
 <li><a href="#index-new_002dcafe-17"><code>new-cafe</code></a>: <a href="#ikaruslib-cafe">ikaruslib cafe</a></li>
-<li><a href="#index-output_002dsocket_002dbuffer_002dsize-77"><code>output-socket-buffer-size</code></a>: <a href="#ikaruslib-io-socket-server">ikaruslib io socket server</a></li>
+<li><a href="#index-output_002dsocket_002dbuffer_002dsize-79"><code>output-socket-buffer-size</code></a>: <a href="#ikaruslib-io-socket-server">ikaruslib io socket server</a></li>
 <li><a href="#index-parameterize-26"><code>parameterize</code></a>: <a href="#ikaruslib-parameters">ikaruslib parameters</a></li>
-<li><a href="#index-pointer_002d_003einteger-130"><code>pointer-&gt;integer</code></a>: <a href="#ikaruslib-foreign-memops-pointer">ikaruslib foreign memops pointer</a></li>
-<li><a href="#index-pointer_002dref_002dc_002ddouble-153"><code>pointer-ref-c-double</code></a>: <a href="#ikaruslib-foreign-memops-peek">ikaruslib foreign memops peek</a></li>
-<li><a href="#index-pointer_002dref_002dc_002dfloat-152"><code>pointer-ref-c-float</code></a>: <a href="#ikaruslib-foreign-memops-peek">ikaruslib foreign memops peek</a></li>
-<li><a href="#index-pointer_002dref_002dc_002dpointer-154"><code>pointer-ref-c-pointer</code></a>: <a href="#ikaruslib-foreign-memops-peek">ikaruslib foreign memops peek</a></li>
-<li><a href="#index-pointer_002dref_002dc_002dsigned_002dchar-142"><code>pointer-ref-c-signed-char</code></a>: <a href="#ikaruslib-foreign-memops-peek">ikaruslib foreign memops peek</a></li>
-<li><a href="#index-pointer_002dref_002dc_002dsigned_002dint-146"><code>pointer-ref-c-signed-int</code></a>: <a href="#ikaruslib-foreign-memops-peek">ikaruslib foreign memops peek</a></li>
-<li><a href="#index-pointer_002dref_002dc_002dsigned_002dlong-148"><code>pointer-ref-c-signed-long</code></a>: <a href="#ikaruslib-foreign-memops-peek">ikaruslib foreign memops peek</a></li>
-<li><a href="#index-pointer_002dref_002dc_002dsigned_002dlong_002dlong-150"><code>pointer-ref-c-signed-long-long</code></a>: <a href="#ikaruslib-foreign-memops-peek">ikaruslib foreign memops peek</a></li>
-<li><a href="#index-pointer_002dref_002dc_002dsigned_002dshort-144"><code>pointer-ref-c-signed-short</code></a>: <a href="#ikaruslib-foreign-memops-peek">ikaruslib foreign memops peek</a></li>
-<li><a href="#index-pointer_002dref_002dc_002dunsigned_002dchar-143"><code>pointer-ref-c-unsigned-char</code></a>: <a href="#ikaruslib-foreign-memops-peek">ikaruslib foreign memops peek</a></li>
-<li><a href="#index-pointer_002dref_002dc_002dunsigned_002dint-147"><code>pointer-ref-c-unsigned-int</code></a>: <a href="#ikaruslib-foreign-memops-peek">ikaruslib foreign memops peek</a></li>
-<li><a href="#index-pointer_002dref_002dc_002dunsigned_002dlong-149"><code>pointer-ref-c-unsigned-long</code></a>: <a href="#ikaruslib-foreign-memops-peek">ikaruslib foreign memops peek</a></li>
-<li><a href="#index-pointer_002dref_002dc_002dunsigned_002dlong_002dlong-151"><code>pointer-ref-c-unsigned-long-long</code></a>: <a href="#ikaruslib-foreign-memops-peek">ikaruslib foreign memops peek</a></li>
-<li><a href="#index-pointer_002dref_002dc_002dunsigned_002dshort-145"><code>pointer-ref-c-unsigned-short</code></a>: <a href="#ikaruslib-foreign-memops-peek">ikaruslib foreign memops peek</a></li>
-<li><a href="#index-pointer_002dset_002dc_002dchar_0021-134"><code>pointer-set-c-char!</code></a>: <a href="#ikaruslib-foreign-memops-poke">ikaruslib foreign memops poke</a></li>
-<li><a href="#index-pointer_002dset_002dc_002ddouble_0021-140"><code>pointer-set-c-double!</code></a>: <a href="#ikaruslib-foreign-memops-poke">ikaruslib foreign memops poke</a></li>
-<li><a href="#index-pointer_002dset_002dc_002dfloat_0021-139"><code>pointer-set-c-float!</code></a>: <a href="#ikaruslib-foreign-memops-poke">ikaruslib foreign memops poke</a></li>
-<li><a href="#index-pointer_002dset_002dc_002dint_0021-136"><code>pointer-set-c-int!</code></a>: <a href="#ikaruslib-foreign-memops-poke">ikaruslib foreign memops poke</a></li>
-<li><a href="#index-pointer_002dset_002dc_002dlong_0021-137"><code>pointer-set-c-long!</code></a>: <a href="#ikaruslib-foreign-memops-poke">ikaruslib foreign memops poke</a></li>
-<li><a href="#index-pointer_002dset_002dc_002dlong_002dlong_0021-138"><code>pointer-set-c-long-long!</code></a>: <a href="#ikaruslib-foreign-memops-poke">ikaruslib foreign memops poke</a></li>
-<li><a href="#index-pointer_002dset_002dc_002dpointer_0021-141"><code>pointer-set-c-pointer!</code></a>: <a href="#ikaruslib-foreign-memops-poke">ikaruslib foreign memops poke</a></li>
-<li><a href="#index-pointer_002dset_002dc_002dshort_0021-135"><code>pointer-set-c-short!</code></a>: <a href="#ikaruslib-foreign-memops-poke">ikaruslib foreign memops poke</a></li>
-<li><a href="#index-pointer_002dsize-133"><code>pointer-size</code></a>: <a href="#ikaruslib-foreign-memops-pointer">ikaruslib foreign memops pointer</a></li>
-<li><a href="#index-pointer_003f-132"><code>pointer?</code></a>: <a href="#ikaruslib-foreign-memops-pointer">ikaruslib foreign memops pointer</a></li>
+<li><a href="#index-pointer_002d_003einteger-132"><code>pointer-&gt;integer</code></a>: <a href="#ikaruslib-foreign-memops-pointer">ikaruslib foreign memops pointer</a></li>
+<li><a href="#index-pointer_002dref_002dc_002ddouble-155"><code>pointer-ref-c-double</code></a>: <a href="#ikaruslib-foreign-memops-peek">ikaruslib foreign memops peek</a></li>
+<li><a href="#index-pointer_002dref_002dc_002dfloat-154"><code>pointer-ref-c-float</code></a>: <a href="#ikaruslib-foreign-memops-peek">ikaruslib foreign memops peek</a></li>
+<li><a href="#index-pointer_002dref_002dc_002dpointer-156"><code>pointer-ref-c-pointer</code></a>: <a href="#ikaruslib-foreign-memops-peek">ikaruslib foreign memops peek</a></li>
+<li><a href="#index-pointer_002dref_002dc_002dsigned_002dchar-144"><code>pointer-ref-c-signed-char</code></a>: <a href="#ikaruslib-foreign-memops-peek">ikaruslib foreign memops peek</a></li>
+<li><a href="#index-pointer_002dref_002dc_002dsigned_002dint-148"><code>pointer-ref-c-signed-int</code></a>: <a href="#ikaruslib-foreign-memops-peek">ikaruslib foreign memops peek</a></li>
+<li><a href="#index-pointer_002dref_002dc_002dsigned_002dlong-150"><code>pointer-ref-c-signed-long</code></a>: <a href="#ikaruslib-foreign-memops-peek">ikaruslib foreign memops peek</a></li>
+<li><a href="#index-pointer_002dref_002dc_002dsigned_002dlong_002dlong-152"><code>pointer-ref-c-signed-long-long</code></a>: <a href="#ikaruslib-foreign-memops-peek">ikaruslib foreign memops peek</a></li>
+<li><a href="#index-pointer_002dref_002dc_002dsigned_002dshort-146"><code>pointer-ref-c-signed-short</code></a>: <a href="#ikaruslib-foreign-memops-peek">ikaruslib foreign memops peek</a></li>
+<li><a href="#index-pointer_002dref_002dc_002dunsigned_002dchar-145"><code>pointer-ref-c-unsigned-char</code></a>: <a href="#ikaruslib-foreign-memops-peek">ikaruslib foreign memops peek</a></li>
+<li><a href="#index-pointer_002dref_002dc_002dunsigned_002dint-149"><code>pointer-ref-c-unsigned-int</code></a>: <a href="#ikaruslib-foreign-memops-peek">ikaruslib foreign memops peek</a></li>
+<li><a href="#index-pointer_002dref_002dc_002dunsigned_002dlong-151"><code>pointer-ref-c-unsigned-long</code></a>: <a href="#ikaruslib-foreign-memops-peek">ikaruslib foreign memops peek</a></li>
+<li><a href="#index-pointer_002dref_002dc_002dunsigned_002dlong_002dlong-153"><code>pointer-ref-c-unsigned-long-long</code></a>: <a href="#ikaruslib-foreign-memops-peek">ikaruslib foreign memops peek</a></li>
+<li><a href="#index-pointer_002dref_002dc_002dunsigned_002dshort-147"><code>pointer-ref-c-unsigned-short</code></a>: <a href="#ikaruslib-foreign-memops-peek">ikaruslib foreign memops peek</a></li>
+<li><a href="#index-pointer_002dset_002dc_002dchar_0021-136"><code>pointer-set-c-char!</code></a>: <a href="#ikaruslib-foreign-memops-poke">ikaruslib foreign memops poke</a></li>
+<li><a href="#index-pointer_002dset_002dc_002ddouble_0021-142"><code>pointer-set-c-double!</code></a>: <a href="#ikaruslib-foreign-memops-poke">ikaruslib foreign memops poke</a></li>
+<li><a href="#index-pointer_002dset_002dc_002dfloat_0021-141"><code>pointer-set-c-float!</code></a>: <a href="#ikaruslib-foreign-memops-poke">ikaruslib foreign memops poke</a></li>
+<li><a href="#index-pointer_002dset_002dc_002dint_0021-138"><code>pointer-set-c-int!</code></a>: <a href="#ikaruslib-foreign-memops-poke">ikaruslib foreign memops poke</a></li>
+<li><a href="#index-pointer_002dset_002dc_002dlong_0021-139"><code>pointer-set-c-long!</code></a>: <a href="#ikaruslib-foreign-memops-poke">ikaruslib foreign memops poke</a></li>
+<li><a href="#index-pointer_002dset_002dc_002dlong_002dlong_0021-140"><code>pointer-set-c-long-long!</code></a>: <a href="#ikaruslib-foreign-memops-poke">ikaruslib foreign memops poke</a></li>
+<li><a href="#index-pointer_002dset_002dc_002dpointer_0021-143"><code>pointer-set-c-pointer!</code></a>: <a href="#ikaruslib-foreign-memops-poke">ikaruslib foreign memops poke</a></li>
+<li><a href="#index-pointer_002dset_002dc_002dshort_0021-137"><code>pointer-set-c-short!</code></a>: <a href="#ikaruslib-foreign-memops-poke">ikaruslib foreign memops poke</a></li>
+<li><a href="#index-pointer_002dsize-135"><code>pointer-size</code></a>: <a href="#ikaruslib-foreign-memops-pointer">ikaruslib foreign memops pointer</a></li>
+<li><a href="#index-pointer_003f-134"><code>pointer?</code></a>: <a href="#ikaruslib-foreign-memops-pointer">ikaruslib foreign memops pointer</a></li>
 <li><a href="#index-port_002dmode-14"><code>port-mode</code></a>: <a href="#ikaruslib-reader">ikaruslib reader</a></li>
+<li><a href="#index-post_002dgc_002dhooks-65"><code>post-gc-hooks</code></a>: <a href="#ikaruslib-guardians-api">ikaruslib guardians api</a></li>
 <li><a href="#index-pretty_002dprint-36"><code>pretty-print</code></a>: <a href="#ikaruslib-printing">ikaruslib printing</a></li>
 <li><a href="#index-pretty_002dwidth-38"><code>pretty-width</code></a>: <a href="#ikaruslib-printing">ikaruslib printing</a></li>
 <li><a href="#index-print_002dgensym-49"><code>print-gensym</code></a>: <a href="#ikaruslib-printing">ikaruslib printing</a></li>
 <li><a href="#index-print_002dgraph-43"><code>print-graph</code></a>: <a href="#ikaruslib-printing">ikaruslib printing</a></li>
 <li><a href="#index-print_002dunicode-46"><code>print-unicode</code></a>: <a href="#ikaruslib-printing">ikaruslib printing</a></li>
 <li><a href="#index-printf-41"><code>printf</code></a>: <a href="#ikaruslib-printing">ikaruslib printing</a></li>
-<li><a href="#index-process-64"><code>process</code></a>: <a href="#ikaruslib-io-process">ikaruslib io process</a></li>
-<li><a href="#index-process_002dnonblocking-65"><code>process-nonblocking</code></a>: <a href="#ikaruslib-io-process">ikaruslib io process</a></li>
-<li><a href="#index-register_002dcallback-75"><code>register-callback</code></a>: <a href="#ikaruslib-io-socket-server">ikaruslib io socket server</a></li>
+<li><a href="#index-process-66"><code>process</code></a>: <a href="#ikaruslib-io-process">ikaruslib io process</a></li>
+<li><a href="#index-process_002dnonblocking-67"><code>process-nonblocking</code></a>: <a href="#ikaruslib-io-process">ikaruslib io process</a></li>
+<li><a href="#index-register_002dcallback-77"><code>register-callback</code></a>: <a href="#ikaruslib-io-socket-server">ikaruslib io socket server</a></li>
 <li><a href="#index-set_002dport_002dmode_0021-15"><code>set-port-mode!</code></a>: <a href="#ikaruslib-reader">ikaruslib reader</a></li>
-<li><a href="#index-strerror-126"><code>strerror</code></a>: <a href="#ikaruslib-posix-misc">ikaruslib posix misc</a></li>
-<li><a href="#index-system-79"><code>system</code></a>: <a href="#ikaruslib-posix-process">ikaruslib posix process</a></li>
-<li><a href="#index-tcp_002dconnect-66"><code>tcp-connect</code></a>: <a href="#ikaruslib-io-socket-client">ikaruslib io socket client</a></li>
-<li><a href="#index-tcp_002dconnect_002dnonblocking-68"><code>tcp-connect-nonblocking</code></a>: <a href="#ikaruslib-io-socket-client">ikaruslib io socket client</a></li>
-<li><a href="#index-tcp_002dserver_002dsocket-70"><code>tcp-server-socket</code></a>: <a href="#ikaruslib-io-socket-server">ikaruslib io socket server</a></li>
-<li><a href="#index-tcp_002dserver_002dsocket_002dnonblocking-71"><code>tcp-server-socket-nonblocking</code></a>: <a href="#ikaruslib-io-socket-server">ikaruslib io socket server</a></li>
+<li><a href="#index-strerror-128"><code>strerror</code></a>: <a href="#ikaruslib-posix-misc">ikaruslib posix misc</a></li>
+<li><a href="#index-system-81"><code>system</code></a>: <a href="#ikaruslib-posix-process">ikaruslib posix process</a></li>
+<li><a href="#index-tcp_002dconnect-68"><code>tcp-connect</code></a>: <a href="#ikaruslib-io-socket-client">ikaruslib io socket client</a></li>
+<li><a href="#index-tcp_002dconnect_002dnonblocking-70"><code>tcp-connect-nonblocking</code></a>: <a href="#ikaruslib-io-socket-client">ikaruslib io socket client</a></li>
+<li><a href="#index-tcp_002dserver_002dsocket-72"><code>tcp-server-socket</code></a>: <a href="#ikaruslib-io-socket-server">ikaruslib io socket server</a></li>
+<li><a href="#index-tcp_002dserver_002dsocket_002dnonblocking-73"><code>tcp-server-socket-nonblocking</code></a>: <a href="#ikaruslib-io-socket-server">ikaruslib io socket server</a></li>
 <li><a href="#index-time-61"><code>time</code></a>: <a href="#ikaruslib-timing">ikaruslib timing</a></li>
 <li><a href="#index-time_002dit-62"><code>time-it</code></a>: <a href="#ikaruslib-timing">ikaruslib timing</a></li>
 <li><a href="#index-trace_002ddefine-57"><code>trace-define</code></a>: <a href="#ikaruslib-tracing">ikaruslib tracing</a></li>
 <li><a href="#index-trace_002dlambda-59"><code>trace-lambda</code></a>: <a href="#ikaruslib-tracing">ikaruslib tracing</a></li>
-<li><a href="#index-udp_002dconnect-67"><code>udp-connect</code></a>: <a href="#ikaruslib-io-socket-client">ikaruslib io socket client</a></li>
-<li><a href="#index-udp_002dconnect_002dnonblocking-69"><code>udp-connect-nonblocking</code></a>: <a href="#ikaruslib-io-socket-client">ikaruslib io socket client</a></li>
-<li><a href="#index-void-163"><code>void</code></a>: <a href="#ikaruslib-misc">ikaruslib misc</a></li>
-<li><a href="#index-waitpid-80"><code>waitpid</code></a>: <a href="#ikaruslib-posix-waitpid">ikaruslib posix waitpid</a></li>
-<li><a href="#index-wstatus_002dexit_002dstatus-82"><code>wstatus-exit-status</code></a>: <a href="#ikaruslib-posix-waitpid">ikaruslib posix waitpid</a></li>
-<li><a href="#index-wstatus_002dpid-81"><code>wstatus-pid</code></a>: <a href="#ikaruslib-posix-waitpid">ikaruslib posix waitpid</a></li>
-<li><a href="#index-wstatus_002dreceived_002dsignal-83"><code>wstatus-received-signal</code></a>: <a href="#ikaruslib-posix-waitpid">ikaruslib posix waitpid</a></li>
+<li><a href="#index-udp_002dconnect-69"><code>udp-connect</code></a>: <a href="#ikaruslib-io-socket-client">ikaruslib io socket client</a></li>
+<li><a href="#index-udp_002dconnect_002dnonblocking-71"><code>udp-connect-nonblocking</code></a>: <a href="#ikaruslib-io-socket-client">ikaruslib io socket client</a></li>
+<li><a href="#index-void-165"><code>void</code></a>: <a href="#ikaruslib-misc">ikaruslib misc</a></li>
+<li><a href="#index-waitpid-82"><code>waitpid</code></a>: <a href="#ikaruslib-posix-waitpid">ikaruslib posix waitpid</a></li>
+<li><a href="#index-wstatus_002dexit_002dstatus-84"><code>wstatus-exit-status</code></a>: <a href="#ikaruslib-posix-waitpid">ikaruslib posix waitpid</a></li>
+<li><a href="#index-wstatus_002dpid-83"><code>wstatus-pid</code></a>: <a href="#ikaruslib-posix-waitpid">ikaruslib posix waitpid</a></li>
+<li><a href="#index-wstatus_002dreceived_002dsignal-85"><code>wstatus-received-signal</code></a>: <a href="#ikaruslib-posix-waitpid">ikaruslib posix waitpid</a></li>
    </ul><div class="node">
 <a name="variable-index"></a>
 <p><hr>
