@@ -7,7 +7,7 @@
 <link title="Top" rel="top" href="#Top">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
-This document describes version 1.3b5 of MBFL, a library
+This document describes version 1.3b6 of MBFL, a library
 of functions for the GNU Bash shell.  The package is distributed
 under the terms of the GNU Lesser General Public License (LGPL);
 the home page is at:
@@ -61,7 +61,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#dir">(dir)</a>
 
 <h2 class="unnumbered">Marco's Bash Functions Library</h2>
 
-<p>This document describes version 1.3b5 of <acronym>MBFL</acronym>, a library
+<p>This document describes version 1.3b6 of <acronym>MBFL</acronym>, a library
 of functions for the <acronym>GNU</acronym> Bash shell.  The package is distributed
 under the terms of the <acronym>GNU</acronym> Lesser General Public License (<acronym>LGPL</acronym>);
 the home page is at:
@@ -3021,9 +3021,7 @@ be used as first argument to <code>mbfl_program_exec</code>:
           
               ARGUMENT=${1:?"missing 'ARGUMENT'"}
               shift
-              PROGNAME=$(mbfl_program_found myprog) || \
-                  exit $?
-              FLAGS
+              PROGNAME=$(mbfl_program_found myprog) || exit $?
           
               mbfl_option_verbose_program &amp;&amp; \
                  FLAGS="$FLAGS --verbose"
@@ -4548,14 +4546,20 @@ escape sequences.
 <li>Be careful in not to wrongly modify it.
 
      <li>Send it one line at a time, terminating each line with a carriage
-return, line feed sequence (<code>\r\n</code>). 
+return, line feed sequence (<code>\r\n</code>).
+
+     <li>Quote with a dot lines starting with a dot. 
 </ul>
 
    <p>So we can use an equivalent of the following chunk of code, assuming
 <code>3</code> is the file descriptor connected to the remote <acronym>SMTP</acronym> server:
 
 <pre class="example">     print_message | while IFS= read line
-     do printf '%s\r\n' "$line" &gt;&amp;3
+     do
+         if test "${line:0:1}" = '.'
+         then printf '.%s\r\n' "$line" &gt;&amp;3
+         else printf  '%s\r\n' "$line" &gt;&amp;3
+         fi
      done
 </pre>
    <p class="noindent">notice that <code>read</code> is executed in an environment in which
@@ -4655,7 +4659,7 @@ code is different from <var>expected_code</var>, raise an error.
      #         The purpose of this script is to understand how to
      #       handle the SMTP protocol.
      #
-     # Copyright (c) 2009 Marco Maggi &lt;marcomaggi@gna.org>
+     # Copyright (c) 2009, 2010 Marco Maggi &lt;marcomaggi@gna.org>
      #
      # This  program  is free  software:  you  can redistribute  it
      # and/or modify it  under the terms of the  GNU General Public
@@ -4761,7 +4765,10 @@ code is different from <var>expected_code</var>, raise an error.
          local -i count=0
          while IFS= read line
          do
-             printf '%s\r\n' "$line" >&amp;3
+             if test "${line:0:1}" = '.'
+             then printf '.%s\r\n' "$line" >&amp;3
+             else printf  '%s\r\n' "$line" >&amp;3
+             fi
              let ++count
          done
          test "$LOGGING_TO_STDERR" = yes &amp;&amp; \
@@ -4895,7 +4902,7 @@ it reads lines from the server, and echoes them to stdout.
      #         The purpose of this script is to understand how to
      #       send a message through a process in background.
      #
-     # Copyright (c) 2009 Marco Maggi &lt;marcomaggi@gna.org>
+     # Copyright (c) 2009, 2010 Marco Maggi &lt;marcomaggi@gna.org>
      #
      # This  program  is free  software:  you  can redistribute  it
      # and/or modify it  under the terms of the  GNU General Public
@@ -5007,7 +5014,10 @@ it reads lines from the server, and echoes them to stdout.
          local -i count=0
          while IFS= read line
          do
-             printf '%s\r\n' "$line" >&amp;4
+             if test "${line:0:1}" = '.'
+             then printf '.%s\r\n' "$line" >&amp;4
+             else printf  '%s\r\n' "$line" >&amp;4
+             fi
              let ++count
          done
          test "$LOGGING_TO_STDERR" = yes &amp;&amp; \
