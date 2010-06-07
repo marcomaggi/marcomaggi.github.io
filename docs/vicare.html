@@ -7,7 +7,7 @@
 <link title="Top" rel="top" href="#Top">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
-This document describes version 0.1d1 of Vicare Scheme, an almost
+This document describes version 0.1d2 of Vicare Scheme, an almost
 R6RS compliant implementation of the Scheme programming language.
 Vicare (pronounced the etruscan way) is an experimental fork of Ikarus
 Scheme which aims at fixing bugs, full R6RS compliance with a
@@ -76,6 +76,7 @@ people.-->
 <li><a href="#toc_library">3 Installed libraries</a></li>
 <li><a href="#toc_posix">4 The <acronym>POSIX</acronym> interface</a></li>
 <li><a href="#toc_objects-int">5 Internals: builtin objects</a></li>
+<li><a href="#toc_debug-int">6 Internals: debug mode</a></li>
 <li><a href="#toc_missing">Appendix A Missing Features</a></li>
 <li><a href="#toc_building">Appendix B Building infrastructure</a></li>
 <li><a href="#toc_credits">Appendix C Credits for this document</a></li>
@@ -189,31 +190,33 @@ people.-->
 </li></ul>
 <li><a name="toc_posix" href="#posix">4 The <acronym>POSIX</acronym> interface</a>
 <ul>
-<li><a href="#posix-process">4.1 Spawning processes and the like</a>
-<li><a href="#posix-waitpid">4.2 Waiting for terminated children</a>
-<li><a href="#posix-signal">4.3 Delivering signals to processes</a>
-<li><a href="#posix-file">4.4 Interfacing with the file system</a>
-<li><a href="#posix-env">4.5 Interfacing with the execution environment</a>
-<li><a href="#posix-misc">4.6 Miscellaneous functions</a>
-<li><a href="#posix-int-intro">4.7 Internals: introduction to the <acronym>POSIX</acronym> <acronym>API</acronym></a>
-<li><a href="#posix-int-errno">4.8 Internals: handling <code>errno</code> codes</a>
-<li><a href="#posix-int-fd">4.9 Internals: file descriptors</a>
+<li><a href="#posix-pid">4.1 Process identifier functions</a>
+<li><a href="#posix-process">4.2 Spawning processes and the like</a>
+<li><a href="#posix-waitpid">4.3 Waiting for terminated children</a>
+<li><a href="#posix-signal">4.4 Delivering signals to processes</a>
+<li><a href="#posix-file">4.5 Interfacing with the file system</a>
+<li><a href="#posix-env">4.6 Interfacing with the execution environment</a>
+<li><a href="#posix-misc">4.7 Miscellaneous functions</a>
+<li><a href="#posix-int-intro">4.8 Internals: introduction to the <acronym>POSIX</acronym> <acronym>API</acronym></a>
+<li><a href="#posix-int-errno">4.9 Internals: handling <code>errno</code> codes</a>
+<li><a href="#posix-int-fd">4.10 Internals: file descriptors</a>
 <ul>
-<li><a href="#posix-int-fd-open">4.9.1 Opening and closing file descriptors</a>
-<li><a href="#posix-int-fd-seek">4.9.2 Handling file descriptor cursor</a>
-<li><a href="#posix-int-fd-rw">4.9.3 Reading and writing</a>
-<li><a href="#posix-int-fd-event">4.9.4 Handling file descriptor events</a>
-<li><a href="#posix-int-fd-net">4.9.5 Handling sockets</a>
+<li><a href="#posix-int-fd-open">4.10.1 Opening and closing file descriptors</a>
+<li><a href="#posix-int-fd-seek">4.10.2 Handling file descriptor cursor</a>
+<li><a href="#posix-int-fd-rw">4.10.3 Reading and writing</a>
+<li><a href="#posix-int-fd-event">4.10.4 Handling file descriptor events</a>
+<li><a href="#posix-int-fd-net">4.10.5 Handling sockets</a>
 </li></ul>
-<li><a href="#posix-int-files">4.10 Internals: file system interface</a>
+<li><a href="#posix-int-pid">4.11 Internals: process identifier functions</a>
+<li><a href="#posix-int-files">4.12 Internals: file system interface</a>
 <ul>
-<li><a href="#posix-int-files-stat">4.10.1 Status and access permissions</a>
-<li><a href="#posix-int-files-dir">4.10.2 Handling directories</a>
-<li><a href="#posix-int-files-link">4.10.3 Handling links and symbolic links</a>
+<li><a href="#posix-int-files-stat">4.12.1 Status and access permissions</a>
+<li><a href="#posix-int-files-dir">4.12.2 Handling directories</a>
+<li><a href="#posix-int-files-link">4.12.3 Handling links and symbolic links</a>
 </li></ul>
-<li><a href="#posix-int-exec">4.11 Internals: executing processes</a>
-<li><a href="#posix-int-time">4.12 Internals: time and date</a>
-<li><a href="#posix-int-env">4.13 Internals: environment variables</a>
+<li><a href="#posix-int-exec">4.13 Internals: executing processes</a>
+<li><a href="#posix-int-time">4.14 Internals: time and date</a>
+<li><a href="#posix-int-env">4.15 Internals: environment variables</a>
 </li></ul>
 <li><a name="toc_objects-int" href="#objects-int">5 Internals: builtin objects</a>
 <ul>
@@ -224,6 +227,10 @@ people.-->
 <li><a href="#objects-int-fixnum">5.5 Fixnum objects</a>
 <li><a href="#objects-int-bytevector">5.6 Bytevector objects</a>
 <li><a href="#objects-int-vector">5.7 Vector objects</a>
+</li></ul>
+<li><a name="toc_debug-int" href="#debug-int">6 Internals: debug mode</a>
+<ul>
+<li><a href="#debug-int-intro">6.1 Introduction to debug mode</a>
 </li></ul>
 <li><a name="toc_missing" href="#missing">Appendix A Missing Features</a>
 <li><a name="toc_building" href="#building">Appendix B Building infrastructure</a>
@@ -253,7 +260,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#dir">(dir)</a>
 
 <h2 class="unnumbered">Vicare Scheme User's Guide</h2>
 
-<p class="noindent">This document describes version 0.1d1 of Vicare Scheme, an almost
+<p class="noindent">This document describes version 0.1d2 of Vicare Scheme, an almost
 <acronym>R6RS</acronym> compliant implementation of the Scheme programming language. 
 Vicare (pronounced the etruscan way) is an experimental fork of Ikarus
 Scheme which aims at fixing bugs, full <acronym>R6RS</acronym> compliance with a
@@ -301,18 +308,25 @@ people.
 <li><a accesskey="1" href="#overview">overview</a>:                     Overview of Vicare Scheme. 
 <li><a accesskey="2" href="#using">using</a>:                        Using the program. 
 <li><a accesskey="3" href="#library">library</a>:                      Installed libraries. 
-<li><a accesskey="4" href="#posix">posix</a>:                        The <acronym>POSIX</acronym> interface. 
-<li><a accesskey="5" href="#objects-int">objects int</a>:                  Internals: builtin objects.
+<li><a accesskey="4" href="#posix">posix</a>:                        The <acronym>POSIX</acronym> interface.
+
+</li></ul>
+<p>Internals
+
+</p>
+<ul class="menu">
+<li><a accesskey="5" href="#objects-int">objects int</a>:                  Builtin objects. 
+<li><a accesskey="6" href="#debug-int">debug int</a>:                    Debug mode.
 
 </li></ul>
 <p>Appendices
 
 </p>
 <ul class="menu">
-<li><a accesskey="6" href="#missing">missing</a>:                      Missing Features. 
-<li><a accesskey="7" href="#building">building</a>:                     Building infrastructure. 
-<li><a accesskey="8" href="#credits">credits</a>:                      Credits for this document. 
-<li><a accesskey="9" href="#package-license">package license</a>:              <acronym>GNU</acronym> General Public License. 
+<li><a accesskey="7" href="#missing">missing</a>:                      Missing Features. 
+<li><a accesskey="8" href="#building">building</a>:                     Building infrastructure. 
+<li><a accesskey="9" href="#credits">credits</a>:                      Credits for this document. 
+<li><a href="#package-license">package license</a>:              <acronym>GNU</acronym> General Public License. 
 <li><a href="#references">references</a>:                   Bibliography and references.
 
 </li></ul>
@@ -1164,10 +1178,10 @@ boot file was installed.
 Scheme run time system.  They are processed after the boot file is
 loaded.
 
-     <br><dt><code>vicare --script script-file-name [arguments ...]</code><dt><code>vicare --r6rs-script script-file-name [arguments ...]</code><dd>The <samp><span class="option">--script</span></samp> or <samp><span class="option">--r6rs-script</span></samp> option instructs
-Vicare that the supplied file is an <acronym>R6RS</acronym> script.  The
-script file name and any additional optional <code>arguments</code> can be
-obtained by calling the <code>command-line</code> procedure.
+     <br><dt><code>vicare --r6rs-script script-file-name [arguments ...]</code><dd>The <samp><span class="option">--r6rs-script</span></samp> option instructs Vicare that the
+supplied file is an <acronym>R6RS</acronym> script.  The script file name and any
+additional optional <code>arguments</code> can be obtained by calling the
+<code>command-line</code> procedure.
 
      <pre class="example">          $ cat test.sps
           (import (rnrs))
@@ -1177,6 +1191,21 @@ obtained by calling the <code>command-line</code> procedure.
           $ vicare --r6rs-script test.sps hi there
           ("test.sps" "hi" "there")
 </pre>
+     <br><dt><code>vicare --script script-file-name [arguments ...]</code><dd>The <samp><span class="option">--script</span></samp> option instructs Vicare that the supplied
+file is a Scheme script.  The script file name and any additional
+optional <code>arguments</code> can be obtained by calling the
+<code>command-line</code> procedure.
+
+     <pre class="example">          $ cat test.sps
+          (write (command-line))
+          (newline)
+          
+          $ vicare --script test.sps hi there
+          ("test.sps" "hi" "there")
+</pre>
+     <p>When <samp><span class="option">--script</span></samp> is used: all the scripts loaded are accepted as
+Scheme scripts without the <code>import</code> or <code>library</code> forms.
+
      <br><dt><code>vicare --r6rs-repl &lt;FILE&gt; ... [-- arguments ...]</code><dd>Start interactive mode, but load and evaluate <samp><span class="file">FILE</span></samp> first.
 
      <br><dt><code>vicare --compile-dependencies &lt;FILE&gt; ... [-- arguments ...]</code><dd>Load the program or library <samp><span class="file">FILE</span></samp> and compile all the libraries on
@@ -4380,23 +4409,25 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 <p>The <acronym>POSIX</acronym> functions are exported by the <code>(ikarus)</code> library.
 
 <ul class="menu">
-<li><a accesskey="1" href="#posix-process">posix process</a>:                Spawning processes and the like. 
-<li><a accesskey="2" href="#posix-waitpid">posix waitpid</a>:                Waiting for terminated children. 
-<li><a accesskey="3" href="#posix-signal">posix signal</a>:                 Delivering signals to processes. 
-<li><a accesskey="4" href="#posix-file">posix file</a>:                   Interfacing with the file system. 
-<li><a accesskey="5" href="#posix-env">posix env</a>:                    Interfacing with the execution
+<li><a accesskey="1" href="#posix-pid">posix pid</a>:                    Process identifier functions. 
+<li><a accesskey="2" href="#posix-process">posix process</a>:                Spawning processes and the like. 
+<li><a accesskey="3" href="#posix-waitpid">posix waitpid</a>:                Waiting for terminated children. 
+<li><a accesskey="4" href="#posix-signal">posix signal</a>:                 Delivering signals to processes. 
+<li><a accesskey="5" href="#posix-file">posix file</a>:                   Interfacing with the file system. 
+<li><a accesskey="6" href="#posix-env">posix env</a>:                    Interfacing with the execution
                                 environment. 
-<li><a accesskey="6" href="#posix-misc">posix misc</a>:                   Miscellaneous functions.
+<li><a accesskey="7" href="#posix-misc">posix misc</a>:                   Miscellaneous functions.
 
 </li></ul>
 <p>Internals
 
 </p>
 <ul class="menu">
-<li><a accesskey="7" href="#posix-int-intro">posix int intro</a>:              Internals: introduction to the <acronym>POSIX</acronym>
+<li><a accesskey="8" href="#posix-int-intro">posix int intro</a>:              Internals: introduction to the <acronym>POSIX</acronym>
                                 <acronym>API</acronym>. 
-<li><a accesskey="8" href="#posix-int-errno">posix int errno</a>:              Internals: handling <code>errno</code> codes. 
-<li><a accesskey="9" href="#posix-int-fd">posix int fd</a>:                 Internals: file descriptors. 
+<li><a accesskey="9" href="#posix-int-errno">posix int errno</a>:              Internals: handling <code>errno</code> codes. 
+<li><a href="#posix-int-fd">posix int fd</a>:                 Internals: file descriptors. 
+<li><a href="#posix-int-pid">posix int pid</a>:                Internals: process identifier functions. 
 <li><a href="#posix-int-files">posix int files</a>:              Internals: file system interface. 
 <li><a href="#posix-int-exec">posix int exec</a>:               Internals: executing processes. 
 <li><a href="#posix-int-time">posix int time</a>:               Internals: time and date. 
@@ -4405,17 +4436,39 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 
 <!-- page -->
 <div class="node">
-<a name="posix-process"></a>
+<a name="posix-pid"></a>
 <p><hr>
-Next:&nbsp;<a rel="next" accesskey="n" href="#posix-waitpid">posix waitpid</a>,
+Next:&nbsp;<a rel="next" accesskey="n" href="#posix-process">posix process</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#posix">posix</a>
 
 </div>
 
-<h3 class="section">4.1 Spawning processes and the like</h3>
+<h3 class="section">4.1 Process identifier functions</h3>
 
 <div class="defun">
-&mdash; Function: <b>fork</b><var> parent-proc child-thunk<a name="index-fork-117"></a></var><br>
+&mdash; Function: <b>getpid</b><var><a name="index-getpid-117"></a></var><br>
+<blockquote><p>Return the process identifier as a fixnum. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>getppid</b><var><a name="index-getppid-118"></a></var><br>
+<blockquote><p>Return the process identifier of the parent as a fixnum. 
+</p></blockquote></div>
+
+<!-- page -->
+<div class="node">
+<a name="posix-process"></a>
+<p><hr>
+Next:&nbsp;<a rel="next" accesskey="n" href="#posix-waitpid">posix waitpid</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#posix-pid">posix pid</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#posix">posix</a>
+
+</div>
+
+<h3 class="section">4.2 Spawning processes and the like</h3>
+
+<div class="defun">
+&mdash; Function: <b>fork</b><var> parent-proc child-thunk<a name="index-fork-119"></a></var><br>
 <blockquote><p>Fork a new process using the system <code>fork()</code> function.
 
         <p>If the operation is successful: in the parent process <var>parent-proc</var>
@@ -4439,7 +4492,7 @@ pid; in the child process <var>child-thunk</var> is evaluated.
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>system</b><var> command-string<a name="index-system-118"></a></var><br>
+&mdash; Function: <b>system</b><var> command-string<a name="index-system-120"></a></var><br>
 <blockquote><p>Executes a command using the <code>system()</code> function, which uses the
 system shell.  If success: return the exit code of the process.  If
 error: raise an exception.
@@ -4461,10 +4514,10 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#posix">posix</a>
 
 </div>
 
-<h3 class="section">4.2 Waiting for terminated children</h3>
+<h3 class="section">4.3 Waiting for terminated children</h3>
 
 <div class="defun">
-&mdash; Function: <b>waitpid</b> [<var>pid </var>[<var>block? </var>[<var>want-error?</var>]]]<var><a name="index-waitpid-119"></a></var><br>
+&mdash; Function: <b>waitpid</b> [<var>pid </var>[<var>block? </var>[<var>want-error?</var>]]]<var><a name="index-waitpid-121"></a></var><br>
 <blockquote><p>Wait for another process termination using the system <code>waitpid()</code>
 function and return informations about its status.
 
@@ -4528,18 +4581,18 @@ is not suspended and the return value is <code>#f</code>.
 <h5 class="subsubheading">Status record interface</h5>
 
 <div class="defun">
-&mdash; Function: <b>wstatus-pid</b><var> status<a name="index-wstatus_002dpid-120"></a></var><br>
+&mdash; Function: <b>wstatus-pid</b><var> status<a name="index-wstatus_002dpid-122"></a></var><br>
 <blockquote><p>Return the pid of the process extracting it from <var>status</var>. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>wstatus-exit-status</b><var> status<a name="index-wstatus_002dexit_002dstatus-121"></a></var><br>
+&mdash; Function: <b>wstatus-exit-status</b><var> status<a name="index-wstatus_002dexit_002dstatus-123"></a></var><br>
 <blockquote><p>Return the exit code of the process extracting it from <var>status</var>.  If
 the process was stopped by a signal: the return value is <code>#f</code>. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>wstatus-received-signal</b><var> status<a name="index-wstatus_002dreceived_002dsignal-122"></a></var><br>
+&mdash; Function: <b>wstatus-received-signal</b><var> status<a name="index-wstatus_002dreceived_002dsignal-124"></a></var><br>
 <blockquote><p>Return a symbol representing the signal that caused the termination of
 the child process.  If no signal was received: return <code>#f</code>. 
 </p></blockquote></div>
@@ -4554,12 +4607,12 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#posix">posix</a>
 
 </div>
 
-<h3 class="section">4.3 Delivering signals to processes</h3>
+<h3 class="section">4.4 Delivering signals to processes</h3>
 
-<p><a name="index-g_t_0040code_007bSIGABRT_007d-123"></a><a name="index-g_t_0040code_007bSIGALRM_007d-124"></a><a name="index-g_t_0040code_007bSIGBUS_007d-125"></a><a name="index-g_t_0040code_007bSIGCHLD_007d-126"></a><a name="index-g_t_0040code_007bSIGCONT_007d-127"></a><a name="index-g_t_0040code_007bSIGFPE_007d-128"></a><a name="index-g_t_0040code_007bSIGHUP_007d-129"></a><a name="index-g_t_0040code_007bSIGILL_007d-130"></a><a name="index-g_t_0040code_007bSIGINT_007d-131"></a><a name="index-g_t_0040code_007bSIGKILL_007d-132"></a><a name="index-g_t_0040code_007bSIGPIPE_007d-133"></a><a name="index-g_t_0040code_007bSIGQUIT_007d-134"></a><a name="index-g_t_0040code_007bSIGSEGV_007d-135"></a><a name="index-g_t_0040code_007bSIGSTOP_007d-136"></a><a name="index-g_t_0040code_007bSIGTERM_007d-137"></a><a name="index-g_t_0040code_007bSIGTSTP_007d-138"></a><a name="index-g_t_0040code_007bSIGTTIN_007d-139"></a><a name="index-g_t_0040code_007bSIGTTOU_007d-140"></a><a name="index-g_t_0040code_007bSIGUSR1_007d-141"></a><a name="index-g_t_0040code_007bSIGUSR2_007d-142"></a><a name="index-g_t_0040code_007bSIGPOLL_007d-143"></a><a name="index-g_t_0040code_007bSIGPROF_007d-144"></a><a name="index-g_t_0040code_007bSIGSYS_007d-145"></a><a name="index-g_t_0040code_007bSIGTRAP_007d-146"></a><a name="index-g_t_0040code_007bSIGURG_007d-147"></a><a name="index-g_t_0040code_007bSIGVTALRM_007d-148"></a><a name="index-g_t_0040code_007bSIGXCPU_007d-149"></a><a name="index-g_t_0040code_007bSIGXFSZ_007d-150"></a>
+<p><a name="index-g_t_0040code_007bSIGABRT_007d-125"></a><a name="index-g_t_0040code_007bSIGALRM_007d-126"></a><a name="index-g_t_0040code_007bSIGBUS_007d-127"></a><a name="index-g_t_0040code_007bSIGCHLD_007d-128"></a><a name="index-g_t_0040code_007bSIGCONT_007d-129"></a><a name="index-g_t_0040code_007bSIGFPE_007d-130"></a><a name="index-g_t_0040code_007bSIGHUP_007d-131"></a><a name="index-g_t_0040code_007bSIGILL_007d-132"></a><a name="index-g_t_0040code_007bSIGINT_007d-133"></a><a name="index-g_t_0040code_007bSIGKILL_007d-134"></a><a name="index-g_t_0040code_007bSIGPIPE_007d-135"></a><a name="index-g_t_0040code_007bSIGQUIT_007d-136"></a><a name="index-g_t_0040code_007bSIGSEGV_007d-137"></a><a name="index-g_t_0040code_007bSIGSTOP_007d-138"></a><a name="index-g_t_0040code_007bSIGTERM_007d-139"></a><a name="index-g_t_0040code_007bSIGTSTP_007d-140"></a><a name="index-g_t_0040code_007bSIGTTIN_007d-141"></a><a name="index-g_t_0040code_007bSIGTTOU_007d-142"></a><a name="index-g_t_0040code_007bSIGUSR1_007d-143"></a><a name="index-g_t_0040code_007bSIGUSR2_007d-144"></a><a name="index-g_t_0040code_007bSIGPOLL_007d-145"></a><a name="index-g_t_0040code_007bSIGPROF_007d-146"></a><a name="index-g_t_0040code_007bSIGSYS_007d-147"></a><a name="index-g_t_0040code_007bSIGTRAP_007d-148"></a><a name="index-g_t_0040code_007bSIGURG_007d-149"></a><a name="index-g_t_0040code_007bSIGVTALRM_007d-150"></a><a name="index-g_t_0040code_007bSIGXCPU_007d-151"></a><a name="index-g_t_0040code_007bSIGXFSZ_007d-152"></a>
 
 <div class="defun">
-&mdash; Function: <b>kill</b><var> pid signame<a name="index-kill-151"></a></var><br>
+&mdash; Function: <b>kill</b><var> pid signame<a name="index-kill-153"></a></var><br>
 <blockquote><p>Send the signal selected by <var>signame</var> to the process or group of
 processes selected by <var>pid</var>.  Make use of the system <code>kill()</code>
 function.  If an error occurs: an exception is raised.
@@ -4607,12 +4660,12 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#posix">posix</a>
 
 </div>
 
-<h3 class="section">4.4 Interfacing with the file system</h3>
+<h3 class="section">4.5 Interfacing with the file system</h3>
 
 <h5 class="subsubheading">Current working directory</h5>
 
 <div class="defun">
-&mdash; Function: <b>current-directory</b> [<var>pathname</var>]<var><a name="index-current_002ddirectory-152"></a></var><br>
+&mdash; Function: <b>current-directory</b> [<var>pathname</var>]<var><a name="index-current_002ddirectory-154"></a></var><br>
 <blockquote><p>When invoked with an argument, change the current working directory to
 the one selected by the string <var>pathname</var>.  Make use of the system
 <code>chdir()</code> function.
@@ -4630,7 +4683,7 @@ function.
 <h5 class="subsubheading">Inspecting the file system</h5>
 
 <div class="defun">
-&mdash; Function: <b>directory-list</b><var> pathname<a name="index-directory_002dlist-153"></a></var><br>
+&mdash; Function: <b>directory-list</b><var> pathname<a name="index-directory_002dlist-155"></a></var><br>
 <blockquote><p>Build and return the list of strings representing the entries in the
 directory selected by the string <var>pathname</var>.  Make use of the
 <code>opendir()</code>, <code>readdir()</code>, <code>closedir()</code> system functions.
@@ -4642,7 +4695,7 @@ directory selected by the string <var>pathname</var>.  Make use of the
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>file-ctime</b><var> pathname<a name="index-file_002dctime-154"></a></var><br>
+&mdash; Function: <b>file-ctime</b><var> pathname<a name="index-file_002dctime-156"></a></var><br>
 <blockquote><p>Return the time of the last modification to the attributes of the file;
 makes use of the <code>stat()</code> system function, and return the
 <code>st_ctime</code> field of the <code>stat</code> data structure.
@@ -4666,27 +4719,27 @@ make use of the <code>stat()</code> system function; if <var>follow</var> is
    <p><a href="libc.html#Reading-Attributes">Reading Attributes</a>
 
 <div class="defun">
-&mdash; Function: <b>file-exists?</b><var> pathname </var>[<var>follow</var>]<var><a name="index-file_002dexists_003f-155"></a></var><br>
+&mdash; Function: <b>file-exists?</b><var> pathname </var>[<var>follow</var>]<var><a name="index-file_002dexists_003f-157"></a></var><br>
 <blockquote><p>Return <code>#t</code> if <var>pathname</var> exists on the file system; otherwise
 return <code>#f</code>.  If an error occurs, an exception is raised. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>file-regular?</b><var> pathname </var>[<var>follow</var>]<var><a name="index-file_002dregular_003f-156"></a></var><br>
+&mdash; Function: <b>file-regular?</b><var> pathname </var>[<var>follow</var>]<var><a name="index-file_002dregular_003f-158"></a></var><br>
 <blockquote><p>Return <code>#t</code> if <var>pathname</var> exists on the file system and it is a
 regular file; otherwise return <code>#f</code>.  If an error occurs, an
 exception is raised. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>file-directory?</b><var> pathname </var>[<var>follow</var>]<var><a name="index-file_002ddirectory_003f-157"></a></var><br>
+&mdash; Function: <b>file-directory?</b><var> pathname </var>[<var>follow</var>]<var><a name="index-file_002ddirectory_003f-159"></a></var><br>
 <blockquote><p>Return <code>#t</code> if <var>pathname</var> exists on the file system and it is a
 directory; otherwise return <code>#f</code>.  If an error occurs, an exception
 is raised. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>file-symbolic-link?</b><var> pathname </var>[<var>follow</var>]<var><a name="index-file_002dsymbolic_002dlink_003f-158"></a></var><br>
+&mdash; Function: <b>file-symbolic-link?</b><var> pathname </var>[<var>follow</var>]<var><a name="index-file_002dsymbolic_002dlink_003f-160"></a></var><br>
 <blockquote><p>Return <code>#t</code> if <var>pathname</var> exists on the file system and it is a
 symbolic link; otherwise return <code>#f</code>.  If an error occurs, an
 exception is raised. 
@@ -4696,7 +4749,7 @@ exception is raised.
 <h5 class="subsubheading">Creation</h5>
 
 <div class="defun">
-&mdash; Function: <b>make-symbolic-link</b><var> to pathname<a name="index-make_002dsymbolic_002dlink-159"></a></var><br>
+&mdash; Function: <b>make-symbolic-link</b><var> to pathname<a name="index-make_002dsymbolic_002dlink-161"></a></var><br>
 <blockquote><p>Create a symbolic link whose pathname is the string <var>pathname</var>
 referencing the <var>to</var> string pathname.  Make use of the
 <code>symlink()</code> system function.  If an error occurs, an exception is
@@ -4706,7 +4759,7 @@ raised.
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>make-directory</b><var> pathname </var>[<var>mode</var>]<var><a name="index-make_002ddirectory-160"></a></var><br>
+&mdash; Function: <b>make-directory</b><var> pathname </var>[<var>mode</var>]<var><a name="index-make_002ddirectory-162"></a></var><br>
 <blockquote><p>Create a directory with name selected by the string <var>pathname</var>. 
 Make use of the <code>mkdir()</code> system function.  If an error occurs, an
 exception is raised.
@@ -4721,7 +4774,7 @@ for the directory; it defaults to &lsquo;<samp><span class="samp">#o755</span></
 <h5 class="subsubheading">Deletion</h5>
 
 <div class="defun">
-&mdash; Function: <b>delete-file</b><var> pathname<a name="index-delete_002dfile-161"></a></var><br>
+&mdash; Function: <b>delete-file</b><var> pathname<a name="index-delete_002dfile-163"></a></var><br>
 <blockquote><p>Remove from the system the file selected by the <var>pathname</var> string. 
 Make use of the <code>unlink()</code> system function.  If an error occurs, an
 exception is raised.
@@ -4730,7 +4783,7 @@ exception is raised.
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>delete-directory</b><var> pathname<a name="index-delete_002ddirectory-162"></a></var><br>
+&mdash; Function: <b>delete-directory</b><var> pathname<a name="index-delete_002ddirectory-164"></a></var><br>
 <blockquote><p>Remove from the system the directory selected by the <var>pathname</var>
 string.  Make use of the <code>rmdir()</code> system function.  If an error
 occurs, an exception is raised.
@@ -4742,7 +4795,7 @@ occurs, an exception is raised.
 <h5 class="subsubheading">Permissions</h5>
 
 <div class="defun">
-&mdash; Function: <b>change-mode</b><var> pathname mode<a name="index-change_002dmode-163"></a></var><br>
+&mdash; Function: <b>change-mode</b><var> pathname mode<a name="index-change_002dmode-165"></a></var><br>
 <blockquote><p>Change the access permissions of the file or directory selected by the
 <var>pathname</var> string.  Make use of the <code>chmod()</code> system function. 
 If an error occurs, an exception is raised.
@@ -4762,10 +4815,10 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#posix">posix</a>
 
 </div>
 
-<h3 class="section">4.5 Interfacing with the execution environment</h3>
+<h3 class="section">4.6 Interfacing with the execution environment</h3>
 
 <div class="defun">
-&mdash; Function: <b>getenv</b><var> varname<a name="index-getenv-164"></a></var><br>
+&mdash; Function: <b>getenv</b><var> varname<a name="index-getenv-166"></a></var><br>
 <blockquote><p>Return the current value, as a string, of the system environment
 variable selected by the string <var>varname</var>.  If the variable is not
 set: <code>#f</code> is returned.
@@ -4787,10 +4840,10 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#posix">posix</a>
 
 </div>
 
-<h3 class="section">4.6 Miscellaneous functions</h3>
+<h3 class="section">4.7 Miscellaneous functions</h3>
 
 <div class="defun">
-&mdash; Function: <b>strerror</b><var> error-code<a name="index-strerror-165"></a></var><br>
+&mdash; Function: <b>strerror</b><var> error-code<a name="index-strerror-167"></a></var><br>
 <blockquote><p>Return a string describing the <code>errno</code> code <var>error-code</var>. 
 Makes use of the system function <code>strerror()</code>.  If <var>error-code</var>
 is not a valid <code>errno</code> value: return a string telling it.
@@ -4799,7 +4852,7 @@ is not a valid <code>errno</code> value: return a string telling it.
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>nanosleep</b><var> seconds nanoseconds<a name="index-nanosleep-166"></a></var><br>
+&mdash; Function: <b>nanosleep</b><var> seconds nanoseconds<a name="index-nanosleep-168"></a></var><br>
 <blockquote><p>Suspend the process for the selected time; it makes use of the system
 <code>nanosleep()</code> function.  <var>seconds</var> and <var>nanoseconds</var> must be
 positive exact integers.  If an error occurs an exception is raised.
@@ -4817,7 +4870,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#posix">posix</a>
 
 </div>
 
-<h3 class="section">4.7 Internals: introduction to the <acronym>POSIX</acronym> <acronym>API</acronym></h3>
+<h3 class="section">4.8 Internals: introduction to the <acronym>POSIX</acronym> <acronym>API</acronym></h3>
 
 <p>The C language&ndash;level implementation is mostly in the files
 <samp><span class="file">src/ikarus-runtime.c</span></samp> and <samp><span class="file">src/ikarus-io.c</span></samp>; the
@@ -4827,6 +4880,60 @@ file <samp><span class="file">scheme/ikarus.posix.ss</span></samp>.
    <p>File pathnames are always bytevector objects and the C language level,
 while they are strings at the Scheme language level; the conversion is
 performed with <code>string-&gt;utf8</code>.
+
+<!--  -->
+<h5 class="subsubheading">How to add a <acronym>POSIX</acronym> primitive</h5>
+
+<p>Remember that the <acronym>POSIX</acronym> primitives end up exported by the
+<code>(ikarus)</code> library.  Follow these steps:
+
+     <ol type=1 start=1>
+<li>In the file <samp><span class="file">scheme/makefile.ss</span></samp>: add an entry for the function to
+the list bound to <code>identifier-&gt;library-map</code>, respect alphabetic
+order.  For example, for <code>getpid</code> add:
+
+     <pre class="example">          [getpid         i]
+</pre>
+     <li>In the file <samp><span class="file">scheme/ikarus.posix.ss</span></samp>: add the binding to both the
+export list of <code>(ikarus.posix)</code> and to the <code>except</code> import
+list from <code>(ikarus)</code>; add the function implementation calling the
+foreign function.  For example, for <code>getpid</code> add:
+
+     <pre class="example">          (define getppid
+            (lambda ()
+              (foreign-call "ikrt_getppid")))
+</pre>
+     <li>Select an appropriate C language file in the <samp><span class="file">src</span></samp> subdirectory and
+add the primitive function.  For example, for <code>getpid</code> in the file
+<samp><span class="file">ikarus-process.c</span></samp> add:
+
+     <pre class="example">          ikptr
+          ikrt_getpid(void)
+          {
+            return fix(getpid());
+          }
+</pre>
+     <li>Add a file to the <samp><span class="file">tests</span></samp> subdirectory with tests for the new
+primitive.  For example, for <code>getpid</code> add:
+
+     <pre class="example">          (import (rnrs)
+            (ikarus)
+            (checks))
+          
+          (check-set-mode! 'report-failed)
+          (display "*** testing getpid\n")
+          
+          (display "result of getpid() is " )
+          (display (getpid))
+          (newline)
+          
+          (check
+              (fixnum? (getpid))
+            =&gt; #t)
+          
+          (check-report)
+</pre>
+     </ol>
 
 <!-- page -->
 <div class="node">
@@ -4838,22 +4945,22 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#posix">posix</a>
 
 </div>
 
-<h3 class="section">4.8 Internals: handling <code>errno</code> codes</h3>
+<h3 class="section">4.9 Internals: handling <code>errno</code> codes</h3>
 
 <div class="defun">
-&mdash; Function: ikptr <b>ik_errno_to_code</b> (<var>void</var>)<var><a name="index-ik_005ferrno_005fto_005fcode-167"></a></var><br>
+&mdash; Function: ikptr <b>ik_errno_to_code</b> (<var>void</var>)<var><a name="index-ik_005ferrno_005fto_005fcode-169"></a></var><br>
 <blockquote><p>Apply <code>ik_errno_num_to_code()</code> to the current <code>errno</code> value. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: ikptr <b>ik_errno_num_to_code</b> (<var>int en</var>)<var><a name="index-ik_005ferrno_005fnum_005fto_005fcode-168"></a></var><br>
+&mdash; Function: ikptr <b>ik_errno_num_to_code</b> (<var>int en</var>)<var><a name="index-ik_005ferrno_005fnum_005fto_005fcode-170"></a></var><br>
 <blockquote><p>Convert the <code>errno</code> value <var>en</var> into an internal representation
 as fixnum, then return the fixnum.  If <var>en</var> is an unknown
 <code>errno</code> value, return a fixnum representing -99999. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: ikptr <b>ikrt_errno_code_to_name</b> (<var>ikptr ec, ikpcb * pcb</var>)<var><a name="index-ikrt_005ferrno_005fcode_005fto_005fname-169"></a></var><br>
+&mdash; Function: ikptr <b>ikrt_errno_code_to_name</b> (<var>ikptr ec, ikpcb * pcb</var>)<var><a name="index-ikrt_005ferrno_005fcode_005fto_005fname-171"></a></var><br>
 <blockquote><p>Convert a fixnum, internal, representation of an <code>errno</code> code into
 a bytevector holding the string representation of that code; return a
 reference to the bytevector.  If <var>ec</var> is invalid: return
@@ -4861,7 +4968,7 @@ reference to the bytevector.  If <var>ec</var> is invalid: return
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: ikptr <b>ikrt_strerror</b> (<var>ikptr ec, ikpcb * pcb</var>)<var><a name="index-ikrt_005fstrerror-170"></a></var><br>
+&mdash; Function: ikptr <b>ikrt_strerror</b> (<var>ikptr ec, ikpcb * pcb</var>)<var><a name="index-ikrt_005fstrerror-172"></a></var><br>
 <blockquote><p>Interface to the <code>strerror()</code> C function.  <a href="libc.html#Error-Messages">strerror</a>.
 
         <p>Convert a fixnum, internal, representation of an <code>errno</code> code into
@@ -4871,7 +4978,7 @@ reference to the bytevector.  If <var>ec</var> is invalid: return
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: ikptr <b>ikrt_last_errno</b> (<var>ikpcb * pcb</var>)<var><a name="index-ikrt_005flast_005ferrno-171"></a></var><br>
+&mdash; Function: ikptr <b>ikrt_last_errno</b> (<var>ikpcb * pcb</var>)<var><a name="index-ikrt_005flast_005ferrno-173"></a></var><br>
 <blockquote><p>Return an exact integer representing the value of <code>errno</code> right
 after the last call to a foreign function through the <acronym>FFI</acronym>. 
 </p></blockquote></div>
@@ -4880,13 +4987,13 @@ after the last call to a foreign function through the <acronym>FFI</acronym>.
 <div class="node">
 <a name="posix-int-fd"></a>
 <p><hr>
-Next:&nbsp;<a rel="next" accesskey="n" href="#posix-int-files">posix int files</a>,
+Next:&nbsp;<a rel="next" accesskey="n" href="#posix-int-pid">posix int pid</a>,
 Previous:&nbsp;<a rel="previous" accesskey="p" href="#posix-int-errno">posix int errno</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#posix">posix</a>
 
 </div>
 
-<h3 class="section">4.9 Internals: file descriptors</h3>
+<h3 class="section">4.10 Internals: file descriptors</h3>
 
 <p>File descriptors are represented as fixnums.
 
@@ -4908,10 +5015,10 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#posix-int-fd">posix int fd</a>
 
 </div>
 
-<h4 class="subsection">4.9.1 Opening and closing file descriptors</h4>
+<h4 class="subsection">4.10.1 Opening and closing file descriptors</h4>
 
 <div class="defun">
-&mdash; Function: ikptr <b>ikrt_close_fd</b> (<var>ikptr fd</var>)<var><a name="index-ikrt_005fclose_005ffd-172"></a></var><br>
+&mdash; Function: ikptr <b>ikrt_close_fd</b> (<var>ikptr fd</var>)<var><a name="index-ikrt_005fclose_005ffd-174"></a></var><br>
 <blockquote><p>Interface to the <code>close()</code> C function.  <a href="libc.html#Opening-and-Closing-Files">close</a>.  Close a file descriptor.
 
         <p><var>fd</var> must be a fixnum representing a file descriptor.
@@ -4921,7 +5028,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#posix-int-fd">posix int fd</a>
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: ikptr <b>ikrt_open_input_fd</b> (<var>ikptr pathname</var>)<var><a name="index-ikrt_005fopen_005finput_005ffd-173"></a></var><br>
+&mdash; Function: ikptr <b>ikrt_open_input_fd</b> (<var>ikptr pathname</var>)<var><a name="index-ikrt_005fopen_005finput_005ffd-175"></a></var><br>
 <blockquote><p>Interface to the <code>open()</code> C function.  <a href="libc.html#Opening-and-Closing-Files">open</a>.  Open a file for reading, using open mode <code>O_RDONLY</code>.
 
         <p><var>pathname</var> must reference a bytevector object holding the file
@@ -4933,7 +5040,7 @@ error occurs in <code>open()</code> return the return value of
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: ikptr <b>ikrt_open_output_fd</b> (<var>ikptr pathname, ikptr opts</var>)<var><a name="index-ikrt_005fopen_005foutput_005ffd-174"></a></var><br>
+&mdash; Function: ikptr <b>ikrt_open_output_fd</b> (<var>ikptr pathname, ikptr opts</var>)<var><a name="index-ikrt_005fopen_005foutput_005ffd-176"></a></var><br>
 <blockquote><p>Interface to the <code>open()</code> C function.  <a href="libc.html#Opening-and-Closing-Files">open</a>.  Open a file for writing with configurable mode based on
 <code>O_WRONLY</code>; the access permissions when a new file is created are
 <code>S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH</code>.
@@ -4974,10 +5081,10 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#posix-int-fd">posix int fd</a>
 
 </div>
 
-<h4 class="subsection">4.9.2 Handling file descriptor cursor</h4>
+<h4 class="subsection">4.10.2 Handling file descriptor cursor</h4>
 
 <div class="defun">
-&mdash; Function: ikptr <b>ikrt_set_position</b> (<var>ikptr fd, ikptr pos</var>)<var><a name="index-ikrt_005fset_005fposition-175"></a></var><br>
+&mdash; Function: ikptr <b>ikrt_set_position</b> (<var>ikptr fd, ikptr pos</var>)<var><a name="index-ikrt_005fset_005fposition-177"></a></var><br>
 <blockquote><p>Interface to the <code>lseek()</code> C function.  <a href="libc.html#File-Position-Primitive">lseek</a>.  Set the cursor position.
 
         <p><var>fd</var> must be a fixnum representing a file descriptor; <var>pos</var> must
@@ -4997,10 +5104,10 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#posix-int-fd">posix int fd</a>
 
 </div>
 
-<h4 class="subsection">4.9.3 Reading and writing</h4>
+<h4 class="subsection">4.10.3 Reading and writing</h4>
 
 <div class="defun">
-&mdash; Function: ikptr <b>ikrt_read_fd</b> (<var>ikptr fd, ikptr buffer, ikptr buffer-start, ikptr size</var>)<var><a name="index-ikrt_005fread_005ffd-176"></a></var><br>
+&mdash; Function: ikptr <b>ikrt_read_fd</b> (<var>ikptr fd, ikptr buffer, ikptr buffer-start, ikptr size</var>)<var><a name="index-ikrt_005fread_005ffd-178"></a></var><br>
 <blockquote><p>Interface to the <code>read()</code> C function.  <a href="libc.html#Input-and-Output-Primitives">read</a>.  Read data from a file descriptor.
 
         <p><var>fd</var> must be a fixnum representing a file descriptor; <var>buffer</var>
@@ -5015,7 +5122,7 @@ the return value of <code>ik_errno_to_code()</code>.
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: ikptr <b>ikrt_write_fd</b> (<var>ikptr fd, ikptr buffer, ikptr buffer-start, ikptr size</var>)<var><a name="index-ikrt_005fwrite_005ffd-177"></a></var><br>
+&mdash; Function: ikptr <b>ikrt_write_fd</b> (<var>ikptr fd, ikptr buffer, ikptr buffer-start, ikptr size</var>)<var><a name="index-ikrt_005fwrite_005ffd-179"></a></var><br>
 <blockquote><p>Interface to the <code>write()</code> C function.  <a href="libc.html#Input-and-Output-Primitives">write</a>.  Write data to a file descriptor.
 
         <p><var>fd</var> must be a fixnum representing a file descriptor; <var>buffer</var>
@@ -5039,10 +5146,10 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#posix-int-fd">posix int fd</a>
 
 </div>
 
-<h4 class="subsection">4.9.4 Handling file descriptor events</h4>
+<h4 class="subsection">4.10.4 Handling file descriptor events</h4>
 
 <div class="defun">
-&mdash; Function: ikptr <b>ikrt_select</b> (<var>ikptr max-fd, ikptr rfds, ikptr wfds, ikptr xfds</var>)<var><a name="index-ikrt_005fselect-178"></a></var><br>
+&mdash; Function: ikptr <b>ikrt_select</b> (<var>ikptr max-fd, ikptr rfds, ikptr wfds, ikptr xfds</var>)<var><a name="index-ikrt_005fselect-180"></a></var><br>
 <blockquote><p>Interface to the <code>select()</code> C function.  <a href="libc.html#Waiting-for-I_002fO">select</a>.  Poll for events on sets of file descriptors, without timeout.
 
         <p><var>max-fd</var> must be a fixnum representing the maximum file descriptor
@@ -5057,7 +5164,7 @@ returns with error without reattempting the call.
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: ikptr <b>ikrt_make_fd_nonblocking</b> (<var>ikptr fd</var>)<var><a name="index-ikrt_005fmake_005ffd_005fnonblocking-179"></a></var><br>
+&mdash; Function: ikptr <b>ikrt_make_fd_nonblocking</b> (<var>ikptr fd</var>)<var><a name="index-ikrt_005fmake_005ffd_005fnonblocking-181"></a></var><br>
 <blockquote><p>Interface to the <code>fcntl()</code> C function.  <a href="libc.html#Control-Operations">fcntl</a>.  Set non&ndash;blocking mode for a file descriptor.
 
         <p><var>fd</var> must be a fixnum representing the file descriptor.
@@ -5076,11 +5183,11 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#posix-int-fd">posix int fd</a>
 
 </div>
 
-<h4 class="subsection">4.9.5 Handling sockets</h4>
+<h4 class="subsection">4.10.5 Handling sockets</h4>
 
 <div class="defun">
-&mdash; Function: ikptr <b>ikrt_tcp_connect</b> (<var>ikptr host, ikptr srvc</var>)<var><a name="index-ikrt_005ftcp_005fconnect-180"></a></var><br>
-&mdash; Function: ikptr <b>ikrt_ucp_connect</b> (<var>ikptr host, ikptr srvc</var>)<var><a name="index-ikrt_005fucp_005fconnect-181"></a></var><br>
+&mdash; Function: ikptr <b>ikrt_tcp_connect</b> (<var>ikptr host, ikptr srvc</var>)<var><a name="index-ikrt_005ftcp_005fconnect-182"></a></var><br>
+&mdash; Function: ikptr <b>ikrt_ucp_connect</b> (<var>ikptr host, ikptr srvc</var>)<var><a name="index-ikrt_005fucp_005fconnect-183"></a></var><br>
 <blockquote><p>Interface to the <code>getaddrinfo()</code>, <code>socket()</code> and <code>connect()</code>
 C functions.  <a href="libc.html#Sockets">Sockets</a>.  Establish a client
 connection to a remote server using the <code>SOCK_STREAM</code> or
@@ -5097,7 +5204,7 @@ value of <code>ik_errno_to_code()</code>.
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: ikptr <b>ikrt_listen</b> (<var>ikptr port-number</var>)<var><a name="index-ikrt_005flisten-182"></a></var><br>
+&mdash; Function: ikptr <b>ikrt_listen</b> (<var>ikptr port-number</var>)<var><a name="index-ikrt_005flisten-184"></a></var><br>
 <blockquote><p>Interface to the <code>socket()</code>, <code>bind()</code>, <code>listen()</code> and
 <code>setsockopt()</code> C functions.  <a href="libc.html#Sockets">Sockets</a>.  Create a
 server socket bound to the given port number for the local host, using
@@ -5113,7 +5220,7 @@ error occurs in one of the C function calls, return the return value of
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: ikptr <b>ikrt_accept</b> (<var>ikptr sock, ikptr sockaddr</var>)<var><a name="index-ikrt_005faccept-183"></a></var><br>
+&mdash; Function: ikptr <b>ikrt_accept</b> (<var>ikptr sock, ikptr sockaddr</var>)<var><a name="index-ikrt_005faccept-185"></a></var><br>
 <blockquote><p>Interface to the <code>accept()</code> C function.  <a href="libc.html#Accepting-Connections">accept</a>.  Accept a connection to a server socket.
 
         <p><var>sock</var> must be a fixnum representing the server socket;
@@ -5126,7 +5233,7 @@ error occurs in one of the C function calls, return the return value of
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: ikptr <b>ikrt_shutdown</b> (<var>ikptr sock</var>)<var><a name="index-ikrt_005fshutdown-184"></a></var><br>
+&mdash; Function: ikptr <b>ikrt_shutdown</b> (<var>ikptr sock</var>)<var><a name="index-ikrt_005fshutdown-186"></a></var><br>
 <blockquote><p>Interface to the <code>shutdown()</code> C function.  <a href="libc.html#Closing-a-Socket">shutdown</a>.  Close a socket for both reading and writing.
 
         <p><var>sock</var> must be a fixnum representing the socket.
@@ -5138,15 +5245,37 @@ occurs in <code>shutdown()</code>, return the return value of
 
 <!-- page -->
 <div class="node">
-<a name="posix-int-files"></a>
+<a name="posix-int-pid"></a>
 <p><hr>
-Next:&nbsp;<a rel="next" accesskey="n" href="#posix-int-exec">posix int exec</a>,
+Next:&nbsp;<a rel="next" accesskey="n" href="#posix-int-files">posix int files</a>,
 Previous:&nbsp;<a rel="previous" accesskey="p" href="#posix-int-fd">posix int fd</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#posix">posix</a>
 
 </div>
 
-<h3 class="section">4.10 Internals: file system interface</h3>
+<h3 class="section">4.11 Internals: process identifier functions</h3>
+
+<div class="defun">
+&mdash; Function: ikptr <b>ikrt_getpid</b> (<var>void</var>)<var><a name="index-ikrt_005fgetpid-187"></a></var><br>
+<blockquote><p>Return the process identifier as fixnum.  <a href="libc.html#Process-Identification">getpid</a>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: ikptr <b>ikrt_getppid</b> (<var>void</var>)<var><a name="index-ikrt_005fgetppid-188"></a></var><br>
+<blockquote><p>Return the parent process identifier as fixnum.  <a href="libc.html#Process-Identification">getpid</a>. 
+</p></blockquote></div>
+
+<!-- page -->
+<div class="node">
+<a name="posix-int-files"></a>
+<p><hr>
+Next:&nbsp;<a rel="next" accesskey="n" href="#posix-int-exec">posix int exec</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#posix-int-pid">posix int pid</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#posix">posix</a>
+
+</div>
+
+<h3 class="section">4.12 Internals: file system interface</h3>
 
 <p>The functions documented in this section are defined in
 <samp><span class="file">src/ikarus-runtime.c</span></samp>.
@@ -5166,10 +5295,10 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#posix-int-files">posix int files</a>
 
 </div>
 
-<h4 class="subsection">4.10.1 Status and access permissions</h4>
+<h4 class="subsection">4.12.1 Status and access permissions</h4>
 
 <div class="defun">
-&mdash; Function: ikptr <b>ikrt_stat</b> (<var>ikptr pathname, ikptr follow</var>)<var><a name="index-ikrt_005fstat-185"></a></var><br>
+&mdash; Function: ikptr <b>ikrt_stat</b> (<var>ikptr pathname, ikptr follow</var>)<var><a name="index-ikrt_005fstat-189"></a></var><br>
 <blockquote><p>Interface to the <code>stat()</code> and <code>lstat()</code> C functions. 
 <a href="libc.html#Reading-Attributes">stat</a>.
 
@@ -5184,7 +5313,7 @@ or <code>lstat()</code>: return the result of <code>ik_errno_to_code()</code>.
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: ikptr <b>ikrt_chmod</b> (<var>ikptr pathname, ikptr mode</var>)<var><a name="index-ikrt_005fchmod-186"></a></var><br>
+&mdash; Function: ikptr <b>ikrt_chmod</b> (<var>ikptr pathname, ikptr mode</var>)<var><a name="index-ikrt_005fchmod-190"></a></var><br>
 <blockquote><p>Interface to the <code>chmod()</code> C function.  <a href="libc.html#Setting-Permissions">chmod</a>.  Change the access permissions of a file.
 
         <p><var>pathname</var> must reference a bytevector object holding the file
@@ -5195,7 +5324,7 @@ pathname; <var>mode</var> must be a fixnum representing the file permissions.
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: ikptr <b>ikrt_access</b> (<var>ikptr pathname, ikptr how</var>)<var><a name="index-ikrt_005faccess-187"></a></var><br>
+&mdash; Function: ikptr <b>ikrt_access</b> (<var>ikptr pathname, ikptr how</var>)<var><a name="index-ikrt_005faccess-191"></a></var><br>
 <blockquote><p>Interface to the <code>access()</code> C function.  <a href="libc.html#Testing-File-Access">access</a>.  Test access permissions for a file.
 
         <p><var>pathname</var> must reference a bytevector object holding a file
@@ -5218,7 +5347,7 @@ else it is an OR combination built as follows:
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: ikptr <b>ikrt_file_size</b> (<var>ikptr pathname, ikpcb * pcb</var>)<var><a name="index-ikrt_005ffile_005fsize-188"></a></var><br>
+&mdash; Function: ikptr <b>ikrt_file_size</b> (<var>ikptr pathname, ikpcb * pcb</var>)<var><a name="index-ikrt_005ffile_005fsize-192"></a></var><br>
 <blockquote><p>Interface to the <code>stat()</code> C function.  <a href="libc.html#Reading-Attributes">stat</a>.  Retrieve the size of a file.
 
         <p><var>pathname</var> must reference a bytevector object holding a file
@@ -5231,8 +5360,8 @@ error occurs in <code>stat()</code>, return the return value of
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: ikptr <b>ikrt_file_mtime2</b> (<var>ikptr pathname, ikpcb * pcb</var>)<var><a name="index-ikrt_005ffile_005fmtime2-189"></a></var><br>
-&mdash; Function: ikptr <b>ikrt_file_ctime2</b> (<var>ikptr pathname, ikpcb * pcb</var>)<var><a name="index-ikrt_005ffile_005fctime2-190"></a></var><br>
+&mdash; Function: ikptr <b>ikrt_file_mtime2</b> (<var>ikptr pathname, ikpcb * pcb</var>)<var><a name="index-ikrt_005ffile_005fmtime2-193"></a></var><br>
+&mdash; Function: ikptr <b>ikrt_file_ctime2</b> (<var>ikptr pathname, ikpcb * pcb</var>)<var><a name="index-ikrt_005ffile_005fctime2-194"></a></var><br>
 <blockquote><p>Interface to the <code>stat()</code> and <code>lstat()</code> C functions. 
 <a href="libc.html#Reading-Attributes">stat</a>.  Acquire the time of the last
 modification or attribute modification for a file.
@@ -5268,8 +5397,8 @@ be inspected as follows:
         </blockquote></div>
 
 <div class="defun">
-&mdash; Function: ikptr <b>ikrt_file_mtime</b> (<var>ikptr pathname, ikpcb result</var>)<var><a name="index-ikrt_005ffile_005fmtime-191"></a></var><br>
-&mdash; Function: ikptr <b>ikrt_file_ctime</b> (<var>ikptr pathname, ikpcb result</var>)<var><a name="index-ikrt_005ffile_005fctime-192"></a></var><br>
+&mdash; Function: ikptr <b>ikrt_file_mtime</b> (<var>ikptr pathname, ikpcb result</var>)<var><a name="index-ikrt_005ffile_005fmtime-195"></a></var><br>
+&mdash; Function: ikptr <b>ikrt_file_ctime</b> (<var>ikptr pathname, ikpcb result</var>)<var><a name="index-ikrt_005ffile_005fctime-196"></a></var><br>
 <blockquote><p>Interface to the <code>stat()</code> and <code>lstat()</code> C functions. 
 <a href="libc.html#Reading-Attributes">stat</a>.  Acquire the time of the last
 modification or attribute modification for a file.
@@ -5297,10 +5426,10 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#posix-int-files">posix int files</a>
 
 </div>
 
-<h4 class="subsection">4.10.2 Handling directories</h4>
+<h4 class="subsection">4.12.2 Handling directories</h4>
 
 <div class="defun">
-&mdash; Function: ikptr <b>ikrt_directory_list</b> (<var>ikptr pathname, ikpcb * pcb</var>)<var><a name="index-ikrt_005fdirectory_005flist-193"></a></var><br>
+&mdash; Function: ikptr <b>ikrt_directory_list</b> (<var>ikptr pathname, ikpcb * pcb</var>)<var><a name="index-ikrt_005fdirectory_005flist-197"></a></var><br>
 <blockquote><p>Interface to the <code>opendir()</code>, <code>readdir()</code> and <code>closedir()</code> C
 functions.  <a href="libc.html#Accessing-Directories">Accessing Directories</a>. 
 Inspect the contents of the selected directory.
@@ -5314,7 +5443,7 @@ return the return value of <code>ik_errno_to_code()</code>.
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: ikptr <b>ikrt_opendir</b> (<var>ikptr pathname, ikpcb * pcb</var>)<var><a name="index-ikrt_005fopendir-194"></a></var><br>
+&mdash; Function: ikptr <b>ikrt_opendir</b> (<var>ikptr pathname, ikpcb * pcb</var>)<var><a name="index-ikrt_005fopendir-198"></a></var><br>
 <blockquote><p>Interface to the <code>opendir()</code> C function.  <a href="libc.html#Accessing-Directories">Accessing Directories</a>.  Open a directory stream.
 
         <p><var>pathname</var> must reference a bytevector object holding a directory
@@ -5326,7 +5455,7 @@ return value of <code>ik_errno_to_code()</code>.
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: ikptr <b>ikrt_closedir</b> (<var>ikptr stream, ikpcb * pcb</var>)<var><a name="index-ikrt_005fclosedir-195"></a></var><br>
+&mdash; Function: ikptr <b>ikrt_closedir</b> (<var>ikptr stream, ikpcb * pcb</var>)<var><a name="index-ikrt_005fclosedir-199"></a></var><br>
 <blockquote><p>Interface to the <code>closedir()</code> C function.  <a href="libc.html#Accessing-Directories">Accessing Directories</a>.  Close a directory stream.
 
         <p><var>stream</var> must reference a pointer object referencing a directory
@@ -5337,7 +5466,7 @@ stream.
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: ikptr <b>ikrt_readdir</b> (<var>ikptr stream, ikpcb * pcb</var>)<var><a name="index-ikrt_005freaddir-196"></a></var><br>
+&mdash; Function: ikptr <b>ikrt_readdir</b> (<var>ikptr stream, ikpcb * pcb</var>)<var><a name="index-ikrt_005freaddir-200"></a></var><br>
 <blockquote><p>Interface to the <code>readdir()</code> C function.  <a href="libc.html#Accessing-Directories">Accessing Directories</a>.  Read a directory entry from a
 directory stream.
 
@@ -5350,7 +5479,7 @@ the return value of <code>ik_errno_to_code()</code>.
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: ikptr <b>ikrt_mkdir</b> (<var>ikptr pathname, ikptr mode</var>)<var><a name="index-ikrt_005fmkdir-197"></a></var><br>
+&mdash; Function: ikptr <b>ikrt_mkdir</b> (<var>ikptr pathname, ikptr mode</var>)<var><a name="index-ikrt_005fmkdir-201"></a></var><br>
 <blockquote><p>Interface to the <code>mkdir()</code> C function.  <a href="libc.html#Creating-Directories">mkdir</a>.
 
         <p><var>pathname</var> must reference a bytevector object holding the new
@@ -5362,7 +5491,7 @@ permissions for the new directory.
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: ikptr <b>ikrt_rmdir</b> (<var>ikptr pathname</var>)<var><a name="index-ikrt_005frmdir-198"></a></var><br>
+&mdash; Function: ikptr <b>ikrt_rmdir</b> (<var>ikptr pathname</var>)<var><a name="index-ikrt_005frmdir-202"></a></var><br>
 <blockquote><p>Interface to the <code>rmdir()</code> C function.  <a href="libc.html#Deleting-Files">rmdir</a>.  Remove a directory.
 
         <p><var>pathname</var> must reference a bytevector object holding the directory
@@ -5373,7 +5502,7 @@ pathname.
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: ikptr <b>ikrt_chdir</b> (<var>ikptr pathname</var>)<var><a name="index-ikrt_005fchdir-199"></a></var><br>
+&mdash; Function: ikptr <b>ikrt_chdir</b> (<var>ikptr pathname</var>)<var><a name="index-ikrt_005fchdir-203"></a></var><br>
 <blockquote><p>Interface to the <code>chdir()</code> C function.  <a href="libc.html#Working-Directory">chdir</a>.  Change the current working directory.
 
         <p><var>pathname</var> must reference a bytevector object holding the directory
@@ -5384,7 +5513,7 @@ pathname.
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: ikptr <b>ikrt_getcwd</b> (<var>ikpcb * pcb</var>)<var><a name="index-ikrt_005fgetcwd-200"></a></var><br>
+&mdash; Function: ikptr <b>ikrt_getcwd</b> (<var>ikpcb * pcb</var>)<var><a name="index-ikrt_005fgetcwd-204"></a></var><br>
 <blockquote><p>Interface to the <code>getcwd()</code> C function.  <a href="libc.html#Working-Directory">getcwd</a>.  Retrieve the current working directory.
 
         <p>If successful, return a reference to a bytevector object holding the
@@ -5401,10 +5530,10 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#posix-int-files">posix int files</a>
 
 </div>
 
-<h4 class="subsection">4.10.3 Handling links and symbolic links</h4>
+<h4 class="subsection">4.12.3 Handling links and symbolic links</h4>
 
 <div class="defun">
-&mdash; Function: ikptr <b>ikrt_link</b> (<var>ikptr old_pathname, ikptr pathname</var>)<var><a name="index-ikrt_005flink-201"></a></var><br>
+&mdash; Function: ikptr <b>ikrt_link</b> (<var>ikptr old_pathname, ikptr pathname</var>)<var><a name="index-ikrt_005flink-205"></a></var><br>
 <blockquote><p>Interface to the <code>link()</code> C function.  <a href="libc.html#Hard-Links">link</a>. 
 Create a hard link.
 
@@ -5417,7 +5546,7 @@ the new hard link pathname.
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: ikptr <b>ikrt_delete_file</b> (<var>ikptr pathname</var>)<var><a name="index-ikrt_005fdelete_005ffile-202"></a></var><br>
+&mdash; Function: ikptr <b>ikrt_delete_file</b> (<var>ikptr pathname</var>)<var><a name="index-ikrt_005fdelete_005ffile-206"></a></var><br>
 <blockquote><p>Interface to the <code>unlink()</code> C function.  <a href="libc.html#Deleting-Files">unlink</a>.  Remove a file selected by pathname.
 
         <p><var>pathname</var> must reference a bytevector object holding a file
@@ -5426,7 +5555,7 @@ pathname.  If an error occurs in <code>unlink()</code>: return the result of
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: ikptr <b>ikrt_symlink</b> (<var>ikptr old_pathname, ikptr pathname</var>)<var><a name="index-ikrt_005fsymlink-203"></a></var><br>
+&mdash; Function: ikptr <b>ikrt_symlink</b> (<var>ikptr old_pathname, ikptr pathname</var>)<var><a name="index-ikrt_005fsymlink-207"></a></var><br>
 <blockquote><p>Interface to the <code>symlink()</code> C function.  <a href="libc.html#Symbolic-Links">symlink</a>.  Create a symbolic link.
 
         <p><var>old_pathname</var> must reference a bytevector object holding the old
@@ -5438,7 +5567,7 @@ the new symbolic link pathname.
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: ikptr <b>ikrt_realpath</b> (<var>ikptr pathname, ikpcb * pcb</var>)<var><a name="index-ikrt_005frealpath-204"></a></var><br>
+&mdash; Function: ikptr <b>ikrt_realpath</b> (<var>ikptr pathname, ikpcb * pcb</var>)<var><a name="index-ikrt_005frealpath-208"></a></var><br>
 <blockquote><p>Interface to the <code>realpath()</code> C function.  <a href="libc.html#Symbolic-Links">realpath</a>.  Acquire the absolute name of the selected file, removing
 dot, double&ndash;dot components and repeated separators, and following
 symbolic links.
@@ -5452,7 +5581,7 @@ if an error occurs in <code>realpath()</code>, return the return value of
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: ikptr <b>ikrt_rename_file</b> (<var>ikptr src, ikptr dst</var>)<var><a name="index-ikrt_005frename_005ffile-205"></a></var><br>
+&mdash; Function: ikptr <b>ikrt_rename_file</b> (<var>ikptr src, ikptr dst</var>)<var><a name="index-ikrt_005frename_005ffile-209"></a></var><br>
 <blockquote><p>Interface to the <code>rename()</code> C function.  <a href="libc.html#Renaming-Files">rename</a>.
 
         <p><var>src</var> and <var>dst</var> must reference bytevector objects holding the
@@ -5472,10 +5601,10 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#posix">posix</a>
 
 </div>
 
-<h3 class="section">4.11 Internals: executing processes</h3>
+<h3 class="section">4.13 Internals: executing processes</h3>
 
 <div class="defun">
-&mdash; Function: ikptr <b>ikrt_exit</b> (<var>ikptr status, ikpcb * pcb</var>)<var><a name="index-ikrt_005fexit-206"></a></var><br>
+&mdash; Function: ikptr <b>ikrt_exit</b> (<var>ikptr status, ikpcb * pcb</var>)<var><a name="index-ikrt_005fexit-210"></a></var><br>
 <blockquote><p>Interface to the <code>exit()</code> C function.  <a href="libc.html#Normal-Termination">exit</a>.  Exit the current process.
 
         <p>If <var>status</var> is a fixnum, it is used as exit status; else the exit
@@ -5483,7 +5612,7 @@ status is <code>EXIT_FAILURE</code>.
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: ikptr <b>ikrt_fork</b> (<var>void</var>)<var><a name="index-ikrt_005ffork-207"></a></var><br>
+&mdash; Function: ikptr <b>ikrt_fork</b> (<var>void</var>)<var><a name="index-ikrt_005ffork-211"></a></var><br>
 <blockquote><p>Interface to the <code>fork()</code> C function.  <a href="libc.html#Creating-a-Process">fork</a>.  Create a new process.
 
         <p>If successful return a fixnum representing the the return value of
@@ -5492,7 +5621,7 @@ value of <code>ik_errno_to_code()</code>.
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: ikptr <b>ik_system</b> (<var>ikptr command</var>)<var><a name="index-ik_005fsystem-208"></a></var><br>
+&mdash; Function: ikptr <b>ik_system</b> (<var>ikptr command</var>)<var><a name="index-ik_005fsystem-212"></a></var><br>
 <blockquote><p>Interface to the <code>system()</code> C function.  <a href="libc.html#Running-a-Command">system</a>.  Execute a command through the system shell.
 
         <p><var>command</var> must reference a bytevector object holding the command to
@@ -5513,10 +5642,10 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#posix">posix</a>
 
 </div>
 
-<h3 class="section">4.12 Internals: time and date</h3>
+<h3 class="section">4.14 Internals: time and date</h3>
 
 <div class="defun">
-&mdash; Function: ikptr <b>ikrt_current_time</b> (<var>ikptr time</var>)<var><a name="index-ikrt_005fcurrent_005ftime-209"></a></var><br>
+&mdash; Function: ikptr <b>ikrt_current_time</b> (<var>ikptr time</var>)<var><a name="index-ikrt_005fcurrent_005ftime-213"></a></var><br>
 <blockquote><p>Interface to the <code>gettimeofday()</code> C function. 
 <a href="libc.html#High_002dResolution-Calendar">gettimeofday</a>.  Retrieve the current
 time.
@@ -5528,7 +5657,7 @@ filled with three values: megaseconds, seconds and microseconds.
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: ikptr <b>ikrt_gmt_offset</b> (<var>ikptr time</var>)<var><a name="index-ikrt_005fgmt_005foffset-210"></a></var><br>
+&mdash; Function: ikptr <b>ikrt_gmt_offset</b> (<var>ikptr time</var>)<var><a name="index-ikrt_005fgmt_005foffset-214"></a></var><br>
 <blockquote><p>Compute the offset in seconds between the local time and the
 <acronym>UTC</acronym> time.
 
@@ -5539,7 +5668,7 @@ filled with megaseconds, seconds and microseconds.
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: ikptr <b>ikrt_nanosleep</b> (<var>ikptr secs, ikptr nsecs</var>)<var><a name="index-ikrt_005fnanosleep-211"></a></var><br>
+&mdash; Function: ikptr <b>ikrt_nanosleep</b> (<var>ikptr secs, ikptr nsecs</var>)<var><a name="index-ikrt_005fnanosleep-215"></a></var><br>
 <blockquote><p>Interface to the <code>nanosleep()</code> C function.  <a href="libc.html#Sleeping">nanosleep</a>.  Halt the current process.
 
         <p><var>secs</var> and <var>nsecs</var> must be fixnums or exact integers whose value
@@ -5555,10 +5684,10 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#posix">posix</a>
 
 </div>
 
-<h3 class="section">4.13 Internals: environment variables</h3>
+<h3 class="section">4.15 Internals: environment variables</h3>
 
 <div class="defun">
-&mdash; Function: ikptr <b>ikrt_getenv</b> (<var>ikptr variable, ikpcb * pcb</var>)<var><a name="index-ikrt_005fgetenv-212"></a></var><br>
+&mdash; Function: ikptr <b>ikrt_getenv</b> (<var>ikptr variable, ikpcb * pcb</var>)<var><a name="index-ikrt_005fgetenv-216"></a></var><br>
 <blockquote><p>Interface to the <code>getenv()</code> C function.  <a href="libc.html#Environment-Access">getenv</a>.  Retrieve the value of environment variables.
 
         <p><var>variable</var> must reference a bytevector object representing the name
@@ -5569,7 +5698,7 @@ value; else return <code>false_object</code>.
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: ikptr <b>ikrt_setenv</b> (<var>ikptr variable, ikptr value, ikptr overwrite</var>)<var><a name="index-ikrt_005fsetenv-213"></a></var><br>
+&mdash; Function: ikptr <b>ikrt_setenv</b> (<var>ikptr variable, ikptr value, ikptr overwrite</var>)<var><a name="index-ikrt_005fsetenv-217"></a></var><br>
 <blockquote><p>Interface to the <code>setenv()</code> C function.  <a href="libc.html#Environment-Access">setenv</a>.  Set a new value for an environment variable.
 
         <p><var>variable</var> must reference a bytevector object representing the name
@@ -5584,7 +5713,7 @@ either creating a new environment variable or replacing the old value.
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: ikptr <b>ikrt_unsetenv</b> (<var>ikptr variable</var>)<var><a name="index-ikrt_005funsetenv-214"></a></var><br>
+&mdash; Function: ikptr <b>ikrt_unsetenv</b> (<var>ikptr variable</var>)<var><a name="index-ikrt_005funsetenv-218"></a></var><br>
 <blockquote><p>Interface to the <code>unsetenv()</code> C function.  <a href="libc.html#Environment-Access">unsetenv</a>.  Unset an environment variable.
 
         <p><var>variable</var> must reference a bytevector object representing the name
@@ -5594,7 +5723,7 @@ of the environment variable.
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: ikptr <b>ikrt_environ</b> (<var>ikpcb * pcb</var>)<var><a name="index-ikrt_005fenviron-215"></a></var><br>
+&mdash; Function: ikptr <b>ikrt_environ</b> (<var>ikpcb * pcb</var>)<var><a name="index-ikrt_005fenviron-219"></a></var><br>
 <blockquote><p>Interface to the <code>environ</code> global C variable. 
 <a href="libc.html#Environment-Access">unsetenv</a>.  Retrieve the full environment.
 
@@ -5607,7 +5736,7 @@ variables set) return <code>null_object</code>.
 <div class="node">
 <a name="objects-int"></a>
 <p><hr>
-Next:&nbsp;<a rel="next" accesskey="n" href="#missing">missing</a>,
+Next:&nbsp;<a rel="next" accesskey="n" href="#debug-int">debug int</a>,
 Previous:&nbsp;<a rel="previous" accesskey="p" href="#posix">posix</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 
@@ -5653,7 +5782,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#objects-int">objects int</a>
 <h3 class="section">5.2 Builtin object references</h3>
 
 <div class="defun">
-&mdash; Object Reference: <b>ikptr</b><var><a name="index-ikptr-216"></a></var><br>
+&mdash; Object Reference: <b>ikptr</b><var><a name="index-ikptr-220"></a></var><br>
 <blockquote><p>In general, it is a reference to a builtin object, implemented as an
 <code>unsigned long int</code>; it can be:
 
@@ -5696,12 +5825,12 @@ then adding offsets to it, the offset is in bytes:
         </blockquote></div>
 
 <div class="defun">
-&mdash; Macro: <b>tagof</b> (<var>ref</var>)<var><a name="index-tagof-217"></a></var><br>
+&mdash; Macro: <b>tagof</b> (<var>ref</var>)<var><a name="index-tagof-221"></a></var><br>
 <blockquote><p>Extract the 3 least significant bits of an <code>ikptr</code> value. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Macro: <b>ref</b> (<var>ptr, offset</var>)<var><a name="index-ref-218"></a></var><br>
+&mdash; Macro: <b>ref</b> (<var>ptr, offset</var>)<var><a name="index-ref-222"></a></var><br>
 <blockquote><p>Expand to the word at <var>offset</var> past <var>ptr</var>; it can be used either
 as operand or as left&ndash;side of an assignment.  The &ldquo;word&rdquo; is the
 unsigned integer type used in the type definition of <code>ikptr</code>;
@@ -5732,22 +5861,22 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#objects-int">objects int</a>
 <h3 class="section">5.3 Constant values</h3>
 
 <div class="defun">
-&mdash; Macro: <b>false_object</b><var><a name="index-false_005fobject-219"></a></var><br>
+&mdash; Macro: <b>false_object</b><var><a name="index-false_005fobject-223"></a></var><br>
 <blockquote><p>An <code>ikptr</code> value representing <code>#f</code>. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Macro: <b>true_object</b><var><a name="index-true_005fobject-220"></a></var><br>
+&mdash; Macro: <b>true_object</b><var><a name="index-true_005fobject-224"></a></var><br>
 <blockquote><p>An <code>ikptr</code> value representing <code>#t</code>. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Macro: <b>null_object</b><var><a name="index-null_005fobject-221"></a></var><br>
+&mdash; Macro: <b>null_object</b><var><a name="index-null_005fobject-225"></a></var><br>
 <blockquote><p>An <code>ikptr</code> value representing null (the empty list). 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Macro: <b>void_object</b><var><a name="index-void_005fobject-222"></a></var><br>
+&mdash; Macro: <b>void_object</b><var><a name="index-void_005fobject-226"></a></var><br>
 <blockquote><p>An <code>ikptr</code> value representing <code>#&lt;void&gt;</code>, the return value of
 functions returning no value. 
 </p></blockquote></div>
@@ -5819,7 +5948,7 @@ aligned pointer:
            allocated block            next block
 </pre>
    <div class="defun">
-&mdash; Macro: <b>align</b> (<var>number_of_bytes</var>)<var><a name="index-align-223"></a></var><br>
+&mdash; Macro: <b>align</b> (<var>number_of_bytes</var>)<var><a name="index-align-227"></a></var><br>
 <blockquote><p>Convert <var>number_of_bytes</var>, which must be an integer of type
 <code>long int</code>, to the number of bytes requested to satisfy pointer
 alignment constraints.  We can simulate the computation with:
@@ -5860,7 +5989,7 @@ alignment constraints.  We can simulate the computation with:
         </blockquote></div>
 
 <div class="defun">
-&mdash; Function: ikptr <b>ik_safe_alloc</b> (<var>ikpcb * pcb, int aligned_size</var>)<var><a name="index-ik_005fsafe_005falloc-224"></a></var><br>
+&mdash; Function: ikptr <b>ik_safe_alloc</b> (<var>ikpcb * pcb, int aligned_size</var>)<var><a name="index-ik_005fsafe_005falloc-228"></a></var><br>
 <blockquote><p>Allocate a memory block on the heap and return a reference to it as an
 untagged pointer.  <var>pcb</var> must reference the heap, <var>aligned_size</var>
 must be the requested number of bytes filtered through <code>align</code>.
@@ -5903,19 +6032,19 @@ size is 4 bytes; then the representation of a fixnum is:
 <code>ikptr</code> which embed fixnums.
 
 <div class="defun">
-&mdash; Macro: <b>fix</b> (<var>num</var>)<var><a name="index-fix-225"></a></var><br>
+&mdash; Macro: <b>fix</b> (<var>num</var>)<var><a name="index-fix-229"></a></var><br>
 <blockquote><p>Convert a small exact integer in the correct range for a fixnum, into a
 <code>ikptr</code> value. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Macro: <b>unfix</b> (<var>ref</var>)<var><a name="index-unfix-226"></a></var><br>
+&mdash; Macro: <b>unfix</b> (<var>ref</var>)<var><a name="index-unfix-230"></a></var><br>
 <blockquote><p>Convert an <code>ikptr</code> value holding a fixnum into a fixnum of type
 <code>long int</code>. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Macro: <b>is_fixnum</b> (<var>ref</var>)<var><a name="index-is_005ffixnum-227"></a></var><br>
+&mdash; Macro: <b>is_fixnum</b> (<var>ref</var>)<var><a name="index-is_005ffixnum-231"></a></var><br>
 <blockquote><p>Expand to true if <var>ref</var> is an <code>ikptr</code> embedding a fixnum.  It
 just tests if the least significant bits in the tag are set to zero. 
 </p></blockquote></div>
@@ -5973,33 +6102,33 @@ a fixnum, so usually a full allocation looks like this:
      data_area = bv + off_bytevector_data;
 </pre>
    <div class="defun">
-&mdash; Macro: <b>bytevector_tag</b><var><a name="index-bytevector_005ftag-228"></a></var><br>
+&mdash; Macro: <b>bytevector_tag</b><var><a name="index-bytevector_005ftag-232"></a></var><br>
 <blockquote><p>An integer used to tag pointers to bytevector memory blocks. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Macro: <b>disp_bytevector_length</b><var><a name="index-disp_005fbytevector_005flength-229"></a></var><br>
+&mdash; Macro: <b>disp_bytevector_length</b><var><a name="index-disp_005fbytevector_005flength-233"></a></var><br>
 <blockquote><p>Displacement of length.  The number of bytes to add to an untagged
 pointer to bytevector to get the pointer to the first byte in the word
 holding the bytevector length as fixnum. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Macro: <b>disp_bytevector_data</b><var><a name="index-disp_005fbytevector_005fdata-230"></a></var><br>
+&mdash; Macro: <b>disp_bytevector_data</b><var><a name="index-disp_005fbytevector_005fdata-234"></a></var><br>
 <blockquote><p>Displacement of data area.  The number of bytes to add to an untagged
 pointer to bytevector to get the pointer to the first byte in the data
 area. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Macro: <b>off_bytevector_length</b><var><a name="index-off_005fbytevector_005flength-231"></a></var><br>
+&mdash; Macro: <b>off_bytevector_length</b><var><a name="index-off_005fbytevector_005flength-235"></a></var><br>
 <blockquote><p>An integer to add to a tagged bytevector reference (<code>ikptr</code>) to
 retrieve the pointer to the first byte of the bytevector length.  The
 bytevector length is a fixnum. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Macro: <b>off_bytevector_data</b><var><a name="index-off_005fbytevector_005fdata-232"></a></var><br>
+&mdash; Macro: <b>off_bytevector_data</b><var><a name="index-off_005fbytevector_005fdata-236"></a></var><br>
 <blockquote><p>An integer to add to a tagged bytevector reference (<code>ikptr</code>) to
 retrieve the pointer to the first byte of the bytevector length.  The
 bytevector length is a fixnum.
@@ -6055,32 +6184,32 @@ fixnum, so usually a full allocation looks like this:
      data_area = bv + off_vector_data;
 </pre>
    <div class="defun">
-&mdash; Macro: <b>vector_tag</b><var><a name="index-vector_005ftag-233"></a></var><br>
+&mdash; Macro: <b>vector_tag</b><var><a name="index-vector_005ftag-237"></a></var><br>
 <blockquote><p>An integer used to tag pointers to vector memory blocks. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Macro: <b>disp_vector_length</b><var><a name="index-disp_005fvector_005flength-234"></a></var><br>
+&mdash; Macro: <b>disp_vector_length</b><var><a name="index-disp_005fvector_005flength-238"></a></var><br>
 <blockquote><p>Displacement of length.  The number of bytes to add to an untagged
 pointer to vector to get the pointer to the first byte in the word
 holding the vector length as fixnum. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Macro: <b>disp_vector_data</b><var><a name="index-disp_005fvector_005fdata-235"></a></var><br>
+&mdash; Macro: <b>disp_vector_data</b><var><a name="index-disp_005fvector_005fdata-239"></a></var><br>
 <blockquote><p>Displacement of data area.  The number of bytes to add to an untagged
 pointer to vector to get the pointer to the first byte in the data area. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Macro: <b>off_vector_length</b><var><a name="index-off_005fvector_005flength-236"></a></var><br>
+&mdash; Macro: <b>off_vector_length</b><var><a name="index-off_005fvector_005flength-240"></a></var><br>
 <blockquote><p>An integer to add to a tagged vector reference (<code>ikptr</code>) to
 retrieve the pointer to the first byte of the vector length.  The
 vector length is a fixnum. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Macro: <b>off_vector_data</b><var><a name="index-off_005fvector_005fdata-237"></a></var><br>
+&mdash; Macro: <b>off_vector_data</b><var><a name="index-off_005fvector_005fdata-241"></a></var><br>
 <blockquote><p>An integer to add to a tagged vector reference (<code>ikptr</code>) to
 retrieve the pointer to the first byte of the vector length.  The
 vector length is a fixnum.
@@ -6092,10 +6221,65 @@ the vector memory block.
 
 <!-- page -->
 <div class="node">
+<a name="debug-int"></a>
+<p><hr>
+Next:&nbsp;<a rel="next" accesskey="n" href="#missing">missing</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#objects-int">objects int</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
+
+</div>
+
+<h2 class="chapter">6 Internals: debug mode</h2>
+
+<ul class="menu">
+<li><a accesskey="1" href="#debug-int-intro">debug int intro</a>:              Introduction to debug mode. 
+</ul>
+
+<!-- page -->
+<div class="node">
+<a name="debug-int-intro"></a>
+<p><hr>
+Up:&nbsp;<a rel="up" accesskey="u" href="#debug-int">debug int</a>
+
+</div>
+
+<h3 class="section">6.1 Introduction to debug mode</h3>
+
+<p>Debug mode is driven with the following options:
+
+     <dl>
+<dt><samp><span class="option">-d</span></samp><dt><samp><span class="option">--debug</span></samp><dd>Turn on debugging mode.  The parameter <code>generate-debug-calls</code> is
+set to true.
+
+     <br><dt><samp><span class="option">-nd</span></samp><dt><samp><span class="option">--no-debug</span></samp><dd>Turn off debugging mode.  The parameter <code>generate-debug-calls</code> is
+set to false. 
+</dl>
+
+   <p>The implementation is mostly in <samp><span class="file">ikarus.debugger.ss</span></samp> and
+<samp><span class="file">ikarus.compiler.ss</span></samp>.
+
+<div class="defun">
+&mdash; Parameter: <b>generate-debug-calls</b><var><a name="index-generate_002ddebug_002dcalls-242"></a></var><br>
+<blockquote><p>Set to true when debug mode is turned on.  Defined in
+<samp><span class="file">ikarus.compiler.ss</span></samp>, configured in <samp><span class="file">ikarus.main.ss</span></samp>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>guarded-start</b><var> proc<a name="index-guarded_002dstart-243"></a></var><br>
+<blockquote><p>Evaluate the procedure <var>proc</var> under the debugging infrastructure. 
+It is used in the <code>(ikarus main)</code> library (<samp><span class="file">ikarus.main.ss</span></samp>)
+to start the execution of a program and all the other execution modes.
+
+        <p><var>proc</var> is evaluated under the installation of an exception handler
+displaying the stack trace and offering the continuation alternatives. 
+</p></blockquote></div>
+
+<!-- page -->
+<div class="node">
 <a name="missing"></a>
 <p><hr>
 Next:&nbsp;<a rel="next" accesskey="n" href="#building">building</a>,
-Previous:&nbsp;<a rel="previous" accesskey="p" href="#objects-int">objects int</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#debug-int">debug int</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 
 </div>
@@ -7007,34 +7191,34 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 <li><a href="#index-Environment_002c-interaction-18">Environment, interaction</a>: <a href="#library-environment">library environment</a></li>
 <li><a href="#index-Installing-_0040value_007bPRJNAME_007d-1">Installing Vicare</a>: <a href="#overview-install">overview install</a></li>
 <li><a href="#index-Invoking-_0040value_007bPRJNAME_007d-12">Invoking Vicare</a>: <a href="#using">using</a></li>
-<li><a href="#index-g_t_0040code_007bSIGABRT_007d-123"><code>SIGABRT</code></a>: <a href="#posix-signal">posix signal</a></li>
-<li><a href="#index-g_t_0040code_007bSIGALRM_007d-124"><code>SIGALRM</code></a>: <a href="#posix-signal">posix signal</a></li>
-<li><a href="#index-g_t_0040code_007bSIGBUS_007d-125"><code>SIGBUS</code></a>: <a href="#posix-signal">posix signal</a></li>
-<li><a href="#index-g_t_0040code_007bSIGCHLD_007d-126"><code>SIGCHLD</code></a>: <a href="#posix-signal">posix signal</a></li>
-<li><a href="#index-g_t_0040code_007bSIGCONT_007d-127"><code>SIGCONT</code></a>: <a href="#posix-signal">posix signal</a></li>
-<li><a href="#index-g_t_0040code_007bSIGFPE_007d-128"><code>SIGFPE</code></a>: <a href="#posix-signal">posix signal</a></li>
-<li><a href="#index-g_t_0040code_007bSIGHUP_007d-129"><code>SIGHUP</code></a>: <a href="#posix-signal">posix signal</a></li>
-<li><a href="#index-g_t_0040code_007bSIGILL_007d-130"><code>SIGILL</code></a>: <a href="#posix-signal">posix signal</a></li>
-<li><a href="#index-g_t_0040code_007bSIGINT_007d-131"><code>SIGINT</code></a>: <a href="#posix-signal">posix signal</a></li>
-<li><a href="#index-g_t_0040code_007bSIGKILL_007d-132"><code>SIGKILL</code></a>: <a href="#posix-signal">posix signal</a></li>
-<li><a href="#index-g_t_0040code_007bSIGPIPE_007d-133"><code>SIGPIPE</code></a>: <a href="#posix-signal">posix signal</a></li>
-<li><a href="#index-g_t_0040code_007bSIGPOLL_007d-143"><code>SIGPOLL</code></a>: <a href="#posix-signal">posix signal</a></li>
-<li><a href="#index-g_t_0040code_007bSIGPROF_007d-144"><code>SIGPROF</code></a>: <a href="#posix-signal">posix signal</a></li>
-<li><a href="#index-g_t_0040code_007bSIGQUIT_007d-134"><code>SIGQUIT</code></a>: <a href="#posix-signal">posix signal</a></li>
-<li><a href="#index-g_t_0040code_007bSIGSEGV_007d-135"><code>SIGSEGV</code></a>: <a href="#posix-signal">posix signal</a></li>
-<li><a href="#index-g_t_0040code_007bSIGSTOP_007d-136"><code>SIGSTOP</code></a>: <a href="#posix-signal">posix signal</a></li>
-<li><a href="#index-g_t_0040code_007bSIGSYS_007d-145"><code>SIGSYS</code></a>: <a href="#posix-signal">posix signal</a></li>
-<li><a href="#index-g_t_0040code_007bSIGTERM_007d-137"><code>SIGTERM</code></a>: <a href="#posix-signal">posix signal</a></li>
-<li><a href="#index-g_t_0040code_007bSIGTRAP_007d-146"><code>SIGTRAP</code></a>: <a href="#posix-signal">posix signal</a></li>
-<li><a href="#index-g_t_0040code_007bSIGTSTP_007d-138"><code>SIGTSTP</code></a>: <a href="#posix-signal">posix signal</a></li>
-<li><a href="#index-g_t_0040code_007bSIGTTIN_007d-139"><code>SIGTTIN</code></a>: <a href="#posix-signal">posix signal</a></li>
-<li><a href="#index-g_t_0040code_007bSIGTTOU_007d-140"><code>SIGTTOU</code></a>: <a href="#posix-signal">posix signal</a></li>
-<li><a href="#index-g_t_0040code_007bSIGURG_007d-147"><code>SIGURG</code></a>: <a href="#posix-signal">posix signal</a></li>
-<li><a href="#index-g_t_0040code_007bSIGUSR1_007d-141"><code>SIGUSR1</code></a>: <a href="#posix-signal">posix signal</a></li>
-<li><a href="#index-g_t_0040code_007bSIGUSR2_007d-142"><code>SIGUSR2</code></a>: <a href="#posix-signal">posix signal</a></li>
-<li><a href="#index-g_t_0040code_007bSIGVTALRM_007d-148"><code>SIGVTALRM</code></a>: <a href="#posix-signal">posix signal</a></li>
-<li><a href="#index-g_t_0040code_007bSIGXCPU_007d-149"><code>SIGXCPU</code></a>: <a href="#posix-signal">posix signal</a></li>
-<li><a href="#index-g_t_0040code_007bSIGXFSZ_007d-150"><code>SIGXFSZ</code></a>: <a href="#posix-signal">posix signal</a></li>
+<li><a href="#index-g_t_0040code_007bSIGABRT_007d-125"><code>SIGABRT</code></a>: <a href="#posix-signal">posix signal</a></li>
+<li><a href="#index-g_t_0040code_007bSIGALRM_007d-126"><code>SIGALRM</code></a>: <a href="#posix-signal">posix signal</a></li>
+<li><a href="#index-g_t_0040code_007bSIGBUS_007d-127"><code>SIGBUS</code></a>: <a href="#posix-signal">posix signal</a></li>
+<li><a href="#index-g_t_0040code_007bSIGCHLD_007d-128"><code>SIGCHLD</code></a>: <a href="#posix-signal">posix signal</a></li>
+<li><a href="#index-g_t_0040code_007bSIGCONT_007d-129"><code>SIGCONT</code></a>: <a href="#posix-signal">posix signal</a></li>
+<li><a href="#index-g_t_0040code_007bSIGFPE_007d-130"><code>SIGFPE</code></a>: <a href="#posix-signal">posix signal</a></li>
+<li><a href="#index-g_t_0040code_007bSIGHUP_007d-131"><code>SIGHUP</code></a>: <a href="#posix-signal">posix signal</a></li>
+<li><a href="#index-g_t_0040code_007bSIGILL_007d-132"><code>SIGILL</code></a>: <a href="#posix-signal">posix signal</a></li>
+<li><a href="#index-g_t_0040code_007bSIGINT_007d-133"><code>SIGINT</code></a>: <a href="#posix-signal">posix signal</a></li>
+<li><a href="#index-g_t_0040code_007bSIGKILL_007d-134"><code>SIGKILL</code></a>: <a href="#posix-signal">posix signal</a></li>
+<li><a href="#index-g_t_0040code_007bSIGPIPE_007d-135"><code>SIGPIPE</code></a>: <a href="#posix-signal">posix signal</a></li>
+<li><a href="#index-g_t_0040code_007bSIGPOLL_007d-145"><code>SIGPOLL</code></a>: <a href="#posix-signal">posix signal</a></li>
+<li><a href="#index-g_t_0040code_007bSIGPROF_007d-146"><code>SIGPROF</code></a>: <a href="#posix-signal">posix signal</a></li>
+<li><a href="#index-g_t_0040code_007bSIGQUIT_007d-136"><code>SIGQUIT</code></a>: <a href="#posix-signal">posix signal</a></li>
+<li><a href="#index-g_t_0040code_007bSIGSEGV_007d-137"><code>SIGSEGV</code></a>: <a href="#posix-signal">posix signal</a></li>
+<li><a href="#index-g_t_0040code_007bSIGSTOP_007d-138"><code>SIGSTOP</code></a>: <a href="#posix-signal">posix signal</a></li>
+<li><a href="#index-g_t_0040code_007bSIGSYS_007d-147"><code>SIGSYS</code></a>: <a href="#posix-signal">posix signal</a></li>
+<li><a href="#index-g_t_0040code_007bSIGTERM_007d-139"><code>SIGTERM</code></a>: <a href="#posix-signal">posix signal</a></li>
+<li><a href="#index-g_t_0040code_007bSIGTRAP_007d-148"><code>SIGTRAP</code></a>: <a href="#posix-signal">posix signal</a></li>
+<li><a href="#index-g_t_0040code_007bSIGTSTP_007d-140"><code>SIGTSTP</code></a>: <a href="#posix-signal">posix signal</a></li>
+<li><a href="#index-g_t_0040code_007bSIGTTIN_007d-141"><code>SIGTTIN</code></a>: <a href="#posix-signal">posix signal</a></li>
+<li><a href="#index-g_t_0040code_007bSIGTTOU_007d-142"><code>SIGTTOU</code></a>: <a href="#posix-signal">posix signal</a></li>
+<li><a href="#index-g_t_0040code_007bSIGURG_007d-149"><code>SIGURG</code></a>: <a href="#posix-signal">posix signal</a></li>
+<li><a href="#index-g_t_0040code_007bSIGUSR1_007d-143"><code>SIGUSR1</code></a>: <a href="#posix-signal">posix signal</a></li>
+<li><a href="#index-g_t_0040code_007bSIGUSR2_007d-144"><code>SIGUSR2</code></a>: <a href="#posix-signal">posix signal</a></li>
+<li><a href="#index-g_t_0040code_007bSIGVTALRM_007d-150"><code>SIGVTALRM</code></a>: <a href="#posix-signal">posix signal</a></li>
+<li><a href="#index-g_t_0040code_007bSIGXCPU_007d-151"><code>SIGXCPU</code></a>: <a href="#posix-signal">posix signal</a></li>
+<li><a href="#index-g_t_0040code_007bSIGXFSZ_007d-152"><code>SIGXFSZ</code></a>: <a href="#posix-signal">posix signal</a></li>
 <li><a href="#index-Uninstalling-_0040value_007bPRJNAME_007d-10">Uninstalling Vicare</a>: <a href="#overview-install-uninstall">overview install uninstall</a></li>
 <li><a href="#index-Uninstalling-_0040value_007bPRJNAME_007d-2">Uninstalling Vicare</a>: <a href="#overview-install">overview install</a></li>
 <li><a href="#index-g_t_0040value_007bPRJNAME_007d_002c-disinstalling-8">Vicare, disinstalling</a>: <a href="#overview-install-uninstall">overview install uninstall</a></li>
@@ -7064,113 +7248,119 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 <li><a href="#index-g_t_0023_0040_007bunique_002dname_0040_007d-34"><code>#{unique-name}</code></a>: <a href="#library-gensym">library gensym</a></li>
 <li><a href="#index-accept_002dconnection-75"><code>accept-connection</code></a>: <a href="#library-io-socket-server">library io socket server</a></li>
 <li><a href="#index-accept_002dconnection_002dnonblocking-76"><code>accept-connection-nonblocking</code></a>: <a href="#library-io-socket-server">library io socket server</a></li>
-<li><a href="#index-align-223"><code>align</code></a>: <a href="#objects-int-alloc">objects int alloc</a></li>
-<li><a href="#index-bytevector_005ftag-228"><code>bytevector_tag</code></a>: <a href="#objects-int-bytevector">objects int bytevector</a></li>
-<li><a href="#index-change_002dmode-163"><code>change-mode</code></a>: <a href="#posix-file">posix file</a></li>
+<li><a href="#index-align-227"><code>align</code></a>: <a href="#objects-int-alloc">objects int alloc</a></li>
+<li><a href="#index-bytevector_005ftag-232"><code>bytevector_tag</code></a>: <a href="#objects-int-bytevector">objects int bytevector</a></li>
+<li><a href="#index-change_002dmode-165"><code>change-mode</code></a>: <a href="#posix-file">posix file</a></li>
 <li><a href="#index-close_002dtcp_002dserver_002dsocket-77"><code>close-tcp-server-socket</code></a>: <a href="#library-io-socket-server">library io socket server</a></li>
 <li><a href="#index-collect-64"><code>collect</code></a>: <a href="#library-guardians">library guardians</a></li>
-<li><a href="#index-current_002ddirectory-152"><code>current-directory</code></a>: <a href="#posix-file">posix file</a></li>
-<li><a href="#index-delete_002ddirectory-162"><code>delete-directory</code></a>: <a href="#posix-file">posix file</a></li>
-<li><a href="#index-delete_002dfile-161"><code>delete-file</code></a>: <a href="#posix-file">posix file</a></li>
-<li><a href="#index-directory_002dlist-153"><code>directory-list</code></a>: <a href="#posix-file">posix file</a></li>
-<li><a href="#index-disp_005fbytevector_005fdata-230"><code>disp_bytevector_data</code></a>: <a href="#objects-int-bytevector">objects int bytevector</a></li>
-<li><a href="#index-disp_005fbytevector_005flength-229"><code>disp_bytevector_length</code></a>: <a href="#objects-int-bytevector">objects int bytevector</a></li>
-<li><a href="#index-disp_005fvector_005fdata-235"><code>disp_vector_data</code></a>: <a href="#objects-int-vector">objects int vector</a></li>
-<li><a href="#index-disp_005fvector_005flength-234"><code>disp_vector_length</code></a>: <a href="#objects-int-vector">objects int vector</a></li>
+<li><a href="#index-current_002ddirectory-154"><code>current-directory</code></a>: <a href="#posix-file">posix file</a></li>
+<li><a href="#index-delete_002ddirectory-164"><code>delete-directory</code></a>: <a href="#posix-file">posix file</a></li>
+<li><a href="#index-delete_002dfile-163"><code>delete-file</code></a>: <a href="#posix-file">posix file</a></li>
+<li><a href="#index-directory_002dlist-155"><code>directory-list</code></a>: <a href="#posix-file">posix file</a></li>
+<li><a href="#index-disp_005fbytevector_005fdata-234"><code>disp_bytevector_data</code></a>: <a href="#objects-int-bytevector">objects int bytevector</a></li>
+<li><a href="#index-disp_005fbytevector_005flength-233"><code>disp_bytevector_length</code></a>: <a href="#objects-int-bytevector">objects int bytevector</a></li>
+<li><a href="#index-disp_005fvector_005fdata-239"><code>disp_vector_data</code></a>: <a href="#objects-int-vector">objects int vector</a></li>
+<li><a href="#index-disp_005fvector_005flength-238"><code>disp_vector_length</code></a>: <a href="#objects-int-vector">objects int vector</a></li>
 <li><a href="#index-dlclose-111"><code>dlclose</code></a>: <a href="#library-foreign-dl">library foreign dl</a></li>
 <li><a href="#index-dlerror-113"><code>dlerror</code></a>: <a href="#library-foreign-dl">library foreign dl</a></li>
 <li><a href="#index-dlopen-108"><code>dlopen</code></a>: <a href="#library-foreign-dl">library foreign dl</a></li>
 <li><a href="#index-dlsym-112"><code>dlsym</code></a>: <a href="#library-foreign-dl">library foreign dl</a></li>
-<li><a href="#index-false_005fobject-219"><code>false_object</code></a>: <a href="#objects-int-const">objects int const</a></li>
-<li><a href="#index-file_002dctime-154"><code>file-ctime</code></a>: <a href="#posix-file">posix file</a></li>
-<li><a href="#index-file_002ddirectory_003f-157"><code>file-directory?</code></a>: <a href="#posix-file">posix file</a></li>
-<li><a href="#index-file_002dexists_003f-155"><code>file-exists?</code></a>: <a href="#posix-file">posix file</a></li>
-<li><a href="#index-file_002dregular_003f-156"><code>file-regular?</code></a>: <a href="#posix-file">posix file</a></li>
-<li><a href="#index-file_002dsymbolic_002dlink_003f-158"><code>file-symbolic-link?</code></a>: <a href="#posix-file">posix file</a></li>
-<li><a href="#index-fix-225"><code>fix</code></a>: <a href="#objects-int-fixnum">objects int fixnum</a></li>
-<li><a href="#index-fork-117"><code>fork</code></a>: <a href="#posix-process">posix process</a></li>
+<li><a href="#index-false_005fobject-223"><code>false_object</code></a>: <a href="#objects-int-const">objects int const</a></li>
+<li><a href="#index-file_002dctime-156"><code>file-ctime</code></a>: <a href="#posix-file">posix file</a></li>
+<li><a href="#index-file_002ddirectory_003f-159"><code>file-directory?</code></a>: <a href="#posix-file">posix file</a></li>
+<li><a href="#index-file_002dexists_003f-157"><code>file-exists?</code></a>: <a href="#posix-file">posix file</a></li>
+<li><a href="#index-file_002dregular_003f-158"><code>file-regular?</code></a>: <a href="#posix-file">posix file</a></li>
+<li><a href="#index-file_002dsymbolic_002dlink_003f-160"><code>file-symbolic-link?</code></a>: <a href="#posix-file">posix file</a></li>
+<li><a href="#index-fix-229"><code>fix</code></a>: <a href="#objects-int-fixnum">objects int fixnum</a></li>
+<li><a href="#index-fork-119"><code>fork</code></a>: <a href="#posix-process">posix process</a></li>
 <li><a href="#index-format-41"><code>format</code></a>: <a href="#library-printing">library printing</a></li>
 <li><a href="#index-fprintf-43"><code>fprintf</code></a>: <a href="#library-printing">library printing</a></li>
 <li><a href="#index-free-82"><code>free</code></a>: <a href="#library-foreign-memops-alloc">library foreign memops alloc</a></li>
+<li><a href="#index-generate_002ddebug_002dcalls-242"><code>generate-debug-calls</code></a>: <a href="#debug-int-intro">debug int intro</a></li>
 <li><a href="#index-gensym-28"><code>gensym</code></a>: <a href="#library-gensym">library gensym</a></li>
 <li><a href="#index-gensym_002d_003eunique_002dstring-32"><code>gensym-&gt;unique-string</code></a>: <a href="#library-gensym">library gensym</a></li>
 <li><a href="#index-gensym_002dcount-56"><code>gensym-count</code></a>: <a href="#library-printing">library printing</a></li>
 <li><a href="#index-gensym_002dprefix-54"><code>gensym-prefix</code></a>: <a href="#library-printing">library printing</a></li>
 <li><a href="#index-gensym_003f-31"><code>gensym?</code></a>: <a href="#library-gensym">library gensym</a></li>
-<li><a href="#index-getenv-164"><code>getenv</code></a>: <a href="#posix-env">posix env</a></li>
-<li><a href="#index-ik_005ferrno_005fnum_005fto_005fcode-168"><code>ik_errno_num_to_code</code></a>: <a href="#posix-int-errno">posix int errno</a></li>
-<li><a href="#index-ik_005ferrno_005fto_005fcode-167"><code>ik_errno_to_code</code></a>: <a href="#posix-int-errno">posix int errno</a></li>
-<li><a href="#index-ik_005fsafe_005falloc-224"><code>ik_safe_alloc</code></a>: <a href="#objects-int-alloc">objects int alloc</a></li>
-<li><a href="#index-ik_005fsystem-208"><code>ik_system</code></a>: <a href="#posix-int-exec">posix int exec</a></li>
-<li><a href="#index-ikrt_005faccept-183"><code>ikrt_accept</code></a>: <a href="#posix-int-fd-net">posix int fd net</a></li>
-<li><a href="#index-ikrt_005faccess-187"><code>ikrt_access</code></a>: <a href="#posix-int-files-stat">posix int files stat</a></li>
-<li><a href="#index-ikrt_005fchdir-199"><code>ikrt_chdir</code></a>: <a href="#posix-int-files-dir">posix int files dir</a></li>
-<li><a href="#index-ikrt_005fchmod-186"><code>ikrt_chmod</code></a>: <a href="#posix-int-files-stat">posix int files stat</a></li>
-<li><a href="#index-ikrt_005fclose_005ffd-172"><code>ikrt_close_fd</code></a>: <a href="#posix-int-fd-open">posix int fd open</a></li>
-<li><a href="#index-ikrt_005fclosedir-195"><code>ikrt_closedir</code></a>: <a href="#posix-int-files-dir">posix int files dir</a></li>
-<li><a href="#index-ikrt_005fcurrent_005ftime-209"><code>ikrt_current_time</code></a>: <a href="#posix-int-time">posix int time</a></li>
-<li><a href="#index-ikrt_005fdelete_005ffile-202"><code>ikrt_delete_file</code></a>: <a href="#posix-int-files-link">posix int files link</a></li>
-<li><a href="#index-ikrt_005fdirectory_005flist-193"><code>ikrt_directory_list</code></a>: <a href="#posix-int-files-dir">posix int files dir</a></li>
-<li><a href="#index-ikrt_005fenviron-215"><code>ikrt_environ</code></a>: <a href="#posix-int-env">posix int env</a></li>
-<li><a href="#index-ikrt_005ferrno_005fcode_005fto_005fname-169"><code>ikrt_errno_code_to_name</code></a>: <a href="#posix-int-errno">posix int errno</a></li>
-<li><a href="#index-ikrt_005fexit-206"><code>ikrt_exit</code></a>: <a href="#posix-int-exec">posix int exec</a></li>
-<li><a href="#index-ikrt_005ffile_005fctime-192"><code>ikrt_file_ctime</code></a>: <a href="#posix-int-files-stat">posix int files stat</a></li>
-<li><a href="#index-ikrt_005ffile_005fctime2-190"><code>ikrt_file_ctime2</code></a>: <a href="#posix-int-files-stat">posix int files stat</a></li>
-<li><a href="#index-ikrt_005ffile_005fmtime-191"><code>ikrt_file_mtime</code></a>: <a href="#posix-int-files-stat">posix int files stat</a></li>
-<li><a href="#index-ikrt_005ffile_005fmtime2-189"><code>ikrt_file_mtime2</code></a>: <a href="#posix-int-files-stat">posix int files stat</a></li>
-<li><a href="#index-ikrt_005ffile_005fsize-188"><code>ikrt_file_size</code></a>: <a href="#posix-int-files-stat">posix int files stat</a></li>
-<li><a href="#index-ikrt_005ffork-207"><code>ikrt_fork</code></a>: <a href="#posix-int-exec">posix int exec</a></li>
-<li><a href="#index-ikrt_005fgetcwd-200"><code>ikrt_getcwd</code></a>: <a href="#posix-int-files-dir">posix int files dir</a></li>
-<li><a href="#index-ikrt_005fgetenv-212"><code>ikrt_getenv</code></a>: <a href="#posix-int-env">posix int env</a></li>
-<li><a href="#index-ikrt_005fgmt_005foffset-210"><code>ikrt_gmt_offset</code></a>: <a href="#posix-int-time">posix int time</a></li>
-<li><a href="#index-ikrt_005flast_005ferrno-171"><code>ikrt_last_errno</code></a>: <a href="#posix-int-errno">posix int errno</a></li>
-<li><a href="#index-ikrt_005flink-201"><code>ikrt_link</code></a>: <a href="#posix-int-files-link">posix int files link</a></li>
-<li><a href="#index-ikrt_005flisten-182"><code>ikrt_listen</code></a>: <a href="#posix-int-fd-net">posix int fd net</a></li>
-<li><a href="#index-ikrt_005fmake_005ffd_005fnonblocking-179"><code>ikrt_make_fd_nonblocking</code></a>: <a href="#posix-int-fd-event">posix int fd event</a></li>
-<li><a href="#index-ikrt_005fmkdir-197"><code>ikrt_mkdir</code></a>: <a href="#posix-int-files-dir">posix int files dir</a></li>
-<li><a href="#index-ikrt_005fnanosleep-211"><code>ikrt_nanosleep</code></a>: <a href="#posix-int-time">posix int time</a></li>
-<li><a href="#index-ikrt_005fopen_005finput_005ffd-173"><code>ikrt_open_input_fd</code></a>: <a href="#posix-int-fd-open">posix int fd open</a></li>
-<li><a href="#index-ikrt_005fopen_005foutput_005ffd-174"><code>ikrt_open_output_fd</code></a>: <a href="#posix-int-fd-open">posix int fd open</a></li>
-<li><a href="#index-ikrt_005fopendir-194"><code>ikrt_opendir</code></a>: <a href="#posix-int-files-dir">posix int files dir</a></li>
-<li><a href="#index-ikrt_005fread_005ffd-176"><code>ikrt_read_fd</code></a>: <a href="#posix-int-fd-rw">posix int fd rw</a></li>
-<li><a href="#index-ikrt_005freaddir-196"><code>ikrt_readdir</code></a>: <a href="#posix-int-files-dir">posix int files dir</a></li>
-<li><a href="#index-ikrt_005frealpath-204"><code>ikrt_realpath</code></a>: <a href="#posix-int-files-link">posix int files link</a></li>
-<li><a href="#index-ikrt_005frename_005ffile-205"><code>ikrt_rename_file</code></a>: <a href="#posix-int-files-link">posix int files link</a></li>
-<li><a href="#index-ikrt_005frmdir-198"><code>ikrt_rmdir</code></a>: <a href="#posix-int-files-dir">posix int files dir</a></li>
-<li><a href="#index-ikrt_005fselect-178"><code>ikrt_select</code></a>: <a href="#posix-int-fd-event">posix int fd event</a></li>
-<li><a href="#index-ikrt_005fset_005fposition-175"><code>ikrt_set_position</code></a>: <a href="#posix-int-fd-seek">posix int fd seek</a></li>
-<li><a href="#index-ikrt_005fsetenv-213"><code>ikrt_setenv</code></a>: <a href="#posix-int-env">posix int env</a></li>
-<li><a href="#index-ikrt_005fshutdown-184"><code>ikrt_shutdown</code></a>: <a href="#posix-int-fd-net">posix int fd net</a></li>
-<li><a href="#index-ikrt_005fstat-185"><code>ikrt_stat</code></a>: <a href="#posix-int-files-stat">posix int files stat</a></li>
-<li><a href="#index-ikrt_005fstrerror-170"><code>ikrt_strerror</code></a>: <a href="#posix-int-errno">posix int errno</a></li>
-<li><a href="#index-ikrt_005fsymlink-203"><code>ikrt_symlink</code></a>: <a href="#posix-int-files-link">posix int files link</a></li>
-<li><a href="#index-ikrt_005ftcp_005fconnect-180"><code>ikrt_tcp_connect</code></a>: <a href="#posix-int-fd-net">posix int fd net</a></li>
-<li><a href="#index-ikrt_005fucp_005fconnect-181"><code>ikrt_ucp_connect</code></a>: <a href="#posix-int-fd-net">posix int fd net</a></li>
-<li><a href="#index-ikrt_005funsetenv-214"><code>ikrt_unsetenv</code></a>: <a href="#posix-int-env">posix int env</a></li>
-<li><a href="#index-ikrt_005fwrite_005ffd-177"><code>ikrt_write_fd</code></a>: <a href="#posix-int-fd-rw">posix int fd rw</a></li>
+<li><a href="#index-getenv-166"><code>getenv</code></a>: <a href="#posix-env">posix env</a></li>
+<li><a href="#index-getpid-117"><code>getpid</code></a>: <a href="#posix-pid">posix pid</a></li>
+<li><a href="#index-getppid-118"><code>getppid</code></a>: <a href="#posix-pid">posix pid</a></li>
+<li><a href="#index-guarded_002dstart-243"><code>guarded-start</code></a>: <a href="#debug-int-intro">debug int intro</a></li>
+<li><a href="#index-ik_005ferrno_005fnum_005fto_005fcode-170"><code>ik_errno_num_to_code</code></a>: <a href="#posix-int-errno">posix int errno</a></li>
+<li><a href="#index-ik_005ferrno_005fto_005fcode-169"><code>ik_errno_to_code</code></a>: <a href="#posix-int-errno">posix int errno</a></li>
+<li><a href="#index-ik_005fsafe_005falloc-228"><code>ik_safe_alloc</code></a>: <a href="#objects-int-alloc">objects int alloc</a></li>
+<li><a href="#index-ik_005fsystem-212"><code>ik_system</code></a>: <a href="#posix-int-exec">posix int exec</a></li>
+<li><a href="#index-ikrt_005faccept-185"><code>ikrt_accept</code></a>: <a href="#posix-int-fd-net">posix int fd net</a></li>
+<li><a href="#index-ikrt_005faccess-191"><code>ikrt_access</code></a>: <a href="#posix-int-files-stat">posix int files stat</a></li>
+<li><a href="#index-ikrt_005fchdir-203"><code>ikrt_chdir</code></a>: <a href="#posix-int-files-dir">posix int files dir</a></li>
+<li><a href="#index-ikrt_005fchmod-190"><code>ikrt_chmod</code></a>: <a href="#posix-int-files-stat">posix int files stat</a></li>
+<li><a href="#index-ikrt_005fclose_005ffd-174"><code>ikrt_close_fd</code></a>: <a href="#posix-int-fd-open">posix int fd open</a></li>
+<li><a href="#index-ikrt_005fclosedir-199"><code>ikrt_closedir</code></a>: <a href="#posix-int-files-dir">posix int files dir</a></li>
+<li><a href="#index-ikrt_005fcurrent_005ftime-213"><code>ikrt_current_time</code></a>: <a href="#posix-int-time">posix int time</a></li>
+<li><a href="#index-ikrt_005fdelete_005ffile-206"><code>ikrt_delete_file</code></a>: <a href="#posix-int-files-link">posix int files link</a></li>
+<li><a href="#index-ikrt_005fdirectory_005flist-197"><code>ikrt_directory_list</code></a>: <a href="#posix-int-files-dir">posix int files dir</a></li>
+<li><a href="#index-ikrt_005fenviron-219"><code>ikrt_environ</code></a>: <a href="#posix-int-env">posix int env</a></li>
+<li><a href="#index-ikrt_005ferrno_005fcode_005fto_005fname-171"><code>ikrt_errno_code_to_name</code></a>: <a href="#posix-int-errno">posix int errno</a></li>
+<li><a href="#index-ikrt_005fexit-210"><code>ikrt_exit</code></a>: <a href="#posix-int-exec">posix int exec</a></li>
+<li><a href="#index-ikrt_005ffile_005fctime-196"><code>ikrt_file_ctime</code></a>: <a href="#posix-int-files-stat">posix int files stat</a></li>
+<li><a href="#index-ikrt_005ffile_005fctime2-194"><code>ikrt_file_ctime2</code></a>: <a href="#posix-int-files-stat">posix int files stat</a></li>
+<li><a href="#index-ikrt_005ffile_005fmtime-195"><code>ikrt_file_mtime</code></a>: <a href="#posix-int-files-stat">posix int files stat</a></li>
+<li><a href="#index-ikrt_005ffile_005fmtime2-193"><code>ikrt_file_mtime2</code></a>: <a href="#posix-int-files-stat">posix int files stat</a></li>
+<li><a href="#index-ikrt_005ffile_005fsize-192"><code>ikrt_file_size</code></a>: <a href="#posix-int-files-stat">posix int files stat</a></li>
+<li><a href="#index-ikrt_005ffork-211"><code>ikrt_fork</code></a>: <a href="#posix-int-exec">posix int exec</a></li>
+<li><a href="#index-ikrt_005fgetcwd-204"><code>ikrt_getcwd</code></a>: <a href="#posix-int-files-dir">posix int files dir</a></li>
+<li><a href="#index-ikrt_005fgetenv-216"><code>ikrt_getenv</code></a>: <a href="#posix-int-env">posix int env</a></li>
+<li><a href="#index-ikrt_005fgetpid-187"><code>ikrt_getpid</code></a>: <a href="#posix-int-pid">posix int pid</a></li>
+<li><a href="#index-ikrt_005fgetppid-188"><code>ikrt_getppid</code></a>: <a href="#posix-int-pid">posix int pid</a></li>
+<li><a href="#index-ikrt_005fgmt_005foffset-214"><code>ikrt_gmt_offset</code></a>: <a href="#posix-int-time">posix int time</a></li>
+<li><a href="#index-ikrt_005flast_005ferrno-173"><code>ikrt_last_errno</code></a>: <a href="#posix-int-errno">posix int errno</a></li>
+<li><a href="#index-ikrt_005flink-205"><code>ikrt_link</code></a>: <a href="#posix-int-files-link">posix int files link</a></li>
+<li><a href="#index-ikrt_005flisten-184"><code>ikrt_listen</code></a>: <a href="#posix-int-fd-net">posix int fd net</a></li>
+<li><a href="#index-ikrt_005fmake_005ffd_005fnonblocking-181"><code>ikrt_make_fd_nonblocking</code></a>: <a href="#posix-int-fd-event">posix int fd event</a></li>
+<li><a href="#index-ikrt_005fmkdir-201"><code>ikrt_mkdir</code></a>: <a href="#posix-int-files-dir">posix int files dir</a></li>
+<li><a href="#index-ikrt_005fnanosleep-215"><code>ikrt_nanosleep</code></a>: <a href="#posix-int-time">posix int time</a></li>
+<li><a href="#index-ikrt_005fopen_005finput_005ffd-175"><code>ikrt_open_input_fd</code></a>: <a href="#posix-int-fd-open">posix int fd open</a></li>
+<li><a href="#index-ikrt_005fopen_005foutput_005ffd-176"><code>ikrt_open_output_fd</code></a>: <a href="#posix-int-fd-open">posix int fd open</a></li>
+<li><a href="#index-ikrt_005fopendir-198"><code>ikrt_opendir</code></a>: <a href="#posix-int-files-dir">posix int files dir</a></li>
+<li><a href="#index-ikrt_005fread_005ffd-178"><code>ikrt_read_fd</code></a>: <a href="#posix-int-fd-rw">posix int fd rw</a></li>
+<li><a href="#index-ikrt_005freaddir-200"><code>ikrt_readdir</code></a>: <a href="#posix-int-files-dir">posix int files dir</a></li>
+<li><a href="#index-ikrt_005frealpath-208"><code>ikrt_realpath</code></a>: <a href="#posix-int-files-link">posix int files link</a></li>
+<li><a href="#index-ikrt_005frename_005ffile-209"><code>ikrt_rename_file</code></a>: <a href="#posix-int-files-link">posix int files link</a></li>
+<li><a href="#index-ikrt_005frmdir-202"><code>ikrt_rmdir</code></a>: <a href="#posix-int-files-dir">posix int files dir</a></li>
+<li><a href="#index-ikrt_005fselect-180"><code>ikrt_select</code></a>: <a href="#posix-int-fd-event">posix int fd event</a></li>
+<li><a href="#index-ikrt_005fset_005fposition-177"><code>ikrt_set_position</code></a>: <a href="#posix-int-fd-seek">posix int fd seek</a></li>
+<li><a href="#index-ikrt_005fsetenv-217"><code>ikrt_setenv</code></a>: <a href="#posix-int-env">posix int env</a></li>
+<li><a href="#index-ikrt_005fshutdown-186"><code>ikrt_shutdown</code></a>: <a href="#posix-int-fd-net">posix int fd net</a></li>
+<li><a href="#index-ikrt_005fstat-189"><code>ikrt_stat</code></a>: <a href="#posix-int-files-stat">posix int files stat</a></li>
+<li><a href="#index-ikrt_005fstrerror-172"><code>ikrt_strerror</code></a>: <a href="#posix-int-errno">posix int errno</a></li>
+<li><a href="#index-ikrt_005fsymlink-207"><code>ikrt_symlink</code></a>: <a href="#posix-int-files-link">posix int files link</a></li>
+<li><a href="#index-ikrt_005ftcp_005fconnect-182"><code>ikrt_tcp_connect</code></a>: <a href="#posix-int-fd-net">posix int fd net</a></li>
+<li><a href="#index-ikrt_005fucp_005fconnect-183"><code>ikrt_ucp_connect</code></a>: <a href="#posix-int-fd-net">posix int fd net</a></li>
+<li><a href="#index-ikrt_005funsetenv-218"><code>ikrt_unsetenv</code></a>: <a href="#posix-int-env">posix int env</a></li>
+<li><a href="#index-ikrt_005fwrite_005ffd-179"><code>ikrt_write_fd</code></a>: <a href="#posix-int-fd-rw">posix int fd rw</a></li>
 <li><a href="#index-import-22"><code>import</code></a>: <a href="#library-import">library import</a></li>
 <li><a href="#index-input_002dsocket_002dbuffer_002dsize-79"><code>input-socket-buffer-size</code></a>: <a href="#library-io-socket-server">library io socket server</a></li>
 <li><a href="#index-integer_002d_003epointer-84"><code>integer-&gt;pointer</code></a>: <a href="#library-foreign-memops-pointer">library foreign memops pointer</a></li>
 <li><a href="#index-interaction_002denvironment-19"><code>interaction-environment</code></a>: <a href="#library-environment">library environment</a></li>
-<li><a href="#index-is_005ffixnum-227"><code>is_fixnum</code></a>: <a href="#objects-int-fixnum">objects int fixnum</a></li>
-<li><a href="#index-kill-151"><code>kill</code></a>: <a href="#posix-signal">posix signal</a></li>
+<li><a href="#index-is_005ffixnum-231"><code>is_fixnum</code></a>: <a href="#objects-int-fixnum">objects int fixnum</a></li>
+<li><a href="#index-kill-153"><code>kill</code></a>: <a href="#posix-signal">posix signal</a></li>
 <li><a href="#index-load-20"><code>load</code></a>: <a href="#library-load">library load</a></li>
 <li><a href="#index-make_002dc_002dcallback-115"><code>make-c-callback</code></a>: <a href="#library-foreign-call-back">library foreign call back</a></li>
 <li><a href="#index-make_002dc_002dcallout-114"><code>make-c-callout</code></a>: <a href="#library-foreign-call-out-api">library foreign call out api</a></li>
-<li><a href="#index-make_002ddirectory-160"><code>make-directory</code></a>: <a href="#posix-file">posix file</a></li>
+<li><a href="#index-make_002ddirectory-162"><code>make-directory</code></a>: <a href="#posix-file">posix file</a></li>
 <li><a href="#index-make_002dguardian-65"><code>make-guardian</code></a>: <a href="#library-guardians-api">library guardians api</a></li>
 <li><a href="#index-make_002dparameter-25"><code>make-parameter</code></a>: <a href="#library-parameters">library parameters</a></li>
-<li><a href="#index-make_002dsymbolic_002dlink-159"><code>make-symbolic-link</code></a>: <a href="#posix-file">posix file</a></li>
+<li><a href="#index-make_002dsymbolic_002dlink-161"><code>make-symbolic-link</code></a>: <a href="#posix-file">posix file</a></li>
 <li><a href="#index-make_002dtraced_002dprocedure-61"><code>make-traced-procedure</code></a>: <a href="#library-tracing">library tracing</a></li>
 <li><a href="#index-malloc-81"><code>malloc</code></a>: <a href="#library-foreign-memops-alloc">library foreign memops alloc</a></li>
 <li><a href="#index-module-23"><code>module</code></a>: <a href="#library-modules-api">library modules api</a></li>
-<li><a href="#index-nanosleep-166"><code>nanosleep</code></a>: <a href="#posix-misc">posix misc</a></li>
+<li><a href="#index-nanosleep-168"><code>nanosleep</code></a>: <a href="#posix-misc">posix misc</a></li>
 <li><a href="#index-new_002dcafe-17"><code>new-cafe</code></a>: <a href="#library-cafe">library cafe</a></li>
-<li><a href="#index-null_005fobject-221"><code>null_object</code></a>: <a href="#objects-int-const">objects int const</a></li>
-<li><a href="#index-off_005fbytevector_005fdata-232"><code>off_bytevector_data</code></a>: <a href="#objects-int-bytevector">objects int bytevector</a></li>
-<li><a href="#index-off_005fbytevector_005flength-231"><code>off_bytevector_length</code></a>: <a href="#objects-int-bytevector">objects int bytevector</a></li>
-<li><a href="#index-off_005fvector_005fdata-237"><code>off_vector_data</code></a>: <a href="#objects-int-vector">objects int vector</a></li>
-<li><a href="#index-off_005fvector_005flength-236"><code>off_vector_length</code></a>: <a href="#objects-int-vector">objects int vector</a></li>
+<li><a href="#index-null_005fobject-225"><code>null_object</code></a>: <a href="#objects-int-const">objects int const</a></li>
+<li><a href="#index-off_005fbytevector_005fdata-236"><code>off_bytevector_data</code></a>: <a href="#objects-int-bytevector">objects int bytevector</a></li>
+<li><a href="#index-off_005fbytevector_005flength-235"><code>off_bytevector_length</code></a>: <a href="#objects-int-bytevector">objects int bytevector</a></li>
+<li><a href="#index-off_005fvector_005fdata-241"><code>off_vector_data</code></a>: <a href="#objects-int-vector">objects int vector</a></li>
+<li><a href="#index-off_005fvector_005flength-240"><code>off_vector_length</code></a>: <a href="#objects-int-vector">objects int vector</a></li>
 <li><a href="#index-output_002dsocket_002dbuffer_002dsize-80"><code>output-socket-buffer-size</code></a>: <a href="#library-io-socket-server">library io socket server</a></li>
 <li><a href="#index-parameterize-27"><code>parameterize</code></a>: <a href="#library-parameters">library parameters</a></li>
 <li><a href="#index-pointer_002d_003einteger-83"><code>pointer-&gt;integer</code></a>: <a href="#library-foreign-memops-pointer">library foreign memops pointer</a></li>
@@ -7207,12 +7397,12 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 <li><a href="#index-printf-42"><code>printf</code></a>: <a href="#library-printing">library printing</a></li>
 <li><a href="#index-process-67"><code>process</code></a>: <a href="#library-io-process">library io process</a></li>
 <li><a href="#index-process_002dnonblocking-68"><code>process-nonblocking</code></a>: <a href="#library-io-process">library io process</a></li>
-<li><a href="#index-ref-218"><code>ref</code></a>: <a href="#objects-int-refs">objects int refs</a></li>
+<li><a href="#index-ref-222"><code>ref</code></a>: <a href="#objects-int-refs">objects int refs</a></li>
 <li><a href="#index-register_002dcallback-78"><code>register-callback</code></a>: <a href="#library-io-socket-server">library io socket server</a></li>
 <li><a href="#index-set_002dport_002dmode_0021-15"><code>set-port-mode!</code></a>: <a href="#library-reader">library reader</a></li>
-<li><a href="#index-strerror-165"><code>strerror</code></a>: <a href="#posix-misc">posix misc</a></li>
-<li><a href="#index-system-118"><code>system</code></a>: <a href="#posix-process">posix process</a></li>
-<li><a href="#index-tagof-217"><code>tagof</code></a>: <a href="#objects-int-refs">objects int refs</a></li>
+<li><a href="#index-strerror-167"><code>strerror</code></a>: <a href="#posix-misc">posix misc</a></li>
+<li><a href="#index-system-120"><code>system</code></a>: <a href="#posix-process">posix process</a></li>
+<li><a href="#index-tagof-221"><code>tagof</code></a>: <a href="#objects-int-refs">objects int refs</a></li>
 <li><a href="#index-tcp_002dconnect-69"><code>tcp-connect</code></a>: <a href="#library-io-socket-client">library io socket client</a></li>
 <li><a href="#index-tcp_002dconnect_002dnonblocking-71"><code>tcp-connect-nonblocking</code></a>: <a href="#library-io-socket-client">library io socket client</a></li>
 <li><a href="#index-tcp_002dserver_002dsocket-73"><code>tcp-server-socket</code></a>: <a href="#library-io-socket-server">library io socket server</a></li>
@@ -7221,17 +7411,17 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 <li><a href="#index-time_002dit-63"><code>time-it</code></a>: <a href="#library-timing">library timing</a></li>
 <li><a href="#index-trace_002ddefine-58"><code>trace-define</code></a>: <a href="#library-tracing">library tracing</a></li>
 <li><a href="#index-trace_002dlambda-60"><code>trace-lambda</code></a>: <a href="#library-tracing">library tracing</a></li>
-<li><a href="#index-true_005fobject-220"><code>true_object</code></a>: <a href="#objects-int-const">objects int const</a></li>
+<li><a href="#index-true_005fobject-224"><code>true_object</code></a>: <a href="#objects-int-const">objects int const</a></li>
 <li><a href="#index-udp_002dconnect-70"><code>udp-connect</code></a>: <a href="#library-io-socket-client">library io socket client</a></li>
 <li><a href="#index-udp_002dconnect_002dnonblocking-72"><code>udp-connect-nonblocking</code></a>: <a href="#library-io-socket-client">library io socket client</a></li>
-<li><a href="#index-unfix-226"><code>unfix</code></a>: <a href="#objects-int-fixnum">objects int fixnum</a></li>
-<li><a href="#index-vector_005ftag-233"><code>vector_tag</code></a>: <a href="#objects-int-vector">objects int vector</a></li>
+<li><a href="#index-unfix-230"><code>unfix</code></a>: <a href="#objects-int-fixnum">objects int fixnum</a></li>
+<li><a href="#index-vector_005ftag-237"><code>vector_tag</code></a>: <a href="#objects-int-vector">objects int vector</a></li>
 <li><a href="#index-void-116"><code>void</code></a>: <a href="#library-misc">library misc</a></li>
-<li><a href="#index-void_005fobject-222"><code>void_object</code></a>: <a href="#objects-int-const">objects int const</a></li>
-<li><a href="#index-waitpid-119"><code>waitpid</code></a>: <a href="#posix-waitpid">posix waitpid</a></li>
-<li><a href="#index-wstatus_002dexit_002dstatus-121"><code>wstatus-exit-status</code></a>: <a href="#posix-waitpid">posix waitpid</a></li>
-<li><a href="#index-wstatus_002dpid-120"><code>wstatus-pid</code></a>: <a href="#posix-waitpid">posix waitpid</a></li>
-<li><a href="#index-wstatus_002dreceived_002dsignal-122"><code>wstatus-received-signal</code></a>: <a href="#posix-waitpid">posix waitpid</a></li>
+<li><a href="#index-void_005fobject-226"><code>void_object</code></a>: <a href="#objects-int-const">objects int const</a></li>
+<li><a href="#index-waitpid-121"><code>waitpid</code></a>: <a href="#posix-waitpid">posix waitpid</a></li>
+<li><a href="#index-wstatus_002dexit_002dstatus-123"><code>wstatus-exit-status</code></a>: <a href="#posix-waitpid">posix waitpid</a></li>
+<li><a href="#index-wstatus_002dpid-122"><code>wstatus-pid</code></a>: <a href="#posix-waitpid">posix waitpid</a></li>
+<li><a href="#index-wstatus_002dreceived_002dsignal-124"><code>wstatus-received-signal</code></a>: <a href="#posix-waitpid">posix waitpid</a></li>
    </ul><div class="node">
 <a name="variable-index"></a>
 <p><hr>
@@ -7260,7 +7450,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 
 
 <ul class="index-tp" compact>
-<li><a href="#index-ikptr-216"><code>ikptr</code></a>: <a href="#objects-int-refs">objects int refs</a></li>
+<li><a href="#index-ikptr-220"><code>ikptr</code></a>: <a href="#objects-int-refs">objects int refs</a></li>
    </ul><div class="footnote">
 <hr>
 <a name="texinfo-footnotes-in-document"></a><h4>Footnotes</h4><p class="footnote"><small>[<a name="fn-1" href="#fnd-1">1</a>]</small> The <samp><span class="command">configure</span></samp> command shown here is very
