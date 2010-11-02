@@ -1,0 +1,349 @@
+<html lang="en">
+<head>
+<title>baselib control - Nausicaa for Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Nausicaa for Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="baselib.html#baselib" title="baselib">
+<link rel="prev" href="baselib-errors.html#baselib-errors" title="baselib errors">
+<link rel="next" href="baselib-iteration.html#baselib-iteration" title="baselib iteration">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d3 of Nausicaa/Scheme, a set of
+Scheme libraries defining a slightly modified R6RS Scheme language
+and augmenting the features of the base and standard R6RS libraries.
+
+The project home page of Nausicaa is at:
+
+             `http://marcomaggi.github.com/nausicaa.html'
+
+
+development of Nausicaa takes place at:
+
+               `http://github.com/marcomaggi/nausicaa/'
+
+
+Copyright (C) 2008, 2009, 2010 by Marco Maggi.
+
+Copyright (C) 1996, 1997, 2000, 2001, 2002, 2003, 2004, 2005
+Free Software Foundation.
+
+Copyright (C) 1996, 1999-2005 Dorai Sitaram.
+
+Copyright (C) 1998 Oleg Kiselyov.
+
+Copyright (C) 1998, 1999, 2000 Olin Shivers.
+
+Copyright (C) 1999 John David Stone.
+
+Copyright (C) 1999, 2002 Marc Feeley.
+
+Copyright (C) 2001, 2009 Danny Dube'
+
+Copyright (C) 2002 Dr. Mirko Luedde.
+
+Copyright (C) 2002, 2003, 2005, 2006 Sebastian Egner.
+
+Copyright (C) 2003 Ray Dillinger.
+
+Copyright (C) 2003 Taylor Campbell.
+
+Copyright (C) 2005 Jens Axel Soegaard.
+
+Copyright (C) 2005-2009 Alex Shinn.
+
+Copyright (C) 2008 Taro Minowa (Higepon).
+
+Copyright (C) 2005-2008 Dominique Boucher.
+
+Copyright (C) 2004, 2005 Tony Garnock-Jones
+
+Copyright (C) 2005 LShift Ltd.
+
+Copyright (C) 2007, 2008 Philip L. Bewig.
+
+Copyright (C) 2000 Will Fitzgerald.
+
+Copyright (C) 2000 Neodesic Corporation.
+
+Copyright (C) 2000-2006 Joachim Henke.
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with no Invariant Sections being ``GNU Free
+     Documentation License'' and ``GNU General Public License'', no
+     Front--Cover Texts, and no Back--Cover Texts.  A copy of the
+     license is included in the section entitled ``GNU Free
+     Documentation License''.
+
+This document embeds an unofficial assemblage of several documents
+reformatted in Texinfo; the reformatting author and maintainer is
+Marco Maggi <marco.maggi-ipsu@poste.it>.  See the appendix ``Credits'' for
+the list of original documents and their authors.  See also the
+`README' and `CREDITS' files for additional attributions.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="baselib-control"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="baselib-iteration.html#baselib-iteration">baselib iteration</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="baselib-errors.html#baselib-errors">baselib errors</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="baselib.html#baselib">baselib</a>
+<hr>
+</div>
+
+<h3 class="section">3.14 Control features</h3>
+
+<p>This chapter describes various primitive procedures which control the
+flow of program execution in special ways.
+
+<div class="defun">
+&mdash; Procedure: <b>apply</b><var> proc arg1 <small class="dots">...</small> rest-args<a name="index-apply-214"></a></var><br>
+<blockquote><p><var>rest-args</var> must be a list.  <var>proc</var> should accept <em>n</em>
+arguments, where <em>n</em> is number of <var>arg</var>s plus the length of
+<var>rest-args</var>.  The <code>apply</code> procedure calls <var>proc</var> with the
+elements of the list:
+
+     <pre class="example">          (append (list <var>arg1</var> ...) <var>rest-args</var>)
+</pre>
+        <p class="noindent">as the actual arguments.
+
+        <p>If a call to <code>apply</code> occurs in a tail context, the call to
+<var>proc</var> is also in a tail context.
+
+     <pre class="example">          (apply + (list 3 4))                    &rArr;  7
+          
+          (define compose
+            (lambda (f g)
+              (lambda args
+                (f (apply g args)))))
+          
+          ((compose sqrt *) 12 75)                &rArr;  30
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Procedure: <b>call-with-current-continuation</b><var> proc<a name="index-call_002dwith_002dcurrent_002dcontinuation-215"></a></var><br>
+&mdash; Procedure: <b>call/cc</b><var> proc<a name="index-call_002fcc-216"></a></var><br>
+<blockquote><p><var>proc</var> should accept one argument.  The procedure <code>call/cc</code>
+(which is the same as the procedure
+<code>call-with-current-continuation</code>) packages the current continuation
+as an &ldquo;escape procedure&rdquo; and passes it as an argument to <var>proc</var>.
+
+        <p>The escape procedure is a Scheme procedure that, if it is later called,
+will abandon whatever continuation is in effect at that later time and
+will instead reinstate the continuation that was in effect when the
+escape procedure was created.
+
+        <p>Calling the escape procedure may cause the invocation of <var>before</var>
+and <var>after</var> procedures installed using <code>dynamic-wind</code>.
+
+        <p>The escape procedure accepts the same number of arguments as the
+continuation of the original call to <code>call/cc</code>.
+
+        <p>The escape procedure that is passed to <var>proc</var> has unlimited extent
+just like any other procedure in Scheme.  It may be stored in variables
+or data structures and may be called as many times as desired.
+
+        <p>If a call to <code>call/cc</code> occurs in a tail context, the call to
+<var>proc</var> is also in a tail context.
+
+        <p>The following examples show only some ways in which <code>call/cc</code> is
+used.  If all real uses were as simple as these examples, there would be
+no need for a procedure with the power of <code>call/cc</code>.
+
+     <pre class="example">          (call-with-current-continuation
+            (lambda (exit)
+              (for-each (lambda (x)
+                          (if (negative? x)
+                              (exit x)))
+                        '(54 0 37 -3 245 19))
+              #t))
+          &rArr;  -3
+          
+          (define list-length
+            (lambda (obj)
+              (call-with-current-continuation
+                (lambda (return)
+                  (letrec ((r
+                            (lambda (obj)
+                              (cond ((null? obj) 0)
+                                    ((pair? obj)
+                                     (+ (r (cdr obj)) 1))
+                                    (else (return #f))))))
+                    (r obj))))))
+          
+          (list-length '(1 2 3 4))                        &rArr;  4
+          (list-length '(a b . c))                        &rArr; #f
+          (call-with-current-continuation procedure?)     &rArr; #t
+</pre>
+        <blockquote>
+<strong>NOTE</strong> Calling an escape procedure reenters the dynamic extent of
+the call to <code>call/cc</code>, and thus restores its dynamic environment. 
+</blockquote>
+        </p></blockquote></div>
+
+<div class="defun">
+&mdash; Procedure: <b>values</b><var> obj <small class="dots">...</small><a name="index-values-217"></a></var><br>
+<blockquote><p>Delivers all of its arguments to its continuation.  The <code>values</code>
+procedure might be defined as follows:
+
+     <pre class="example">          (define (values . things)
+            (call-with-current-continuation
+              (lambda (cont) (apply cont things))))
+</pre>
+        <p>The continuations of all non&ndash;final expressions within a sequence of
+expressions, such as in <code>lambda</code>, <code>begin</code>, <code>let</code>,
+<code>let*</code>, <code>letrec</code>, <code>letrec*</code>, <code>let-values</code>,
+<code>let*-values</code>, <code>case</code>, and <code>cond</code> forms, usually take an
+arbitrary number of values.
+
+        <p>Except for these and the continuations created by
+<code>call-with-values</code>, <code>let-values</code>, and <code>let*-values</code>,
+continuations implicitly accepting a single value, such as the
+continuations of &lt;operator&gt; and &lt;operand&gt;s of procedure calls
+or the &lt;test&gt; expressions in conditionals, take exactly one value. 
+The effect of passing an inappropriate number of values to such a
+continuation is undefined. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Procedure: <b>call-with-values</b><var> producer consumer<a name="index-call_002dwith_002dvalues-218"></a></var><br>
+<blockquote><p><var>producer</var> must be a procedure and should accept zero arguments. 
+<var>consumer</var> must be a procedure and should accept as many values as
+<var>producer</var> returns.  The <code>call-with-values</code> procedure calls
+<var>producer</var> with no arguments and a continuation that, when passed
+some values, calls the <var>consumer</var> procedure with those values as
+arguments.  The continuation for the call to <var>consumer</var> is the
+continuation of the call to <code>call-with-values</code>.
+
+     <pre class="example">          (call-with-values
+              (lambda () (values 4 5))
+            (lambda (a b) b))
+          &rArr;  5
+          
+          (call-with-values * -)
+          &rArr;  -1
+</pre>
+        <p>If a call to <code>call-with-values</code> occurs in a tail context, the call
+to <var>consumer</var> is also in a tail context.
+
+        <p><strong>Implementation responsibilities:</strong> After <var>producer</var> returns,
+the implementation must check that <var>consumer</var> accepts as many values
+as <var>consumer</var> has returned. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Procedure: <b>dynamic-wind</b><var> before thunk after<a name="index-dynamic_002dwind-219"></a></var><br>
+<blockquote><p><var>before</var>, <var>thunk</var>, and <var>after</var> must be procedures, and each
+should accept zero arguments.  These procedures may return any number of
+values.
+
+        <p>The <code>dynamic-wind</code> procedure calls <var>thunk</var> without arguments,
+returning the results of this call.  Moreover, <code>dynamic-wind</code> calls
+<var>before</var> without arguments whenever the dynamic extent of the call
+to <var>thunk</var> is entered, and <var>after</var> without arguments whenever
+the dynamic extent of the call to <var>thunk</var> is exited.  Thus, in the
+absence of calls to escape procedures created by <code>call/cc</code>,
+<code>dynamic-wind</code> calls <var>before</var>, <var>thunk</var>, and <var>after</var>, in
+that order.
+
+        <p>While the calls to <var>before</var> and <var>after</var> are not considered to be
+within the dynamic extent of the call to <var>thunk</var>, calls to the
+<var>before</var> and <var>after</var> procedures of any other calls to
+<code>dynamic-wind</code> that occur within the dynamic extent of the call to
+<var>thunk</var> are considered to be within the dynamic extent of the call
+to <var>thunk</var>.
+
+        <p>More precisely, an escape procedure transfers control out of the dynamic
+extent of a set of zero or more active <code>dynamic-wind</code> calls <em>x
+<small class="dots">...</small></em> and transfer control into the dynamic extent of a set of zero
+or more active <code>dynamic-wind</code> calls <em>y <small class="dots">...</small></em>.  It leaves
+the dynamic extent of the most recent <em>x</em> and calls without
+arguments the corresponding <var>after</var> procedure.  If the <var>after</var>
+procedure returns, the escape procedure proceeds to the next most recent
+<em>x</em>, and so on.  Once each <em>x</em> has been handled in this
+manner, the escape procedure calls without arguments the <var>before</var>
+procedure corresponding to the least recent <em>y</em>.  If the
+<var>before</var> procedure returns, the escape procedure reenters the
+dynamic extent of the least recent <em>y</em> and proceeds with the next
+least recent <em>y</em>, and so on.  Once each <em>y</em> has been handled
+in this manner, control is transferred to the continuation packaged in
+the escape procedure.
+
+        <p><strong>Implementation responsibilities:</strong> The implementation must check
+the restrictions on <var>thunk</var> and <var>after</var> only if they are
+actually called.
+
+     <pre class="example">          (let ((path '())
+                (c #f))
+            (let ((add (lambda (s)
+                         (set! path (cons s path)))))
+              (dynamic-wind
+                (lambda () (add 'connect))
+                (lambda ()
+                  (add (call-with-current-continuation
+                         (lambda (c0)
+                           (set! c c0)
+                           'talk1))))
+                (lambda () (add 'disconnect)))
+              (if (&lt; (length path) 4)
+                  (c 'talk2)
+                  (reverse path))))
+          &rArr; (connect talk1 disconnect connect talk2 disconnect)
+          
+          (let ((n 0))
+            (call-with-current-continuation
+              (lambda (k)
+                (dynamic-wind
+                  (lambda ()
+                    (set! n (+ n 1))
+                    (k))
+                  (lambda ()
+                    (set! n (+ n 2)))
+                  (lambda ()
+                    (set! n (+ n 4))))))
+            n)
+          &rArr; 1
+          
+          (let ((n 0))
+            (call-with-current-continuation
+              (lambda (k)
+                (dynamic-wind
+                  values
+                  (lambda ()
+                    (dynamic-wind
+                      values
+                      (lambda ()
+                        (set! n (+ n 1))
+                        (k))
+                      (lambda ()
+                        (set! n (+ n 2))
+                        (k))))
+                  (lambda ()
+                    (set! n (+ n 4))))))
+            n)
+          &rArr; 7
+</pre>
+        <blockquote>
+<strong>NOTE</strong> Entering a dynamic extent restores its dynamic environment. 
+</blockquote>
+        </p></blockquote></div>
+
+<!-- page -->
+   </body></html>
+

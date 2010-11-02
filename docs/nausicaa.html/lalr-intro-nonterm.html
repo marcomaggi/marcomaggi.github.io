@@ -1,0 +1,183 @@
+<html lang="en">
+<head>
+<title>lalr intro nonterm - Nausicaa for Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Nausicaa for Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="lalr-intro.html#lalr-intro" title="lalr intro">
+<link rel="prev" href="lalr-intro-error.html#lalr-intro-error" title="lalr intro error">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d3 of Nausicaa/Scheme, a set of
+Scheme libraries defining a slightly modified R6RS Scheme language
+and augmenting the features of the base and standard R6RS libraries.
+
+The project home page of Nausicaa is at:
+
+             `http://marcomaggi.github.com/nausicaa.html'
+
+
+development of Nausicaa takes place at:
+
+               `http://github.com/marcomaggi/nausicaa/'
+
+
+Copyright (C) 2008, 2009, 2010 by Marco Maggi.
+
+Copyright (C) 1996, 1997, 2000, 2001, 2002, 2003, 2004, 2005
+Free Software Foundation.
+
+Copyright (C) 1996, 1999-2005 Dorai Sitaram.
+
+Copyright (C) 1998 Oleg Kiselyov.
+
+Copyright (C) 1998, 1999, 2000 Olin Shivers.
+
+Copyright (C) 1999 John David Stone.
+
+Copyright (C) 1999, 2002 Marc Feeley.
+
+Copyright (C) 2001, 2009 Danny Dube'
+
+Copyright (C) 2002 Dr. Mirko Luedde.
+
+Copyright (C) 2002, 2003, 2005, 2006 Sebastian Egner.
+
+Copyright (C) 2003 Ray Dillinger.
+
+Copyright (C) 2003 Taylor Campbell.
+
+Copyright (C) 2005 Jens Axel Soegaard.
+
+Copyright (C) 2005-2009 Alex Shinn.
+
+Copyright (C) 2008 Taro Minowa (Higepon).
+
+Copyright (C) 2005-2008 Dominique Boucher.
+
+Copyright (C) 2004, 2005 Tony Garnock-Jones
+
+Copyright (C) 2005 LShift Ltd.
+
+Copyright (C) 2007, 2008 Philip L. Bewig.
+
+Copyright (C) 2000 Will Fitzgerald.
+
+Copyright (C) 2000 Neodesic Corporation.
+
+Copyright (C) 2000-2006 Joachim Henke.
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with no Invariant Sections being ``GNU Free
+     Documentation License'' and ``GNU General Public License'', no
+     Front--Cover Texts, and no Back--Cover Texts.  A copy of the
+     license is included in the section entitled ``GNU Free
+     Documentation License''.
+
+This document embeds an unofficial assemblage of several documents
+reformatted in Texinfo; the reformatting author and maintainer is
+Marco Maggi <marco.maggi-ipsu@poste.it>.  See the appendix ``Credits'' for
+the list of original documents and their authors.  See also the
+`README' and `CREDITS' files for additional attributions.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="lalr-intro-nonterm"></a>
+<p>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="lalr-intro-error.html#lalr-intro-error">lalr intro error</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="lalr-intro.html#lalr-intro">lalr intro</a>
+<hr>
+</div>
+
+<h4 class="subsection">57.1.7 Non&ndash;terminal categories</h4>
+
+<p>We have seen the graph representation of the grammar with tokens
+belonging to terminal categories.  But how many nodes are there in such
+a graph?  There are an infinite number of expressions, and consequently
+an infinite number of sequences of terminals is required to represent
+them.  This would make it impossible to code a parser, unless we take a
+different approach.
+
+   <p>We start by noticing that, if the following sequences of terminals
+represent expressions:
+
+<pre class="example">     N
+     A N
+     N A N
+     N M N
+</pre>
+   <p class="noindent">then the following sequences of terminals represent expressions with
+subexpression:
+
+<pre class="example">     N A  N
+     N A  A N
+     N A  N A N
+     N A  N M N
+     
+     N M  N
+     N M  A N
+     N M  N A N
+     N M  N M N
+</pre>
+   <p>Let's define a new category, indicated by the Scheme symbol &lsquo;<samp><span class="samp">E</span></samp>&rsquo;,
+which represents the basic expressions:
+
+<pre class="example">     E == N
+       == A N
+       == N A N
+       == N M N
+</pre>
+   <p class="noindent">then we can represent the composite sequences written above with:
+
+<pre class="example">     N A E
+     N M E
+</pre>
+   <p class="noindent">and more generally:
+
+<pre class="example">     E A E
+     E M E
+</pre>
+   <p>Let's suppose in defining the category &lsquo;<samp><span class="samp">E</span></samp>&rsquo; we can use &lsquo;<samp><span class="samp">E</span></samp>&rsquo;
+itself, recursively; then we can write:
+
+<pre class="example">     E == N
+       == A E
+       == E A E
+       == E M E
+       == O E C
+</pre>
+   <p class="noindent">in which we have included a rule for the parentheses; with this
+definition involving a few symbols we can represent the whole set of
+possible expressions.  <code>(lalr)</code> allows us to do exactly this,
+using the following S&ndash;expression:
+
+<pre class="example">     (E (N)
+        (A E)
+        (E A E)
+        (E M E)
+        (O E C))
+</pre>
+   <p>Categories defined this way, as sequences of the same and other
+categories, are called non&ndash;terminals for reasons we can imagine.  The
+definition of non&ndash;terminals changes nothing in the way the parser
+itself works, but it is the fundamental tool to describe the grammar. 
+We can use any number of non&ndash;terminals to describe a grammar.
+
+<!-- page -->
+   </body></html>
+

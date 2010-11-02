@@ -1,0 +1,195 @@
+<html lang="en">
+<head>
+<title>strings compar number - Nausicaa for Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Nausicaa for Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="strings-compar.html#strings-compar" title="strings compar">
+<link rel="prev" href="strings-compar-dict.html#strings-compar-dict" title="strings compar dict">
+<link rel="next" href="strings-compar-dictnumber.html#strings-compar-dictnumber" title="strings compar dictnumber">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d3 of Nausicaa/Scheme, a set of
+Scheme libraries defining a slightly modified R6RS Scheme language
+and augmenting the features of the base and standard R6RS libraries.
+
+The project home page of Nausicaa is at:
+
+             `http://marcomaggi.github.com/nausicaa.html'
+
+
+development of Nausicaa takes place at:
+
+               `http://github.com/marcomaggi/nausicaa/'
+
+
+Copyright (C) 2008, 2009, 2010 by Marco Maggi.
+
+Copyright (C) 1996, 1997, 2000, 2001, 2002, 2003, 2004, 2005
+Free Software Foundation.
+
+Copyright (C) 1996, 1999-2005 Dorai Sitaram.
+
+Copyright (C) 1998 Oleg Kiselyov.
+
+Copyright (C) 1998, 1999, 2000 Olin Shivers.
+
+Copyright (C) 1999 John David Stone.
+
+Copyright (C) 1999, 2002 Marc Feeley.
+
+Copyright (C) 2001, 2009 Danny Dube'
+
+Copyright (C) 2002 Dr. Mirko Luedde.
+
+Copyright (C) 2002, 2003, 2005, 2006 Sebastian Egner.
+
+Copyright (C) 2003 Ray Dillinger.
+
+Copyright (C) 2003 Taylor Campbell.
+
+Copyright (C) 2005 Jens Axel Soegaard.
+
+Copyright (C) 2005-2009 Alex Shinn.
+
+Copyright (C) 2008 Taro Minowa (Higepon).
+
+Copyright (C) 2005-2008 Dominique Boucher.
+
+Copyright (C) 2004, 2005 Tony Garnock-Jones
+
+Copyright (C) 2005 LShift Ltd.
+
+Copyright (C) 2007, 2008 Philip L. Bewig.
+
+Copyright (C) 2000 Will Fitzgerald.
+
+Copyright (C) 2000 Neodesic Corporation.
+
+Copyright (C) 2000-2006 Joachim Henke.
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with no Invariant Sections being ``GNU Free
+     Documentation License'' and ``GNU General Public License'', no
+     Front--Cover Texts, and no Back--Cover Texts.  A copy of the
+     license is included in the section entitled ``GNU Free
+     Documentation License''.
+
+This document embeds an unofficial assemblage of several documents
+reformatted in Texinfo; the reformatting author and maintainer is
+Marco Maggi <marco.maggi-ipsu@poste.it>.  See the appendix ``Credits'' for
+the list of original documents and their authors.  See also the
+`README' and `CREDITS' files for additional attributions.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="strings-compar-number"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="strings-compar-dictnumber.html#strings-compar-dictnumber">strings compar dictnumber</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="strings-compar-dict.html#strings-compar-dict">strings compar dict</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="strings-compar.html#strings-compar">strings compar</a>
+<hr>
+</div>
+
+<h4 class="subsection">30.6.3 String and numeric parts lexicographic comparison</h4>
+
+<p>String/numbers comparison splits the strings to compare into their
+numeric and non&ndash;numeric parts and compares the parts one by one; for
+example, the string &lsquo;<samp><span class="samp">foo4bar3zab10</span></samp>&rsquo; is split into the following
+list:
+
+<pre class="example">     ("foo" 4 "bar" 3 "zab" 10)
+</pre>
+   <p class="noindent">in which non&ndash;numeric parts are retained as Scheme strings and numeric
+parts become exact integers; numeric parts only become <strong>exact</strong>
+integer, never flonums.  String parts are compared with the ordinary
+lexicographic operators <code>string&lt;?</code> and <code>string=?</code> (or
+<code>string-ci&lt;?</code> and <code>string-ci=?</code>), while numeric parts are
+compared with the ordinary <code>&lt;</code> and <code>=</code> operators; a string
+part and a numeric part are compared by converting the number into a
+string, then using <code>string&lt;?</code> and <code>string=?</code>.
+
+   <p>Miscellaneous examples:
+
+<pre class="example">     (string/numbers&lt;? "123" "45")
+     &rArr; #f
+     
+     (string/numbers&lt;? "ciao3" "ciao10")
+     &rArr; #t
+     
+     (string/numbers&lt;? "foo4bar3zab10" "foo4bar3zab2")
+     &rArr; #f
+     
+     (string/numbers&lt;? "foo4bar10" "foo4bar3zab")
+     &rArr; #f
+</pre>
+   <div class="defun">
+&mdash; Function: <b>string/numbers-compare</b><var> str1 str2<a name="index-string_002fnumbers_002dcompare-2390"></a></var><br>
+&mdash; Function: <b>%string/numbers-compare</b><var> str1 str2<a name="index-g_t_0025string_002fnumbers_002dcompare-2391"></a></var><br>
+<blockquote><p>Compare the string and numeric parts of the arguments and return a
+ternary result: &lsquo;<samp><span class="samp">-1</span></samp>&rsquo; if <var>str1</var> is less than <var>str2</var>,
+&lsquo;<samp><span class="samp">0</span></samp>&rsquo; if <var>str1</var> is equal to <var>str2</var>, &lsquo;<samp><span class="samp">+1</span></samp>&rsquo; if <var>str1</var>
+is greater than <var>str2</var>.  The comparison is case sensitive. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>string/numbers=?</b><var> str1 str2<a name="index-string_002fnumbers_003d_003f-2392"></a></var><br>
+&mdash; Function: <b>string/numbers&lt;&gt;?</b><var> str1 str2<a name="index-string_002fnumbers_003c_003e_003f-2393"></a></var><br>
+&mdash; Function: <b>string/numbers&lt;?</b><var> str1 str2<a name="index-string_002fnumbers_003c_003f-2394"></a></var><br>
+&mdash; Function: <b>string/numbers&lt;=?</b><var> str1 str2<a name="index-string_002fnumbers_003c_003d_003f-2395"></a></var><br>
+&mdash; Function: <b>string/numbers&gt;?</b><var> str1 str2<a name="index-string_002fnumbers_003e_003f-2396"></a></var><br>
+&mdash; Function: <b>string/numbers&gt;=?</b><var> str1 str2<a name="index-string_002fnumbers_003e_003d_003f-2397"></a></var><br>
+&mdash; Function: <b>%string/numbers=?</b><var> str1 str2<a name="index-g_t_0025string_002fnumbers_003d_003f-2398"></a></var><br>
+&mdash; Function: <b>%string/numbers&lt;&gt;?</b><var> str1 str2<a name="index-g_t_0025string_002fnumbers_003c_003e_003f-2399"></a></var><br>
+&mdash; Function: <b>%string/numbers&lt;?</b><var> str1 str2<a name="index-g_t_0025string_002fnumbers_003c_003f-2400"></a></var><br>
+&mdash; Function: <b>%string/numbers&lt;=?</b><var> str1 str2<a name="index-g_t_0025string_002fnumbers_003c_003d_003f-2401"></a></var><br>
+&mdash; Function: <b>%string/numbers&gt;?</b><var> str1 str2<a name="index-g_t_0025string_002fnumbers_003e_003f-2402"></a></var><br>
+&mdash; Function: <b>%string/numbers&gt;=?</b><var> str1 str2<a name="index-g_t_0025string_002fnumbers_003e_003d_003f-2403"></a></var><br>
+<blockquote><p>Return <code>#t</code> or <code>#f</code>, whether the string arguments comply with the
+predicate. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>string/numbers-compare-ci</b><var> str1 str2<a name="index-string_002fnumbers_002dcompare_002dci-2404"></a></var><br>
+&mdash; Function: <b>%string/numbers-compare-ci</b><var> str1 str2<a name="index-g_t_0025string_002fnumbers_002dcompare_002dci-2405"></a></var><br>
+<blockquote><p>Compare the string and numeric parts of the arguments and return a
+ternary result: &lsquo;<samp><span class="samp">-1</span></samp>&rsquo; if <var>str1</var> is less than <var>str2</var>,
+&lsquo;<samp><span class="samp">0</span></samp>&rsquo; if <var>str1</var> is equal to <var>str2</var>, &lsquo;<samp><span class="samp">+1</span></samp>&rsquo; if <var>str1</var>
+is greater than <var>str2</var>.  The comparison is case insensitive. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>string/numbers-ci=?</b><var> str1 str2<a name="index-string_002fnumbers_002dci_003d_003f-2406"></a></var><br>
+&mdash; Function: <b>string/numbers-ci&lt;&gt;?</b><var> str1 str2<a name="index-string_002fnumbers_002dci_003c_003e_003f-2407"></a></var><br>
+&mdash; Function: <b>string/numbers-ci&lt;?</b><var> str1 str2<a name="index-string_002fnumbers_002dci_003c_003f-2408"></a></var><br>
+&mdash; Function: <b>string/numbers-ci&gt;?</b><var> str1 str2<a name="index-string_002fnumbers_002dci_003e_003f-2409"></a></var><br>
+&mdash; Function: <b>string/numbers-ci&lt;=?</b><var> str1 str2<a name="index-string_002fnumbers_002dci_003c_003d_003f-2410"></a></var><br>
+&mdash; Function: <b>string/numbers-ci&gt;=?</b><var> str1 str2<a name="index-string_002fnumbers_002dci_003e_003d_003f-2411"></a></var><br>
+&mdash; Function: <b>%string/numbers-ci=?</b><var> str1 str2<a name="index-g_t_0025string_002fnumbers_002dci_003d_003f-2412"></a></var><br>
+&mdash; Function: <b>%string/numbers-ci&lt;&gt;?</b><var> str1 str2<a name="index-g_t_0025string_002fnumbers_002dci_003c_003e_003f-2413"></a></var><br>
+&mdash; Function: <b>%string/numbers-ci&lt;?</b><var> str1 str2<a name="index-g_t_0025string_002fnumbers_002dci_003c_003f-2414"></a></var><br>
+&mdash; Function: <b>%string/numbers-ci&gt;?</b><var> str1 str2<a name="index-g_t_0025string_002fnumbers_002dci_003e_003f-2415"></a></var><br>
+&mdash; Function: <b>%string/numbers-ci&lt;=?</b><var> str1 str2<a name="index-g_t_0025string_002fnumbers_002dci_003c_003d_003f-2416"></a></var><br>
+&mdash; Function: <b>%string/numbers-ci&gt;=?</b><var> str1 str2<a name="index-g_t_0025string_002fnumbers_002dci_003e_003d_003f-2417"></a></var><br>
+<blockquote><p>Return <code>#t</code> or <code>#f</code>, whether the string arguments comply with the
+predicate.  The comparison is case insensitive. 
+</p></blockquote></div>
+
+<!-- page -->
+   </body></html>
+

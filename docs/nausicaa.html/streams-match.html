@@ -1,0 +1,207 @@
+<html lang="en">
+<head>
+<title>streams match - Nausicaa for Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Nausicaa for Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="streams.html#streams" title="streams">
+<link rel="prev" href="streams-map.html#streams-map" title="streams map">
+<link rel="next" href="streams-utilities.html#streams-utilities" title="streams utilities">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d3 of Nausicaa/Scheme, a set of
+Scheme libraries defining a slightly modified R6RS Scheme language
+and augmenting the features of the base and standard R6RS libraries.
+
+The project home page of Nausicaa is at:
+
+             `http://marcomaggi.github.com/nausicaa.html'
+
+
+development of Nausicaa takes place at:
+
+               `http://github.com/marcomaggi/nausicaa/'
+
+
+Copyright (C) 2008, 2009, 2010 by Marco Maggi.
+
+Copyright (C) 1996, 1997, 2000, 2001, 2002, 2003, 2004, 2005
+Free Software Foundation.
+
+Copyright (C) 1996, 1999-2005 Dorai Sitaram.
+
+Copyright (C) 1998 Oleg Kiselyov.
+
+Copyright (C) 1998, 1999, 2000 Olin Shivers.
+
+Copyright (C) 1999 John David Stone.
+
+Copyright (C) 1999, 2002 Marc Feeley.
+
+Copyright (C) 2001, 2009 Danny Dube'
+
+Copyright (C) 2002 Dr. Mirko Luedde.
+
+Copyright (C) 2002, 2003, 2005, 2006 Sebastian Egner.
+
+Copyright (C) 2003 Ray Dillinger.
+
+Copyright (C) 2003 Taylor Campbell.
+
+Copyright (C) 2005 Jens Axel Soegaard.
+
+Copyright (C) 2005-2009 Alex Shinn.
+
+Copyright (C) 2008 Taro Minowa (Higepon).
+
+Copyright (C) 2005-2008 Dominique Boucher.
+
+Copyright (C) 2004, 2005 Tony Garnock-Jones
+
+Copyright (C) 2005 LShift Ltd.
+
+Copyright (C) 2007, 2008 Philip L. Bewig.
+
+Copyright (C) 2000 Will Fitzgerald.
+
+Copyright (C) 2000 Neodesic Corporation.
+
+Copyright (C) 2000-2006 Joachim Henke.
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with no Invariant Sections being ``GNU Free
+     Documentation License'' and ``GNU General Public License'', no
+     Front--Cover Texts, and no Back--Cover Texts.  A copy of the
+     license is included in the section entitled ``GNU Free
+     Documentation License''.
+
+This document embeds an unofficial assemblage of several documents
+reformatted in Texinfo; the reformatting author and maintainer is
+Marco Maggi <marco.maggi-ipsu@poste.it>.  See the appendix ``Credits'' for
+the list of original documents and their authors.  See also the
+`README' and `CREDITS' files for additional attributions.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="streams-match"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="streams-utilities.html#streams-utilities">streams utilities</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="streams-map.html#streams-map">streams map</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="streams.html#streams">streams</a>
+<hr>
+</div>
+
+<h3 class="section">34.12 Matching</h3>
+
+<div class="defun">
+&mdash; Syntax: <b>stream-match</b><var> stream clause ...<a name="index-stream_002dmatch-3068"></a></var><br>
+<blockquote><p>Provide the syntax of pattern&ndash;matching for streams.  The input
+<var>stream</var> is an expression that evaluates to a stream.  <var>clause</var>
+arguments are of the form:
+
+     <pre class="example">          (&lt;pattern&gt; &lt;expr&gt;)
+          (&lt;pattern&gt; &lt;fender&gt; &lt;expr&gt;)
+</pre>
+        <p class="noindent">consisting of a &lt;pattern&gt; that matches a stream of a particular
+shape, an optional &lt;fender&gt; that must succeed if the &lt;pattern&gt;
+is to match, and an &lt;expr&gt; that is evaluated if the &lt;pattern&gt;
+matches.  There are four types of patterns:
+
+          <dl>
+<dt><code>()</code><dd>Matches the null stream.
+
+          <br><dt><code>(pat0 pat1 ...)</code><dd>Matches a finite stream with length exactly equal to the number of
+pattern elements.
+
+          <br><dt><code>(pat0 pat1 ...  . patrest)</code><dd>Matches an infinite stream, or a finite stream with length at least as
+great as the number of pattern elements before the literal dot.
+
+          <br><dt><code>pat</code><dd>Matches an entire stream; should always appear last in the list of
+clauses; it's not an error to appear elsewhere, but subsequent clauses
+could never match. 
+</dl>
+
+        <p>Each &lt;pattern&gt; element may be either:
+
+          <dl>
+<dt><em>An identifier</em><dd>Matches any stream element; additionally, the value of the stream
+element is bound to the variable named by the identifier, which is in
+scope in the fender and expression of the corresponding clause; each
+identifier in a single pattern must be unique.
+
+          <br><dt><em>A literal underscore</em><dd>Matches any stream element, but creates no bindings. 
+</dl>
+
+        <p>The patterns are tested in order, left&ndash;to&ndash;right, until a matching
+pattern is found; if &lt;fender&gt; is present, it must evaluate as true
+for the match to be successful.  Pattern variables are bound in the
+corresponding fender and expression.  Once the matching pattern is
+found, the corresponding expression is evaluated and returned as the
+result of the match.  An error is signaled if no pattern matches the
+input stream.
+
+        <p><code>stream-match</code> is often used to distinguish null streams from
+non&ndash;null streams, binding head and tail:
+
+     <pre class="example">          (define (len strm)
+            (stream-match strm
+              (()                 0)
+              ((head . tail)      (+ 1 (len tail)))))
+</pre>
+        <p>Fenders can test the common case where two stream elements must be
+identical; the else pattern is an identifier bound to the entire stream,
+not a keyword as in <code>cond</code>.
+
+     <pre class="example">          (stream-match strm
+            ((x y . _) (equal? x y)
+             'ok)
+            (else
+             'error))
+</pre>
+        <p>A more complex example uses two nested matchers to match two different
+stream arguments; <code>(stream-merge lt? .  strms)</code> stably merges two
+or more streams ordered by the <var>lt?</var> predicate:
+
+     <pre class="example">          (define-stream (stream-merge lt? . strms)
+          
+            (define-stream (merge xx yy)
+              (stream-match xx
+                (() yy)
+                ((x . xs)
+                 (stream-match yy
+                   (() xx)
+                   ((y . ys)
+                    (if (lt? y x)
+                        (stream-cons y (merge xx ys))
+                      (stream-cons x (merge xs yy))))))))
+          
+            (stream-let loop ((strms strms))
+              (cond ((null? strms)
+                     stream-null)
+                    ((null? (cdr strms))
+                     (car strms))
+                    (else
+                     (merge (car strms)
+                            (apply stream-merge lt?
+                            (cdr strms)))))))
+</pre>
+        </blockquote></div>
+
+<!-- page -->
+   </body></html>
+

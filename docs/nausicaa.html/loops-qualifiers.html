@@ -1,0 +1,215 @@
+<html lang="en">
+<head>
+<title>loops qualifiers - Nausicaa for Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Nausicaa for Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="loops.html#loops" title="loops">
+<link rel="prev" href="loops-comprehensions.html#loops-comprehensions" title="loops comprehensions">
+<link rel="next" href="loops-generators.html#loops-generators" title="loops generators">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d3 of Nausicaa/Scheme, a set of
+Scheme libraries defining a slightly modified R6RS Scheme language
+and augmenting the features of the base and standard R6RS libraries.
+
+The project home page of Nausicaa is at:
+
+             `http://marcomaggi.github.com/nausicaa.html'
+
+
+development of Nausicaa takes place at:
+
+               `http://github.com/marcomaggi/nausicaa/'
+
+
+Copyright (C) 2008, 2009, 2010 by Marco Maggi.
+
+Copyright (C) 1996, 1997, 2000, 2001, 2002, 2003, 2004, 2005
+Free Software Foundation.
+
+Copyright (C) 1996, 1999-2005 Dorai Sitaram.
+
+Copyright (C) 1998 Oleg Kiselyov.
+
+Copyright (C) 1998, 1999, 2000 Olin Shivers.
+
+Copyright (C) 1999 John David Stone.
+
+Copyright (C) 1999, 2002 Marc Feeley.
+
+Copyright (C) 2001, 2009 Danny Dube'
+
+Copyright (C) 2002 Dr. Mirko Luedde.
+
+Copyright (C) 2002, 2003, 2005, 2006 Sebastian Egner.
+
+Copyright (C) 2003 Ray Dillinger.
+
+Copyright (C) 2003 Taylor Campbell.
+
+Copyright (C) 2005 Jens Axel Soegaard.
+
+Copyright (C) 2005-2009 Alex Shinn.
+
+Copyright (C) 2008 Taro Minowa (Higepon).
+
+Copyright (C) 2005-2008 Dominique Boucher.
+
+Copyright (C) 2004, 2005 Tony Garnock-Jones
+
+Copyright (C) 2005 LShift Ltd.
+
+Copyright (C) 2007, 2008 Philip L. Bewig.
+
+Copyright (C) 2000 Will Fitzgerald.
+
+Copyright (C) 2000 Neodesic Corporation.
+
+Copyright (C) 2000-2006 Joachim Henke.
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with no Invariant Sections being ``GNU Free
+     Documentation License'' and ``GNU General Public License'', no
+     Front--Cover Texts, and no Back--Cover Texts.  A copy of the
+     license is included in the section entitled ``GNU Free
+     Documentation License''.
+
+This document embeds an unofficial assemblage of several documents
+reformatted in Texinfo; the reformatting author and maintainer is
+Marco Maggi <marco.maggi-ipsu@poste.it>.  See the appendix ``Credits'' for
+the list of original documents and their authors.  See also the
+`README' and `CREDITS' files for additional attributions.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="loops-qualifiers"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="loops-generators.html#loops-generators">loops generators</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="loops-comprehensions.html#loops-comprehensions">loops comprehensions</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="loops.html#loops">loops</a>
+<hr>
+</div>
+
+<h3 class="section">36.3 Qualifiers</h3>
+
+<p>This section defines the syntax &lt;qualifier&gt;.  The nesting of
+qualifiers is from left (outer) to right (inner).  In other words, the
+rightmost generator &ldquo;spins faster&rdquo;.  The nesting also defines the
+region of the variables introduced by the generators.  This implies that
+inner generators may depend on the variables of outer generators.  The
+sequence of enumeration of values is strictly depth first.  These
+conventions are illustrated by the first example.
+
+   <p>The syntax &lt;qualifier&gt; consists of the following alternatives.
+
+<div class="defun">
+&mdash; Qualifier Syntax: <b>&lt;generator&gt;</b><var><a name="index-g_t_0040meta_007bgenerator_007d-3163"></a></var><br>
+<blockquote><p>Enumerate a sequence of bindings of one or more variables.  The region
+of the variables starts at the generator and extends over all subsequent
+qualifiers and expressions in the comprehension.  <a href="loops-generators.html#loops-generators">Generators</a>
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Qualifier Syntax: <b>if</b><var> test<a name="index-if-3164"></a></var><br>
+<blockquote><p>Filter the sequence of bindings by testing if <var>test</var> evaluates to
+non&ndash;<code>#f</code>.  Only for those bindings for which this is the case, the
+subsequent qualifiers of the comprehension are evaluated.
+
+     <pre class="example">          (list-ec (:range i 10)
+                   (if (even? i))
+            i)
+          &rArr; (0 2 4 6 8)
+          
+          (list-ec (:range i 5)
+                   (if (even? i))
+                   (:let j (+ 1 i))
+            j)
+          &rArr; (1 3 5)
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Qualifier Syntax: <b>not</b><var> test<a name="index-not-3165"></a></var><br>
+&mdash; Qualifier Syntax: <b>and</b><var> test ...<a name="index-and-3166"></a></var><br>
+&mdash; Qualifier Syntax: <b>or</b><var> test ...<a name="index-or-3167"></a></var><br>
+<blockquote><p>Abbreviated notations for filters of the form:
+
+     <pre class="example">          (if (not <var>test</var>))
+          (if (and <var>test</var> ...))
+          (if (or  <var>test</var> ...))
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Qualifier Syntax: <b>begin</b><var> sequence<a name="index-begin-3168"></a></var><br>
+<blockquote><p>Evaluate <var>sequence</var>, consisting of &lsquo;<samp><var>command</var><span class="samp"> ... 
+</span><var>expression</var></samp>&rsquo;, once for each binding of the variables defined by the
+previous qualifiers in the comprehension.  Using this qualifier, side
+effects can be inserted into the body of a comprehension.
+
+     <pre class="example">          (let* ((ans '())
+                 (ell (list-ec (:range i 5)
+                               (begin
+                                 (set! ans (cons i ans)))
+                               i)))
+            (list ans ell))
+          &rArr; ((4 3 2 1 0)
+              (0 1 2 3 4))
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Qualifier Syntax: <b>nested</b><var> &lt;qualifier&gt; ...<a name="index-nested-3169"></a></var><br>
+<blockquote><p>A syntactic construct to group qualifiers.  The meaning of a qualifier
+according to the &lsquo;<samp><span class="samp">nested</span></samp>&rsquo; syntax is the same as inserting the
+&lt;qualifier&gt; syntaxes into the enclosing comprehension.
+
+        <p>This construct can be used to reduce comprehensions with several
+qualifiers into a form with exactly one qualifier.
+
+     <pre class="example">          (list-ec (nested (:range i 5)
+                           (if (even? i))
+                           (:let j (+ 1 i)))
+            j)
+          &rArr; (1 3 5)
+          
+          (list-ec (:range i 5)
+                   (nested (if (even? i))
+                           (:let j (+ 1 i)))
+            j)
+          &rArr; (1 3 5)
+          
+          (list-ec (:range i 5)
+                   (if (even? i))
+                   (nested (:let j (+ 1 i)))
+            j)
+          &rArr; (1 3 5)
+          
+          (list-ec (:range i 5)
+                   (if (even? i))
+                   (:let j (+ 1 i))
+                   (nested)
+            j)
+          &rArr; (1 3 5)
+</pre>
+        </blockquote></div>
+
+<!-- page -->
+   </body></html>
+

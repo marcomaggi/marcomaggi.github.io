@@ -1,0 +1,203 @@
+<html lang="en">
+<head>
+<title>uri percent - Nausicaa for Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Nausicaa for Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="uri.html#uri" title="uri">
+<link rel="prev" href="uri-string.html#uri-string" title="uri string">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d3 of Nausicaa/Scheme, a set of
+Scheme libraries defining a slightly modified R6RS Scheme language
+and augmenting the features of the base and standard R6RS libraries.
+
+The project home page of Nausicaa is at:
+
+             `http://marcomaggi.github.com/nausicaa.html'
+
+
+development of Nausicaa takes place at:
+
+               `http://github.com/marcomaggi/nausicaa/'
+
+
+Copyright (C) 2008, 2009, 2010 by Marco Maggi.
+
+Copyright (C) 1996, 1997, 2000, 2001, 2002, 2003, 2004, 2005
+Free Software Foundation.
+
+Copyright (C) 1996, 1999-2005 Dorai Sitaram.
+
+Copyright (C) 1998 Oleg Kiselyov.
+
+Copyright (C) 1998, 1999, 2000 Olin Shivers.
+
+Copyright (C) 1999 John David Stone.
+
+Copyright (C) 1999, 2002 Marc Feeley.
+
+Copyright (C) 2001, 2009 Danny Dube'
+
+Copyright (C) 2002 Dr. Mirko Luedde.
+
+Copyright (C) 2002, 2003, 2005, 2006 Sebastian Egner.
+
+Copyright (C) 2003 Ray Dillinger.
+
+Copyright (C) 2003 Taylor Campbell.
+
+Copyright (C) 2005 Jens Axel Soegaard.
+
+Copyright (C) 2005-2009 Alex Shinn.
+
+Copyright (C) 2008 Taro Minowa (Higepon).
+
+Copyright (C) 2005-2008 Dominique Boucher.
+
+Copyright (C) 2004, 2005 Tony Garnock-Jones
+
+Copyright (C) 2005 LShift Ltd.
+
+Copyright (C) 2007, 2008 Philip L. Bewig.
+
+Copyright (C) 2000 Will Fitzgerald.
+
+Copyright (C) 2000 Neodesic Corporation.
+
+Copyright (C) 2000-2006 Joachim Henke.
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with no Invariant Sections being ``GNU Free
+     Documentation License'' and ``GNU General Public License'', no
+     Front--Cover Texts, and no Back--Cover Texts.  A copy of the
+     license is included in the section entitled ``GNU Free
+     Documentation License''.
+
+This document embeds an unofficial assemblage of several documents
+reformatted in Texinfo; the reformatting author and maintainer is
+Marco Maggi <marco.maggi-ipsu@poste.it>.  See the appendix ``Credits'' for
+the list of original documents and their authors.  See also the
+`README' and `CREDITS' files for additional attributions.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="uri-percent"></a>
+<p>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="uri-string.html#uri-string">uri string</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="uri.html#uri">uri</a>
+<hr>
+</div>
+
+<h3 class="section">66.2 Percent encoding of characters</h3>
+
+<p>A string is valid as <acronym>URI</acronym> component only if its characters match the
+following <code>(silex)</code> specification:
+
+<pre class="example">     ALPHA           [a-zA-Z]
+     DIGIT           [0-9]
+     HEXDIG          [0-9a-fA-F]
+     
+     pct-encoded     %{HEXDIG}{HEXDIG}
+     
+     gen-delims      [:/\?#\[\]@]
+     sub-delims      [\!\$&amp;\'()\*\+,\;=]
+     
+     reserved        {gen-delims}|{sub-delims}
+     unreserved      {ALPHA}|{DIGIT}|[\-\._~]
+</pre>
+   <p class="noindent"><a href="silex-syntax.html#silex-syntax">silex syntax</a> for the syntax of the specification.  All the
+characters which are not unreserved are meant to be percent&ndash;encoded in
+a <acronym>URI</acronym> string; in particular the following must be encoded:
+
+<pre class="example">     : / ? # [ ]  \ ! $ &amp; ' ( ) * + , ; =
+</pre>
+   <p class="noindent">the characters in the unreserved set can, but should not, be encoded.
+
+   <p>The following bindings are exported by the <code>(uri low)</code> library; it
+is suggested to prefix them when importing this library.
+
+<div class="defun">
+&mdash; Function: <b>unreserved-char?</b><var> obj<a name="index-unreserved_002dchar_003f-4415"></a></var><br>
+<blockquote><p>Return true if <var>obj</var> represents an unreserved character according to
+<acronym>RFC</acronym> 3986.  <var>obj</var> can be either a character or an integer
+representing a character according to <code>char-&gt;integer</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>percent-encode</b><var> &lt;obj&gt; &lt;clause&gt; ...<a name="index-percent_002dencode-4416"></a></var><br>
+<blockquote><p>This syntax is a maker, <a href="../nausicaa/makers.html#makers">Maker syntaxes</a>. 
+Percent&ndash;encode the given object, return the result; characters outside
+a selected range are percent&ndash;encoded.
+
+        <p><var>obj</var> must be an expression evaluating to any character, or string,
+or bytevector; the character is converted to a string and the string is
+converted to a bytevector with <code>string-&gt;utf8</code>.
+
+        <p>The following clauses are supported:
+
+          <dl>
+<dt><code>:char-selector </code><var>pred</var><dd><var>pred</var> must be a predicate function which, applied to an integer
+representing a character according to <code>char-&gt;integer</code>, returns true
+if the character must be percent encoded.  The default is to encode all
+the character not unreserved.
+
+          <br><dt><code>:string-result? </code><var>bool</var><dd>If <var>bool</var> is true: return a string, else return a bytevector; the
+default is to return a bytevector. 
+</dl>
+        </p></blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>percent-decode</b><var> &lt;obj&gt; &lt;clause&gt; ...<a name="index-percent_002ddecode-4417"></a></var><br>
+<blockquote><p>This syntax is a maker, <a href="../nausicaa/makers.html#makers">Maker syntaxes</a>. 
+Percent&ndash;decode the given <var>obj</var>, return the result.
+
+        <p><var>obj</var> must be an expression evaluating to any string or bytevector;
+the string is converted to a bytevector with <code>string-&gt;utf8</code>.
+
+        <p>The following clauses are supported:
+
+          <dl>
+<dt><code>:string-result? </code><var>bool</var><dd>If <var>bool</var> is true: return a string, else return a bytevector; the
+default is to return a bytevector. 
+</dl>
+        </p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>normalise-percent-encoded-bytevector</b><var> bv<a name="index-normalise_002dpercent_002dencoded_002dbytevector-4418"></a></var><br>
+<blockquote><p>Normalise the given percent&ndash;encoded bytevector; bytes that are encoded
+but should not are decoded; return the normalised bytevector.  Assume
+that <var>bv</var> is composed by bytes in the valid range for <acronym>URI</acronym>s.
+
+        <p>Notice that this function does <strong>not</strong> percent&ndash;encode bytes which
+are already not so. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>normalise-percent-encoded-string</b><var> str<a name="index-normalise_002dpercent_002dencoded_002dstring-4419"></a></var><br>
+<blockquote><p>Normalise the given percent&ndash;encoded string; characters that are encoded
+but should not are decoded; return the normalised string.  Assume that
+<var>str</var> is composed by characters in the valid range for <acronym>URI</acronym>s.
+
+        <p>Notice that this function does <strong>not</strong> percent&ndash;encode characters
+which are already not so. 
+</p></blockquote></div>
+
+<!-- end of file -->
+   </body></html>
+

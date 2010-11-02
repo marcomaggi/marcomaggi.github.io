@@ -1,0 +1,288 @@
+<html lang="en">
+<head>
+<title>ffi memory cache - Nausicaa for Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Nausicaa for Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="ffi-memory.html#ffi-memory" title="ffi memory">
+<link rel="prev" href="ffi-memory-blocks.html#ffi-memory-blocks" title="ffi memory blocks">
+<link rel="next" href="ffi-memory-compensate.html#ffi-memory-compensate" title="ffi memory compensate">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d3 of Nausicaa/Scheme, a set of
+Scheme libraries defining a slightly modified R6RS Scheme language
+and augmenting the features of the base and standard R6RS libraries.
+
+The project home page of Nausicaa is at:
+
+             `http://marcomaggi.github.com/nausicaa.html'
+
+
+development of Nausicaa takes place at:
+
+               `http://github.com/marcomaggi/nausicaa/'
+
+
+Copyright (C) 2008, 2009, 2010 by Marco Maggi.
+
+Copyright (C) 1996, 1997, 2000, 2001, 2002, 2003, 2004, 2005
+Free Software Foundation.
+
+Copyright (C) 1996, 1999-2005 Dorai Sitaram.
+
+Copyright (C) 1998 Oleg Kiselyov.
+
+Copyright (C) 1998, 1999, 2000 Olin Shivers.
+
+Copyright (C) 1999 John David Stone.
+
+Copyright (C) 1999, 2002 Marc Feeley.
+
+Copyright (C) 2001, 2009 Danny Dube'
+
+Copyright (C) 2002 Dr. Mirko Luedde.
+
+Copyright (C) 2002, 2003, 2005, 2006 Sebastian Egner.
+
+Copyright (C) 2003 Ray Dillinger.
+
+Copyright (C) 2003 Taylor Campbell.
+
+Copyright (C) 2005 Jens Axel Soegaard.
+
+Copyright (C) 2005-2009 Alex Shinn.
+
+Copyright (C) 2008 Taro Minowa (Higepon).
+
+Copyright (C) 2005-2008 Dominique Boucher.
+
+Copyright (C) 2004, 2005 Tony Garnock-Jones
+
+Copyright (C) 2005 LShift Ltd.
+
+Copyright (C) 2007, 2008 Philip L. Bewig.
+
+Copyright (C) 2000 Will Fitzgerald.
+
+Copyright (C) 2000 Neodesic Corporation.
+
+Copyright (C) 2000-2006 Joachim Henke.
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with no Invariant Sections being ``GNU Free
+     Documentation License'' and ``GNU General Public License'', no
+     Front--Cover Texts, and no Back--Cover Texts.  A copy of the
+     license is included in the section entitled ``GNU Free
+     Documentation License''.
+
+This document embeds an unofficial assemblage of several documents
+reformatted in Texinfo; the reformatting author and maintainer is
+Marco Maggi <marco.maggi-ipsu@poste.it>.  See the appendix ``Credits'' for
+the list of original documents and their authors.  See also the
+`README' and `CREDITS' files for additional attributions.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="ffi-memory-cache"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="ffi-memory-compensate.html#ffi-memory-compensate">ffi memory compensate</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="ffi-memory-blocks.html#ffi-memory-blocks">ffi memory blocks</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="ffi-memory.html#ffi-memory">ffi memory</a>
+<hr>
+</div>
+
+<h4 class="subsection">23.2.4 Caching memory blocks</h4>
+
+<p>The following bindings are exported by <code>(ffi memory caches)</code> and
+re&ndash;exported by <code>(ffi memory)</code>.  This library makes use of
+<code>&lt;memblock&gt;</code> records, whose interface is exported by <code>(ffi
+memory memblocks)</code>.
+
+<div class="defun">
+&mdash; Function: <b>make-block-cache</b><var> number-of-bytes max-depth<a name="index-make_002dblock_002dcache-1452"></a></var><br>
+<blockquote><p>Build and return a new memory blocks cache, for blocks of
+<var>number-of-bytes</var>, which, at maximum, will cache <var>max-depth</var>
+blocks.  The return value is an interface function with the following
+protocol:
+
+          <dl>
+<dt><em>When the function is invoked with zero arguments</em><dd>It retrieves a block from the set of cached blocks; if the set is empty:
+A new block is allocated with <code>calloc</code>.  Return a pointer to the
+block.
+
+          <br><dt><em>When the function is invoked with 1 argument</em><dd>If the argument is the Scheme symbol &lsquo;<samp><span class="samp">purge</span></samp>&rsquo;: <code>primitive-free</code>
+is applied to all the blocks in the cache and the cache is reset to
+empty.
+
+          <p>If the argument is the Scheme symbol &lsquo;<samp><span class="samp">size</span></samp>&rsquo;: The return value is
+<var>number-of-bytes</var>.
+
+          <p>Else the argument must be a pointer previously returned by this
+interface function: If the number of blocks in the cache is less than
+<var>max-depth</var>, the pointer is stored in the cache, else
+<code>primitive-free</code> is applied to it. 
+</dl>
+        </p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>small-blocks-cache</b><var><a name="index-small_002dblocks_002dcache-1453"></a></var><br>
+&mdash; Function: <b>small-blocks-cache</b><var> pointer<a name="index-small_002dblocks_002dcache-1454"></a></var><br>
+&mdash; Function: <b>small-blocks-cache</b><var> purge<a name="index-small_002dblocks_002dcache-1455"></a></var><br>
+&mdash; Function: <b>small-blocks-cache</b><var> size<a name="index-small_002dblocks_002dcache-1456"></a></var><br>
+<blockquote><p>Interface function for a cache of memory blocks of size 32,
+10 blocks deep.  This cache is meant to be used for temporary
+storage space of output values from foreign&ndash;functions.  The size of
+32 should be enough to hold all the output values of C language
+standard types.
+
+        <p>Blocks are allocated with <code>calloc</code> and reset to zero with
+<code>memset</code> when released, so they are guaranteed to be set to zero
+when acquired.
+
+        <p>For example, the <acronym>GNU</acronym> Libgcrypt library has a constructor with this
+prototype:
+
+     <pre class="example">          gcry_error_t gcry_cipher_open (gcry_cipher_hd_t * hd,
+                                         int algo, int mode,
+                                         unsigned int flag);
+</pre>
+        <p class="noindent">where <code>gcry_cipher_hd_t</code> is a <code>typedef</code> for an opaque pointer
+(we can think of it as <code>void *</code>); the <var>hd</var> argument must
+reference a pointer&ndash;sized location in which the function will store a
+pointer to a newly allocated data structure; this location is required
+only for the construction of a new object, so a Scheme interface could
+do (unsafe code, not handling errors):
+
+     <pre class="example">          (let ((hd* (small-blocks-cache)))
+            (gcry_cipher_open hd* algo mode flag)
+            (begin0
+                (pointer-ref-c-pointer hd* 0)
+              (small-blocks-cache hd*)))
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>page-blocks-cache</b><var><a name="index-page_002dblocks_002dcache-1457"></a></var><br>
+&mdash; Function: <b>page-blocks-cache</b><var> pointer<a name="index-page_002dblocks_002dcache-1458"></a></var><br>
+&mdash; Function: <b>page-blocks-cache</b><var> purge<a name="index-page_002dblocks_002dcache-1459"></a></var><br>
+&mdash; Function: <b>page-blocks-cache</b><var> size<a name="index-page_002dblocks_002dcache-1460"></a></var><br>
+<blockquote><p>Interface function for a cache of memory blocks of size 4096, 10 blocks
+deep. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Constant: <b>small-blocks-size</b><var><a name="index-small_002dblocks_002dsize-1461"></a></var><br>
+&mdash; Constant: <b>page-blocks-size</b><var><a name="index-page_002dblocks_002dsize-1462"></a></var><br>
+<blockquote><p>The size of the small and page blocks. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>memblocks-cache</b><var> memblock/size<a name="index-memblocks_002dcache-1463"></a></var><br>
+<blockquote><p>Interface function to memblocks allocation and release.  When
+<var>memblock/size</var> is:
+
+          <dl>
+<dt><em>A record of type </em><code>&lt;memblock&gt;</code><dd>The function releases the allocated memory block.
+
+          <br><dt><em>An unsigned exact integer</em><dd>The number is meant to represent the number of bytes to be allocated: A
+new <code>&lt;memblock&gt;</code> record is allocated and returned. 
+</dl>
+
+        <p>Allocation and release of memory blocks is done, in this order:
+
+          <ol type=1 start=1>
+<li>Relying on <code>small-blocks-cache</code> if the number of bytes is less than
+or equal to the size of a small block.
+
+          <li>Relying on <code>page-blocks-cache</code> if the number of bytes is less than
+or equal to the size of a page block.
+
+          <li>Relying on <code>calloc</code> and <code>primitive-free</code> in all the other cases.
+             </ol>
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>make-caching-object-factory</b><var> init-func final-func number-of-bytes max-depth<a name="index-make_002dcaching_002dobject_002dfactory-1464"></a></var><br>
+<blockquote><p>Build and return a new caching object factory.  It is a wrapper for
+<code>make-block-cache</code>, to which the <var>number-of-bytes</var> and
+<var>max-depth</var> arguments are handed untouched.  The return value is an
+interface function with the following protocol:
+
+          <dl>
+<dt><em>When the function is invoked with zero arguments</em><dd>It retrieves a block from the cache and applies <var>init-func</var> to it; a
+pointer to the block is returned.
+
+          <br><dt><em>When the function is invoked with 1 argument</em><dd>If the argument is the symbol &lsquo;<samp><span class="samp">purge</span></samp>&rsquo;: The same symbol is handed to
+the block cache, causing the cache to be purged of allocated blocks.
+
+          <p>If the argument is the symbol &lsquo;<samp><span class="samp">size</span></samp>&rsquo;: The same symbol is handed to
+the block cache, the return value is the cache memory block size.
+
+          <p>Else the argument must be a pointer previously returned by this
+interface function: <var>final-func</var> is applied to it, then it is handed
+to the underlying block cache interface function. 
+</dl>
+
+        <p>For example, the <acronym>MPFR</acronym> library (Multiple Precision
+Floating&ndash;Point Reliable Library) requires us to allocate structures of
+type <code>mpfr_t</code>, then to use an initialiser and a finaliser with the
+following prototypes:
+
+     <pre class="example">          void mpfr_init  (mpfr_ptr p);
+          void mpfr_clear (mpfr_ptr p);
+</pre>
+        <p class="noindent"><code>mpfr_t</code> values are real numbers with special representation, so we
+may need a lot of them to carry on computations; a Scheme interface
+could initialise itself like this:
+
+     <pre class="example">          (define sizeof-mpfr 64) ;this must be exactly determined
+          
+          (define mpfr-lib
+            (let ((o (open-shared-object "libmpfr.so")))
+              (shared-object o)
+              o))
+          
+          (define mpfr_ptr 'pointer)
+          (define-c-function mpfr_init  (void mpfr_init  (mpfr_ptr)))
+          (define-c-function mpfr_clear (void mpfr_clear (mpfr_ptr)))
+          
+          (define mpfr
+            (make-caching-object-factory mpfr_init mpfr_clear
+                                         sizeof-mpfr 100))
+          
+          (define (mpfr/c)
+            (letrec ((p (compensate (mpfr)
+                          (with (mpfr p)))))
+              p))
+</pre>
+        <p class="noindent">and then:
+
+     <pre class="example">          (with-compensations
+            (let ((a (mpfr/c))
+                  (b (mpfr/c)))
+              (do-something-with a b)))
+</pre>
+        <p class="noindent">at the end of the world, if we feel like it, we can do:
+
+     <pre class="example">          (mpfr 'purge)
+</pre>
+        </blockquote></div>
+
+<!-- page -->
+   </body></html>
+

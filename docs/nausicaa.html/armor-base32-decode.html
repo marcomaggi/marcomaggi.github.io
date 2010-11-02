@@ -1,0 +1,288 @@
+<html lang="en">
+<head>
+<title>armor base32 decode - Nausicaa for Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Nausicaa for Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="armor-base32.html#armor-base32" title="armor base32">
+<link rel="prev" href="armor-base32-encode.html#armor-base32-encode" title="armor base32 encode">
+<link rel="next" href="armor-base32-utils.html#armor-base32-utils" title="armor base32 utils">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d3 of Nausicaa/Scheme, a set of
+Scheme libraries defining a slightly modified R6RS Scheme language
+and augmenting the features of the base and standard R6RS libraries.
+
+The project home page of Nausicaa is at:
+
+             `http://marcomaggi.github.com/nausicaa.html'
+
+
+development of Nausicaa takes place at:
+
+               `http://github.com/marcomaggi/nausicaa/'
+
+
+Copyright (C) 2008, 2009, 2010 by Marco Maggi.
+
+Copyright (C) 1996, 1997, 2000, 2001, 2002, 2003, 2004, 2005
+Free Software Foundation.
+
+Copyright (C) 1996, 1999-2005 Dorai Sitaram.
+
+Copyright (C) 1998 Oleg Kiselyov.
+
+Copyright (C) 1998, 1999, 2000 Olin Shivers.
+
+Copyright (C) 1999 John David Stone.
+
+Copyright (C) 1999, 2002 Marc Feeley.
+
+Copyright (C) 2001, 2009 Danny Dube'
+
+Copyright (C) 2002 Dr. Mirko Luedde.
+
+Copyright (C) 2002, 2003, 2005, 2006 Sebastian Egner.
+
+Copyright (C) 2003 Ray Dillinger.
+
+Copyright (C) 2003 Taylor Campbell.
+
+Copyright (C) 2005 Jens Axel Soegaard.
+
+Copyright (C) 2005-2009 Alex Shinn.
+
+Copyright (C) 2008 Taro Minowa (Higepon).
+
+Copyright (C) 2005-2008 Dominique Boucher.
+
+Copyright (C) 2004, 2005 Tony Garnock-Jones
+
+Copyright (C) 2005 LShift Ltd.
+
+Copyright (C) 2007, 2008 Philip L. Bewig.
+
+Copyright (C) 2000 Will Fitzgerald.
+
+Copyright (C) 2000 Neodesic Corporation.
+
+Copyright (C) 2000-2006 Joachim Henke.
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with no Invariant Sections being ``GNU Free
+     Documentation License'' and ``GNU General Public License'', no
+     Front--Cover Texts, and no Back--Cover Texts.  A copy of the
+     license is included in the section entitled ``GNU Free
+     Documentation License''.
+
+This document embeds an unofficial assemblage of several documents
+reformatted in Texinfo; the reformatting author and maintainer is
+Marco Maggi <marco.maggi-ipsu@poste.it>.  See the appendix ``Credits'' for
+the list of original documents and their authors.  See also the
+`README' and `CREDITS' files for additional attributions.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="armor-base32-decode"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="armor-base32-utils.html#armor-base32-utils">armor base32 utils</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="armor-base32-encode.html#armor-base32-encode">armor base32 encode</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="armor-base32.html#armor-base32">armor base32</a>
+<hr>
+</div>
+
+<h4 class="subsection">63.3.3 Decoding byte streams with base32</h4>
+
+<div class="defun">
+&mdash; Class: <b>&lt;base32-decode-ctx&gt;</b><var><a name="index-g_t_0040aclass_007bbase32_002ddecode_002dctx_007d-4191"></a></var><br>
+<blockquote><p>Context descriptor for base32 decoding.  Nothing in this record depends
+on the input or output data: records of this type can be reused for
+different streams, both in sequence and in parallel. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Immutable Field of &lt;base32-decode-ctx&gt;: <b>encoding</b><var><a name="index-encoding-4192"></a></var><br>
+<blockquote><p>A Scheme symbol among: <code>base32</code>, <code>base32/hex</code>.  It is the
+&ldquo;name&rdquo; of the table used for decoding. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Immutable Field of &lt;base32-decode-ctx&gt;: <b>encoding-case</b><var><a name="index-encoding_002dcase-4193"></a></var><br>
+<blockquote><p>A Scheme symbol among: <code>lower</code>, <code>mixed</code>, <code>upper</code>.  Select
+the case of the alphabetic characters in the encoded input data. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Immutable Field of &lt;base32-decode-ctx&gt;: <b>expect-padding?</b><var><a name="index-expect_002dpadding_003f-4194"></a></var><br>
+<blockquote><p>A Scheme boolean; <code>#t</code> if we expect the encoded input to be padded in
+length to a multiple of 8. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Immutable Field of &lt;base32-decode-ctx&gt;: <b>pad-char</b><var><a name="index-pad_002dchar-4195"></a></var><br>
+<blockquote><p>An exact integer representing (as defined by <code>char-&gt;integer</code>) the
+expected pad character.  It is set to the integer representation of
+&lsquo;<samp><span class="samp">#\=</span></samp>&rsquo;. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Immutable Field of &lt;base32-decode-ctx&gt;: <b>table</b><var><a name="index-table-4196"></a></var><br>
+<blockquote><p>A Scheme vector of exact integers representing the selected decoding's
+table. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>make-&lt;base32-decode-ctx&gt;</b><var> encoding expect-padding? encoding-case<a name="index-make_002d_003cbase32_002ddecode_002dctx_003e-4197"></a></var><br>
+<blockquote><p>Build and return a new record of type <code>&lt;base32-decode-ctx&gt;</code>.
+
+        <p><var>encoding</var> must be a Scheme symbol selecting the decoding table:
+<code>base32</code> or <code>rfc4648</code>, <code>base32/hex</code> or <code>rfc2938</code>. 
+The argument's value is normalised to one among: <code>base32</code>,
+<code>base32/hex</code>.
+
+        <p>If <var>expect-padding?</var>  is true: the input is expected to be padded in
+length to an exact multiple of 8.  The argument's value is
+normalised to <code>#t</code> or <code>#f</code>.
+
+        <p><var>encoding-case</var> must be a Scheme symbol selecting the expected case
+of the input string: <code>lower</code>, <code>upper</code>, <code>mixed</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>&lt;base32-decode-ctx&gt;?</b><var> obj<a name="index-g_t_003cbase32_002ddecode_002dctx_003e_003f-4198"></a></var><br>
+<blockquote><p>Return true if <var>obj</var> is a record of type <code>&lt;base32-decode-ctx&gt;</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>&lt;base32-decode-ctx&gt;-encoding</b><var> ctx<a name="index-g_t_003cbase32_002ddecode_002dctx_003e_002dencoding-4199"></a></var><br>
+&mdash; Function: <b>&lt;base32-decode-ctx&gt;-encoding-case</b><var> ctx<a name="index-g_t_003cbase32_002ddecode_002dctx_003e_002dencoding_002dcase-4200"></a></var><br>
+&mdash; Function: <b>&lt;base32-decode-ctx&gt;-expect-padding?</b><var> ctx<a name="index-g_t_003cbase32_002ddecode_002dctx_003e_002dexpect_002dpadding_003f-4201"></a></var><br>
+&mdash; Function: <b>&lt;base32-decode-ctx&gt;-pad-char</b><var> ctx<a name="index-g_t_003cbase32_002ddecode_002dctx_003e_002dpad_002dchar-4202"></a></var><br>
+&mdash; Function: <b>&lt;base32-decode-ctx&gt;-table</b><var> ctx<a name="index-g_t_003cbase32_002ddecode_002dctx_003e_002dtable-4203"></a></var><br>
+<blockquote><p>Field accessors for records of type <code>&lt;base32-decode-ctx&gt;</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>base32-decode-update-length</b><var> number-of-chars<a name="index-base32_002ddecode_002dupdate_002dlength-4204"></a></var><br>
+<blockquote><p>Return the minimum number of bytes required in the output bytevector
+when <code>base32-decode-update!</code>  is applied to <var>number-of-chars</var>
+<acronym>ASCII</acronym> characters of input.  Notice that the function will consume
+input in 8-bytes blocks only and produce output in 5-bytes
+blocks only, so the return value is always zero or an exact multiple of
+5. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>base32-decode-final-length</b><var> number-of-chars<a name="index-base32_002ddecode_002dfinal_002dlength-4205"></a></var><br>
+&mdash; Function: <b>base32-decode-final-length</b><var> number-of-chars padding?<a name="index-base32_002ddecode_002dfinal_002dlength-4206"></a></var><br>
+<blockquote><p>Return the minimum number of bytes required in the output bytevector
+when <code>base32-decode-final!</code> is applied to <var>number-of-chars</var>
+&lt; 8 <acronym>ASCII</acronym> characters of input.  Not all the arguments between
+0 and 7 are valid; if <var>number-of-chars</var> is not valid:
+the return value is <code>#f</code>.
+
+        <p>If <var>padding?</var> is true: the input is expected to be padded; in this
+case the only valid value for <var>number-of-chars</var> is zero and the
+return value is zero.  If <var>padding?</var> is true and
+<var>number-of-chars</var> is non&ndash;zero: the return value is <code>#f</code>.  When
+not given, <var>padding?</var> defaults to <code>#f</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>base32-decode-length</b><var> number-of-chars<a name="index-base32_002ddecode_002dlength-4207"></a></var><br>
+&mdash; Function: <b>base32-decode-length</b><var> number-of-chars padding?<a name="index-base32_002ddecode_002dlength-4208"></a></var><br>
+<blockquote><p>Return the minimum number of bytes required in the output bytevector
+when <code>base32-decode-final!</code>  is applied to <var>number-of-chars</var>
+<acronym>ASCII</acronym> characters of input.  This is also the number required when
+both <code>base32-decode-update!</code>  and <code>base32-decode-final!</code> are
+used.
+
+        <p>If <var>padding?</var> is true, the input is expected to be padded; in this
+case the only valid value for <var>number-of-chars</var> is zero and the
+return value is zero.  If <var>padding?</var> is true and
+<var>number-of-chars</var> is non&ndash;zero, the return value is <code>#f</code>.  When
+not given, <var>padding?</var> defaults to <code>#f</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Constant: <b>base32-decode-block-length</b><var><a name="index-base32_002ddecode_002dblock_002dlength-4209"></a></var><br>
+<blockquote><p>The length of the input block: 8. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>base32-decode-update!</b><var> ctx dst-bv dst-start src-bv src-start src-past<a name="index-base32_002ddecode_002dupdate_0021-4210"></a></var><br>
+<blockquote><p>Decode <acronym>ASCII</acronym> characters from the bytevector <var>src-bv</var> starting at
+index <var>src-start</var> (included) up to index <var>src-past</var> (excluded);
+store binary data bytes in the bytevector <var>dst-bv</var> starting at
+<var>dst-start</var> (included); decoding is performed according to the
+specification in the context <var>ctx</var>, which must be a record of type
+<code>&lt;base32-decode-ctx&gt;</code>.
+
+        <p>Return three values:
+
+          <ol type=1 start=1>
+<li>A boolean: true if padding is turned on and a full padded block was
+successfully decoded; false otherwise.  If this is true: the end of
+input has been reached and fully processed.
+
+          <li>The index of the next non&ndash;written byte in <var>dst-bv</var>; if <var>dst-bv</var>
+is filled to the end, this value is the length of <var>dst-bv</var>.
+
+          <li>The index of the next non&ndash;read byte in <var>src-bv</var>; if all the
+characters from <var>src-bv</var> are consumed, this value is <var>src-past</var>.
+             </ol>
+
+        <p><acronym>ASCII</acronym> characters are read from <var>src-bv</var> in chunks of 8
+bytes; binary data bytes are written to <var>dst-bv</var> in chunks of
+5 bytes.  If not enough room exists in <var>dst-bv</var> to store a
+block, available input data is not consumed. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>base32-decode-final!</b><var> ctx dst-bv dst-start src-bv src-start src-past<a name="index-base32_002ddecode_002dfinal_0021-4211"></a></var><br>
+<blockquote><p>Decode <acronym>ASCII</acronym> characters from the bytevector <var>src-bv</var> starting at
+index <var>src-start</var> (included) up to index <var>src-past</var> (excluded);
+store binary data bytes in the bytevector <var>dst-bv</var> starting at
+<var>dst-start</var> (included); decoding is performed according to the
+specification in the context <var>ctx</var>, which must be a record of type
+<code>&lt;base32-decode-ctx&gt;</code>.
+
+        <p>Return three values:
+
+          <ol type=1 start=1>
+<li>A boolean: true if success, false if the output bytevector was filled
+before flushing all the bytes.
+
+          <li>The index of the next non&ndash;written byte in <var>dst-bv</var>; if <var>dst-bv</var>
+is filled to the end, this value is the length of <var>dst-bv</var>.
+
+          <li>The index of the next non&ndash;read byte in <var>src-bv</var>; if all the bytes
+from <var>src-bv</var> are consumed, this value is <var>src-past</var>.
+             </ol>
+
+        <p><acronym>ASCII</acronym> characters are read from <var>src-bv</var> in chunks of 8
+bytes; binary data bytes are written to <var>dst-bv</var> in chunks of
+8 bytes.  If the last characters are in a chunk of less than
+8, they are interpreted as unpadded characters as specified in
+<var>ctx</var>.  If not enough room exists in <var>dst-bv</var> to store a block,
+available input data is not consumed. 
+</p></blockquote></div>
+
+<!-- page -->
+   </body></html>
+

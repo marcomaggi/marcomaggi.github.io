@@ -1,0 +1,179 @@
+<html lang="en">
+<head>
+<title>ffi memory compensate - Nausicaa for Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Nausicaa for Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="ffi-memory.html#ffi-memory" title="ffi memory">
+<link rel="prev" href="ffi-memory-cache.html#ffi-memory-cache" title="ffi memory cache">
+<link rel="next" href="ffi-memory-operations.html#ffi-memory-operations" title="ffi memory operations">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d3 of Nausicaa/Scheme, a set of
+Scheme libraries defining a slightly modified R6RS Scheme language
+and augmenting the features of the base and standard R6RS libraries.
+
+The project home page of Nausicaa is at:
+
+             `http://marcomaggi.github.com/nausicaa.html'
+
+
+development of Nausicaa takes place at:
+
+               `http://github.com/marcomaggi/nausicaa/'
+
+
+Copyright (C) 2008, 2009, 2010 by Marco Maggi.
+
+Copyright (C) 1996, 1997, 2000, 2001, 2002, 2003, 2004, 2005
+Free Software Foundation.
+
+Copyright (C) 1996, 1999-2005 Dorai Sitaram.
+
+Copyright (C) 1998 Oleg Kiselyov.
+
+Copyright (C) 1998, 1999, 2000 Olin Shivers.
+
+Copyright (C) 1999 John David Stone.
+
+Copyright (C) 1999, 2002 Marc Feeley.
+
+Copyright (C) 2001, 2009 Danny Dube'
+
+Copyright (C) 2002 Dr. Mirko Luedde.
+
+Copyright (C) 2002, 2003, 2005, 2006 Sebastian Egner.
+
+Copyright (C) 2003 Ray Dillinger.
+
+Copyright (C) 2003 Taylor Campbell.
+
+Copyright (C) 2005 Jens Axel Soegaard.
+
+Copyright (C) 2005-2009 Alex Shinn.
+
+Copyright (C) 2008 Taro Minowa (Higepon).
+
+Copyright (C) 2005-2008 Dominique Boucher.
+
+Copyright (C) 2004, 2005 Tony Garnock-Jones
+
+Copyright (C) 2005 LShift Ltd.
+
+Copyright (C) 2007, 2008 Philip L. Bewig.
+
+Copyright (C) 2000 Will Fitzgerald.
+
+Copyright (C) 2000 Neodesic Corporation.
+
+Copyright (C) 2000-2006 Joachim Henke.
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with no Invariant Sections being ``GNU Free
+     Documentation License'' and ``GNU General Public License'', no
+     Front--Cover Texts, and no Back--Cover Texts.  A copy of the
+     license is included in the section entitled ``GNU Free
+     Documentation License''.
+
+This document embeds an unofficial assemblage of several documents
+reformatted in Texinfo; the reformatting author and maintainer is
+Marco Maggi <marco.maggi-ipsu@poste.it>.  See the appendix ``Credits'' for
+the list of original documents and their authors.  See also the
+`README' and `CREDITS' files for additional attributions.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="ffi-memory-compensate"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="ffi-memory-operations.html#ffi-memory-operations">ffi memory operations</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="ffi-memory-cache.html#ffi-memory-cache">ffi memory cache</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="ffi-memory.html#ffi-memory">ffi memory</a>
+<hr>
+</div>
+
+<h4 class="subsection">23.2.5 Compensations</h4>
+
+<p>The functions described here make use of compensation stacks to handle
+semi&ndash;automatice release of allocated memory.  <a href="compensations.html#compensations">Compensation stacks</a>
+
+   <p>The following bindings are exported by <code>(ffi memory compensated)</code>
+and re&ndash;exported by <code>(ffi memory)</code>.  This library makes internal
+use of <code>(ffi memory caches)</code>; the <acronym>API</acronym> requires also the
+<code>(compensations)</code> and <code>(ffi memory memblocks)</code> libraries.
+
+<div class="defun">
+&mdash; Function: <b>malloc/compensated</b><var> number-of-bytes<a name="index-malloc_002fcompensated-1465"></a></var><br>
+&mdash; Function: <b>calloc/compensated</b><var> count element-size<a name="index-calloc_002fcompensated-1466"></a></var><br>
+&mdash; Function: <b>malloc/c</b><var> number-of-bytes<a name="index-malloc_002fc-1467"></a></var><br>
+&mdash; Function: <b>calloc/c</b><var> count element-size<a name="index-calloc_002fc-1468"></a></var><br>
+<blockquote><p>Wrappers for <code>malloc</code> and <code>calloc</code> that allocate a block of
+memory and return a pointer to it.  The appropriate invocation to
+<code>primitive-free</code>, to free the block, is added to the dynamic
+environment of the current compensations stack. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>malloc-small/compensated</b><var><a name="index-malloc_002dsmall_002fcompensated-1469"></a></var><br>
+&mdash; Function: <b>malloc-small/c</b><var><a name="index-malloc_002dsmall_002fc-1470"></a></var><br>
+<blockquote><p>Acquire a small block of memory from <code>small-blocks-cache</code> and
+return a pointer to it.  The appropriate invocation to
+<code>small-blocks-cache</code>, to release the block, is added to the dynamic
+environment of the current compensations stack. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>malloc-page/compensated</b><var><a name="index-malloc_002dpage_002fcompensated-1471"></a></var><br>
+&mdash; Function: <b>malloc-page/c</b><var><a name="index-malloc_002dpage_002fc-1472"></a></var><br>
+<blockquote><p>Acquire a page of memory from <code>page-blocks-cache</code> and return a
+pointer to it.  The appropriate invocation to <code>page-blocks-cache</code>,
+to release the block, is added to the dynamic environment of the current
+compensations stack. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>malloc-block/compensated</b><var> number-of-bytes<a name="index-malloc_002dblock_002fcompensated-1473"></a></var><br>
+&mdash; Function: <b>malloc-block/c</b><var> number-of-bytes<a name="index-malloc_002dblock_002fc-1474"></a></var><br>
+<blockquote><p>Allocate a new memory block and return a pointer to it.  The appropriate
+invocation to the release function is added to the dynamic environment
+of the current compensations stack.
+
+        <p>Allocation and releasing of memory blocks is done, in this order:
+
+          <ol type=1 start=1>
+<li>Relying on <code>small-blocks-cache</code> if the number of bytes is less than
+or equal to the size of a small block.
+
+          <li>Relying on <code>page-blocks-cache</code> if the number of bytes is less than
+or equal to the size of a page block.
+
+          <li>Relying on <code>calloc</code> and <code>primitive-free</code> in all the other cases.
+             </ol>
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>malloc-memblock/compensated</b><var> number-of-bytes<a name="index-malloc_002dmemblock_002fcompensated-1475"></a></var><br>
+&mdash; Function: <b>malloc-memblock/c</b><var> number-of-bytes<a name="index-malloc_002dmemblock_002fc-1476"></a></var><br>
+<blockquote><p>Acquire a block of memory from <code>memblocks-cache</code> and return a
+record of type <code>&lt;memblock&gt;</code>.  The appropriate invocation to
+<code>memblocks-cache</code>, to release the block, is added to the dynamic
+environment of the current compensations stack. 
+</p></blockquote></div>
+
+<!-- page -->
+   </body></html>
+

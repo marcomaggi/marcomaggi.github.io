@@ -1,0 +1,227 @@
+<html lang="en">
+<head>
+<title>enumerations flags - Nausicaa for Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Nausicaa for Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="enumerations.html#enumerations" title="enumerations">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d3 of Nausicaa/Scheme, a set of
+Scheme libraries defining a slightly modified R6RS Scheme language
+and augmenting the features of the base and standard R6RS libraries.
+
+The project home page of Nausicaa is at:
+
+             `http://marcomaggi.github.com/nausicaa.html'
+
+
+development of Nausicaa takes place at:
+
+               `http://github.com/marcomaggi/nausicaa/'
+
+
+Copyright (C) 2008, 2009, 2010 by Marco Maggi.
+
+Copyright (C) 1996, 1997, 2000, 2001, 2002, 2003, 2004, 2005
+Free Software Foundation.
+
+Copyright (C) 1996, 1999-2005 Dorai Sitaram.
+
+Copyright (C) 1998 Oleg Kiselyov.
+
+Copyright (C) 1998, 1999, 2000 Olin Shivers.
+
+Copyright (C) 1999 John David Stone.
+
+Copyright (C) 1999, 2002 Marc Feeley.
+
+Copyright (C) 2001, 2009 Danny Dube'
+
+Copyright (C) 2002 Dr. Mirko Luedde.
+
+Copyright (C) 2002, 2003, 2005, 2006 Sebastian Egner.
+
+Copyright (C) 2003 Ray Dillinger.
+
+Copyright (C) 2003 Taylor Campbell.
+
+Copyright (C) 2005 Jens Axel Soegaard.
+
+Copyright (C) 2005-2009 Alex Shinn.
+
+Copyright (C) 2008 Taro Minowa (Higepon).
+
+Copyright (C) 2005-2008 Dominique Boucher.
+
+Copyright (C) 2004, 2005 Tony Garnock-Jones
+
+Copyright (C) 2005 LShift Ltd.
+
+Copyright (C) 2007, 2008 Philip L. Bewig.
+
+Copyright (C) 2000 Will Fitzgerald.
+
+Copyright (C) 2000 Neodesic Corporation.
+
+Copyright (C) 2000-2006 Joachim Henke.
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with no Invariant Sections being ``GNU Free
+     Documentation License'' and ``GNU General Public License'', no
+     Front--Cover Texts, and no Back--Cover Texts.  A copy of the
+     license is included in the section entitled ``GNU Free
+     Documentation License''.
+
+This document embeds an unofficial assemblage of several documents
+reformatted in Texinfo; the reformatting author and maintainer is
+Marco Maggi <marco.maggi-ipsu@poste.it>.  See the appendix ``Credits'' for
+the list of original documents and their authors.  See also the
+`README' and `CREDITS' files for additional attributions.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="enumerations-flags"></a>
+<p>
+Up:&nbsp;<a rel="up" accesskey="u" href="enumerations.html#enumerations">enumerations</a>
+<hr>
+</div>
+
+<h3 class="section">26.1 Flags and flags combinations</h3>
+
+<div class="defun">
+&mdash; Syntax: <b>define-c-flags</b><var> &lt;name&gt; </var>(<var>&lt;flag0&gt; &lt;flag&gt; ...</var>) (<var>&lt;symbol0&gt; &lt;symbol&gt; ...</var>)<var><a name="index-define_002dc_002dflags-1718"></a></var><br>
+<blockquote><p>Define a new enumeration type and a couple of functions to convert
+between enumeration sets of this type and other objects.  Usage example:
+
+     <pre class="example">          (define A 1)
+          (define B 2)
+          (define C 3)
+          
+          (define-c-flags things
+            (A B C)
+            (a b c))
+          
+          (things-&gt;value (things a)) &rArr; 1
+          (things-&gt;value (things b)) &rArr; 2
+          (things-&gt;value (things c)) &rArr; 3
+          
+          (value-&gt;things 1) &rArr; (things a)
+          (value-&gt;things 2) &rArr; (things b)
+          (value-&gt;things 3) &rArr; (things c)
+</pre>
+        <p class="noindent">when used in a library, we can do the following to export the interface:
+
+     <pre class="example">          (library (things)
+            (export things things-&gt;value value-&gt;things)
+            (import (rnrs))
+            (define A 1)
+            (define B 2)
+            (define C 3)
+            (define-c-flags things
+              (A B C)
+              (a b c)))
+</pre>
+        <p>The typical use of this syntax is to define an interface for C language
+foreign constants.
+
+        <p>&lt;name&gt; must be an identifier to which an enumeration set
+constructor syntax is bound; the syntax accepts only a single symbol as
+argument and it expands to an enumeration set with that symbol as
+element.
+
+        <p>The enumeration type is <code>enum-&lt;name&gt;</code> and the original
+constructor syntax accepting any number of arguments is
+<code>%&lt;name&gt;</code>.
+
+        <p>The &lt;flag&gt; arguments are meant to be identifiers bound to any
+Scheme value, but they can be any value.  The &lt;symbol&gt; arguments
+must be Scheme symbols which are used to define (in the given order) the
+universe of the enumeration.
+
+        <p>The function which converts from an enumeration set (holding a single
+argument) to the corresponding value is bound to
+<code>&lt;name&gt;-&gt;value</code>.  The function which converts from a value to
+the enumeration set (holding a single argument) is bound to
+<code>value-&gt;&lt;name&gt;</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>define-c-ior-flags</b><var> &lt;name&gt; </var>(<var>&lt;flag0&gt; &lt;flag&gt; ...</var>) (<var>&lt;symbol0&gt; &lt;symbol&gt; ...</var>)<var><a name="index-define_002dc_002dior_002dflags-1719"></a></var><br>
+<blockquote><p>Define a new enumeration type and a couple of functions to convert
+between enumeration sets of this type and a bitwise, inclusive, OR
+combination of exact integers.  Usage example:
+
+     <pre class="example">          (define A (bitwise-arithmetic-shift-left 1 0))
+          (define B (bitwise-arithmetic-shift-left 1 1))
+          (define C (bitwise-arithmetic-shift-left 1 2))
+          
+          (define-c-ior-flags things
+            (A B C)
+            (a b c))
+          
+          (things-&gt;value (things a))      &rArr; 1
+          (things-&gt;value (things b))      &rArr; 2
+          (things-&gt;value (things a b))    &rArr; 3
+          (things-&gt;value (things c))      &rArr; 4
+          (things-&gt;value (things a c))    &rArr; 5
+          (things-&gt;value (things b c))    &rArr; 6
+          (things-&gt;value (things a b c))  &rArr; 7
+          
+          (value-&gt;things 1) &rArr; (things a)
+          (value-&gt;things 2) &rArr; (things b)
+          (value-&gt;things 5) &rArr; (things a c)
+</pre>
+        <p class="noindent">when used in a library, we can do the following to export the interface:
+
+     <pre class="example">          (library (things)
+            (export things things-&gt;value value-&gt;things)
+            (import (rnrs))
+          (define A (bitwise-arithmetic-shift-left 1 0))
+          (define B (bitwise-arithmetic-shift-left 1 1))
+          (define C (bitwise-arithmetic-shift-left 1 2))
+            (define-c-ior-flags things
+              (A B C)
+              (a b c)))
+</pre>
+        <p>The typical use of this syntax is to define an interface for C language
+foreign constants used as flags in inclusive OR combinations.
+
+        <p>&lt;name&gt; must be an identifier to which an enumeration set
+constructor syntax is bound; the syntax accepts any number of symbols as
+arguments and it expands to an enumeration set with that symbols as
+elements.  The enumeration type is <code>enum-&lt;name&gt;</code>.
+
+        <p>The &lt;flag&gt; arguments must be identifiers bound to exact integers. 
+The &lt;symbol&gt; arguments must be Scheme symbols which are used to
+define (in the given order) the universe of the enumeration.
+
+        <p>The function which converts from an enumeration set to the corresponding
+bitwise, inclusive OR combination is bound to
+<code>&lt;name&gt;-&gt;value</code>.  An assertion violation is raised if this
+function is applied to an enumeration set of the wrong type.
+
+        <p>The function which converts from a bitwise, inclusive OR combination to
+the enumeration set is bound to <code>value-&gt;&lt;name&gt;</code>.  If this
+function is applied to an integer holding bits outside the ones coded in
+the definition of the enumeration, no error is raised. 
+</p></blockquote></div>
+
+<!-- end of file -->
+   </body></html>
+

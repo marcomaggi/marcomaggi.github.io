@@ -1,0 +1,188 @@
+<html lang="en">
+<head>
+<title>streams examples persistent - Nausicaa for Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Nausicaa for Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="streams-examples.html#streams-examples" title="streams examples">
+<link rel="prev" href="streams-examples-pipeline.html#streams-examples-pipeline" title="streams examples pipeline">
+<link rel="next" href="streams-examples-passes.html#streams-examples-passes" title="streams examples passes">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d3 of Nausicaa/Scheme, a set of
+Scheme libraries defining a slightly modified R6RS Scheme language
+and augmenting the features of the base and standard R6RS libraries.
+
+The project home page of Nausicaa is at:
+
+             `http://marcomaggi.github.com/nausicaa.html'
+
+
+development of Nausicaa takes place at:
+
+               `http://github.com/marcomaggi/nausicaa/'
+
+
+Copyright (C) 2008, 2009, 2010 by Marco Maggi.
+
+Copyright (C) 1996, 1997, 2000, 2001, 2002, 2003, 2004, 2005
+Free Software Foundation.
+
+Copyright (C) 1996, 1999-2005 Dorai Sitaram.
+
+Copyright (C) 1998 Oleg Kiselyov.
+
+Copyright (C) 1998, 1999, 2000 Olin Shivers.
+
+Copyright (C) 1999 John David Stone.
+
+Copyright (C) 1999, 2002 Marc Feeley.
+
+Copyright (C) 2001, 2009 Danny Dube'
+
+Copyright (C) 2002 Dr. Mirko Luedde.
+
+Copyright (C) 2002, 2003, 2005, 2006 Sebastian Egner.
+
+Copyright (C) 2003 Ray Dillinger.
+
+Copyright (C) 2003 Taylor Campbell.
+
+Copyright (C) 2005 Jens Axel Soegaard.
+
+Copyright (C) 2005-2009 Alex Shinn.
+
+Copyright (C) 2008 Taro Minowa (Higepon).
+
+Copyright (C) 2005-2008 Dominique Boucher.
+
+Copyright (C) 2004, 2005 Tony Garnock-Jones
+
+Copyright (C) 2005 LShift Ltd.
+
+Copyright (C) 2007, 2008 Philip L. Bewig.
+
+Copyright (C) 2000 Will Fitzgerald.
+
+Copyright (C) 2000 Neodesic Corporation.
+
+Copyright (C) 2000-2006 Joachim Henke.
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with no Invariant Sections being ``GNU Free
+     Documentation License'' and ``GNU General Public License'', no
+     Front--Cover Texts, and no Back--Cover Texts.  A copy of the
+     license is included in the section entitled ``GNU Free
+     Documentation License''.
+
+This document embeds an unofficial assemblage of several documents
+reformatted in Texinfo; the reformatting author and maintainer is
+Marco Maggi <marco.maggi-ipsu@poste.it>.  See the appendix ``Credits'' for
+the list of original documents and their authors.  See also the
+`README' and `CREDITS' files for additional attributions.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="streams-examples-persistent"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="streams-examples-passes.html#streams-examples-passes">streams examples passes</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="streams-examples-pipeline.html#streams-examples-pipeline">streams examples pipeline</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="streams-examples.html#streams-examples">streams examples</a>
+<hr>
+</div>
+
+<h4 class="subsection">34.14.4 Persistent data</h4>
+
+<p>Queues are one of the fundamental data structures of computer science. 
+In functional languages, queues are commonly implemented using two
+lists, with the front half of the queue in one list, where the head of
+the queue can be accessed easily, and the rear half of the queue in
+reverse order in another list, where new items can easily be added to
+the end of a queue.  The standard form of such a queue holds that the
+front list can only be null if the rear list is also null:
+
+<pre class="example">     (define queue-null (cons '() '())
+     
+     (define (queue-null? obj)
+       (and (pair? obj) (null? (car obj))))
+     
+     (define (queue-check f r)
+       (if (null? f)
+           (cons (reverse r) '())
+         (cons f r)))
+     
+     (define (queue-snoc q x)
+       (queue-check (car q) (cons x (cdr q))))
+     
+     (define (queue-head q)
+       (if (null? (car q))
+           (error "empty queue: head")
+         (car (car q))))
+     
+     (define (queue-tail q)
+       (if (null? (car q))
+           (error "empty-head: tail")
+         (queue-check (cdr (car q)) (cdr q))))
+</pre>
+   <p>This queue operates in amortized constant time per operation, with two
+conses per element, one when it is added to the rear list, and another
+when the rear list is reversed to become the front list. 
+<code>queue-snoc</code> and <code>queue-head</code> operate in constant time;
+<code>queue-tail</code> operates in worst&ndash;case linear time when the front
+list is empty.
+
+   <p>Chris Okasaki points out that, if the queue is used persistently, its
+time&ndash;complexity rises from linear to quadratic since each persistent
+copy of the queue requires its own linear&ndash;time access.  The problem can
+be fixed by implementing the front and rear parts of the queue as
+streams, rather than lists, and rotating one element from rear to front
+whenever the rear list is larger than the front list:
+
+<pre class="example">     (define queue-null
+       (cons stream-null stream-null))
+     
+     (define (queue-null? x)
+       (and (pair? x) (stream-null (car x))))
+     
+     (define (queue-check f r)
+       (if (&lt; (stream-length r) (stream-length f))
+           (cons f r)
+         (cons (stream-append f (stream-reverse r))
+               stream-null)))
+     
+     (define (queue-snoc q x)
+       (queue-check (car q) (stream-cons x (cdr q))))
+     
+     (define (queue-head q)
+       (if (stream-null? (car q))
+           (error "empty queue: head")
+         (stream-car (car q))))
+     
+     (define (queue-tail q)
+       (if (stream-null? (car q))
+           (error "empty queue: tail")
+         (queue-check (stream-cdr (car q)) (cdr q))))
+</pre>
+   <p>Memoization solves the persistence problem; once a queue element has
+moved from rear to front, it needs never be moved again in subsequent
+traversals of the queue.  Thus, the linear time&ndash;complexity to access
+all elements in the queue, persistently, is restored.
+
+<!-- page -->
+   </body></html>
+

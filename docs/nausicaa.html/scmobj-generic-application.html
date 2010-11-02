@@ -1,0 +1,239 @@
+<html lang="en">
+<head>
+<title>scmobj generic application - Nausicaa for Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Nausicaa for Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="scmobj-generic.html#scmobj-generic" title="scmobj generic">
+<link rel="next" href="scmobj-generic-dispatching.html#scmobj-generic-dispatching" title="scmobj generic dispatching">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d3 of Nausicaa/Scheme, a set of
+Scheme libraries defining a slightly modified R6RS Scheme language
+and augmenting the features of the base and standard R6RS libraries.
+
+The project home page of Nausicaa is at:
+
+             `http://marcomaggi.github.com/nausicaa.html'
+
+
+development of Nausicaa takes place at:
+
+               `http://github.com/marcomaggi/nausicaa/'
+
+
+Copyright (C) 2008, 2009, 2010 by Marco Maggi.
+
+Copyright (C) 1996, 1997, 2000, 2001, 2002, 2003, 2004, 2005
+Free Software Foundation.
+
+Copyright (C) 1996, 1999-2005 Dorai Sitaram.
+
+Copyright (C) 1998 Oleg Kiselyov.
+
+Copyright (C) 1998, 1999, 2000 Olin Shivers.
+
+Copyright (C) 1999 John David Stone.
+
+Copyright (C) 1999, 2002 Marc Feeley.
+
+Copyright (C) 2001, 2009 Danny Dube'
+
+Copyright (C) 2002 Dr. Mirko Luedde.
+
+Copyright (C) 2002, 2003, 2005, 2006 Sebastian Egner.
+
+Copyright (C) 2003 Ray Dillinger.
+
+Copyright (C) 2003 Taylor Campbell.
+
+Copyright (C) 2005 Jens Axel Soegaard.
+
+Copyright (C) 2005-2009 Alex Shinn.
+
+Copyright (C) 2008 Taro Minowa (Higepon).
+
+Copyright (C) 2005-2008 Dominique Boucher.
+
+Copyright (C) 2004, 2005 Tony Garnock-Jones
+
+Copyright (C) 2005 LShift Ltd.
+
+Copyright (C) 2007, 2008 Philip L. Bewig.
+
+Copyright (C) 2000 Will Fitzgerald.
+
+Copyright (C) 2000 Neodesic Corporation.
+
+Copyright (C) 2000-2006 Joachim Henke.
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with no Invariant Sections being ``GNU Free
+     Documentation License'' and ``GNU General Public License'', no
+     Front--Cover Texts, and no Back--Cover Texts.  A copy of the
+     license is included in the section entitled ``GNU Free
+     Documentation License''.
+
+This document embeds an unofficial assemblage of several documents
+reformatted in Texinfo; the reformatting author and maintainer is
+Marco Maggi <marco.maggi-ipsu@poste.it>.  See the appendix ``Credits'' for
+the list of original documents and their authors.  See also the
+`README' and `CREDITS' files for additional attributions.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="scmobj-generic-application"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="scmobj-generic-dispatching.html#scmobj-generic-dispatching">scmobj generic dispatching</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="scmobj-generic.html#scmobj-generic">scmobj generic</a>
+<hr>
+</div>
+
+<h4 class="subsection">50.7.1 How generic functions and methods are invoked</h4>
+
+<p><code>(scmobj)</code> allows the definition of four kinds of methods:
+<code>:primary</code>, <code>:around</code>, <code>:before</code> and <code>:after</code>.  The
+short description is that <code>:around</code> methods are applied first, then
+<code>:before</code>, <code>:primary</code> and <code>:after</code> methods are applied in
+this order.
+
+   <p>When a generic function is applied to a tuple of arguments, the
+following happens:
+
+     <ol type=1 start=1>
+<li>For each argument in the tuple a class is determined.  The tuple of
+classes is called <dfn>signature</dfn>.
+        </ol>
+
+   <p>For each kind of method, the generic function maintains an internal
+collection in which every method's closure is associated to a signature.
+
+     <ol type=1 start=2>
+<li>For each kind of method: The internal collection is queried for all the
+methods applicable to the tuple of arguments, using the signature as
+search key.
+
+     <li>For each kind of method: The list of applicable methods is sorted from
+the more specific to the least specific for the signature.  The list of
+<code>:after</code> methods is reversed.
+        </ol>
+
+   <p>From now on the lists of sorted, applicable methods are handled as
+stacks; the stacks of <code>:primary</code>, <code>:around</code> and <code>:before</code>
+methods have most specific method on the top; the stack of <code>:after</code>
+methods has the least specific method on the top.
+
+   <p>From now on the application of the generic function enters an implicit
+loop in which more methods' closures can be applied to the same tuple of
+arguments.  The loop can terminate if a method's closure throws an
+exception or, for <code>:around</code> and <code>:primary</code> methods, if it does
+not take the special action of calling <code>call-next-method</code>.
+
+   <p>The loop is a bit articulated, so we may have to read the following
+descriptions multiple times.  We split the description in two branches:
+First a simplified invocation for generic functions having at least one
+applicable <code>:primary</code> method, no <code>:around</code> methods, and
+performing no calls to <code>call-next-method</code>; then the full
+application algorithm.
+
+   <p>Here is the simplified branch with no <code>:around</code> methods and no
+calls to <code>call-next-method</code>:
+
+     <ol type=1 start=4>
+<li>Pop all the <code>:before</code> methods from the stack and apply their
+closures to the tuple of arguments.  The return values of these
+applications are discarded.
+
+     <li>Pop the next <code>:primary</code> method from the stack and apply its closure
+to the tuple of arguments.  The return value of this application is
+saved in a temporary location.
+
+     <li>Pop all the <code>:after</code> methods from the stack and apply their
+closures to the tuple of arguments.  The return values of these
+applications are discarded.
+
+     <li>Return the saved return value of the <code>:primary</code> method.
+        </ol>
+
+   <p>Here is the full application algorithm:
+
+     <ol type=1 start=4>
+<li>Test if this function application originated from a call to
+<code>call-next-method</code> from a <code>:before</code> or <code>:after</code> method. 
+If it has: Raise an assertion violation.
+
+     <li>Test if this function application originated from a call to
+<code>call-next-method</code> from a <code>:primary</code> method.  If it has:
+
+          <ol type=a start=1>
+<li>If the stack of <code>:primary</code> methods is empty raise an assertion
+violation.
+
+          <li>Pop the next <code>:primary</code> method from the stack and apply its closure
+to the tuple of arguments.
+
+          <li>Break out returning the return value of this application: It becomes the
+return value of <code>call-next-method</code>.
+          </ol>
+
+     <li>If the stack of <code>:primary</code> methods is empty: Raise an assertion
+violation.  This condition means that the generic function has no
+applicable methods for the tuple of arguments.
+
+     <li>If the stack of <code>:around</code> methods is not empty: Pop the next
+<code>:around</code> method and apply its closure to the tuple of arguments. 
+Break out returning the return value of this application.
+
+     <li>Pop all the <code>:before</code> methods from the stack and apply their
+closures to the tuple of arguments.  The return values of these
+applications are discarded.
+
+     <li>Pop the next <code>:primary</code> method from the stack and apply its closure
+to the tuple of arguments.  The return value of this application is
+saved in a temporary location.
+
+     <li>Pop all the <code>:after</code> methods from the stack and apply their
+closures to the tuple of arguments.  The return values of these
+applications are discarded.
+
+     <li>Return the saved return value of the <code>:primary</code> method.
+        </ol>
+
+   <p>The <code>:primary</code> methods are meant to do the real work of the
+function.  Only the most specific is applied to the arguments, however
+it can use <code>call-next-method</code> to invoke a least specialised version
+and use its return value.
+
+   <p><code>:before</code> and <code>:after</code> methods are meant to execute additional
+work before and after the primary methods.  While <code>:before</code> methods
+are applied from the most specific to the least specific, <code>:after</code>
+methods are applied from the least specific to the most specific. 
+Notice that the <code>:after</code> methods have no access to the return value
+of the <code>:primary</code> methods.
+
+   <p><code>:around</code> methods are yet another level for performing tasks before
+and after the primary methods; only the most specific is applied to the
+arguments.  It is expected, but not mandatory, that an <code>:around</code>
+method invokes <code>call-next-method</code>; such invocations will consume
+all the applicable <code>:around</code> methods, from the least to the most
+specific, and then will start the application of <code>:before</code>,
+<code>:primary</code> and <code>:after</code> methods.
+
+<!-- page -->
+   </body></html>
+

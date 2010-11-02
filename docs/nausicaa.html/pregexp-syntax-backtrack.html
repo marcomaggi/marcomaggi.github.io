@@ -1,0 +1,159 @@
+<html lang="en">
+<head>
+<title>pregexp syntax backtrack - Nausicaa for Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Nausicaa for Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="pregexp-syntax.html#pregexp-syntax" title="pregexp syntax">
+<link rel="prev" href="pregexp-syntax-alternation.html#pregexp-syntax-alternation" title="pregexp syntax alternation">
+<link rel="next" href="pregexp-syntax-look.html#pregexp-syntax-look" title="pregexp syntax look">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d3 of Nausicaa/Scheme, a set of
+Scheme libraries defining a slightly modified R6RS Scheme language
+and augmenting the features of the base and standard R6RS libraries.
+
+The project home page of Nausicaa is at:
+
+             `http://marcomaggi.github.com/nausicaa.html'
+
+
+development of Nausicaa takes place at:
+
+               `http://github.com/marcomaggi/nausicaa/'
+
+
+Copyright (C) 2008, 2009, 2010 by Marco Maggi.
+
+Copyright (C) 1996, 1997, 2000, 2001, 2002, 2003, 2004, 2005
+Free Software Foundation.
+
+Copyright (C) 1996, 1999-2005 Dorai Sitaram.
+
+Copyright (C) 1998 Oleg Kiselyov.
+
+Copyright (C) 1998, 1999, 2000 Olin Shivers.
+
+Copyright (C) 1999 John David Stone.
+
+Copyright (C) 1999, 2002 Marc Feeley.
+
+Copyright (C) 2001, 2009 Danny Dube'
+
+Copyright (C) 2002 Dr. Mirko Luedde.
+
+Copyright (C) 2002, 2003, 2005, 2006 Sebastian Egner.
+
+Copyright (C) 2003 Ray Dillinger.
+
+Copyright (C) 2003 Taylor Campbell.
+
+Copyright (C) 2005 Jens Axel Soegaard.
+
+Copyright (C) 2005-2009 Alex Shinn.
+
+Copyright (C) 2008 Taro Minowa (Higepon).
+
+Copyright (C) 2005-2008 Dominique Boucher.
+
+Copyright (C) 2004, 2005 Tony Garnock-Jones
+
+Copyright (C) 2005 LShift Ltd.
+
+Copyright (C) 2007, 2008 Philip L. Bewig.
+
+Copyright (C) 2000 Will Fitzgerald.
+
+Copyright (C) 2000 Neodesic Corporation.
+
+Copyright (C) 2000-2006 Joachim Henke.
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with no Invariant Sections being ``GNU Free
+     Documentation License'' and ``GNU General Public License'', no
+     Front--Cover Texts, and no Back--Cover Texts.  A copy of the
+     license is included in the section entitled ``GNU Free
+     Documentation License''.
+
+This document embeds an unofficial assemblage of several documents
+reformatted in Texinfo; the reformatting author and maintainer is
+Marco Maggi <marco.maggi-ipsu@poste.it>.  See the appendix ``Credits'' for
+the list of original documents and their authors.  See also the
+`README' and `CREDITS' files for additional attributions.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="pregexp-syntax-backtrack"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="pregexp-syntax-look.html#pregexp-syntax-look">pregexp syntax look</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="pregexp-syntax-alternation.html#pregexp-syntax-alternation">pregexp syntax alternation</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="pregexp-syntax.html#pregexp-syntax">pregexp syntax</a>
+<hr>
+</div>
+
+<h4 class="subsection">54.3.6 Backtracking</h4>
+
+<p>We've already seen that greedy quantifiers match the maximal number of
+times, but the overriding priority is that the overall match
+succeed.  Consider:
+
+<pre class="example">     (pregexp-match "a*a" "aaaa")
+</pre>
+   <p>The regexp consists of two subregexps, <code>a*</code> followed by <code>a</code>. 
+The subregexp <code>a*</code> cannot be allowed to match all four <code>a</code>'s
+in the text string <code>aaaa</code>, even though <code>*</code> is a greedy
+quantifier.  It may match only the first three, leaving the last one for
+the second subregexp.  This ensures that the full regexp matches
+successfully.
+
+   <p>The regexp matcher accomplishes this via a process called backtracking. 
+The matcher tentatively allows the greedy quantifier to match all four
+<code>a</code>'s, but then when it becomes clear that the overall match is in
+jeopardy, it backtracks to a less greedy match of three <code>a</code>'s.  If
+even this fails, as in the call:
+
+<pre class="example">     (pregexp-match "a*aa" "aaaa")
+</pre>
+   <p class="noindent">the matcher backtracks even further.  Overall failure is conceded only
+when all possible backtracking has been tried with no success.
+
+   <p>Backtracking is not restricted to greedy quantifiers.  Nongreedy
+quantifiers match as few instances as possible, and progressively
+backtrack to more and more instances in order to attain an overall
+match.  There is backtracking in alternation too, as the more rightward
+alternates are tried when locally successful leftward ones fail to yield
+an overall match.
+
+<!--  -->
+<h5 class="subsubheading">Disabling backtracking</h5>
+
+<p>Sometimes it is efficient to disable backtracking.  For example, we may
+wish to commit to a choice, or we know that trying alternatives is
+fruitless.  A nonbacktracking regexp is enclosed in <code>(?&gt;...)</code>.
+
+<pre class="example">     (pregexp-match "(?&gt;a+)." "aaaa")
+     &rArr; #f
+</pre>
+   <p>In this call, the subregexp <code>?&gt;a+</code> greedily matches all four
+<code>a</code>'s, and is denied the opportunity to backpedal.  So the overall
+match is denied.  The effect of the regexp is therefore to match one or
+more <code>a</code>'s followed by something that is definitely non&ndash;<code>a</code>.
+
+<!-- page -->
+   </body></html>
+

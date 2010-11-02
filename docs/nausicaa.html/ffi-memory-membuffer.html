@@ -1,0 +1,239 @@
+<html lang="en">
+<head>
+<title>ffi memory membuffer - Nausicaa for Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Nausicaa for Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="ffi-memory.html#ffi-memory" title="ffi memory">
+<link rel="prev" href="ffi-memory-refcount.html#ffi-memory-refcount" title="ffi memory refcount">
+<link rel="next" href="ffi-memory-guarded.html#ffi-memory-guarded" title="ffi memory guarded">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d3 of Nausicaa/Scheme, a set of
+Scheme libraries defining a slightly modified R6RS Scheme language
+and augmenting the features of the base and standard R6RS libraries.
+
+The project home page of Nausicaa is at:
+
+             `http://marcomaggi.github.com/nausicaa.html'
+
+
+development of Nausicaa takes place at:
+
+               `http://github.com/marcomaggi/nausicaa/'
+
+
+Copyright (C) 2008, 2009, 2010 by Marco Maggi.
+
+Copyright (C) 1996, 1997, 2000, 2001, 2002, 2003, 2004, 2005
+Free Software Foundation.
+
+Copyright (C) 1996, 1999-2005 Dorai Sitaram.
+
+Copyright (C) 1998 Oleg Kiselyov.
+
+Copyright (C) 1998, 1999, 2000 Olin Shivers.
+
+Copyright (C) 1999 John David Stone.
+
+Copyright (C) 1999, 2002 Marc Feeley.
+
+Copyright (C) 2001, 2009 Danny Dube'
+
+Copyright (C) 2002 Dr. Mirko Luedde.
+
+Copyright (C) 2002, 2003, 2005, 2006 Sebastian Egner.
+
+Copyright (C) 2003 Ray Dillinger.
+
+Copyright (C) 2003 Taylor Campbell.
+
+Copyright (C) 2005 Jens Axel Soegaard.
+
+Copyright (C) 2005-2009 Alex Shinn.
+
+Copyright (C) 2008 Taro Minowa (Higepon).
+
+Copyright (C) 2005-2008 Dominique Boucher.
+
+Copyright (C) 2004, 2005 Tony Garnock-Jones
+
+Copyright (C) 2005 LShift Ltd.
+
+Copyright (C) 2007, 2008 Philip L. Bewig.
+
+Copyright (C) 2000 Will Fitzgerald.
+
+Copyright (C) 2000 Neodesic Corporation.
+
+Copyright (C) 2000-2006 Joachim Henke.
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with no Invariant Sections being ``GNU Free
+     Documentation License'' and ``GNU General Public License'', no
+     Front--Cover Texts, and no Back--Cover Texts.  A copy of the
+     license is included in the section entitled ``GNU Free
+     Documentation License''.
+
+This document embeds an unofficial assemblage of several documents
+reformatted in Texinfo; the reformatting author and maintainer is
+Marco Maggi <marco.maggi-ipsu@poste.it>.  See the appendix ``Credits'' for
+the list of original documents and their authors.  See also the
+`README' and `CREDITS' files for additional attributions.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="ffi-memory-membuffer"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="ffi-memory-guarded.html#ffi-memory-guarded">ffi memory guarded</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="ffi-memory-refcount.html#ffi-memory-refcount">ffi memory refcount</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="ffi-memory.html#ffi-memory">ffi memory</a>
+<hr>
+</div>
+
+<h4 class="subsection">23.2.10 Memory buffers</h4>
+
+<p>The following bindings are exported by <code>(ffi memory membuffers)</code>;
+the library is built on top of <code>&lt;classes&gt;</code>.
+
+<div class="defun">
+&mdash; Class: <b>&lt;membuffer&gt;</b><var><a name="index-g_t_0040aclass_007bmembuffer_007d-1508"></a></var><br>
+<blockquote><p>Record type of byte buffers; it is used as a <acronym>FIFO</acronym> for bytes or
+multi&ndash;byte data types. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>make-&lt;membuffer&gt;</b><var><a name="index-make_002d_003cmembuffer_003e-1509"></a></var><br>
+&mdash; Function: <b>make-&lt;membuffer&gt;</b><var> cache<a name="index-make_002d_003cmembuffer_003e-1510"></a></var><br>
+<blockquote><p>Build and return a new <code>&lt;membuffer&gt;</code> record.  <var>cache</var> must be a
+memory block cache interface function returned by
+<code>make-block-cache</code>; when not given, it defaults to
+<code>page-blocks-cache</code>.
+
+        <p>The cache function must raise an <code>&amp;out-of-memory</code> condition if
+memory allocation fails. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>&lt;membuffer&gt;?</b><var> obj<a name="index-g_t_003cmembuffer_003e_003f-1511"></a></var><br>
+<blockquote><p>Return <code>#t</code> if <var>obj</var> is a record of type <code>&lt;membuffer&gt;</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>membuffer-push-memblock!</b><var> mb blk<a name="index-membuffer_002dpush_002dmemblock_0021-1512"></a></var><br>
+&mdash; Function: <b>membuffer-push-memblock!</b><var> mb blk blk.start<a name="index-membuffer_002dpush_002dmemblock_0021-1513"></a></var><br>
+&mdash; Function: <b>membuffer-push-memblock!</b><var> mb blk blk.start blk.past<a name="index-membuffer_002dpush_002dmemblock_0021-1514"></a></var><br>
+<blockquote><p>Enqueue in the <code>&lt;membuffer&gt;</code> record <var>mb</var> bytes from the
+<code>&lt;memblock&gt;</code> record <var>blk</var>; bytes are read from <var>blk</var>
+starting at offset <var>blk.start</var> and stopping before offset
+<var>blk.past</var>.
+
+        <p>If no error occurs allocating memory, all the bytes in the selected
+range of <var>blk</var> are enqueued in <var>mb</var>.  If an error occurs
+allocating memory, <var>mb</var> is left in a consistent state and an
+exception is raised with a condition object of type
+<code>&amp;membuffer-incomplete-push</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>membuffer-pop-memblock!</b><var> mb blk<a name="index-membuffer_002dpop_002dmemblock_0021-1515"></a></var><br>
+&mdash; Function: <b>membuffer-pop-memblock!</b><var> mb blk blk.start<a name="index-membuffer_002dpop_002dmemblock_0021-1516"></a></var><br>
+&mdash; Function: <b>membuffer-pop-memblock!</b><var> mb blk blk.start blk.past<a name="index-membuffer_002dpop_002dmemblock_0021-1517"></a></var><br>
+<blockquote><p>Fill the <code>&lt;memblock&gt;</code> record <var>blk</var>, starting at offset
+<var>blk.start</var> and stopping before offset <var>blk.past</var>, with bytes
+dequeued from the <code>&lt;membuffer&gt;</code> record <var>mb</var>.  Return the offset
+in <var>blk</var> of the position past the last filled byte.  If <var>blk</var> is
+filled to <var>blk.past</var>, the return value is <var>blk.past</var>.
+
+        <p>When <var>blk.past</var> is not given, it defaults to the size of <var>blk</var>. 
+When <var>blk.start</var> is not given, it defaults to zero. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>membuffer-push-bytevector!</b><var> mb bv<a name="index-membuffer_002dpush_002dbytevector_0021-1518"></a></var><br>
+&mdash; Function: <b>membuffer-push-bytevector!</b><var> mb bv bv.start<a name="index-membuffer_002dpush_002dbytevector_0021-1519"></a></var><br>
+&mdash; Function: <b>membuffer-push-bytevector!</b><var> mb bv bv.start bv.past<a name="index-membuffer_002dpush_002dbytevector_0021-1520"></a></var><br>
+<blockquote><p>Enqueue in the <code>&lt;membuffer&gt;</code> record <var>mb</var> bytes from the
+bytevector <var>bv</var>; bytes are read from <var>bv</var> starting at offset
+<var>bv.start</var> and stopping before offset <var>bv.past</var>.
+
+        <p>If no error occurs allocating memory, all the bytes in the selected
+range of <var>bv</var> are enqueued in <var>mb</var>.  If an error occurs
+allocating memory, <var>mb</var> is left in a consistent state and an
+exception is raised with a condition object of type
+<code>&amp;membuffer-incomplete-push</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>membuffer-pop-bytevector!</b><var> mb bv<a name="index-membuffer_002dpop_002dbytevector_0021-1521"></a></var><br>
+&mdash; Function: <b>membuffer-pop-bytevector!</b><var> mb bv bv.start<a name="index-membuffer_002dpop_002dbytevector_0021-1522"></a></var><br>
+&mdash; Function: <b>membuffer-pop-bytevector!</b><var> mb bv bv.start bv.past<a name="index-membuffer_002dpop_002dbytevector_0021-1523"></a></var><br>
+<blockquote><p>Fill the bytevector <var>bv</var>, starting at offset <var>bv.start</var> and
+stopping before offset <var>bv.past</var>, with bytes from the
+<code>&lt;membuffer&gt;</code> record <var>mb</var>.  Return the offset in <var>bv</var> of
+the position past the last filled byte.  If <var>bv</var> is filled to
+<var>bv.past</var>, the return value is <var>bv.past</var>.
+
+        <p>When <var>bv.past</var> is not given, it defaults to the length of the
+bytevector.  When <var>bv.start</var> is not given, it defaults to zero. 
+</p></blockquote></div>
+
+<!--  -->
+<h5 class="subsubheading">Incomplete push condition object</h5>
+
+<div class="defun">
+&mdash; Condition Type: <b>&amp;membuffer-incomplete-push</b><var><a name="index-g_t_0026membuffer_002dincomplete_002dpush-1524"></a></var><br>
+<blockquote><p>Type of condition describing an incomplete push operation on a
+<code>&lt;membuffer&gt;</code> record.  It has the following fields:
+
+          <dl>
+<dt>&lsquo;<samp><span class="samp">membuffer</span></samp>&rsquo;<dd>The <code>&lt;membuffer&gt;</code> record for which the push was incomplete.
+
+          <br><dt>&lsquo;<samp><span class="samp">source</span></samp>&rsquo;<dd>The source object from which data was read.  It is a bytevector or a
+<code>&lt;memblock&gt;</code> record.
+
+          <br><dt>&lsquo;<samp><span class="samp">source-start-offset</span></samp>&rsquo;<dd>The offset in the source object from which data should have been read.
+
+          <br><dt>&lsquo;<samp><span class="samp">source-past-offset</span></samp>&rsquo;<dd>The exclusive upper limit offset of data in the source object. 
+</dl>
+        </p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>make-membuffer-incomplete-push-condition</b><var> mb source source-offset<a name="index-make_002dmembuffer_002dincomplete_002dpush_002dcondition-1525"></a></var><br>
+<blockquote><p>Build and return a condition object of type
+<code>&amp;membuffer-incomplete-push</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>membuffer-incomplete-push-condition?</b><var> obj<a name="index-membuffer_002dincomplete_002dpush_002dcondition_003f-1526"></a></var><br>
+<blockquote><p>Return true if <var>obj</var> is a condition object of type
+<code>&amp;membuffer-incomplete-push</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>membuffer-incomplete-push/membuffer</b><var> obj<a name="index-membuffer_002dincomplete_002dpush_002fmembuffer-1527"></a></var><br>
+&mdash; Function: <b>membuffer-incomplete-push/source</b><var> obj<a name="index-membuffer_002dincomplete_002dpush_002fsource-1528"></a></var><br>
+&mdash; Function: <b>membuffer-incomplete-push/source-start-offset</b><var> obj<a name="index-membuffer_002dincomplete_002dpush_002fsource_002dstart_002doffset-1529"></a></var><br>
+&mdash; Function: <b>membuffer-incomplete-push/source-past-offset</b><var> obj<a name="index-membuffer_002dincomplete_002dpush_002fsource_002dpast_002doffset-1530"></a></var><br>
+<blockquote><p>Field accessors for condition objects of type
+<code>&amp;membuffer-incomplete-push</code>. 
+</p></blockquote></div>
+
+<!-- page -->
+   </body></html>
+

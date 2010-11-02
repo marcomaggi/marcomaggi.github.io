@@ -1,0 +1,185 @@
+<html lang="en">
+<head>
+<title>lalr grammar intro - Nausicaa for Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Nausicaa for Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="lalr-grammar.html#lalr-grammar" title="lalr grammar">
+<link rel="next" href="lalr-grammar-precedence.html#lalr-grammar-precedence" title="lalr grammar precedence">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d3 of Nausicaa/Scheme, a set of
+Scheme libraries defining a slightly modified R6RS Scheme language
+and augmenting the features of the base and standard R6RS libraries.
+
+The project home page of Nausicaa is at:
+
+             `http://marcomaggi.github.com/nausicaa.html'
+
+
+development of Nausicaa takes place at:
+
+               `http://github.com/marcomaggi/nausicaa/'
+
+
+Copyright (C) 2008, 2009, 2010 by Marco Maggi.
+
+Copyright (C) 1996, 1997, 2000, 2001, 2002, 2003, 2004, 2005
+Free Software Foundation.
+
+Copyright (C) 1996, 1999-2005 Dorai Sitaram.
+
+Copyright (C) 1998 Oleg Kiselyov.
+
+Copyright (C) 1998, 1999, 2000 Olin Shivers.
+
+Copyright (C) 1999 John David Stone.
+
+Copyright (C) 1999, 2002 Marc Feeley.
+
+Copyright (C) 2001, 2009 Danny Dube'
+
+Copyright (C) 2002 Dr. Mirko Luedde.
+
+Copyright (C) 2002, 2003, 2005, 2006 Sebastian Egner.
+
+Copyright (C) 2003 Ray Dillinger.
+
+Copyright (C) 2003 Taylor Campbell.
+
+Copyright (C) 2005 Jens Axel Soegaard.
+
+Copyright (C) 2005-2009 Alex Shinn.
+
+Copyright (C) 2008 Taro Minowa (Higepon).
+
+Copyright (C) 2005-2008 Dominique Boucher.
+
+Copyright (C) 2004, 2005 Tony Garnock-Jones
+
+Copyright (C) 2005 LShift Ltd.
+
+Copyright (C) 2007, 2008 Philip L. Bewig.
+
+Copyright (C) 2000 Will Fitzgerald.
+
+Copyright (C) 2000 Neodesic Corporation.
+
+Copyright (C) 2000-2006 Joachim Henke.
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with no Invariant Sections being ``GNU Free
+     Documentation License'' and ``GNU General Public License'', no
+     Front--Cover Texts, and no Back--Cover Texts.  A copy of the
+     license is included in the section entitled ``GNU Free
+     Documentation License''.
+
+This document embeds an unofficial assemblage of several documents
+reformatted in Texinfo; the reformatting author and maintainer is
+Marco Maggi <marco.maggi-ipsu@poste.it>.  See the appendix ``Credits'' for
+the list of original documents and their authors.  See also the
+`README' and `CREDITS' files for additional attributions.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="lalr-grammar-intro"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="lalr-grammar-precedence.html#lalr-grammar-precedence">lalr grammar precedence</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="lalr-grammar.html#lalr-grammar">lalr grammar</a>
+<hr>
+</div>
+
+<h4 class="subsection">57.5.1 Introduction to grammar definition</h4>
+
+<p>The grammar is defined by the list of terminal token categories and the
+list of non&ndash;terminal definitions.  Each non&ndash;terminal definition is a
+list where the first element is the non&ndash;terminal and the other elements
+are the right&ndash;hand sides (lists of grammar symbols).  In addition to
+this, each right&ndash;hand side can be followed by a semantic clause.
+
+   <p>For example, consider the following (Yacc) grammar for a very simple
+expression language:
+
+<pre class="example">     e : e '+' t
+       | e '-' t
+       | t
+       ;
+     
+     t : t '*' f
+       : t '/' f
+       | f
+       ;
+     
+     f : ID
+       ;
+</pre>
+   <p class="noindent">the same grammar, written with <code>(lalr)</code>, would look like this:
+
+<pre class="example">     (lalr-parser
+     
+       (:terminals '(ID + - * /))
+     
+       (:rules '((e (e + t)    : (+ $1 $3)
+                    (e - t)    : (- $1 $3)
+                    (t)        : $1)
+     
+                 (t (t * f)    : (* $1 $3)
+                    (t / f)    : (/ $1 $3)
+                    (f)        : $1)
+     
+                 (f (ID)       : $1)))
+     
+       ---) ;other options
+</pre>
+   <p>Here the symbols &lsquo;<samp><span class="samp">ID</span></samp>&rsquo;, &lsquo;<samp><span class="samp">+</span></samp>&rsquo;, &lsquo;<samp><span class="samp">-</span></samp>&rsquo;, &lsquo;<samp><span class="samp">*</span></samp>&rsquo;, &lsquo;<samp><span class="samp">/</span></samp>&rsquo;
+represent the terminal token categories; each token returned by the
+lexer closure must belong to one of these.  The non&ndash;terminal
+definitions are the symbols &lsquo;<samp><span class="samp">e</span></samp>&rsquo;, &lsquo;<samp><span class="samp">t</span></samp>&rsquo; and &lsquo;<samp><span class="samp">f</span></samp>&rsquo;; the
+right&ndash;hand sides of &lsquo;<samp><span class="samp">e</span></samp>&rsquo; are the rules:
+
+<pre class="example">     (e + t)
+     (e - t)
+     (t)
+</pre>
+   <p class="noindent">which are used to match sequences of terminals and non&ndash;terminals.  The
+rule &lsquo;<samp><span class="samp">(e + t)</span></samp>&rsquo; has the semantic clause &lsquo;<samp><span class="samp">(+ $1 $3)</span></samp>&rsquo;.
+
+   <p>In the semantic clauses, the symbol &lsquo;<samp><span class="samp">$n</span></samp>&rsquo; refers to the value of the
+n-th symbol in the right&ndash;hand side rule.  For example, when the
+sequence of tokens &lsquo;<samp><span class="samp">1 + 2</span></samp>&rsquo; is matched by the rule:
+
+<pre class="example">     (e + t)    : (+ $1 $3)
+</pre>
+   <p class="noindent">the semantic clause is evaluated with &lsquo;<samp><span class="samp">$1</span></samp>&rsquo; bound to &lsquo;<samp><span class="samp">1</span></samp>&rsquo;, and
+&lsquo;<samp><span class="samp">$2</span></samp>&rsquo; bound to &lsquo;<samp><span class="samp">2</span></samp>&rsquo;; the result of the evaluation of the
+semantic clause becomes the value of the non&ndash;terminal &lsquo;<samp><span class="samp">e</span></samp>&rsquo;.
+
+   <p>A rule with no semantic clause can be written by omitting the &lsquo;<samp><span class="samp">: ---</span></samp>&rsquo;
+part, example:
+
+<pre class="example">     (e (e + t)    : (+ $1 $3)
+        (e - t)    : (- $1 $3)
+        (p)                       ;no semantic clause
+        (t)        : $1)
+</pre>
+   <p class="noindent">when such a rule matches a sequence of symbols, it generates the
+sentinel value.  <a href="../nausicaa/sentinel.html#sentinel">The sentinel value</a>
+
+<!-- page -->
+   </body></html>
+

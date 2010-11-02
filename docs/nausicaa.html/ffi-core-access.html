@@ -1,0 +1,344 @@
+<html lang="en">
+<head>
+<title>ffi core access - Nausicaa for Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Nausicaa for Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="ffi-core.html#ffi-core" title="ffi core">
+<link rel="prev" href="ffi-core-pointers.html#ffi-core-pointers" title="ffi core pointers">
+<link rel="next" href="ffi-core-call.html#ffi-core-call" title="ffi core call">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d3 of Nausicaa/Scheme, a set of
+Scheme libraries defining a slightly modified R6RS Scheme language
+and augmenting the features of the base and standard R6RS libraries.
+
+The project home page of Nausicaa is at:
+
+             `http://marcomaggi.github.com/nausicaa.html'
+
+
+development of Nausicaa takes place at:
+
+               `http://github.com/marcomaggi/nausicaa/'
+
+
+Copyright (C) 2008, 2009, 2010 by Marco Maggi.
+
+Copyright (C) 1996, 1997, 2000, 2001, 2002, 2003, 2004, 2005
+Free Software Foundation.
+
+Copyright (C) 1996, 1999-2005 Dorai Sitaram.
+
+Copyright (C) 1998 Oleg Kiselyov.
+
+Copyright (C) 1998, 1999, 2000 Olin Shivers.
+
+Copyright (C) 1999 John David Stone.
+
+Copyright (C) 1999, 2002 Marc Feeley.
+
+Copyright (C) 2001, 2009 Danny Dube'
+
+Copyright (C) 2002 Dr. Mirko Luedde.
+
+Copyright (C) 2002, 2003, 2005, 2006 Sebastian Egner.
+
+Copyright (C) 2003 Ray Dillinger.
+
+Copyright (C) 2003 Taylor Campbell.
+
+Copyright (C) 2005 Jens Axel Soegaard.
+
+Copyright (C) 2005-2009 Alex Shinn.
+
+Copyright (C) 2008 Taro Minowa (Higepon).
+
+Copyright (C) 2005-2008 Dominique Boucher.
+
+Copyright (C) 2004, 2005 Tony Garnock-Jones
+
+Copyright (C) 2005 LShift Ltd.
+
+Copyright (C) 2007, 2008 Philip L. Bewig.
+
+Copyright (C) 2000 Will Fitzgerald.
+
+Copyright (C) 2000 Neodesic Corporation.
+
+Copyright (C) 2000-2006 Joachim Henke.
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with no Invariant Sections being ``GNU Free
+     Documentation License'' and ``GNU General Public License'', no
+     Front--Cover Texts, and no Back--Cover Texts.  A copy of the
+     license is included in the section entitled ``GNU Free
+     Documentation License''.
+
+This document embeds an unofficial assemblage of several documents
+reformatted in Texinfo; the reformatting author and maintainer is
+Marco Maggi <marco.maggi-ipsu@poste.it>.  See the appendix ``Credits'' for
+the list of original documents and their authors.  See also the
+`README' and `CREDITS' files for additional attributions.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="ffi-core-access"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="ffi-core-call.html#ffi-core-call">ffi core call</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="ffi-core-pointers.html#ffi-core-pointers">ffi core pointers</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="ffi-core.html#ffi-core">ffi core</a>
+<hr>
+</div>
+
+<h4 class="subsection">23.1.6 Direct access to memory blocks</h4>
+
+<p>A rich set of procedures is implemented to access directly memory blocks
+referenced by pointer objects; they are exported by the <code>(ffi
+peekers-and-pokers compat)</code> library.  These procedures are accessible
+through a small set of macros, which expand to a direct call to the
+procedure.
+
+   <p>The bindings described in this section are exported by the <code>(ffi
+peekers-and-pokers)</code> library and reexported by <code>(ffi memory)</code>. 
+When using this library, it is suggested to import it with prefix
+&lsquo;<samp><span class="samp">ffi:</span></samp>&rsquo;, because other libraries in the Nausicaa distribution export
+bindings with the same name.
+
+   <blockquote>
+<strong>NOTE</strong> When specifying ranges of exact integers: [1, 3]
+means a range that is left&ndash;inclusive and right&ndash;inclusive; [1,
+3) means a range that is left&ndash;inclusive and right&ndash;exclusive, that is
+[1, 2]. 
+</blockquote>
+
+<div class="defun">
+&mdash; Syntax: <b>pointer-c-ref</b><var> &lt;type&gt; &lt;pointer&gt; &lt;offset&gt;<a name="index-pointer_002dc_002dref-1324"></a></var><br>
+<blockquote><p>Peek the value located at &lt;offset&gt; from &lt;pointer&gt; and return
+it.  &lt;pointer&gt; must be a pointer object; &lt;offset&gt; must be an
+exact integer which is <strong>not</strong> scaled by the type dimension.
+
+        <p>&lt;type&gt; must be a symbol representing a C language type in the
+enumeration <code>enum-clang-external-types</code> from the <code>(ffi
+clang-data-types)</code> library; in particular the meaning of the basic types
+is as follows:
+
+          <dl>
+<dt><code>int8_t</code><dt><code>signed-char</code><dd>Peek a single byte and return an exact integer representing the
+sign&ndash;extended integer value of that byte; the returned value is in the
+range [-2^7, 2^7), that is [-128, 127].
+
+          <br><dt><code>uint8_t</code><dt><code>unsigned-char</code><dd>Peek a single byte and return an exact integer representing the unsigned
+integer value of that byte; the returned value is in the range [0,
+2^8), that is [0, 255].
+
+          <br><dt><code>int16_t</code><dd>Peek two bytes and return an exact integer representing the
+sign&ndash;extended integer value of the sequence; the returned value is in
+the range [-2^15, 2^15), that is [-32768, 32767].
+
+          <br><dt><code>uint16_t</code><dd>Peek two bytes and return an exact integer representing the unsigned
+integer value of the sequence; the returned value is in the range
+[0, 2^16), that is [0, 65535].
+
+          <br><dt><code>int32_t</code><dd>Peek four bytes and return an exact integer in the range [-2^31,
+2^31), that is [-2147483648, 2147483647].
+
+          <br><dt><code>uint32_t</code><dd>Peek four bytes and return an exact integer in the range [0,
+2^32), that is [0, 4294967295].
+
+          <br><dt><code>int64_t</code><dd>Peek eight bytes and return an exact integer in the range [-2^63,
+2^63), that is [9223372036854775808, 9223372036854775807].
+
+          <br><dt><code>uint64_t </code><var>pointer</var> <var>offset</var><dd>Peek eight bytes and return an exact integer in the range [0,
+2^64), that is [0, 18446744073709551615].
+
+          <br><dt><code>signed-short</code><dd>Alias for the fixed&ndash;size peeker whose target matches the size and range
+of the &lsquo;<samp><span class="samp">short int</span></samp>&rsquo; C language type of the underlying platform.
+
+          <br><dt><code>unsigned-short</code><dd>Aliases for the fixed&ndash;size peeker whose target matches the size and
+range of the &lsquo;<samp><span class="samp">unsigned short int</span></samp>&rsquo; C language type of the underlying
+platform.
+
+          <br><dt><code>signed-int</code><dd>Alias for the fixed&ndash;size peeker whose target matches the size and range
+of the &lsquo;<samp><span class="samp">int</span></samp>&rsquo; C language type of the underlying platform.
+
+          <br><dt><code>unsigned-int</code><dd>Alias for the fixed&ndash;size peeker whose target matches the size and range
+of the &lsquo;<samp><span class="samp">unsigned int</span></samp>&rsquo; C language type of the underlying platform.
+
+          <br><dt><code>signed-long</code><dd>Alias for the fixed&ndash;size peeker whose target matches the size and range
+of the &lsquo;<samp><span class="samp">long</span></samp>&rsquo; C language type of the underlying platform.
+
+          <br><dt><code>unsigned-long</code><dd>Alias for the fixed&ndash;size peeker whose target matches the size and range
+of the &lsquo;<samp><span class="samp">unsigned long</span></samp>&rsquo; C language type of the underlying platform.
+
+          <br><dt><code>signed-long-long</code><dd>Aliases for the fixed&ndash;size peeker whose target matches the size and
+range of the &lsquo;<samp><span class="samp">long long</span></samp>&rsquo; C language type of the underlying
+platform.
+
+          <br><dt><code>unsigned-long-long</code><dd>Alias for the fixed&ndash;size peeker whose target matches the size and range
+of the &lsquo;<samp><span class="samp">unsigned long long</span></samp>&rsquo; C language type of the underlying
+platform.
+
+          <br><dt><code>float</code><dd>Peek a flonum Scheme object representing the four&ndash;byte &lsquo;<samp><span class="samp">float</span></samp>&rsquo;
+(represented as <acronym>IEEE</acronym> 754 single precision floating point number).
+
+          <br><dt><code>double</code><dd>Peek a flonum Scheme object representing the eight&ndash;byte &lsquo;<samp><span class="samp">double</span></samp>&rsquo;
+(represented as <acronym>IEEE</acronym> 754 double precision floating point number).
+
+          <br><dt><code>pointer</code><dd>Peek a &lsquo;<samp><span class="samp">pointer</span></samp>&rsquo; value; the size of the pointer (also the number of
+bytes loaded) depends on the architecture: it is 4 bytes on
+32-bit systems and 8 bytes on 64-bit systems. 
+</dl>
+        </p></blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>pointer-c-set!</b><var> &lt;type&gt; &lt;pointer&gt; &lt;offset&gt; &lt;value&gt;<a name="index-pointer_002dc_002dset_0021-1325"></a></var><br>
+<blockquote><p>Poke &lt;value&gt; in the location at &lt;offset&gt; from &lt;pointer&gt;. 
+&lt;pointer&gt; must be a pointer object; &lt;offset&gt; must be an exact
+integer which is <strong>not</strong> scaled by the type dimension. 
+&lt;value&gt; can be an expression, which is evaluated only once.
+
+        <p>&lt;type&gt; must be a symbol representing a C language type in the
+enumeration <code>enum-clang-external-types</code> from the <code>(ffi
+clang-data-types)</code> library; in particular the meaning of the basic types
+is as follows:
+
+          <dl>
+<dt><code>int8_t</code><dt><code>signed-char</code><dd>Poke a single byte; &lt;value&gt; must evaluate to an exact integer in
+the range [-2^7, 2^7), that is [-128, 127].
+
+          <br><dt><code>uint8_t</code><dt><code>unsigned-char</code><dd>Poke a single byte; &lt;value&gt; must evaluate to an exact integer in
+the range [0, 2^8), that is [0, 255].
+
+          <br><dt><code>int16_t</code><dd>Poke two bytes; &lt;value&gt; must evaluate to an exact integer in the
+range [-2^15, 2^15), that is [-32768, 32767].
+
+          <br><dt><code>uint16_t</code><dd>Poke two bytes; &lt;value&gt; must evaluate to an exact integer in the
+range [0, 2^16), that is [0, 65535].
+
+          <br><dt><code>int32_t</code><dd>Poke four bytes; &lt;value&gt; must evaluate to an exact integer in the
+range [-2^31, 2^31), that is [-2147483648, 2147483647].
+
+          <br><dt><code>uint32_t</code><dd>Poke four bytes; &lt;value&gt; must evaluate to an exact integer in the
+range [0, 2^32), that is [0, 4294967295].
+
+          <br><dt><code>int64_t</code><dd>Poke eight bytes; &lt;value&gt; must evaluate to an exact integer in the
+range [-2^63, 2^63), that is [9223372036854775808,
+9223372036854775807].
+
+          <br><dt><code>uint64_t</code><dd>Poke eight bytes; &lt;value&gt; must evaluate to an exact integer in the
+range [0, 2^64), that is [0, 18446744073709551615].
+
+          <br><dt><code>signed-short</code><dd>Alias for the fixed&ndash;size poker whose target matches the size and range
+of the &lsquo;<samp><span class="samp">short int</span></samp>&rsquo; C language type of the underlying platform.
+
+          <br><dt><code>unsigned-short</code><dd>Alias for the fixed&ndash;size pokers whose target matches the size and range
+of the &lsquo;<samp><span class="samp">unsigned short int</span></samp>&rsquo; C language type of the underlying
+platform.
+
+          <br><dt><code>signed-int</code><dd>Alias for the fixed&ndash;size pokers whose target matches the size and range
+of the &lsquo;<samp><span class="samp">int</span></samp>&rsquo; C language type of the underlying platform.
+
+          <br><dt><code>unsigned-int</code><dd>Alias for the fixed&ndash;size pokers whose target matches the size and range
+of the &lsquo;<samp><span class="samp">unsigned int</span></samp>&rsquo; C language type of the underlying platform.
+
+          <br><dt><code>signed-long</code><dd>Alias for the fixed&ndash;size pokers whose target matches the size and range
+of the &lsquo;<samp><span class="samp">long</span></samp>&rsquo; C language type of the underlying platform.
+
+          <br><dt><code>unsigned-long</code><dd>Alias for the fixed&ndash;size pokers whose target matches the size and range
+of the &lsquo;<samp><span class="samp">unsigned long</span></samp>&rsquo; C language type of the underlying platform.
+
+          <br><dt><code>signed-long-long</code><dd>Alias for the fixed&ndash;size pokers whose target matches the size and range
+of the &lsquo;<samp><span class="samp">long long</span></samp>&rsquo; C language type of the underlying platform.
+
+          <br><dt><code>unsigned-long-long</code><dd>Alias for the fixed&ndash;size pokers whose target matches the size and range
+of the &lsquo;<samp><span class="samp">unsigned long long</span></samp>&rsquo; C language type of the underlying
+platform.
+
+          <br><dt><code>float</code><dd>Poke a floating point value; &lt;value&gt; must evaluate to a flonum
+which is convertible C language &lsquo;<samp><span class="samp">float</span></samp>&rsquo; (an <acronym>IEEE</acronym> 754 single
+precision floating point number).
+
+          <br><dt><code>float</code><dd>Poke a floating point value; &lt;value&gt; must evaluate to a flonum
+which is convertible C language &lsquo;<samp><span class="samp">double</span></samp>&rsquo; (an <acronym>IEEE</acronym> 754 double
+precision floating point number).
+
+          <br><dt><code>pointer</code><dd>Poke a pointer; &lt;value&gt; must evaluate to a pointer object; the size
+of the pointer (also the number of bytes stored) depends on the
+architecture: it is 4 bytes on 32-bits systems and
+8 bytes on 64-bits systems. 
+</dl>
+        </p></blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>pointer-c-accessor</b><var> &lt;type&gt;<a name="index-pointer_002dc_002daccessor-1326"></a></var><br>
+<blockquote><p>Expand to an expression evaluating to the pointer accessor function for
+&lt;type&gt;; the returned function accepts two arguments: a pointer
+object, an offset from the pointer object.  &lt;type&gt; must be a symbol
+representing a C language type in the enumeration
+<code>enum-clang-external-types</code> from the <code>(ffi clang-data-types)</code>
+library. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>pointer-c-mutator</b><var> &lt;type&gt;<a name="index-pointer_002dc_002dmutator-1327"></a></var><br>
+<blockquote><p>Expand to an expression evaluating to the pointer mutator function for
+&lt;type&gt;; the returned function accepts three arguments: a pointer
+object, an offset from the pointer object, the value to store at the
+selected location.  &lt;type&gt; must be a symbol representing a C
+language type in the enumeration <code>enum-clang-external-types</code> from the
+<code>(ffi clang-data-types)</code> library. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>array-c-ref</b><var> &lt;type&gt; &lt;pointer&gt; &lt;index&gt;<a name="index-array_002dc_002dref-1328"></a></var><br>
+<blockquote><p>Peek the value located at &lt;index&gt; in the array of &lt;type&gt;
+referenced by &lt;pointer&gt; and return it.  &lt;pointer&gt; must be a
+pointer object; &lt;index&gt; must be an exact integer in the referenced
+array; &lt;type&gt; must be a symbol selecting a C language type.
+
+        <p>This is a wrapper for <code>pointer-c-ref</code>, so all the types supported
+by <code>pointer-c-ref</code> are supported by <code>array-c-ref</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>array-c-set!</b><var> &lt;type&gt; &lt;pointer&gt; &lt;index&gt; &lt;value&gt;<a name="index-array_002dc_002dset_0021-1329"></a></var><br>
+<blockquote><p>Poke &lt;value&gt; to the location at &lt;index&gt; in the array of
+&lt;type&gt; referenced by &lt;pointer&gt; and return it.  &lt;pointer&gt;
+must be a pointer object; &lt;index&gt; must be an exact integer
+representing an index in the referenced array; &lt;type&gt; must be a
+symbol selecting a C language type.
+
+        <p>This is a wrapper for <code>pointer-c-set!</code>, so all the types supported
+by <code>pointer-c-set!</code> are supported by <code>array-c-set!</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>array-c-pointer-to</b><var> &lt;type&gt; &lt;pointer&gt; &lt;index&gt;<a name="index-array_002dc_002dpointer_002dto-1330"></a></var><br>
+<blockquote><p>Return a new pointer object referencing the location at &lt;index&gt; in
+the array of &lt;type&gt; referenced by &lt;pointer&gt;.  &lt;pointer&gt;
+must be a pointer object; &lt;index&gt; must be an exact integer
+representing an index in the referenced array; &lt;type&gt; must be a
+symbol representing a C language type in the enumeration
+<code>enum-clang-external-types</code> from the <code>(ffi clang-data-types)</code>
+library. 
+</p></blockquote></div>
+
+<!-- page -->
+   </body></html>
+

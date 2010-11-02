@@ -1,0 +1,291 @@
+<html lang="en">
+<head>
+<title>one-dimension ops - Nausicaa for Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Nausicaa for Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="one_002ddimension.html#one_002ddimension" title="one-dimension">
+<link rel="prev" href="one_002ddimension-inspect.html#one_002ddimension-inspect" title="one-dimension inspect">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d3 of Nausicaa/Scheme, a set of
+Scheme libraries defining a slightly modified R6RS Scheme language
+and augmenting the features of the base and standard R6RS libraries.
+
+The project home page of Nausicaa is at:
+
+             `http://marcomaggi.github.com/nausicaa.html'
+
+
+development of Nausicaa takes place at:
+
+               `http://github.com/marcomaggi/nausicaa/'
+
+
+Copyright (C) 2008, 2009, 2010 by Marco Maggi.
+
+Copyright (C) 1996, 1997, 2000, 2001, 2002, 2003, 2004, 2005
+Free Software Foundation.
+
+Copyright (C) 1996, 1999-2005 Dorai Sitaram.
+
+Copyright (C) 1998 Oleg Kiselyov.
+
+Copyright (C) 1998, 1999, 2000 Olin Shivers.
+
+Copyright (C) 1999 John David Stone.
+
+Copyright (C) 1999, 2002 Marc Feeley.
+
+Copyright (C) 2001, 2009 Danny Dube'
+
+Copyright (C) 2002 Dr. Mirko Luedde.
+
+Copyright (C) 2002, 2003, 2005, 2006 Sebastian Egner.
+
+Copyright (C) 2003 Ray Dillinger.
+
+Copyright (C) 2003 Taylor Campbell.
+
+Copyright (C) 2005 Jens Axel Soegaard.
+
+Copyright (C) 2005-2009 Alex Shinn.
+
+Copyright (C) 2008 Taro Minowa (Higepon).
+
+Copyright (C) 2005-2008 Dominique Boucher.
+
+Copyright (C) 2004, 2005 Tony Garnock-Jones
+
+Copyright (C) 2005 LShift Ltd.
+
+Copyright (C) 2007, 2008 Philip L. Bewig.
+
+Copyright (C) 2000 Will Fitzgerald.
+
+Copyright (C) 2000 Neodesic Corporation.
+
+Copyright (C) 2000-2006 Joachim Henke.
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with no Invariant Sections being ``GNU Free
+     Documentation License'' and ``GNU General Public License'', no
+     Front--Cover Texts, and no Back--Cover Texts.  A copy of the
+     license is included in the section entitled ``GNU Free
+     Documentation License''.
+
+This document embeds an unofficial assemblage of several documents
+reformatted in Texinfo; the reformatting author and maintainer is
+Marco Maggi <marco.maggi-ipsu@poste.it>.  See the appendix ``Credits'' for
+the list of original documents and their authors.  See also the
+`README' and `CREDITS' files for additional attributions.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="one-dimension-ops"></a>
+<a name="one_002ddimension-ops"></a>
+<p>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="one_002ddimension-inspect.html#one_002ddimension-inspect">one-dimension inspect</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="one_002ddimension.html#one_002ddimension">one-dimension</a>
+<hr>
+</div>
+
+<h3 class="section">71.5 Operations</h3>
+
+<h5 class="subsubheading">Set operations</h5>
+
+<div class="defun">
+&mdash; Function: <b>%range-intersection</b><var> type range-a range-b<a name="index-g_t_0025range_002dintersection-4554"></a></var><br>
+<blockquote><p>Return a range representing the intersection of the argument ranges.  It
+does not matter which range has start less than the other.
+
+        <p>Intersection is a closed operation on the space of ranges: The
+intersection of two ranges is a range (possibly empty).  If the ranges
+are not overlapping return <code>#f</code> to represent the empty range. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>%range-union</b><var> type range-a range-b<a name="index-g_t_0025range_002dunion-4555"></a></var><br>
+<blockquote><p>Return two values representing the union of the argument ranges.  It
+does not matter which range has start less than the other.
+
+        <p>Union is <strong>not</strong> a closed operation on the space of ranges: The
+union of two contiguous or overlapping ranges is a single range, but the
+union of two disjoint ranges is the set holding the two argument ranges.
+
+        <p>If the argument ranges are disjoint and non&ndash;contiguous: Return two
+values being <var>range-a</var> and <var>range-b</var>.  If the argument ranges
+are contiguous or overlapping: Return two values being <code>#f</code> and a
+new range representing the union.
+
+        <p>This function should be called like this:
+
+     <pre class="example">          (let-values (((head tail) (%range-union type r-a r-b)))
+            (when head ---)
+            (when tail ---))
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>%range-difference</b><var> type range-a range-b<a name="index-g_t_0025range_002ddifference-4556"></a></var><br>
+<blockquote><p>Return two values representing the difference between the argument
+ranges; the difference is the set of elements present in one range and
+not in the other.  It does not matter which range has start less than
+the other.
+
+        <p>Difference is <strong>not</strong> a closed operation on the space of ranges: In
+genreral the result is a couple of ranges.  The first one represents
+values which are all less than the values in the second one.  Both the
+returned values can be <code>#f</code>.
+
+        <p>This function should be called like this:
+
+     <pre class="example">          (let-values (((head tail) (%range-difference type r-a r-b)))
+            (when head ---)
+            (when tail ---))
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>%range-in-first-only</b><var> type range-a range-b<a name="index-g_t_0025range_002din_002dfirst_002donly-4557"></a></var><br>
+<blockquote><p>Return two values representing the elements of <var>range-a</var> that are
+not in <var>range-b</var>.
+
+        <p>This operation is <strong>not</strong> a closed operation on the space of
+ranges: In genreral the result is a couple of ranges.  The first one
+represents values which are all less than the values in the second one. 
+Both the returned values can be <code>#f</code>.
+
+        <p>This function should be called like this:
+
+     <pre class="example">          (let-values (((head tail) (%range-in-first-only type r-a r-b)))
+            (when head ---)
+            (when tail ---))
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>%domain-intersection</b><var> type domain-a domain-b<a name="index-g_t_0025domain_002dintersection-4558"></a></var><br>
+<blockquote><p>Return a new domain representing the intersection of the arguments.  The
+intersection is the set of values present in both the arguments.
+
+        <p>The returned value may share some structure with the arguments. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>%domain-union</b><var> type domain-a domain-b<a name="index-g_t_0025domain_002dunion-4559"></a></var><br>
+<blockquote><p>Return a new domain representing the union of the arguments.  The union
+is the set of values present in one and/or the other argument.
+
+        <p>The returned value may share some structure with the arguments. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>%domain-difference</b><var> type domain-a domain-b<a name="index-g_t_0025domain_002ddifference-4560"></a></var><br>
+<blockquote><p>Return a new domain representing the difference of the arguments.  The
+difference is the set of values present in one or the other argument.
+
+        <p>The returned value may share some structure with the arguments. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>%domain-complement</b><var> type domain domain-universe<a name="index-g_t_0025domain_002dcomplement-4561"></a></var><br>
+<blockquote><p>Return a new domain representing the complement of <var>domain</var> in the
+space defined by <var>domain-universe</var>.  The returned value holds all
+the items from <var>domain-universe</var> that are not in <var>domain</var>.
+
+        <p>The returned value may share some structure with the arguments. 
+</p></blockquote></div>
+
+<!--  -->
+<h5 class="subsubheading">List operations</h5>
+
+<div class="defun">
+&mdash; Function: <b>%range-for-each</b><var> type proc range<a name="index-g_t_0025range_002dfor_002deach-4562"></a></var><br>
+<blockquote><p>Apply <var>proc</var> to each value in the range. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>%range-every</b><var> type proc range<a name="index-g_t_0025range_002devery-4563"></a></var><br>
+<blockquote><p>Apply <var>proc</var> to each value in the range and return true if all the
+return values are true.  The application stops at the first <code>#f</code>
+return value. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>%range-any</b><var> type proc range<a name="index-g_t_0025range_002dany-4564"></a></var><br>
+<blockquote><p>Apply <var>proc</var> to each value in the range and return true if at least
+one of the returned values is true.  The application stops at the first
+true return value. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>%range-fold</b><var> type kons knil range<a name="index-g_t_0025range_002dfold-4565"></a></var><br>
+<blockquote><p>Fold <var>kons</var> over the values in the range. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>%range-&gt;list</b><var> type range<a name="index-g_t_0025range_002d_003elist-4566"></a></var><br>
+<blockquote><p>Return a list holding all the elements in the range. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>%domain-for-each</b><var> type proc domain<a name="index-g_t_0025domain_002dfor_002deach-4567"></a></var><br>
+<blockquote><p>Apply <var>proc</var> to each element of <var>domain</var>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>%domain-every</b><var> type proc domain<a name="index-g_t_0025domain_002devery-4568"></a></var><br>
+<blockquote><p>Apply <var>proc</var> to each value in the domain and return true if all the
+return values are true.  The application stops at the first <code>#f</code>
+return value. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>%domain-any</b><var> type proc domain<a name="index-g_t_0025domain_002dany-4569"></a></var><br>
+<blockquote><p>Apply <var>proc</var> to each value in the domain and return true if at least
+one of the returned values is true.  The application stops at the first
+true return value. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>%domain-fold</b><var> type kons knil domain<a name="index-g_t_0025domain_002dfold-4570"></a></var><br>
+<blockquote><p>Fold <var>kons</var> over the values in the domain. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>%domain-&gt;list</b><var> type domain<a name="index-g_t_0025domain_002d_003elist-4571"></a></var><br>
+<blockquote><p>Return a list holding all the elements in the domain. 
+</p></blockquote></div>
+
+<!--  -->
+<h5 class="subsubheading">Miscellaneous operations</h5>
+
+<div class="defun">
+&mdash; Function: <b>%range-concatenate</b><var> type range-a range-b<a name="index-g_t_0025range_002dconcatenate-4572"></a></var><br>
+<blockquote><p>Concatenate the ranges and return the resulting range.  It does not
+matter which range has start less than the other.  It makes sense to
+apply this function to ranges that satisfy <code>%range-contiguous?</code>.
+
+        <p>The returned range may share some value with the original ranges. 
+</p></blockquote></div>
+
+<!-- end of file -->
+<!-- appendices -->
+   </body></html>
+

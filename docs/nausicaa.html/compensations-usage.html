@@ -1,0 +1,224 @@
+<html lang="en">
+<head>
+<title>compensations usage - Nausicaa for Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Nausicaa for Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="compensations.html#compensations" title="compensations">
+<link rel="next" href="compensations-api.html#compensations-api" title="compensations api">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d3 of Nausicaa/Scheme, a set of
+Scheme libraries defining a slightly modified R6RS Scheme language
+and augmenting the features of the base and standard R6RS libraries.
+
+The project home page of Nausicaa is at:
+
+             `http://marcomaggi.github.com/nausicaa.html'
+
+
+development of Nausicaa takes place at:
+
+               `http://github.com/marcomaggi/nausicaa/'
+
+
+Copyright (C) 2008, 2009, 2010 by Marco Maggi.
+
+Copyright (C) 1996, 1997, 2000, 2001, 2002, 2003, 2004, 2005
+Free Software Foundation.
+
+Copyright (C) 1996, 1999-2005 Dorai Sitaram.
+
+Copyright (C) 1998 Oleg Kiselyov.
+
+Copyright (C) 1998, 1999, 2000 Olin Shivers.
+
+Copyright (C) 1999 John David Stone.
+
+Copyright (C) 1999, 2002 Marc Feeley.
+
+Copyright (C) 2001, 2009 Danny Dube'
+
+Copyright (C) 2002 Dr. Mirko Luedde.
+
+Copyright (C) 2002, 2003, 2005, 2006 Sebastian Egner.
+
+Copyright (C) 2003 Ray Dillinger.
+
+Copyright (C) 2003 Taylor Campbell.
+
+Copyright (C) 2005 Jens Axel Soegaard.
+
+Copyright (C) 2005-2009 Alex Shinn.
+
+Copyright (C) 2008 Taro Minowa (Higepon).
+
+Copyright (C) 2005-2008 Dominique Boucher.
+
+Copyright (C) 2004, 2005 Tony Garnock-Jones
+
+Copyright (C) 2005 LShift Ltd.
+
+Copyright (C) 2007, 2008 Philip L. Bewig.
+
+Copyright (C) 2000 Will Fitzgerald.
+
+Copyright (C) 2000 Neodesic Corporation.
+
+Copyright (C) 2000-2006 Joachim Henke.
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with no Invariant Sections being ``GNU Free
+     Documentation License'' and ``GNU General Public License'', no
+     Front--Cover Texts, and no Back--Cover Texts.  A copy of the
+     license is included in the section entitled ``GNU Free
+     Documentation License''.
+
+This document embeds an unofficial assemblage of several documents
+reformatted in Texinfo; the reformatting author and maintainer is
+Marco Maggi <marco.maggi-ipsu@poste.it>.  See the appendix ``Credits'' for
+the list of original documents and their authors.  See also the
+`README' and `CREDITS' files for additional attributions.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="compensations-usage"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="compensations-api.html#compensations-api">compensations api</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="compensations.html#compensations">compensations</a>
+<hr>
+</div>
+
+<h3 class="section">21.1 Basic compensations usage</h3>
+
+<p>A <dfn>compensation</dfn> is a chunk of code that undoes a resource
+allocation performed in another chunk, example:
+
+<pre class="example">     (define port
+       (open-file-input-port "/tmp/proof.1"))
+</pre>
+   <p class="noindent">must be &rdquo;compensated&rdquo; by:
+
+<pre class="example">     (close-port port)
+</pre>
+   <p class="noindent">with the compensations stack such code can be written:
+
+<pre class="example">     (with-compensations
+       (letrec
+           ((port (compensate
+                      (open-file-input-port "/tmp/proof.1")
+                    (with
+                      (close-port port)))))
+         (make-use-of port)))
+</pre>
+   <p>Compensation forms are embedded in a closure and pushed on a stack, so
+that, in case of error, it is possible to evaluate them in
+allocation&ndash;reversed order.
+
+   <p>A form that makes use of a compensation stack looks like this:
+
+<pre class="example">     (with-compensations
+         (compensate
+             ALLOC-FORMS-1
+           (with FREE-FORMS-1))
+         (compensate
+             ALLOC-FORMS-2
+           (with FREE-FORMS-2))
+       BODY-FORMS)
+</pre>
+   <p class="noindent">both <code>with-compensations</code> and <code>compensate</code> are syntaxes.  If
+no error occurs the order of evaluation is:
+
+<pre class="example">     ALLOC-FORMS-1
+     ALLOC-FORMS-2
+     BODY-FORMS
+     FREE-FORMS-2
+     FREE-FORMS-1
+</pre>
+   <p class="noindent">if an error occurs in <code>BODY-FORMS</code>, the order of evaluation is:
+
+<pre class="example">     ALLOC-FORMS-1
+     ALLOC-FORMS-2
+     BODY-FORMS
+     FREE-FORMS-2
+     FREE-FORMS-1
+</pre>
+   <p class="noindent">if an error occurs in <code>ALLOC-FORMS-2</code>, the order of evaluation is:
+
+<pre class="example">     ALLOC-FORMS-1
+     ALLOC-FORMS-2
+     FREE-FORMS-1
+</pre>
+   <p class="noindent">if an error occurs in <code>ALLOC-FORMS-1</code>, the order of evaluation is:
+
+<pre class="example">     ALLOC-FORMS-1
+</pre>
+   <p class="noindent">if an error occurs in <code>FREE-FORMS-1</code>, the order of evaluation is:
+
+<pre class="example">     ALLOC-FORMS-1
+     ALLOC-FORMS-2
+     BODY-FORMS
+     FREE-FORMS-2
+     FREE-FORMS-1
+</pre>
+   <p class="noindent">if an error occurs in <code>FREE-FORMS-2</code>, the order of evaluation is:
+
+<pre class="example">     ALLOC-FORMS-1
+     ALLOC-FORMS-2
+     BODY-FORMS
+     FREE-FORMS-2
+     FREE-FORMS-1
+</pre>
+   <p>So <code>with-compensations</code> tries to evaluate all the free forms,
+despite errors.  Of course if an error occurs in the middle of a set of
+forms:
+
+<pre class="example">     (first-form)   ;evaluated
+     (raise 'here)
+     (third-form)   ;not evaluated
+</pre>
+   <p class="noindent">the forms before the error are evaluated, while the forms after the
+error are not.
+
+   <p>A variant of <code>with-compensations</code> exists to evaluate the
+compensation forms only in case of error:
+
+<pre class="example">     (with-compensations/on-error
+         (compensate
+             ALLOC-FORMS-1
+           (with FREE-FORMS-1))
+         (compensate
+             ALLOC-FORMS-2
+           (with FREE-FORMS-2))
+       BODY-FORMS)
+</pre>
+   <p class="noindent">if no error occurs the order of evaluation is:
+
+<pre class="example">     ALLOC-FORMS-1
+     ALLOC-FORMS-2
+     BODY-FORMS
+</pre>
+   <p class="noindent">while if an error occurs the evaluation is equal to the cases of
+<code>with-compensations</code>.  The &ldquo;on error&rdquo; variant is useful in
+constructors and initialisation functions, where we want to run the
+compensations only if an error occurs; if no error is raised, we just
+want the constructor to return.
+
+<!-- page -->
+   </body></html>
+

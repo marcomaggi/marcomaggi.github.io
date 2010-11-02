@@ -1,0 +1,288 @@
+<html lang="en">
+<head>
+<title>lists misc - Nausicaa for Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Nausicaa for Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="lists.html#lists" title="lists">
+<link rel="prev" href="lists-select.html#lists-select" title="lists select">
+<link rel="next" href="lists-fold.html#lists-fold" title="lists fold">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d3 of Nausicaa/Scheme, a set of
+Scheme libraries defining a slightly modified R6RS Scheme language
+and augmenting the features of the base and standard R6RS libraries.
+
+The project home page of Nausicaa is at:
+
+             `http://marcomaggi.github.com/nausicaa.html'
+
+
+development of Nausicaa takes place at:
+
+               `http://github.com/marcomaggi/nausicaa/'
+
+
+Copyright (C) 2008, 2009, 2010 by Marco Maggi.
+
+Copyright (C) 1996, 1997, 2000, 2001, 2002, 2003, 2004, 2005
+Free Software Foundation.
+
+Copyright (C) 1996, 1999-2005 Dorai Sitaram.
+
+Copyright (C) 1998 Oleg Kiselyov.
+
+Copyright (C) 1998, 1999, 2000 Olin Shivers.
+
+Copyright (C) 1999 John David Stone.
+
+Copyright (C) 1999, 2002 Marc Feeley.
+
+Copyright (C) 2001, 2009 Danny Dube'
+
+Copyright (C) 2002 Dr. Mirko Luedde.
+
+Copyright (C) 2002, 2003, 2005, 2006 Sebastian Egner.
+
+Copyright (C) 2003 Ray Dillinger.
+
+Copyright (C) 2003 Taylor Campbell.
+
+Copyright (C) 2005 Jens Axel Soegaard.
+
+Copyright (C) 2005-2009 Alex Shinn.
+
+Copyright (C) 2008 Taro Minowa (Higepon).
+
+Copyright (C) 2005-2008 Dominique Boucher.
+
+Copyright (C) 2004, 2005 Tony Garnock-Jones
+
+Copyright (C) 2005 LShift Ltd.
+
+Copyright (C) 2007, 2008 Philip L. Bewig.
+
+Copyright (C) 2000 Will Fitzgerald.
+
+Copyright (C) 2000 Neodesic Corporation.
+
+Copyright (C) 2000-2006 Joachim Henke.
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with no Invariant Sections being ``GNU Free
+     Documentation License'' and ``GNU General Public License'', no
+     Front--Cover Texts, and no Back--Cover Texts.  A copy of the
+     license is included in the section entitled ``GNU Free
+     Documentation License''.
+
+This document embeds an unofficial assemblage of several documents
+reformatted in Texinfo; the reformatting author and maintainer is
+Marco Maggi <marco.maggi-ipsu@poste.it>.  See the appendix ``Credits'' for
+the list of original documents and their authors.  See also the
+`README' and `CREDITS' files for additional attributions.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="lists-misc"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="lists-fold.html#lists-fold">lists fold</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="lists-select.html#lists-select">lists select</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="lists.html#lists">lists</a>
+<hr>
+</div>
+
+<h3 class="section">27.7 Length, append, concatenate, reverse, zip and count</h3>
+
+<p><a name="index-List-length-1790"></a><a name="index-List-appending-1791"></a><a name="index-List-contatenation-1792"></a><a name="index-List-reversing-1793"></a><a name="index-List-zip-1794"></a><a name="index-List-counting-1795"></a>
+
+<div class="defun">
+&mdash; Function: <b>length+</b><var> circ<a name="index-length_002b-1796"></a></var><br>
+<blockquote><p>Return the length of the argument, or <code>#f</code> if <var>circ</var> is a
+circular list.  The length of a proper list is a non&ndash;negative integer
+n such that <code>cdr</code> applied n times to the list
+produces the empty list. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>append!</b><var> ell ...<a name="index-append_0021-1797"></a></var><br>
+<blockquote><p>Return a list consisting of the elements of <var>ell</var> followed by the
+elements of the other list arguments; it is allowed to alter cons cells
+in the argument lists to construct the result list.  The last argument
+is never altered; the result list shares structure with this parameter.
+
+     <pre class="example">          (append! '(x) '(y))        &rArr;  (x y)
+          (append! '(a) '(b c d))    &rArr;  (a b c d)
+          (append! '(a (b)) '((c)))  &rArr;  (a (b) (c))
+          (append! '(a b) '(c . d))  &rArr;  (a b c . d)
+          (append! '() 'a)           &rArr;  a
+          (append! '(x y))           &rArr;  (x y)
+          (append!)                  &rArr;  ()
+</pre>
+        <p>Notice that <code>append</code> is implemented by <code>(rnrs base (6))</code>. 
+<a href="../nausicaa/baselib-lists.html#baselib-lists">Pairs and lists</a>
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>concatenate</b><var> list-of-lists<a name="index-concatenate-1798"></a></var><br>
+&mdash; Function: <b>concatenate!</b><var> list-of-lists<a name="index-concatenate_0021-1799"></a></var><br>
+&mdash; Syntax: <b>concatenate/stx</b><var> list-of-lists<a name="index-concatenate_002fstx-1800"></a></var><br>
+&mdash; Syntax: <b>concatenate!/stx</b><var> list-of-lists<a name="index-concatenate_0021_002fstx-1801"></a></var><br>
+<blockquote><p>These functions append the elements of their argument together; that is,
+<code>concatenate</code> returns:
+
+     <pre class="example">          (apply append list-of-lists)
+</pre>
+        <p><code>concatenate!</code> is allowed to alter the arguments to build the
+result.  As with <code>append</code> and <code>append!</code>, the last element of
+the input list may be any value at all. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>reverse!</b><var> list<a name="index-reverse_0021-1802"></a></var><br>
+<blockquote><p>Return a newly allocated list consisting of the elements of <var>list</var>
+in reverse order; it is allowed to alter the argument's cons cells to
+produce the reversed list.
+
+     <pre class="example">          (reverse! '(a b c))              &rArr;  (c b a)
+          (reverse! '(a (b c) d (e (f))))  &rArr;  ((e (f)) d (b c) a)
+</pre>
+        <p>Notice that <code>reverse</code> is implemented by <code>(rnrs base (6))</code>. 
+<a href="../nausicaa/baselib-lists.html#baselib-lists">Pairs and lists</a>
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>append-reverse</b><var> rev-head tail<a name="index-append_002dreverse-1803"></a></var><br>
+&mdash; Function: <b>append-reverse!</b><var> rev-head tail<a name="index-append_002dreverse_0021-1804"></a></var><br>
+&mdash; Syntax: <b>append-reverse/stx</b><var> rev-head tail<a name="index-append_002dreverse_002fstx-1805"></a></var><br>
+&mdash; Syntax: <b>append-reverse!/stx</b><var> rev-head tail<a name="index-append_002dreverse_0021_002fstx-1806"></a></var><br>
+<blockquote><p><code>append-reverse</code> returns:
+
+     <pre class="example">          (append (reverse rev-head) tail)
+</pre>
+        <p>It is provided because it is a common operation; a common
+list&ndash;processing style calls for this exact operation to transfer values
+accumulated in reverse order onto the front of another list, and because
+the implementation is significantly more efficient than the simple
+composition it replaces.
+
+        <blockquote>
+But note that this pattern of iterative computation followed by a
+<code>reverse</code> can frequently be rewritten as a recursion, dispensing
+with the <code>reverse</code> and <code>append-reverse</code> steps, and shifting
+temporary, intermediate storage from the heap to the stack, which is
+typically a win for reasons of cache locality and eager storage
+reclamation. 
+</blockquote>
+
+        <p><code>append-reverse!</code> is allowed to alter <var>rev-head</var>'s cons cells
+to construct the result. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>zip</b><var> list1 list ...<a name="index-zip-1807"></a></var><br>
+&mdash; Function: <b>zip*</b><var> circ1 circ ...<a name="index-zip_002a-1808"></a></var><br>
+&mdash; Syntax: <b>zip/stx</b><var> &lt;list1&gt; &lt;list&gt; ...<a name="index-zip_002fstx-1809"></a></var><br>
+&mdash; Syntax: <b>zip*/stx</b><var> &lt;circ1&gt; &lt;circ&gt; ...<a name="index-zip_002a_002fstx-1810"></a></var><br>
+<blockquote><p>The function <code>zip</code> is defined as:
+
+     <pre class="example">          (lambda ells (apply map list ells))
+</pre>
+        <p class="noindent">while <code>zip*</code> is defined as:
+
+     <pre class="example">          (lambda ells (apply map* list ells))
+</pre>
+        <p>If <code>zip*</code> is passed <var>n</var> lists, it returns a list as long as the
+shortest of these lists, each element of which is an <var>n</var>&ndash;element
+list comprised of the corresponding elements from the parameter lists.
+
+     <pre class="example">          (zip* '(one two three)
+                '(1 2 3)
+                '(odd even odd even odd even odd even))
+          &rArr; ((one 1 odd) (two 2 even) (three 3 odd))
+          
+          (zip* '(1 2 3))
+          &rArr; ((1) (2) (3))
+</pre>
+        <p>When applying <code>zip*</code>, at least one of the argument lists must be
+finite:
+
+     <pre class="example">          (zip* '(3 1 4 1)
+                (circular-list #f #t))
+          &rArr; ((3 #f)
+              (1 #t)
+              (4 #f)
+              (1 #t))
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>unzip1</b><var> ell<a name="index-unzip1-1811"></a></var><br>
+&mdash; Function: <b>unzip2</b><var> ell<a name="index-unzip2-1812"></a></var><br>
+&mdash; Function: <b>unzip3</b><var> ell<a name="index-unzip3-1813"></a></var><br>
+&mdash; Function: <b>unzip4</b><var> ell<a name="index-unzip4-1814"></a></var><br>
+&mdash; Function: <b>unzip5</b><var> ell<a name="index-unzip5-1815"></a></var><br>
+&mdash; Syntax: <b>unzip1/stx</b><var> ell<a name="index-unzip1_002fstx-1816"></a></var><br>
+&mdash; Syntax: <b>unzip2/stx</b><var> ell<a name="index-unzip2_002fstx-1817"></a></var><br>
+&mdash; Syntax: <b>unzip3/stx</b><var> ell<a name="index-unzip3_002fstx-1818"></a></var><br>
+&mdash; Syntax: <b>unzip4/stx</b><var> ell<a name="index-unzip4_002fstx-1819"></a></var><br>
+&mdash; Syntax: <b>unzip5/stx</b><var> ell<a name="index-unzip5_002fstx-1820"></a></var><br>
+<blockquote><p><code>unzip1</code> takes a list of lists, where every list must contain at
+least one element, and returns a list containing the initial element of
+each such list.  That is, it returns <code>(map car lists)</code>.
+
+        <p><code>unzip2</code> takes a list of lists, where every list must contain at
+least two elements, and returns two values: a list of the first
+elements, and a list of the second elements.
+
+        <p><code>unzip3</code> does the same for the first three elements of the lists,
+and so forth.
+
+     <pre class="example">          (unzip2 '((1 one) (2 two) (3 three)))
+          &rArr; (1 2 3)
+             (one two three)
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>count</b><var> pred circ ...<a name="index-count-1821"></a></var><br>
+&mdash; Syntax: <b>count/stx</b><var> pred circ ...<a name="index-count_002fstx-1822"></a></var><br>
+<blockquote><p><var>pred</var> is a procedure taking as many arguments as there are lists
+and returning a single value.  It is applied element&ndash;wise to the
+elements of the lists, and a count is tallied of the number of elements
+that produce a true value.  This count is returned.
+
+        <p><code>count</code> is &ldquo;iterative&rdquo; in that it is guaranteed to apply
+<var>pred</var> to the list elements in a left&ndash;to&ndash;right order.  The
+counting stops when the shortest list expires.
+
+     <pre class="example">          (count even? '(3 1 4 1 5 9 2 5 6))
+          &rArr; 3
+          
+          (count &lt; '(1 2 4 8) '(2 4 6 8 10 12 14 16))
+          &rArr; 3
+</pre>
+        <p>At least one of the argument lists must be finite:
+
+     <pre class="example">          (count &lt; '(3 1 4 1) (circular-list 1 10))
+          &rArr; 2
+</pre>
+        </blockquote></div>
+
+<!-- page -->
+   </body></html>
+

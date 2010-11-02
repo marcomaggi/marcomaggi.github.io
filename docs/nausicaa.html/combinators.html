@@ -1,0 +1,168 @@
+<html lang="en">
+<head>
+<title>combinators - Nausicaa for Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Nausicaa for Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="prev" href="cleanup_002dhandlers.html#cleanup_002dhandlers" title="cleanup-handlers">
+<link rel="next" href="keywords.html#keywords" title="keywords">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d3 of Nausicaa/Scheme, a set of
+Scheme libraries defining a slightly modified R6RS Scheme language
+and augmenting the features of the base and standard R6RS libraries.
+
+The project home page of Nausicaa is at:
+
+             `http://marcomaggi.github.com/nausicaa.html'
+
+
+development of Nausicaa takes place at:
+
+               `http://github.com/marcomaggi/nausicaa/'
+
+
+Copyright (C) 2008, 2009, 2010 by Marco Maggi.
+
+Copyright (C) 1996, 1997, 2000, 2001, 2002, 2003, 2004, 2005
+Free Software Foundation.
+
+Copyright (C) 1996, 1999-2005 Dorai Sitaram.
+
+Copyright (C) 1998 Oleg Kiselyov.
+
+Copyright (C) 1998, 1999, 2000 Olin Shivers.
+
+Copyright (C) 1999 John David Stone.
+
+Copyright (C) 1999, 2002 Marc Feeley.
+
+Copyright (C) 2001, 2009 Danny Dube'
+
+Copyright (C) 2002 Dr. Mirko Luedde.
+
+Copyright (C) 2002, 2003, 2005, 2006 Sebastian Egner.
+
+Copyright (C) 2003 Ray Dillinger.
+
+Copyright (C) 2003 Taylor Campbell.
+
+Copyright (C) 2005 Jens Axel Soegaard.
+
+Copyright (C) 2005-2009 Alex Shinn.
+
+Copyright (C) 2008 Taro Minowa (Higepon).
+
+Copyright (C) 2005-2008 Dominique Boucher.
+
+Copyright (C) 2004, 2005 Tony Garnock-Jones
+
+Copyright (C) 2005 LShift Ltd.
+
+Copyright (C) 2007, 2008 Philip L. Bewig.
+
+Copyright (C) 2000 Will Fitzgerald.
+
+Copyright (C) 2000 Neodesic Corporation.
+
+Copyright (C) 2000-2006 Joachim Henke.
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with no Invariant Sections being ``GNU Free
+     Documentation License'' and ``GNU General Public License'', no
+     Front--Cover Texts, and no Back--Cover Texts.  A copy of the
+     license is included in the section entitled ``GNU Free
+     Documentation License''.
+
+This document embeds an unofficial assemblage of several documents
+reformatted in Texinfo; the reformatting author and maintainer is
+Marco Maggi <marco.maggi-ipsu@poste.it>.  See the appendix ``Credits'' for
+the list of original documents and their authors.  See also the
+`README' and `CREDITS' files for additional attributions.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="combinators"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="keywords.html#keywords">keywords</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="cleanup_002dhandlers.html#cleanup_002dhandlers">cleanup-handlers</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="index.html#Top">Top</a>
+<hr>
+</div>
+
+<h2 class="chapter">47 Combinators</h2>
+
+<p>The following combinators are exported by <code>(combinators)</code>.
+
+<div class="defun">
+&mdash; Syntax: <b>K</b><var> form . forms<a name="index-K-3701"></a></var><br>
+<blockquote><p>Evaluate all the forms like the standard <code>begin</code>, but return the
+value of the first form.
+
+     <pre class="example">          (define-syntax K
+            (syntax-rules ()
+              ((_ ?expr0 ?expr ...)
+               (call-with-values
+                   (lambda () ?expr0)
+                 (lambda x
+                   ?expr ...
+                   (apply values x))))))
+</pre>
+        <p>This is the same as the <code>begin0</code> syntax. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>Y</b><var> func<a name="index-Y-3702"></a></var><br>
+<blockquote><p>Build a recursive function with no name.
+
+     <pre class="example">          (define-syntax Y
+            (syntax-rules ()
+              ((_ ?func)
+               (let ((F ?func))
+                 ((lambda (f)
+                    (F (lambda (. args)
+                         (apply (f f) args))))
+                  (lambda (f)
+                    (F (lambda (. args)
+                         (apply (f f) args)))))))))
+</pre>
+        <p>The combinator has to called like this:
+
+     <pre class="example">          ((Y (lambda (f)
+                (lambda (. args)
+                  (do-something-with-args args)
+                  (if (condition) (f args))))
+              arg1 arg2 ...))
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>S</b><var> x y z<a name="index-S-3703"></a></var><br>
+<blockquote><p>The S combinator:
+
+     <pre class="example">          (define-syntax S
+            (syntax-rules ()
+              ((_ ?x ?y ?z)
+               (let ((Z ?z))
+                 (?x Z (?y Z))))))
+</pre>
+        </blockquote></div>
+
+<!-- end of file -->
+   </body></html>
+

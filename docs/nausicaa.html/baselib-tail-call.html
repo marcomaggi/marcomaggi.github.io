@@ -1,0 +1,210 @@
+<html lang="en">
+<head>
+<title>baselib tail call - Nausicaa for Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Nausicaa for Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="baselib.html#baselib" title="baselib">
+<link rel="prev" href="baselib-transformers.html#baselib-transformers" title="baselib transformers">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d3 of Nausicaa/Scheme, a set of
+Scheme libraries defining a slightly modified R6RS Scheme language
+and augmenting the features of the base and standard R6RS libraries.
+
+The project home page of Nausicaa is at:
+
+             `http://marcomaggi.github.com/nausicaa.html'
+
+
+development of Nausicaa takes place at:
+
+               `http://github.com/marcomaggi/nausicaa/'
+
+
+Copyright (C) 2008, 2009, 2010 by Marco Maggi.
+
+Copyright (C) 1996, 1997, 2000, 2001, 2002, 2003, 2004, 2005
+Free Software Foundation.
+
+Copyright (C) 1996, 1999-2005 Dorai Sitaram.
+
+Copyright (C) 1998 Oleg Kiselyov.
+
+Copyright (C) 1998, 1999, 2000 Olin Shivers.
+
+Copyright (C) 1999 John David Stone.
+
+Copyright (C) 1999, 2002 Marc Feeley.
+
+Copyright (C) 2001, 2009 Danny Dube'
+
+Copyright (C) 2002 Dr. Mirko Luedde.
+
+Copyright (C) 2002, 2003, 2005, 2006 Sebastian Egner.
+
+Copyright (C) 2003 Ray Dillinger.
+
+Copyright (C) 2003 Taylor Campbell.
+
+Copyright (C) 2005 Jens Axel Soegaard.
+
+Copyright (C) 2005-2009 Alex Shinn.
+
+Copyright (C) 2008 Taro Minowa (Higepon).
+
+Copyright (C) 2005-2008 Dominique Boucher.
+
+Copyright (C) 2004, 2005 Tony Garnock-Jones
+
+Copyright (C) 2005 LShift Ltd.
+
+Copyright (C) 2007, 2008 Philip L. Bewig.
+
+Copyright (C) 2000 Will Fitzgerald.
+
+Copyright (C) 2000 Neodesic Corporation.
+
+Copyright (C) 2000-2006 Joachim Henke.
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with no Invariant Sections being ``GNU Free
+     Documentation License'' and ``GNU General Public License'', no
+     Front--Cover Texts, and no Back--Cover Texts.  A copy of the
+     license is included in the section entitled ``GNU Free
+     Documentation License''.
+
+This document embeds an unofficial assemblage of several documents
+reformatted in Texinfo; the reformatting author and maintainer is
+Marco Maggi <marco.maggi-ipsu@poste.it>.  See the appendix ``Credits'' for
+the list of original documents and their authors.  See also the
+`README' and `CREDITS' files for additional attributions.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="baselib-tail-call"></a>
+<p>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="baselib-transformers.html#baselib-transformers">baselib transformers</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="baselib.html#baselib">baselib</a>
+<hr>
+</div>
+
+<h3 class="section">3.19 Tail calls and tail contexts</h3>
+
+<p><a name="index-Tail-call-237"></a><a name="index-Tail-contexts-238"></a>
+
+   <p>A <em>tail call</em> is a procedure call that occurs in a <em>tail
+context</em>.  Tail contexts are defined inductively.  Note that a tail
+context is always determined with respect to a particular lambda
+expression.
+
+     <ul>
+<li>The last expression within the body of a lambda expression, shown as
+&lt;tail expression&gt; below, occurs in a tail context.
+
+     <pre class="example">          (lambda &lt;formals&gt;
+            &lt;definition&gt;*
+            &lt;expression&gt;* &lt;tail expression&gt;)
+</pre>
+     <li>If one of the following expressions is in a tail context, then the
+subexpressions shown as &lt;tail expression&gt; are in a tail context. 
+These were derived from specifications of the syntax of the forms
+described in this chapter by replacing some occurrences of
+&lt;expression&gt; with &lt;tail expression&gt;.  Only those rules that
+contain tail contexts are shown here.
+
+     <pre class="example">          (if &lt;expression&gt; &lt;tail expression&gt; &lt;tail expression&gt;)
+          (if &lt;expression&gt; &lt;tail expression&gt;)
+          
+          (cond &lt;cond clause&gt;+)
+          (cond &lt;cond clause&gt;* (else &lt;tail sequence&gt;))
+          
+          (case &lt;expression&gt;
+            &lt;case clause&gt;+)
+          (case &lt;expression&gt;
+            &lt;case clause&gt;*
+            (else &lt;tail sequence&gt;))
+          
+          (and &lt;expression&gt;* &lt;tail expression&gt;)
+          (or &lt;expression&gt;* &lt;tail expression&gt;)
+          
+          (let &lt;bindings&gt; &lt;tail body&gt;)
+          (let &lt;variable&gt; &lt;bindings&gt; &lt;tail body&gt;)
+          (let* &lt;bindings&gt; &lt;tail body&gt;)
+          (letrec* &lt;bindings&gt; &lt;tail body&gt;)
+          (letrec &lt;bindings&gt; &lt;tail body&gt;)
+          (let-values &lt;mv-bindings&gt; &lt;tail body&gt;)
+          (let*-values &lt;mv-bindings&gt; &lt;tail body&gt;)
+          
+          (let-syntax &lt;bindings&gt; &lt;tail body&gt;)
+          (letrec-syntax &lt;bindings&gt; &lt;tail body&gt;)
+          
+          (begin &lt;tail sequence&gt;)
+</pre>
+     <p>A &lt;cond clause&gt; is:
+
+     <pre class="example">          (&lt;test&gt; &lt;tail sequence&gt;)
+</pre>
+     <p class="noindent">a &lt;case clause&gt; is:
+
+     <pre class="example">          ((&lt;datum&gt;*) &lt;tail sequence&gt;)
+</pre>
+     <p class="noindent">a &lt;tail body&gt; is:
+
+     <pre class="example">          &lt;definition&gt;* &lt;tail sequence&gt;
+</pre>
+     <p class="noindent">and a &lt;tail sequence&gt; is:
+
+     <pre class="example">          &lt;expression&gt;* &lt;tail expression&gt;
+</pre>
+     <li>If a <code>cond</code> expression is in a tail context, and has a clause of
+the form <code>(&lt;expression1&gt; =&gt; &lt;expression2&gt;)</code> then the
+(implied) call to the procedure that results from the evaluation of
+&lt;expression2&gt; is in a tail context.  &lt;expression2&gt; itself
+is not in a tail context. 
+</ul>
+
+   <p>Certain built&ndash;in procedures must also perform tail calls.  The first
+argument passed to <code>apply</code> and to <code>call/cc</code>, and the second
+argument passed to <code>call-with-values</code>, must be called via a tail
+call.
+
+   <p>In the following example the only tail call is the call to <code>f</code>. 
+None of the calls to <code>g</code> or <code>h</code> are tail calls.  The reference
+to <code>x</code> is in a tail context, but it is not a call and thus is not a
+tail call.
+
+<pre class="example">     (lambda ()
+       (if (g)
+           (let ((x (h)))
+             x)
+           (and (g) (f))))
+</pre>
+   <blockquote>
+<strong>NOTE</strong> Implementations may recognize that some non&ndash;tail calls,
+such as the call to <code>h</code> above, can be evaluated as though they were
+tail calls.  In the example above, the <code>let</code> expression could be
+compiled as a tail call to <code>h</code>.  (The possibility of <code>h</code>
+returning an unexpected number of values can be ignored, because in that
+case the effect of the <code>let</code> is explicitly unspecified and
+implementation&ndash;dependent.) 
+</blockquote>
+
+<!-- end of file -->
+   </body></html>
+

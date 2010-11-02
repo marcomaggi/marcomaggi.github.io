@@ -1,0 +1,212 @@
+<html lang="en">
+<head>
+<title>stdlib syntax-case hygiene - Nausicaa for Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Nausicaa for Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="stdlib-syntax_002dcase.html#stdlib-syntax_002dcase" title="stdlib syntax-case">
+<link rel="prev" href="stdlib-syntax_002dcase-intro.html#stdlib-syntax_002dcase-intro" title="stdlib syntax-case intro">
+<link rel="next" href="stdlib-syntax_002dcase-objects.html#stdlib-syntax_002dcase-objects" title="stdlib syntax-case objects">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d3 of Nausicaa/Scheme, a set of
+Scheme libraries defining a slightly modified R6RS Scheme language
+and augmenting the features of the base and standard R6RS libraries.
+
+The project home page of Nausicaa is at:
+
+             `http://marcomaggi.github.com/nausicaa.html'
+
+
+development of Nausicaa takes place at:
+
+               `http://github.com/marcomaggi/nausicaa/'
+
+
+Copyright (C) 2008, 2009, 2010 by Marco Maggi.
+
+Copyright (C) 1996, 1997, 2000, 2001, 2002, 2003, 2004, 2005
+Free Software Foundation.
+
+Copyright (C) 1996, 1999-2005 Dorai Sitaram.
+
+Copyright (C) 1998 Oleg Kiselyov.
+
+Copyright (C) 1998, 1999, 2000 Olin Shivers.
+
+Copyright (C) 1999 John David Stone.
+
+Copyright (C) 1999, 2002 Marc Feeley.
+
+Copyright (C) 2001, 2009 Danny Dube'
+
+Copyright (C) 2002 Dr. Mirko Luedde.
+
+Copyright (C) 2002, 2003, 2005, 2006 Sebastian Egner.
+
+Copyright (C) 2003 Ray Dillinger.
+
+Copyright (C) 2003 Taylor Campbell.
+
+Copyright (C) 2005 Jens Axel Soegaard.
+
+Copyright (C) 2005-2009 Alex Shinn.
+
+Copyright (C) 2008 Taro Minowa (Higepon).
+
+Copyright (C) 2005-2008 Dominique Boucher.
+
+Copyright (C) 2004, 2005 Tony Garnock-Jones
+
+Copyright (C) 2005 LShift Ltd.
+
+Copyright (C) 2007, 2008 Philip L. Bewig.
+
+Copyright (C) 2000 Will Fitzgerald.
+
+Copyright (C) 2000 Neodesic Corporation.
+
+Copyright (C) 2000-2006 Joachim Henke.
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with no Invariant Sections being ``GNU Free
+     Documentation License'' and ``GNU General Public License'', no
+     Front--Cover Texts, and no Back--Cover Texts.  A copy of the
+     license is included in the section entitled ``GNU Free
+     Documentation License''.
+
+This document embeds an unofficial assemblage of several documents
+reformatted in Texinfo; the reformatting author and maintainer is
+Marco Maggi <marco.maggi-ipsu@poste.it>.  See the appendix ``Credits'' for
+the list of original documents and their authors.  See also the
+`README' and `CREDITS' files for additional attributions.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="stdlib-syntax-case-hygiene"></a>
+<a name="stdlib-syntax_002dcase-hygiene"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="stdlib-syntax_002dcase-objects.html#stdlib-syntax_002dcase-objects">stdlib syntax-case objects</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="stdlib-syntax_002dcase-intro.html#stdlib-syntax_002dcase-intro">stdlib syntax-case intro</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="stdlib-syntax_002dcase.html#stdlib-syntax_002dcase">stdlib syntax-case</a>
+<hr>
+</div>
+
+<h4 class="subsection">4.12.2 Hygiene</h4>
+
+<p>Barendregt's <em>hygiene condition</em> for the lambda calculus is an
+informal notion that requires the free variables of an expression
+<em>N</em> that is to be substituted into another expression <em>M</em> not
+to be captured by bindings in <em>M</em> when such capture is not
+intended.
+
+   <p>Kohlbecker, et al. propose a corresponding <em>hygiene condition for
+macro expansion</em> that applies in all situations where capturing is not
+explicit: &ldquo;Generated identifiers that become binding instances in the
+completely expanded program must only bind variables that are generated
+at the same transcription step&rdquo;.  In the terminology of this document,
+the &ldquo;generated identifiers&rdquo; are those introduced by a transformer
+rather than those present in the form passed to the transformer, and a
+&ldquo;macro transcription step&rdquo; corresponds to a single call by the
+expander to a transformer.  Also, the hygiene condition applies to all
+introduced bindings rather than to introduced variable bindings alone.
+
+   <p>This leaves open what happens to an introduced identifier that appears
+outside the scope of a binding introduced by the same call.  Such an
+identifier refers to the lexical binding in effect where it appears
+(within a <code>syntax</code> &lt;template&gt;) inside the transformer body or
+one of the helpers it calls.  This is essentially the referential
+transparency property described by Clinger and Rees.  Thus, the hygiene
+condition can be restated as follows:
+
+   <blockquote>
+A binding for an identifier introduced into the output of a transformer
+call from the expander must capture only references to the identifier
+introduced into the output of the same transformer call.
+
+   <p>A reference to an identifier introduced into the output of a transformer
+refers to the closest enclosing binding for the introduced identifier
+or, if it appears outside of any enclosing binding for the introduced
+identifier, the closest enclosing lexical binding where the identifier
+appears (within a <code>syntax</code> &lt;template&gt;) inside the transformer
+body or one of the helpers it calls. 
+</blockquote>
+
+   <p>Explicit captures are handled via <code>datum-&gt;syntax</code>.
+
+   <p>Operationally, the expander can maintain hygiene with the help of
+<em>marks</em>.  Marks are applied selectively by the expander to the
+output of each transformer it invokes, and substitutions are applied to
+the portions of each binding form that are supposed to be within the
+scope of the bound identifiers.  Marks are used to distinguish
+like&ndash;named identifiers that are introduced at different times (either
+present in the source or introduced into the output of a particular
+transformer call), and substitutions are used to map identifiers to
+their expand-time values.
+
+   <p>Each time the expander encounters a macro use, it applies an
+<em>antimark</em> to the input form, invokes the associated transformer,
+then applies a fresh mark to the output.  Marks and antimarks cancel, so
+the portions of the input that appear in the output are effectively left
+unmarked, while the portions of the output that are introduced are
+marked with the fresh mark.
+
+   <p>Each time the expander encounters a binding form it creates a set of
+substitutions, each mapping one of the (possibly marked) bound
+identifiers to information about the binding.  (For a <code>lambda</code>
+expression, the expander might map each bound identifier to a
+representation of the formal parameter in the output of the expander. 
+For a <code>let-syntax</code> form, the expander might map each bound
+identifier to the associated transformer.)  These substitutions are
+applied to the portions of the input form in which the binding is
+supposed to be visible.
+
+   <p>Marks and substitutions together form a <em>wrap</em> that is layered on
+the form being processed by the expander and pushed down toward the
+leaves as necessary.  A wrapped form is referred to as a <em>wrapped
+syntax object</em>.  Ultimately, the wrap may rest on a leaf that represents
+an identifier, in which case the wrapped syntax object is also referred
+to as an <em>identifier</em>.  An identifier contains a name along with
+the wrap.  (Names are typically represented by symbols.)
+
+   <p>When a substitution is created to map an identifier to an expand&ndash;time
+value, the substitution records the name of the identifier and the set
+of marks that have been applied to that identifier, along with the
+associated expand&ndash;time value.  The expander resolves identifier
+references by looking for the latest matching substitution to be applied
+to the identifier, i.e., the outermost substitution in the wrap whose
+name and marks match the name and marks recorded in the substitution. 
+The name matches if it is the same name (if using symbols, then by
+<code>eq?</code>), and the marks match if the marks recorded with the
+substitution are the same as those that appear <em>below</em> the
+substitution in the wrap, i.e., those that were applied <em>before</em>
+the substitution.  Marks applied after a substitution, i.e., appear over
+the substitution in the wrap, are not relevant and are ignored.
+
+   <p>An algebra that defines how marks and substitutions work more precisely
+is given in section 2.4 of Oscar Waddell's PhD thesis.  Note, however,
+that Waddell's thesis describes slightly different semantics for
+<code>bound-identifier=?</code>, it specifies that for two identifiers to be
+equal in the sense of <code>bound-identifier=?</code>, they must have the same
+marks and be equal in the sense of <code>free-identifier=?</code>, whereas
+this report requires instead that they must have the same marks and have
+the same name.
+
+<!-- page -->
+   </body></html>
+

@@ -1,0 +1,219 @@
+<html lang="en">
+<head>
+<title>classes dot lambda - Nausicaa for Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Nausicaa for Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="classes-dot.html#classes-dot" title="classes dot">
+<link rel="prev" href="classes-dot-let.html#classes-dot-let" title="classes dot let">
+<link rel="next" href="classes-dot-setter.html#classes-dot-setter" title="classes dot setter">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d3 of Nausicaa/Scheme, a set of
+Scheme libraries defining a slightly modified R6RS Scheme language
+and augmenting the features of the base and standard R6RS libraries.
+
+The project home page of Nausicaa is at:
+
+             `http://marcomaggi.github.com/nausicaa.html'
+
+
+development of Nausicaa takes place at:
+
+               `http://github.com/marcomaggi/nausicaa/'
+
+
+Copyright (C) 2008, 2009, 2010 by Marco Maggi.
+
+Copyright (C) 1996, 1997, 2000, 2001, 2002, 2003, 2004, 2005
+Free Software Foundation.
+
+Copyright (C) 1996, 1999-2005 Dorai Sitaram.
+
+Copyright (C) 1998 Oleg Kiselyov.
+
+Copyright (C) 1998, 1999, 2000 Olin Shivers.
+
+Copyright (C) 1999 John David Stone.
+
+Copyright (C) 1999, 2002 Marc Feeley.
+
+Copyright (C) 2001, 2009 Danny Dube'
+
+Copyright (C) 2002 Dr. Mirko Luedde.
+
+Copyright (C) 2002, 2003, 2005, 2006 Sebastian Egner.
+
+Copyright (C) 2003 Ray Dillinger.
+
+Copyright (C) 2003 Taylor Campbell.
+
+Copyright (C) 2005 Jens Axel Soegaard.
+
+Copyright (C) 2005-2009 Alex Shinn.
+
+Copyright (C) 2008 Taro Minowa (Higepon).
+
+Copyright (C) 2005-2008 Dominique Boucher.
+
+Copyright (C) 2004, 2005 Tony Garnock-Jones
+
+Copyright (C) 2005 LShift Ltd.
+
+Copyright (C) 2007, 2008 Philip L. Bewig.
+
+Copyright (C) 2000 Will Fitzgerald.
+
+Copyright (C) 2000 Neodesic Corporation.
+
+Copyright (C) 2000-2006 Joachim Henke.
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with no Invariant Sections being ``GNU Free
+     Documentation License'' and ``GNU General Public License'', no
+     Front--Cover Texts, and no Back--Cover Texts.  A copy of the
+     license is included in the section entitled ``GNU Free
+     Documentation License''.
+
+This document embeds an unofficial assemblage of several documents
+reformatted in Texinfo; the reformatting author and maintainer is
+Marco Maggi <marco.maggi-ipsu@poste.it>.  See the appendix ``Credits'' for
+the list of original documents and their authors.  See also the
+`README' and `CREDITS' files for additional attributions.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="classes-dot-lambda"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="classes-dot-setter.html#classes-dot-setter">classes dot setter</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="classes-dot-let.html#classes-dot-let">classes dot let</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="classes-dot.html#classes-dot">classes dot</a>
+<hr>
+</div>
+
+<h4 class="subsection">20.5.3 Function bindings</h4>
+
+<p>The following macros integrate the facilities of the <code>with-class</code>
+macro with the function creation facilities of the <code>lambda</code> and
+<code>case-lambda</code> syntaxes from <code>(rnrs base (6))</code>.
+
+   <blockquote>
+<strong>NOTE</strong> It is possible to use the facilities of the
+<code>(contracts)</code> library to assert that the type of arguments to the
+functions is the one selected by the class identifiers.  Merging the
+features of contracts along with the function construction macros may
+result in inflexible code or bloated code after the expansion; so, for
+the time being, this merging is not implemented. 
+</blockquote>
+
+<div class="defun">
+&mdash; Macro: <b>lambda/with-class</b><var> formals body<a name="index-lambda_002fwith_002dclass-1136"></a></var><br>
+<blockquote><p>Like <code>lambda</code> but encloses the body into a <code>with-class</code> syntax
+defining identifier syntaxes to access the fields and virtual fields of
+the arguments.  <var>formals</var> must have the same form of the formals for
+<code>lambda</code>, but each <var>variable</var> argument can be an identifier, as
+in <code>lambda</code>, or a list of the form:
+
+     <pre class="example">          (<var>variable</var> <var>class</var> ...)
+</pre>
+        <p class="noindent">in which case the <var>variable</var> argument is meant to be of type
+<var>class</var> and the corresponding identifier syntaxes are defined.  When
+an argument as no class specifiers: we can use <code>&lt;top&gt;</code> as its
+conventional class name, or let <code>lambda/with-class</code> select
+<code>&lt;top&gt;</code> automatically.
+
+     <pre class="example">          (define-class &lt;fraction&gt;
+            (fields (mutable number))
+            (virtual-fields (mutable numerator)
+                            (mutable denominator)))
+          
+          (define &lt;fraction&gt;-numerator
+            (lambda/with-class ((o &lt;fraction&gt;))
+              (numerator o.number)))
+          
+          (define &lt;fraction&gt;-numerator-set!
+            (lambda/with-class ((o &lt;fraction&gt;) v)
+              (set! o.number (/ v (denominator o.number)))))
+          
+          (define &lt;fraction&gt;-denominator
+            (lambda/with-class ((o &lt;fraction&gt;))
+              (denominator o.number)))
+          
+          (define &lt;fraction&gt;-denominator-set!
+            (lambda/with-class ((o &lt;fraction&gt;) v)
+              (set! o.number (/ (numerator o.number) v))))
+          
+          (let/with-class (((o &lt;fraction&gt;) (make &lt;fraction&gt; 2/3)))
+            o.numerator)
+          &rArr; 2
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>define/with-class</b> (<var>variable formals</var>)<var> body<a name="index-define_002fwith_002dclass-1137"></a></var><br>
+&mdash; Macro: <b>define/with-class</b> (<var>variable . formal</var>)<var> body<a name="index-define_002fwith_002dclass-1138"></a></var><br>
+&mdash; Macro: <b>define/with-class</b><var> variable expression<a name="index-define_002fwith_002dclass-1139"></a></var><br>
+&mdash; Macro: <b>define/with-class</b><var> variable<a name="index-define_002fwith_002dclass-1140"></a></var><br>
+<blockquote><p>Like <code>define</code> but when used in the first and second forms it
+expands to the use of <code>lambda/with-class</code>.
+
+     <pre class="example">          (define-class &lt;fraction&gt;
+            (fields (mutable number))
+            (virtual-fields (mutable numerator)
+                            (mutable denominator)))
+          
+          (define/with-class (&lt;fraction&gt;-numerator (o &lt;fraction&gt;))
+            (numerator o.number))
+          
+          (define/with-class (&lt;fraction&gt;-numerator-set! (o &lt;fraction&gt;) v)
+            (set! o.number (/ v (denominator o.number))))
+          
+          (define/with-class (&lt;fraction&gt;-denominator (o &lt;fraction&gt;))
+            (denominator o.number))
+          
+          (define/with-class (&lt;fraction&gt;-denominator-set! (o &lt;fraction&gt;) v)
+            (set! o.number (/ (numerator o.number) v)))
+          
+          (let/with-class (((o &lt;fraction&gt;) (make &lt;fraction&gt; 2/3)))
+            o.numerator)
+          &rArr; 2
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>Syntax</b><var> case-lambda/with-class case-lambda-clause ...<a name="index-Syntax-1141"></a></var><br>
+<blockquote><p>The natural extension of <code>lambda/with-class</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>receive/with-class</b><var> formals expression . body<a name="index-receive_002fwith_002dclass-1142"></a></var><br>
+<blockquote><p>Like <code>receive</code> but expands to <code>lambda/with-class</code> rather than
+<code>lambda</code>:
+
+     <pre class="example">          (define-syntax receive/with-class
+            (syntax-rules ()
+              ((_ ?formals ?expression ?form0 ?form ...)
+               (call-with-values
+                   (lambda () ?expression)
+                 (lambda/with-class ?formals ?form0 ?form ...)))))
+</pre>
+        </blockquote></div>
+
+<!-- page -->
+   </body></html>
+

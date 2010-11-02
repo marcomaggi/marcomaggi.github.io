@@ -1,0 +1,260 @@
+<html lang="en">
+<head>
+<title>packrat calc - Nausicaa for Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Nausicaa for Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="packrat.html#packrat" title="packrat">
+<link rel="prev" href="packrat-intro.html#packrat-intro" title="packrat intro">
+<link rel="next" href="packrat-types.html#packrat-types" title="packrat types">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d3 of Nausicaa/Scheme, a set of
+Scheme libraries defining a slightly modified R6RS Scheme language
+and augmenting the features of the base and standard R6RS libraries.
+
+The project home page of Nausicaa is at:
+
+             `http://marcomaggi.github.com/nausicaa.html'
+
+
+development of Nausicaa takes place at:
+
+               `http://github.com/marcomaggi/nausicaa/'
+
+
+Copyright (C) 2008, 2009, 2010 by Marco Maggi.
+
+Copyright (C) 1996, 1997, 2000, 2001, 2002, 2003, 2004, 2005
+Free Software Foundation.
+
+Copyright (C) 1996, 1999-2005 Dorai Sitaram.
+
+Copyright (C) 1998 Oleg Kiselyov.
+
+Copyright (C) 1998, 1999, 2000 Olin Shivers.
+
+Copyright (C) 1999 John David Stone.
+
+Copyright (C) 1999, 2002 Marc Feeley.
+
+Copyright (C) 2001, 2009 Danny Dube'
+
+Copyright (C) 2002 Dr. Mirko Luedde.
+
+Copyright (C) 2002, 2003, 2005, 2006 Sebastian Egner.
+
+Copyright (C) 2003 Ray Dillinger.
+
+Copyright (C) 2003 Taylor Campbell.
+
+Copyright (C) 2005 Jens Axel Soegaard.
+
+Copyright (C) 2005-2009 Alex Shinn.
+
+Copyright (C) 2008 Taro Minowa (Higepon).
+
+Copyright (C) 2005-2008 Dominique Boucher.
+
+Copyright (C) 2004, 2005 Tony Garnock-Jones
+
+Copyright (C) 2005 LShift Ltd.
+
+Copyright (C) 2007, 2008 Philip L. Bewig.
+
+Copyright (C) 2000 Will Fitzgerald.
+
+Copyright (C) 2000 Neodesic Corporation.
+
+Copyright (C) 2000-2006 Joachim Henke.
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with no Invariant Sections being ``GNU Free
+     Documentation License'' and ``GNU General Public License'', no
+     Front--Cover Texts, and no Back--Cover Texts.  A copy of the
+     license is included in the section entitled ``GNU Free
+     Documentation License''.
+
+This document embeds an unofficial assemblage of several documents
+reformatted in Texinfo; the reformatting author and maintainer is
+Marco Maggi <marco.maggi-ipsu@poste.it>.  See the appendix ``Credits'' for
+the list of original documents and their authors.  See also the
+`README' and `CREDITS' files for additional attributions.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="packrat-calc"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="packrat-types.html#packrat-types">packrat types</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="packrat-intro.html#packrat-intro">packrat intro</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="packrat.html#packrat">packrat</a>
+<hr>
+</div>
+
+<h3 class="section">58.2 Calculator example</h3>
+
+<p>The following example implements a simple arithmetics calculator.  First
+let's see an S&ndash;expressions lexer; the parser expects a lexer closure
+returning records of type <code>&lt;lexical-token&gt;</code> having terminal category
+symbols in the set:
+
+<pre class="example">     NUMBER OPEN-PAREN CLOSE-PAREN + - * /
+</pre>
+   <p class="noindent">the lexer first converts an S&ndash;expression into a list of pairs:
+
+<pre class="example">     (sexp-&gt;stream '(1 + 2 + 3))
+     &rArr; ((NUMBER . 1)
+         (+)
+         (NUMBER . 2)
+         (+)
+         (NUMBER . 3))
+     
+     (sexp-&gt;stream '((1 + 2) * 3))
+     &rArr; ((OPEN-PAREN)
+         (NUMBER . 1)
+         (+)
+         (NUMBER . 2)
+         (CLOSE-PAREN)
+         (*)
+         (NUMBER . 3))
+</pre>
+   <p class="noindent">notice that &lsquo;<samp><span class="samp">(NUMBER . 3)</span></samp>&rsquo; is a token representation with terminal
+category &lsquo;<samp><span class="samp">NUMBER</span></samp>&rsquo; and semantic value &lsquo;<samp><span class="samp">3</span></samp>&rsquo;; also, &lsquo;<samp><span class="samp">(+)</span></samp>&rsquo; is
+a token representation with terminal category &lsquo;<samp><span class="samp">+</span></samp>&rsquo; and semantic
+value null.
+
+<pre class="example">     (define (sexp-&gt;stream sexp)
+       (define (lexer sexp)
+         (let loop ((sexp   (if (pair? sexp)
+                                sexp
+                              (list sexp)))
+                    (result '()))
+           (if (null? sexp)
+               result
+             (let ((atom (car sexp)))
+               (loop (cdr sexp)
+                     (cond ((number? atom)
+                            `((NUMBER . ,atom) . ,result))
+                           ((memq atom '(+ - * /))
+                            `((,atom) . ,result))
+                           ((pair? atom)
+                            (append '((CLOSE-PAREN))
+                                    (lexer atom)
+                                    '((OPEN-PAREN))
+                                    result))
+                           (else
+                            (error #f "invalid token" atom))))))))
+       (reverse (lexer sexp)))
+</pre>
+   <p>Then let's see the lexer closure; it takes an S&ndash;expression and returns
+a thunk which, when evaluated, returns records of type
+<code>&lt;lexical-token&gt;</code>.  The source location field is set to <code>#f</code>,
+because for an S&ndash;expression there is no such information available.
+
+<pre class="example">     (define (make-lexer-closure sexp)
+       (let ((stream (sexp-&gt;stream sexp)))
+         (lambda ()
+           (if (null? stream)
+               (make-&lt;lexical-token&gt;/end-of-input #f)
+             (let ((token (car stream)))
+               (set! stream (cdr stream))
+               (make-&lt;lexical-token&gt; (car token) #f
+                                     (cdr token) 0))))))
+</pre>
+   <p>Finally the parser definition; it defines the following non&ndash;terminal
+symbols:
+
+     <dl>
+<dt>&lsquo;<samp><span class="samp">expr</span></samp>&rsquo;<dd>It is the start symbol and represents a general arithmetic expression.
+
+     <br><dt>&lsquo;<samp><span class="samp">mul-expr</span></samp>&rsquo;<dd>It represents a multiplication, a division or a subexpression.  It is
+subordinate to &lsquo;<samp><span class="samp">expr</span></samp>&rsquo; to allow multiplication and division to have
+precedence over addition and subtraction.  Also, it allows parenthesised
+subexpressions to be evaluated first.
+
+     <br><dt>&lsquo;<samp><span class="samp">simple</span></samp>&rsquo;<dd>It represents subexpressions.  It includes: simple numbers; negated
+expressions; expressions preceeded by a standalone plus sign;
+parenthesised subexpressions. 
+</dl>
+
+   <p>The <code>make-grammar-combinator</code> macro returns a combinator function
+which can be used any number of times to parse S&ndash;expressions.
+
+<pre class="example">     (define calc
+       (make-grammar-combinator expr
+     
+         (expr     ((a &lt;- mul-expr '+ b &lt;- expr)
+                    (+ a b))
+                   ((a &lt;- mul-expr '- b &lt;- expr)
+                    (- a b))
+                   ((a &lt;- mul-expr)
+                    a))
+     
+         (mul-expr ((a &lt;- simple '* b &lt;- simple)
+                    (* a b))
+                   ((a &lt;- simple '/ b &lt;- simple)
+                    (/ a b))
+                   ((a &lt;- simple)
+                    a))
+     
+         (simple   ((a &lt;- 'NUMBER)
+                    a)
+                   (('+ a &lt;- expr)
+                    a)
+                   (('- a &lt;- expr)
+                    (- a))
+                   (('OPEN-PAREN a &lt;- expr 'CLOSE-PAREN)
+                    a))))
+</pre>
+   <p class="noindent">typical usage of the interface is represented by the following function:
+
+<pre class="example">     (define (doit sexp)
+       (let* ((lexer   (make-lexer-closure sexp))
+              (result  (calc (initialise-state lexer))))
+         (if (&lt;success&gt;? result)
+             (&lt;result&gt;-value result)
+           (&lt;error&gt;-message result))))
+</pre>
+   <p class="noindent">it works like this:
+
+<pre class="example">     (doit 1)
+     &rArr; 1
+     
+     (doit '(+ 1))
+     &rArr; 1
+     
+     (doit '(- 1))
+     &rArr; -1
+     
+     (doit '(- - + + - + 1))
+     &rArr; -1
+     
+     (doit '(1 * 2 - 3))
+     &rArr; -1
+     
+     (doit '((1 + 2) * 3))
+     &rArr; 9
+     
+     (doit '(+ *))
+     &rArr; "expected token with category OPEN-PAREN"
+</pre>
+   <p class="noindent">there are ways to return better error messages.
+
+<!-- page -->
+   </body></html>
+

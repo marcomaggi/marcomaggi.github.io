@@ -1,0 +1,192 @@
+<html lang="en">
+<head>
+<title>matches syntax lists - Nausicaa for Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Nausicaa for Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="matches-syntax.html#matches-syntax" title="matches syntax">
+<link rel="prev" href="matches-syntax-quoted.html#matches-syntax-quoted" title="matches syntax quoted">
+<link rel="next" href="matches-syntax-vectors.html#matches-syntax-vectors" title="matches syntax vectors">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d3 of Nausicaa/Scheme, a set of
+Scheme libraries defining a slightly modified R6RS Scheme language
+and augmenting the features of the base and standard R6RS libraries.
+
+The project home page of Nausicaa is at:
+
+             `http://marcomaggi.github.com/nausicaa.html'
+
+
+development of Nausicaa takes place at:
+
+               `http://github.com/marcomaggi/nausicaa/'
+
+
+Copyright (C) 2008, 2009, 2010 by Marco Maggi.
+
+Copyright (C) 1996, 1997, 2000, 2001, 2002, 2003, 2004, 2005
+Free Software Foundation.
+
+Copyright (C) 1996, 1999-2005 Dorai Sitaram.
+
+Copyright (C) 1998 Oleg Kiselyov.
+
+Copyright (C) 1998, 1999, 2000 Olin Shivers.
+
+Copyright (C) 1999 John David Stone.
+
+Copyright (C) 1999, 2002 Marc Feeley.
+
+Copyright (C) 2001, 2009 Danny Dube'
+
+Copyright (C) 2002 Dr. Mirko Luedde.
+
+Copyright (C) 2002, 2003, 2005, 2006 Sebastian Egner.
+
+Copyright (C) 2003 Ray Dillinger.
+
+Copyright (C) 2003 Taylor Campbell.
+
+Copyright (C) 2005 Jens Axel Soegaard.
+
+Copyright (C) 2005-2009 Alex Shinn.
+
+Copyright (C) 2008 Taro Minowa (Higepon).
+
+Copyright (C) 2005-2008 Dominique Boucher.
+
+Copyright (C) 2004, 2005 Tony Garnock-Jones
+
+Copyright (C) 2005 LShift Ltd.
+
+Copyright (C) 2007, 2008 Philip L. Bewig.
+
+Copyright (C) 2000 Will Fitzgerald.
+
+Copyright (C) 2000 Neodesic Corporation.
+
+Copyright (C) 2000-2006 Joachim Henke.
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with no Invariant Sections being ``GNU Free
+     Documentation License'' and ``GNU General Public License'', no
+     Front--Cover Texts, and no Back--Cover Texts.  A copy of the
+     license is included in the section entitled ``GNU Free
+     Documentation License''.
+
+This document embeds an unofficial assemblage of several documents
+reformatted in Texinfo; the reformatting author and maintainer is
+Marco Maggi <marco.maggi-ipsu@poste.it>.  See the appendix ``Credits'' for
+the list of original documents and their authors.  See also the
+`README' and `CREDITS' files for additional attributions.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="matches-syntax-lists"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="matches-syntax-vectors.html#matches-syntax-vectors">matches syntax vectors</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="matches-syntax-quoted.html#matches-syntax-quoted">matches syntax quoted</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="matches-syntax.html#matches-syntax">matches syntax</a>
+<hr>
+</div>
+
+<h4 class="subsection">52.3.5 Matching pairs and lists</h4>
+
+<p>Pairs and lists in expressions can be matched by pairs and lists in the
+pattern.  The usage of a pair matcher looks like this:
+
+<pre class="example">     (match '(1 . 2)
+       ((1 . 2)
+        'ok))
+     &rArr; ok
+</pre>
+   <p class="noindent">we can think of it as expanding to:
+
+<pre class="example">     (let ((expr '(1 . 2)))
+       (if (pair? expr)
+           (let ((expr1 (car expr))
+                 (expr2 (cdr expr)))
+             (if (equal? expr1 1)
+                 (if (equal? expr2 2)
+                     'ok
+                   (match-mismatch-error 'match expr2))
+               (match-mismatch-error 'match expr1)))
+         (match-mismatch-error 'match expr)))
+</pre>
+   <p class="noindent">we see that the expression pair is destructured in its car and cdr, then
+both are matched against the car and cdr of the pattern, which happen to
+be literals in this example; if we isolate the parts related to matching
+the pair we obtain:
+
+<pre class="example">     (let ((expr '(1 . 2)))
+       (if (pair? expr)
+           (let ((expr1 (car expr))
+                 (expr2 (cdr expr)))
+             ---)
+         (match-mismatch-error 'match expr)))
+</pre>
+   <p class="noindent">we can understand how multiple patterns are matched by nesting forms one
+into the other.
+
+   <p>If we just want to verify that the expression is a pair, we can use the
+wildcards:
+
+<pre class="example">     (match '(1 . 2)
+       ((_ . _)
+        'ok))
+     &rArr; ok
+</pre>
+   <p class="noindent">we can think of it as expanding to:
+
+<pre class="example">     (let ((expr '(1 . 2)))
+       (if (pair? expr)
+           (let ((expr1 (car expr))
+                 (expr2 (cdr expr)))
+             ok)
+         (match-mismatch-error 'match expr)))
+</pre>
+   <p>We can match a list of literals with the following code:
+
+<pre class="example">     (match '(1 2 3)
+       ((1 2 3)
+        'ok))
+     &rArr; ok
+</pre>
+   <p class="noindent">we can think of it as expanding to:
+
+<pre class="example">     (let ((expr '(1 2)))
+       (if (pair? expr)
+           (let ((expr1 (car expr))
+                 (expr2 (cdr expr)))
+             (if (equal? expr1 1)
+                 (if (pair? expr2)
+                     (let ((expr3 (car expr2))
+                           (expr4 (cdr expr2)))
+                       (if (equal? expr3 2)
+                           (if (null? expr4)
+                               'ok
+                             (match-mismatch-error 'match expr4))
+                         (match-mismatch-error 'match expr3)))
+                   (match-mismatch-error 'match expr2))
+               (match-mismatch-error 'match expr1)))
+         (match-mismatch-error 'match expr)))
+</pre>
+   <!-- page -->
+   </body></html>
+

@@ -1,0 +1,203 @@
+<html lang="en">
+<head>
+<title>ffi memory conditions - Nausicaa for Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Nausicaa for Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="ffi-memory.html#ffi-memory" title="ffi memory">
+<link rel="next" href="ffi-memory-alloc.html#ffi-memory-alloc" title="ffi memory alloc">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d3 of Nausicaa/Scheme, a set of
+Scheme libraries defining a slightly modified R6RS Scheme language
+and augmenting the features of the base and standard R6RS libraries.
+
+The project home page of Nausicaa is at:
+
+             `http://marcomaggi.github.com/nausicaa.html'
+
+
+development of Nausicaa takes place at:
+
+               `http://github.com/marcomaggi/nausicaa/'
+
+
+Copyright (C) 2008, 2009, 2010 by Marco Maggi.
+
+Copyright (C) 1996, 1997, 2000, 2001, 2002, 2003, 2004, 2005
+Free Software Foundation.
+
+Copyright (C) 1996, 1999-2005 Dorai Sitaram.
+
+Copyright (C) 1998 Oleg Kiselyov.
+
+Copyright (C) 1998, 1999, 2000 Olin Shivers.
+
+Copyright (C) 1999 John David Stone.
+
+Copyright (C) 1999, 2002 Marc Feeley.
+
+Copyright (C) 2001, 2009 Danny Dube'
+
+Copyright (C) 2002 Dr. Mirko Luedde.
+
+Copyright (C) 2002, 2003, 2005, 2006 Sebastian Egner.
+
+Copyright (C) 2003 Ray Dillinger.
+
+Copyright (C) 2003 Taylor Campbell.
+
+Copyright (C) 2005 Jens Axel Soegaard.
+
+Copyright (C) 2005-2009 Alex Shinn.
+
+Copyright (C) 2008 Taro Minowa (Higepon).
+
+Copyright (C) 2005-2008 Dominique Boucher.
+
+Copyright (C) 2004, 2005 Tony Garnock-Jones
+
+Copyright (C) 2005 LShift Ltd.
+
+Copyright (C) 2007, 2008 Philip L. Bewig.
+
+Copyright (C) 2000 Will Fitzgerald.
+
+Copyright (C) 2000 Neodesic Corporation.
+
+Copyright (C) 2000-2006 Joachim Henke.
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with no Invariant Sections being ``GNU Free
+     Documentation License'' and ``GNU General Public License'', no
+     Front--Cover Texts, and no Back--Cover Texts.  A copy of the
+     license is included in the section entitled ``GNU Free
+     Documentation License''.
+
+This document embeds an unofficial assemblage of several documents
+reformatted in Texinfo; the reformatting author and maintainer is
+Marco Maggi <marco.maggi-ipsu@poste.it>.  See the appendix ``Credits'' for
+the list of original documents and their authors.  See also the
+`README' and `CREDITS' files for additional attributions.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="ffi-memory-conditions"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="ffi-memory-alloc.html#ffi-memory-alloc">ffi memory alloc</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="ffi-memory.html#ffi-memory">ffi memory</a>
+<hr>
+</div>
+
+<h4 class="subsection">23.2.1 Out of memory errors</h4>
+
+<p>The following bindings are exported by <code>(ffi memory conditions)</code>
+and re&ndash;exported by <code>(ffi memory)</code>.
+
+<div class="defun">
+&mdash; Condition: <b>&amp;out-of-memory</b><var><a name="index-g_t_0026out_002dof_002dmemory-1395"></a></var><br>
+<blockquote><p>Type of condition objects representing a memory allocation error; it is
+derived from <code>&amp;error</code>.  It has the following fields:
+
+          <dl>
+<dt><code>number-of-bytes</code><dd>An exact non&ndash;negative integer representing the number of bytes
+requested in the failed memory allocation; it can be set to <code>#f</code> if
+the number is not known (for example when the error is raised by a
+foreign library). 
+</dl>
+
+        <p>This condition type is for failed memory allocations <strong>not</strong> meant
+to be recoverable by an exception handler. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Condition: <b>&amp;memory-request</b><var><a name="index-g_t_0026memory_002drequest-1396"></a></var><br>
+<blockquote><p>Type of condition objects representing a memory allocation error; it is
+derived from <code>&amp;out-of-memory</code>.  It has the following fields:
+
+          <dl>
+<dt><code>clean</code><dd>A boolean value, <code>#t</code> if the requested memory was meant to be reset
+to zero. 
+</dl>
+
+        <p>This condition type is for failed memory allocations meant to be
+recoverable by an exception handler. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Condition Constructor: <b>make-out-of-memory-condition</b><var> number-of-bytes<a name="index-make_002dout_002dof_002dmemory_002dcondition-1397"></a></var><br>
+&mdash; Condition Predicate: <b>out-of-memory-condition?</b><var> object<a name="index-out_002dof_002dmemory_002dcondition_003f-1398"></a></var><br>
+&mdash; Field Accessor: <b>condition-out-of-memory/number-of-bytes</b><var> object<a name="index-condition_002dout_002dof_002dmemory_002fnumber_002dof_002dbytes-1399"></a></var><br>
+<blockquote><p>Functions to handle non&ndash;recoverable out of memory condition objects. 
+<var>number-of-bytes</var> is the size of the requested allocation that could
+not be satisfied. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Condition Constructor: <b>make-memory-request-condition</b><var> number-of-bytes clean<a name="index-make_002dmemory_002drequest_002dcondition-1400"></a></var><br>
+&mdash; Condition Predicate: <b>memory-request-condition?</b><var> object<a name="index-memory_002drequest_002dcondition_003f-1401"></a></var><br>
+&mdash; Field Accessor: <b>condition-memory-request/number-of-bytes</b><var> object<a name="index-condition_002dmemory_002drequest_002fnumber_002dof_002dbytes-1402"></a></var><br>
+&mdash; Field Accessor: <b>condition-memory-request/clean?</b><var> object<a name="index-condition_002dmemory_002drequest_002fclean_003f-1403"></a></var><br>
+<blockquote><p>Functions to handle recoverable out of memory condition objects. 
+<var>number-of-bytes</var> is the size of the requested allocation that could
+not be satisfied.  <var>clean</var> must be a boolean value: <code>#t</code> if the
+requested memory was meant to be reset to zero. 
+</p></blockquote></div>
+
+   <p>Examples:
+
+<pre class="example">     (define (malloc size)
+       (or (primitive-malloc size)
+           (raise
+              (condition (make-who-condition 'malloc)
+                         (make-message-condition "out of memory")
+                         (make-out-of-memory-condition size)))))
+     
+     (define (malloc* size)
+       (or (primitive-malloc size)
+           (raise-continuable
+              (condition (make-who-condition 'malloc)
+                         (make-message-condition "out of memory")
+                         (make-memory-request-condition size #f)))))
+     
+     (define (calloc* size)
+       (or (primitive-calloc size)
+           (raise-continuable
+              (condition (make-who-condition 'malloc)
+                         (make-message-condition "out of memory")
+                         (make-memory-request-condition size #t)))))
+</pre>
+   <div class="defun">
+&mdash; Function: <b>raise-out-of-memory</b><var> who number-of-bytes<a name="index-raise_002dout_002dof_002dmemory-1404"></a></var><br>
+<blockquote><p>Raise a non&ndash;continuable exception representing a non&ndash;recoverable
+memory allocation failure.  The raised condition object is a compound of
+<code>&amp;who</code>, <code>&amp;message</code> and <code>&amp;out-of-memory</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>raise-memory-request</b><var> who number-of-bytes clean<a name="index-raise_002dmemory_002drequest-1405"></a></var><br>
+<blockquote><p>Raise a continuable exception representing a recoverable memory
+allocation failure.  The raised condition object is a compound of
+<code>&amp;who</code>, <code>&amp;message</code> and <code>&amp;memory-request</code>.  Functions
+raising this condition should be ready to accept as return value the
+requested block of memory (allocated by the exception handler). 
+</p></blockquote></div>
+
+<!-- page -->
+   </body></html>
+

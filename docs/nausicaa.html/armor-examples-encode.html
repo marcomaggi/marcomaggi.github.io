@@ -1,0 +1,246 @@
+<html lang="en">
+<head>
+<title>armor examples encode - Nausicaa for Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Nausicaa for Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="armor-examples.html#armor-examples" title="armor examples">
+<link rel="next" href="armor-examples-decode.html#armor-examples-decode" title="armor examples decode">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d3 of Nausicaa/Scheme, a set of
+Scheme libraries defining a slightly modified R6RS Scheme language
+and augmenting the features of the base and standard R6RS libraries.
+
+The project home page of Nausicaa is at:
+
+             `http://marcomaggi.github.com/nausicaa.html'
+
+
+development of Nausicaa takes place at:
+
+               `http://github.com/marcomaggi/nausicaa/'
+
+
+Copyright (C) 2008, 2009, 2010 by Marco Maggi.
+
+Copyright (C) 1996, 1997, 2000, 2001, 2002, 2003, 2004, 2005
+Free Software Foundation.
+
+Copyright (C) 1996, 1999-2005 Dorai Sitaram.
+
+Copyright (C) 1998 Oleg Kiselyov.
+
+Copyright (C) 1998, 1999, 2000 Olin Shivers.
+
+Copyright (C) 1999 John David Stone.
+
+Copyright (C) 1999, 2002 Marc Feeley.
+
+Copyright (C) 2001, 2009 Danny Dube'
+
+Copyright (C) 2002 Dr. Mirko Luedde.
+
+Copyright (C) 2002, 2003, 2005, 2006 Sebastian Egner.
+
+Copyright (C) 2003 Ray Dillinger.
+
+Copyright (C) 2003 Taylor Campbell.
+
+Copyright (C) 2005 Jens Axel Soegaard.
+
+Copyright (C) 2005-2009 Alex Shinn.
+
+Copyright (C) 2008 Taro Minowa (Higepon).
+
+Copyright (C) 2005-2008 Dominique Boucher.
+
+Copyright (C) 2004, 2005 Tony Garnock-Jones
+
+Copyright (C) 2005 LShift Ltd.
+
+Copyright (C) 2007, 2008 Philip L. Bewig.
+
+Copyright (C) 2000 Will Fitzgerald.
+
+Copyright (C) 2000 Neodesic Corporation.
+
+Copyright (C) 2000-2006 Joachim Henke.
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with no Invariant Sections being ``GNU Free
+     Documentation License'' and ``GNU General Public License'', no
+     Front--Cover Texts, and no Back--Cover Texts.  A copy of the
+     license is included in the section entitled ``GNU Free
+     Documentation License''.
+
+This document embeds an unofficial assemblage of several documents
+reformatted in Texinfo; the reformatting author and maintainer is
+Marco Maggi <marco.maggi-ipsu@poste.it>.  See the appendix ``Credits'' for
+the list of original documents and their authors.  See also the
+`README' and `CREDITS' files for additional attributions.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="armor-examples-encode"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="armor-examples-decode.html#armor-examples-decode">armor examples decode</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="armor-examples.html#armor-examples">armor examples</a>
+<hr>
+</div>
+
+<h4 class="subsection">63.9.1 Encoding example</h4>
+
+<p>Let's say we want to encode with <code>base32</code> encoding, a byte stream
+which comes in three chunks; we want the output to be padded and in
+upper case:
+
+<pre class="example">     (import (nausicaa)
+       (armor base32))
+     
+     (define ctx
+       (make-&lt;base32-encode-ctx&gt; 'base32 #t 'upper))
+</pre>
+   <p class="noindent">we will need this helper function:
+
+<pre class="example">     (define (subbytevector src start past)
+       (let ((dst (make-bytevector (- past start))))
+         (do ((i 0     (+ 1 i))
+              (j start (+ 1 j)))
+             ((= j past)
+              dst)
+           (bytevector-u8-set! dst i
+               (bytevector-u8-ref src j)))))
+</pre>
+   <p class="noindent">the first chunk is &lsquo;<samp><span class="samp">bin-1</span></samp>&rsquo;, we notice that its length is exactly
+5 bytes so the output will be exactly 8 characters:
+
+<pre class="example">     (define bin-1.bv
+       '#vu8(0 1 2 3 4))
+     
+     (define bin-1.len
+       (bytevector-length bin-1.bv)) &rArr; 5
+</pre>
+   <p class="noindent">we allocate the output bytevector:
+
+<pre class="example">     (define asc-1.len
+       (base32-encode-update-length bin-1.len)) &rArr; 8
+     
+     (define asc-1.bv
+       (make-bytevector asc-1.len))
+</pre>
+   <p class="noindent">and process the data:
+
+<pre class="example">     (define-values (dst-next-1 src-next-1)
+       (base32-encode-update! ctx
+                              asc-1.bv 0
+                              bin-1.bv 0 bin-1.len))
+     
+     ;; (utf8-&gt;string asc-1.bv) &rArr; "AAAQEAYE"
+     ;; dst-next-1 &rArr; 8
+     ;; src-next-1 &rArr; 5
+</pre>
+   <p class="noindent">all the input has been consumed and the output bytevector is full.
+
+   <p>The second chunk is &lsquo;<samp><span class="samp">bin-2</span></samp>&rsquo; and we notice that its length is not an
+exact multiple of 5:
+
+<pre class="example">     (define bin-2.bv
+       '#vu8(0 1 2 3 4 5 6))
+     
+     (define bin-2.len
+       (bytevector-length bin-2.bv)) &rArr; 7
+     
+     (define asc-2.len
+       (base32-encode-update-length bin-2.len)) &rArr; 8
+     
+     (define asc-2.bv
+       (make-bytevector asc-2.len))
+     
+     (define-values (dst-next-2 src-next-2)
+       (base32-encode-update! ctx
+                              asc-2.bv 0
+                              bin-2.bv 0 bin-2.len))
+     
+     ;; (utf8-&gt;string (subbytevector asc-2.bv 0 dst-next-2))
+     ;; &rArr; "AAAQEAYE"
+     ;; dst-next-2 &rArr; 8
+     ;; src-next-2 &rArr; 5
+</pre>
+   <p class="noindent">the last bytes from the input are still to be consumed; the output
+bytevector is full.
+
+   <p>The last chunk is &lsquo;<samp><span class="samp">bin-3</span></samp>&rsquo;, but we have to append it to the leftover
+from &lsquo;<samp><span class="samp">bin-2</span></samp>&rsquo;:
+
+<pre class="example">     (define bin-3.bv
+       '#vu8(0 1 2 3 4 5 6))
+     
+     (define bin-3.len
+       (bytevector-length bin-3.bv)) &rArr; 7
+     
+     (define delta
+       (- bin-2.len src-next-2)) &rArr; 2
+     
+     (define bin-23.len
+       (+ bin-3.len delta)) &rArr; 9
+     
+     (define bin-23.bv
+       (let ((bv (make-bytevector bin-23.len)))
+         (do ((i 0          (+ 1 i))
+              (j src-next-2 (+ 1 j)))
+             ((= i delta))
+           (bytevector-u8-set! bv i
+               (bytevector-u8-ref bin-2.bv j)))
+         (do ((i delta (+ 1 i))
+              (j 0     (+ 1 j)))
+             ((= j bin-3.len)
+              bv)
+           (bytevector-u8-set! bv i
+               (bytevector-u8-ref bin-3.bv j)))))
+     
+     (define asc-3.len
+       (base32-encode-length bin-23.len #t)) &rArr; 16
+     
+     (define asc-3.bv
+       (make-bytevector asc-3.len))
+     
+     (define-values (result dst-next-3 src-next-3)
+       (base32-encode-final! ctx
+                             asc-3.bv 0
+                             bin-23.bv 0 bin-23.len))
+     
+     ;; (utf8-&gt;string asc-3.bv) &rArr; "AUDAAAICAMCAKBQ="
+     ;; result     &rArr; #t
+     ;; dst-next-3 &rArr; 16
+     ;; src-next-3 &rArr; 9
+</pre>
+   <p class="noindent">all the input has been consumed and the output bytevector is full.  At
+the end of it the sequence of bytes:
+
+<pre class="example">     |0 1 2 3 4|0 1 2 3 4 5 6|0 1 2 3 4 5 6|
+     |  bin-1  |    bin-2    |    bin-3    |
+                         |    bin-23       |
+</pre>
+   <p class="noindent">is encoded in the string:
+
+<pre class="example">     AAAQEAYEAAAQEAYEAUDAAAICAMCAKBQ=
+</pre>
+   <!-- page -->
+   </body></html>
+

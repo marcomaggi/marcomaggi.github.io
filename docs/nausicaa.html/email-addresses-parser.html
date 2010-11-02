@@ -1,0 +1,189 @@
+<html lang="en">
+<head>
+<title>email addresses parser - Nausicaa for Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Nausicaa for Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="email-addresses.html#email-addresses" title="email addresses">
+<link rel="prev" href="email-addresses-lexer.html#email-addresses-lexer" title="email addresses lexer">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d3 of Nausicaa/Scheme, a set of
+Scheme libraries defining a slightly modified R6RS Scheme language
+and augmenting the features of the base and standard R6RS libraries.
+
+The project home page of Nausicaa is at:
+
+             `http://marcomaggi.github.com/nausicaa.html'
+
+
+development of Nausicaa takes place at:
+
+               `http://github.com/marcomaggi/nausicaa/'
+
+
+Copyright (C) 2008, 2009, 2010 by Marco Maggi.
+
+Copyright (C) 1996, 1997, 2000, 2001, 2002, 2003, 2004, 2005
+Free Software Foundation.
+
+Copyright (C) 1996, 1999-2005 Dorai Sitaram.
+
+Copyright (C) 1998 Oleg Kiselyov.
+
+Copyright (C) 1998, 1999, 2000 Olin Shivers.
+
+Copyright (C) 1999 John David Stone.
+
+Copyright (C) 1999, 2002 Marc Feeley.
+
+Copyright (C) 2001, 2009 Danny Dube'
+
+Copyright (C) 2002 Dr. Mirko Luedde.
+
+Copyright (C) 2002, 2003, 2005, 2006 Sebastian Egner.
+
+Copyright (C) 2003 Ray Dillinger.
+
+Copyright (C) 2003 Taylor Campbell.
+
+Copyright (C) 2005 Jens Axel Soegaard.
+
+Copyright (C) 2005-2009 Alex Shinn.
+
+Copyright (C) 2008 Taro Minowa (Higepon).
+
+Copyright (C) 2005-2008 Dominique Boucher.
+
+Copyright (C) 2004, 2005 Tony Garnock-Jones
+
+Copyright (C) 2005 LShift Ltd.
+
+Copyright (C) 2007, 2008 Philip L. Bewig.
+
+Copyright (C) 2000 Will Fitzgerald.
+
+Copyright (C) 2000 Neodesic Corporation.
+
+Copyright (C) 2000-2006 Joachim Henke.
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with no Invariant Sections being ``GNU Free
+     Documentation License'' and ``GNU General Public License'', no
+     Front--Cover Texts, and no Back--Cover Texts.  A copy of the
+     license is included in the section entitled ``GNU Free
+     Documentation License''.
+
+This document embeds an unofficial assemblage of several documents
+reformatted in Texinfo; the reformatting author and maintainer is
+Marco Maggi <marco.maggi-ipsu@poste.it>.  See the appendix ``Credits'' for
+the list of original documents and their authors.  See also the
+`README' and `CREDITS' files for additional attributions.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="email-addresses-parser"></a>
+<p>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="email-addresses-lexer.html#email-addresses-lexer">email addresses lexer</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="email-addresses.html#email-addresses">email addresses</a>
+<hr>
+</div>
+
+<h4 class="subsection">60.1.4 Parsing tokens</h4>
+
+<p>The parser for the <code>(email addresses)</code> library is built upon the
+<code>(lalr)</code> parser generator and makes use of the <code>(lalr
+lr-driver)</code> driver.  <a href="lalr.html#lalr">A LALR(1) parser generator</a>
+
+<div class="defun">
+&mdash; Function: <b>make-address-parser</b><var><a name="index-make_002daddress_002dparser-4068"></a></var><br>
+<blockquote><p>Return a new parser closure, to be used as explained in <a href="lalr-parser.html#lalr-parser">Running the parser</a>.  If the parsing completes successfully, the
+return value of the closure is a list of <code>&lt;mailbox&gt;</code> and or
+<code>&lt;group&gt;</code> records.  <a href="email-addresses-types.html#email-addresses-types">Record types</a>
+</p></blockquote></div>
+
+   <p>Given the helper functions:
+
+<pre class="example">     (import (rnrs)
+       (email addresses)
+       (silex)
+       (records))
+     
+     (define (error-handler message token)
+       (error #f message token))
+     
+     (define (doit string)
+       (let* ((IS      (lexer-make-IS (string: string)
+                                      (counters: 'all)))
+              (lexer   (make-address-lexer IS))
+              (parser  (make-address-parser)))
+         (parser lexer error-handler)))
+</pre>
+   <p class="noindent">here is an example of parsing a list of mailboxes:
+
+<pre class="example">     (define result
+       (doit "marco.maggi@here.it, &lt;marco.maggi@there.it&gt;"))
+     
+     (length result)
+     &rArr; 2
+     
+     (&lt;mailbox&gt;? (car result))
+     &rArr; #t
+     
+     (&lt;mailbox&gt;? (cadr result))
+     &rArr; #t
+     
+     (object-&gt;string (car result))
+     &rArr; "&lt;marco.maggi@here.it&gt;"
+     
+     (object-&gt;string (cadr result))
+     &rArr; "&lt;marco.maggi@there.it&gt;"
+</pre>
+   <p class="noindent">and here an example of parsing a group:
+
+<pre class="example">     (define result
+       (doit "the group: marco.maggi@here.it, &lt;marco.maggi@there.it&gt;, \r
+     Marco Maggi &lt;mrc.mgg@here.it&gt;;"))
+     
+     (length result)
+     &rArr; 1
+     
+     (&lt;group&gt;? (car result))
+     &rArr; #t
+     
+     (let* ((group       (car result))
+            (mailboxes   (&lt;group&gt;-mailboxes group)))
+     
+       (length mailboxes)
+       &rArr; 3
+     
+       (&lt;group&gt;-display-name group)
+       &rArr; "the group"
+     
+       (object-&gt;string (car mailboxes))
+       &rArr; "&lt;marco.maggi@here.it&gt;"
+     
+       (object-&gt;string (cadr mailboxes))
+       &rArr; "&lt;marco.maggi@there.it&gt;"
+     
+       (object-&gt;string (&lt;mailbox&gt;-addr-spec (caddr mailboxes))))
+       &rArr; "mrc.mgg@here.it"
+</pre>
+   <!-- end of file -->
+   </body></html>
+

@@ -1,0 +1,247 @@
+<html lang="en">
+<head>
+<title>lang define - Nausicaa for Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Nausicaa for Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="lang.html#lang" title="lang">
+<link rel="prev" href="lang-id.html#lang-id" title="lang id">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d3 of Nausicaa/Scheme, a set of
+Scheme libraries defining a slightly modified R6RS Scheme language
+and augmenting the features of the base and standard R6RS libraries.
+
+The project home page of Nausicaa is at:
+
+             `http://marcomaggi.github.com/nausicaa.html'
+
+
+development of Nausicaa takes place at:
+
+               `http://github.com/marcomaggi/nausicaa/'
+
+
+Copyright (C) 2008, 2009, 2010 by Marco Maggi.
+
+Copyright (C) 1996, 1997, 2000, 2001, 2002, 2003, 2004, 2005
+Free Software Foundation.
+
+Copyright (C) 1996, 1999-2005 Dorai Sitaram.
+
+Copyright (C) 1998 Oleg Kiselyov.
+
+Copyright (C) 1998, 1999, 2000 Olin Shivers.
+
+Copyright (C) 1999 John David Stone.
+
+Copyright (C) 1999, 2002 Marc Feeley.
+
+Copyright (C) 2001, 2009 Danny Dube'
+
+Copyright (C) 2002 Dr. Mirko Luedde.
+
+Copyright (C) 2002, 2003, 2005, 2006 Sebastian Egner.
+
+Copyright (C) 2003 Ray Dillinger.
+
+Copyright (C) 2003 Taylor Campbell.
+
+Copyright (C) 2005 Jens Axel Soegaard.
+
+Copyright (C) 2005-2009 Alex Shinn.
+
+Copyright (C) 2008 Taro Minowa (Higepon).
+
+Copyright (C) 2005-2008 Dominique Boucher.
+
+Copyright (C) 2004, 2005 Tony Garnock-Jones
+
+Copyright (C) 2005 LShift Ltd.
+
+Copyright (C) 2007, 2008 Philip L. Bewig.
+
+Copyright (C) 2000 Will Fitzgerald.
+
+Copyright (C) 2000 Neodesic Corporation.
+
+Copyright (C) 2000-2006 Joachim Henke.
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with no Invariant Sections being ``GNU Free
+     Documentation License'' and ``GNU General Public License'', no
+     Front--Cover Texts, and no Back--Cover Texts.  A copy of the
+     license is included in the section entitled ``GNU Free
+     Documentation License''.
+
+This document embeds an unofficial assemblage of several documents
+reformatted in Texinfo; the reformatting author and maintainer is
+Marco Maggi <marco.maggi-ipsu@poste.it>.  See the appendix ``Credits'' for
+the list of original documents and their authors.  See also the
+`README' and `CREDITS' files for additional attributions.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="lang-define"></a>
+<p>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="lang-id.html#lang-id">lang id</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="lang.html#lang">lang</a>
+<hr>
+</div>
+
+<h3 class="section">9.5 Macro definition helpers</h3>
+
+<div class="defun">
+&mdash; Syntax: <b>define-inline</b> (<var>&lt;name&gt; &lt;arg&gt; ...</var>)<var> &lt;form0&gt; &lt;form&gt; ...<a name="index-define_002dinline-950"></a></var><br>
+<blockquote><p>Define a macro with with a definition resembling a function.  It is
+defined as:
+
+     <pre class="example">          (define-syntax define-inline
+            (syntax-rules ()
+              ((_ (?name ?arg ...) ?form0 ?form ...)
+               (define-syntax ?name
+                 (syntax-rules ()
+                   ((_ ?arg ...)
+                    (begin ?form0 ?form ...)))))))
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>define-identifier-accessor-mutator</b><var> &lt;name&gt; &lt;thing&gt; &lt;accessor&gt;<a name="index-define_002didentifier_002daccessor_002dmutator-951"></a></var><br>
+&mdash; Syntax: <b>define-identifier-accessor-mutator</b><var> &lt;name&gt; &lt;thing&gt; &lt;accessor&gt; &lt;mutator&gt;<a name="index-define_002didentifier_002daccessor_002dmutator-952"></a></var><br>
+<blockquote><p>Helper for the definition of an identifier syntax.  It is defined as:
+
+     <pre class="smallexample">          (define-syntax define-identifier-accessor-mutator
+            (syntax-rules ()
+              ((_ ?name ?thing ?accessor ?mutator)
+               (define-syntax ?name
+                 (identifier-syntax-accessor-mutator ?thing ?accessor ?mutator)))
+              ((_ ?name ?thing ?accessor)
+               (define-syntax ?name
+                 (identifier-syntax-accessor-mutator ?thing ?accessor)))))
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>identifier-syntax-accessor-mutator</b><var> &lt;thing&gt; &lt;accessor&gt;<a name="index-identifier_002dsyntax_002daccessor_002dmutator-953"></a></var><br>
+&mdash; Syntax: <b>identifier-syntax-accessor-mutator</b><var> &lt;thing&gt; &lt;accessor&gt; &lt;mutator&gt;<a name="index-identifier_002dsyntax_002daccessor_002dmutator-954"></a></var><br>
+<blockquote><p>Helper for the definition of an identifier syntax.  It is defined as:
+
+     <pre class="smallexample">          (define-syntax identifier-syntax-accessor-mutator
+            (syntax-rules ()
+              ((_ ?thing ?accessor ?mutator)
+               (identifier-syntax
+                (_                (?accessor ?thing))
+                ((set! _ expr)    (?mutator  ?thing expr))))
+              ((_ ?thing ?accessor)
+               (identifier-syntax (?accessor ?thing)))))
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>with-accessor-and-mutator</b> (<var>&lt;spec0&gt; &lt;spec&gt; ...</var>)<var> &lt;body0&gt; &lt;body&gt; ...<a name="index-with_002daccessor_002dand_002dmutator-955"></a></var><br>
+<blockquote><p>Expand to a <code>let-syntax</code> form used to define identifier syntaxes;
+&lt;spec&gt; and subsequent forms are expected to be in one of the forms:
+
+     <pre class="example">          (&lt;name&gt; &lt;thing&gt; &lt;accessor&gt;)
+          (&lt;name&gt; &lt;thing&gt; &lt;accessor&gt; &lt;mutator&gt;)
+</pre>
+        <p class="noindent">in which the symbol &lt;name&gt; is defined as identifier syntax that
+makes use of &lt;accessor&gt; and &lt;mutator&gt; to access and mutate
+&lt;thing&gt;.  Examples:
+
+     <pre class="example">          (let ((a 1))
+            (with-accessor-and-mutator ((alpha a (lambda (x) x) set!))
+              alpha))
+          &rArr; 1
+          
+          (let ((a 1))
+            (with-accessor-and-mutator ((alpha a (lambda (x) x) set!))
+              (set! alpha 2)
+              alpha))
+          &rArr; 2
+          
+          (let ((a 1))
+            (with-accessor-and-mutator ((alpha a (lambda (x) x)))
+               alpha))
+          &rArr; 1
+          
+          (let ((a 1)
+                (b 2))
+            (with-accessor-and-mutator ((alpha a (lambda (x) x) set!)
+                                        (beta  b (lambda (x) x) set!))
+              (list alpha beta)))
+          &rArr; (1 2)
+          
+          (let ((a 1)
+                (b 2))
+            (with-accessor-and-mutator ((alpha a (lambda (x) x) set!)
+                                        (beta  b (lambda (x) x) set!))
+              (set! alpha 3)
+              (set! beta  4)
+              (list alpha beta)))
+          &rArr; (3 4)
+          
+          (let ((a 1)
+                (b 2))
+             (with-accessor-and-mutator ((alpha a (lambda (x) x))
+                                         (beta  b (lambda (x) x)))
+               (list alpha beta)))
+          &rArr; (1 2)
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>define-constant</b><var> name expression<a name="index-define_002dconstant-956"></a></var><br>
+<blockquote><p>Bind <var>name</var> to the result of <var>expression</var> as <code>define</code> would
+do, but additionally make <var>name</var> impossible to be the first argument
+to <code>set!</code> from <code>(rnrs base (6))</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>define-syntax*</b> (<var>name stx</var>)<var> body0 body ...<a name="index-define_002dsyntax_002a-957"></a></var><br>
+<blockquote><p>Like <code>define-syntax</code> but allows a more function-like definition and
+introduces some bindings in the body.  The following macro use:
+
+     <pre class="example">          (define-syntax* (<var>name</var> <var>stx</var>)
+            <var>body0</var> <var>body</var> ...)
+</pre>
+        <p class="noindent">expands to:
+
+     <pre class="example">          (define-syntax <var>name</var>
+            (lambda (<var>stx</var>)
+              <var>bindings</var> ...
+              <var>body0</var> <var>body</var> ...))
+</pre>
+        <p class="noindent">currently <var>bindings</var> is:
+
+     <pre class="example">          (define synner
+            (case-lambda
+             ((message)
+              (synner message #f))
+             ((message subform)
+              (syntax-violation <var>name</var> message
+                (syntax-&gt;datum <var>stx</var>) (syntax-&gt;datum subform)))))
+</pre>
+        <p class="noindent">that is: a function called <code>synner</code> which can be used to raise a
+syntax violation. 
+</p></blockquote></div>
+
+<!-- end of file -->
+   </body></html>
+

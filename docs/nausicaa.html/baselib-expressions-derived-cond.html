@@ -1,0 +1,287 @@
+<html lang="en">
+<head>
+<title>baselib expressions derived cond - Nausicaa for Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Nausicaa for Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="baselib-expressions.html#baselib-expressions" title="baselib expressions">
+<link rel="prev" href="baselib-expressions-assignments.html#baselib-expressions-assignments" title="baselib expressions assignments">
+<link rel="next" href="baselib-expressions-binding.html#baselib-expressions-binding" title="baselib expressions binding">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d3 of Nausicaa/Scheme, a set of
+Scheme libraries defining a slightly modified R6RS Scheme language
+and augmenting the features of the base and standard R6RS libraries.
+
+The project home page of Nausicaa is at:
+
+             `http://marcomaggi.github.com/nausicaa.html'
+
+
+development of Nausicaa takes place at:
+
+               `http://github.com/marcomaggi/nausicaa/'
+
+
+Copyright (C) 2008, 2009, 2010 by Marco Maggi.
+
+Copyright (C) 1996, 1997, 2000, 2001, 2002, 2003, 2004, 2005
+Free Software Foundation.
+
+Copyright (C) 1996, 1999-2005 Dorai Sitaram.
+
+Copyright (C) 1998 Oleg Kiselyov.
+
+Copyright (C) 1998, 1999, 2000 Olin Shivers.
+
+Copyright (C) 1999 John David Stone.
+
+Copyright (C) 1999, 2002 Marc Feeley.
+
+Copyright (C) 2001, 2009 Danny Dube'
+
+Copyright (C) 2002 Dr. Mirko Luedde.
+
+Copyright (C) 2002, 2003, 2005, 2006 Sebastian Egner.
+
+Copyright (C) 2003 Ray Dillinger.
+
+Copyright (C) 2003 Taylor Campbell.
+
+Copyright (C) 2005 Jens Axel Soegaard.
+
+Copyright (C) 2005-2009 Alex Shinn.
+
+Copyright (C) 2008 Taro Minowa (Higepon).
+
+Copyright (C) 2005-2008 Dominique Boucher.
+
+Copyright (C) 2004, 2005 Tony Garnock-Jones
+
+Copyright (C) 2005 LShift Ltd.
+
+Copyright (C) 2007, 2008 Philip L. Bewig.
+
+Copyright (C) 2000 Will Fitzgerald.
+
+Copyright (C) 2000 Neodesic Corporation.
+
+Copyright (C) 2000-2006 Joachim Henke.
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with no Invariant Sections being ``GNU Free
+     Documentation License'' and ``GNU General Public License'', no
+     Front--Cover Texts, and no Back--Cover Texts.  A copy of the
+     license is included in the section entitled ``GNU Free
+     Documentation License''.
+
+This document embeds an unofficial assemblage of several documents
+reformatted in Texinfo; the reformatting author and maintainer is
+Marco Maggi <marco.maggi-ipsu@poste.it>.  See the appendix ``Credits'' for
+the list of original documents and their authors.  See also the
+`README' and `CREDITS' files for additional attributions.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="baselib-expressions-derived-cond"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="baselib-expressions-binding.html#baselib-expressions-binding">baselib expressions binding</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="baselib-expressions-assignments.html#baselib-expressions-assignments">baselib expressions assignments</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="baselib-expressions.html#baselib-expressions">baselib expressions</a>
+<hr>
+</div>
+
+<h4 class="subsection">3.4.5 Derived conditionals</h4>
+
+<div class="defun">
+&mdash; Syntax: <b>cond</b><var> &lt;cond clause1&gt; &lt;cond clause2&gt; <small class="dots">...</small><a name="index-cond-56"></a></var><br>
+&mdash; Auxiliary Syntax: <b>=&gt;</b><var><a name="index-g_t_003d_003e-57"></a></var><br>
+&mdash; Auxiliary Syntax: <b>else</b><var><a name="index-else-58"></a></var><br>
+<blockquote><p>Each &lt;cond clause&gt; must be of the form:
+
+     <pre class="example">          (&lt;test&gt; &lt;expression1&gt; ...)
+</pre>
+        <p class="noindent">where &lt;test&gt; is an expression.  Alternatively, a &lt;cond clause&gt;
+may be of the form:
+
+     <pre class="example">          (&lt;test&gt; =&gt; &lt;expression&gt;)
+</pre>
+        <p>The last &lt;cond clause&gt; may be an &ldquo;<code>else</code> clause&rdquo;, which has
+the form:
+
+     <pre class="example">          (else &lt;expression1&gt; &lt;expression2&gt; ...)
+</pre>
+        <p>A <code>cond</code> expression is evaluated by evaluating the &lt;test&gt;
+expressions of successive &lt;cond clause&gt;s in order until one of them
+evaluates to a true value.  When a &lt;test&gt; evaluates to a true
+value, then the remaining &lt;expression&gt;s in its &lt;cond clause&gt;
+are evaluated in order, and the results of the last &lt;expression&gt; in
+the &lt;cond clause&gt; are returned as the results of the entire
+<code>cond</code> expression.
+
+        <p>If the selected &lt;cond clause&gt; contains only the &lt;test&gt; and no
+&lt;expression&gt;s, then the value of the &lt;test&gt; is returned as the
+result.  If the selected &lt;cond clause&gt; uses the &lsquo;<samp><span class="samp">=&gt;</span></samp>&rsquo; alternate
+form, then the &lt;expression&gt; is evaluated.  Its value must be a
+procedure.  This procedure should accept one argument; it is called on
+the value of the &lt;test&gt; and the values returned by this procedure
+are returned by the <code>cond</code> expression.
+
+        <p>If all &lt;test&gt;s evaluate to <code>#f</code>, and there is no &lsquo;<samp><span class="samp">else</span></samp>&rsquo;
+clause, then the conditional expression returns unspecified values; if
+there is an <code>else</code> clause, then its &lt;expression&gt;s are
+evaluated, and the values of the last one are returned.
+
+     <pre class="example">          (cond ((&gt; 3 2) 'greater)
+                ((&lt; 3 2) 'less))          &rArr; greater
+          
+          (cond ((&gt; 3 3) 'greater)
+                ((&lt; 3 3) 'less)
+                (else 'equal))            &rArr; equal
+          
+          (cond ('(1 2 3) =&gt; cadr)
+                (else #f))                &rArr; 2
+</pre>
+        <p>For a &lt;cond clause&gt; of one of the following forms:
+
+     <pre class="example">          (&lt;test&gt; &lt;expression1&gt; ...)
+          (else &lt;expression1&gt; &lt;expression2&gt; ...)
+</pre>
+        <p class="noindent">the last &lt;expression&gt; is in tail context if the <code>cond</code> form
+itself is.  For a &lt;cond clause&gt; of the form:
+
+     <pre class="example">          (&lt;test&gt; =&gt; &lt;expression&gt;)
+</pre>
+        <p class="noindent">the (implied) call to the procedure that results from the evaluation of
+&lt;expression&gt; is in a tail context if the <code>cond</code> form itself
+is. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>case</b><var> &lt;key&gt; &lt;case clause1&gt; &lt;case clause2&gt; <small class="dots">...</small><a name="index-case-59"></a></var><br>
+<blockquote><p>&lt;key&gt; must be an expression.  Each &lt;case clause&gt; must have one
+of the following forms:
+
+     <pre class="example">          ((&lt;datum1&gt; ...) &lt;expression1&gt; &lt;expression2&gt; ...)
+          (else &lt;expression1&gt; &lt;expression2&gt; ...)
+</pre>
+        <p>The second form, which specifies an &ldquo;<code>else</code> clause&rdquo;, may only
+appear as the last &lt;case clause&gt;.  Each &lt;datum&gt; is an external
+representation of some object.  The data represented by the
+&lt;datum&gt;s need not be distinct.
+
+        <p>A <code>case</code> expression is evaluated as follows.
+
+          <ol type=1 start=1>
+<li>&lt;key&gt; is evaluated and its result is compared using <code>eqv?</code>
+against the data represented by the &lt;datum&gt;s of each &lt;case
+clause&gt; in turn, proceeding in order from left to right through the set
+of clauses.
+
+          <li>If the result of evaluating &lt;key&gt; is equivalent to a datum of a
+&lt;case clause&gt;, the corresponding &lt;expression&gt;s are evaluated
+from left to right and the results of the last expression in the
+&lt;case clause&gt; are returned as the results of the <code>case</code>
+expression.  Otherwise, the comparison process continues.
+
+          <li>If the result of evaluating &lt;key&gt; is different from every datum in
+each set, then if there is an <code>else</code> clause its expressions are
+evaluated and the results of the last are the results of the <code>case</code>
+expression; otherwise the <code>case</code> expression returns unspecified
+values.
+             </ol>
+
+     <pre class="example">          (case (* 2 3)
+            ((2 3 5 7) 'prime)
+            ((1 4 6 8 9) 'composite))     &rArr; composite
+          (case (car '(c d))
+            ((a) 'a)
+            ((b) 'b))                     &rArr; unspecified
+          (case (car '(c d))
+            ((a e i o u) 'vowel)
+            ((w y) 'semivowel)
+            (else 'consonant))            &rArr; consonant
+</pre>
+        <p>The last &lt;expression&gt; of a &lt;case clause&gt; is in tail context if
+the <code>case</code> expression itself is. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>and</b><var> &lt;test1&gt; <small class="dots">...</small><a name="index-and-60"></a></var><br>
+<blockquote><p>The &lt;test&gt;s must be expressions.
+
+        <p>If there are no &lt;test&gt;s, <code>#t</code> is returned.  Otherwise, the
+&lt;test&gt; expressions are evaluated from left to right until a
+&lt;test&gt; returns <code>#f</code> or the last &lt;test&gt; is reached.  In the
+former case, the <code>and</code> expression returns <code>#f</code> without
+evaluating the remaining expressions.  In the latter case, the last
+expression is evaluated and its values are returned.
+
+     <pre class="example">          (and (= 2 2) (&gt; 2 1))           &rArr;  #t
+          (and (= 2 2) (&lt; 2 1))           &rArr;  #f
+          (and 1 2 'c '(f g))             &rArr;  (f g)
+          (and)                           &rArr;  #t
+</pre>
+        <p>The <code>and</code> keyword could be defined in terms of <code>if</code> using
+<code>syntax-rules</code> as follows:
+
+     <pre class="example">          (define-syntax and
+            (syntax-rules ()
+              ((and) #t)
+              ((and test) test)
+              ((and test1 test2 ...)
+               (if test1 (and test2 ...) #t))))
+</pre>
+        <p>The last &lt;test&gt; expression is in tail context if the <code>and</code>
+expression itself is. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>or</b><var> &lt;test1&gt; <small class="dots">...</small><a name="index-or-61"></a></var><br>
+<blockquote><p>The &lt;test&gt;s must be expressions.
+
+        <p>If there are no &lt;test&gt;s, <code>#f</code> is returned.  Otherwise, the
+&lt;test&gt; expressions are evaluated from left to right until a
+&lt;test&gt; returns a true value <var>val</var> or the last &lt;test&gt; is
+reached.  In the former case, the <code>or</code> expression returns <var>val</var>
+without evaluating the remaining expressions.  In the latter case, the
+last expression is evaluated and its values are returned.
+
+     <pre class="example">          (or (= 2 2) (&gt; 2 1))            &rArr; #t
+          (or (= 2 2) (&lt; 2 1))            &rArr; #t
+          (or #f #f #f)                   &rArr; #f
+          (or '(b c) (/ 3 0))             &rArr; (b c)
+</pre>
+        <p>The <code>or</code> keyword could be defined in terms of <code>if</code> using
+<code>syntax-rules</code> as follows:
+
+     <pre class="example">          (define-syntax or
+            (syntax-rules ()
+              ((or) #f)
+              ((or test) test)
+              ((or test1 test2 ...)
+               (let ((x test1))
+                 (if x x (or test2 ...))))))
+</pre>
+        <p>The last &lt;test&gt; expression is in tail context if the <code>or</code>
+expression itself is. 
+</p></blockquote></div>
+
+<!-- page -->
+   </body></html>
+

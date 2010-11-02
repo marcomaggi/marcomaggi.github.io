@@ -1,0 +1,186 @@
+<html lang="en">
+<head>
+<title>classes define virtual - Nausicaa for Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Nausicaa for Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="classes-define.html#classes-define" title="classes define">
+<link rel="prev" href="classes-define-predicate.html#classes-define-predicate" title="classes define predicate">
+<link rel="next" href="classes-define-method.html#classes-define-method" title="classes define method">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d3 of Nausicaa/Scheme, a set of
+Scheme libraries defining a slightly modified R6RS Scheme language
+and augmenting the features of the base and standard R6RS libraries.
+
+The project home page of Nausicaa is at:
+
+             `http://marcomaggi.github.com/nausicaa.html'
+
+
+development of Nausicaa takes place at:
+
+               `http://github.com/marcomaggi/nausicaa/'
+
+
+Copyright (C) 2008, 2009, 2010 by Marco Maggi.
+
+Copyright (C) 1996, 1997, 2000, 2001, 2002, 2003, 2004, 2005
+Free Software Foundation.
+
+Copyright (C) 1996, 1999-2005 Dorai Sitaram.
+
+Copyright (C) 1998 Oleg Kiselyov.
+
+Copyright (C) 1998, 1999, 2000 Olin Shivers.
+
+Copyright (C) 1999 John David Stone.
+
+Copyright (C) 1999, 2002 Marc Feeley.
+
+Copyright (C) 2001, 2009 Danny Dube'
+
+Copyright (C) 2002 Dr. Mirko Luedde.
+
+Copyright (C) 2002, 2003, 2005, 2006 Sebastian Egner.
+
+Copyright (C) 2003 Ray Dillinger.
+
+Copyright (C) 2003 Taylor Campbell.
+
+Copyright (C) 2005 Jens Axel Soegaard.
+
+Copyright (C) 2005-2009 Alex Shinn.
+
+Copyright (C) 2008 Taro Minowa (Higepon).
+
+Copyright (C) 2005-2008 Dominique Boucher.
+
+Copyright (C) 2004, 2005 Tony Garnock-Jones
+
+Copyright (C) 2005 LShift Ltd.
+
+Copyright (C) 2007, 2008 Philip L. Bewig.
+
+Copyright (C) 2000 Will Fitzgerald.
+
+Copyright (C) 2000 Neodesic Corporation.
+
+Copyright (C) 2000-2006 Joachim Henke.
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with no Invariant Sections being ``GNU Free
+     Documentation License'' and ``GNU General Public License'', no
+     Front--Cover Texts, and no Back--Cover Texts.  A copy of the
+     license is included in the section entitled ``GNU Free
+     Documentation License''.
+
+This document embeds an unofficial assemblage of several documents
+reformatted in Texinfo; the reformatting author and maintainer is
+Marco Maggi <marco.maggi-ipsu@poste.it>.  See the appendix ``Credits'' for
+the list of original documents and their authors.  See also the
+`README' and `CREDITS' files for additional attributions.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="classes-define-virtual"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="classes-define-method.html#classes-define-method">classes define method</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="classes-define-predicate.html#classes-define-predicate">classes define predicate</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="classes-define.html#classes-define">classes define</a>
+<hr>
+</div>
+
+<h4 class="subsection">20.1.6 Defining class having virtual fields</h4>
+
+<div class="defun">
+&mdash; Auxiliary Syntax: <b>virtual-fields</b><var> field-spec ...<a name="index-virtual_002dfields-1097"></a></var><br>
+<blockquote><p>Add virtual fields to the enclosing class definition; the
+<var>field-spec</var> arguments have the same syntax as the <code>fields</code>
+ones, but with different semantics.  This clause can be used multiple
+times.
+
+        <p>An immutable virtual field is defined by a field name and a field
+accessor which can be applied to a class instance to compute a value.  A
+mutable virtual field is defined by a field name, a field accessor which
+can be applied to a class instance to compute a value, a field mutator
+which can be applied to a class instance to mutate its fields.
+
+        <p>For more details on virtual fields, especially fields with the same name
+in different record types of the same hierarchy, <a href="classes-dot-with.html#classes-dot-with"><code>with-class</code></a>.
+
+        <p>The following is an example of virtual fields usage:
+
+     <pre class="example">          (define-class &lt;fraction&gt;
+            (fields (mutable number))
+            (virtual-fields (mutable numerator)
+                            (mutable denominator)))
+          
+          ;; virtual fields accessors and mutators
+          
+          (define (&lt;fraction&gt;-numerator o)
+            (numerator (&lt;fraction&gt;-number o)))
+          
+          (define (&lt;fraction&gt;-numerator-set! o v)
+            (let ((n (&lt;fraction&gt;-number o)))
+              (&lt;fraction&gt;-number-set! o (/ v (denominator n)))))
+          
+          
+          (define (&lt;fraction&gt;-denominator o)
+            (denominator (&lt;fraction&gt;-number o)))
+          
+          (define (&lt;fraction&gt;-denominator-set! o v)
+            (let ((n (&lt;fraction&gt;-number o)))
+              (&lt;fraction&gt;-number-set! o (/ (numerator n) v))))
+          
+          ;; tests
+          
+          (let ((o (make-&lt;fraction&gt; 2/3)))
+            (with-class ((o &lt;fraction&gt;))
+              o.numerator))
+          &rArr; 2
+          
+          (let ((o (make-&lt;fraction&gt; 2/3)))
+            (with-class ((o &lt;fraction&gt;))
+              o.denominator))
+          &rArr; 3
+          
+          (let ((o (make-&lt;fraction&gt; 2/3)))
+            (with-class ((o &lt;fraction&gt;))
+              (set! o.numerator 5)
+              o.number))
+          &rArr; 5/3
+          
+          (let ((o (make-&lt;fraction&gt; 2/3)))
+            (with-class ((o &lt;fraction&gt;))
+              (set! o.denominator 5)
+              o.number))
+          &rArr; 2/5
+</pre>
+        <p>Notice the semantic difference between <code>fields</code> clauses and
+<code>virtual-fields</code> clauses.  With <code>fields</code> we add a concrete
+field to the record type, thereby creating the accessor and possibly the
+mutator; then select the public names of accessors and mutators.  With
+<code>virtual-fields</code> we select the name of a virtual field whose
+accessor and mutator functions or syntaxes must be explicitly defined in
+some other way. 
+</p></blockquote></div>
+
+<!-- page -->
+   </body></html>
+

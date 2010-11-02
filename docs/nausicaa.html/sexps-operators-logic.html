@@ -1,0 +1,194 @@
+<html lang="en">
+<head>
+<title>sexps operators logic - Nausicaa for Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Nausicaa for Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="sexps-operators.html#sexps-operators" title="sexps operators">
+<link rel="prev" href="sexps-operators-predicate.html#sexps-operators-predicate" title="sexps operators predicate">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d3 of Nausicaa/Scheme, a set of
+Scheme libraries defining a slightly modified R6RS Scheme language
+and augmenting the features of the base and standard R6RS libraries.
+
+The project home page of Nausicaa is at:
+
+             `http://marcomaggi.github.com/nausicaa.html'
+
+
+development of Nausicaa takes place at:
+
+               `http://github.com/marcomaggi/nausicaa/'
+
+
+Copyright (C) 2008, 2009, 2010 by Marco Maggi.
+
+Copyright (C) 1996, 1997, 2000, 2001, 2002, 2003, 2004, 2005
+Free Software Foundation.
+
+Copyright (C) 1996, 1999-2005 Dorai Sitaram.
+
+Copyright (C) 1998 Oleg Kiselyov.
+
+Copyright (C) 1998, 1999, 2000 Olin Shivers.
+
+Copyright (C) 1999 John David Stone.
+
+Copyright (C) 1999, 2002 Marc Feeley.
+
+Copyright (C) 2001, 2009 Danny Dube'
+
+Copyright (C) 2002 Dr. Mirko Luedde.
+
+Copyright (C) 2002, 2003, 2005, 2006 Sebastian Egner.
+
+Copyright (C) 2003 Ray Dillinger.
+
+Copyright (C) 2003 Taylor Campbell.
+
+Copyright (C) 2005 Jens Axel Soegaard.
+
+Copyright (C) 2005-2009 Alex Shinn.
+
+Copyright (C) 2008 Taro Minowa (Higepon).
+
+Copyright (C) 2005-2008 Dominique Boucher.
+
+Copyright (C) 2004, 2005 Tony Garnock-Jones
+
+Copyright (C) 2005 LShift Ltd.
+
+Copyright (C) 2007, 2008 Philip L. Bewig.
+
+Copyright (C) 2000 Will Fitzgerald.
+
+Copyright (C) 2000 Neodesic Corporation.
+
+Copyright (C) 2000-2006 Joachim Henke.
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with no Invariant Sections being ``GNU Free
+     Documentation License'' and ``GNU General Public License'', no
+     Front--Cover Texts, and no Back--Cover Texts.  A copy of the
+     license is included in the section entitled ``GNU Free
+     Documentation License''.
+
+This document embeds an unofficial assemblage of several documents
+reformatted in Texinfo; the reformatting author and maintainer is
+Marco Maggi <marco.maggi-ipsu@poste.it>.  See the appendix ``Credits'' for
+the list of original documents and their authors.  See also the
+`README' and `CREDITS' files for additional attributions.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="sexps-operators-logic"></a>
+<p>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="sexps-operators-predicate.html#sexps-operators-predicate">sexps operators predicate</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="sexps-operators.html#sexps-operators">sexps operators</a>
+<hr>
+</div>
+
+<h4 class="subsection">51.2.4 Logic matching</h4>
+
+<div class="defun">
+&mdash; Function: <b>sexp-or</b><var> pattern-token ...<a name="index-sexp_002dor-3804"></a></var><br>
+&mdash; Syntax: <b>sexp-or*</b><var> &lt;pattern-token&gt; ...<a name="index-sexp_002dor_002a-3805"></a></var><br>
+<blockquote><p>Return an operator which attempts to match the car of the form with each
+<var>pattern-token</var>, halting at the first positive match.  The match of
+the operator is positive if at least one of the alternatives does match.
+
+        <p><code>sexp-or*</code> behaves like <code>sexp-or</code>, but quotes each of its
+arguments.
+
+     <pre class="example">          (sexp-match `(,(sexp-or 'a 'b 'c)) '(a)) &rArr; '()
+          (sexp-match `(,(sexp-or 'a 'b 'c)) '(b)) &rArr; '()
+          (sexp-match `(,(sexp-or 'a 'b 'c)) '(c)) &rArr; '()
+          
+          (sexp-match `(,(sexp-or* a b c)) '(a)) &rArr; '()
+          (sexp-match `(,(sexp-or* a b c)) '(b)) &rArr; '()
+          (sexp-match `(,(sexp-or* a b c)) '(c)) &rArr; '()
+</pre>
+        <p>Notice that the arguments of <code>sexp-or*</code> must be pattern tokens, not
+pattern sexps:
+
+     <pre class="example">          (sexp-match `(,(sexp-or* (a) (b) (c))) '((a))) &rArr; '()
+          (sexp-match `(,(sexp-or* (a) (b) (c))) '((b))) &rArr; '()
+          (sexp-match `(,(sexp-or* (a) (b) (c))) '((c))) &rArr; '()
+</pre>
+        <p>If <code>sexp-or</code> invoked with no arguments, it returns an operator
+which matches nothing and always raises a sexp mismatch error; this is
+consistent with <code>(or)</code> returning <code>#f</code> in <acronym>R6RS</acronym>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>sexp-and</b><var> pattern-token ...<a name="index-sexp_002dand-3806"></a></var><br>
+&mdash; Syntax: <b>sexp-and*</b><var> &lt;pattern-token&gt; ...<a name="index-sexp_002dand_002a-3807"></a></var><br>
+<blockquote><p>Return an operator which attempts to match the car of the form with each
+<var>pattern-token</var>, halting at the first mismatch.  The match of the
+operator is positive if all the alternatives do match.
+
+        <p><code>sexp-and*</code> behaves like <code>sexp-and</code>, but quotes each of its
+arguments.
+
+        <p>If <code>sexp-and</code> is invoked with no arguments, it returns an operator
+which always matches a single token; this is consistent with
+<code>(and)</code> returning <code>#t</code> in <acronym>R6RS</acronym>.
+
+     <pre class="example">          (sexp-match `(,(sexp-and* a)) '(a))      &rArr; '()
+          (sexp-match `(,(sexp-and) b)  '(a b))    &rArr; '())
+          
+          (let-sexp-variables ((?v 0))
+            (sexp-match `(,(sexp-and (sexp-pred integer?)
+                                     (sexp-var ?v)))
+                        '(123)))
+          &rArr; ((#&lt;record sexp-variable ?v&gt; . 123))
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>sexp-any</b><var> pattern-token<a name="index-sexp_002dany-3808"></a></var><br>
+&mdash; Syntax: <b>sexp-any*</b><var> &lt;pattern-token&gt;<a name="index-sexp_002dany_002a-3809"></a></var><br>
+<blockquote><p>Return an operator which attempts to match every sexp in the form with
+<var>pattern-token</var>, halting at the first mismatch.  It is fine if
+<var>pattern-token</var> does not match the car of the form.
+
+        <p><code>sexp-any*</code> behaves like <code>sexp-any</code>, but quotes its argument.
+
+     <pre class="example">          (sexp-match `(,(sexp-any* a)) '())      &rArr; '()
+          (sexp-match `(,(sexp-any* a)) '(a))     &rArr; '()
+          (sexp-match `(,(sexp-any* a)) '(a a))   &rArr; '()
+          (sexp-match `(,(sexp-any* a)) '(a a a)) &rArr; '()
+          
+          (sexp-match `(,(sexp-any* a) b) '(b))       &rArr; '()
+          (sexp-match `(,(sexp-any* a) b) '(a b))     &rArr; '()
+          (sexp-match `(,(sexp-any* a) b) '(a a b))   &rArr; '()
+          (sexp-match `(,(sexp-any* a) b) '(a a a b)) &rArr; '()
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>sexp-one</b><var> pattern-token<a name="index-sexp_002done-3810"></a></var><br>
+&mdash; Syntax: <b>sexp-one*</b><var> &lt;pattern-token&gt;<a name="index-sexp_002done_002a-3811"></a></var><br>
+<blockquote><p>Like <code>sexp-any</code>, but <var>pattern-token</var> must match at least the
+car of the form. 
+</p></blockquote></div>
+
+<!-- page -->
+   </body></html>
+

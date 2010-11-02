@@ -1,0 +1,194 @@
+<html lang="en">
+<head>
+<title>json decoding parser - Nausicaa for Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Nausicaa for Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="json-decoding.html#json-decoding" title="json decoding">
+<link rel="prev" href="json-decoding-lexer.html#json-decoding-lexer" title="json decoding lexer">
+<link rel="next" href="json-decoding-string.html#json-decoding-string" title="json decoding string">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d3 of Nausicaa/Scheme, a set of
+Scheme libraries defining a slightly modified R6RS Scheme language
+and augmenting the features of the base and standard R6RS libraries.
+
+The project home page of Nausicaa is at:
+
+             `http://marcomaggi.github.com/nausicaa.html'
+
+
+development of Nausicaa takes place at:
+
+               `http://github.com/marcomaggi/nausicaa/'
+
+
+Copyright (C) 2008, 2009, 2010 by Marco Maggi.
+
+Copyright (C) 1996, 1997, 2000, 2001, 2002, 2003, 2004, 2005
+Free Software Foundation.
+
+Copyright (C) 1996, 1999-2005 Dorai Sitaram.
+
+Copyright (C) 1998 Oleg Kiselyov.
+
+Copyright (C) 1998, 1999, 2000 Olin Shivers.
+
+Copyright (C) 1999 John David Stone.
+
+Copyright (C) 1999, 2002 Marc Feeley.
+
+Copyright (C) 2001, 2009 Danny Dube'
+
+Copyright (C) 2002 Dr. Mirko Luedde.
+
+Copyright (C) 2002, 2003, 2005, 2006 Sebastian Egner.
+
+Copyright (C) 2003 Ray Dillinger.
+
+Copyright (C) 2003 Taylor Campbell.
+
+Copyright (C) 2005 Jens Axel Soegaard.
+
+Copyright (C) 2005-2009 Alex Shinn.
+
+Copyright (C) 2008 Taro Minowa (Higepon).
+
+Copyright (C) 2005-2008 Dominique Boucher.
+
+Copyright (C) 2004, 2005 Tony Garnock-Jones
+
+Copyright (C) 2005 LShift Ltd.
+
+Copyright (C) 2007, 2008 Philip L. Bewig.
+
+Copyright (C) 2000 Will Fitzgerald.
+
+Copyright (C) 2000 Neodesic Corporation.
+
+Copyright (C) 2000-2006 Joachim Henke.
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with no Invariant Sections being ``GNU Free
+     Documentation License'' and ``GNU General Public License'', no
+     Front--Cover Texts, and no Back--Cover Texts.  A copy of the
+     license is included in the section entitled ``GNU Free
+     Documentation License''.
+
+This document embeds an unofficial assemblage of several documents
+reformatted in Texinfo; the reformatting author and maintainer is
+Marco Maggi <marco.maggi-ipsu@poste.it>.  See the appendix ``Credits'' for
+the list of original documents and their authors.  See also the
+`README' and `CREDITS' files for additional attributions.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="json-decoding-parser"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="json-decoding-string.html#json-decoding-string">json decoding string</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="json-decoding-lexer.html#json-decoding-lexer">json decoding lexer</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="json-decoding.html#json-decoding">json decoding</a>
+<hr>
+</div>
+
+<h4 class="subsection">64.2.3 Parsing <acronym>JSON</acronym> text</h4>
+
+<p>The following bindings are exported by the <code>(json)</code> library.
+
+<div class="defun">
+&mdash; Function: <b>make-json-parser</b><var><a name="index-make_002djson_002dparser-4330"></a></var><br>
+<blockquote><p>Build and return a new <acronym>JSON</acronym> parser using <code>(lalr lr-driver)</code>;
+the returned value is a parser function as described in <a href="lalr-parser.html#lalr-parser">lalr parser</a>.  The parser function returns the S&ndash;expression representing the
+<acronym>JSON</acronym> text; notice that strings in the S&ndash;expression are <strong>not</strong>
+processed by <code>json-decode-string</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>make-json-event-parser</b><var> clause ...<a name="index-make_002djson_002devent_002dparser-4331"></a></var><br>
+<blockquote><p>Build and return a new <acronym>JSON</acronym> parser which calls provided functions
+when parsing elements.  The returned parser function matches the
+interface of the parser functions based upon <code>(lalr lr-driver)</code>. 
+</p></blockquote></div>
+
+   <p>Event parsing is driven by the clauses described below.
+
+<div class="defun">
+&mdash; Auxiliary Syntax: <b>begin-object:</b><var> handler<a name="index-begin_002dobject_003a-4332"></a></var><br>
+<blockquote><p>Used when the parser receives a <code>BEGIN_OBJECT</code> token. 
+<var>handler</var> is called with the symbol <code>begin-object</code> as single
+argument. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Auxiliary Syntax: <b>end-object:</b><var> handler<a name="index-end_002dobject_003a-4333"></a></var><br>
+<blockquote><p>Used when the parser receives a <code>END_OBJECT</code> token.  <var>handler</var>
+is called with the symbol <code>end-object</code> as single argument. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Auxiliary Syntax: <b>begin-array:</b><var> handler<a name="index-begin_002darray_003a-4334"></a></var><br>
+<blockquote><p>Used when the parser receives a <code>BEGIN_ARRAY</code> token.  <var>handler</var>
+is called with the symbol <code>begin-array</code> as single argument. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Auxiliary Syntax: <b>end-array:</b><var> handler<a name="index-end_002darray_003a-4335"></a></var><br>
+<blockquote><p>Used when the parser receives a <code>END_ARRAY</code> token.  <var>handler</var>
+is called with the symbol <code>end-array</code> as single argument. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Auxiliary Syntax: <b>begin-pair:</b><var> handler<a name="index-begin_002dpair_003a-4336"></a></var><br>
+<blockquote><p>Used when the parser processes the name of a pair.  <var>handler</var> is
+called with the symbol <code>begin-pair</code> as first argument and the
+string representing the pair's name as second argument. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Auxiliary Syntax: <b>end-pair:</b><var> handler<a name="index-end_002dpair_003a-4337"></a></var><br>
+<blockquote><p>Used when the parser terminates processing of a pair.  <var>handler</var> is
+called with the symbol <code>end-pair</code> as single argument. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Auxiliary Syntax: <b>atom:</b><var> handler<a name="index-atom_003a-4338"></a></var><br>
+<blockquote><p>Used when the parser parses the value of a pair or an array element
+being a string, a literal or a number.  When the value is:
+
+          <dl>
+<dt>A number<dd><var>handler</var> is called with the symbol <code>number</code> as first argument
+and the number itself as second argument.
+
+          <br><dt>A string<dd><var>handler</var> is called with the symbol <code>string</code> as first argument
+and the string itself as second argument.  The string is <strong>not</strong>
+processed with <code>json-decode-string</code>.
+
+          <br><dt>The literal true<dd><var>handler</var> is called with the symbol <code>true</code> as first argument
+and <code>#t</code> as second argument.
+
+          <br><dt>The literal false<dd><var>handler</var> is called with the symbol <code>false</code> as first argument
+and <code>#f</code> as second argument.
+
+          <br><dt>The literal null<dd><var>handler</var> is called with the symbol <code>null</code> as first argument
+and <code>()</code> as second argument. 
+</dl>
+        </p></blockquote></div>
+
+<!-- page -->
+   </body></html>
+

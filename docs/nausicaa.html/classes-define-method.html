@@ -1,0 +1,439 @@
+<html lang="en">
+<head>
+<title>classes define method - Nausicaa for Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Nausicaa for Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="classes-define.html#classes-define" title="classes define">
+<link rel="prev" href="classes-define-virtual.html#classes-define-virtual" title="classes define virtual">
+<link rel="next" href="classes-define-setter.html#classes-define-setter" title="classes define setter">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d3 of Nausicaa/Scheme, a set of
+Scheme libraries defining a slightly modified R6RS Scheme language
+and augmenting the features of the base and standard R6RS libraries.
+
+The project home page of Nausicaa is at:
+
+             `http://marcomaggi.github.com/nausicaa.html'
+
+
+development of Nausicaa takes place at:
+
+               `http://github.com/marcomaggi/nausicaa/'
+
+
+Copyright (C) 2008, 2009, 2010 by Marco Maggi.
+
+Copyright (C) 1996, 1997, 2000, 2001, 2002, 2003, 2004, 2005
+Free Software Foundation.
+
+Copyright (C) 1996, 1999-2005 Dorai Sitaram.
+
+Copyright (C) 1998 Oleg Kiselyov.
+
+Copyright (C) 1998, 1999, 2000 Olin Shivers.
+
+Copyright (C) 1999 John David Stone.
+
+Copyright (C) 1999, 2002 Marc Feeley.
+
+Copyright (C) 2001, 2009 Danny Dube'
+
+Copyright (C) 2002 Dr. Mirko Luedde.
+
+Copyright (C) 2002, 2003, 2005, 2006 Sebastian Egner.
+
+Copyright (C) 2003 Ray Dillinger.
+
+Copyright (C) 2003 Taylor Campbell.
+
+Copyright (C) 2005 Jens Axel Soegaard.
+
+Copyright (C) 2005-2009 Alex Shinn.
+
+Copyright (C) 2008 Taro Minowa (Higepon).
+
+Copyright (C) 2005-2008 Dominique Boucher.
+
+Copyright (C) 2004, 2005 Tony Garnock-Jones
+
+Copyright (C) 2005 LShift Ltd.
+
+Copyright (C) 2007, 2008 Philip L. Bewig.
+
+Copyright (C) 2000 Will Fitzgerald.
+
+Copyright (C) 2000 Neodesic Corporation.
+
+Copyright (C) 2000-2006 Joachim Henke.
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with no Invariant Sections being ``GNU Free
+     Documentation License'' and ``GNU General Public License'', no
+     Front--Cover Texts, and no Back--Cover Texts.  A copy of the
+     license is included in the section entitled ``GNU Free
+     Documentation License''.
+
+This document embeds an unofficial assemblage of several documents
+reformatted in Texinfo; the reformatting author and maintainer is
+Marco Maggi <marco.maggi-ipsu@poste.it>.  See the appendix ``Credits'' for
+the list of original documents and their authors.  See also the
+`README' and `CREDITS' files for additional attributions.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="classes-define-method"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="classes-define-setter.html#classes-define-setter">classes define setter</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="classes-define-virtual.html#classes-define-virtual">classes define virtual</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="classes-define.html#classes-define">classes define</a>
+<hr>
+</div>
+
+<h4 class="subsection">20.1.7 Defining classes having methods</h4>
+
+<div class="defun">
+&mdash; Auxiliary Syntax: <b>methods</b><var> method-spec ...<a name="index-methods-1098"></a></var><br>
+<blockquote><p>Add methods to the enclosing class definition; the <var>method-spec</var>
+arguments can be of the form:
+
+     <pre class="example">          <var>method</var>
+          (<var>method</var>)
+          (<var>method</var> <var>method-name</var>)
+</pre>
+        <p class="noindent">where <var>method</var> and <var>method-name</var> must be identifiers; in the
+first two forms the function name is built in the same way the field
+accessor names are built: appending a dash and <var>method</var> to the
+class type name.  This clause can be used multiple times.
+
+        <p>The <var>method-name</var> must be an identifier bound to a Scheme function
+or syntax which will be invoked as method; it must accept as first
+argument the record which is the subject of the application.
+
+        <p>For more details on methods, especially methods with the same name in
+different class types of the same hierarchy, <a href="classes-dot-with.html#classes-dot-with"><code>with-class</code></a>.
+
+     <pre class="example">          (define-class &lt;fraction&gt;
+            (fields (mutable number))
+            (virtual-fields (mutable numerator))
+            (methods (denominator)
+                     product
+                     (the-list the-list-function)))
+          
+          ;; virtual field accessor and mutator
+          
+          (define (&lt;fraction&gt;-numerator o)
+            (numerator (&lt;fraction&gt;-number o)))
+          
+          (define (&lt;fraction&gt;-numerator-set! o v)
+            (let ((n (&lt;fraction&gt;-number o)))
+              (&lt;fraction&gt;-number-set! o (/ v (denominator n)))))
+          
+          ;; method functions
+          
+          (define (&lt;fraction&gt;-denominator o)
+            (denominator (&lt;fraction&gt;-number o)))
+          
+          (define/with-class (&lt;fraction&gt;-product (o &lt;fraction&gt;) lambda)
+            (set! o.numerator (* o.numerator lambda)))
+          
+          (define/with-class (the-list-function (o &lt;fraction&gt;) . ell)
+            (cons o.numerator ell))
+          
+          ;; tests
+          
+          (let ((o (make-&lt;fraction&gt; 2/3)))
+            (with-class ((o &lt;fraction&gt;))
+              (o.denominator)))
+          &rArr; 3
+          
+          (let ((o (make-&lt;fraction&gt; 2/3)))
+            (with-class ((o &lt;fraction&gt;))
+              (o.product 10)
+              o.numerator))
+          &rArr; 20
+          
+          (let ((o (make-&lt;fraction&gt; 2/3)))
+            (with-class ((o &lt;fraction&gt;))
+              (o.the-list 10 11 12 13)))
+          &rArr; (2 10 11 12 13)
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Auxiliary Syntax: <b>method</b> (<var>name . formals</var>)<var> . body<a name="index-method-1099"></a></var><br>
+&mdash; Auxiliary Syntax: <b>method</b><var> name expression<a name="index-method-1100"></a></var><br>
+<blockquote><p>Add a method to the enclosing class definition; the method is applicable
+only through an automatically generated macro, which is bound by
+<code>with-class</code> to an identifier in dot notation.  This clause can be
+used any number of times in a class definition.
+
+        <p>When the first form is used, the method definition is added to the
+methods list as if the following clause had been used:
+
+     <pre class="example">          (methods <var>other-methods</var> ...
+                   (<var>name</var> function-name))
+</pre>
+        <p class="noindent">the function definition is expanded to:
+
+     <pre class="example">          (define/with-class (function-name . <var>formals</var>) . <var>body</var>)
+</pre>
+        <p class="noindent">where <code>function-name</code> is an automatically generated identifier
+built by appending a dash and <var>name</var> to the class type name.  The
+first argument in <var>formals</var> will be the class instance.
+
+        <p>When the second form is used, the method definition is added to the
+methods list as if the following clause had been used:
+
+     <pre class="example">          (methods <var>other-methods</var> ...
+                   (<var>name</var> function-name))
+</pre>
+        <p class="noindent">the function definition is expanded to:
+
+     <pre class="example">          (define function-name <var>expression</var>)
+</pre>
+        <p class="noindent">where <code>function-name</code> is an automatically generated identifier
+built by appending a dash and <var>name</var> to the class type name; the
+<var>expression</var> must evaluate to a function accepting at least one
+argument: the class instance.
+
+     <pre class="example">          (define-class &lt;fraction&gt;
+            (fields (mutable number))
+            (virtual-fields (mutable numerator))
+          
+            (method (denominator (o &lt;fraction&gt;))
+              (denominator o.number))
+          
+            (method (product (o &lt;fraction&gt;) lambda)
+              (set! o.numerator (* o.numerator lambda)))
+          
+            (method the-list
+              (lambda/with-class ((o &lt;fraction&gt;) . ell)
+                (cons o.numerator ell))))
+          
+          ;; virtual field accessor and mutator
+          
+          (define (&lt;fraction&gt;-numerator o)
+            (numerator (&lt;fraction&gt;-number o)))
+          
+          (define (&lt;fraction&gt;-numerator-set! o v)
+            (let ((n (&lt;fraction&gt;-number o)))
+              (&lt;fraction&gt;-number-set! o (/ v (denominator n)))))
+          
+          ;; tests
+          
+          (let ((o (make-&lt;fraction&gt; 2/3)))
+            (with-class ((o &lt;fraction&gt;))
+              o.numerator))
+          &rArr; 2
+          
+          (let ((o (make-&lt;fraction&gt; 2/3)))
+            (with-class ((o &lt;fraction&gt;))
+              (o.denominator)))
+          &rArr; 3
+          
+          (let ((o (make-&lt;fraction&gt; 2/3)))
+            (with-class ((o &lt;fraction&gt;))
+              (o.product 10)
+              o.numerator))
+          &rArr; 20
+          
+          (let ((o (make-&lt;fraction&gt; 2/3)))
+            (with-class ((o &lt;fraction&gt;))
+              (o.the-list 10 11 12 13)))
+          &rArr; (2 10 11 12 13)
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Auxiliary Syntax: <b>method-syntax</b><var> name transformer<a name="index-method_002dsyntax-1101"></a></var><br>
+<blockquote><p>Add a method to the enclosing class definition; the method is applicable
+only through an automatically generated macro, which is bound by
+<code>with-class</code> to an identifier in dot notation.  This clause can be
+used any number of times in a class definition.
+
+        <p>The method definition is added to the methods list as if the following
+clause had been used:
+
+     <pre class="example">          (methods <var>other-methods</var> ...
+                   (<var>name</var> transformer-name))
+</pre>
+        <p class="noindent">the macro definition is expanded to:
+
+     <pre class="example">          (define-syntax transformer-name <var>transformer</var>)
+</pre>
+        <p class="noindent">where <code>transformer-name</code> is an automatically generated identifier
+built by appending a dash and <var>name</var> to the class type name. 
+<var>transformer</var> must expand to a macro transformer.  The first
+argument to the macro will be the class instance. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>define-virtual-method</b><var> class-name method-name<a name="index-define_002dvirtual_002dmethod-1102"></a></var><br>
+&mdash; Macro: <b>define-virtual-method</b><var> class-name method-name expr<a name="index-define_002dvirtual_002dmethod-1103"></a></var><br>
+&mdash; Macro: <b>define-virtual-method</b><var> class-name </var>(<var>method-name . args</var>)<var> . body<a name="index-define_002dvirtual_002dmethod-1104"></a></var><br>
+<blockquote><p>Define a virtual method for <var>class-name</var>; the virtual methods of a
+class can be overridden by implementations in subclasses.  For example:
+
+     <pre class="example">          (import (nausicaa))
+          
+          (define-class &lt;alpha&gt;
+            (fields a)
+            (methods the-method))
+          
+          (define-class &lt;beta&gt;
+            (inherit &lt;alpha&gt;)
+            (methods the-method))
+          
+          (define-virtual-method &lt;alpha&gt; the-method
+            (lambda (o) 'alpha))
+          
+          (define-virtual-method &lt;beta&gt; (the-method o)
+            'beta)
+          
+          (let (((o &lt;alpha&gt;) (make &lt;beta&gt; 2)))
+            (o.the-method))
+          &rArr; beta
+</pre>
+        <p>A virtual method call is much slower than a concrete method call, but
+mostly it is still faster than a call to a generic function as
+implemented by the <code>(classes)</code> library; <a href="generics.html#generics">Multimethod dispatching</a>.
+
+        <p>A virtual method must be declared in the definition of <var>class-name</var>
+as an ordinary method with the <code>methods</code> clause; <var>method-name</var>
+must be an identifier specifying the name of the method and <var>expr</var>
+must be an expression evaluating to the method implementation.
+
+        <p>When the first syntax is used: the virtual method exists, but it has no
+implementation for <var>class-name</var>.  A virtual method without
+implementation does not forbid the instantiation of a class, but trying
+to call that method will result in a syntax violation.
+
+        <p>When the last syntax is used, it expands in the usage of
+<code>lambda/with-class</code>; for example:
+
+     <pre class="example">          (define-virtual-method &lt;beta&gt; (the-method o)
+            'beta)
+</pre>
+        <p class="noindent">is equivalent to:
+
+     <pre class="example">          (define-virtual-method &lt;beta&gt; the-method
+            (lambda/with-class (o)
+              'beta))
+</pre>
+        <p>Only classes can have virtual methods, labels cannot. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>defmethod</b><var> class </var>(<var>method-name . args</var>)<var> body0 body ...<a name="index-defmethod-1105"></a></var><br>
+<blockquote><p>Define a method function for <var>class</var> called <var>method-name</var>; the
+identifier <var>method-name</var> must be listed in the <code>methods</code> clause
+of <var>class</var>.  This macro behaves like <code>define/with-class</code>, but
+does not use dot notation to access the fields and methods of the
+instance of <var>class</var>; rather it defines implicitly the first function
+argument called <code>this</code> bound to the class instance, and defines an
+identifier macro for each field and method, without prefixing the names,
+in such a way that the following code works:
+
+     <pre class="example">          (define-class &lt;alpha&gt;
+            (fields (mutable a)
+                    (mutable b))
+            (methods red blue green the-this))
+          
+          (define-class &lt;beta&gt;
+            (fields (mutable c)
+                    (mutable d)))
+          
+          (defmethod &lt;alpha&gt; (the-this)
+            this)
+          
+          (defmethod &lt;alpha&gt; (red)
+            (list a b))
+          
+          (defmethod &lt;alpha&gt; (blue (o &lt;beta&gt;))
+            (list a b o.c o.d))
+          
+          (defmethod &lt;alpha&gt; (green (o &lt;beta&gt;))
+            (cons #\a (blue o)))
+          
+          (let/with-class (((p &lt;alpha&gt;) (make &lt;alpha&gt; 1 2)))
+            (check
+                (p.the-this)
+              &rArr; p))
+          
+          (check
+              (let/with-class (((p &lt;alpha&gt;) (make &lt;alpha&gt; 1 2)))
+                (p.red))
+            &rArr; '(1 2))
+          
+          (check
+              (let/with-class (((p &lt;alpha&gt;) (make &lt;alpha&gt; 1 2))
+                               ((q &lt;beta&gt;)  (make &lt;beta&gt;  3 4)))
+                (p.blue q))
+            &rArr; '(1 2 3 4))
+          
+          (check
+              (let/with-class (((p &lt;alpha&gt;) (make &lt;alpha&gt; 1 2))
+                               ((q &lt;beta&gt;)  (make &lt;beta&gt;  3 4)))
+                (p.green q))
+            &rArr; '(#\a 1 2 3 4))
+</pre>
+        <p>The binding of <code>this</code> is simple: there are <strong>no</strong> identifier
+macros with <code>this.</code> prefix to access fields and methods.  Usually
+we do not need to use <code>this</code> at all. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>defmethod-virtual</b><var> class </var>(<var>method-name . args</var>)<var> body0 body ...<a name="index-defmethod_002dvirtual-1106"></a></var><br>
+<blockquote><p>Like <code>defmethod</code> but defines a virtual method as if
+<code>define-virtual-method</code> was used. 
+</p></blockquote></div>
+
+<!--  -->
+<h5 class="subsubheading">Method overloading</h5>
+
+<p>There is no support for methods overloading in the <code>(classes)</code>
+library, but we can do it using the facilities of the <code>(generics)</code>
+library.  Example:
+
+<pre class="example">     (import (nausicaa) (generics))
+     
+     (define-class &lt;alpha&gt;
+       (fields a)
+       (methods doit))
+     
+     (define-generic &lt;alpha&gt;-doit)
+     
+     (define-method (&lt;alpha&gt;-doit (o &lt;alpha&gt;) (v &lt;char&gt;))
+       (cons 'char v))
+     
+     (define-method (&lt;alpha&gt;-doit (o &lt;alpha&gt;) (v &lt;integer&gt;))
+       (cons 'int  v))
+     
+     (let (((o &lt;alpha&gt;) (make &lt;alpha&gt; 1)))
+     
+       (o.doit #\a) &rArr; (char . #\a)
+     
+       (o.doit 2)   &rArr; (int . 2)
+     
+       )
+</pre>
+   <!-- page -->
+   </body></html>
+

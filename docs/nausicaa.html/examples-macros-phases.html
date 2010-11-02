@@ -1,0 +1,278 @@
+<html lang="en">
+<head>
+<title>examples macros phases - Nausicaa for Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Nausicaa for Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="examples-macros.html#examples-macros" title="examples macros">
+<link rel="next" href="examples-macros-underscore.html#examples-macros-underscore" title="examples macros underscore">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d3 of Nausicaa/Scheme, a set of
+Scheme libraries defining a slightly modified R6RS Scheme language
+and augmenting the features of the base and standard R6RS libraries.
+
+The project home page of Nausicaa is at:
+
+             `http://marcomaggi.github.com/nausicaa.html'
+
+
+development of Nausicaa takes place at:
+
+               `http://github.com/marcomaggi/nausicaa/'
+
+
+Copyright (C) 2008, 2009, 2010 by Marco Maggi.
+
+Copyright (C) 1996, 1997, 2000, 2001, 2002, 2003, 2004, 2005
+Free Software Foundation.
+
+Copyright (C) 1996, 1999-2005 Dorai Sitaram.
+
+Copyright (C) 1998 Oleg Kiselyov.
+
+Copyright (C) 1998, 1999, 2000 Olin Shivers.
+
+Copyright (C) 1999 John David Stone.
+
+Copyright (C) 1999, 2002 Marc Feeley.
+
+Copyright (C) 2001, 2009 Danny Dube'
+
+Copyright (C) 2002 Dr. Mirko Luedde.
+
+Copyright (C) 2002, 2003, 2005, 2006 Sebastian Egner.
+
+Copyright (C) 2003 Ray Dillinger.
+
+Copyright (C) 2003 Taylor Campbell.
+
+Copyright (C) 2005 Jens Axel Soegaard.
+
+Copyright (C) 2005-2009 Alex Shinn.
+
+Copyright (C) 2008 Taro Minowa (Higepon).
+
+Copyright (C) 2005-2008 Dominique Boucher.
+
+Copyright (C) 2004, 2005 Tony Garnock-Jones
+
+Copyright (C) 2005 LShift Ltd.
+
+Copyright (C) 2007, 2008 Philip L. Bewig.
+
+Copyright (C) 2000 Will Fitzgerald.
+
+Copyright (C) 2000 Neodesic Corporation.
+
+Copyright (C) 2000-2006 Joachim Henke.
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with no Invariant Sections being ``GNU Free
+     Documentation License'' and ``GNU General Public License'', no
+     Front--Cover Texts, and no Back--Cover Texts.  A copy of the
+     license is included in the section entitled ``GNU Free
+     Documentation License''.
+
+This document embeds an unofficial assemblage of several documents
+reformatted in Texinfo; the reformatting author and maintainer is
+Marco Maggi <marco.maggi-ipsu@poste.it>.  See the appendix ``Credits'' for
+the list of original documents and their authors.  See also the
+`README' and `CREDITS' files for additional attributions.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="examples-macros-phases"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="examples-macros-underscore.html#examples-macros-underscore">examples macros underscore</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="examples-macros.html#examples-macros">examples macros</a>
+<hr>
+</div>
+
+<h4 class="appendixsubsec">B.1.1 Bits about phases</h4>
+
+<blockquote>
+<strong>The following ramblings do not aim at being rigorous.</strong>
+</blockquote>
+
+<p class="noindent">Let's look at this code:
+
+<pre class="example">     (import (rnrs))
+     
+     (define (gasp arg)
+       arg)
+     
+     (define (gulp arg)
+       (gasp arg))
+     
+     (gulp 123)
+</pre>
+   <p class="noindent">Oll Korrect: we define two functions, one of which invokes the other in
+its body.  Now look at this:
+
+<pre class="example">     (import (rnrs))
+     
+     (let ()
+       (define (gasp arg)
+         arg)
+       #f)
+     
+     (let ()
+       (define (gulp arg)
+         (gasp arg))
+       (gulp 123))
+</pre>
+   <p class="noindent">this will not work: when <code>gulp</code> is invoked <code>gasp</code> does not
+exist anymore, because it is &ldquo;local&rdquo; to the first <code>let</code>.  The two
+functions exist at different &ldquo;times&rdquo; (using correct jargon for this
+case: they belong to distinct <em>regions</em>).
+
+   <p>Let's state this clearly: Scheme allows sets of functions to exist at
+different times.  With more generality: Scheme allows sets of
+identifier/value bindings to exist at different times.  Fine.  Now we
+know that, technologically speaking, we have this option.
+
+   <p>In the two&ndash;<code>let</code> example above the two &ldquo;times&rdquo;, the two regions,
+correspond to two distinct chunks of code: the <code>let</code> forms.  We ask
+ourselves if it is possible to make two set of functions exist at
+different times in the same chunk of code; with this feature, we could
+use the first set to compute values and build code that are used by the
+second set.  It would be similar to preprocessing C language files with
+the C language preprocessor.  The answer is that: yes, it is possible.
+
+   <p>Inhabitants of the Scheme Pantheon decided that, in the same way as
+<code>let</code> &ldquo;times&rdquo; are called <em>regions</em>, these other &ldquo;times&rdquo;
+are called <em>phases</em>.
+
+   <p>To do such a thing we have to mark, select, partition, discriminate,
+paint with different colours the functions that are meant to belong to
+different phases.  We can imagine that there are special versions of
+<code>define</code> and <code>eval</code> that select a phase:
+
+<pre class="example">     ;; Imaginary code.
+     
+     (define-for-phase-1 (gasp arg1)
+       (cons 1 arg1))
+     
+     (define-for-phase-2 (gulp arg2)
+       (cons 2 (gasp arg2)))
+     
+     (evaluate-in-phase-2
+       (gulp 9))
+</pre>
+   <p class="noindent">so that after evaluation phase <code>1</code> is finished, we have code
+equivalent to:
+
+<pre class="example">     ;; Imaginary code.
+     
+     (define-for-phase-2 (gulp arg)
+       (cons 2 (cons 1 arg)))
+     
+     (evaluate-in-phase-2
+       (gulp 9))
+</pre>
+   <p class="noindent">which is equivalent to:
+
+<pre class="example">     ;; Imaginary code.
+     
+     (define (gulp arg)
+       (cons 2 (cons 1 arg)))
+     
+     (gulp 9)
+</pre>
+   <p class="noindent">which is &ldquo;ordinary&rdquo; Scheme code that computes the improper list
+<code>(2 1 . 9)</code>.
+
+   <p>It turns out that code like this is really ugly, and the Scheme Pantheon
+decided that a chunk of code, by itself, should have only two phases
+called <code>expand</code> and <code>run</code>.  The <code>run</code> phase is the normal
+one: it is when the program should do whatever it is meant to do (talk
+to the user, download web pages, etc).  The <code>expand</code> phase is the
+special one: it is when the program does the precomputation of values
+and code.
+
+   <p>So it is enough to mark one set of functions, and the Pantheon decided
+that it is the <code>expand</code> set that must be marked differently.  Let's
+look at:
+
+<pre class="example">     (import (rnrs) (checks))
+     (check-set-mode! 'report-failed)
+     
+     (define-syntax expand-time-func
+       (lambda (syntax-object)        ;; this is the expand
+         123))                        ;; phase function
+     
+     (define (run-time-func arg)
+       (expand-time-func arg))
+     
+     (check
+      (run-time-func 456)
+      =&gt; 123)
+     
+     (check-report)
+</pre>
+   <p class="noindent">where we have marked <code>expand-time-func</code> to exist at <code>expand</code>
+time using <code>define-syntax</code>.  After evaluation phase <code>expand</code>
+is finished the code is equivalent to:
+
+<pre class="example">     (import (rnrs) (checks))
+     (check-set-mode! 'report-failed)
+     
+     (define (run-time-func arg)
+       123)
+     
+     (check
+      (run-time-func 456)
+      =&gt; 123)
+     
+     (check-report)
+</pre>
+   <p class="noindent">and everything works as we expect.
+
+   <p>The single argument that is handed to the <code>expand</code> time function is
+a weird beast called &ldquo;syntax object&rdquo;.  All this section about
+<code>syntax-case</code> deals with using syntax objects.
+
+   <p>In the example above, it looks like <code>expand-time-func</code> is applied
+to the <code>arg</code> argument of <code>run-time-func</code>; but what is actually
+handed to the function is a syntax object holding information about the
+whole form <code>(expand-time-func arg)</code> and the context where it was
+located.
+
+   <p>There are functions to extract and use values in the syntax object.  For
+example the following script evaluates successfully:
+
+<pre class="example">     (import (rnrs) (checks))
+     (check-set-mode! 'report-failed)
+     
+     (define-syntax expand-time-func
+       (lambda (syntax-object)
+         (caddr (syntax-&gt;datum syntax-object))))
+     
+     (define (run-time-func arg)
+       (expand-time-func arg 123))
+     
+     (check
+      (run-time-func 456)
+      =&gt; '123)
+     
+     (check-report)
+</pre>
+   <!-- page -->
+   </body></html>
+

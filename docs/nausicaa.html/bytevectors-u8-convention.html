@@ -1,0 +1,228 @@
+<html lang="en">
+<head>
+<title>bytevectors u8 convention - Nausicaa for Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Nausicaa for Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="bytevectors-u8.html#bytevectors-u8" title="bytevectors u8">
+<link rel="prev" href="bytevectors-u8-intro.html#bytevectors-u8-intro" title="bytevectors u8 intro">
+<link rel="next" href="bytevectors-u8-views.html#bytevectors-u8-views" title="bytevectors u8 views">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d3 of Nausicaa/Scheme, a set of
+Scheme libraries defining a slightly modified R6RS Scheme language
+and augmenting the features of the base and standard R6RS libraries.
+
+The project home page of Nausicaa is at:
+
+             `http://marcomaggi.github.com/nausicaa.html'
+
+
+development of Nausicaa takes place at:
+
+               `http://github.com/marcomaggi/nausicaa/'
+
+
+Copyright (C) 2008, 2009, 2010 by Marco Maggi.
+
+Copyright (C) 1996, 1997, 2000, 2001, 2002, 2003, 2004, 2005
+Free Software Foundation.
+
+Copyright (C) 1996, 1999-2005 Dorai Sitaram.
+
+Copyright (C) 1998 Oleg Kiselyov.
+
+Copyright (C) 1998, 1999, 2000 Olin Shivers.
+
+Copyright (C) 1999 John David Stone.
+
+Copyright (C) 1999, 2002 Marc Feeley.
+
+Copyright (C) 2001, 2009 Danny Dube'
+
+Copyright (C) 2002 Dr. Mirko Luedde.
+
+Copyright (C) 2002, 2003, 2005, 2006 Sebastian Egner.
+
+Copyright (C) 2003 Ray Dillinger.
+
+Copyright (C) 2003 Taylor Campbell.
+
+Copyright (C) 2005 Jens Axel Soegaard.
+
+Copyright (C) 2005-2009 Alex Shinn.
+
+Copyright (C) 2008 Taro Minowa (Higepon).
+
+Copyright (C) 2005-2008 Dominique Boucher.
+
+Copyright (C) 2004, 2005 Tony Garnock-Jones
+
+Copyright (C) 2005 LShift Ltd.
+
+Copyright (C) 2007, 2008 Philip L. Bewig.
+
+Copyright (C) 2000 Will Fitzgerald.
+
+Copyright (C) 2000 Neodesic Corporation.
+
+Copyright (C) 2000-2006 Joachim Henke.
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with no Invariant Sections being ``GNU Free
+     Documentation License'' and ``GNU General Public License'', no
+     Front--Cover Texts, and no Back--Cover Texts.  A copy of the
+     license is included in the section entitled ``GNU Free
+     Documentation License''.
+
+This document embeds an unofficial assemblage of several documents
+reformatted in Texinfo; the reformatting author and maintainer is
+Marco Maggi <marco.maggi-ipsu@poste.it>.  See the appendix ``Credits'' for
+the list of original documents and their authors.  See also the
+`README' and `CREDITS' files for additional attributions.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="bytevectors-u8-convention"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="bytevectors-u8-views.html#bytevectors-u8-views">bytevectors u8 views</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="bytevectors-u8-intro.html#bytevectors-u8-intro">bytevectors u8 intro</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="bytevectors-u8.html#bytevectors-u8">bytevectors u8</a>
+<hr>
+</div>
+
+<h4 class="subsection">32.1.2 Interface conventions</h4>
+
+<p>The following conventions hold:
+
+     <ul>
+<li>Procedures whose names end in <code>-ci</code> are case&ndash;insensitive variants;
+they interpret bytevectors as strings of characters in <acronym>ASCII</acronym>
+encoding: when doing comparisons they use <code>char-ci=?</code> and
+<code>char-ci&lt;?</code> and the like.
+
+     <li>Procedures whose names end in <code>!</code> are side&ndash;effecting variants. 
+What values these procedures return is usually not specified.
+
+     <li>The order of common arguments is consistent across the different
+procedures in the high level library, and consistent across the
+different procedures in the low level library.  Arguments to some
+functions in the high level library have different order from the ones
+of the homologous low level functions.
+
+     <li>Procedures that have left/right directional variants use the following
+convention:
+
+     <p><table summary=""><tr align="left"><th valign="top">Direction </th><th valign="top">Suffix
+<br></th></tr><tr align="left"><td valign="top">left-to-right </td><td valign="top">&lt;none&gt;
+<br></td></tr><tr align="left"><td valign="top">right-to-left </td><td valign="top">&ndash;right
+<br></td></tr><tr align="left"><td valign="top">both </td><td valign="top">&ndash;both
+     <br></td></tr></table>
+</ul>
+
+   <p>In the procedure specifications:
+
+     <ul>
+<li>A <var>B</var> argument is a bytevector view, which is expanded by a macro in
+a triplet of values: the bytevector, the index of the first byte in the
+selected subvector, the index of the byte past the last in the selected
+position;  <a href="bytevectors-u8-views.html#bytevectors-u8-views">bytevectors u8 views</a> for details.
+
+     <li>A <var>bv</var> argument is a bytevector.
+
+     <li>A <var>byte</var> argument is an exact integer representing an unsigned byte,
+that is in the range [0, 256).
+
+     <li>A <var>char</var> argument is a character.
+
+     <li>The <var>start</var> and <var>past</var> arguments are half&ndash;open bytevector
+indices specifying a subvector within a bytevector argument; when
+unspecified, they default to zero and the length of the bytevector,
+respectively.  When specified, it must be the case that:
+
+     <pre class="example">          0 &lt;= start &lt;= past &lt;= (bytevector-length bv)
+</pre>
+     <p class="noindent">for the corresponding argument <var>bv</var>.  They typically restrict a
+procedure's action to the indicated subvector; when <var>start</var> equals
+<var>past</var> the selected subvector is the empty bytevector.
+
+     <li>A <var>pred</var> argument is a unary predicate procedure, returning a
+true/false value when applied to an exact integer representing a byte.
+
+     <li>A <var>criterion</var> orn <var>byte/char/char-set/pred</var> argument is a value
+used to select/search for a byte in a bytevector:
+
+          <ul>
+<li>If it is a byte, it is used in an equality test with <code>=</code>.
+
+          <li>If it is a character, it is used in an equality test with <code>=</code> after
+having been converted to an exact integer with <code>char-&gt;integer</code>.
+
+          <li>If it is a character set, it is used in a membership test after the byte
+has been converted to a character with <code>integer-&gt;char</code>.
+
+          <li>If it is a procedure, it is applied to the bytes as a test predicate. 
+</ul>
+
+     <li>An <var>i</var> or <var>k</var> argument is an exact non&ndash;negative integer
+specifying an index into a bytevector.
+
+     <li>The <var>len</var> and <var>nbytes</var> arguments are exact non&ndash;negative
+integers specifying a length of a bytevector or some number of bytes.
+
+     <li>An <var>obj</var> argument can be any value. 
+</ul>
+
+   <p>An argument followed by <code>...</code> means zero&ndash;or&ndash;more elements.  So
+the procedure with the signature:
+
+<pre class="example">     sum-squares x ...
+</pre>
+   <p class="noindent">takes zero or more arguments (<var>x</var>, <small class="dots">...</small>), while the procedure
+with signature:
+
+<pre class="example">     spell-check doc dict1 dict2 ...
+</pre>
+   <p class="noindent">takes two mandatory arguments (<var>doc</var> and <var>dict1</var>) and zero or
+more optional arguments (<var>dict2</var> ...).
+
+   <p>If a procedure is said to return &ldquo;unspecified&rdquo;, this means that
+nothing at all is known about what the procedure returns; such a
+procedure is not even required to be consistent from call to call; it is
+simply required to return a value (or values) that may be passed to a
+command continuation, e.g. as the value of an expression appearing as a
+non&ndash;terminal subform of a begin expression.
+
+   <p>Unless explicitly stated: comparison is simply done on individual bytes
+of the bytevector, case&ndash;insensitive comparison is done converting the
+bytes to characters with <code>integer-&gt;char</code> and then using the
+functions:
+
+<pre class="example">     char-ci=? char-ci&lt;? char-ci&gt;? char-ci&lt;=? char-ci&gt;=?
+</pre>
+   <p class="noindent">provided by the underlying implementation, or by case&ndash;folding
+characters with the operation:
+
+<pre class="example">     (char-downcase (char-upcase (integer-&gt;char byte)))
+</pre>
+   <p class="noindent">where the two case&ndash;mapping operations are assumed to work for
+characters in the range allowed by <acronym>ASCII</acronym> encoding.
+
+<!-- page -->
+   </body></html>
+

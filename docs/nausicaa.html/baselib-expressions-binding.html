@@ -1,0 +1,363 @@
+<html lang="en">
+<head>
+<title>baselib expressions binding - Nausicaa for Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Nausicaa for Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="baselib-expressions.html#baselib-expressions" title="baselib expressions">
+<link rel="prev" href="baselib-expressions-derived-cond.html#baselib-expressions-derived-cond" title="baselib expressions derived cond">
+<link rel="next" href="baselib-expressions-sequencing.html#baselib-expressions-sequencing" title="baselib expressions sequencing">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d3 of Nausicaa/Scheme, a set of
+Scheme libraries defining a slightly modified R6RS Scheme language
+and augmenting the features of the base and standard R6RS libraries.
+
+The project home page of Nausicaa is at:
+
+             `http://marcomaggi.github.com/nausicaa.html'
+
+
+development of Nausicaa takes place at:
+
+               `http://github.com/marcomaggi/nausicaa/'
+
+
+Copyright (C) 2008, 2009, 2010 by Marco Maggi.
+
+Copyright (C) 1996, 1997, 2000, 2001, 2002, 2003, 2004, 2005
+Free Software Foundation.
+
+Copyright (C) 1996, 1999-2005 Dorai Sitaram.
+
+Copyright (C) 1998 Oleg Kiselyov.
+
+Copyright (C) 1998, 1999, 2000 Olin Shivers.
+
+Copyright (C) 1999 John David Stone.
+
+Copyright (C) 1999, 2002 Marc Feeley.
+
+Copyright (C) 2001, 2009 Danny Dube'
+
+Copyright (C) 2002 Dr. Mirko Luedde.
+
+Copyright (C) 2002, 2003, 2005, 2006 Sebastian Egner.
+
+Copyright (C) 2003 Ray Dillinger.
+
+Copyright (C) 2003 Taylor Campbell.
+
+Copyright (C) 2005 Jens Axel Soegaard.
+
+Copyright (C) 2005-2009 Alex Shinn.
+
+Copyright (C) 2008 Taro Minowa (Higepon).
+
+Copyright (C) 2005-2008 Dominique Boucher.
+
+Copyright (C) 2004, 2005 Tony Garnock-Jones
+
+Copyright (C) 2005 LShift Ltd.
+
+Copyright (C) 2007, 2008 Philip L. Bewig.
+
+Copyright (C) 2000 Will Fitzgerald.
+
+Copyright (C) 2000 Neodesic Corporation.
+
+Copyright (C) 2000-2006 Joachim Henke.
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with no Invariant Sections being ``GNU Free
+     Documentation License'' and ``GNU General Public License'', no
+     Front--Cover Texts, and no Back--Cover Texts.  A copy of the
+     license is included in the section entitled ``GNU Free
+     Documentation License''.
+
+This document embeds an unofficial assemblage of several documents
+reformatted in Texinfo; the reformatting author and maintainer is
+Marco Maggi <marco.maggi-ipsu@poste.it>.  See the appendix ``Credits'' for
+the list of original documents and their authors.  See also the
+`README' and `CREDITS' files for additional attributions.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="baselib-expressions-binding"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="baselib-expressions-sequencing.html#baselib-expressions-sequencing">baselib expressions sequencing</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="baselib-expressions-derived-cond.html#baselib-expressions-derived-cond">baselib expressions derived cond</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="baselib-expressions.html#baselib-expressions">baselib expressions</a>
+<hr>
+</div>
+
+<h4 class="subsection">3.4.6 Binding constructs</h4>
+
+<p>The binding constructs described in this section create local bindings
+for variables that are visible only in a delimited region.  The syntax
+of the constructs <code>let</code>, <code>let*</code>, <code>letrec</code>, and
+<code>letrec*</code> is identical, but they differ in the regions they
+establish for their variable bindings and in the order in which the
+values for the bindings are computed.
+
+     <ul>
+<li>In a <code>let</code> expression, the initial values are computed before any
+of the variables become bound; in a <code>let*</code> expression, the bindings
+and evaluations are performed sequentially.
+
+     <li>In a <code>letrec</code> or <code>letrec*</code> expression, all the bindings are in
+effect while their initial values are being computed, thus allowing
+mutually recursive definitions.
+
+     <li>In a <code>letrec</code> expression, the initial values are computed before
+being assigned to the variables; in a <code>letrec*</code>, the evaluations
+and assignments are performed sequentially. 
+</ul>
+
+   <p>In addition, the binding constructs <code>let-values</code> and
+<code>let*-values</code> generalize <code>let</code> and <code>let*</code> to allow
+multiple variables to be bound to the results of expressions that
+evaluate to multiple values.  They are analogous to <code>let</code> and
+<code>let*</code> in the way they establish regions: in a <code>let-values</code>
+expression, the initial values are computed before any of the variables
+become bound; in a <code>let*-values</code> expression, the bindings are
+performed sequentially.
+
+<div class="defun">
+&mdash; Syntax: <b>let</b><var> &lt;bindings&gt; &lt;body&gt;<a name="index-let-62"></a></var><br>
+<blockquote><p>&lt;bindings&gt; must have the form:
+
+     <pre class="example">          ((&lt;variable1&gt; &lt;init1&gt;) ...)
+</pre>
+        <p class="noindent">where each &lt;init&gt; is an expression, and &lt;body&gt; is as described
+in <a href="baselib-bodies.html#baselib-bodies">baselib bodies</a>.  Any variable must not appear more than once in
+the &lt;variable&gt;s.
+
+        <p>The &lt;init&gt;s are evaluated in the current environment (in some
+unspecified order), the &lt;variable&gt;s are bound to fresh locations
+holding the results, the &lt;body&gt; is evaluated in the extended
+environment, and the values of the last expression of &lt;body&gt; are
+returned.  Each binding of a &lt;variable&gt; has &lt;body&gt; as its
+region.
+
+     <pre class="example">          (let ((x 2) (y 3))
+            (* x y))                      &rArr; 6
+          
+          (let ((x 2) (y 3))
+            (let ((x 7)
+                  (z (+ x y)))
+              (* z x)))                   &rArr; 35
+</pre>
+        <p>See also named <code>let</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>let*</b><var> &lt;bindings&gt; &lt;body&gt;<a name="index-let_002a-63"></a></var><br>
+<blockquote><p>&lt;bindings&gt; must have the form:
+
+     <pre class="example">          ((&lt;variable1&gt; &lt;init1&gt;) ...)
+</pre>
+        <p class="noindent">where each &lt;init&gt; is an expression, and &lt;body&gt; is as described
+in <a href="baselib-bodies.html#baselib-bodies">baselib bodies</a>.
+
+        <p>The <code>let*</code> form is similar to <code>let</code>, but the &lt;init&gt;s are
+evaluated and bindings created sequentially from left to right, with the
+region of each binding including the bindings to its right as well as
+&lt;body&gt;.  Thus the second &lt;init&gt; is evaluated in an environment
+in which the first binding is visible and initialized, and so on.
+
+     <pre class="example">          (let ((x 2) (y 3))
+            (let* ((x 7)
+                   (z (+ x y)))
+              (* z x)))             &rArr; 70
+</pre>
+        <blockquote>
+<strong>NOTE</strong> While the variables bound by a <code>let</code> expression must
+be distinct, the variables bound by a <code>let*</code> expression need not be
+distinct. 
+</blockquote>
+        </p></blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>letrec</b><var> &lt;bindings&gt; &lt;body&gt;<a name="index-letrec-64"></a></var><br>
+<blockquote><p>&lt;bindings&gt; must have the form:
+
+     <pre class="example">          ((&lt;variable1&gt; &lt;init1&gt;) ...)
+</pre>
+        <p class="noindent">where each &lt;init&gt; is an expression, and &lt;body&gt; is as described
+in <a href="baselib-bodies.html#baselib-bodies">baselib bodies</a>.  Any variable must not appear more than once in
+the &lt;variable&gt;s.
+
+        <p>The &lt;variable&gt;s are bound to fresh locations, the &lt;init&gt;s are
+evaluated in the resulting environment (in some unspecified order), each
+&lt;variable&gt; is assigned to the result of the corresponding
+&lt;init&gt;, the &lt;body&gt; is evaluated in the resulting environment,
+and the values of the last expression in &lt;body&gt; are returned.  Each
+binding of a &lt;variable&gt; has the entire <code>letrec</code> expression as
+its region, making it possible to define mutually recursive procedures.
+
+     <pre class="example">          (letrec ((even?
+                    (lambda (n)
+                      (if (zero? n)
+                          \schtrue
+                          (odd? (- n 1)))))
+                   (odd?
+                    (lambda (n)
+                      (if (zero? n)
+                          \schfalse
+                          (even? (- n 1))))))
+            (even? 88))
+          &rArr; #t
+</pre>
+        <p>It should be possible to evaluate each &lt;init&gt; without assigning or
+referring to the value of any &lt;variable&gt;.  In the most common uses
+of <code>letrec</code>, all the &lt;init&gt;s are <code>lambda</code>s and the
+restriction is satisfied automatically.  Another restriction is that the
+continuation of each &lt;init&gt; should not be invoked more than once.
+
+        <p><strong>Implementation responsibilities:</strong> Implementations must detect
+references to a &lt;variable&gt; during the evaluation of the &lt;init&gt;
+expressions (using one particular evaluation order and order of
+evaluating the &lt;init&gt; expressions).  If an implementation detects
+such a violation of the restriction, it must raise an exception with
+condition type <code>&amp;assertion</code>.  Implementations may or may not detect
+that the continuation of each &lt;init&gt; is invoked more than once. 
+However, if the implementation detects this, it must raise an exception
+with condition type <code>&amp;assertion</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>letrec*</b><var> &lt;bindings&gt; &lt;body&gt;<a name="index-letrec_002a-65"></a></var><br>
+<blockquote><p>&lt;bindings&gt; must have the form:
+
+     <pre class="example">          ((&lt;variable1&gt; &lt;init1&gt;) ...)
+</pre>
+        <p class="noindent">where each &lt;init&gt; is an expression, and &lt;body&gt; is as described
+in <a href="baselib-bodies.html#baselib-bodies">baselib bodies</a>.  Any variable must not appear more than once in
+the &lt;variable&gt;s.
+
+        <p>The &lt;variable&gt;s are bound to fresh locations, each &lt;variable&gt;
+is assigned in left&ndash;to&ndash;right order to the result of evaluating the
+corresponding &lt;init&gt;, the &lt;body&gt; is evaluated in the resulting
+environment, and the values of the last expression in &lt;body&gt; are
+returned.  Despite the left&ndash;to&ndash;right evaluation and assignment order,
+each binding of a &lt;variable&gt; has the entire <code>letrec*</code>
+expression as its region, making it possible to define mutually
+recursive procedures.
+
+     <pre class="example">          (letrec* ((p
+                     (lambda (x)
+                       (+ 1 (q (- x 1)))))
+                    (q
+                     (lambda (y)
+                       (if (zero? y)
+                           0
+                           (+ 1 (p (- y 1))))))
+                    (x (p 5))
+                    (y x))
+            y)
+          &rArr;  5
+</pre>
+        <p>It must be possible to evaluate each &lt;init&gt; without assigning or
+referring to the value of the corresponding &lt;variable&gt; or the
+&lt;variable&gt; of any of the bindings that follow it in
+&lt;bindings&gt;.  Another restriction is that the continuation of each
+&lt;init&gt; should not be invoked more than once.
+
+        <p><strong>Implementation responsibilities:</strong> Implementations must, during
+the evaluation of an &lt;init&gt; expression, detect references to the
+value of the corresponding &lt;variable&gt; or the &lt;variable&gt; of any
+of the bindings that follow it in &lt;bindings&gt;.  If an implementation
+detects such a violation of the restriction, it must raise an exception
+with condition type <code>&amp;assertion</code>.  Implementations may or may not
+detect that the continuation of each &lt;init&gt; is invoked more than
+once.  However, if the implementation detects this, it must raise an
+exception with condition type <code>&amp;assertion</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>let-values</b><var> &lt;mv-bindings&gt; &lt;body&gt;<a name="index-let_002dvalues-66"></a></var><br>
+<blockquote><p>&lt;mv-bindings&gt; must have the form:
+
+     <pre class="example">          ((&lt;formals1&gt; &lt;init1&gt;) ...)
+</pre>
+        <p class="noindent">where each &lt;init&gt; is an expression, and &lt;body&gt; is as described
+in <a href="baselib-bodies.html#baselib-bodies">baselib bodies</a>.  Any variable must not appear more than once in
+the set of &lt;formals&gt;.
+
+        <p>The &lt;init&gt;s are evaluated in the current environment (in some
+unspecified order), and the variables occurring in the &lt;formals&gt;
+are bound to fresh locations containing the values returned by the
+&lt;init&gt;s, where the &lt;formals&gt; are matched to the return values
+in the same way that the &lt;formals&gt; in a <code>lambda</code> are matched
+to the arguments in a procedure call.  Then, the &lt;body&gt; is
+evaluated in the extended environment, and the values of the last
+expression of &lt;body&gt; are returned.  Each binding of a variable has
+&lt;body&gt; as its region.  If the &lt;formals&gt; do not match, an
+exception with condition type <code>&amp;assertion</code> is raised.
+
+     <pre class="example">          (let-values (((a b) (values 1 2))
+                       ((c d) (values 3 4)))
+            (list a b c d))
+          &rArr; (1 2 3 4)
+          
+          (let-values (((a b . c) (values 1 2 3 4)))
+            (list a b c))
+          &rArr; (1 2 (3 4))
+          
+          (let ((a 'a) (b 'b) (x 'x) (y 'y))
+            (let-values (((a b) (values x y))
+                         ((x y) (values a b)))
+              (list a b x y)))
+          &rArr; (x y a b)
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>let*-values</b><var> &lt;mv-bindings&gt; &lt;body&gt;<a name="index-let_002a_002dvalues-67"></a></var><br>
+<blockquote><p>&lt;mv-bindings&gt; must have the form:
+
+     <pre class="example">          ((&lt;formals1&gt; &lt;init1&gt;) ...)
+</pre>
+        <p class="noindent">where each &lt;init&gt; is an expression, and &lt;body&gt; is as described
+in <a href="baselib-bodies.html#baselib-bodies">baselib bodies</a>.  In each &lt;formals&gt;, any variable must not
+appear more than once.
+
+        <p>The <code>let*-values</code> form is similar to <code>let-values</code>, but the
+&lt;init&gt;s are evaluated and bindings created sequentially from left
+to right, with the region including the bindings to its right as well as
+&lt;body&gt;.  Thus the second &lt;init&gt; is evaluated in an environment
+in which the bindings of the first &lt;formals&gt; is visible and
+initialized, and so on.
+
+     <pre class="example">          (let ((a 'a) (b 'b) (x 'x) (y 'y))
+            (let*-values (((a b) (values x y))
+                          ((x y) (values a b)))
+              (list a b x y)))
+          &rArr; (x y x y)
+</pre>
+        <blockquote>
+<strong>NOTE</strong> While all of the variables bound by a <code>let-values</code>
+expression must be distinct, the variables bound by different
+&lt;formals&gt; of a <code>let*-values</code> expression need not be distinct. 
+</blockquote>
+        </p></blockquote></div>
+
+<!-- page -->
+   </body></html>
+

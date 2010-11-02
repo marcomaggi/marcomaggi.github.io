@@ -1,0 +1,250 @@
+<html lang="en">
+<head>
+<title>baselib syntax binding - Nausicaa for Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Nausicaa for Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="baselib.html#baselib" title="baselib">
+<link rel="prev" href="baselib-quasiquotation.html#baselib-quasiquotation" title="baselib quasiquotation">
+<link rel="next" href="baselib-transformers.html#baselib-transformers" title="baselib transformers">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d3 of Nausicaa/Scheme, a set of
+Scheme libraries defining a slightly modified R6RS Scheme language
+and augmenting the features of the base and standard R6RS libraries.
+
+The project home page of Nausicaa is at:
+
+             `http://marcomaggi.github.com/nausicaa.html'
+
+
+development of Nausicaa takes place at:
+
+               `http://github.com/marcomaggi/nausicaa/'
+
+
+Copyright (C) 2008, 2009, 2010 by Marco Maggi.
+
+Copyright (C) 1996, 1997, 2000, 2001, 2002, 2003, 2004, 2005
+Free Software Foundation.
+
+Copyright (C) 1996, 1999-2005 Dorai Sitaram.
+
+Copyright (C) 1998 Oleg Kiselyov.
+
+Copyright (C) 1998, 1999, 2000 Olin Shivers.
+
+Copyright (C) 1999 John David Stone.
+
+Copyright (C) 1999, 2002 Marc Feeley.
+
+Copyright (C) 2001, 2009 Danny Dube'
+
+Copyright (C) 2002 Dr. Mirko Luedde.
+
+Copyright (C) 2002, 2003, 2005, 2006 Sebastian Egner.
+
+Copyright (C) 2003 Ray Dillinger.
+
+Copyright (C) 2003 Taylor Campbell.
+
+Copyright (C) 2005 Jens Axel Soegaard.
+
+Copyright (C) 2005-2009 Alex Shinn.
+
+Copyright (C) 2008 Taro Minowa (Higepon).
+
+Copyright (C) 2005-2008 Dominique Boucher.
+
+Copyright (C) 2004, 2005 Tony Garnock-Jones
+
+Copyright (C) 2005 LShift Ltd.
+
+Copyright (C) 2007, 2008 Philip L. Bewig.
+
+Copyright (C) 2000 Will Fitzgerald.
+
+Copyright (C) 2000 Neodesic Corporation.
+
+Copyright (C) 2000-2006 Joachim Henke.
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with no Invariant Sections being ``GNU Free
+     Documentation License'' and ``GNU General Public License'', no
+     Front--Cover Texts, and no Back--Cover Texts.  A copy of the
+     license is included in the section entitled ``GNU Free
+     Documentation License''.
+
+This document embeds an unofficial assemblage of several documents
+reformatted in Texinfo; the reformatting author and maintainer is
+Marco Maggi <marco.maggi-ipsu@poste.it>.  See the appendix ``Credits'' for
+the list of original documents and their authors.  See also the
+`README' and `CREDITS' files for additional attributions.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="baselib-syntax-binding"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="baselib-transformers.html#baselib-transformers">baselib transformers</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="baselib-quasiquotation.html#baselib-quasiquotation">baselib quasiquotation</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="baselib.html#baselib">baselib</a>
+<hr>
+</div>
+
+<h3 class="section">3.17 Binding constructs for syntactic keywords</h3>
+
+<p><a name="index-Binding-syntactic-keywords-225"></a><a name="index-Syntactic-keywords_002c-binding-226"></a>
+
+   <p>The <code>let-syntax</code> and <code>letrec-syntax</code> forms bind keywords. 
+Like a <code>begin</code> form, a <code>let-syntax</code> or <code>letrec-syntax</code>
+form may appear in a definition context, in which case it is treated as
+a definition, and the forms in the body must also be definitions.  A
+<code>let-syntax</code> or <code>letrec-syntax</code> form may also appear in an
+expression context, in which case the forms within their bodies must be
+expressions.
+
+<div class="defun">
+&mdash; Syntax: <b>let-syntax</b><var> &lt;bindings&gt; &lt;form&gt; <small class="dots">...</small><a name="index-let_002dsyntax-227"></a></var><br>
+<blockquote><p>&lt;bindings&gt; must have the form:
+
+     <pre class="example">          ((&lt;keyword&gt; &lt;expression&gt;) ...)
+</pre>
+        <p>Each &lt;keyword&gt; is an identifier, and each &lt;expression&gt; is an
+expression that evaluates, at macro&ndash;expansion time, to a
+<dfn>transformer</dfn>.  Transformers may be created by <code>syntax-rules</code>
+or <code>identifier-syntax</code> or by one of the other mechanisms described
+in <a href="stdlib-syntax_002dcase.html#stdlib-syntax_002dcase">Syntax&ndash;case</a>.  It is a syntax violation for
+&lt;keyword&gt; to appear more than once in the list of keywords being
+bound.
+
+        <p>The &lt;form&gt;s are expanded in the syntactic environment obtained by
+extending the syntactic environment of the <code>let-syntax</code> form with
+macros whose keywords are the &lt;keyword&gt;s, bound to the specified
+transformers.  Each binding of a &lt;keyword&gt; has the &lt;form&gt;s as
+its region.
+
+        <p>The &lt;form&gt;s of a <code>let-syntax</code> form are treated, whether in
+definition or expression context, as if wrapped in an implicit
+<code>begin</code>.  Thus definitions in the result of expanding the
+&lt;form&gt;s have the same region as any definition appearing in place
+of the <code>let-syntax</code> form would have.
+
+        <p><strong>Implementation responsibilities:</strong> The implementation should
+detect if the value of &lt;expression&gt; cannot possibly be a
+transformer.
+
+     <pre class="example">          (let-syntax ((when (syntax-rules ()
+                               ((when test stmt1 stmt2 ...)
+                                (if test
+                                    (begin stmt1 stmt2 ...))))))
+            (let ((if #t))
+              (when if (set! if 'now))
+              if))
+          &rArr;  now
+          
+          (let ((x 'outer))
+            (let-syntax ((m (syntax-rules () ((m) x))))
+              (let ((x 'inner))
+                (m))))
+          &rArr;  outer
+          
+          (let ()
+            (let-syntax ((def (syntax-rules ()
+                                ((def stuff ...) (define stuff ...)))))
+              (def foo 42))
+            foo)
+          &rArr; 42
+          
+          (let ()
+            (let-syntax ())
+            5)
+          &rArr; 5
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>letrec-syntax</b><var> &lt;bindings&gt; &lt;form&gt; <small class="dots">...</small><a name="index-letrec_002dsyntax-228"></a></var><br>
+<blockquote><p>Same as for <code>let-syntax</code>.
+
+        <p>The &lt;form&gt;s are expanded in the syntactic environment obtained by
+extending the syntactic environment of the <code>letrec-syntax</code> form
+with macros whose keywords are the &lt;keyword&gt;s, bound to the
+specified transformers.  Each binding of a &lt;keyword&gt; has the
+&lt;bindings&gt; as well as the &lt;form&gt;s within its region, so the
+transformers can transcribe forms into uses of the macros introduced by
+the <code>letrec-syntax</code> form.
+
+        <p>The &lt;form&gt;s of a <code>letrec-syntax</code> form are treated, whether in
+definition or expression context, as if wrapped in an implicit
+<code>begin</code>.  Thus definitions in the result of expanding the
+&lt;form&gt;s have the same region as any definition appearing in place
+of the <code>letrec-syntax</code> form would have.
+
+        <p><strong>Implementation responsibilities:</strong> The implementation should
+detect if the value of &lt;expression&gt; cannot possibly be a
+transformer.
+
+     <pre class="example">          (letrec-syntax
+              ((my-or (syntax-rules ()
+                        ((my-or)
+                         #f)
+                        ((my-or e)
+                         e)
+                        ((my-or e1 e2 ...)
+                         (let ((temp e1))
+                           (if temp
+                               temp
+                             (my-or e2 ...)))))))
+            (let ((x     #f)
+                  (y     7)
+                  (temp  8)
+                  (let   odd?)
+                  (if    even?))
+              (my-or x (let temp) (if y) y)))
+          &rArr; 7
+</pre>
+        <p>The following example highlights how <code>let-syntax</code> and
+<code>letrec-syntax</code> differ.
+
+     <pre class="example">          (let ((f (lambda (x) (+ x 1))))
+            (let-syntax ((f (syntax-rules ()
+                              ((f x) x)))
+                         (g (syntax-rules ()
+                              ((g x) (f x)))))
+              (list (f 1) (g 1))))
+          &rArr; (1 2)
+          
+          (let ((f (lambda (x) (+ x 1))))
+            (letrec-syntax ((f (syntax-rules ()
+                                 ((f x) x)))
+                            (g (syntax-rules ()
+                                 ((g x) (f x)))))
+              (list (f 1) (g 1))))
+          &rArr; (1 1)
+</pre>
+        <p>The two expressions are identical except that the <code>let-syntax</code> form
+in the first expression is a <code>letrec-syntax</code> form in the second. 
+In the first expression, the &lsquo;<samp><span class="samp">f</span></samp>&rsquo; occurring in &lsquo;<samp><span class="samp">g</span></samp>&rsquo; refers to
+the <code>let</code>&ndash;bound variable &lsquo;<samp><span class="samp">f</span></samp>&rsquo;, whereas in the second it refers
+to the keyword <code>f</code> whose binding is established by the
+<code>letrec-syntax</code> form. 
+</p></blockquote></div>
+
+<!-- page -->
+   </body></html>
+
