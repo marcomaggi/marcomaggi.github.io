@@ -1,0 +1,353 @@
+<html lang="en">
+<head>
+<title>classes define tagged - Nausicaa for Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Nausicaa for Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="classes-define.html#classes-define" title="classes define">
+<link rel="prev" href="classes-define-virtual.html#classes-define-virtual" title="classes define virtual">
+<link rel="next" href="classes-define-method.html#classes-define-method" title="classes define method">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d4 of Nausicaa/Scheme, a set of
+Scheme libraries defining a slightly modified R6RS Scheme language
+and augmenting the features of the base and standard R6RS libraries.
+
+The project home page of Nausicaa is at:
+
+             `http://marcomaggi.github.com/nausicaa.html'
+
+
+development of Nausicaa takes place at:
+
+               `http://github.com/marcomaggi/nausicaa/'
+
+
+Copyright (C) 2008, 2009, 2010 by Marco Maggi.
+
+Copyright (C) 1996, 1997, 2000, 2001, 2002, 2003, 2004, 2005
+Free Software Foundation.
+
+Copyright (C) 1996, 1999-2005 Dorai Sitaram.
+
+Copyright (C) 1998 Oleg Kiselyov.
+
+Copyright (C) 1998, 1999, 2000 Olin Shivers.
+
+Copyright (C) 1999 John David Stone.
+
+Copyright (C) 1999, 2002 Marc Feeley.
+
+Copyright (C) 2001, 2009 Danny Dube'
+
+Copyright (C) 2002 Dr. Mirko Luedde.
+
+Copyright (C) 2002, 2003, 2005, 2006 Sebastian Egner.
+
+Copyright (C) 2003 Ray Dillinger.
+
+Copyright (C) 2003 Taylor Campbell.
+
+Copyright (C) 2005 Jens Axel Soegaard.
+
+Copyright (C) 2005-2009 Alex Shinn.
+
+Copyright (C) 2008 Taro Minowa (Higepon).
+
+Copyright (C) 2005-2008 Dominique Boucher.
+
+Copyright (C) 2004, 2005 Tony Garnock-Jones
+
+Copyright (C) 2005 LShift Ltd.
+
+Copyright (C) 2007, 2008 Philip L. Bewig.
+
+Copyright (C) 2000 Will Fitzgerald.
+
+Copyright (C) 2000 Neodesic Corporation.
+
+Copyright (C) 2000-2006 Joachim Henke.
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with no Invariant Sections being ``GNU Free
+     Documentation License'' and ``GNU General Public License'', no
+     Front--Cover Texts, and no Back--Cover Texts.  A copy of the
+     license is included in the section entitled ``GNU Free
+     Documentation License''.
+
+This document embeds an unofficial assemblage of several documents
+reformatted in Texinfo; the reformatting author and maintainer is
+Marco Maggi <marco.maggi-ipsu@poste.it>.  See the appendix ``Credits'' for
+the list of original documents and their authors.  See also the
+`README' and `CREDITS' files for additional attributions.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="classes-define-tagged"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="classes-define-method.html#classes-define-method">classes define method</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="classes-define-virtual.html#classes-define-virtual">classes define virtual</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="classes-define.html#classes-define">classes define</a>
+<hr>
+</div>
+
+<h4 class="subsection">22.1.8 Fields tagged for dot notation</h4>
+
+<p>There is a special syntax to specify a class or label as tag for fields
+and virtual fields of a class or label; this syntax is used to enable
+dot notation to access fields and methods of those fields.  At present
+no validation of tagged field values is performed by field accessors and
+mutators nor by constructor functions of classes and labels.
+
+   <p>The plain forms to specify a field in a <code>field</code> or
+<code>virtual-field</code> auxiliary syntax are the same supported by
+<code>define-record-type</code> from <code>(rnrs records syntactic (6))</code>:
+
+<pre class="example">     <var>field</var>
+     (mutable <var>field</var>)
+     (mutable <var>field</var> <var>accessor</var> <var>mutator</var>)
+     (immutable <var>field</var>)
+     (immutable <var>field</var> <var>accessor</var>)
+</pre>
+   <p class="noindent">where <var>field</var>, <var>accessor</var> and <var>mutator</var> are identifiers,
+<code>mutable</code> and <code>immutable</code> are the auxiliary syntaxes exported
+by <code>(rnrs records syntactic (6))</code>.  <code>define-class</code> and
+<code>define-label</code> additionally support the following forms:
+
+<pre class="example">     (<var>field</var> <var>class</var> ...)
+     (mutable (<var>field</var> <var>class</var> ...))
+     (mutable (<var>field</var> <var>class</var> ...) <var>accessor</var> <var>mutator</var>)
+     (immutable (<var>field</var> <var>class</var> ...))
+     (immutable (<var>field</var> <var>class</var> ...) <var>accessor</var>)
+</pre>
+   <p class="noindent">where each <var>class</var> is a class or label identifier.
+
+   <p>To use dot notation with non&ndash;tagged fields we do:
+
+<pre class="example">     (define-class &lt;alpha&gt;
+       (fields a b))
+     
+     (let ((o (make &lt;alpha&gt; 1 2)))
+       (with-class ((o &lt;alpha&gt;))
+         (list o.a o.b)))
+     &rArr; (1 2)
+</pre>
+   <p class="noindent">with tagged fields we can do:
+
+<pre class="example">     #|
+        &lt;beta&gt; -----------&gt; &lt;alpha&gt;
+                field tag
+     |#
+     (define-class &lt;alpha&gt;
+       (fields a b))
+     
+     (define-class &lt;beta&gt;
+       (fields (c &lt;alpha&gt;)))
+     
+     (let ((o (make &lt;beta&gt;
+                (make &lt;alpha&gt;
+                  1 2))))
+       (with-class ((o &lt;beta&gt;))
+         (list o.c o.c.a o.c.b)))
+</pre>
+   <p class="noindent">in which the use of <code>with-class</code> is equivalent to:
+
+<pre class="example">     (with-class ((o &lt;beta&gt;))
+       (with-class ((o.c &lt;alpha&gt;))
+         (list o.c o.c.a o.c.b)))
+</pre>
+   <p class="noindent">and to:
+
+<pre class="example">     (with-class ((o    &lt;beta&gt;)
+                  (o.c  &lt;alpha&gt;))
+       (list o.c o.c.a o.c.b))
+</pre>
+   <!--  -->
+<h5 class="subsubheading">Circular tagging</h5>
+
+<p>In the context of the <code>(nausicaa language classes)</code> library, a
+<dfn>circular tagging</dfn> happens when:
+
+     <ol type=1 start=1>
+<li>A class or label <code>&lt;x&gt;</code> has a field with tag <code>&lt;x&gt;</code>:
+
+     <pre class="example">            -----
+           |     | field tag
+           v     |
+          &lt;x&gt; ---
+</pre>
+     <p class="noindent">or, more generally, when class or label <code>&lt;x&gt;</code> has tagged fields
+being classes or labels having tagged fields and so on, and somewhere
+down the graph structure of tags there is again the <code>&lt;x&gt;</code> class or
+label:
+
+     <pre class="example">            ---------------------
+           |                     | tag
+           v                     |
+          &lt;x&gt; -----&gt; &lt;y&gt; -----&gt; &lt;z&gt;
+               tag        tag
+</pre>
+     <li>A class or label <code>&lt;x&gt;</code> has <code>&lt;y&gt;</code> as ancestor in the inheritance
+hierarchy, and <code>&lt;y&gt;</code> has tagged fields which, down the graph
+structure of tags, use the <code>&lt;x&gt;</code> class or label:
+
+     <pre class="example">          &lt;y&gt; --------
+           ^          |
+           |inherit   | field tag
+           |          v
+          &lt;a&gt;        &lt;b&gt;
+           ^          |
+           |inherit   | field tag
+           |          |
+          &lt;x&gt; &lt;-------
+</pre>
+     </ol>
+
+<p class="noindent">circular tagging is not supported by <code>(nausicaa language classes)</code>
+because it results in infinite recursion in the expansion of the
+<code>with-class</code> macro; unfortunately, it is impossible to avoid this
+infinite recursion with the technology of <code>(nausicaa language
+classes)</code> (a custom macro expander would be needed).
+
+   <p>An attempt to detect circular tagging at expand time is performed by
+<code>define-class</code> and <code>define-label</code> and a syntax violation is
+raised when it succeeds.
+
+   <p>A class definition with the simplest circular tagging is like this:
+
+<pre class="example">     #|
+         ------
+        |      |field tag
+        v      |
+     &lt;alpha&gt;---
+     |#
+     
+     (define-class &lt;alpha&gt;
+       (fields (a &lt;alpha&gt;)))
+</pre>
+   <p class="noindent">we can understand that it would generate an infinite number of nested
+<code>with-class</code> uses:
+
+<pre class="example">     (with-class ((o &lt;alpha&gt;))
+       (with-class ((o.a &lt;alpha&gt;))
+         (with-class ((o.a.a &lt;alpha&gt;))
+           (with-class ((o.a.a.a &lt;alpha&gt;))
+             ...))))
+</pre>
+   <p class="noindent">or equivalently a <code>with-class</code> use with an infinite number of
+clauses:
+
+<pre class="example">     (with-class ((o &lt;alpha&gt;)
+                  (o.a &lt;alpha&gt;)
+                  (o.a.a &lt;alpha&gt;)
+                  (o.a.a.a &lt;alpha&gt;)
+                  ...)
+       ---)
+</pre>
+   <p>The following example is also a definition with circular tagging:
+
+<pre class="example">     #|
+        &lt;alpha&gt; ------
+          ^           |
+          | inherit   | field tag
+          |           |
+        &lt;beta&gt; &lt;------
+     |#
+     
+     (define-class &lt;alpha&gt;
+       (fields (a &lt;beta&gt;)))
+     
+     (define-class &lt;beta&gt;
+       (inherit &lt;alpha&gt;))
+     
+     (define o
+       (make &lt;beta&gt;
+         (make &lt;beta&gt; 1))) ;wrong initialisation
+     
+     (with-class ((o &lt;beta&gt;))
+       #f)
+</pre>
+   <p class="noindent">because the use of <code>with-class</code> expands to the following infinite
+clauses:
+
+<pre class="example">     (with-class ((o &lt;beta&gt;)
+                  (o.a &lt;beta&gt;)
+                  (o.a.a &lt;beta&gt;)
+                  (o.a.a.a &lt;beta&gt;)
+                  ...)
+       #f)
+</pre>
+   <!--  -->
+<h5 class="subsubheading">Non&ndash;circular tagging</h5>
+
+<p>The following is a collection of definition examples with
+<strong>non</strong>&ndash;circular tagging, they are perfectly fine:
+
+<pre class="example">     #|
+     &lt;alpha&gt; &lt;-----
+       ^           |
+       |inherit    |field tag
+       |           |
+     &lt;beta&gt; -------
+     |#
+     
+     (define-class &lt;alpha&gt;
+       (fields (mutable a)))
+     
+     (define-class &lt;beta&gt;
+       (inherit &lt;alpha&gt;)
+       (fields (b &lt;alpha&gt;)))
+     
+     (define o
+       (make &lt;beta&gt;
+         1 (make &lt;alpha&gt; 2)))
+     
+     (with-class ((o &lt;beta&gt;))
+       (list o.a o.b.a))
+     &rArr; (1 2)
+</pre>
+   <pre class="example">     #|
+     &lt;alpha&gt; &lt;-------------
+       ^                   |
+       |inherit            | inherit
+       |                   |
+     &lt;beta&gt; ----------&gt; &lt;gamma&gt;
+            field tag
+     |#
+     
+     (define-class &lt;alpha&gt;
+       (fields (mutable a)))
+     
+     (define-class &lt;beta&gt;
+       (inherit &lt;alpha&gt;)
+       (fields (b &lt;gamma&gt;)))
+     
+     (define-class &lt;gamma&gt;
+       (inherit &lt;alpha&gt;))
+     
+     (let (((o &lt;beta&gt;)
+            (make &lt;beta&gt;
+              'beta-alpha-a
+              (make &lt;gamma&gt;
+                'gamma-alpha-a))))
+       (list o.a o.b.a))
+     &rArr; (beta-alpha-a gamma-alpha-a)
+</pre>
+   <!-- page -->
+   </body></html>
+

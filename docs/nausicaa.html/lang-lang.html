@@ -9,7 +9,7 @@
 <link rel="next" href="lang-let.html#lang-let" title="lang let">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
-This document describes version 0.2d3 of Nausicaa/Scheme, a set of
+This document describes version 0.2d4 of Nausicaa/Scheme, a set of
 Scheme libraries defining a slightly modified R6RS Scheme language
 and augmenting the features of the base and standard R6RS libraries.
 
@@ -107,7 +107,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="lang.html#lang">lang</a>
 <h3 class="section">9.1 Language constructs</h3>
 
 <div class="defun">
-&mdash; Syntax: <b>begin0</b><var> form0 form ...<a name="index-begin0-919"></a></var><br>
+&mdash; Syntax: <b>begin0</b><var> form0 form ...<a name="index-begin0-939"></a></var><br>
 <blockquote><p>Evaluate all the <var>form</var>s like the standard <code>begin</code>, but return
 the value of <var>form0</var>.  The implementation comes from the <acronym>R6RS</acronym>
 original document, Appendix A &ldquo;Formal semantics&rdquo;.
@@ -125,8 +125,10 @@ original document, Appendix A &ldquo;Formal semantics&rdquo;.
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Syntax: <b>cut</b><var> slot-or-expr ...<a name="index-cut-920"></a></var><br>
-&mdash; Syntax: <b>cute</b><var> slot-or-expr ...<a name="index-cute-921"></a></var><br>
+&mdash; Syntax: <b>cut</b><var> slot-or-expr ...<a name="index-cut-940"></a></var><br>
+&mdash; Syntax: <b>cute</b><var> slot-or-expr ...<a name="index-cute-941"></a></var><br>
+&mdash; Auxiliary Syntax: <b>&lt;&gt;</b><var><a name="index-g_t_003c_003e-942"></a></var><br>
+&mdash; Auxiliary Syntax: <b>&lt;...&gt;</b><var><a name="index-g_t_003c_002e_002e_002e_003e-943"></a></var><br>
 <blockquote><p>When programming in functional style, it is frequently necessary to
 specialize some of the parameters of a multi&ndash;parameter procedure.  For
 example, from the binary operation <code>cons</code> one might want to obtain
@@ -137,18 +139,18 @@ section&rdquo; or &ldquo;projection&rdquo;.
         <p>The <code>cut</code> and <code>cute</code> syntaxes allow to write this sort of
 specialization in a simple and compact way.  Examples:
 
-     <pre class="example">          (cut cons (+ a 1) &lt;&gt;)   = (lambda (x2)
-                                      (cons (+ a 1) x2))
+     <pre class="example">          (cut cons (+ a 1) &lt;&gt;)   ==&gt; (lambda (x2)
+                                        (cons (+ a 1) x2))
           
-          (cut list 1 &lt;&gt; 3 &lt;&gt; 5)  = (lambda (x2 x4)
-                                      (list 1 x2 3 x4 5))
+          (cut list 1 &lt;&gt; 3 &lt;&gt; 5)  ==&gt; (lambda (x2 x4)
+                                        (list 1 x2 3 x4 5))
           
-          (cut list)              = (lambda () (list))
+          (cut list)              ==&gt; (lambda () (list))
           
-          (cut list 1 &lt;&gt; 3 &lt;...&gt;) = (lambda (x2 . xs)
-                                      (apply list 1 x2 3 xs))
+          (cut list 1 &lt;&gt; 3 &lt;...&gt;) ==&gt; (lambda (x2 . xs)
+                                        (apply list 1 x2 3 xs))
           
-          (cut &lt;&gt; a b)            = (lambda (f) (f a b))
+          (cut &lt;&gt; a b)            ==&gt; (lambda (f) (f a b))
 </pre>
         <p><code>cut</code> specializes some of the parameters of its first argument. 
 The parameters that are to show up as formal variables of the result are
@@ -161,9 +163,9 @@ can also be a slot.
 procedure is specialized, not at the time the specialized procedure is
 called.  For example:
 
-     <pre class="example">          (cute cons (+ a 1) &lt;&gt;) = (let ((a1 (+ a 1)))
-                                     (lambda (x2)
-                                       (cons a1 x2)))
+     <pre class="example">          (cute cons (+ a 1) &lt;&gt;) ==&gt; (let ((a1 (+ a 1)))
+                                       (lambda (x2)
+                                         (cons a1 x2)))
 </pre>
         <p class="noindent"><code>cute</code> will evaluate <code>(+ a 1)</code> once, while the <code>cut</code>
 would evaluate it during every invocation of the resulting procedure.
@@ -178,11 +180,14 @@ would evaluate it during every invocation of the resulting procedure.
           &lt;slot-or-expr&gt;   -&gt; &lt;&gt;              ; a "slot"
                            |  &lt;expression&gt;    ; a "non-slot expression"
 </pre>
-        </blockquote></div>
+        <p>The <code>&lt;&gt;</code> and <code>&lt;...&gt;</code> auxiliary syntaxes are exported by the
+library <code>(nausicaa language auxiliary-syntaxes)</code> and reexported by
+this library. 
+</p></blockquote></div>
 
 <div class="defun">
-&mdash; Syntax: <b>ensure</b><var> test </var>(<var>by form0 form ...</var>) (<var>else form0 form ...</var>)<var><a name="index-ensure-922"></a></var><br>
-&mdash; Syntax: <b>ensure</b><var> test </var>(<var>by form0 form ...</var>) (<var>else-by form0 form ...</var>)<var> ... </var>(<var>else form0 form ...</var>)<var><a name="index-ensure-923"></a></var><br>
+&mdash; Syntax: <b>ensure</b><var> test </var>(<var>by form0 form ...</var>) (<var>else form0 form ...</var>)<var><a name="index-ensure-944"></a></var><br>
+&mdash; Syntax: <b>ensure</b><var> test </var>(<var>by form0 form ...</var>) (<var>else-by form0 form ...</var>)<var> ... </var>(<var>else form0 form ...</var>)<var><a name="index-ensure-945"></a></var><br>
 <blockquote><p>Evaluate the <var>form</var>s in the <code>by</code> and <code>else-by</code> clauses, in
 sequence, until <var>test</var> evaluates to true.  If the first evaluation
 of <var>test</var> gives true: no <var>form</var>s are evaluated.  If neither the
@@ -236,6 +241,11 @@ no <var>form</var>s were evaluated.
           &rArr; 789
 </pre>
         </blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>xor</b><var> expr ...<a name="index-xor-946"></a></var><br>
+<blockquote><p>Exclusive <code>or</code>. 
+</p></blockquote></div>
 
 <!-- page -->
    </body></html>

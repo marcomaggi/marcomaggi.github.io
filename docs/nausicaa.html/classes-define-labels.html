@@ -7,9 +7,10 @@
 <link title="Top" rel="start" href="index.html#Top">
 <link rel="up" href="classes-define.html#classes-define" title="classes define">
 <link rel="prev" href="classes-define-bindings.html#classes-define-bindings" title="classes define bindings">
+<link rel="next" href="classes-define-mixins.html#classes-define-mixins" title="classes define mixins">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
-This document describes version 0.2d3 of Nausicaa/Scheme, a set of
+This document describes version 0.2d4 of Nausicaa/Scheme, a set of
 Scheme libraries defining a slightly modified R6RS Scheme language
 and augmenting the features of the base and standard R6RS libraries.
 
@@ -99,24 +100,24 @@ the list of original documents and their authors.  See also the
 <div class="node">
 <a name="classes-define-labels"></a>
 <p>
+Next:&nbsp;<a rel="next" accesskey="n" href="classes-define-mixins.html#classes-define-mixins">classes define mixins</a>,
 Previous:&nbsp;<a rel="previous" accesskey="p" href="classes-define-bindings.html#classes-define-bindings">classes define bindings</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="classes-define.html#classes-define">classes define</a>
 <hr>
 </div>
 
-<h4 class="subsection">20.1.10 Defining labels</h4>
+<h4 class="subsection">22.1.12 Defining labels</h4>
 
 <p>A label allows us to take an identifier (bound to whatever value) and
 define new identifiers representing virtual fields, methods, a setter
-and a getter, a parent label.  Labels cannot be used in the inheritance
-hierarchy of classes, and vice versa.  Labels can be used by
-<code>with-class</code> and all its derived syntaxes; labels <strong>cannot</strong>
-be used to dispatch generic functions defined by the <code>(generics)</code>
-library (foreign classes can).
+and a getter, a parent label or class.  Labels can inherit from a class,
+but not vice versa.  Labels can be used by <code>with-class</code> and all its
+derived syntaxes; labels <strong>cannot</strong> be used to dispatch generic
+functions defined by the <code>(nausicaa generics)</code> library.
 
 <div class="defun">
-&mdash; Macro: <b>define-label</b><var> name clause ...<a name="index-define_002dlabel-1110"></a></var><br>
-&mdash; Macro: <b>define-label</b> (<var>name predicate</var>)<var> clause ...<a name="index-define_002dlabel-1111"></a></var><br>
+&mdash; Macro: <b>define-label</b><var> name clause ...<a name="index-define_002dlabel-1176"></a></var><br>
+&mdash; Macro: <b>define-label</b> (<var>name predicate</var>)<var> clause ...<a name="index-define_002dlabel-1177"></a></var><br>
 <blockquote><p>Define a new label type.  Labels are somewhat like classes, but with no
 concrete fields, no underlying record type and no constructor protocols,
 no virtual methods; labels cannot be instantiated.
@@ -124,8 +125,15 @@ no virtual methods; labels cannot be instantiated.
         <p>The following clauses are available in the body of a label definition:
 
           <dl>
-<dt><code>inherit</code><dd>Select a parent label; it has the same syntax and semantics of the
-corresponding clause for classes.
+<dt><code>inherit</code><dd>Select a parent label or class; it has the same syntax and semantics of
+the corresponding clause for classes.  The default is to inherit
+everything from the parent but concrete fields; this is fine when the
+parent is another label, but when the parent is a class we should use
+the <code>concrete-fields</code> option to enable bindings for the parent's
+concrete fields.
+
+          <p>If no <code>inherit</code> clause is present: by default the label inherits
+from <code>&lt;top&gt;</code>, which is a class.
 
           <br><dt><code>predicate</code><dd>Select a predicate function to be used to identify values with the
 <code>is-a?</code> macro; it has the same syntax and semantics of the
@@ -133,10 +141,95 @@ corresponding clause for classes.  If a predicate is not selected: it
 defaults to a function which always returns <code>#t</code>.
 
           <br><dt><code>virtual-fields</code><dt><code>method</code><dt><code>method-syntax</code><dt><code>methods</code><dt><code>setter</code><dt><code>getter</code><dt><code>bindings</code><dd>They have the same syntax and semantics of the corresponding clauses for
-classes. 
+classes.
+
+          <br><dt><code>custom-maker</code><dd>Define a maker which can be used to build whatever value the label
+provides an <acronym>API</acronym> to.  The maker definition must be external to the
+<code>define-label</code> body. 
 </dl>
         </p></blockquote></div>
 
-<!-- page -->
+   <p>The following is an example of library in which a label is used to
+handle lists as tuples of values:
+
+<pre class="example">     #!r6rs
+     (library (the-tuple)
+       (export &lt;tuple&gt; a: b: c:)
+       (import (nausicaa))
+     
+       (define-auxiliary-syntaxes
+         a: b: c:)
+     
+       (define (tuple-predicate obj)
+         (and (not (null? obj))
+              (list? obj)
+              (= 3 (length obj))))
+     
+       (define-maker make-tuple
+         list
+         ((a: #f)
+          (b: #f)
+          (c: #f)))
+     
+       (define-label (&lt;tuple&gt; tuple?)
+         (predicate tuple-predicate)
+         (virtual-fields (immutable a car)
+                         (immutable b cadr)
+                         (immutable c caddr))
+         (custom-maker make-tuple))
+       )
+</pre>
+   <p class="noindent">it can be used as follows:
+
+<pre class="example">     #!r6rs
+     (import (nausicaa) (the-tuple))
+     
+     (let (((o &lt;tuple&gt;) (make &lt;tuple&gt;
+                          (a: 1)
+                          (b: 2)
+                          (c: 3))))
+     
+       (is-a? o &lt;tuple&gt;)     &rArr; #t
+       (tuple? o)            &rArr; #t
+       (list o.a o.b o.c)    &rArr; (1 2 3)
+       )
+</pre>
+   <p>The following meaningless example shows how labels and generic functions
+from <code>(nausicaa generics)</code> can be used to define &ldquo;interfaces&rdquo;
+and classes implementing them:
+
+<pre class="example">     ;; the interface &lt;iface&gt; has two methods
+     
+     (define-generic iface-one)
+     (define-generic iface-two)
+     
+     (define-label &lt;iface&gt;
+       (methods (one iface-one)
+                (two iface-two)))
+     
+     ;; the classes &lt;alpha&gt; and &lt;beta&gt; implement &lt;iface&gt;
+     
+     (define-class &lt;alpha&gt;
+       (fields a))
+     
+     (define-class &lt;beta&gt;
+       (fields b))
+     
+     (define-method (iface-one (o &lt;alpha&gt;)) '(one . alpha))
+     (define-method (iface-two (o &lt;alpha&gt;)) '(two . alpha))
+     (define-method (iface-one (o &lt;beta&gt;))  '(one . beta))
+     (define-method (iface-two (o &lt;beta&gt;))  '(two . beta))
+     
+     ;; tests
+     
+     (let (((p &lt;iface&gt;) (make &lt;alpha&gt; 1))
+           ((q &lt;iface&gt;) (make &lt;beta&gt;  2)))
+       (check (p.one) &rArr; '(one . alpha))
+       (check (p.two) &rArr; '(two . alpha))
+       (check (q.one) &rArr; '(one . beta))
+       (check (q.two) &rArr; '(two . beta))
+       )
+</pre>
+   <!-- page -->
    </body></html>
 

@@ -10,7 +10,7 @@
 <link rel="next" href="interps-eval.html#interps-eval" title="interps eval">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
-This document describes version 0.2d3 of Nausicaa/Scheme, a set of
+This document describes version 0.2d4 of Nausicaa/Scheme, a set of
 Scheme libraries defining a slightly modified R6RS Scheme language
 and augmenting the features of the base and standard R6RS libraries.
 
@@ -106,67 +106,117 @@ Up:&nbsp;<a rel="up" accesskey="u" href="interps.html#interps">interps</a>
 <hr>
 </div>
 
-<h3 class="section">67.2 Interpreter objects</h3>
+<h3 class="section">69.2 Interpreter objects</h3>
 
-<p>The following bindings are exported by the <code>(interps)</code> library.
+<p>The following bindings are exported by the <code>(nausicaa interps)</code>
+library.
 
 <div class="defun">
-&mdash; Class: <b>&lt;interp&gt;</b><var><a name="index-g_t_0040aclass_007binterp_007d-4424"></a></var><br>
+&mdash; Class: <b>&lt;interp&gt;</b><var><a name="index-g_t_0040aclass_007binterp_007d-4962"></a></var><br>
 <blockquote><p>Hold the state of subsequent code evaluations. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Immutable Field of &lt;interp&gt;: <b>table-of-variables</b><var><a name="index-table_002dof_002dvariables-4425"></a></var><br>
+&mdash; Immutable Field of &lt;interp&gt;: <b>table-of-variables</b><var><a name="index-table_002dof_002dvariables-4963"></a></var><br>
 <blockquote><p>A hash table mapping Scheme symbols to values; one for each persistent
 variable currently in the interpreter. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Immutable Field of &lt;interp&gt;: <b>eval-environment</b><var><a name="index-eval_002denvironment-4426"></a></var><br>
+&mdash; Immutable Field of &lt;interp&gt;: <b>eval-environment</b><var><a name="index-eval_002denvironment-4964"></a></var><br>
 <blockquote><p>The environment object to be used when evaluating code in the
 interpreter. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Syntax: <b>make &lt;interp&gt;</b><var> &lt;import specs&gt;<a name="index-make-_0040aclass_007binterp_007d-4427"></a></var><br>
-<blockquote><p>Expand to an expression which evaluates to a new <code>&lt;interp&gt;</code> object.
-
-        <p>&lt;import specs&gt; must be an expression evaluating to a list of
-library import specifications; the list is used to build the environment
-in which code will be evaluated.  The environment cannot be modified. 
-</p></blockquote></div>
-
-<div class="defun">
-&mdash; Syntax: <b>make* &lt;interp&gt;</b><var> &lt;clause&gt;<a name="index-make_002a-_0040aclass_007binterp_007d-4428"></a></var><br>
+&mdash; Syntax: <b>make &lt;interp&gt;</b><var> clause ...<a name="index-make-_0040aclass_007binterp_007d-4965"></a></var><br>
+&mdash; Auxiliary Syntax: <b>imports:</b><var> import-specs<a name="index-imports_003a-4966"></a></var><br>
 <blockquote><p>This syntax is a maker, <a href="../nausicaa/makers.html#makers">Makers</a>.  Expand to an
 expression which evaluates to a new <code>&lt;interp&gt;</code> object.  The
 following clauses are recognised:
 
           <dl>
-<dt><code>:imports &lt;import specs&gt;</code><dd>&lt;import specs&gt; must be an expression evaluating to a list of
-library import specifications; the list is used to build the environment
-in which code will be evaluated.  The environment cannot be modified. 
-The default value causes the <code>(rnrs)</code> library to be imported. 
+<dt><code>imports: </code><var>import-specs</var><dd><var>import-specs</var> must be an expression evaluating to a list of library
+import specifications; the list is used to build the environment in
+which code will be evaluated.  The environment cannot be modified.  The
+default value causes the <code>(rnrs)</code> library to be imported. 
 </dl>
         </p></blockquote></div>
 
 <div class="defun">
-&mdash; Method on &lt;interp&gt;: <b>eval</b><var> sexp<a name="index-eval-on-_0040aclass_007binterp_007d-4429"></a></var><br>
-<blockquote><p>Evaluate <var>sexp</var> in the environment of the interpreter.  Return the
-return value of the expression; <var>sexp</var> must return a single value. 
+&mdash; Syntax: <b>make* &lt;interp&gt;</b><var> import-specs<a name="index-make_002a-_0040aclass_007binterp_007d-4967"></a></var><br>
+<blockquote><p>Expand to an expression which evaluates to a new <code>&lt;interp&gt;</code> object.
+
+        <p><var>import-specs</var> must be an expression evaluating to a list of library
+import specifications; the list is used to build the environment in
+which code will be evaluated.  The environment cannot be modified. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Method on &lt;interp&gt;: <b>variable-ref</b><var> varname default<a name="index-variable_002dref-on-_0040aclass_007binterp_007d-4430"></a></var><br>
+&mdash; Method on &lt;interp&gt;: <b>eval</b><var> sexp<a name="index-eval-on-_0040aclass_007binterp_007d-4968"></a></var><br>
+<blockquote><p>Evaluate <var>sexp</var> in the environment of the interpreter.  Return the
+return value of the expression; <var>sexp</var> can return any number of
+values.  <var>sexp</var> is evaluated as if it is the first form in the body
+of a <code>let</code> form, so it can contain definitions. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Method on &lt;interp&gt;: <b>variable-ref</b><var> varname default<a name="index-variable_002dref-on-_0040aclass_007binterp_007d-4969"></a></var><br>
 <blockquote><p>Retrieve the value of variable name <var>varname</var>, a Scheme symbol;
 return <var>default</var> if the variable is not defined. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Method on &lt;interp&gt;: <b>variable-set!</b><var> varname obj<a name="index-variable_002dset_0021-on-_0040aclass_007binterp_007d-4431"></a></var><br>
+&mdash; Method on &lt;interp&gt;: <b>variable-set!</b><var> varname obj<a name="index-variable_002dset_0021-on-_0040aclass_007binterp_007d-4970"></a></var><br>
 <blockquote><p>Set <var>obj</var> as new value for variable <var>varname</var>, a Scheme symbol. 
 If such a variable does not exist: it is created. 
 </p></blockquote></div>
+
+<div class="defun">
+&mdash; Method on &lt;interp&gt;: <b>clone</b><var><a name="index-clone-on-_0040aclass_007binterp_007d-4971"></a></var><br>
+&mdash; Method on &lt;interp&gt;: <b>clone</b><var> filter<a name="index-clone-on-_0040aclass_007binterp_007d-4972"></a></var><br>
+<blockquote><p>Build and return a clone of the interp; the clone's table of variables
+is populated with elements from the interp's table of variables
+according to <var>filter</var>.
+
+        <p>If <var>filter</var> is not used: all the variables are duplicated into the
+new interp; keys and values from the source table are stored in the new
+table as is (there is no deep copy of the values).
+
+        <p>When it is used, <var>filter</var> must accept 3 arguments: a symbol
+representing a variable name; a value representing the current
+variable's value; an object, unique according to <code>eq?</code>.
+
+          <ul>
+<li>If the variable must be stored in the new table: <var>filter</var> must
+return the variable's value, which can be the argument's value itself. 
+<li>If the variable must be discarded: <var>filter</var> must return the unique
+object. 
+</ul>
+
+        <p>The following example of <var>filter</var> causes the table to be
+transparently duplicated:
+
+     <pre class="example">          (lambda (key val avoid)
+            val)
+</pre>
+        <p class="noindent">the following example of <var>filter</var> discards all the variables having
+a list as value and accepts all the others:
+
+     <pre class="example">          (lambda (key val avoid)
+            (if (list? val)
+                avoid
+              val))
+</pre>
+        <p class="noindent">the following example of <var>filter</var> duplicates the spine of all the
+list values:
+
+     <pre class="example">          (lambda (key val avoid)
+            (if (list? val)
+                (list-copy val)
+              val))
+</pre>
+        </blockquote></div>
 
 <!-- page -->
    </body></html>

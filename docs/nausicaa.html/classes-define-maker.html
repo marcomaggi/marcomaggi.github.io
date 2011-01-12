@@ -7,10 +7,10 @@
 <link title="Top" rel="start" href="index.html#Top">
 <link rel="up" href="classes-define.html#classes-define" title="classes define">
 <link rel="prev" href="classes-define-protocol.html#classes-define-protocol" title="classes define protocol">
-<link rel="next" href="classes-define-predicate.html#classes-define-predicate" title="classes define predicate">
+<link rel="next" href="classes-define-custom_002dmaker.html#classes-define-custom_002dmaker" title="classes define custom-maker">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
-This document describes version 0.2d3 of Nausicaa/Scheme, a set of
+This document describes version 0.2d4 of Nausicaa/Scheme, a set of
 Scheme libraries defining a slightly modified R6RS Scheme language
 and augmenting the features of the base and standard R6RS libraries.
 
@@ -100,18 +100,18 @@ the list of original documents and their authors.  See also the
 <div class="node">
 <a name="classes-define-maker"></a>
 <p>
-Next:&nbsp;<a rel="next" accesskey="n" href="classes-define-predicate.html#classes-define-predicate">classes define predicate</a>,
+Next:&nbsp;<a rel="next" accesskey="n" href="classes-define-custom_002dmaker.html#classes-define-custom_002dmaker">classes define custom-maker</a>,
 Previous:&nbsp;<a rel="previous" accesskey="p" href="classes-define-protocol.html#classes-define-protocol">classes define protocol</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="classes-define.html#classes-define">classes define</a>
 <hr>
 </div>
 
-<h4 class="subsection">20.1.4 Defining class makers</h4>
+<h4 class="subsection">22.1.4 Defining class makers</h4>
 
 <div class="defun">
-&mdash; Auxiliary Syntax: <b>maker</b> (<var>positional-arg ...</var>) (<var>optional-keyword optional-default</var>)<var> ...<a name="index-maker-1094"></a></var><br>
-<blockquote><p>Define the specification of the maker to be used by <code>make*</code>;
-Defining a maker for a class means defining a specialised macro with
+&mdash; Auxiliary Syntax: <b>maker</b> (<var>positional-arg ...</var>) (<var>optional-keyword optional-default</var>)<var> ...<a name="index-maker-1158"></a></var><br>
+<blockquote><p>Define the specification of the maker to be used by <code>make</code>;
+defining a maker for a class means defining a specialised macro with
 <code>define-maker</code>.  The <code>maker</code> clause in the following
 definition:
 
@@ -124,16 +124,16 @@ definition:
         <p class="noindent">can be thought as equivalent to:
 
      <pre class="example">          (define-maker (the-maker a b c)
-            (make &lt;alpha&gt;)
+            (make* &lt;alpha&gt;)
             ((d 1)
              (e 2)))
 </pre>
         <p class="noindent">and can be used as:
 
-     <pre class="example">          (make* &lt;alpha&gt; #\a #\b #\c
+     <pre class="example">          (make &lt;alpha&gt; #\a #\b #\c
             (d 4))
 </pre>
-        <p class="noindent">where the <code>make*</code> macro will expand to an use of the
+        <p class="noindent">where the <code>make</code> macro will expand to an use of the
 <code>the-maker</code> macro.  See the documentation of <code>define-maker</code>
 for details on the arguments of <code>maker</code>; <a href="makers-api.html#makers-api">Defining makers</a>.
 
@@ -141,13 +141,66 @@ for details on the arguments of <code>maker</code>; <a href="makers-api.html#mak
 with the <code>maker-protocol</code> clause, else it will default to the
 public constructor.
 
-        <p>When no maker is defined, the <code>make*</code> macro can still be used to
+        <p>If a <code>maker-transformer</code> clause is present: the use of <code>make</code>
+will expand into a use of the specified maker transformer; the first
+argument to the maker transformer will be the maker constructor.  If no
+<code>maker-transformer</code> clause is present: the use of <code>make</code> will
+expand into a call to the constructor.
+
+        <p>When no maker is defined: the <code>make</code> macro can still be used to
 instantiate the class: it defaults to use the public protocol, so it
-becomes equivalent to a <code>make</code> use. 
+becomes equivalent to a <code>make*</code> use. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Auxiliary Syntax: <b>maker-protocol</b><var> expression<a name="index-maker_002dprotocol-1095"></a></var><br>
+&mdash; Auxiliary Syntax: <b>maker-transformer</b><var> transformer<a name="index-maker_002dtransformer-1159"></a></var><br>
+<blockquote><p>Select a maker macro transformer to be used as expansion of <code>make</code>. 
+<var>transformer</var> can be an identifier or an expression evaluating to a
+macro transformer.  The transformer will receive the maker protocol
+constructor as first argument, and it is meant to use it in its output
+form.
+
+        <p>This is an example of identifier transformer:
+
+     <pre class="example">          (define-class &lt;alpha&gt;
+            (fields a b)
+            (maker (a)
+                   (b 2))
+            (maker-transformer transformer))
+          
+          (define-syntax transformer
+            (syntax-rules ()
+              ((_ ?constructor ?a ?b)
+               (?constructor (+ 1 ?a) (+ 2 ?b)))))
+          
+          (let (((o &lt;alpha&gt;) (make &lt;alpha&gt; 1)))
+            (list o.a o.b)) &rArr; (2 4)
+          
+          (let (((o &lt;alpha&gt;) (make &lt;alpha&gt; 1 (b 20))))
+            (list o.a o.b)) &rArr; (2 22)
+</pre>
+        <p class="noindent">and this is an example of expression transformer:
+
+     <pre class="example">          (define-class &lt;alpha&gt;
+            (fields a b)
+            (maker (a)
+                   (b 2))
+            (maker-transformer
+             (lambda (stx)
+               (syntax-case stx ()
+                 ((_ ?constructor ?a ?b)
+                  #'(?constructor (+ 1 ?a) (+ 2 ?b)))))))
+          
+          (let (((o &lt;alpha&gt;) (make &lt;alpha&gt; 1)))
+            (list o.a o.b)) &rArr; (2 4)
+          
+          (let (((o &lt;alpha&gt;) (make &lt;alpha&gt; 1 (b 20))))
+            (list o.a o.b)) &rArr; (2 22)
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Auxiliary Syntax: <b>maker-protocol</b><var> expression<a name="index-maker_002dprotocol-1160"></a></var><br>
 <blockquote><p>Select the maker constructor's protocol function.  When this clause is
 not used: the maker syntax expands to an application of the public
 constructor function.
@@ -161,15 +214,15 @@ constructor function.
                               (lambda (a b)
                                 ((make-top) a b 456)))))
           
-          (let (((o &lt;alpha&gt;) (make* &lt;alpha&gt; 1)))
+          (let (((o &lt;alpha&gt;) (make &lt;alpha&gt; 1)))
             (list o.a o.b o.c))
           &rArr; (1 2 456)
           
-          (let (((o &lt;alpha&gt;) (make* &lt;alpha&gt; 1 (b 20))))
+          (let (((o &lt;alpha&gt;) (make &lt;alpha&gt; 1 (b 20))))
             (list o.a o.b o.c))
           &rArr; (1 20 456)
           
-          (let (((o &lt;alpha&gt;) (make &lt;alpha&gt; 1 2 3)))
+          (let (((o &lt;alpha&gt;) (make* &lt;alpha&gt; 1 2 3)))
             (list o.a o.b o.c))
           &rArr; (1 2 3)
 </pre>

@@ -1,0 +1,235 @@
+<html lang="en">
+<head>
+<title>r6rs lexer full - Nausicaa for Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Nausicaa for Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="r6rs-lexer.html#r6rs-lexer" title="r6rs lexer">
+<link rel="next" href="r6rs-lexer-params.html#r6rs-lexer-params" title="r6rs lexer params">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d4 of Nausicaa/Scheme, a set of
+Scheme libraries defining a slightly modified R6RS Scheme language
+and augmenting the features of the base and standard R6RS libraries.
+
+The project home page of Nausicaa is at:
+
+             `http://marcomaggi.github.com/nausicaa.html'
+
+
+development of Nausicaa takes place at:
+
+               `http://github.com/marcomaggi/nausicaa/'
+
+
+Copyright (C) 2008, 2009, 2010 by Marco Maggi.
+
+Copyright (C) 1996, 1997, 2000, 2001, 2002, 2003, 2004, 2005
+Free Software Foundation.
+
+Copyright (C) 1996, 1999-2005 Dorai Sitaram.
+
+Copyright (C) 1998 Oleg Kiselyov.
+
+Copyright (C) 1998, 1999, 2000 Olin Shivers.
+
+Copyright (C) 1999 John David Stone.
+
+Copyright (C) 1999, 2002 Marc Feeley.
+
+Copyright (C) 2001, 2009 Danny Dube'
+
+Copyright (C) 2002 Dr. Mirko Luedde.
+
+Copyright (C) 2002, 2003, 2005, 2006 Sebastian Egner.
+
+Copyright (C) 2003 Ray Dillinger.
+
+Copyright (C) 2003 Taylor Campbell.
+
+Copyright (C) 2005 Jens Axel Soegaard.
+
+Copyright (C) 2005-2009 Alex Shinn.
+
+Copyright (C) 2008 Taro Minowa (Higepon).
+
+Copyright (C) 2005-2008 Dominique Boucher.
+
+Copyright (C) 2004, 2005 Tony Garnock-Jones
+
+Copyright (C) 2005 LShift Ltd.
+
+Copyright (C) 2007, 2008 Philip L. Bewig.
+
+Copyright (C) 2000 Will Fitzgerald.
+
+Copyright (C) 2000 Neodesic Corporation.
+
+Copyright (C) 2000-2006 Joachim Henke.
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with no Invariant Sections being ``GNU Free
+     Documentation License'' and ``GNU General Public License'', no
+     Front--Cover Texts, and no Back--Cover Texts.  A copy of the
+     license is included in the section entitled ``GNU Free
+     Documentation License''.
+
+This document embeds an unofficial assemblage of several documents
+reformatted in Texinfo; the reformatting author and maintainer is
+Marco Maggi <marco.maggi-ipsu@poste.it>.  See the appendix ``Credits'' for
+the list of original documents and their authors.  See also the
+`README' and `CREDITS' files for additional attributions.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="r6rs-lexer-full"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="r6rs-lexer-params.html#r6rs-lexer-params">r6rs lexer params</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="r6rs-lexer.html#r6rs-lexer">r6rs lexer</a>
+<hr>
+</div>
+
+<h4 class="subsection">71.1.1 Full source code lexer</h4>
+
+<p><a name="index-Reading-Scheme-source-code-4993"></a><a name="index-Lexer_002c-Scheme-source-code-4994"></a><a name="index-Scheme-source-code_002c-reading-4995"></a><a name="index-Scheme-source-code_002c-lexer-4996"></a><a name="index-Source-code-of-Scheme_002c-lexer-4997"></a><a name="index-Source-code-of-Scheme_002c-reader-4998"></a>
+
+   <p>The full <acronym>R6RS</acronym> source code lexer makes heavy use of parametrised
+functions to allow customisation of tokens.  The following bindings are
+exported by the <code>(nausicaa r6rs lexer)</code> library.
+
+<div class="defun">
+&mdash; Constant: <b>r6rs-lexer-table</b><var><a name="index-r6rs_002dlexer_002dtable-4999"></a></var><br>
+<blockquote><p>A lexer table to parse <acronym>R6RS</acronym> compliant Scheme source code.  The
+semantic action forms make use of the parameters documented in this
+chapter to build the lexical tokens; <a href="r6rs-lexer-params.html#r6rs-lexer-params">r6rs lexer params</a> for
+details.
+
+        <p>This table needs an input system configured with counters <code>all</code>,
+for example:
+
+     <pre class="example">          (import (nausicaa)
+            (prefix (nausicaa silex lexer) lex.))
+          
+          (define port ---)
+          
+          (define IS
+            (lex.lexer-make-IS
+              (lex.port: port)
+              (lex.counters: 'all)))
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>make-token-lexer</b><var> IS CLAUSE ...<a name="index-make_002dtoken_002dlexer-5000"></a></var><br>
+&mdash; Auxiliary Syntax: <b>table</b><var> table<a name="index-table-5001"></a></var><br>
+&mdash; Auxiliary Syntax: <b>comments</b><var> boolean<a name="index-comments-5002"></a></var><br>
+&mdash; Auxiliary Syntax: <b>blanks</b><var> boolean<a name="index-blanks-5003"></a></var><br>
+&mdash; Auxiliary Syntax: <b>sharpbang</b><var> boolean<a name="index-sharpbang-5004"></a></var><br>
+<blockquote><p>A lexer thunk generator for full <acronym>R6RS</acronym> source code reading.  Given an
+input system <var>IS</var> build and return a lexer thunk; the optional
+clauses allow configuration of the lexer behaviour.  The thunk returns
+instances of <code>&lt;lexical-token&gt;</code> as defined by <code>(nausicaa
+parser-tools lexical-token)</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Auxiliary Syntax: <b>table</b><var> table<a name="index-table-5005"></a></var><br>
+<blockquote><p>Allow the selection of the lexer table; the default is
+<code>r6rs-lexer-table</code>.  Selecting a custom table should be considered
+with care because it involves generating a table with the same interface
+of <code>r6rs-lexer-table</code>; it can be done by modifying the source code
+of <code>r6rs-lexer-table</code> itself (see <a href="r6rs-lexer-custom.html#r6rs-lexer-custom">r6rs lexer custom</a>). 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Auxiliary Syntax: <b>comments</b><var> boolean<a name="index-comments-5006"></a></var><br>
+<blockquote><p>If <var>boolean</var> is false: the lexer thunk discards tokens with category
+<code>LINECOMMENT</code> and the results of calling the function referenced by
+the <code>nested-comment-token-maker</code> parameter used to read nested
+comments.  The default value is false.
+
+        <p>Notice that the sharp-semicolon token &lsquo;<samp><span class="samp">#;</span></samp>&rsquo; (which precedes
+commented datums) is still returned by the lexer thunk: it is impossible
+to discard datums at the lexer level, it has to be done by the parser. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Auxiliary Syntax: <b>blanks</b><var> boolean<a name="index-blanks-5007"></a></var><br>
+<blockquote><p>If <var>boolean</var> is false: the lexer thunk discards tokens with category
+<code>WHITESPACE</code> and <code>LINEENDING</code>.  The default value is false. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Auxiliary Syntax: <b>sharpbang</b><var> boolean<a name="index-sharpbang-5008"></a></var><br>
+<blockquote><p>If <var>boolean</var> is false: the lexer thunk discards tokens with category
+<code>SHARPBANG</code> and <code>SHARPBANGR6RS</code>.  The default value is false. 
+</p></blockquote></div>
+
+   <p>Here is how to test the lexer function maker:
+
+<pre class="example">     #!r6rs
+     (import (nausicaa)
+       (prefix (nausicaa r6rs  lexer) r6.)
+       (prefix (nausicaa silex lexer) lex.)
+       (nausicaa parser-tools))
+     
+     (define (tokenise string)
+       (let* ((IS     (lex.lexer-make-IS
+                        (lex.string: string)
+                        (lex.counters: 'all)))
+              (lexer  (r6.make-token-lexer IS)))
+         (let next (((T &lt;lexical-token&gt;) (lexer))
+                    (result              '()))
+           (cond (T.lexer-error?
+                  (reverse `((,T.category ,T.value)
+                             . ,result)))
+                 (T.end-of-input?
+                  (reverse `(*eoi* . ,result)))
+                 (else
+                  (next (lexer) `((,T.category ,T.value)
+                                  . ,result)))))))
+     
+     (define (mt yygetc yyungetc yytext
+                 yyline yycolumn yyoffset)
+       (make* &lt;lexical-token&gt; 'THE-IDENTIFIER
+         (make* &lt;source-location&gt;
+           (r6.current-input-source)
+           yyline yycolumn yyoffset)
+         (string-&gt;symbol yytext)
+         (string-length yytext)))
+     
+     (tokenise "( \"ciao\" ciao 123 )")
+     &rArr; ((OPAREN #\()
+         (STRING "ciao")
+         (IDENTIFIER "ciao")
+         (NUMBER 123)
+         (CPAREN #\))
+         *eoi*)
+     
+     (parametrise ((r6.identifier-token-maker mt))
+       (tokenise "( \"ciao\" ciao 123 )"))
+     &rArr; ((OPAREN #\()
+         (STRING "ciao")
+         (THE-IDENTIFIER ciao)
+         (NUMBER 123)
+         (CPAREN #\))
+         *eoi*)
+</pre>
+   <!-- page -->
+   </body></html>
+
