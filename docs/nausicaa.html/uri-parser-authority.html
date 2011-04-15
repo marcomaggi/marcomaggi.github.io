@@ -1,0 +1,678 @@
+<html lang="en">
+<head>
+<title>uri parser authority - Nausicaa for Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Nausicaa for Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="uri-parser.html#uri-parser" title="uri parser">
+<link rel="prev" href="uri-parser-basic.html#uri-parser-basic" title="uri parser basic">
+<link rel="next" href="uri-parser-segment.html#uri-parser-segment" title="uri parser segment">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d5 of Nausicaa/Scheme, a set of
+Scheme libraries defining a slightly modified R6RS Scheme language
+and augmenting the features of the base and standard R6RS libraries.
+
+The project home page of Nausicaa is at:
+
+             `http://marcomaggi.github.com/nausicaa.html'
+
+
+development of Nausicaa takes place at:
+
+               `http://github.com/marcomaggi/nausicaa/'
+
+
+Copyright (C) 2008, 2009, 2010 by Marco Maggi.
+
+Copyright (C) 1996, 1997, 2000, 2001, 2002, 2003, 2004, 2005
+Free Software Foundation.
+
+Copyright (C) 1996, 1999-2005 Dorai Sitaram.
+
+Copyright (C) 1998 Oleg Kiselyov.
+
+Copyright (C) 1998, 1999, 2000 Olin Shivers.
+
+Copyright (C) 1999 John David Stone.
+
+Copyright (C) 1999, 2002 Marc Feeley.
+
+Copyright (C) 2001, 2009 Danny Dube'
+
+Copyright (C) 2002 Dr. Mirko Luedde.
+
+Copyright (C) 2002, 2003, 2005, 2006 Sebastian Egner.
+
+Copyright (C) 2003 Ray Dillinger.
+
+Copyright (C) 2003 Taylor Campbell.
+
+Copyright (C) 2005 Jens Axel Soegaard.
+
+Copyright (C) 2005-2009 Alex Shinn.
+
+Copyright (C) 2008 Taro Minowa (Higepon).
+
+Copyright (C) 2005-2008 Dominique Boucher.
+
+Copyright (C) 2004, 2005 Tony Garnock-Jones
+
+Copyright (C) 2005 LShift Ltd.
+
+Copyright (C) 2007, 2008 Philip L. Bewig.
+
+Copyright (C) 2000 Will Fitzgerald.
+
+Copyright (C) 2000 Neodesic Corporation.
+
+Copyright (C) 2000-2006 Joachim Henke.
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with no Invariant Sections being ``GNU Free
+     Documentation License'' and ``GNU General Public License'', no
+     Front--Cover Texts, and no Back--Cover Texts.  A copy of the
+     license is included in the section entitled ``GNU Free
+     Documentation License''.
+
+This document embeds an unofficial assemblage of several documents
+reformatted in Texinfo; the reformatting author and maintainer is
+Marco Maggi <marco.maggi-ipsu@poste.it>.  See the appendix ``Credits'' for
+the list of original documents and their authors.  See also the
+`README' and `CREDITS' files for additional attributions.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="uri-parser-authority"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="uri-parser-segment.html#uri-parser-segment">uri parser segment</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="uri-parser-basic.html#uri-parser-basic">uri parser basic</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="uri-parser.html#uri-parser">uri parser</a>
+<hr>
+</div>
+
+<h4 class="subsection">68.5.2 Authority components parser functions</h4>
+
+<p>The following functions can be used to parse the elements of an <acronym>URI</acronym>;
+all the functions accept a <var>port</var> argument: it must be a binary
+input port drawing characters from a bytevector.  When parsing an
+<code>authority</code> component: we are meant to extract the full
+<code>authority</code> component and then parse it separately.
+
+   <p>The following bindings are exported by the <code>(nausicaa uri low)</code>
+library; it is suggested to prefix them when importing this library.
+
+<div class="defun">
+&mdash; Function: <b>parse-authority</b><var> port<a name="index-parse_002dauthority-5034"></a></var><br>
+<blockquote><p>Accumulate bytes from <var>port</var> while they are valid for an
+<code>authority</code> component in the <code>hier-part</code> of an <acronym>URI</acronym> or the
+<code>relative-part</code> of a <code>relative-ref</code>.  The first two bytes read
+must represent, in <acronym>ASCII</acronym> encoding, two slash characters; after the
+two slashes, if <acronym>EOF</acronym> or a byte representing a slash, a question mark
+or a number&ndash;sign is read: return a bytevector holding the accumulated
+bytes, ending slash, question mark or number&ndash;sign excluded; else return
+false.
+
+        <p>If successful: leave the port position to the byte after the last
+accumulated byte; if an error occurs: rewind the port position to the
+one before this function call.
+
+        <p>Notice that an empty <code>authority</code> (after the two leading slashes) is
+valid: it is the case of <code>authority</code> equal to a <code>host</code>
+component, equal to a <code>reg-name</code> component which can be empty.
+
+     <pre class="example">          (import (rnrs)
+            (prefix (nausicaa uri low) low.))
+          
+          (define (make-lexer-port S)
+            (open-bytevector-input-port (low.to-bytevector S)))
+          
+          (low.parse-authority (make-lexer-port ""))      &rArr; #f
+          (low.parse-authority (make-lexer-port "ciao"))  &rArr; #f
+          (low.parse-authority (make-lexer-port "/ciao")) &rArr; #f
+          (low.parse-authority (make-lexer-port "?ciao")) &rArr; #f
+          (low.parse-authority (make-lexer-port "#ciao")) &rArr; #f
+          
+          (let ((P (make-lexer-port "//")))
+            (low.to-string (low.parse-authority P))  &rArr; ""
+            (eof-object? (lookahead-u8 P)))          &rArr; #t
+          
+          (let ((P (make-lexer-port "///")))
+            (low.to-string (low.parse-authority P))  &rArr; ""
+            (low.to-string (get-bytevector-some P))) &rArr; "/"
+          
+          (let ((P (make-lexer-port "//?query")))
+            (low.to-string (low.parse-authority P))  &rArr; ""
+            (low.to-string (get-bytevector-some P))) &rArr; "?query"
+          
+          (let ((P (make-lexer-port "//#fragment")))
+            (low.to-string (low.parse-authority P))  &rArr; ""
+            (low.to-string (get-bytevector-some P))) &rArr; "#fragment"
+          
+          (let ((P (make-lexer-port "///ciao")))
+            (low.to-string (low.parse-authority P))  &rArr; ""
+            (low.to-string (get-bytevector-some P))) &rArr; "/ciao"
+          
+          (let ((P (make-lexer-port "//ciao:8080/salut")))
+            (low.to-string (low.parse-authority P))  &rArr; "ciao:8080"
+            (low.to-string (get-bytevector-some P))) &rArr; "/salut"
+          
+          (let ((P (make-lexer-port "//ciao.it:8080/salut")))
+            (low.to-string (low.parse-authority P))  &rArr; "ciao.it:8080"
+            (low.to-string (get-bytevector-some P))) &rArr; "/salut"
+          
+          (let ((P (make-lexer-port "//marco@ciao:8080/salut")))
+            (low.to-string (low.parse-authority P))  &rArr; "marco@ciao:8080"
+            (low.to-string (get-bytevector-some P))) &rArr; "/salut"
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>parse-userinfo</b><var> port<a name="index-parse_002duserinfo-5035"></a></var><br>
+<blockquote><p>Accumulate bytes from <var>port</var> while they are valid for an
+<code>userinfo</code> component in the <code>authority</code> component.  If a byte
+representing a commercial at&ndash;sign (&lsquo;<samp><span class="samp">@</span></samp>&rsquo;), in <acronym>ASCII</acronym> encoding, is
+read: return a bytevector holding the accumulated bytes, ending at&ndash;sign
+excluded; else return false.
+
+        <p>If successful: leave the port position to the byte after the ending
+at&ndash;sign; if an error occurs: rewind the port position to the one before
+this function call.
+
+        <p>Notice that an empty <code>userinfo</code> component is valid (an at&ndash;sign
+preceded by nothing).
+
+     <pre class="example">          (import (rnrs)
+            (prefix (nausicaa uri low) low.))
+          
+          (define (make-lexer-port S)
+            (open-bytevector-input-port (low.to-bytevector S)))
+          
+          (low.parse-userinfo (make-lexer-port ""))   &rArr; #f
+          
+          (let ((P (make-lexer-port "ciao.it")))
+            (low.parse-userinfo P)                    &rArr; #f
+            (low.to-string (get-bytevector-some P)))  &rArr; "ciao.it"
+          
+          (let ((P (make-lexer-port ":8080")))
+            (low.parse-userinfo P)                    &rArr; #f
+            (low.to-string (get-bytevector-some P)))  &rArr; ":8080"
+          
+          (let ((P (make-lexer-port "/hello")))
+            (low.parse-userinfo P)                    &rArr; #f
+            (low.to-string (get-bytevector-some P)))  &rArr; "/hello"
+          
+          (let ((P (make-lexer-port "?hello")))
+            (low.parse-userinfo P)                    &rArr; #f
+            (low.to-string (get-bytevector-some P)))  &rArr; "?hello"
+          
+          (let ((P (make-lexer-port "#hello")))
+            (low.parse-userinfo P)                    &rArr;
+            (low.to-string (get-bytevector-some P)))  &rArr; "#hello"
+          
+          (let ((P (make-lexer-port "@")))
+            (low.to-string (low.parse-userinfo P))    &rArr; ""
+            (eof-object? (lookahead-u8 P)))           &rArr; #t
+          
+          (let ((P (make-lexer-port "@host")))
+            (low.to-string (low.parse-userinfo P))    &rArr; ""
+            (low.to-string (get-bytevector-some P)))  &rArr; "host"
+          
+          (let ((P (make-lexer-port "userinfo@host")))
+            (low.to-string (low.parse-userinfo P))    &rArr; "userinfo"
+            (low.to-string (get-bytevector-some P)))  &rArr; "host"
+          
+          (let ((P (make-lexer-port "ciao%3dciao@host")))
+            (low.to-string (low.parse-userinfo P))    &rArr; "ciao%3dciao"
+            (low.to-string (get-bytevector-some P)))  &rArr; "host"
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>parse-ipv4-address</b><var> port<a name="index-parse_002dipv4_002daddress-5036"></a></var><br>
+<blockquote><p>Accumulate bytes from <var>port</var> while they are valid for an
+<code>IPv4address</code> component, then parse them as IPv4 address.  If
+successful return two values: a bytevector holding the accumulated
+bytes, a list holding the octets as exact integers; else return false
+and false.
+
+        <p>If successful: leave the port position to the byte after last one read
+from the port; if an error occurs: rewind the port position to the one
+before this function call.
+
+        <p>No validation is performed on the first byte after the address, if any.
+
+     <pre class="example">          (import (rnrs)
+            (prefix (nausicaa uri low) low.))
+          
+          (define (make-lexer-port S)
+            (open-bytevector-input-port (low.to-bytevector S)))
+          
+          (low.parse-ipv4-address (make-lexer-port "")) &rArr; #f #f
+          
+          (let ((P (make-lexer-port "ciao")))
+            (low.parse-ipv4-address P)                 &rArr; #f #f
+            (low.to-string (get-bytevector-some P)))   &rArr; "ciao"
+          
+          (let ((P (make-lexer-port "1.2.3")))
+            (low.parse-ipv4-address P)                 &rArr; #f #f
+            (low.to-string (get-bytevector-some P)))   &rArr; "1.2.3"
+          
+          (let ((P (make-lexer-port "1.2.3.4.5")))
+            (low.parse-ipv4-address P)                 &rArr; #f #f
+            (low.to-string (get-bytevector-some P)))   &rArr; "1.2.3.4.5"
+          
+          (let ((P (make-lexer-port "123ciao")))
+            (low.parse-ipv4-address P)                 &rArr; #f #f
+            (low.to-string (get-bytevector-some P)))   &rArr; "123ciao"
+          
+          (let ((P (make-lexer-port "1.2.3.4")))
+            (receive (addr ell)
+                (low.parse-ipv4-address P)
+              (low.to-string addr)          &rArr; "1.2.3.4"
+              ell)                          &rArr; (1 2 3 4)
+            (eof-object? (lookahead-u8 P))  &rArr; #t
+          
+          (let ((P (make-lexer-port "191.223.376.434")))
+            (low.parse-ipv4-address P)   &rArr; #f #f
+            (low.to-string
+             (get-bytevector-some P)))   &rArr; "191.223.376.434"
+          
+          (let ((P (make-lexer-port "191.223.76.255")))
+            (receive (addr ell)
+                (low.parse-ipv4-address P)
+              (low.to-string addr)          &rArr; "191.223.76.255"
+              ell))                         &rArr; (191 223 76 255)
+          
+          (let ((P (make-lexer-port "1.2.3.4/5")))
+            (receive (addr ell)
+                (low.parse-ipv4-address P)
+              (low.to-string addr))         &rArr; "1.2.3.4"
+            (low.to-string
+             (get-bytevector-some P)))      &rArr; "/5"
+          
+          (let ((P (make-lexer-port "1.2.3.4/ciao")))
+            (receive (addr ell)
+                (low.parse-ipv4-address P)
+              (low.to-string addr))         &rArr; "1.2.3.4"
+            (low.to-string
+             (get-bytevector-some P)))      &rArr; "/ciao"
+          
+          (let ((P (make-lexer-port "1.2.3.4:8080")))
+            (receive (addr ell)
+                (low.parse-ipv4-address P)
+              (low.to-string addr))         &rArr; "1.2.3.4"
+            (low.to-string
+             (get-bytevector-some P)))      &rArr; ":8080"
+          
+          (let ((P (make-lexer-port "1.2.3.4ciao")))
+            (receive (addr ell)
+                (low.parse-ipv4-address P)
+              (low.to-string addr))         &rArr; "1.2.3.4"
+            (low.to-string
+             (get-bytevector-some P)))      &rArr; "ciao"
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>parse-ipv6-address</b><var> port<a name="index-parse_002dipv6_002daddress-5037"></a></var><br>
+<blockquote><p>Accumulate bytes from <var>port</var> while they are valid for an
+<code>IPv6address</code> component, then parse them as IPv6 address.  If
+successful return two values: a bytevector holding the accumulated
+bytes, a list holding the 8 numeric address components as exact
+integers; else return false and false.
+
+        <p>If successful: leave the port position to the byte after last one read
+from the port; if an error occurs: rewind the port position to the one
+before this function call.
+
+        <p>No validation is performed on the first byte after the address, if any.
+
+     <pre class="example">          (import (rnrs)
+            (prefix (nausicaa uri low) low.))
+          
+          (define (make-lexer-port S)
+            (open-bytevector-input-port (low.to-bytevector S)))
+          
+          (low.parse-ipv6-address (make-lexer-port "")) &rArr; #f #f
+          
+          (let ((P (make-lexer-port "ciao")))
+            (low.parse-ipv6-address P)            &rArr; #f #f
+            (low.to-string
+             (get-bytevector-some P)))            &rArr; "ciao"
+          
+          (let ((P (make-lexer-port "1.2.3.ciao")))
+            (low.parse-ipv6-address P)            &rArr; #f #f
+            (low.to-string
+             (get-bytevector-some P)))            &rArr; "1.2.3.ciao"
+          
+          (let ((P (make-lexer-port "1:2:3:4:5:6:7:8")))
+            (low.parse-ipv6-address P))
+            &rArr; "1:2:3:4:5:6:7:8" (1 2 3 4 5 6 7 8)
+          
+          (let ((P (make-lexer-port "::1")))
+            (low.parse-ipv6-address P))
+            &rArr; "::1" (0 0 0 0 0 0 0 1)
+          
+          (let ((P (make-lexer-port "1::")))
+            (low.parse-ipv6-address P))
+            &rArr; "1::" (1 0 0 0 0 0 0 0)
+          
+          (let ((P (make-lexer-port "1:2::3")))
+            (low.parse-ipv6-address P))
+            &rArr; "1:2::3" (1 2 0 0 0 0 0 3)
+          
+          (let ((P (make-lexer-port "1:2:3:4::172.30.67.254")))
+            (low.parse-ipv6-address P))
+            &rArr; "1:2:3:4::172.30.67.254" (1 2 3 4 0 0 #xac1e #x43fe)
+          
+          (let ((P (make-lexer-port "::ffff:192.168.99.1")))
+            (low.parse-ipv6-address P))
+            &rArr; "::ffff:192.168.99.1" (0 0 0 0 0 #xFFFF #xC0A8 #x6301)
+          
+          (let ((P (make-lexer-port "::1/60")))
+            (low.parse-ipv6-address P) &rArr; "::1" (0 0 0 0 0 0 0 1)
+            (low.to-string
+             (get-bytevector-some P))) &rArr; "/60"
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>parse-ip-literal</b><var> port<a name="index-parse_002dip_002dliteral-5038"></a></var><br>
+<blockquote><p>Accumulate bytes from <var>port</var> while they are valid for an
+<code>IP-literal</code> component in a <code>host</code> component.  The first byte
+must represent an open bracket (&lsquo;<samp><span class="samp">[</span></samp>&rsquo;) character in <acronym>ASCII</acronym>
+encoding; if a byte representing a closed bracket (&lsquo;<samp><span class="samp">]</span></samp>&rsquo;) is read:
+return a bytevector holding the accumulated bytes, brackets excluded;
+else return false.
+
+        <p>If successful: leave the port position to the byte after the closing
+bracket; if an error occurs: rewind the port position to the one before
+this function call.
+
+        <p>No validation is performed on the returned bytevector contents; the
+returned bytevector can be empty even though an <code>IP-literal</code>
+component cannot be of zero length inside the brackets: it is
+responsibility of the caller to check the length of the returned
+bytevector.
+
+     <pre class="example">          (import (rnrs)
+            (prefix (nausicaa uri low) low.))
+          
+          (define (make-lexer-port S)
+            (open-bytevector-input-port (low.to-bytevector S)))
+          
+          (low.parse-ip-literal (make-lexer-port ""))
+          &rArr; #f
+          
+          (let ((P (make-lexer-port "ciao")))
+            (low.parse-ip-literal P)                  &rArr; #f
+            (low.to-string (get-bytevector-some P)))  &rArr; "ciao"
+          
+          (low.to-string
+           (low.parse-ip-literal (make-lexer-port "[]")))
+          &rArr; ""
+          
+          (low.to-string
+           (low.parse-ip-literal (make-lexer-port "[::0:1:2]")))
+          &rArr; "::0:1:2"
+          
+          (let ((P (make-lexer-port "[::0:1:2]:8080")))
+            (low.to-string (low.parse-ip-literal P))  &rArr; "::0:1:2"
+            (low.to-string (get-bytevector-some P)))  &rArr; ":8080"
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>parse-ipvfuture</b><var> port<a name="index-parse_002dipvfuture-5039"></a></var><br>
+<blockquote><p>Accumulate bytes from <var>port</var> while they are valid for an
+<code>IPvFuture</code> component in the <code>IP-literal</code> component.  The
+first byte must represent the character <code>v</code> in <acronym>ASCII</acronym> encoding
+and the second byte must represent a single hexadecimal digit in
+<acronym>ASCII</acronym> encoding; after the prolog is read, bytes are accumulated until
+<acronym>EOF</acronym> is found.
+
+        <p>Return two values: an exact integer representing the hexadecimal digit
+in <acronym>ASCII</acronym> encoding, a bytevector holding the accumulated bytes; else
+return false and false.
+
+        <p>If an error occurs: rewind the port position to the one before this
+function call.
+
+        <p>No validation is performed on the returned bytevector contents; the
+returned bytevector can be empty even though an <code>IPvFuture</code>
+component cannot be of zero length inside the brackets.
+
+     <pre class="example">          (import (rnrs)
+            (prefix (nausicaa uri low) low.))
+          
+          (define (make-lexer-port S)
+            (open-bytevector-input-port (low.to-bytevector S)))
+          
+          (call-with-values
+              (lambda ()
+                (low.parse-ipvfuture (make-lexer-port "")))
+            list)
+          &rArr; (#f #f)
+          
+          (call-with-values
+              (lambda ()
+                (low.parse-ipvfuture (make-lexer-port "ciao")))
+            list)
+          &rArr; (#f #f)
+          
+          (call-with-values
+              (lambda ()
+                (low.parse-ipvfuture (make-lexer-port "v1")))
+            list)
+          &rArr; (1 #vu8())
+          
+          (call-with-values
+              (lambda ()
+                (low.parse-ipvfuture (make-lexer-port "v9ciao")))
+            (lambda (version bv)
+              (list version (low.to-string bv))))
+          &rArr; (9 "ciao")
+          
+          (call-with-values
+              (lambda ()
+                (low.parse-ipvfuture (make-lexer-port "vFciao")))
+            (lambda (version bv)
+              (list version (low.to-string bv))))
+          &rArr; (15 "ciao")
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>parse-reg-name</b><var> port<a name="index-parse_002dreg_002dname-5040"></a></var><br>
+<blockquote><p>Accumulate bytes from <var>port</var> while they are valid for a
+<code>reg-name</code> (registered name) component in a <code>host</code> component. 
+If <acronym>EOF</acronym> or a byte representing a colon, slash, question mark or
+number&ndash;sign, in <acronym>ASCII</acronym> encoding, is read: return a bytevector holding
+the accumulated bytes, ending byte excluded; else return false.
+
+        <p>If successful: leave the port position to the byte after last one read
+from the port, ending colon or slash excluded; if an error occurs:
+rewind the port position to the one before this function call.
+
+        <p>Notice that an empty <code>reg-name</code> component is valid; also, a
+<code>reg-name</code> cannot be longer than 255 bytes: if it is, this
+function returns false.
+
+     <pre class="example">          (import (rnrs)
+            (prefix (nausicaa uri low) low.))
+          
+          (define (make-lexer-port S)
+            (open-bytevector-input-port (low.to-bytevector S)))
+          
+          (low.to-string
+           (low.parse-reg-name (make-lexer-port ""))) &rArr; ""
+          
+          (let ((P (make-lexer-port ":80")))
+            (low.to-string (low.parse-reg-name P))    &rArr; #f
+            (low.to-string (get-bytevector-some P)))  &rArr; ":80"
+          
+          (let ((P (make-lexer-port "/ciao")))
+            (low.to-string (low.parse-reg-name P))    &rArr; #f
+            (low.to-string (get-bytevector-some P)))  &rArr; "/ciao"
+          
+          (let ((P (make-lexer-port "?query")))
+            (low.to-string (low.parse-reg-name P))    &rArr; #f
+            (low.to-string (get-bytevector-some P)))  &rArr; "?query"
+          
+          (let ((P (make-lexer-port "#fragment")))
+            (low.to-string (low.parse-reg-name P))    &rArr; #f
+            (low.to-string (get-bytevector-some P)))  &rArr; "#fragment"
+          
+          (low.to-string
+           (low.parse-reg-name (make-lexer-port "the-reg-name")))
+          &rArr; "the-reg-name"
+          
+          (low.to-string
+           (low.parse-reg-name (make-lexer-port "the.reg.name")))
+          &rArr; "the.reg.name"
+          
+          (low.to-string
+           (low.parse-reg-name (make-lexer-port "ciao%3dciao")))
+          &rArr; "ciao%3dciao"
+          
+          (let ((P (make-lexer-port "the-reg-name:80")))
+            (low.to-string (low.parse-reg-name P))    &rArr; "the-reg-name"
+            (low.to-string (get-bytevector-some P)))  &rArr; ":80"
+          
+          (let ((P (make-lexer-port "the-reg-name/ciao")))
+            (low.to-string (low.parse-reg-name P))    &rArr; "the-reg-name"
+            (low.to-string (get-bytevector-some P)))  &rArr; "/ciao"
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>parse-host</b><var> port<a name="index-parse_002dhost-5041"></a></var><br>
+<blockquote><p>Accumulate bytes from <var>port</var> while they are valid for a <code>host</code>
+component; parse the accumulated bytes as <code>host</code> and return two
+values, the first being one of the Scheme symbols: <code>ipv4-address</code>,
+<code>ipv6-address</code>, <code>ipvfuture</code>, <code>reg-name</code>.
+
+        <p>The second returned value depends upon the first:
+
+          <dl>
+<dt><code>ipv4-address</code><dd>The second value is a pair, whose car is a bytevector holding the
+accumulated bytes and whose cdr is a list of 4 exact integers
+representing the octets.
+
+          <br><dt><code>ipv6-address</code><dd>The second value is a pair, whose car is a bytevector holding the
+accumulated bytes (without the enclosing square brackets) and whose cdr
+is a list of 8 exact integers representing the address components.
+
+          <br><dt><code>ipvfuture</code><dd>The second value is a pair, whose car is the version number as exact
+integer in the range [0, 15] and whose cdr is a possibly empty
+bytevector holding the accumulated bytes (without the enclosing square
+brackets, the <code>v</code> and the version byte).
+
+          <br><dt><code>reg-name</code><dd>The second value is a possibly empty bytevector holding the accumulated
+bytes. 
+</dl>
+
+        <p>If successful: leave the port position to the byte after last one read
+from the port; if an error occurs: return false and false, rewind the
+port position to the one before this function call.
+
+     <pre class="example">          (import (rnrs)
+            (prefix (nausicaa uri low) low.))
+          
+          (define (make-lexer-port S)
+            (open-bytevector-input-port (low.to-bytevector S)))
+          
+          (let ((P (make-lexer-port "/")))
+            (low.parse-host P)            &rArr; reg-name #vu8()
+            (low.to-string
+             (get-bytevector-some P)))    &rArr; "/"
+          
+          (let ((P (make-lexer-port ":80")))
+            (low.parse-host P)            &rArr; reg-name #vu8()
+            (low.to-string
+             (get-bytevector-some P)))    &rArr; ":80"
+          
+          (let ((P (make-lexer-port "1.2.3.4:80")))
+            (receive (kind data)
+                (low.parse-host P)
+              kind                        &rArr; ipv4-address
+              (low.to-string (car data))  &rArr; "1.2.3.4"
+              (cdr data))                 &rArr; (1 2 3 4)
+            (low.to-string
+             (get-bytevector-some P)))    &rArr; ":80"
+          
+          (let ((P (make-lexer-port "[::ffff:192.168.99.1]:80")))
+            (receive (kind data)
+                (low.parse-host P)
+              kind                        &rArr; ipv6-address
+              (low.to-string (car data))  &rArr; "::ffff:192.168.99.1"
+              (cdr data))                 &rArr; (0 0 0 0 0 #xFFFF #xC0A8 #x6301)
+            (low.to-string
+             (get-bytevector-some P)))    &rArr; ":80"
+          
+          (let ((P (make-lexer-port "[vF,ciao,ciao]/ciao")))
+            (receive (kind data)
+                (low.parse-host P)
+              kind                        &rArr; ipvfuture
+              (car data)                  &rArr; 15
+              (low.to-string (cdr data))) &rArr; ",ciao,ciao"
+            (low.to-string
+             (get-bytevector-some P)))    &rArr; "/ciao"
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>parse-port</b><var> port<a name="index-parse_002dport-5042"></a></var><br>
+<blockquote><p>Accumulate bytes from <var>port</var> while they are valid for a <code>port</code>
+component in the <code>authority</code> component.  The first byte must
+represent a colon in <acronym>ASCII</acronym> encoding; after that: if <acronym>EOF</acronym> or a byte
+not representing a decimal digit, in <acronym>ASCII</acronym> encoding, is read: return
+a bytevector holding the accumulated bytes, starting colon excluded;
+else return false.
+
+        <p>If successful: leave the port position to the byte after last one read
+from the port; if an error occurs: rewind the port position to the one
+before this function call.
+
+        <p>Notice that an empty <code>port</code> component after the mandatory colon is
+valid: in this case an empty bytevector is returned.
+
+     <pre class="example">          (import (rnrs)
+            (prefix (nausicaa uri low) low.))
+          
+          (define (make-lexer-port S)
+            (open-bytevector-input-port (low.to-bytevector S)))
+          
+          (low.parse-port (make-lexer-port ""))         &rArr; #f
+          (low.to-string
+           (low.parse-port (make-lexer-port ":")))      &rArr; ""
+          (low.to-string
+           (low.parse-port (make-lexer-port ":2")))     &rArr; "2"
+          (low.to-string
+           (low.parse-port (make-lexer-port ":8080")))  &rArr; "8080"
+          
+          (let ((P (make-lexer-port ":8080ciao")))
+            (low.to-string (low.parse-port P))        &rArr; "8080"
+            (low.to-string (get-bytevector-some P)))  &rArr; "ciao"
+</pre>
+        </blockquote></div>
+
+<!-- page -->
+   </body></html>
+

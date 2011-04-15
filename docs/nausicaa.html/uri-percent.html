@@ -7,9 +7,10 @@
 <link title="Top" rel="start" href="index.html#Top">
 <link rel="up" href="uri.html#uri" title="uri">
 <link rel="prev" href="uri-string.html#uri-string" title="uri string">
+<link rel="next" href="uri-parser.html#uri-parser" title="uri parser">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
-This document describes version 0.2d4 of Nausicaa/Scheme, a set of
+This document describes version 0.2d5 of Nausicaa/Scheme, a set of
 Scheme libraries defining a slightly modified R6RS Scheme language
 and augmenting the features of the base and standard R6RS libraries.
 
@@ -99,15 +100,18 @@ the list of original documents and their authors.  See also the
 <div class="node">
 <a name="uri-percent"></a>
 <p>
+Next:&nbsp;<a rel="next" accesskey="n" href="uri-parser.html#uri-parser">uri parser</a>,
 Previous:&nbsp;<a rel="previous" accesskey="p" href="uri-string.html#uri-string">uri string</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="uri.html#uri">uri</a>
 <hr>
 </div>
 
-<h3 class="section">66.2 Percent encoding of characters</h3>
+<h3 class="section">68.4 Percent encoding of characters</h3>
 
-<p>A string is valid as <acronym>URI</acronym> component only if its characters match the
-following <code>(nausicaa silex)</code> specification:
+<p>A bytevector, whose bytes are interpreted as <acronym>ASCII</acronym> characters, is
+valid as <acronym>URI</acronym> component only if its characters match the following
+<code>(nausicaa silex)</code> specification (see <a href="silex-syntax.html#silex-syntax">silex syntax</a> for the
+syntax of the specification):
 
 <pre class="example">     ALPHA           [a-zA-Z]
      DIGIT           [0-9]
@@ -121,9 +125,9 @@ following <code>(nausicaa silex)</code> specification:
      reserved        {gen-delims}|{sub-delims}
      unreserved      {ALPHA}|{DIGIT}|[\-\._~]
 </pre>
-   <p class="noindent"><a href="silex-syntax.html#silex-syntax">silex syntax</a> for the syntax of the specification.  All the
-characters which are not unreserved are meant to be percent&ndash;encoded in
-a <acronym>URI</acronym> string; in particular the following must be encoded:
+   <p class="noindent">all the characters which are not unreserved are meant to be
+percent&ndash;encoded in a <acronym>URI</acronym> string; in particular the following must be
+encoded:
 
 <pre class="example">     : / ? # [ ]  \ ! $ &amp; ' ( ) * + , ; =
 </pre>
@@ -133,14 +137,16 @@ a <acronym>URI</acronym> string; in particular the following must be encoded:
 library; it is suggested to prefix them when importing this library.
 
 <div class="defun">
-&mdash; Function: <b>unreserved-char?</b><var> obj<a name="index-unreserved_002dchar_003f-4868"></a></var><br>
+&mdash; Function: <b>unreserved-char?</b><var> obj<a name="index-unreserved_002dchar_003f-5021"></a></var><br>
 <blockquote><p>Return true if <var>obj</var> represents an unreserved character according to
 <acronym>RFC</acronym> 3986.  <var>obj</var> can be either a character or an integer
 representing a character according to <code>char-&gt;integer</code>. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Syntax: <b>percent-encode</b><var> &lt;obj&gt; &lt;clause&gt; ...<a name="index-percent_002dencode-4869"></a></var><br>
+&mdash; Syntax: <b>percent-encode</b><var> &lt;obj&gt; &lt;clause&gt; ...<a name="index-percent_002dencode-5022"></a></var><br>
+&mdash; Auxiliary Syntax: <b>char-selector</b><var> pred<a name="index-char_002dselector-5023"></a></var><br>
+&mdash; Auxiliary Syntax: <b>string-result?</b><var> bool<a name="index-string_002dresult_003f-5024"></a></var><br>
 <blockquote><p>This syntax is a maker, <a href="../nausicaa/makers.html#makers">Maker syntaxes</a>. 
 Percent&ndash;encode the given object, return the result; characters outside
 a selected range are percent&ndash;encoded.
@@ -152,18 +158,19 @@ converted to a bytevector with <code>string-&gt;utf8</code>.
         <p>The following clauses are supported:
 
           <dl>
-<dt><code>:char-selector </code><var>pred</var><dd><var>pred</var> must be a predicate function which, applied to an integer
+<dt><code>char-selector </code><var>pred</var><dd><var>pred</var> must be a predicate function which, applied to an integer
 representing a character according to <code>char-&gt;integer</code>, returns true
 if the character must be percent encoded.  The default is to encode all
 the character not unreserved.
 
-          <br><dt><code>:string-result? </code><var>bool</var><dd>If <var>bool</var> is true: return a string, else return a bytevector; the
+          <br><dt><code>string-result? </code><var>bool</var><dd>If <var>bool</var> is true: return a string, else return a bytevector; the
 default is to return a bytevector. 
 </dl>
         </p></blockquote></div>
 
 <div class="defun">
-&mdash; Syntax: <b>percent-decode</b><var> &lt;obj&gt; &lt;clause&gt; ...<a name="index-percent_002ddecode-4870"></a></var><br>
+&mdash; Syntax: <b>percent-decode</b><var> &lt;obj&gt; &lt;clause&gt; ...<a name="index-percent_002ddecode-5025"></a></var><br>
+&mdash; Auxiliary Syntax: <b>string-result?</b><var> bool<a name="index-string_002dresult_003f-5026"></a></var><br>
 <blockquote><p>This syntax is a maker, <a href="../nausicaa/makers.html#makers">Maker syntaxes</a>. 
 Percent&ndash;decode the given <var>obj</var>, return the result.
 
@@ -173,31 +180,33 @@ the string is converted to a bytevector with <code>string-&gt;utf8</code>.
         <p>The following clauses are supported:
 
           <dl>
-<dt><code>:string-result? </code><var>bool</var><dd>If <var>bool</var> is true: return a string, else return a bytevector; the
+<dt><code>string-result? </code><var>bool</var><dd>If <var>bool</var> is true: return a string, else return a bytevector; the
 default is to return a bytevector. 
 </dl>
         </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>normalise-percent-encoded-bytevector</b><var> bv<a name="index-normalise_002dpercent_002dencoded_002dbytevector-4871"></a></var><br>
+&mdash; Function: <b>normalise-percent-encoded-bytevector</b><var> bv<a name="index-normalise_002dpercent_002dencoded_002dbytevector-5027"></a></var><br>
 <blockquote><p>Normalise the given percent&ndash;encoded bytevector; bytes that are encoded
-but should not are decoded; return the normalised bytevector.  Assume
-that <var>bv</var> is composed by bytes in the valid range for <acronym>URI</acronym>s.
+but should not are decoded; return the normalised bytevector, in which
+percent&ndash;encoded characters are displayed in upper case.  Assume that
+<var>bv</var> is composed by bytes in the valid range for <acronym>URI</acronym>s.
 
         <p>Notice that this function does <strong>not</strong> percent&ndash;encode bytes which
 are already not so. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>normalise-percent-encoded-string</b><var> str<a name="index-normalise_002dpercent_002dencoded_002dstring-4872"></a></var><br>
+&mdash; Function: <b>normalise-percent-encoded-string</b><var> str<a name="index-normalise_002dpercent_002dencoded_002dstring-5028"></a></var><br>
 <blockquote><p>Normalise the given percent&ndash;encoded string; characters that are encoded
-but should not are decoded; return the normalised string.  Assume that
+but should not are decoded; return the normalised string, in which
+percent&ndash;encoded characters are displayed in upper case.  Assume that
 <var>str</var> is composed by characters in the valid range for <acronym>URI</acronym>s.
 
         <p>Notice that this function does <strong>not</strong> percent&ndash;encode characters
 which are already not so. 
 </p></blockquote></div>
 
-<!-- end of file -->
+<!-- page -->
    </body></html>
 

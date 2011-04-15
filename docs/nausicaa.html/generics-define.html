@@ -10,7 +10,7 @@
 <link rel="next" href="generics-next.html#generics-next" title="generics next">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
-This document describes version 0.2d4 of Nausicaa/Scheme, a set of
+This document describes version 0.2d5 of Nausicaa/Scheme, a set of
 Scheme libraries defining a slightly modified R6RS Scheme language
 and augmenting the features of the base and standard R6RS libraries.
 
@@ -106,44 +106,119 @@ Up:&nbsp;<a rel="up" accesskey="u" href="generics.html#generics">generics</a>
 <hr>
 </div>
 
-<h3 class="section">26.4 Defining generic functions and methods</h3>
+<h3 class="section">25.4 Defining generic functions and methods</h3>
+
+<p>The following syntaxes allow the definition and merging of generic
+functions; merging generics is useful when two different libraries
+export generic functions bound to the same identifier.
 
 <div class="defun">
-&mdash; Syntax: <b>define-generic</b><var> &lt;name&gt;<a name="index-define_002dgeneric-1872"></a></var><br>
-<blockquote><p>Define a new generic function (a macro) and bind it to &lt;name&gt;.  The
-number of arguments is unspecified: it will be established by the first
-<code>define-method</code> or <code>add-method</code> applied to &lt;name&gt;. 
-</p></blockquote></div>
+&mdash; Syntax: <b>define-generic</b><var> &lt;name&gt; &lt;formals&gt; &lt;clause&gt; ...<a name="index-define_002dgeneric-1446"></a></var><br>
+&mdash; Auxiliary Syntax: <b>uid-list-of</b><var> &lt;func&gt;<a name="index-uid_002dlist_002dof-1447"></a></var><br>
+&mdash; Auxiliary Syntax: <b>merge</b><var> &lt;generic&gt; ...<a name="index-merge-1448"></a></var><br>
+<blockquote><p>Define a new ordinary generic function (a macro) and bind it to
+<var>&lt;name&gt;</var>.  The number of arguments is specified by <var>&lt;formals&gt;</var>: a
+list of identifiers, one for each argument; the list is used only to
+determine the number of arguments (it can be used to document the
+intended meaning of arguments).
 
-<div class="defun">
-&mdash; Syntax: <b>define-generic/merge</b><var> &lt;name&gt; &lt;generic0&gt; &lt;generic&gt; ...<a name="index-define_002dgeneric_002fmerge-1873"></a></var><br>
-<blockquote><p>Define a new generic function and bind it to &lt;name&gt;.  The internal
-collection of methods holds the union of the method collections from the
-&lt;generic&gt; arguments, which must be generic function identifiers.
-
-        <p>The union is performed visiting arguments from left to right; when two
+        <p>When the <code>merge</code> clause is used: the internal method table is
+initialised to the union of the method tables from the <var>&lt;generic&gt;</var>
+arguments, which must be ordinary generic function identifiers.  The
+union is performed by visiting arguments from left to right; when two
 methods have the same signature, the one from the leftmost generic
-function has precedence.
+function takes precedence.
 
-        <p>Merging methods is useful when two different libraries export generic
-functions bound to the same identifier. 
+        <p>See below for the documentation of the <code>uid-list-of</code> clause. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Syntax: <b>define-method</b><var> &lt;generic&gt; </var>(<var>&lt;arg-spec&gt; ...</var>)<var> &lt;body&gt;<a name="index-define_002dmethod-1874"></a></var><br>
-&mdash; Syntax: <b>define-method</b> (<var>&lt;generic&gt; &lt;arg-spec&gt; ...</var>)<var> &lt;body&gt;<a name="index-define_002dmethod-1875"></a></var><br>
-<blockquote><p>Add a new method to an already existent generic function,
-&lt;generic&gt;.
+&mdash; Syntax: <b>define-generic*</b><var> &lt;name&gt; &lt;formals&gt; &lt;clause&gt; ...<a name="index-define_002dgeneric_002a-1449"></a></var><br>
+&mdash; Auxiliary Syntax: <b>uid-list-of</b><var> &lt;func&gt;<a name="index-uid_002dlist_002dof-1450"></a></var><br>
+&mdash; Auxiliary Syntax: <b>merge</b><var> &lt;generic&gt; ...<a name="index-merge-1451"></a></var><br>
+&mdash; Auxiliary Syntax: <b>reverse-before-methods</b><var> &lt;boolean&gt;<a name="index-reverse_002dbefore_002dmethods-1452"></a></var><br>
+<blockquote><p>Define a new starred generic function (a macro) and bind it to
+<var>&lt;name&gt;</var>.  The number of arguments is specified by <var>&lt;formals&gt;</var>: a
+list of identifiers, one for each argument; the list is used only to
+determine the number of arguments (it can be used to document the
+intended meaning of arguments).
 
-        <p>The list of &lt;arg-spec&gt; specifies the class of the arguments for
-which this method specialises the generic function; an &lt;arg-spec&gt;
+        <p>When the <code>merge</code> clause is used: the internal method tables are
+initialised to the unions of the method tables from the <var>&lt;generic&gt;</var>
+arguments, which must be starred generic function identifiers.  The
+union is performed by visiting arguments from left to right; when two
+methods have the same signature, the one from the leftmost generic
+function takes precedence.
+
+        <p>The default methods composition protocol states that <code>:before</code> and
+<code>:around</code> methods are evaluated from the most specific to the least
+specific, while <code>:after</code> methods are evaluated from the least
+specific to the most specific; the protocol can be customised in the
+following ways:
+
+          <ul>
+<li>When the <code>reverse-before-methods</code> clause is used and <var>&lt;boolean&gt;</var>
+is <code>#t</code>: the order of <code>:before</code> methods is reversed to &ldquo;from
+the least specific to the most specific&rdquo; prior to evaluating them. 
+</ul>
+
+     <p class="noindent"><a href="generics-methods.html#generics-methods">generics methods</a> for an example of why these customisations are
+useful.
+
+        <p>See below for the documentation of the <code>uid-list-of</code> clause. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Auxiliary Syntax: <b>uid-list-of</b><var> &lt;func&gt;<a name="index-uid_002dlist_002dof-1453"></a></var><br>
+<blockquote><p>The optional clause <code>uid-list-of</code> allows the specification of a
+custom function to extract a unique symbol representing the type of the
+arguments in calls to the generic functions; the default value is
+<code>class-uid-list-of</code> exported by <code>nausicaa language classes</code>. 
+<var>&lt;func&gt;</var> can be any expression evaluating to a function.
+
+        <p>When merging generic functions: the type inspector function is
+<code>class-uid-list-of</code> if we do not use this clause.
+
+        <p>Usually the <code>uid-list-of</code> clause selects a wrapper for
+<code>class-uid-list-of</code>; for example:
+
+     <pre class="example">          (define (new-uid-list-of obj)
+            (if (pointer? obj)
+                '(nausicaa:ffi:pointer &lt;top&gt;)
+             (class-uid-list-of obj)))
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>define-method</b> (<var>&lt;generic&gt; &lt;arg-spec&gt; ...</var>)<var> &lt;body&gt;<a name="index-define_002dmethod-1454"></a></var><br>
+&mdash; Syntax: <b>define-method</b><var> &lt;generic&gt; </var>(<var>&lt;arg-spec&gt; ...</var>)<var> &lt;body&gt;<a name="index-define_002dmethod-1455"></a></var><br>
+&mdash; Syntax: <b>define-method</b><var> &lt;kind&gt; &lt;generic&gt; </var>(<var>&lt;arg-spec&gt; ...</var>)<var> &lt;body&gt;<a name="index-define_002dmethod-1456"></a></var><br>
+&mdash; Syntax: <b>define-method</b><var> &lt;generic&gt; &lt;kind&gt; </var>(<var>&lt;arg-spec&gt; ...</var>)<var> &lt;body&gt;<a name="index-define_002dmethod-1457"></a></var><br>
+&mdash; Auxiliary Syntax: <b>:primary</b><var><a name="index-g_t_003aprimary-1458"></a></var><br>
+&mdash; Auxiliary Syntax: <b>:around</b><var><a name="index-g_t_003aaround-1459"></a></var><br>
+&mdash; Auxiliary Syntax: <b>:before</b><var><a name="index-g_t_003abefore-1460"></a></var><br>
+&mdash; Auxiliary Syntax: <b>:after</b><var><a name="index-g_t_003aafter-1461"></a></var><br>
+<blockquote><p>Add a new method to an already existent generic function <var>&lt;generic&gt;</var>
+either ordinary or starred.
+
+        <p>When the <var>&lt;kind&gt;</var> argument is not present or it is the
+<code>:primary</code> syntax: <var>&lt;generic&gt;</var> can be either an ordinary or
+starred generic function.
+
+        <p>When the <var>&lt;kind&gt;</var> argument is the <code>:before</code>, <code>:after</code> or
+<code>:around</code> syntax: <var>&lt;generic&gt;</var> must be a starred generic
+function.
+
+        <p>The list of <var>&lt;arg-spec&gt;</var> specifies the class of the arguments for
+which this method specialises the generic function; an <var>&lt;arg-spec&gt;</var>
 can be:
 
           <dl>
-<dt><code>(&lt;arg&gt; &lt;class name&gt;)</code><dd>Where &lt;arg&gt; is the formal name of the argument and &lt;class
-name&gt; the (possibly conventional) class name of expected values.
+<dt><code>(</code><var>&lt;arg&gt;</var> <var>&lt;class-name&gt;</var><code>)</code><dd>Where <var>&lt;arg&gt;</var> is the formal name of the argument and
+<var>&lt;class-name&gt;</var> the (possibly conventional) class name of expected
+values.
 
-          <br><dt><code>&lt;arg&gt;</code><dd>Where &lt;arg&gt; is the formal name of the argument.  In this case the
+          <br><dt><var>&lt;arg&gt;</var><dd>Where <var>&lt;arg&gt;</var> is the formal name of the argument.  In this case the
 class defaults to the conventional <code>&lt;top&gt;</code>, which is interpreted as
 parent of every other class (and so it has the least specificity). 
 </dl>
@@ -153,11 +228,26 @@ method: the old method is overwritten by the new one.
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Syntax: <b>add-method</b><var> &lt;generic&gt; &lt;classes&gt; &lt;closure&gt;<a name="index-add_002dmethod-1876"></a></var><br>
-<blockquote><p>Add a new method to an already existent generic function,
-&lt;generic&gt;.  &lt;classes&gt; must be a list of class names for which
-this method specialises the generic function.  &lt;closure&gt; must be
-the method's closure. 
+&mdash; Syntax: <b>add-method</b><var> &lt;generic&gt; &lt;types&gt; &lt;closure&gt;<a name="index-add_002dmethod-1462"></a></var><br>
+&mdash; Syntax: <b>add-method</b><var> &lt;generic&gt; &lt;kind&gt; &lt;types&gt; &lt;closure&gt;<a name="index-add_002dmethod-1463"></a></var><br>
+&mdash; Auxiliary Syntax: <b>:primary</b><var><a name="index-g_t_003aprimary-1464"></a></var><br>
+&mdash; Auxiliary Syntax: <b>:around</b><var><a name="index-g_t_003aaround-1465"></a></var><br>
+&mdash; Auxiliary Syntax: <b>:before</b><var><a name="index-g_t_003abefore-1466"></a></var><br>
+&mdash; Auxiliary Syntax: <b>:after</b><var><a name="index-g_t_003aafter-1467"></a></var><br>
+<blockquote><p>Add a new method to an already existent generic function <var>&lt;generic&gt;</var>
+either ordinary or starred.
+
+        <p>When the <var>&lt;kind&gt;</var> argument is not present or it is the
+<code>:primary</code> syntax: <var>&lt;generic&gt;</var> can be either an ordinary or
+starred generic function.
+
+        <p>When the <var>&lt;kind&gt;</var> argument is the <code>:before</code>, <code>:after</code> or
+<code>:around</code> syntax: <var>&lt;generic&gt;</var> must be a starred generic
+function.
+
+        <p><var>&lt;types&gt;</var> must be a list of class names for which this method
+specialises the generic function.  <var>&lt;closure&gt;</var> must be the method's
+closure. 
 </p></blockquote></div>
 
 <!-- page -->

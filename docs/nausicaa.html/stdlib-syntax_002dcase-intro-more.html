@@ -1,0 +1,164 @@
+<html lang="en">
+<head>
+<title>stdlib syntax-case intro more - Nausicaa for Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Nausicaa for Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="stdlib-syntax_002dcase-intro.html#stdlib-syntax_002dcase-intro" title="stdlib syntax-case intro">
+<link rel="prev" href="stdlib-syntax_002dcase-intro-ex.html#stdlib-syntax_002dcase-intro-ex" title="stdlib syntax-case intro ex">
+<link rel="next" href="stdlib-syntax_002dcase-intro-expand.html#stdlib-syntax_002dcase-intro-expand" title="stdlib syntax-case intro expand">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d5 of Nausicaa/Scheme, a set of
+Scheme libraries defining a slightly modified R6RS Scheme language
+and augmenting the features of the base and standard R6RS libraries.
+
+The project home page of Nausicaa is at:
+
+             `http://marcomaggi.github.com/nausicaa.html'
+
+
+development of Nausicaa takes place at:
+
+               `http://github.com/marcomaggi/nausicaa/'
+
+
+Copyright (C) 2008, 2009, 2010 by Marco Maggi.
+
+Copyright (C) 1996, 1997, 2000, 2001, 2002, 2003, 2004, 2005
+Free Software Foundation.
+
+Copyright (C) 1996, 1999-2005 Dorai Sitaram.
+
+Copyright (C) 1998 Oleg Kiselyov.
+
+Copyright (C) 1998, 1999, 2000 Olin Shivers.
+
+Copyright (C) 1999 John David Stone.
+
+Copyright (C) 1999, 2002 Marc Feeley.
+
+Copyright (C) 2001, 2009 Danny Dube'
+
+Copyright (C) 2002 Dr. Mirko Luedde.
+
+Copyright (C) 2002, 2003, 2005, 2006 Sebastian Egner.
+
+Copyright (C) 2003 Ray Dillinger.
+
+Copyright (C) 2003 Taylor Campbell.
+
+Copyright (C) 2005 Jens Axel Soegaard.
+
+Copyright (C) 2005-2009 Alex Shinn.
+
+Copyright (C) 2008 Taro Minowa (Higepon).
+
+Copyright (C) 2005-2008 Dominique Boucher.
+
+Copyright (C) 2004, 2005 Tony Garnock-Jones
+
+Copyright (C) 2005 LShift Ltd.
+
+Copyright (C) 2007, 2008 Philip L. Bewig.
+
+Copyright (C) 2000 Will Fitzgerald.
+
+Copyright (C) 2000 Neodesic Corporation.
+
+Copyright (C) 2000-2006 Joachim Henke.
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with no Invariant Sections being ``GNU Free
+     Documentation License'' and ``GNU General Public License'', no
+     Front--Cover Texts, and no Back--Cover Texts.  A copy of the
+     license is included in the section entitled ``GNU Free
+     Documentation License''.
+
+This document embeds an unofficial assemblage of several documents
+reformatted in Texinfo; the reformatting author and maintainer is
+Marco Maggi <marco.maggi-ipsu@poste.it>.  See the appendix ``Credits'' for
+the list of original documents and their authors.  See also the
+`README' and `CREDITS' files for additional attributions.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="stdlib-syntax-case-intro-more"></a>
+<a name="stdlib-syntax_002dcase-intro-more"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="stdlib-syntax_002dcase-intro-expand.html#stdlib-syntax_002dcase-intro-expand">stdlib syntax-case intro expand</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="stdlib-syntax_002dcase-intro-ex.html#stdlib-syntax_002dcase-intro-ex">stdlib syntax-case intro ex</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="stdlib-syntax_002dcase-intro.html#stdlib-syntax_002dcase-intro">stdlib syntax-case intro</a>
+<hr>
+</div>
+
+<h5 class="subsubsection">4.12.1.4 More on wrapped and unwrapped syntax objects</h5>
+
+<p>A wrapped syntax object can be implemented as a record instance
+containing an S&ndash;expression and lexical context informations; wrapped
+syntax objects are a disjoint type of values.  An unwrapped object is an
+S-expression, a structure of pairs and/or vectors, holding datums and
+syntax objects.
+
+   <p>Fully unwrapping a syntax object means to convert it into an
+S&ndash;expression in which all the symbols are turned into identifiers and
+the identifiers are the only syntax objects.  The identifier is the
+simplest syntax object with lexical informations in it; the symbol is
+the only element of an input form which needs lexical informations; so
+the wrapped syntax object:
+
+<pre class="example">     #&lt;syntax (1 ciao)&gt;
+</pre>
+   <p class="noindent">is unwrapped to:
+
+<pre class="example">     (1 #&lt;syntax ciao&gt;)
+</pre>
+   <p>A syntax object can be partially unwrapped, for example:
+
+<pre class="example">     #&lt;syntax (the-macro 1 hello #(ciao 2) 3 salut)&gt;
+</pre>
+   <p class="noindent">can be unwrapped to:
+
+<pre class="example">     (#&lt;syntax the-macro&gt;
+      1
+      #&lt;syntax hello&gt;
+      #&lt;syntax #(ciao 2)&gt;
+      3
+      #&lt;syntax salut&gt;)
+</pre>
+   <p class="noindent">which still contains the wrapped syntax object &lsquo;<samp><span class="samp">#&lt;syntax #(ciao
+2)&gt;</span></samp>&rsquo;.
+
+   <p>The function <code>unwrap</code> defined above fully unwraps its
+argument; notice that it will unwrap also quoted S&ndash;expressions, for
+example:
+
+<pre class="example">     #&lt;syntax (a b '(1 2 #\c d))&gt;
+</pre>
+   <p class="noindent">is unwrapped to:
+
+<pre class="example">     (#&lt;syntax a&gt;
+      #&lt;syntax b&gt;
+      (#&lt;syntax quote&gt;
+       (1 2 #\c #&lt;syntax d&gt;)))
+</pre>
+   <p class="noindent">this is not always what we want.
+
+<!-- page -->
+   </body></html>
+

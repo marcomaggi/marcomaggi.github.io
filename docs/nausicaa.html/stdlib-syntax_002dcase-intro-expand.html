@@ -1,0 +1,195 @@
+<html lang="en">
+<head>
+<title>stdlib syntax-case intro expand - Nausicaa for Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Nausicaa for Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="stdlib-syntax_002dcase-intro.html#stdlib-syntax_002dcase-intro" title="stdlib syntax-case intro">
+<link rel="prev" href="stdlib-syntax_002dcase-intro-more.html#stdlib-syntax_002dcase-intro-more" title="stdlib syntax-case intro more">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d5 of Nausicaa/Scheme, a set of
+Scheme libraries defining a slightly modified R6RS Scheme language
+and augmenting the features of the base and standard R6RS libraries.
+
+The project home page of Nausicaa is at:
+
+             `http://marcomaggi.github.com/nausicaa.html'
+
+
+development of Nausicaa takes place at:
+
+               `http://github.com/marcomaggi/nausicaa/'
+
+
+Copyright (C) 2008, 2009, 2010 by Marco Maggi.
+
+Copyright (C) 1996, 1997, 2000, 2001, 2002, 2003, 2004, 2005
+Free Software Foundation.
+
+Copyright (C) 1996, 1999-2005 Dorai Sitaram.
+
+Copyright (C) 1998 Oleg Kiselyov.
+
+Copyright (C) 1998, 1999, 2000 Olin Shivers.
+
+Copyright (C) 1999 John David Stone.
+
+Copyright (C) 1999, 2002 Marc Feeley.
+
+Copyright (C) 2001, 2009 Danny Dube'
+
+Copyright (C) 2002 Dr. Mirko Luedde.
+
+Copyright (C) 2002, 2003, 2005, 2006 Sebastian Egner.
+
+Copyright (C) 2003 Ray Dillinger.
+
+Copyright (C) 2003 Taylor Campbell.
+
+Copyright (C) 2005 Jens Axel Soegaard.
+
+Copyright (C) 2005-2009 Alex Shinn.
+
+Copyright (C) 2008 Taro Minowa (Higepon).
+
+Copyright (C) 2005-2008 Dominique Boucher.
+
+Copyright (C) 2004, 2005 Tony Garnock-Jones
+
+Copyright (C) 2005 LShift Ltd.
+
+Copyright (C) 2007, 2008 Philip L. Bewig.
+
+Copyright (C) 2000 Will Fitzgerald.
+
+Copyright (C) 2000 Neodesic Corporation.
+
+Copyright (C) 2000-2006 Joachim Henke.
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with no Invariant Sections being ``GNU Free
+     Documentation License'' and ``GNU General Public License'', no
+     Front--Cover Texts, and no Back--Cover Texts.  A copy of the
+     license is included in the section entitled ``GNU Free
+     Documentation License''.
+
+This document embeds an unofficial assemblage of several documents
+reformatted in Texinfo; the reformatting author and maintainer is
+Marco Maggi <marco.maggi-ipsu@poste.it>.  See the appendix ``Credits'' for
+the list of original documents and their authors.  See also the
+`README' and `CREDITS' files for additional attributions.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="stdlib-syntax-case-intro-expand"></a>
+<a name="stdlib-syntax_002dcase-intro-expand"></a>
+<p>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="stdlib-syntax_002dcase-intro-more.html#stdlib-syntax_002dcase-intro-more">stdlib syntax-case intro more</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="stdlib-syntax_002dcase-intro.html#stdlib-syntax_002dcase-intro">stdlib syntax-case intro</a>
+<hr>
+</div>
+
+<h5 class="subsubsection">4.12.1.5 A quick look at the expander</h5>
+
+<p>Macro transformers are ordinary Scheme functions, which are written in
+an <acronym>R6RS</acronym>&ndash;compatible Scheme language; the only difference from
+ordinary functions, is that: transformer definitions are evaluated at
+<dfn>expand time</dfn>, while ordinary function definitions are evaluated at
+<dfn>run time</dfn>.  We take a look at how the expander works, avoiding
+almost all the details and focusing on the languages.
+
+   <p>Let's define a simple library to be used as language for run time:
+
+<pre class="example">     #!r6rs
+     (library (language-for-run)
+       (export write newline quote define)
+       (import (rnrs)))
+</pre>
+   <p class="noindent">and a simple library to be used as language for expand time:
+
+<pre class="example">     #!r6rs
+     (library (language-for-expand)
+       (export lambda syntax)
+       (import (rnrs)))
+</pre>
+   <p class="noindent">we use them in the following library, where we also import
+<code>define-syntax</code> for run time:
+
+<pre class="example">     #!r6rs
+     (library (the-library)
+       (export doit)
+       (import (for (language-for-run) run)
+         (for (language-for-expand) expand)
+         (for (only (rnrs) define-syntax) run))
+     
+       (define (doit)
+         (write (the-macro))
+         (newline))
+     
+       (define-syntax the-macro
+         (lambda (stx)
+           (syntax (quote (1 2 3)))))
+       )
+</pre>
+   <p class="noindent">we can run the code with the following program:
+
+<pre class="example">     #!r6rs
+     (import (the-library))
+     (doit)
+</pre>
+   <p>Let's point our attention to <code>(the-library)</code>.  After parsing the
+<code>import</code> and <code>export</code> clauses, the expander scans the library
+body; the <code>define-syntax</code> identifier is recognised as the one from
+<code>(rnrs rnrs (6))</code>, so the transformer expression on its right&ndash;hand
+side:
+
+<pre class="example">     (lambda (stx)
+       (syntax (quote (1 2 3))))
+</pre>
+   <p class="noindent">is extracted and we can imagine it being evaluated with (notice the
+import levels):
+
+<pre class="example">     (define the-transformer
+       (eval '(lambda (stx)
+                (syntax (quote (1 2 3))))
+             (environment
+               '(for (language-for-run)    (meta -1))
+               '(for (language-for-expand) run))))
+</pre>
+   <p class="noindent">what's left of the library's body is:
+
+<pre class="example">     (define (doit)
+       (write (the-macro))
+       (newline))
+</pre>
+   <p class="noindent">which is scanned for uses of <code>the-macro</code>; the use is found and the
+transformer function applied to a syntax object holding
+<code>(the-macro)</code>; the return value is a syntax object holdingthe
+quoted list <code>(1 2 3)</code>, which is inserted in the body:
+
+<pre class="example">     (define (doit)
+       (write (quote (1 2 3)))
+       (newline))
+</pre>
+   <p>The body can now be evaluate using bindings from
+<code>(language-for-run)</code>.
+
+<!-- page -->
+   </body></html>
+

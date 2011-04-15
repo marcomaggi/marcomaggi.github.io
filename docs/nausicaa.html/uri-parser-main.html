@@ -1,0 +1,318 @@
+<html lang="en">
+<head>
+<title>uri parser main - Nausicaa for Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Nausicaa for Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="uri-parser.html#uri-parser" title="uri parser">
+<link rel="prev" href="uri-parser-path.html#uri-parser-path" title="uri parser path">
+<link rel="next" href="uri-parser-misc.html#uri-parser-misc" title="uri parser misc">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d5 of Nausicaa/Scheme, a set of
+Scheme libraries defining a slightly modified R6RS Scheme language
+and augmenting the features of the base and standard R6RS libraries.
+
+The project home page of Nausicaa is at:
+
+             `http://marcomaggi.github.com/nausicaa.html'
+
+
+development of Nausicaa takes place at:
+
+               `http://github.com/marcomaggi/nausicaa/'
+
+
+Copyright (C) 2008, 2009, 2010 by Marco Maggi.
+
+Copyright (C) 1996, 1997, 2000, 2001, 2002, 2003, 2004, 2005
+Free Software Foundation.
+
+Copyright (C) 1996, 1999-2005 Dorai Sitaram.
+
+Copyright (C) 1998 Oleg Kiselyov.
+
+Copyright (C) 1998, 1999, 2000 Olin Shivers.
+
+Copyright (C) 1999 John David Stone.
+
+Copyright (C) 1999, 2002 Marc Feeley.
+
+Copyright (C) 2001, 2009 Danny Dube'
+
+Copyright (C) 2002 Dr. Mirko Luedde.
+
+Copyright (C) 2002, 2003, 2005, 2006 Sebastian Egner.
+
+Copyright (C) 2003 Ray Dillinger.
+
+Copyright (C) 2003 Taylor Campbell.
+
+Copyright (C) 2005 Jens Axel Soegaard.
+
+Copyright (C) 2005-2009 Alex Shinn.
+
+Copyright (C) 2008 Taro Minowa (Higepon).
+
+Copyright (C) 2005-2008 Dominique Boucher.
+
+Copyright (C) 2004, 2005 Tony Garnock-Jones
+
+Copyright (C) 2005 LShift Ltd.
+
+Copyright (C) 2007, 2008 Philip L. Bewig.
+
+Copyright (C) 2000 Will Fitzgerald.
+
+Copyright (C) 2000 Neodesic Corporation.
+
+Copyright (C) 2000-2006 Joachim Henke.
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with no Invariant Sections being ``GNU Free
+     Documentation License'' and ``GNU General Public License'', no
+     Front--Cover Texts, and no Back--Cover Texts.  A copy of the
+     license is included in the section entitled ``GNU Free
+     Documentation License''.
+
+This document embeds an unofficial assemblage of several documents
+reformatted in Texinfo; the reformatting author and maintainer is
+Marco Maggi <marco.maggi-ipsu@poste.it>.  See the appendix ``Credits'' for
+the list of original documents and their authors.  See also the
+`README' and `CREDITS' files for additional attributions.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="uri-parser-main"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="uri-parser-misc.html#uri-parser-misc">uri parser misc</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="uri-parser-path.html#uri-parser-path">uri parser path</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="uri-parser.html#uri-parser">uri parser</a>
+<hr>
+</div>
+
+<h4 class="subsection">68.5.5 Main components parser functions</h4>
+
+<p>The following functions can be used to parse the <code>URI</code>,
+<code>absolute-URI</code>, <code>relative-ref</code> and <code>path</code> components; the
+relevant portion of the grammar is:
+
+<pre class="example">     URI           = scheme ":" hier-part [ "?" query ] [ "#" fragment ]
+     
+     relative-ref  = relative-part [ "?" query ] [ "#" fragment ]
+     
+     absolute-URI  = scheme ":" hier-part [ "?" query ]
+     
+     path          = path-abempty    ; begins with "/" or is empty
+                   | path-absolute   ; begins with "/" but not "//"
+                   | path-noscheme   ; begins with a non-colon segment
+                   | path-rootless   ; begins with a segment
+                   | path-empty      ; zero characters
+     
+     hier-part     = "//" authority path-abempty
+                   | path-absolute
+                   | path-rootless
+                   | path-empty
+     
+     relative-part = "//" authority path-abempty
+                   | path-absolute
+                   | path-noscheme
+                   | path-empty
+</pre>
+   <p>The following bindings are exported by the <code>(nausicaa uri low)</code>
+library; it is suggested to prefix them when importing this library. 
+All the functions accept a <var>port</var> argument: it must be a binary
+input port drawing characters from a bytevector.
+
+<div class="defun">
+&mdash; Function: <b>parse-uri</b><var> port<a name="index-parse_002duri-5052"></a></var><br>
+<blockquote><p>Read bytes from <var>PORT</var> expecting to get, from the first byte to the
+<acronym>EOF</acronym>, a <code>URI</code> component; parse the input decomposing it into its
+subcomponents.  This function does not decode the percent&ndash;encoded
+bytes.
+
+        <p>Return multiple value being:
+
+          <dl>
+<dt><code>scheme</code><dd>A bytevector representing the <code>scheme</code> component; false if the
+<code>scheme</code> is not present.  According to the <acronym>RFC</acronym>: the
+<code>scheme</code> component is mandatory, but this function accepts its
+absence.
+
+          <br><dt><code>authority</code><dd>A bytevector representing the <code>authority</code> component, not including
+the leading slashes; false if the <code>authority</code> is not present.
+
+          <br><dt><code>userinfo</code><dd>A bytevector representing the <code>userinfo</code> component, not including
+the ending at&ndash;sign; false if the <code>userinfo</code> is not present.
+
+          <br><dt><code>host-type</code><dd>One of the symbols: <code>reg-name</code>, <code>ipv4-address</code>,
+<code>ipv6-address</code>, <code>ipvfuture</code>; when the host is empty: this
+value is <code>reg-name</code>.
+
+          <br><dt><code>host</code><dd>Host data represented as the second return value from <code>parse-host</code>
+and associated to the symbol above.
+
+          <br><dt><code>port</code><dd>A bytevector representing the <code>port</code> component; false if the
+<code>port</code> is not present.
+
+          <br><dt><code>path-type</code><dd>One of the symbols: <code>path-abempty</code>, <code>path-empty</code>,
+<code>path-absolute</code>, <code>path-rootless</code>.  When the <code>authority</code>
+is present: this value is always <code>path-abempty</code>.
+
+          <br><dt><code>path</code><dd>A possibly empty list representing the path segments.
+
+          <br><dt><code>query</code><dd>A bytevector representing the <code>query</code> component; false when the
+<code>query</code> is not present.
+
+          <br><dt><code>fragment</code><dd>A bytevector representing the <code>fragment</code> component; false when the
+<code>fragment</code> is not present. 
+</dl>
+
+        <p>If the host cannot be classified in <code>reg-name</code>, <code>ip-literal</code>
+or <code>ipvfuture</code>: an exception is raised with condition components
+<code>&amp;parser-error</code>, <code>&amp;who</code>, <code>&amp;message</code>,
+<code>&amp;irritants</code>, the irritants being the input port.
+
+        <p>If the path cannot be classified: an exception is raised with condition
+components <code>&amp;parser-error</code>, <code>&amp;who</code>,
+<code>&amp;message</code>, <code>&amp;irritants</code>, the irritants being the
+input port. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>parse-relative-ref</b><var> port<a name="index-parse_002drelative_002dref-5053"></a></var><br>
+<blockquote><p>Read bytes from <var>port</var> expecting to get, from the first byte to the
+<acronym>EOF</acronym>, a <code>relative-ref</code> component; parse the input decomposing it
+into its subcomponents.  This function does not decode the
+percent&ndash;encoded bytes.
+
+        <p>Return multiple value being:
+
+          <dl>
+<dt><code>authority</code><dd>A bytevector representing the <code>authority</code> component, not including
+the leading slashes; false if the <code>authority</code> is not present.
+
+          <br><dt><code>userinfo</code><dd>A bytevector representing the <code>userinfo</code> component, not including
+the ending at&ndash;sign; false if the <code>userinfo</code> is not present.
+
+          <br><dt><code>host-type</code><dd>One of the symbols: <code>reg-name</code>, <code>ipv4-address</code>,
+<code>ipv6-address</code>, <code>ipvfuture</code>; when the host is empty: this
+value is <code>reg-name</code>.
+
+          <br><dt><code>host</code><dd>Host data represented as the second return value from <code>parse-host</code>
+and associated to the symbol above.
+
+          <br><dt><code>port</code><dd>A bytevector representing the <code>port</code> component; false if the
+<code>port</code> is not present.
+
+          <br><dt><code>path-type</code><dd>One of the symbols: <code>path-abempty</code>, <code>path-empty</code>,
+<code>path-absolute</code>, <code>path-noscheme</code>.  When the <code>authority</code>
+is present: this value is always <code>path-abempty</code>.
+
+          <br><dt><code>path</code><dd>A possibly empty list representing the path segments.
+
+          <br><dt><code>query</code><dd>A bytevector representing the <code>query</code> component; false when the
+<code>query</code> is not present.
+
+          <br><dt><code>fragment</code><dd>A bytevector representing the <code>fragment</code> component; false when the
+<code>fragment</code> is not present. 
+</dl>
+
+        <p>If the host cannot be classified in <code>reg-name</code>, <code>ip-literal</code>
+or <code>ipvfuture</code>: an exception is raised with condition components
+<code>&amp;parser-error</code>, <code>&amp;who</code>, <code>&amp;message</code>,
+<code>&amp;irritants</code>, the irritants being the input port.
+
+        <p>If the path cannot be classified: an exception is raised with condition
+components <code>&amp;parser-error</code>, <code>&amp;who</code>,
+<code>&amp;message</code>, <code>&amp;irritants</code>, the irritants being the
+input port. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>parse-path</b><var> port<a name="index-parse_002dpath-5054"></a></var><br>
+<blockquote><p>Parse from <var>port</var> a <code>path</code> component.  Return two values: false
+or one of the symbols: <code>path-empty</code>, <code>path-absolute</code>,
+<code>path-abempty</code>, <code>path-noscheme</code>, <code>path-rootless</code>; the
+list of bytevectors representing the segments, possibly null.
+
+        <p>If successful: leave the port position to the byte after the last read
+byte; if an error occurs: rewind the port position to the one before
+this function call.
+
+        <p>Notice that the <code>path</code> component can be followed only by <acronym>EOF</acronym>; if
+the path cannot be classified: an exception is raised with condition
+components <code>&amp;parser-error</code>, <code>&amp;who</code>,
+<code>&amp;message</code>, <code>&amp;irritants</code>, the irritants being the
+input port.
+
+     <pre class="example">          (import (rnrs)
+            (prefix (nausicaa uri low) low.))
+          
+          (define (make-lexer-port S)
+            (open-bytevector-input-port (low.to-bytevector S)))
+          
+          (low.parse-path (make-lexer-port ""))  &rArr; path-empty ()
+          
+          (low.parse-path (make-lexer-port "?query"))  error--&gt; &amp;parser-error
+          (low.parse-path (make-lexer-port "#fragment"))  error--&gt; &amp;parser-error
+          
+          (low.parse-path (make-lexer-port "/"))
+          &rArr; path-absolute (#vu8())
+          
+          (let*-values
+              (((P)          (make-lexer-port "/ciao/hello/salut"))
+               ((type path)  (low.parse-path P)))
+            type                         &rArr; path-absolute
+            (map low.to-string path))    &rArr; ("ciao" "hello" "salut")
+          
+          (let*-values
+              (((P)          (make-lexer-port "//"))
+               ((type path)  (low.parse-path P)))
+            type                         &rArr; path-abempty
+            (map low.to-string path))    &rArr; ("" "")
+          
+          (let*-values
+              (((P)          (make-lexer-port "///"))
+               ((type path)  (low.parse-path P)))
+            type                         &rArr; path-abempty
+            (map low.to-string path))    &rArr; ("" "" "")
+          
+          (let*-values
+              (((P)          (make-lexer-port "//ciao/"))
+               ((type path)  (low.parse-path P)))
+            type                         &rArr; path-abempty
+            (map low.to-string path))    &rArr; ("" "ciao" "")
+          
+          (let*-values
+              (((P)          (make-lexer-port "ciao/hello"))
+               ((type path)  (low.parse-path P)))
+            type                         &rArr; path-noscheme
+            (map low.to-string path))    &rArr; ("ciao" "hello")
+          
+          (let*-values
+              (((P)          (make-lexer-port "ci:ao/hello"))
+               ((type path)  (low.parse-path P)))
+            type                         &rArr; path-rootless
+            (map low.to-string path))    &rArr; ("ci:ao" "hello")
+</pre>
+        </blockquote></div>
+
+<!-- page -->
+   </body></html>
+

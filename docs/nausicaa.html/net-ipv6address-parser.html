@@ -10,7 +10,7 @@
 <link rel="next" href="net-ipv6address-utilities.html#net-ipv6address-utilities" title="net ipv6address utilities">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
-This document describes version 0.2d4 of Nausicaa/Scheme, a set of
+This document describes version 0.2d5 of Nausicaa/Scheme, a set of
 Scheme libraries defining a slightly modified R6RS Scheme language
 and augmenting the features of the base and standard R6RS libraries.
 
@@ -106,13 +106,13 @@ Up:&nbsp;<a rel="up" accesskey="u" href="net-ipv6address.html#net-ipv6address">n
 <hr>
 </div>
 
-<h4 class="subsection">65.2.2 Parsing an IPv6 address</h4>
+<h4 class="subsection">67.2.2 Parsing an IPv6 address</h4>
 
 <p>The following bindings are exported by the <code>(nausicaa net helpers
 ipv6address-parser)</code> library.
 
 <div class="defun">
-&mdash; Function: <b>make-ipv6-address-parser</b><var><a name="index-make_002dipv6_002daddress_002dparser-4832"></a></var><br>
+&mdash; Function: <b>make-ipv6-address-parser</b><var><a name="index-make_002dipv6_002daddress_002dparser-4981"></a></var><br>
 <blockquote><p>Return a parser function for textual IPv6 address or IPv6 address prefix
 representations, it works as described in <a href="lalr-parser.html#lalr-parser">lalr parser</a>; the lexer
 must work as described in <a href="net-ipv6address-lexer.html#net-ipv6address-lexer">net ipv6address lexer</a>.
@@ -125,11 +125,10 @@ must be further parsed and validated as described below.
    <p>To parse an IPv6 address string we can do:
 
 <pre class="example">     (import (nausicaa)
-       (nausicaa silex lexer)
        (nausicaa net helpers ipv6address-lexer)
        (nausicaa net helpers ipv6address-parser)
-       (nausicaa parser-tools lexical-token)
-       (nausicaa parser-tools source-location))
+       (prefix (nausicaa silex lexer) lex.)
+       (nausicaa parser-tools))
      
      (define (make-ipv6-address-parser-error-handler who string)
        (lambda (message (token &lt;lexical-token&gt;))
@@ -140,9 +139,8 @@ must be further parsed and validated as described below.
            string token.value)))
      
      (define (parse-address string)
-       (let* ((IS      (lexer-make-IS (string: string)
-                                      (counters: 'all)))
-              (lexer   (lexer-make-lexer ipv6-address-lexer-table IS))
+       (let* ((IS      (lex.make-IS (string: string)))
+              (lexer   (lex.make-lexer ipv6-address-lexer-table IS))
               (parser  (make-ipv6-address-parser)))
          (parser lexer
                  (make-ipv6-address-parser-error-handler
@@ -153,6 +151,8 @@ must be further parsed and validated as described below.
 <pre class="example">     (parse-address "1:2:3:4:5:6:7:8")
      &rArr; (1 2 3 4 5 6 7 8)
      
+     (parse-address "1")             &rArr; (1)
+     (parse-address "::")            &rArr; (#f)
      (parse-address "1::")           &rArr; (1 #f)
      (parse-address "1::2")          &rArr; (1 #f 2)
      (parse-address "1:2::3")        &rArr; (1 2 #f 3)
@@ -179,7 +179,9 @@ must be further parsed and validated as described below.
 </pre>
    <p class="noindent">and here are some examples of address prefix parsing:
 
-<pre class="example">     (parse-address "::1/60")        &rArr; (#f 1 (60))
+<pre class="example">     (parse-address "1/60")          &rArr; (1 (60))
+     (parse-address "::/60")         &rArr; (#f (60))
+     (parse-address "::1/60")        &rArr; (#f 1 (60))
      (parse-address "1::/60")        &rArr; (1 #f (60))
      (parse-address "1::2/60")       &rArr; (1 #f 2 (60))
      (parse-address "1:2::3/60")     &rArr; (1 2 #f 3 (60))
@@ -209,6 +211,9 @@ sequence.
      <ol type=1 start=1>
 <li>If the numeric address components are more than 8 the address is
 invalid.
+
+     <li>If the numeric address components are less than 8 and <code>#f</code> is
+not present: the address is invalid.
 
      <li>If the <code>#f</code> value is present and the numeric address components are
 more than 7 the address is invalid; <code>#f</code> represents at least

@@ -9,7 +9,7 @@
 <link rel="next" href="generics-application.html#generics-application" title="generics application">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
-This document describes version 0.2d4 of Nausicaa/Scheme, a set of
+This document describes version 0.2d5 of Nausicaa/Scheme, a set of
 Scheme libraries defining a slightly modified R6RS Scheme language
 and augmenting the features of the base and standard R6RS libraries.
 
@@ -104,10 +104,10 @@ Up:&nbsp;<a rel="up" accesskey="u" href="generics.html#generics">generics</a>
 <hr>
 </div>
 
-<h3 class="section">26.1 Examples of method dispatching</h3>
+<h3 class="section">25.1 Examples of method dispatching</h3>
 
 <p>Here we show with some examples what we have to expect from the
-multimethod dispatching of <code>(nausicaa generics)</code>.  In the
+multimethod dispatching of <code>(nausicaa language generics)</code>.  In the
 following examples the string <code>%apple</code> is written in place of the
 value bound to the symbol <code>&lt;apple&gt;</code>.
 
@@ -118,7 +118,7 @@ classes)</code> library:
      (define-class &lt;two&gt; (inherit &lt;one&gt;) (nongenerative two))
      (define-class &lt;c&gt;   (inherit &lt;two&gt;) (nongenerative c))
 </pre>
-   <p class="noindent">the record hierarchy is:
+   <p class="noindent">the class hierarchy is:
 
 <pre class="example">     &lt;top&gt; -&gt; &lt;one&gt; -&gt; &lt;two&gt; -&gt; &lt;c&gt;
 </pre>
@@ -129,7 +129,7 @@ classes)</code> library:
 </pre>
    <p class="noindent">so for the generic function:
 
-<pre class="example">     (define-generic doit)
+<pre class="example">     (define-generic doit (o))
      (define-method (doit (o &lt;one&gt;)) 'one)
      (define-method (doit (o &lt;two&gt;)) 'two)
 </pre>
@@ -141,11 +141,10 @@ the signature:
 </pre>
    <p class="noindent">also the method with <code>&lt;one&gt;</code> in the signature is the &ldquo;next method&rdquo;
 of the method with <code>&lt;two&gt;</code> in the signature, we can call it using
-<code>call-next-method</code>.
+<code>call-next-method</code>.  The following example shows a call to the next
+method:
 
-   <p>The following example shows a call to the next method:
-
-<pre class="example">     (define-generic fluff)
+<pre class="example">     (define-generic fluff (o))
      
      (define-method (fluff (o &lt;one&gt;))
        'one)
@@ -159,9 +158,9 @@ of the method with <code>&lt;two&gt;</code> in the signature, we can call it usi
      &rArr; (two . one)
 </pre>
    <p>The syntax <code>define-generic</code> defines a macro and the syntax
-<code>define-method</code> add a new method to the generic function; the first
-method definition establishes the number of arguments for the generic
-function: all the methods added afterwards must have the same number of
+<code>define-method</code> adds a new method to the generic function;
+<code>define-generic</code> establishes the number of arguments for the
+generic function: all the methods must have the same number of
 arguments.
 
    <p>It is possible to define a function accepting different numbers of
@@ -176,9 +175,9 @@ arguments as follows:
         ((a b . rest)
          (fluff-3 a b rest))))
      
-     (define-generic fluff-1)
-     (define-generic fluff-2)
-     (define-generic fluff-3)
+     (define-generic fluff-1 (o))
+     (define-generic fluff-2 (o p))
+     (define-generic fluff-3 (o p rest))
      
      (define-method (fluff-1 (o &lt;one&gt;))
        ---)

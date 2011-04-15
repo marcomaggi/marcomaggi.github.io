@@ -10,7 +10,7 @@
 <link rel="next" href="stdlib-syntax_002dcase-parsing.html#stdlib-syntax_002dcase-parsing" title="stdlib syntax-case parsing">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
-This document describes version 0.2d4 of Nausicaa/Scheme, a set of
+This document describes version 0.2d5 of Nausicaa/Scheme, a set of
 Scheme libraries defining a slightly modified R6RS Scheme language
 and augmenting the features of the base and standard R6RS libraries.
 
@@ -111,10 +111,10 @@ Up:&nbsp;<a rel="up" accesskey="u" href="stdlib-syntax_002dcase.html#stdlib-synt
 
 <p>In <code>define-syntax</code>, <code>let-syntax</code>, and <code>letrec-syntax</code>
 forms, a binding for a syntactic keyword is an expression that evaluates
-to a <em>transformer</em>.
+to a <dfn>transformer</dfn>.
 
-   <p>A transformer is a <em>transformation procedure</em> or a <em>variable
-transformer</em>.  A transformation procedure is a procedure that must
+   <p>A transformer is a <dfn>transformation procedure</dfn> or a <dfn>variable
+transformer</dfn>.  A transformation procedure is a procedure that must
 accept one argument, a wrapped syntax object representing the input, and
 return a syntax object representing the output.  The transformer is
 called by the expander whenever a reference to a keyword with which it
@@ -126,8 +126,36 @@ list&ndash;structured form, and its output replaces the entire form.
 in any other definition or expression context, the transformer receives
 a wrapped syntax object representing just the keyword reference, and its
 output replaces just the reference.  Except with variable transformers,
-an exception with condition type <code>&amp;syntax</code> is raised if the keyword
-appears on the left&ndash;hand side of a <code>set!</code> expression.
+an exception with condition type <code>&amp;syntax</code> is raised if the
+keyword appears on the left&ndash;hand side of a <code>set!</code> expression.
+
+   <p>Let's set what this means with an example:
+
+<pre class="example">     (import (rnrs))
+     
+     (define a 1)
+     (define (b arg) (list 2 arg))
+     
+     (define-syntax doit
+       (lambda (stx)
+         (syntax-case stx ()
+           (?x
+            (identifier? #'?x)
+            #'a)
+           ((?x ?arg)
+            #'(b ?arg)))))
+     
+     doit            &rArr; 1
+     (doit 3)        &rArr; (2 3)
+     (set! doit 5)   error--&gt; &amp;syntax
+</pre>
+   <p class="noindent">when the macro use <code>(doit 3)</code> is expanded: the transformer receives
+the whole form <code>(doit 3)</code> in the syntax object argument; when the
+macro use <code>doit</code> is expanded: the transformer receives only the
+identifier <code>doit</code> in the syntax object argument; when the keyword
+<code>doit</code> is used in <code>set! doit 1</code>: the expander recognises this
+situation as invalid, rather than a reference to <code>doit</code>, and it
+raises an exception.
 
 <div class="defun">
 &mdash; Procedure: <b>make-variable-transformer</b><var> proc<a name="index-make_002dvariable_002dtransformer-801"></a></var><br>
@@ -145,28 +173,59 @@ return value replaces the entire <code>set!</code>  expression.
         <p><strong>Implementation responsibilities:</strong> The implementation must check
 the restrictions on <var>proc</var> only to the extent performed by applying
 it as described.  An implementation may check whether <var>proc</var> is an
-appropriate argument before applying it.
+appropriate argument before applying it. 
+</p></blockquote></div>
 
-        <p>Meaningless example using the <code>unwrap-syntax-object</code> function
-defined in <a href="stdlib-syntax_002dcase-intro.html#stdlib-syntax_002dcase-intro">stdlib syntax-case intro</a>:
+   <p>The following example shows the difference between a common transformer
+and a transformer wrapped by <code>make-variable-transformer</code>:
 
-     <pre class="example">          (import (rnrs) (for (syntax-utilities) expand))
-          
-          (define-syntax alpha
-            (make-variable-transformer
-             (lambda (use)
-               (write (unwrap-syntax-object use))
-               (newline)
-               #f)))
-          
-          (set! alpha 123)
-          -| (#&lt;syntax set!&gt; #&lt;syntax alpha&gt; 123)
-          
-          alpha
-          -| #&lt;syntax alpha&gt;
+<pre class="example">     (import (rnrs))
+     
+     (define a 1)
+     (define (b arg) (list 2 arg))
+     (define (c arg) (list 4 arg))
+     
+     (define-syntax doit
+       (make-variable-transformer
+         (lambda (stx)
+           (syntax-case stx (set!)
+             (?x
+              (identifier? #'?x)
+              #'a)
+             ((?x ?arg)
+              #'(b ?arg))
+             ((set! ?x ?expr)
+              #'(c ?expr))
+             ))))
+     
+     doit            &rArr; 1
+     (doit 3)        &rArr; (2 3)
+     (set! doit 5)   &rArr; (4 5)
 </pre>
-        </blockquote></div>
+   <p>The following is another meaningless example using the <code>unwrap</code>
+function defined in <a href="stdlib-syntax_002dcase-intro.html#stdlib-syntax_002dcase-intro">stdlib syntax-case intro</a>:
 
-<!-- page -->
+<pre class="example">     (import (rnrs) (for (syntax-utilities) expand))
+     
+     (define-syntax alpha
+       (make-variable-transformer
+        (lambda (use)
+          (write (unwrap use))
+          (newline)
+          #f)))
+     
+     (set! alpha 123)
+     -| (#&lt;syntax set!&gt; #&lt;syntax alpha&gt; 123)
+     
+     alpha
+     -| #&lt;syntax alpha&gt;
+</pre>
+   <p>Notice that <code>syntax-rules</code> accepts only patterns being lists or
+vectors; the following definition will raise a syntax violation:
+
+<pre class="example">     (define-syntax doit
+       (syntax-rules () (x a))) error--&gt; &amp;syntax
+</pre>
+   <!-- page -->
    </body></html>
 

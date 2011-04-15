@@ -9,7 +9,7 @@
 <link rel="next" href="stdlib-syntax_002dcase-hygiene.html#stdlib-syntax_002dcase-hygiene" title="stdlib syntax-case hygiene">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
-This document describes version 0.2d4 of Nausicaa/Scheme, a set of
+This document describes version 0.2d5 of Nausicaa/Scheme, a set of
 Scheme libraries defining a slightly modified R6RS Scheme language
 and augmenting the features of the base and standard R6RS libraries.
 
@@ -113,199 +113,14 @@ subexpression is extracted from the program's S&ndash;expression and can be
 processed by an appropriate function, called <dfn>transformer</dfn>, before
 being put back.
 
-   <p>For example, let's say that <code>infix</code> is a syntactic keyword; we may
-have a library like this:
-
-<pre class="example">     (library (infix)
-       (export infix)
-       (import (rnrs))
-       (define-syntax infix
-         (lambda (use) ---) ;this is the transformer function
-         ))
-</pre>
-   <p class="noindent">then in the following program S&ndash;expression:
-
-<pre class="example">     (import (rnrs) (infix))
-     
-     (let-values (((port getter) (open-string-output-port)))
-       (display (infix 1 + 2) port)
-       (getter))
-</pre>
-   <p class="noindent">the subexpression:
-
-<pre class="example">     (infix 1 + 2)
-</pre>
-   <p class="noindent">is a <dfn>macro use</dfn> of the <code>infix</code> syntax and it becomes the
-<dfn>input form</dfn> of the transformer function of <code>infix</code>; the input
-form is extracted from the whole S&ndash;expression, transformed, let's say,
-into the <dfn>output form</dfn>:
-
-<pre class="example">     (begin 3)
-</pre>
-   <p class="noindent">and put back:
-
-<pre class="example">     (import (rnrs) (infix))
-     
-     (let-values (((port getter) (open-string-output-port)))
-       (display (begin 3) port)
-       (getter))
-</pre>
-   <p>A number of rules are used not to mess up bidings in the input and
-output forms; these are introduced in <a href="stdlib-syntax_002dcase-hygiene.html#stdlib-syntax_002dcase-hygiene">Hygiene</a>.
-
-   <p>The single argument transformer functions are applied to is a
-<dfn>syntax object</dfn> representing the input form; the standard defines
-<dfn>wrapped syntax objects</dfn> and <dfn>unwrapped syntax objects</dfn>.  Both
-wrapped and unwrapped objects can be used to represent the same
-informations, but wrapped objects can be more efficient in terms of
-consumed resources.
-
-   <p>Let's focus on unwrapped syntax objects, which are easier to deal with;
-it is always possible to convert a wrapped syntax object into an
-unwrapped one by applying the <code>unwrap-syntax-object</code> function
-defined in the following library (it is <strong>not</strong> important to
-understand it at first reading):
-
-<pre class="example">     (library (syntax-utilities)
-       (export unwrap-syntax-object)
-       (import (rnrs))
-       (define (unwrap-syntax-object stx)
-         (syntax-case stx ()
-           (()
-            '())
-           ((?car . ?cdr)
-            (cons (unwrap-syntax-object (syntax ?car))
-                  (unwrap-syntax-object (syntax ?cdr))))
-           (#(?item ...)
-            (list-&gt;vector (unwrap-syntax-object (syntax (?item ...)))))
-           (?atom
-            (identifier? (syntax ?atom))
-            (syntax ?atom))
-           (?atom
-            (syntax-&gt;datum (syntax ?atom))))))
-</pre>
-   <p class="noindent">it is possible to define alternative versions of this function with
-different properties, depending on the intended usage.
-
-   <p>Now let's define the following library:
-
-<pre class="example">     (library (try-it-macros)
-       (export the-macro)
-       (import (rnrs)
-         (for (syntax-utilities) expand))
-       (define-syntax the-macro
-         (lambda (stx)
-           (let ((sexp (unwrap-syntax-object stx)))
-             (write sexp)(newline)
-             #f))))
-</pre>
-   <p class="noindent">the macro use in the following program:
-
-<pre class="example">     (import (rnrs) (try-it-macros))
-     
-     (the-macro 1 hello #(ciao 2) 3 salut)
-</pre>
-   <p class="noindent">will cause the input form to be unwrapped and bound to <code>sexp</code>, then
-the S-expression is displayed as something like:
-
-<pre class="example">     (#&lt;syntax the-macro&gt;
-      1
-      #&lt;syntax hello&gt;
-      #(#&lt;syntax ciao&gt; 2)
-      3
-      #&lt;syntax salut&gt;)
-</pre>
-   <p class="noindent">we see that where symbols appear in the input form, in the output form
-we get <dfn>identifiers</dfn>: syntax objects holding only a symbol marked
-with its originating lexical context.  We can process <code>sexp</code> with
-the ordinary Scheme functions, then return as result an S&ndash;expression
-holding datums and identifiers that do what we want.
-
-   <p>Here is an example implementation of the <code>receive</code> syntax, giving a
-condensed interface to <code>call-with-values</code>:
-
-<pre class="example">     (import (rnrs) (for (syntax-utilities) expand))
-     
-     (define-syntax receive
-       (lambda (use)
-         (let ((sexp (unwrap-syntax-object use)))
-           (let ((formals          (cadr  sexp))
-                 (expression       (caddr sexp))
-                 (body             (cdddr sexp)))
-             `(,(syntax call-with-values)
-                   (,(syntax lambda) () ,expression)
-                   (,(syntax lambda) ,formals . ,body))))))
-     
-     (receive (a b)
-         (values 1 2)
-       (write 'ciao)
-       (list a b))
-     ==&gt; (call-with-values
-             (lambda ()
-               (values 1 2))
-           (lambda (a b)
-             (write 'ciao)
-             (list a b)))
-</pre>
-   <p>A wrapped syntax object can be implemented as a record instance
-containing an S&ndash;expression and lexical context informations; wrapped
-syntax objects are a disjoint type of values.  An unwrapped object is an
-S-expression, a structure of pairs and/or vectors, holding datums and
-syntax objects.
-
-   <p>Fully unwrapping a syntax object means to convert it into an
-S&ndash;expression in which all the symbols are turned into identifiers and
-the identifiers are the only syntax objects.  The identifier is the
-simplest syntax object with lexical informations in it; the symbol is
-the only element of an input form which needs lexical informations; so
-the wrapped syntax object:
-
-<pre class="example">     #&lt;syntax (1 ciao)&gt;
-</pre>
-   <p class="noindent">is unwrapped to:
-
-<pre class="example">     (1 #&lt;syntax ciao&gt;)
-</pre>
-   <p>A syntax object can be partially unwrapped, for example:
-
-<pre class="example">     #&lt;syntax (the-macro 1 hello #(ciao 2) 3 salut)&gt;
-</pre>
-   <p class="noindent">can be unwrapped to:
-
-<pre class="example">     (#&lt;syntax the-macro&gt;
-      1
-      #&lt;syntax hello&gt;
-      #&lt;syntax #(ciao 2)&gt;
-      3
-      #&lt;syntax salut&gt;)
-</pre>
-   <p class="noindent">which still contains the wrapped syntax object &lsquo;<samp><span class="samp">#&lt;syntax #(ciao
-2)&gt;</span></samp>&rsquo;.
-
-   <p>The function <code>unwrap-syntax-object</code> defined above fully unwraps its
-argument; notice that it will unwrap also quoted S&ndash;expressions, for
-example:
-
-<pre class="example">     #&lt;syntax (a b '(1 2 #\c d))&gt;
-</pre>
-   <p class="noindent">is unwrapped to:
-
-<pre class="example">     (#&lt;syntax a&gt;
-      #&lt;syntax b&gt;
-      (#&lt;syntax quote&gt;
-       (1 2 #\c #&lt;syntax d&gt;)))
-</pre>
-   <p class="noindent">this is not always what we want.
-
-   <p>The <code>receive</code> implementation above extracts datums and identifiers
-from the input form using the common list functions <code>car</code>,
-<code>cdr</code>, <small class="dots">...</small> and, for simplicity, it performs no checks to verify
-that the input for has the required structure (for example: it does not
-check that the first element after the syntactic keyword <code>receive</code>
-is a list of identifiers).  The <code>syntax-case</code> macro provides a way
-to both extract elements from a syntax object and to perform basic
-checks on its structure, it is often more convenient and efficient to
-use <code>syntax-case</code> rather than to unwrap the input form.
+<ul class="menu">
+<li><a accesskey="1" href="stdlib-syntax_002dcase-intro-use.html#stdlib-syntax_002dcase-intro-use">stdlib syntax-case intro use</a>:     An example of macro use. 
+<li><a accesskey="2" href="stdlib-syntax_002dcase-intro-unwrap.html#stdlib-syntax_002dcase-intro-unwrap">stdlib syntax-case intro unwrap</a>:  Unwrapping syntax objects. 
+<li><a accesskey="3" href="stdlib-syntax_002dcase-intro-ex.html#stdlib-syntax_002dcase-intro-ex">stdlib syntax-case intro ex</a>:      A transformer example. 
+<li><a accesskey="4" href="stdlib-syntax_002dcase-intro-more.html#stdlib-syntax_002dcase-intro-more">stdlib syntax-case intro more</a>:    More on wrapped and unwrapped
+                                    syntax objects. 
+<li><a accesskey="5" href="stdlib-syntax_002dcase-intro-expand.html#stdlib-syntax_002dcase-intro-expand">stdlib syntax-case intro expand</a>:  A quick look at the expander. 
+</ul>
 
 <!-- page -->
    </body></html>
