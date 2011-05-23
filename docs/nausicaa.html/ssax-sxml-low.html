@@ -1,0 +1,453 @@
+<html lang="en">
+<head>
+<title>ssax sxml low - Nausicaa for Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Nausicaa for Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="ssax-sxml.html#ssax-sxml" title="ssax sxml">
+<link rel="prev" href="ssax-sxml-typedefs.html#ssax-sxml-typedefs" title="ssax sxml typedefs">
+<link rel="next" href="ssax-sxml-mid.html#ssax-sxml-mid" title="ssax sxml mid">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d6 of Nausicaa/Scheme, a set of
+Scheme libraries defining a slightly modified R6RS Scheme language
+and augmenting the features of the base and standard R6RS libraries.
+
+The project home page of Nausicaa is at:
+
+             `http://marcomaggi.github.com/nausicaa.html'
+
+
+development of Nausicaa takes place at:
+
+               `http://github.com/marcomaggi/nausicaa/'
+
+
+Copyright (C) 2008, 2009, 2010 by Marco Maggi.
+
+Copyright (C) 1996, 1997, 2000, 2001, 2002, 2003, 2004, 2005
+Free Software Foundation.
+
+Copyright (C) 1996, 1999-2005 Dorai Sitaram.
+
+Copyright (C) 1998 Oleg Kiselyov.
+
+Copyright (C) 1998, 1999, 2000 Olin Shivers.
+
+Copyright (C) 1999 John David Stone.
+
+Copyright (C) 1999, 2002 Marc Feeley.
+
+Copyright (C) 2001, 2009 Danny Dube'
+
+Copyright (C) 2002 Dr. Mirko Luedde.
+
+Copyright (C) 2002, 2003, 2005, 2006 Sebastian Egner.
+
+Copyright (C) 2003 Ray Dillinger.
+
+Copyright (C) 2003 Taylor Campbell.
+
+Copyright (C) 2005 Jens Axel Soegaard.
+
+Copyright (C) 2005-2009 Alex Shinn.
+
+Copyright (C) 2008 Taro Minowa (Higepon).
+
+Copyright (C) 2005-2008 Dominique Boucher.
+
+Copyright (C) 2004, 2005 Tony Garnock-Jones
+
+Copyright (C) 2005 LShift Ltd.
+
+Copyright (C) 2007, 2008 Philip L. Bewig.
+
+Copyright (C) 2000 Will Fitzgerald.
+
+Copyright (C) 2000 Neodesic Corporation.
+
+Copyright (C) 2000-2006 Joachim Henke.
+
+Copyright (C) 2004-2009 Neil Van Dyke.
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with no Invariant Sections being ``GNU Free
+     Documentation License'' and ``GNU General Public License'', no
+     Front--Cover Texts, and no Back--Cover Texts.  A copy of the
+     license is included in the section entitled ``GNU Free
+     Documentation License''.
+
+This document embeds an unofficial assemblage of several documents
+reformatted in Texinfo; the reformatting author and maintainer is
+Marco Maggi <marco.maggi-ipsu@poste.it>.  See the appendix ``Credits'' for
+the list of original documents and their authors.  See also the
+`README' and `CREDITS' files for additional attributions.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="ssax-sxml-low"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="ssax-sxml-mid.html#ssax-sxml-mid">ssax sxml mid</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="ssax-sxml-typedefs.html#ssax-sxml-typedefs">ssax sxml typedefs</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="ssax-sxml.html#ssax-sxml">ssax sxml</a>
+<hr>
+</div>
+
+<h4 class="subsection">76.1.4 Low&ndash;level parsers and scanners</h4>
+
+<p>These procedures deal with primitive lexical units (Names, whitespaces,
+tags) and with pieces of more generic productions.  Most of these
+parsers must be called in appropriate context.  For example:
+<code>ssax.complete-start-tag</code> must be called only when the start&ndash;tag
+has been detected and its GI has been read.
+
+<div class="defun">
+&mdash; Function: <b>ssax.skip-s</b><var> port<a name="index-ssax_002eskip_002ds-5466"></a></var><br>
+<blockquote><p>Skip the <code>S</code> (whitespace) production as defined by:
+
+     <pre class="example">          [3] S ::= (#x20 | #x09 | #x0D | #x0A)
+</pre>
+        <p>Return the first not&ndash;whitespace character it encounters while scanning
+<var>port</var>.  This character is left on the input stream. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>ssax.read-ncname</b><var> port<a name="index-ssax_002eread_002dncname-5467"></a></var><br>
+<blockquote><p>Read a <code>NCName</code> starting from the current position in the
+<var>port</var> and return it as a symbol.
+
+     <pre class="example">          [4] NameChar ::= Letter | Digit | '.' | '-' | '_' | ':'
+                           | CombiningChar | Extender
+          [5] Name ::= (Letter | '_' | ':') (NameChar)*
+</pre>
+        <p>This code supports the <acronym>XML</acronym> Namespace Recommendation REC-xml-names,
+which modifies the above productions as follows:
+
+     <pre class="example">          [4] NCNameChar ::= Letter | Digit | '.' | '-' | '_'
+                                | CombiningChar | Extender
+          [5] NCName ::= (Letter | '_') (NCNameChar)*
+</pre>
+        <p>As the REC-xml-names says:
+
+        <blockquote>
+An <acronym>XML</acronym> document conforms to this specification if all other tokens
+[other than element types and attribute names] in the document which are
+required, for <acronym>XML</acronym> conformance, to match the <acronym>XML</acronym> production for
+<code>Name</code>, match this specification's production for <code>NCName</code>. 
+</blockquote>
+
+        <p>Element types and attribute names must match the production
+<code>QName</code>, defined below. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>ssax.read-qname</b><var> port<a name="index-ssax_002eread_002dqname-5468"></a></var><br>
+<blockquote><p>Read a (namespace-) Qualified Name, <code>QName</code>, from the current
+position in <var>port</var> and return an <code>UNRES-NAME</code>.
+
+        <p>From REC-xml-names:
+
+     <pre class="example">          [6] QName ::= (Prefix ':')? LocalPart
+          [7] Prefix ::= NCName
+          [8] LocalPart ::= NCName
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>ssax.read-markup-token</b><var> port<a name="index-ssax_002eread_002dmarkup_002dtoken-5469"></a></var><br>
+<blockquote><p>This procedure starts parsing of a markup token.  The current position
+in the stream must be the &lsquo;<samp><span class="samp">&lt;</span></samp>&rsquo; character.  This procedure scans
+enough of the input stream to figure out what kind of a markup token it
+is seeing.  The procedure returns an <code>XML-TOKEN</code> structure
+describing the token.  Note, generally reading of the current markup is
+not finished!  In particular, no attributes of the start&ndash;tag token are
+scanned.
+
+        <p>Here's a detailed break out of the return values and the position in the
+<var>port</var> when that particular value is returned:
+
+          <dl>
+<dt>PI-token<dd>Only PI-target is read.  To finish the Processing-Instruction and
+disregard it, call <code>ssax.skip-pi</code>.  <code>ssax.read-attributes</code> may
+be useful as well (for PIs whose content is attribute&ndash;value pairs).
+
+          <br><dt>END-token<dd>The end tag is read completely; the current position is right after the
+terminating &lsquo;<samp><span class="samp">&gt;</span></samp>&rsquo; character.
+
+          <br><dt>COMMENT<dd>Is read and skipped completely.  The current position is right after
+&lsquo;<samp><span class="samp">--&gt;</span></samp>&rsquo; that terminates the comment.
+
+          <br><dt>CDSECT<dd>The current position is right after &lsquo;<samp><span class="samp">&lt;!CDATA[</span></samp>&rsquo;.  Use
+<code>ssax.read-cdata-body</code> to read the rest.
+
+          <br><dt>DECL<dd>We have read the keyword (the one that follows &lsquo;<samp><span class="samp">&lt;!</span></samp>&rsquo;)  identifying
+this declaration markup.  The current position is after the keyword
+(usually a whitespace character).
+
+          <br><dt>START-token<dd>We have read the keyword (GI) of this start tag.  No attributes are
+scanned yet.  We don't know if this tag has an empty content either. 
+Use <code>ssax.complete-start-tag</code> to finish parsing of the token. 
+</dl>
+        </p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>ssax.skip-pi</b><var> port<a name="index-ssax_002eskip_002dpi-5470"></a></var><br>
+<blockquote><p>The current position is inside a <code>PI</code>.  Skip till the rest of the
+<code>PI</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>ssax.read-pi-body-as-string</b><var> port<a name="index-ssax_002eread_002dpi_002dbody_002das_002dstring-5471"></a></var><br>
+<blockquote><p>The current position is right after reading the <code>PITarget</code>.  We
+read the body of PI and return is as a string.  The port will point to
+the character right after &lsquo;<samp><span class="samp">?&gt;</span></samp>&rsquo; combination that terminates
+<code>PI</code>.
+
+     <pre class="example">          [16] PI ::= '&lt;?' PITarget (S (Char* - (Char* '?&gt;' Char*)))? '?&gt;'
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>ssax.skip-internal-dtd</b><var> port<a name="index-ssax_002eskip_002dinternal_002ddtd-5472"></a></var><br>
+<blockquote><p>The current pos in the port is inside an internal <acronym>DTD</acronym> subset (e.g.,
+after reading &lsquo;<samp><span class="samp">#\[</span></samp>&rsquo; that begins an internal <acronym>DTD</acronym> subset).  Skip
+until the &lsquo;<samp><span class="samp">]&gt;</span></samp>&rsquo; combination that terminates this <acronym>DTD</acronym>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>ssax.read-cdata-body</b><var> port str-handler seed<a name="index-ssax_002eread_002dcdata_002dbody-5473"></a></var><br>
+<blockquote><p>This procedure must be called after we have read a string
+&lsquo;<samp><span class="samp">&lt;![CDATA[</span></samp>&rsquo; that begins a <code>CDATA</code> section.  The current
+position must be the first position of the <code>CDATA</code> body.  This
+function reads <em>lines</em> of the <code>CDATA</code> body and passes them to
+a <var>str-handler</var>, a character data consumer.
+
+        <p><var>str-handler</var> is a procedure taking arguments: <var>string1</var>,
+<var>string2</var>, and <var>seed</var>.  The first <var>string1</var> argument to
+<var>str-handler</var> never contains a newline; the second <var>string2</var>
+argument often will.  On the first invocation of <var>str-handler</var>,
+<var>seed</var> is the one passed to <code>ssax.read-cdata-body</code> as the third
+argument.  The result of this first invocation will be passed as the
+<var>seed</var> argument to the second invocation of the line consumer and so
+on.  The result of the last invocation of the <var>str-handler</var> is
+returned by the <code>ssax.read-cdata-body</code>.  Note a similarity to the
+fundamental <dfn>fold</dfn> iterator.
+
+        <p>Within a <code>CDATA</code> section all characters are taken at their face
+value, with three exceptions:
+
+          <ul>
+<li>CR, LF, and CRLF are treated as line delimiters and passed as a single
+&lsquo;<samp><span class="samp">#\newline</span></samp>&rsquo; to <var>str-handler</var>.
+
+          <li>&lsquo;<samp><span class="samp">]]&gt;</span></samp>&rsquo; combination is the end of the <code>CDATA</code> section. 
+&lsquo;<samp><span class="samp">&amp;gt;</span></samp>&rsquo; is treated as an embedded &lsquo;<samp><span class="samp">&gt;</span></samp>&rsquo; character.
+
+          <li>&lsquo;<samp><span class="samp">&amp;lt;</span></samp>&rsquo; and &lsquo;<samp><span class="samp">&amp;amp;</span></samp>&rsquo; are not specially recognized (and are not
+expanded). 
+</ul>
+        </p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>ssax.read-char-ref</b><var> port<a name="index-ssax_002eread_002dchar_002dref-5474"></a></var><br>
+<blockquote><p>Read a char reference:
+
+     <pre class="example">          [66]  CharRef ::=  '&amp;#' [0-9]+ ';'
+                           | '&amp;#x' [0-9a-fA-F]+ ';'
+</pre>
+        <p>This procedure must be called after we we have read &lsquo;<samp><span class="samp">&amp;#</span></samp>&rsquo; that
+introduces a char reference.  The procedure reads this reference and
+returns the corresponding char.  The current position in <var>port</var> will
+be after the &lsquo;<samp><span class="samp">;</span></samp>&rsquo; that terminates the char reference.
+
+        <p>Faults detected:<br>
+WFC: XML-Spec.html#wf-Legalchar
+
+        <p>According to Section <cite>4.1 Character and Entity References</cite> of the
+<acronym>XML</acronym> Recommendation:
+
+        <blockquote>
+[Definition: A character reference refers to a specific character in the
+<acronym>ISO</acronym>/<acronym>IEC</acronym> 10646 character set, for example one not
+directly accessible from available input devices.] 
+</blockquote>
+
+     <!-- Therefore, we use a @code{ucscode->char} function to convert a -->
+     <!-- character code into the character - *regardless* of the current -->
+     <!-- character encoding of the input stream. -->
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>ssax.handle-parsed-entity</b><var> port name entities content-handler str-handler seed<a name="index-ssax_002ehandle_002dparsed_002dentity-5475"></a></var><br>
+<blockquote><p>Expand and handle a parsed-entity reference.
+
+        <p><var>name</var> is a symbol, the name of the parsed entity to expand. 
+<!-- entities - see ENTITIES -->
+<var>content-handler</var> is a procedure of arguments <var>port</var>, <var>entities</var>, and
+<var>seed</var> that returns a seed. 
+<var>str-handler</var> is called if the entity in question is a pre&ndash;declared
+entity.
+
+        <p>This function returns the result returned by <var>content-handler</var> or
+<var>str-handler</var>.
+
+        <p>Faults detected:<br>
+WFC: XML-Spec.html#wf-entdeclared<br>
+WFC: XML-Spec.html#norecursion
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>attlist-add</b><var> attlist name-value<a name="index-attlist_002dadd-5476"></a></var><br>
+<blockquote><p>Add a <var>name-value</var> pair to the existing <var>attlist</var>, preserving
+its sorted ascending order, and return the new list.  Return <code>#f</code> if
+a pair with the same name already exists in <var>attlist</var>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>attlist-remove-top</b><var> attlist<a name="index-attlist_002dremove_002dtop-5477"></a></var><br>
+<blockquote><p>Given an non&ndash;null <var>attlist</var>, return a pair of values: the top and
+the rest. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>ssax.read-attributes</b><var> port entities<a name="index-ssax_002eread_002dattributes-5478"></a></var><br>
+<blockquote><p>This procedure reads and parses a production <code>Attribute</code>.
+
+     <pre class="example">          [41] Attribute ::= Name Eq AttValue
+          [10] AttValue ::=  '"' ([^&lt;&amp;"] | Reference)* '"'
+                          | "'" ([^&lt;&amp;'] | Reference)* "'"
+          [25] Eq ::= S? '=' S?
+</pre>
+        <p>The procedure returns an <var>attlist</var>, of <code>Name</code> (as
+<code>UNRES-NAME</code>) <code>Value</code> (as string) pairs.  The current
+character on the <var>port</var> is a non&ndash;whitespace character that is not
+an <code>NCName</code>&ndash;starting character.
+
+        <p>Note the following rules to keep in mind when reading an
+<code>AttValue</code>:
+
+        <blockquote>
+Before the value of an attribute is passed to the application or checked
+for validity, the <acronym>XML</acronym> processor must normalise it as follows:
+
+          <ul>
+<li>A character reference is processed by appending the referenced character
+to the attribute value.
+
+          <li>An entity reference is processed by recursively processing the
+replacement text of the entity.  The named entities &lsquo;<samp><span class="samp">amp</span></samp>&rsquo;,
+&lsquo;<samp><span class="samp">lt</span></samp>&rsquo;, &lsquo;<samp><span class="samp">gt</span></samp>&rsquo;, &lsquo;<samp><span class="samp">quot</span></samp>&rsquo;, and &lsquo;<samp><span class="samp">apos</span></samp>&rsquo; are predeclared.
+
+          <li>A whitespace character (&lsquo;<samp><span class="samp">#x20</span></samp>&rsquo;, &lsquo;<samp><span class="samp">#x0D</span></samp>&rsquo;, &lsquo;<samp><span class="samp">#x0A</span></samp>&rsquo;,
+&lsquo;<samp><span class="samp">#x09</span></samp>&rsquo;) is processed by appending &lsquo;<samp><span class="samp">#x20</span></samp>&rsquo; to the normalized
+value, except that only a single &lsquo;<samp><span class="samp">#x20</span></samp>&rsquo; is appended for a
+&lsquo;<samp><span class="samp">#x0D#x0A</span></samp>&rsquo; sequence that is part of an external parsed entity or
+the literal entity value of an internal parsed entity.
+
+          <li>Other characters are processed by appending them to the normalized
+value. 
+</ul>
+</blockquote>
+
+        <p>Faults detected:<br>
+WFC: XML-Spec.html#CleanAttrVals<br>
+WFC: XML-Spec.html#uniqattspec
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>ssax.resolve-name</b><var> port unres-name namespaces apply-default-ns?<a name="index-ssax_002eresolve_002dname-5479"></a></var><br>
+<blockquote><p>Convert an <var>unres-name</var> to a <code>RES-NAME</code>, given the appropriate
+<var>namespaces</var> declarations.  The last parameter,
+<var>apply-default-ns?</var>, determines if the default namespace applies
+(for instance: it does not for attribute names).
+
+        <p>Per REC-xml-names/#nsc-NSDeclared, the &lsquo;<samp><span class="samp">xml</span></samp>&rsquo; prefix is considered
+pre&ndash;declared and bound to the namespace name
+&lsquo;<samp><span class="samp">http://www.w3.org/XML/1998/namespace</span></samp>&rsquo;.
+
+        <p>This function tests for the namespace constraints,
+<a href="http://www.w3.org/TR/REC-xml-names/#nsc-NSDeclared">http://www.w3.org/TR/REC-xml-names/#nsc-NSDeclared</a>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>ssax.complete-start-tag</b><var> tag port elems entities namespaces<a name="index-ssax_002ecomplete_002dstart_002dtag-5480"></a></var><br>
+<blockquote><p>Complete parsing of a start-tag markup, it must be called after the
+start tag token has been read.
+
+        <p><var>tag</var> is an <code>UNRES-NAME</code>.  <var>elems</var> is an instance of the
+<code>ELEMS</code> slot of <code>XML-DECL</code>; it can be <code>#f</code> to tell the
+function to do <strong>no</strong> validation of elements and their attributes.
+
+        <p>Return several values:
+
+          <ul>
+<li>ELEM-GI:
+A <code>RES-NAME</code>
+. 
+<li>ATTRIBUTES:
+Element's attributes, an <code>ATTLIST</code> of <code>(</code><var>RES-NAME</var><code>
+. </code><var>STRING</var><code>)</code> pairs.  The list does <strong>not</strong> include xmlns
+attributes.
+
+          <li>NAMESPACES:
+The input list of namespaces amended with namespace (re-)declarations
+contained within the start-tag under parsing
+
+          <li>ELEM-CONTENT-MODEL
+</ul>
+
+        <p>On exit, the current position in <var>port</var> will be the first character
+after &lsquo;<samp><span class="samp">&gt;</span></samp>&rsquo; that terminates the start-tag markup.
+
+        <p>Faults detected:<br>
+VC: XML-Spec.html#enum<br>
+VC: XML-Spec.html#RequiredAttr<br>
+VC: XML-Spec.html#FixedAttr<br>
+VC: XML-Spec.html#ValueType<br>
+WFC: XML-Spec.html#uniqattspec (after namespaces prefixes are resolved)<br>
+VC: XML-Spec.html#elementvalid<br>
+WFC: REC-xml-names/#dt-NSName
+
+        <p><em>Note</em>: although <acronym>XML</acronym> Recommendation does not explicitly say it,
+xmlns and xmlns: attributes do not have to be declared (although they
+can be declared, to specify their default value). 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>ssax.read-external-id</b><var> port<a name="index-ssax_002eread_002dexternal_002did-5481"></a></var><br>
+<blockquote><p>Parse an <code>ExternalID</code> production:
+
+     <pre class="example">          [75] ExternalID ::= 'SYSTEM' S SystemLiteral
+                            | 'PUBLIC' S PubidLiteral S SystemLiteral
+          [11] SystemLiteral ::= ('"' [^"]* '"') | ("'" [^']* "'")
+          [12] PubidLiteral ::=  '"' PubidChar* '"'
+                               | "'" (PubidChar - "'")* "'"
+          [13] PubidChar ::=  #x20 | #x0D | #x0A | [a-zA-Z0-9]
+                                   | [-'()+,./:=?;!*#@$_%]
+</pre>
+        <p>We call this function when an <code>ExternalID</code> is expected; that is,
+the current character must be either &lsquo;<samp><span class="samp">#\S</span></samp>&rsquo; or &lsquo;<samp><span class="samp">#\P</span></samp>&rsquo; that
+starts correspondingly a <code>SYSTEM</code> or <code>PUBLIC</code> token.
+
+        <p>Return the <var>SystemLiteral</var> as a string.  A <code>PubidLiteral</code> is
+disregarded if present. 
+</p></blockquote></div>
+
+<!-- page -->
+   </body></html>
+
