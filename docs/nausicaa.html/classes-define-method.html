@@ -10,7 +10,7 @@
 <link rel="next" href="classes-define-setter.html#classes-define-setter" title="classes define setter">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
-This document describes version 0.2d6 of Nausicaa/Scheme, a set of
+This document describes version 0.2d7 of Nausicaa/Scheme, a set of
 Scheme libraries defining a slightly modified R6RS Scheme language
 and augmenting the features of the base and standard R6RS libraries.
 
@@ -108,10 +108,10 @@ Up:&nbsp;<a rel="up" accesskey="u" href="classes-define.html#classes-define">cla
 <hr>
 </div>
 
-<h4 class="subsection">25.1.9 Defining classes having methods</h4>
+<h4 class="subsection">26.1.9 Defining classes having methods</h4>
 
 <div class="defun">
-&mdash; Auxiliary Syntax: <b>methods</b><var> method-spec ...<a name="index-methods-1214"></a></var><br>
+&mdash; Auxiliary Syntax: <b>methods</b><var> method-spec ...<a name="index-methods-1232"></a></var><br>
 <blockquote><p>Add methods to the enclosing class definition; the <var>method-spec</var>
 arguments can be of the form:
 
@@ -179,8 +179,8 @@ different class types of the same hierarchy, <a href="classes-dot-with.html#clas
         </blockquote></div>
 
 <div class="defun">
-&mdash; Auxiliary Syntax: <b>method</b> (<var>name . formals</var>)<var> . body<a name="index-method-1215"></a></var><br>
-&mdash; Auxiliary Syntax: <b>method</b><var> name expression<a name="index-method-1216"></a></var><br>
+&mdash; Auxiliary Syntax: <b>method</b> (<var>name . formals</var>)<var> . body<a name="index-method-1233"></a></var><br>
+&mdash; Auxiliary Syntax: <b>method</b><var> name expression<a name="index-method-1234"></a></var><br>
 <blockquote><p>Add a method to the enclosing class definition; the method is applicable
 only through an automatically generated macro, which is bound by
 <code>with-class</code> to an identifier in dot notation.  This clause can be
@@ -264,7 +264,7 @@ argument: the class instance.
         </blockquote></div>
 
 <div class="defun">
-&mdash; Auxiliary Syntax: <b>method-syntax</b><var> name transformer<a name="index-method_002dsyntax-1217"></a></var><br>
+&mdash; Auxiliary Syntax: <b>method-syntax</b><var> name transformer<a name="index-method_002dsyntax-1235"></a></var><br>
 <blockquote><p>Add a method to the enclosing class definition; the method is applicable
 only through an automatically generated macro, which is bound by
 <code>with-class</code> to an identifier in dot notation.  This clause can be
@@ -287,9 +287,9 @@ argument to the macro will be the class instance.
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Macro: <b>define-virtual-method</b><var> class-name method-name<a name="index-define_002dvirtual_002dmethod-1218"></a></var><br>
-&mdash; Macro: <b>define-virtual-method</b><var> class-name method-name expr<a name="index-define_002dvirtual_002dmethod-1219"></a></var><br>
-&mdash; Macro: <b>define-virtual-method</b><var> class-name </var>(<var>method-name . args</var>)<var> . body<a name="index-define_002dvirtual_002dmethod-1220"></a></var><br>
+&mdash; Macro: <b>define-virtual-method</b><var> class-name method-name<a name="index-define_002dvirtual_002dmethod-1236"></a></var><br>
+&mdash; Macro: <b>define-virtual-method</b><var> class-name method-name expr<a name="index-define_002dvirtual_002dmethod-1237"></a></var><br>
+&mdash; Macro: <b>define-virtual-method</b><var> class-name </var>(<var>method-name . args</var>)<var> . body<a name="index-define_002dvirtual_002dmethod-1238"></a></var><br>
 <blockquote><p>Define a virtual method for <var>class-name</var>; the virtual methods of a
 class can be overridden by implementations in subclasses.  For example:
 
@@ -315,7 +315,7 @@ class can be overridden by implementations in subclasses.  For example:
 </pre>
         <p>A virtual method call is much slower than a concrete method call, but
 mostly it is still faster than a call to a generic function as
-implemented by the <code>(nausicaa language classes)</code> library
+implemented by the <code>(nausicaa language generics)</code> library
 (see <a href="generics.html#generics">Multimethod dispatching</a>).
 
         <p>A virtual method must be declared in the definition of <var>class-name</var>
@@ -341,71 +341,6 @@ to call that method will result in a syntax violation.
               'beta))
 </pre>
         <p>Only classes can have virtual methods, labels cannot. 
-</p></blockquote></div>
-
-<div class="defun">
-&mdash; Macro: <b>defmethod</b><var> class </var>(<var>method-name . args</var>)<var> body0 body ...<a name="index-defmethod-1221"></a></var><br>
-<blockquote><p>Define a method function for <var>class</var> called <var>method-name</var>; the
-identifier <var>method-name</var> must be listed in the <code>methods</code> clause
-of <var>class</var>.  This macro behaves like <code>define/with-class</code>, but
-does not use dot notation to access the fields and methods of the
-instance of <var>class</var>; rather it defines implicitly the first function
-argument called <code>this</code> bound to the class instance, and defines an
-identifier macro for each field and method, without prefixing the names,
-in such a way that the following code works:
-
-     <pre class="example">          (define-class &lt;alpha&gt;
-            (fields (mutable a)
-                    (mutable b))
-            (methods red blue green the-this))
-          
-          (define-class &lt;beta&gt;
-            (fields (mutable c)
-                    (mutable d)))
-          
-          (defmethod &lt;alpha&gt; (the-this)
-            this)
-          
-          (defmethod &lt;alpha&gt; (red)
-            (list a b))
-          
-          (defmethod &lt;alpha&gt; (blue (o &lt;beta&gt;))
-            (list a b o.c o.d))
-          
-          (defmethod &lt;alpha&gt; (green (o &lt;beta&gt;))
-            (cons #\a (blue o)))
-          
-          (let/with-class (((p &lt;alpha&gt;) (make &lt;alpha&gt; 1 2)))
-            (check
-                (p.the-this)
-              &rArr; p))
-          
-          (check
-              (let/with-class (((p &lt;alpha&gt;) (make &lt;alpha&gt; 1 2)))
-                (p.red))
-            &rArr; '(1 2))
-          
-          (check
-              (let/with-class (((p &lt;alpha&gt;) (make &lt;alpha&gt; 1 2))
-                               ((q &lt;beta&gt;)  (make &lt;beta&gt;  3 4)))
-                (p.blue q))
-            &rArr; '(1 2 3 4))
-          
-          (check
-              (let/with-class (((p &lt;alpha&gt;) (make &lt;alpha&gt; 1 2))
-                               ((q &lt;beta&gt;)  (make &lt;beta&gt;  3 4)))
-                (p.green q))
-            &rArr; '(#\a 1 2 3 4))
-</pre>
-        <p>The binding of <code>this</code> is simple: there are <strong>no</strong> identifier
-macros with <code>this.</code> prefix to access fields and methods.  Usually
-we do not need to use <code>this</code> at all. 
-</p></blockquote></div>
-
-<div class="defun">
-&mdash; Macro: <b>defmethod-virtual</b><var> class </var>(<var>method-name . args</var>)<var> body0 body ...<a name="index-defmethod_002dvirtual-1222"></a></var><br>
-<blockquote><p>Like <code>defmethod</code> but defines a virtual method as if
-<code>define-virtual-method</code> was used. 
 </p></blockquote></div>
 
 <!--  -->

@@ -9,7 +9,7 @@
 <link rel="next" href="classes-dot-let.html#classes-dot-let" title="classes dot let">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
-This document describes version 0.2d6 of Nausicaa/Scheme, a set of
+This document describes version 0.2d7 of Nausicaa/Scheme, a set of
 Scheme libraries defining a slightly modified R6RS Scheme language
 and augmenting the features of the base and standard R6RS libraries.
 
@@ -106,14 +106,16 @@ Up:&nbsp;<a rel="up" accesskey="u" href="classes-dot.html#classes-dot">classes d
 <hr>
 </div>
 
-<h4 class="subsection">25.7.1 Basic dot notation usage</h4>
+<h4 class="subsection">26.7.1 Basic dot notation usage</h4>
 
-<p>The <code>with-class</code> syntax is the basic tool providing dot notation
-in fields and methods usage.
+<p>The <code>with-class</code> syntax is the basic tool providing dot notation in
+fields and methods usage; the <code>with-fields</code> syntax is very similar,
+but its use is a bit dangerous and it should be avoided with the
+exception of some special case.
 
 <div class="defun">
-&mdash; Macro: <b>with-class</b> (<var>clause ...</var>)<var> body<a name="index-with_002dclass-1258"></a></var><br>
-<blockquote><p>Expand into a nested <code>let-syntax</code> forms which define: identifier
+&mdash; Syntax: <b>with-class</b> (<var>clause ...</var>)<var> body<a name="index-with_002dclass-1274"></a></var><br>
+<blockquote><p>Expand into nested <code>let-syntax</code> forms which define: identifier
 syntaxes to access and mutate fields and virtual fields of objects and
 records; macros to invoke methods of objects and records; macros to use
 the getter and setter associated to a class.
@@ -150,7 +152,7 @@ equivalent to nested <code>with-class</code> forms as follows:
         <p class="noindent">that is: variable name, dot, field name; the same goes for method's
 macros.
 
-        <p>When a <var>identifier</var> as no type: we can use <code>&lt;top&gt;</code> as its
+        <p>When a <var>identifier</var> has no type: we can use <code>&lt;top&gt;</code> as its
 conventional class type name; this can be useful when expanding macros
 making use of <code>with-class</code>.
 
@@ -354,6 +356,78 @@ parent classes:
      &rArr; (1 2)
 </pre>
    <!--  -->
+<div class="defun">
+&mdash; Syntax: <b>with-fields</b> (<var>clause ...</var>)<var> body<a name="index-with_002dfields-1275"></a></var><br>
+<blockquote><p>Works exactly like <code>with-class</code>, but it does not use dot notation
+for the fields and methods of the referenced instance; rather it creates
+identifier syntaxes with names being the names of fields and methods. 
+Examples:
+
+     <pre class="example">          (define-class &lt;alpha&gt;
+            (fields (mutable a)
+                    (mutable b))
+            (methods red blue green))
+          
+          (define-class &lt;beta&gt;
+            (fields (mutable c)
+                    (mutable d)))
+          
+          (define (&lt;alpha&gt;-red o)
+            (with-fields ((o &lt;alpha&gt;))
+              (list a b)))
+          
+          (define (&lt;alpha&gt;-blue o p)
+            (with-fields ((o &lt;alpha&gt;)
+                          (p &lt;beta&gt;))
+              (list a b c d)))
+          
+          (define (&lt;alpha&gt;-green o p)
+            (with-fields ((o &lt;alpha&gt;)
+                          (p &lt;beta&gt;))
+              (cons #\a (blue p))))
+          
+          (let/with-class (((p &lt;alpha&gt;) (make* &lt;alpha&gt; 1 2)))
+            (p.red))
+          &rArr; (1 2)
+          
+          (let/with-class (((p &lt;alpha&gt;) (make* &lt;alpha&gt; 1 2))
+                           ((q &lt;beta&gt;)  (make* &lt;beta&gt;  3 4)))
+            (p.blue q))
+          &rArr; (1 2 3 4)
+          
+          (let/with-class (((p &lt;alpha&gt;) (make* &lt;alpha&gt; 1 2))
+                           ((q &lt;beta&gt;)  (make* &lt;beta&gt;  3 4)))
+            (p.green q))
+          &rArr; (#\a 1 2 3 4)
+</pre>
+        <p class="noindent">notice how it works with nested dot notation for tagged fields:
+
+     <pre class="example">          (define-class &lt;alpha&gt;
+            (fields (mutable a)
+                    (mutable b))
+            (methods red blue green the-this))
+          
+          (define-class &lt;beta&gt;
+            (fields (mutable (c &lt;alpha&gt;))
+                    (mutable d)))
+          
+          (let ((o (make* &lt;beta&gt;
+                     (make* &lt;alpha&gt;
+                       1 2)
+                     3)))
+            (with-fields ((o &lt;beta&gt;))
+              (is-a? c &lt;alpha&gt;)   &rArr; #t
+              c.a                 &rArr; 1
+              c.b                 &rArr; 2
+              d))                 &rArr; 3
+</pre>
+        <p>Care must be taken when using this syntax, because it makes no effort to
+check conflicts between member names of different classes; usually it
+makes sense to use <code>with-fields</code> with only one instance, for
+example with the first argument to a method function. 
+</p></blockquote></div>
+
+<!--  -->
 <h5 class="subsubheading">Duplicated field names</h5>
 
 <p>We have to be careful when selecting names for methods and virtual

@@ -1,0 +1,187 @@
+<html lang="en">
+<head>
+<title>namespaces using - Nausicaa for Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Nausicaa for Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="namespaces.html#namespaces" title="namespaces">
+<link rel="prev" href="namespaces-define.html#namespaces-define" title="namespaces define">
+<link rel="next" href="namespaces-builtin.html#namespaces-builtin" title="namespaces builtin">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d7 of Nausicaa/Scheme, a set of
+Scheme libraries defining a slightly modified R6RS Scheme language
+and augmenting the features of the base and standard R6RS libraries.
+
+The project home page of Nausicaa is at:
+
+             `http://marcomaggi.github.com/nausicaa.html'
+
+
+development of Nausicaa takes place at:
+
+               `http://github.com/marcomaggi/nausicaa/'
+
+
+Copyright (C) 2008, 2009, 2010 by Marco Maggi.
+
+Copyright (C) 1996, 1997, 2000, 2001, 2002, 2003, 2004, 2005
+Free Software Foundation.
+
+Copyright (C) 1996, 1999-2005 Dorai Sitaram.
+
+Copyright (C) 1998 Oleg Kiselyov.
+
+Copyright (C) 1998, 1999, 2000 Olin Shivers.
+
+Copyright (C) 1999 John David Stone.
+
+Copyright (C) 1999, 2002 Marc Feeley.
+
+Copyright (C) 2001, 2009 Danny Dube'
+
+Copyright (C) 2002 Dr. Mirko Luedde.
+
+Copyright (C) 2002, 2003, 2005, 2006 Sebastian Egner.
+
+Copyright (C) 2003 Ray Dillinger.
+
+Copyright (C) 2003 Taylor Campbell.
+
+Copyright (C) 2005 Jens Axel Soegaard.
+
+Copyright (C) 2005-2009 Alex Shinn.
+
+Copyright (C) 2008 Taro Minowa (Higepon).
+
+Copyright (C) 2005-2008 Dominique Boucher.
+
+Copyright (C) 2004, 2005 Tony Garnock-Jones
+
+Copyright (C) 2005 LShift Ltd.
+
+Copyright (C) 2007, 2008 Philip L. Bewig.
+
+Copyright (C) 2000 Will Fitzgerald.
+
+Copyright (C) 2000 Neodesic Corporation.
+
+Copyright (C) 2000-2006 Joachim Henke.
+
+Copyright (C) 2004-2009 Neil Van Dyke.
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with no Invariant Sections being ``GNU Free
+     Documentation License'' and ``GNU General Public License'', no
+     Front--Cover Texts, and no Back--Cover Texts.  A copy of the
+     license is included in the section entitled ``GNU Free
+     Documentation License''.
+
+This document embeds an unofficial assemblage of several documents
+reformatted in Texinfo; the reformatting author and maintainer is
+Marco Maggi <marco.maggi-ipsu@poste.it>.  See the appendix ``Credits'' for
+the list of original documents and their authors.  See also the
+`README' and `CREDITS' files for additional attributions.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="namespaces-using"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="namespaces-builtin.html#namespaces-builtin">namespaces builtin</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="namespaces-define.html#namespaces-define">namespaces define</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="namespaces.html#namespaces">namespaces</a>
+<hr>
+</div>
+
+<h3 class="section">21.3 Using namespaces</h3>
+
+<p>The syntaxes described in this section provide dot notation to use
+namespace bindings; the core syntax is <code>with-namespace</code>.  The
+following bindings are exported by the <code>(nausicaa language
+namespaces)</code> library.
+
+<div class="defun">
+&mdash; Syntax: <b>with-namespace</b> (<var>&lt;clause&gt; ...</var>)<var> . &lt;body&gt;<a name="index-with_002dnamespace-1173"></a></var><br>
+<blockquote><p>Expand into nested <code>let-syntax</code> forms which define syntaxes to
+reference constants, functions and macros from namespaces.
+
+        <p>Each <var>&lt;clause&gt;</var> must have the form:
+
+     <pre class="example">          (<var>&lt;prefix&gt;</var> <var>&lt;name&gt;</var> ...)
+</pre>
+        <p class="noindent">where <var>&lt;name&gt;</var> must be an identifier referencing a namespace;
+<var>&lt;prefix&gt;</var> must be an identifier and it will be used as prefix for
+the dot notation identifiers.  When multiple namespace names are present
+in a single clause:
+
+     <pre class="example">          (<var>&lt;prefix&gt;</var> <var>&lt;name0&gt;</var> <var>&lt;name&gt;</var> ...)
+</pre>
+        <p class="noindent">the clause is equivalent to the sequence of clauses:
+
+     <pre class="example">          (<var>&lt;prefix&gt;</var> <var>&lt;name0&gt;</var>)
+          (<var>&lt;prefix&gt;</var> <var>&lt;name&gt;</var>)
+          ...
+</pre>
+        <p class="noindent">when multiple clauses are present, the <code>with-namespace</code> form is
+equivalent to nested <code>with-namespace</code> forms as follows:
+
+     <pre class="example">          (with-namespace ((<var>&lt;prefix1&gt;</var> <var>&lt;name1&gt;</var>)
+                           (<var>&lt;prefix2&gt;</var> <var>&lt;name2&gt;</var>))
+            . <var>&lt;body&gt;</var>)
+          == (with-namespace ((<var>&lt;prefix1&gt;</var> <var>&lt;name1&gt;</var>))
+               (with-namespace ((<var>&lt;prefix2&gt;</var> <var>&lt;name2&gt;</var>))
+                 . <var>&lt;body&gt;</var>))
+</pre>
+        <p>The identifier syntax for a binding named &lsquo;<samp><span class="samp">alpha</span></samp>&rsquo; is built as:
+
+     <pre class="example">          <var>&lt;prefix&gt;</var>.alpha
+</pre>
+        <p class="noindent">that is: prefix name, dot, binding name.
+
+        <p>When a <var>&lt;prefix&gt;</var> has no namespace: we can use <code>&lt;&lt;top&gt;&gt;</code> as its
+conventional namespace name; this can be useful when expanding macros
+making use of <code>with-namespace</code>.
+
+        <p>The bindings of the ancestors of <var>&lt;name&gt;</var> are handled as in the
+following example:
+
+     <pre class="example">          (define-namespace &lt;&lt;alpha&gt;&gt;
+            ---)
+          
+          (define-namespace &lt;&lt;beta&gt;&gt;
+            (inherit &lt;&lt;alpha&gt;&gt;)
+            ---)
+          
+          (define-class &lt;&lt;gamma&gt;&gt;
+            (inherit &lt;&lt;beta&gt;&gt;)
+            ---)
+          
+          (with-namespace ((o &lt;&lt;gamma&gt;&gt;))
+            ---)
+          == (with-namespace ((o &lt;&lt;alpha&gt;&gt;))
+               (with-namespace ((o &lt;&lt;beta&gt;&gt;))
+                 (with-namespace ((o &lt;&lt;gamma&gt;&gt;))
+                   ---)))
+</pre>
+        <p class="noindent">so that the syntaxes of a super&ndash;namespace are shadowed by the syntaxes
+of its sub&ndash;namespace. 
+</p></blockquote></div>
+
+<!-- page -->
+   </body></html>
+

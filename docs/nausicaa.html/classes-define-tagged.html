@@ -10,7 +10,7 @@
 <link rel="next" href="classes-define-method.html#classes-define-method" title="classes define method">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
-This document describes version 0.2d6 of Nausicaa/Scheme, a set of
+This document describes version 0.2d7 of Nausicaa/Scheme, a set of
 Scheme libraries defining a slightly modified R6RS Scheme language
 and augmenting the features of the base and standard R6RS libraries.
 
@@ -108,7 +108,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="classes-define.html#classes-define">cla
 <hr>
 </div>
 
-<h4 class="subsection">25.1.8 Fields tagged for dot notation</h4>
+<h4 class="subsection">26.1.8 Fields tagged for dot notation</h4>
 
 <p>There is a special syntax to specify a class or label as tag for fields
 and virtual fields of a class or label; this syntax is used to enable
@@ -138,15 +138,14 @@ by <code>(rnrs records syntactic (6))</code>.  <code>define-class</code> and
      (immutable (<var>field</var> <var>class</var> ...))
      (immutable (<var>field</var> <var>class</var> ...) <var>accessor</var>)
 </pre>
-   <p class="noindent">where each <var>class</var> is a class or label identifier; see below for a
-further extension.
+   <p class="noindent">where each <var>class</var> is a class or label identifier.
 
    <p>To use dot notation with non&ndash;tagged fields we do:
 
 <pre class="example">     (define-class &lt;alpha&gt;
        (fields a b))
      
-     (let ((o (make &lt;alpha&gt; 1 2)))
+     (let ((o (make* &lt;alpha&gt; 1 2)))
        (with-class ((o &lt;alpha&gt;))
          (list o.a o.b)))
      &rArr; (1 2)
@@ -163,8 +162,8 @@ further extension.
      (define-class &lt;beta&gt;
        (fields (c &lt;alpha&gt;)))
      
-     (let ((o (make &lt;beta&gt;
-                (make &lt;alpha&gt;
+     (let ((o (make* &lt;beta&gt;
+                (make* &lt;alpha&gt;
                   1 2))))
        (with-class ((o &lt;beta&gt;))
          (list o.c o.c.a o.c.b)))
@@ -182,77 +181,6 @@ further extension.
        (list o.c o.c.a o.c.b))
 </pre>
    <!--  -->
-<h5 class="subsubheading">Field getters</h5>
-
-<p>Let's consider this simple case of tagged field:
-
-<pre class="example">     (define-class &lt;alpha&gt;
-       (fields (mutable a)))
-     
-     (define-class &lt;beta&gt;
-       (fields (mutable (b &lt;alpha&gt;))))
-     
-     (let* (((A &lt;alpha&gt;) (make &lt;alpha&gt; 1))
-            ((B &lt;beta&gt;)  (make &lt;beta&gt; A)))
-       (list A.a B.b.a))
-     &rArr; (1 1)
-</pre>
-   <p class="noindent">the identifier syntax <code>B.b.a</code> expands to:
-
-<pre class="example">     (&lt;alpha&gt;-a B.b)
-</pre>
-   <p class="noindent">which in turn expands to:
-
-<pre class="example">     (&lt;alpha&gt;-a (&lt;beta&gt;-b B))
-</pre>
-   <p>In some rare case we would like the outer accessor (<code>&lt;alpha&gt;-a</code> in
-the example) to be applied to a value different from the return value of
-the inner accessor (<code>&lt;beta&gt;-b</code> in the example).  This is possible
-by specifying a custom field getter to be used only when building nested
-dot notation expansion forms:
-
-<pre class="example">     (define-class &lt;alpha&gt;
-       (fields (mutable a)))
-     
-     (define-class &lt;beta&gt;
-       (fields (mutable (b &lt;alpha&gt; (getter b-getter)))))
-     
-     (define (b-getter (o &lt;beta&gt;))
-       (make &lt;alpha&gt; 2))
-     
-     (let* (((A &lt;alpha&gt;) (make &lt;alpha&gt; 1))
-            ((B &lt;beta&gt;)  (make &lt;beta&gt;  A)))
-       (list A.a B.b.a))
-     &rArr; (1 2)
-</pre>
-   <p class="noindent">here the identifier syntax <code>B.b.a</code> expands to:
-
-<pre class="example">     (&lt;alpha&gt;-a B.b)
-</pre>
-   <p class="noindent">which in turn expands to:
-
-<pre class="example">     (&lt;alpha&gt;-a (b-getter B))
-</pre>
-   <p class="noindent">but the identifier syntax <code>B.b</code> would still expand to:
-
-<pre class="example">     (&lt;beta&gt;-b B)
-</pre>
-   <p>So the <code>field</code> and <code>virtual-field</code> auxiliary syntax of
-<code>define-class</code> and <code>define-label</code> support the following forms:
-
-<pre class="example">     (<var>field</var> <var>class/getter</var> ...)
-     (mutable (<var>field</var> <var>class/getter</var> ...))
-     (mutable (<var>field</var> <var>class/getter</var> ...) <var>accessor</var> <var>mutator</var>)
-     (immutable (<var>field</var> <var>class/getter</var> ...))
-     (immutable (<var>field</var> <var>class/getter</var> ...) <var>accessor</var>)
-</pre>
-   <p class="noindent">where: <var>field</var>, <var>accessor</var> and <var>mutator</var> are identifiers;
-<code>mutable</code> and <code>immutable</code> are the auxiliary syntaxes exported
-by <code>(rnrs records syntactic (6))</code>; <var>class/getter</var> are class or
-label identifiers or <code>(getter </code><var>getter</var><code>)</code> forms.  The can be at
-most one <code>getter</code> form for each field clause.
-
-<!--  -->
 <h5 class="subsubheading">Circular tagging</h5>
 
 <p>In the context of the <code>(nausicaa language classes)</code> library, a
@@ -351,8 +279,8 @@ clauses:
        (inherit &lt;alpha&gt;))
      
      (define o
-       (make &lt;beta&gt;
-         (make &lt;beta&gt; 1))) ;wrong initialisation
+       (make* &lt;beta&gt;
+         (make* &lt;beta&gt; 1))) ;wrong initialisation
      
      (with-class ((o &lt;beta&gt;))
        #f)
@@ -389,8 +317,8 @@ clauses:
        (fields (b &lt;alpha&gt;)))
      
      (define o
-       (make &lt;beta&gt;
-         1 (make &lt;alpha&gt; 2)))
+       (make* &lt;beta&gt;
+         1 (make* &lt;alpha&gt; 2)))
      
      (with-class ((o &lt;beta&gt;))
        (list o.a o.b.a))
@@ -416,9 +344,9 @@ clauses:
        (inherit &lt;alpha&gt;))
      
      (let (((o &lt;beta&gt;)
-            (make &lt;beta&gt;
+            (make* &lt;beta&gt;
               'beta-alpha-a
-              (make &lt;gamma&gt;
+              (make* &lt;gamma&gt;
                 'gamma-alpha-a))))
        (list o.a o.b.a))
      &rArr; (beta-alpha-a gamma-alpha-a)
