@@ -10,7 +10,7 @@
 <link rel="next" href="nausicaa-mutable_002dpairs.html#nausicaa-mutable_002dpairs" title="nausicaa mutable-pairs">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
-This document describes version 0.2d7 of Nausicaa/Scheme, a set of
+This document describes version 0.2d8 of Nausicaa/Scheme, a set of
 Scheme libraries defining a slightly modified R6RS Scheme language
 and augmenting the features of the base and standard R6RS libraries.
 
@@ -24,7 +24,7 @@ development of Nausicaa takes place at:
                `http://github.com/marcomaggi/nausicaa/'
 
 
-Copyright (C) 2008, 2009, 2010 by Marco Maggi.
+Copyright (C) 2008-2011 by Marco Maggi.
 
 Copyright (C) 1996, 1997, 2000, 2001, 2002, 2003, 2004, 2005
 Free Software Foundation.
@@ -110,11 +110,21 @@ Up:&nbsp;<a rel="up" accesskey="u" href="nausicaa.html#nausicaa">nausicaa</a>
 
 <h3 class="section">5.5 Infix to prefix notation conversion</h3>
 
-<p>The following bindings are exported by the <code>(nausicaa language
+<p><a name="index-g_t_0040library_007bnausicaa-language-infix_007d_002c-library-905"></a><a name="index-Library-_0040library_007bnausicaa-language-infix_007d-906"></a>
+
+   <p>The following bindings are exported by the <code>(nausicaa language
 infix)</code> library and reexported by the <code>(nausicaa)</code> library.
 
+   <blockquote>
+<strong>NOTE</strong> Notice that the <code>infix</code> syntax documented below does
+<strong>not</strong> share the parser table with the libraries in the
+<code>(nausicaa infix ---)</code> hierarchy; this is both for efficiency and
+to avoid circular dependency between the <code>infix</code> syntax and the
+<code>(nausicaa)</code> library. 
+</blockquote>
+
 <div class="defun">
-&mdash; Syntax: <b>infix</b><var> &lt;atom&gt; ...<a name="index-infix-901"></a></var><br>
+&mdash; Syntax: <b>infix</b><var> &lt;atom&gt; ...<a name="index-infix-907"></a></var><br>
 <blockquote><p>Expand to a prefix expression to be evaluated at runtime, in the lexical
 context of the macro use; as a special case <code>(infix)</code> is equivalent
 to <code>(values)</code>.  The syntax allows us to evaluate forms like:
@@ -136,17 +146,79 @@ to <code>(values)</code>.  The syntax allows us to evaluate forms like:
 
           <ul>
 <li>The following infix operators are supported, in order of increasing
-precedence from left to right:
+precedence from top to bottom:
 
-          <pre class="example">               + - * / div // div0 mod mod0 % expt ^ &lt; &gt; &lt;= &gt;= =
+          <pre class="example">               + -
+               * / div div0
+               mod mod0
+               expt
+               &lt; &gt; &lt;= &gt;= =
+               (unary +) (unary -)
+               bitwise-and bitwise-ior bitwise-xor
+               bitwise-not
+               bitwise-arithmetic-shift-left bitwise-arithmetic-shift-right
 </pre>
-          <p class="noindent">remember that the Scheme comparison operators are meant to return a
-boolean value, rather than a number object.  &lsquo;<samp><span class="samp">//</span></samp>&rsquo; is an alias for
-<code>div</code>, &lsquo;<samp><span class="samp">%</span></samp>&rsquo; is an alias for <code>mod</code>, &lsquo;<samp><span class="samp">^</span></samp>&rsquo; is an alias
-for <code>expt</code>.  The recognised operators are bindings from both the
-<code>(rnrs)</code> and <code>(nausicaa)</code> libraries; &lsquo;<samp><span class="samp">//</span></samp>&rsquo;, &lsquo;<samp><span class="samp">%</span></samp>&rsquo; and
-&lsquo;<samp><span class="samp">^</span></samp>&rsquo; should be free identifiers.
+          <p class="noindent">operators on the same line have equal precedence; we need to remember
+that the Scheme comparison operators are meant to return a boolean
+value, rather than a number object.
 
+          <p>The recognised operators are bindings from both the <code>(rnrs)</code> and
+<code>(nausicaa)</code> libraries; for example:
+
+          <pre class="example">               #!r6rs
+               (import (nausicaa)
+                 (prefix (rnrs) rnrs.))
+               
+               (infix 2 rnrs.* 3)      &rArr; 6
+</pre>
+          <p class="noindent">works as expected.
+
+          <p>Notice that we can make the bitwise operators more easy to type simply
+by renaming them at the <code>import</code> clause:
+
+          <pre class="example">               (rename (only (rnrs)
+                             bitwise-and
+                             bitwise-ior
+                             bitwise-xor
+                             bitwise-not
+                             bitwise-arithmetic-shift-left
+                             bitwise-arithmetic-shift-right)
+                       (bitwise-and                     &amp;)
+                       (bitwise-ior                     !)
+                       (bitwise-xor                     ^)
+                       (bitwise-not                     ~)
+                       (bitwise-arithmetic-shift-left   &lt;&lt;)
+                       (bitwise-arithmetic-shift-right  &gt;&gt;))
+</pre>
+          <p class="noindent">the exclamation point &lsquo;<samp><span class="samp">!</span></samp>&rsquo; is ugly as inclusive OR operator, but the
+vertical bar &lsquo;<samp><span class="samp">|</span></samp>&rsquo; is invalid as identifier name according to
+<acronym>R6RS</acronym>.
+
+          <li>The following operators for fixnums are supported with the same
+precedence of the corresponding generic operators:
+
+          <pre class="example">               fx+             fx-
+               fx*
+               fxdiv           fxdiv0
+               fxmod           fxmod0
+               fx&lt;?            fx&gt;?
+               fx&lt;=?           fx&gt;=?
+               fx=?
+               
+               fxand fxior fxxor fxnot
+               fxarithmetic-shift-left
+               fxarithmetic-shift-right
+</pre>
+          <li>The following operators for flonums are supported with the same
+precedence of the corresponding generic operators:
+
+          <pre class="example">               fl+             fl-
+               fl*             fl/
+               flexpt
+               fl&lt;?            fl&gt;?
+               fl&lt;=?           fl&gt;=?
+               fl=?
+</pre>
           <li>The if&ndash;then&ndash;else statement involves the special symbols <code>?</code> and
 <code>:</code> which should be free identifiers.  This statement has the least
 precedence of all.

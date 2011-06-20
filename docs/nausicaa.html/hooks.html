@@ -1,0 +1,205 @@
+<html lang="en">
+<head>
+<title>hooks - Nausicaa for Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Nausicaa for Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="prev" href="streams.html#streams" title="streams">
+<link rel="next" href="comparisons.html#comparisons" title="comparisons">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d8 of Nausicaa/Scheme, a set of
+Scheme libraries defining a slightly modified R6RS Scheme language
+and augmenting the features of the base and standard R6RS libraries.
+
+The project home page of Nausicaa is at:
+
+             `http://marcomaggi.github.com/nausicaa.html'
+
+
+development of Nausicaa takes place at:
+
+               `http://github.com/marcomaggi/nausicaa/'
+
+
+Copyright (C) 2008-2011 by Marco Maggi.
+
+Copyright (C) 1996, 1997, 2000, 2001, 2002, 2003, 2004, 2005
+Free Software Foundation.
+
+Copyright (C) 1996, 1999-2005 Dorai Sitaram.
+
+Copyright (C) 1998 Oleg Kiselyov.
+
+Copyright (C) 1998, 1999, 2000 Olin Shivers.
+
+Copyright (C) 1999 John David Stone.
+
+Copyright (C) 1999, 2002 Marc Feeley.
+
+Copyright (C) 2001, 2009 Danny Dube'
+
+Copyright (C) 2002 Dr. Mirko Luedde.
+
+Copyright (C) 2002, 2003, 2005, 2006 Sebastian Egner.
+
+Copyright (C) 2003 Ray Dillinger.
+
+Copyright (C) 2003 Taylor Campbell.
+
+Copyright (C) 2005 Jens Axel Soegaard.
+
+Copyright (C) 2005-2009 Alex Shinn.
+
+Copyright (C) 2008 Taro Minowa (Higepon).
+
+Copyright (C) 2005-2008 Dominique Boucher.
+
+Copyright (C) 2004, 2005 Tony Garnock-Jones
+
+Copyright (C) 2005 LShift Ltd.
+
+Copyright (C) 2007, 2008 Philip L. Bewig.
+
+Copyright (C) 2000 Will Fitzgerald.
+
+Copyright (C) 2000 Neodesic Corporation.
+
+Copyright (C) 2000-2006 Joachim Henke.
+
+Copyright (C) 2004-2009 Neil Van Dyke.
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with no Invariant Sections being ``GNU Free
+     Documentation License'' and ``GNU General Public License'', no
+     Front--Cover Texts, and no Back--Cover Texts.  A copy of the
+     license is included in the section entitled ``GNU Free
+     Documentation License''.
+
+This document embeds an unofficial assemblage of several documents
+reformatted in Texinfo; the reformatting author and maintainer is
+Marco Maggi <marco.maggi-ipsu@poste.it>.  See the appendix ``Credits'' for
+the list of original documents and their authors.  See also the
+`README' and `CREDITS' files for additional attributions.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="hooks"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="comparisons.html#comparisons">comparisons</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="streams.html#streams">streams</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="index.html#Top">Top</a>
+<hr>
+</div>
+
+<h2 class="chapter">43 Running lists of functions</h2>
+
+<p><a name="index-g_t_0040library_007bnausicaa-hooks_007d_002c-library-3926"></a><a name="index-Library-_0040library_007bnausicaa-hooks_007d-3927"></a>
+
+   <p>The <code>(nausicaa hooks)</code> library exports an <acronym>API</acronym> defining
+<dfn>hooks</dfn>: lists of functions which can be applied to arguments at a
+specified point in a program.  Nausicaa/Scheme hooks are somewhat
+similar to <acronym>GNU</acronym> Emacs and <acronym>GNU</acronym> Guile hooks.
+
+<pre class="example">     #!r6rs
+     (import (nausicaa) (nausicaa hooks))
+     
+     (let (((H &lt;hook&gt;) (make &lt;hook&gt;))
+           (result     0))
+       (H.register! (lambda ()
+                      (incr! result 2)))
+       (H.register! (lambda ()
+                      (incr! result 4)))
+       (H.run)
+       result)
+     &rArr; 6
+     
+     (let (((H &lt;hook&gt;) (make &lt;hook&gt;
+                         (number-of-arguments 1)))
+           (result     0))
+       (H.register! (lambda (x)
+                      (incr! result x)))
+       (H.register! (lambda (x)
+                      (incr! result x)))
+       (H.apply 2)
+       result)
+     &rArr; 4
+</pre>
+   <div class="defun">
+&mdash; Class: <b>&lt;hook&gt;</b><var><a name="index-g_t_0040aclass_007bhook_007d-3928"></a></var><br>
+<blockquote><p>Type of hook objects. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>make &lt;hook&gt;</b><var> &lt;clause&gt; ...<a name="index-make-_0040aclass_007bhook_007d-3929"></a></var><br>
+&mdash; Auxiliary Syntax: <b>number-of-arguments</b><var> num<a name="index-number_002dof_002darguments-3930"></a></var><br>
+<blockquote><p>Build and return a new instance of <code>&lt;hook&gt;</code>.
+
+        <p>The optional <code>number-of-arguments</code> clause sets the number of
+arguments to <var>num</var>; when not used, the number of arguments defaults
+to zero. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Immutable Field of &lt;hook&gt;: <b>number-of-arguments</b><var><a name="index-number_002dof_002darguments-3931"></a></var><br>
+<blockquote><p>The fixed number of arguments of all the registered hook functions. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Method on &lt;hook&gt;: <b>register!</b><var> func<a name="index-register_0021-on-_0040aclass_007bhook_007d-3932"></a></var><br>
+&mdash; Method on &lt;hook&gt;: <b>register!</b><var> func last?<a name="index-register_0021-on-_0040aclass_007bhook_007d-3933"></a></var><br>
+<blockquote><p>Register <var>func</var> as hook function; return a unique identifier
+associated to <var>func</var>.  If <var>last?</var> is false or not used: the new
+function is registered as first, else it is registered as last. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Method on &lt;hook&gt;: <b>forget!</b><var> id<a name="index-forget_0021-on-_0040aclass_007bhook_007d-3934"></a></var><br>
+<blockquote><p>Remove a previously registered hook function, the one associated to
+<var>id</var> which must be the return value of a previous call to
+<code>register!</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Method on &lt;hook&gt;: <b>reset!</b><var><a name="index-reset_0021-on-_0040aclass_007bhook_007d-3935"></a></var><br>
+<blockquote><p>Remove all the previously registered hooks. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Method on &lt;hook&gt;: <b>empty?</b><var><a name="index-empty_003f-on-_0040aclass_007bhook_007d-3936"></a></var><br>
+<blockquote><p>Return true if the hook holds no registered functions. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Method on &lt;hook&gt;: <b>apply</b><var> arg <small class="dots">...</small><a name="index-apply-on-_0040aclass_007bhook_007d-3937"></a></var><br>
+<blockquote><p>Apply all the hook functions to the selected <var>arg</var> which must be in
+number equal to the <code>number-of-arguments</code> field; the order of
+evaluation is from the last registered to the first.  Hooks can be run
+any number of times. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Method on &lt;hook&gt;: <b>run</b><var><a name="index-run-on-_0040aclass_007bhook_007d-3938"></a></var><br>
+<blockquote><p>Run all the hook functions without arguments; to be used only when the
+<code>number-of-arguments</code> field is set to zero.  Hooks can be run any
+number of times. 
+</p></blockquote></div>
+
+<!-- end of file -->
+   </body></html>
+
