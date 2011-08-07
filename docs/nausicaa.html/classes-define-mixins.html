@@ -6,11 +6,11 @@
 <meta name="generator" content="makeinfo 4.13">
 <link title="Top" rel="start" href="index.html#Top">
 <link rel="up" href="classes-define.html#classes-define" title="classes define">
-<link rel="prev" href="classes-define-labels.html#classes-define-labels" title="classes define labels">
+<link rel="prev" href="classes-define-bindings.html#classes-define-bindings" title="classes define bindings">
 <link rel="next" href="classes-define-satisfy.html#classes-define-satisfy" title="classes define satisfy">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
-This document describes version 0.2d8 of Nausicaa/Scheme, a set of
+This document describes version 0.2d11 of Nausicaa/Scheme, a set of
 Scheme libraries defining a slightly modified R6RS Scheme language
 and augmenting the features of the base and standard R6RS libraries.
 
@@ -103,17 +103,20 @@ the list of original documents and their authors.  See also the
 <a name="classes-define-mixins"></a>
 <p>
 Next:&nbsp;<a rel="next" accesskey="n" href="classes-define-satisfy.html#classes-define-satisfy">classes define satisfy</a>,
-Previous:&nbsp;<a rel="previous" accesskey="p" href="classes-define-labels.html#classes-define-labels">classes define labels</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="classes-define-bindings.html#classes-define-bindings">classes define bindings</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="classes-define.html#classes-define">classes define</a>
 <hr>
 </div>
 
-<h4 class="subsection">25.1.13 Composing with mixins</h4>
+<h4 class="subsection">24.1.13 Composing with mixins</h4>
 
 <p><dfn>Mixins</dfn> are a way to add definition clauses to classes and labels. 
 Let's consider this situation:
 
-<pre class="example">     (define-class &lt;alpha&gt;
+<pre class="example">     #!r6rs
+     (import (nausicaa))
+     
+     (define-class &lt;alpha&gt;
        (field a))
      
      (define-class &lt;beta&gt;
@@ -133,12 +136,16 @@ Let's consider this situation:
 </pre>
    <p class="noindent">the definitions of <code>&lt;delta&gt;</code> and <code>&lt;gamma&gt;</code> share some clauses;
 both of them already have a parent class and multiple inheritance is not
-supported.  Is it possible to write the shared clauses only once and
-attach them to the class definitions?  Yes, with mixins.
+supported by Nausicaa/Scheme.  Is it possible to write the shared
+clauses only once and attach them to the class definitions?  Yes, with
+mixins.
 
    <p>The example above is equivalent to the following:
 
-<pre class="example">     (define-class &lt;alpha&gt;
+<pre class="example">     #!r6rs
+     (import (nausicaa))
+     
+     (define-class &lt;alpha&gt;
        (field a))
      
      (define-class &lt;beta&gt;
@@ -166,31 +173,144 @@ class definition:
 syntax object.
 
      <li>All the instances of the identifier <code>&lt;stuff&gt;</code> are substituted with
-the identifier of the enclosing class or label.
+the identifier of the enclosing class or label, <code>&lt;delta&gt;</code> and
+<code>&lt;gamma&gt;</code> in the example.
 
      <li>The resulting clauses are added to the enclosing definition.
         </ol>
 
-   <p><a href="classes-mixins.html#classes-mixins">classes mixins</a> for further examples.  When we compose a class with
-a mixin, we can rightly think that the receiving class or label knows of
-it; there is no need to keep the receiving definition separate from the
-mixin definition.  In particular the constructor functions must prepare
-appropriate values for the fields of the mixins; the order of the fields
-in the receiving class is the same of the order of the <code>fields</code>
-clauses.
+<p class="noindent"><a href="classes-mixins.html#classes-mixins">classes mixins</a> for further examples.  We can use the
+<code>mixins</code> clause in the definition body of classes, labels and
+mixins.
 
 <div class="defun">
-&mdash; Auxiliary Syntax: <b>mixins</b><var> name ...<a name="index-mixins-1463"></a></var><br>
-<blockquote><p>Compose the enclosing class or label definition with the given list of
-mixins.  The <code>mixins</code> clause can be used any number of times; each
-of them can list any number of mixin identifiers.
+&mdash; Auxiliary Syntax: <b>mixins</b><var> &lt;spec&gt; ...<a name="index-mixins-1524"></a></var><br>
+<blockquote><p>Compose the enclosing class, label or mixin definition with the given
+list of mixins.  Each <var>&lt;spec&gt;</var> element must have one of the forms:
 
-        <p>It is a syntax violation if a mixin identifier is not already associated
-to a set of clauses.  It is a syntax violation if the same mixin
-identifier is used multiple times in the <code>mixins</code> clauses of the
-same definition. 
+     <pre class="example">          <var>&lt;mixin-name&gt;</var>
+          (<var>&lt;mixin-name&gt;</var> (<var>&lt;from&gt;</var> <var>&lt;to&gt;</var>) ...)
+</pre>
+        <p class="noindent">in which <var>&lt;mixin-name&gt;</var> is the identifier referencing the mixin,
+<var>&lt;from&gt;</var> and <var>&lt;to&gt;</var> are identifiers specifying the specialisation
+for this mixin.
+
+        <p>To specialise a mixin's clauses for the receiving definition means the
+following:
+
+          <ol type=1 start=1>
+<li>All the occurrences of <var>&lt;mixin-name&gt;</var> are replaced with the receiving
+definition's class, label or mixin name.
+
+          <li>All the occurrences of the <var>&lt;from&gt;</var> identifiers are replaced with the
+<var>&lt;to&gt;</var> identifiers.
+             </ol>
+
+        <p>It is a syntax violation if a mixin identifier name is not already
+associated to a set of clauses at the time the receiving definition is
+expanded; it is a syntax violation if the same <var>&lt;mixin-name&gt;</var> is used
+multiple times in the <code>mixins</code> clauses of a definition. 
 </p></blockquote></div>
 
-<!-- page -->
+   <p>The <code>mixins</code> clause can be used any number of times, each of them
+can list any number of mixin identifiers; the following clauses:
+
+<pre class="example">     (mixins &lt;a&gt; &lt;b&gt;)
+     (mixins &lt;c&gt; &lt;d&gt;)
+     (mixins &lt;e&gt; &lt;f&gt;)
+</pre>
+   <p class="noindent">are equivalent to the single clause:
+
+<pre class="example">     (mixins &lt;a&gt; &lt;b&gt; &lt;c&gt; &lt;d&gt; &lt;e&gt; &lt;f&gt;)
+</pre>
+   <p class="noindent">notice how the order is preserved from left to right and top to bottom.
+
+   <p>Mixin clauses are added to the receiving definition in a deterministic
+order: first the original clauses, then the mixin clauses in the same
+order in which the mixin identifiers appear in the <code>mixins</code>
+clauses.  For example the following definitions:
+
+<pre class="example">     #!r6rs
+     (import (nausicaa))
+     
+     (define-mixin &lt;alpha&gt;
+       (fields second))
+     
+     (define-mixin &lt;beta&gt;
+       (fields third))
+     
+     (define-mixin &lt;gamma&gt;
+       (fields fourth))
+     
+     (define-class &lt;red&gt;
+       (fields first)
+       (mixins &lt;alpha&gt; &lt;beta&gt; &lt;gamma&gt;)
+       (protocol
+         (lambda (make-top)
+           (lambda (first second third fourth)
+             ((make-top) first second third fourth)))))
+</pre>
+   <p class="noindent">are equivalent to the following single definition:
+
+<pre class="example">     #!r6rs
+     (import (nausicaa))
+     
+     (define-class &lt;red&gt;
+       (fields first second third fourth)
+       (mixins &lt;alpha&gt; &lt;beta&gt; &lt;gamma&gt;)
+       (protocol
+         (lambda (make-top)
+           (lambda (first second third fourth)
+             ((make-top) first second third fourth)))))
+</pre>
+   <p class="noindent">notice how the order of the <code>fields</code> clauses matches the order of
+the arguments to the constructor function.
+
+   <p>The capability of substituting arbitrary identifiers in the mixin
+clauses is a powerful tool of specialisation; for example, we could
+substitute identifier placeholders in the mixin clauses with class and
+namespace names for the receiving definitions (see <a href="namespaces.html#namespaces">namespaces</a>):
+
+<pre class="example">     #!r6rs
+     (import (nausicaa))
+     
+     (define-auxiliary-syntaxes
+       &lt;sequence&gt; &lt;&lt;for-sequence&gt;&gt;)
+     
+     (define-namespace &lt;&lt;for-string&gt;&gt;
+       (functions (ref  string-ref)
+                  (set! string-set!)))
+     
+     (define-namespace &lt;&lt;for-vector&gt;&gt;
+       (functions (ref  vector-ref)
+                  (set! vector-set!)))
+     
+     (define-mixin &lt;the-sequence&gt;
+       (fields (subject &lt;sequence&gt;)
+       (method (get-first (o &lt;the-sequence&gt;))
+         (with-namespace ((N &lt;&lt;for-sequence&gt;&gt;))
+           (N.ref o.subject 0))))
+     
+     (define-class &lt;the-string&gt;
+       (mixins (&lt;the-sequence&gt;
+                 (&lt;sequence&gt;       &lt;string&gt;)
+                 (&lt;&lt;for-sequence&gt;&gt; &lt;&lt;for-string&gt;&gt;))))
+     
+     (define-class &lt;the-vector&gt;
+       (mixins (&lt;the-sequence&gt;
+                 (&lt;sequence&gt;       &lt;vector&gt;)
+                 (&lt;&lt;for-sequence&gt;&gt; &lt;&lt;for-vector&gt;&gt;))))
+     
+     (let (((o &lt;the-string&gt;) (make* &lt;the-string&gt;
+                               "ciao")))
+       o.subject.length      &rArr; 4
+       (o.get-first))        &rArr; #\c
+     
+     (let (((o &lt;the-vector&gt;) (make* &lt;the-vector&gt;
+                               (vector 'c 'i 'a 'o))))
+       o.subject.length      &rArr; 4
+       (o.get-first))        &rArr; c
+</pre>
+   <!-- page -->
    </body></html>
 

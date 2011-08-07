@@ -6,10 +6,10 @@
 <meta name="generator" content="makeinfo 4.13">
 <link title="Top" rel="start" href="index.html#Top">
 <link rel="up" href="conditions.html#conditions" title="conditions">
-<link rel="next" href="conditions-mismatch.html#conditions-mismatch" title="conditions mismatch">
+<link rel="next" href="conditions-handle.html#conditions-handle" title="conditions handle">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
-This document describes version 0.2d8 of Nausicaa/Scheme, a set of
+This document describes version 0.2d11 of Nausicaa/Scheme, a set of
 Scheme libraries defining a slightly modified R6RS Scheme language
 and augmenting the features of the base and standard R6RS libraries.
 
@@ -101,62 +101,96 @@ the list of original documents and their authors.  See also the
 <div class="node">
 <a name="conditions-define"></a>
 <p>
-Next:&nbsp;<a rel="next" accesskey="n" href="conditions-mismatch.html#conditions-mismatch">conditions mismatch</a>,
+Next:&nbsp;<a rel="next" accesskey="n" href="conditions-handle.html#conditions-handle">conditions handle</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="conditions.html#conditions">conditions</a>
 <hr>
 </div>
 
-<h3 class="section">9.1 Defining new condition types</h3>
+<h3 class="section">8.1 Defining new condition types</h3>
 
-<p>The <code>define-condition</code> syntax is a wrapper for
-<code>define-condition-type</code> which adds some automation; for example,
-the definition:
-
-<pre class="example">     (define-condition &amp;wrong-num-args
-       (parent &amp;assertion)
-       (fields procname expected given))
-</pre>
-   <p class="noindent">expands to:
-
-<pre class="example">     (define-condition-type &amp;wrong-num-args
-       &amp;assertion
-       make-wrong-num-args-condition
-       wrong-num-args-condition?
-       (procname     condition-wrong-num-args/procname)
-       (expected     condition-wrong-num-args/expected)
-       (given        condition-wrong-num-args/given))
-     
-     (define-syntax raise-wrong-num-args-error
-       (syntax-rules ()
-         ((_ ?who ?message ?procname ?expected ?given)
-          (raise
-           (condition (make-who-condition ?who)
-                      (make-message-condition ?message)
-                      (make-wrong-num-args-condition
-                         ?procname ?expected ?given)
-                      (make-non-continuable-violation))))))
-</pre>
-   <p class="noindent">in which we see several automatically generated identifiers.
+<p>The following bindings are exported by the library <code>(nausicaa
+language conditions)</code>.
 
 <div class="defun">
-&mdash; Syntax: <b>define-condition</b><var> &lt;name&gt; &lt;clause&gt; ...<a name="index-define_002dcondition-1165"></a></var><br>
-<blockquote><p>Define a new condition object type named <var>&lt;name&gt;</var>; the identifier
-<var>&lt;name&gt;</var> must have &lsquo;<samp><span class="samp">&amp;</span></samp>&rsquo; as first character.  The clauses must be
-the auxiliary syntaxes described below.
+&mdash; Syntax: <b>define-condition-type</b><var> &lt;condition-type&gt; &lt;supertype&gt; &lt;constructor&gt; &lt;predicate&gt; </var>(<var>&lt;field&gt; &lt;accessor&gt;</var>)<var> <small class="dots">...</small><a name="index-define_002dcondition_002dtype-1160"></a></var><br>
+<blockquote><p>A transparent replacement for <code>define-condition-type</code> from
+<code>(rnrs conditions (6))</code> which defines a new condition object type with
+additional features to better merge it in to the Nausicaa language,
+see <a href="stdlib-exceptions-conditions-objects.html#stdlib-exceptions-conditions-objects"><code>define-condition-type</code></a>.
 
-        <p>Additionally, a syntax is defined to raise a condition object with this
-type; the name of the syntax is built by stripping the &lsquo;<samp><span class="samp">&amp;</span></samp>&rsquo;
-character from the name, then prepending &lsquo;<samp><span class="samp">raise-</span></samp>&rsquo; and appending
-&lsquo;<samp><span class="samp">-error</span></samp>&rsquo;.  The raised condition type is composite with types
-<var>&lt;name&gt;</var>, <code>&amp;who</code>, <code>&amp;message</code>,
-<code>&amp;non-continuable</code>. 
+        <p>It can be used exactly like the original, but we cannot mix the
+hierarchy of <var>&lt;condition-type&gt;</var> identifiers created by the original
+with the hierarchy of identifiers created by this replacement.
+
+        <p>This syntax takes advantage of the fact that, in normal code using
+<code>(rnrs conditions (6))</code>, the identifier of a condition type is used
+only in <code>define-condition-type</code> forms; so this syntax defines a
+condition type using <code>define-condition-type</code> from
+<code>(rnrs conditions (6))</code>, assigning to it an automatically generated
+name &lsquo;<samp><span class="samp">the-type</span></samp>&rsquo;:
+
+     <pre class="example">          (rnrs.define-condition-type the-type
+              <var>&lt;supertype&gt;</var>
+            <var>&lt;constructor&gt;</var>
+            <var>&lt;predicate&gt;</var>
+            (<var>&lt;field&gt;</var> <var>&lt;accessor&gt;</var>)
+            ...)
+</pre>
+        <p class="noindent">then it defines a label using the type name as label name and shadowing
+&lsquo;<samp><span class="samp">the-type</span></samp>&rsquo;:
+
+     <pre class="example">          (define-label <var>&lt;condition-type&gt;</var>
+            (shadows the-type)
+            (custom-maker <var>&lt;constructor&gt;</var>)
+            (predicate <var>&lt;predicate&gt;</var>)
+            (virtual-fields (immutable <var>&lt;field&gt;</var> <var>&lt;accessor&gt;</var>)
+                            ...))
+</pre>
+        <p class="noindent">the result is a condition type definition which can be used as usual
+inside a hierarchy of types created by this syntax; in addition we have
+the features of a label, that is <var>&lt;condition-type&gt;</var> can be used by
+<code>is-a?</code>, <code>with-class</code> and derived syntaxes.
+
+        <p>Condition objects of types created by this syntax <strong>cannot</strong> be
+used to dispatch generic functions as defined by <code>(nausicaa
+language generics)</code>. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Auxiliary Syntax: <b>parent</b><var> &lt;parent type&gt;<a name="index-parent-1166"></a></var><br>
+&mdash; Syntax: <b>define-condition</b><var> &lt;condition-type&gt; &lt;clause&gt; <small class="dots">...</small><a name="index-define_002dcondition-1161"></a></var><br>
+&mdash; Auxiliary Syntax: <b>parent</b><var> &lt;supertype&gt;<a name="index-parent-1162"></a></var><br>
+&mdash; Auxiliary Syntax: <b>fields</b><var> &lt;field-spec&gt; <small class="dots">...</small><a name="index-fields-1163"></a></var><br>
+<blockquote><p>Define a new condition object type <var>&lt;condition-type&gt;</var>; the name of
+the identifier <var>&lt;condition-type&gt;</var> must have &lsquo;<samp><span class="samp">&amp;</span></samp>&rsquo; as first
+character; this syntax has the same features of
+<code>define-condition-type</code> described above, but in addition it allows
+fields tagging.  As example, the definition:
+
+     <pre class="example">          (define-condition &amp;wrong-num-args
+            (parent &amp;assertion)
+            (fields procname expected given))
+</pre>
+        <p class="noindent">is equivalent to:
+
+     <pre class="example">          (define-condition-type &amp;wrong-num-args
+              &amp;assertion
+            make-wrong-num-args-condition
+            wrong-num-args-condition?
+            (procname     condition-wrong-num-args/procname)
+            (expected     condition-wrong-num-args/expected)
+            (given        condition-wrong-num-args/given))
+</pre>
+        <p class="noindent">in which we see several automatically generated identifiers. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Auxiliary Syntax: <b>parent</b><var> &lt;parent-type&gt;<a name="index-parent-1164"></a></var><br>
 <blockquote><p>Select the parent condition type for the enclosing definition.  This
 clause can be omitted and can be used at most once.  When not used, the
-parent defaults to <code>&amp;error</code>.
+parent defaults to <code>&amp;condition</code>.
+
+        <p><var>&lt;parent-type&gt;</var> must be an identifier defined by
+<code>define-condition-type</code> described above.
 
         <p>The <code>parent</code> identifier is the one exported by
 <code>(rnrs syntactic (6))</code> or <code>(nausicaa language classes
@@ -164,16 +198,26 @@ auxiliary-syntaxes)</code> for the implementations that do not define it.
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Auxiliary Syntax: <b>fields</b><var> &lt;field&gt; ...<a name="index-fields-1167"></a></var><br>
+&mdash; Auxiliary Syntax: <b>fields</b><var> &lt;field-spec&gt; <small class="dots">...</small><a name="index-fields-1165"></a></var><br>
 <blockquote><p>Specify the fields of the enclosing condition type definition.  All the
-<var>&lt;field&gt;</var> arguments must be identifiers.  This clause can be omitted
-and can be used at most once.
+<var>&lt;field-spec&gt;</var> arguments must have one of the forms:
 
-        <p>For each field a field accessor is defined with name built from the
-condition type name as follows: the &lsquo;<samp><span class="samp">&amp;</span></samp>&rsquo; character is stripped from
-the type name, a slash is appended to the name, the field name is
-appended to the result, the string &lsquo;<samp><span class="samp">condition-</span></samp>&rsquo; is prepended to the
-result.
+     <pre class="example">          <var>&lt;field&gt;</var>
+          (<var>&lt;field&gt;</var> <var>&lt;accessor&gt;</var>)
+          ((<var>&lt;field&gt;</var> <var>&lt;tag&gt;</var> ...))
+          ((<var>&lt;field&gt;</var> <var>&lt;tag&gt;</var> ...) <var>&lt;accessor&gt;</var>)
+</pre>
+        <p class="noindent">in which: the identifier <var>&lt;field&gt;</var> is the name of the field; the
+identifier <var>&lt;accessor&gt;</var> is the name of the accessor of the field; the
+identifier <var>&lt;tag&gt;</var> is the name of a label or class which tags the
+field (<a href="classes-define-tagged.html#classes-define-tagged">classes define tagged</a>).  This clause can be omitted and can
+be used at most once.
+
+        <p>When the first form of <var>&lt;field-spec&gt;</var> is used: for each field an
+accessor name is built as follows: the &lsquo;<samp><span class="samp">&amp;</span></samp>&rsquo; character is stripped
+from <var>&lt;condition-type&gt;</var>, a slash is appended to the result, the field
+name is appended to the result, the string &lsquo;<samp><span class="samp">condition-</span></samp>&rsquo; is
+prepended to the result.
 
         <p>The <code>fields</code> identifier is the one exported by
 <code>(rnrs syntactic (6))</code> or <code>(nausicaa language classes

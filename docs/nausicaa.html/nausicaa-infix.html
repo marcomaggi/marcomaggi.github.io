@@ -10,7 +10,7 @@
 <link rel="next" href="nausicaa-mutable_002dpairs.html#nausicaa-mutable_002dpairs" title="nausicaa mutable-pairs">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
-This document describes version 0.2d8 of Nausicaa/Scheme, a set of
+This document describes version 0.2d11 of Nausicaa/Scheme, a set of
 Scheme libraries defining a slightly modified R6RS Scheme language
 and augmenting the features of the base and standard R6RS libraries.
 
@@ -110,7 +110,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="nausicaa.html#nausicaa">nausicaa</a>
 
 <h3 class="section">5.5 Infix to prefix notation conversion</h3>
 
-<p><a name="index-g_t_0040library_007bnausicaa-language-infix_007d_002c-library-905"></a><a name="index-Library-_0040library_007bnausicaa-language-infix_007d-906"></a>
+<p><a name="index-g_t_0040library_007bnausicaa-language-infix_007d_002c-library-904"></a><a name="index-Library-_0040library_007bnausicaa-language-infix_007d-905"></a>
 
    <p>The following bindings are exported by the <code>(nausicaa language
 infix)</code> library and reexported by the <code>(nausicaa)</code> library.
@@ -124,7 +124,7 @@ to avoid circular dependency between the <code>infix</code> syntax and the
 </blockquote>
 
 <div class="defun">
-&mdash; Syntax: <b>infix</b><var> &lt;atom&gt; ...<a name="index-infix-907"></a></var><br>
+&mdash; Syntax: <b>infix</b><var> &lt;atom&gt; ...<a name="index-infix-906"></a></var><br>
 <blockquote><p>Expand to a prefix expression to be evaluated at runtime, in the lexical
 context of the macro use; as a special case <code>(infix)</code> is equivalent
 to <code>(values)</code>.  The syntax allows us to evaluate forms like:
@@ -145,22 +145,48 @@ to <code>(values)</code>.  The syntax allows us to evaluate forms like:
         <p>Some interpretation rules:
 
           <ul>
-<li>The following infix operators are supported, in order of increasing
-precedence from top to bottom:
+<li>The following infix operators are supported; in order of descending
+precedence from top to bottom, operators on the same line have equal
+precedence:
 
-          <pre class="example">               + -
-               * / div div0
-               mod mod0
-               expt
-               &lt; &gt; &lt;= &gt;= =
-               (unary +) (unary -)
-               bitwise-and bitwise-ior bitwise-xor
+          <pre class="example">               bitwise-arithmetic-shift-left bitwise-arithmetic-shift-right
                bitwise-not
-               bitwise-arithmetic-shift-left bitwise-arithmetic-shift-right
+               bitwise-and bitwise-ior bitwise-xor
+               incr! decr!
+               (unary +) (unary -)
+               expt
+               mod mod0
+               * / div div0
+               + -
+               &lt; &gt; &lt;= &gt;= =
+               not
+               and or xor
 </pre>
           <p class="noindent">operators on the same line have equal precedence; we need to remember
 that the Scheme comparison operators are meant to return a boolean
 value, rather than a number object.
+
+          <p>All the operators are left&ndash;associative with the exception of
+<code>expt</code> which is right&ndash;associative and of the unary <code>+</code>,
+<code>-</code>, <code>incr!</code>, <code>decr!</code>, <code>not</code> and <code>bitwise-not</code>
+which are non&ndash;associative:
+
+          <pre class="example">               ;; left-associative
+               (infix 10 - 5 - 3)        &rArr; (- (- 10 5) 3))
+               (infix 10 - 5 - 3)        &rArr; (- 10 5 3))
+               (infix 10 / 5 / 3)        &rArr; (/ (/ 10 5) 3))
+               (infix 10 / 5 / 3)        &rArr; (/ 10 5 3))
+               
+               ;; right-associative
+               (infix 10 expt 5 expt 3)  &rArr; (expt 10 (expt 5 3))
+</pre>
+          <p><code>incr!</code> and <code>decr!</code> are unary operators that can be applied to
+expressions both in prefix and suffix positions; when applied in prefix
+positions they behave like <code>pre-incr</code> and <code>pre-decr</code>, when
+applied in suffix positions they behave like <code>post-incr</code> and
+<code>post-decr</code>, where <code>pre-incr</code>, <code>pre-decr</code>,
+<code>post-incr</code> and <code>post-incr</code> are the bindings from
+<code>(nausicaa language extensions)</code>, <a href="lang-lang.html#lang-lang">lang lang</a> for details.
 
           <p>The recognised operators are bindings from both the <code>(rnrs)</code> and
 <code>(nausicaa)</code> libraries; for example:
@@ -209,6 +235,12 @@ precedence of the corresponding generic operators:
                fxarithmetic-shift-left
                fxarithmetic-shift-right
 </pre>
+          <p>All the operators are left&ndash;associative with the exception of
+<code>fxnot</code> which is non&ndash;associative:
+
+          <pre class="example">               (infix 10 fx- 5 fx- 3)       &rArr; (fx- (fx- 10 5) 3))
+               (infix 10 fxdiv 5 fxdiv 3)   &rArr; (fxdiv (fxdiv 10 5) 3))
+</pre>
           <li>The following operators for flonums are supported with the same
 precedence of the corresponding generic operators:
 
@@ -218,6 +250,21 @@ precedence of the corresponding generic operators:
                fl&lt;?            fl&gt;?
                fl&lt;=?           fl&gt;=?
                fl=?
+</pre>
+          <p>All the operators are left&ndash;associative with the exception of
+<code>flexpt</code> which is right&ndash;associative:
+
+          <pre class="example">               ;; left-associative
+               (infix 10. fl- 5. fl- 3.)       &rArr; (fl- (fl- 10. 5.) 3.))
+               (infix 10. fl- 5. fl- 3.)       &rArr; (fl- 10. 5. 3.))
+               (infix 10. fl/ 5. fl/ 3.)       &rArr; (fl/ (fl/ 10. 5.) 3.))
+               (infix 10. fl/ 5. fl/ 3.)       &rArr; (fl/ 10. 5. 3.))
+               
+               ;; right-associative
+               (infix 10 expt 5 expt 3)
+               &rArr; (expt 10 (expt 5 3))
+               (infix 10. flexpt 5. flexpt 3.)
+               &rArr; (flexpt 10. (flexpt 5. 3.))
 </pre>
           <li>The if&ndash;then&ndash;else statement involves the special symbols <code>?</code> and
 <code>:</code> which should be free identifiers.  This statement has the least

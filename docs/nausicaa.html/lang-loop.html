@@ -10,7 +10,7 @@
 <link rel="next" href="lang-id.html#lang-id" title="lang id">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
-This document describes version 0.2d8 of Nausicaa/Scheme, a set of
+This document describes version 0.2d11 of Nausicaa/Scheme, a set of
 Scheme libraries defining a slightly modified R6RS Scheme language
 and augmenting the features of the base and standard R6RS libraries.
 
@@ -108,54 +108,80 @@ Up:&nbsp;<a rel="up" accesskey="u" href="lang.html#lang">lang</a>
 <hr>
 </div>
 
-<h3 class="section">10.3 Loop constructs</h3>
+<h3 class="section">9.3 Loop constructs</h3>
 
 <div class="defun">
-&mdash; Syntax: <b>do*</b> ((<var>&lt;variable1&gt; &lt;init1&gt; &lt;step1&gt;</var>)<var> ...</var>) (<var>&lt;test&gt; &lt;expr&gt; ...</var>)<var> &lt;command&gt; ...<a name="index-do_002a-1198"></a></var><br>
+&mdash; Syntax: <b>do*</b> ((<var>&lt;variable1&gt; &lt;init1&gt; &lt;step1&gt;</var>)<var> ...</var>) (<var>&lt;test&gt; &lt;expr&gt; ...</var>)<var> &lt;command&gt; ...<a name="index-do_002a-1242"></a></var><br>
 <blockquote><p>Like <code>do</code>, but bind the variables as in <code>let*</code> rather than as
 in <code>let</code>.  The <var>&lt;step&gt;</var> form is optional. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Syntax: <b>while</b><var> &lt;test&gt; &lt;expression1&gt; &lt;expression2&gt; ...<a name="index-while-1199"></a></var><br>
-<blockquote><p>If <var>&lt;test&gt;</var> is true evaluate the <var>&lt;expression&gt;</var> forms; then loop,
-if <var>&lt;test&gt;</var> is true<small class="dots">...</small>
+&mdash; Syntax: <b>while</b><var> &lt;test&gt; . &lt;body&gt;<a name="index-while-1243"></a></var><br>
+&mdash; Syntax: <b>until</b><var> &lt;test&gt; . &lt;body&gt;<a name="index-until-1244"></a></var><br>
+&mdash; Auxiliary Syntax: <b>break</b><var><a name="index-break-1245"></a></var><br>
+&mdash; Auxiliary Syntax: <b>continue</b><var><a name="index-continue-1246"></a></var><br>
+<blockquote><p>For the <code>while</code> syntax: if <var>&lt;test&gt;</var> is true evaluate the
+<var>&lt;body&gt;</var> forms; then loop, if <var>&lt;test&gt;</var> is true<small class="dots">...</small>
+
+        <p>For the <code>until</code> syntax: if <var>&lt;test&gt;</var> is false evaluate the
+<var>&lt;body&gt;</var> forms; then loop, if <var>&lt;test&gt;</var> is false<small class="dots">...</small>
+
+        <p>In the body, we can use the auxiliary syntax <code>break</code> to jump out of
+the loop to the continuation of <code>while</code> or <code>until</code>. 
+<strong>NOTE</strong> <code>break</code> breaks out of the innermost <code>while</code> or
+<code>until</code> loop.
+
+        <p>In the body, we can use the auxiliary syntax <code>continue</code> to jump
+immediately to the next iteration skipping the following forms;
+<strong>NOTE</strong> <code>continue</code> jumps to the start of the innermost
+<code>while</code> or <code>until</code> loop.
+
+        <p>Both the <code>break</code> and <code>continue</code> identifiers must appear in the
+same lexical context of the <code>while</code> or <code>until</code> identifier. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Syntax: <b>while*</b><var> &lt;test&gt; &lt;expression1&gt; &lt;expression2&gt; ...<a name="index-while_002a-1200"></a></var><br>
-&mdash; Auxiliary Syntax: <b>break</b><var><a name="index-break-1201"></a></var><br>
-<blockquote><p>If <var>&lt;test&gt;</var> is true evaluate the <var>&lt;expression&gt;</var> forms; then loop,
-if <var>&lt;test&gt;</var> is true<small class="dots">...</small>
+&mdash; Syntax: <b>do-while</b><var> &lt;test&gt; . &lt;body&gt;<a name="index-do_002dwhile-1247"></a></var><br>
+&mdash; Syntax: <b>do-until</b><var> &lt;test&gt; . &lt;body&gt;<a name="index-do_002duntil-1248"></a></var><br>
+&mdash; Auxiliary Syntax: <b>break</b><var><a name="index-break-1249"></a></var><br>
+&mdash; Auxiliary Syntax: <b>continue</b><var><a name="index-continue-1250"></a></var><br>
+<blockquote><p>For <code>do-while</code>: evaluate the <var>&lt;body&gt;</var> forms; then if <var>&lt;test&gt;</var>
+is true loop: evaluate the <var>&lt;body&gt;</var> <small class="dots">...</small>
 
-        <p>In the body of the form we can use the auxiliary syntax <code>break</code> to
-return zero, one or more values to the <code>while*</code> continuation,
-breaking out of the loop.  <strong>NOTE</strong> <code>break</code> breaks out of the
-innermost loop. 
+        <p>For <code>do-until</code>: evaluate the <var>&lt;body&gt;</var> forms; then if <var>&lt;test&gt;</var>
+is false loop: evaluate the <var>&lt;body&gt;</var> <small class="dots">...</small>
+
+        <p>In the body, we can use the auxiliary syntax <code>break</code> to jump out of
+the loop to the continuation of <code>do-while</code> or <code>do-until</code>;
+<strong>NOTE</strong> <code>break</code> breaks out of the innermost <code>do-while</code>
+or <code>do-until</code> loop.
+
+        <p>In the body, we can use the auxiliary syntax <code>continue</code> to jump
+immediately to the next test step skipping the following forms;
+<strong>NOTE</strong> <code>continue</code> jumps to the end of the innermost
+<code>do-while</code> or <code>do-until</code> loop.
+
+        <p>Both the <code>break</code> and <code>continue</code> identifiers must appear in the
+same lexical context of the <code>do-while</code> or <code>do-until</code>
+identifier. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Syntax: <b>do-while</b><var> &lt;test&gt; &lt;expression1&gt; &lt;expression2&gt; ...<a name="index-do_002dwhile-1202"></a></var><br>
-<blockquote><p>Evaluate the <var>&lt;expression&gt;</var> forms; then if <var>&lt;test&gt;</var> is true loop:
-evaluate the <var>&lt;expressions&gt;</var> <small class="dots">...</small>
-</p></blockquote></div>
+&mdash; Syntax: <b>let/cc</b><var> &lt;kont&gt; . &lt;body&gt;<a name="index-let_002fcc-1251"></a></var><br>
+<blockquote><p>Wrapper for <code>call/cc</code> defined as:
 
-<div class="defun">
-&mdash; Syntax: <b>do-while*</b><var> &lt;test&gt; &lt;expression1&gt; &lt;expression2&gt; ...<a name="index-do_002dwhile_002a-1203"></a></var><br>
-&mdash; Auxiliary Syntax: <b>break</b><var><a name="index-break-1204"></a></var><br>
-<blockquote><p>Evaluate the <var>&lt;expression&gt;</var> forms; then if <var>&lt;test&gt;</var> is true loop:
-evaluate the <var>&lt;expressions&gt;</var> <small class="dots">...</small>
-
-        <p>In the body of the form we can use the auxiliary syntax <code>break</code> to
-return zero, one or more values to the <code>while*</code> continuation,
-breaking out of the loop.  <strong>NOTE</strong> <code>break</code> breaks out of the
-innermost loop. 
-</p></blockquote></div>
+     <pre class="example">          (define-syntax let/cc
+            (syntax-rules ()
+              ((_ ?kont . ?body)
+               (call/cc (lambda (?kont) . ?body)))))
+</pre>
+        </blockquote></div>
 
 <!--  -->
 <div class="defun">
-&mdash; Syntax: <b>dotimes</b> (<var>varname exclusive-count</var>)<var> form ...<a name="index-dotimes-1205"></a></var><br>
-&mdash; Syntax: <b>dotimes</b> (<var>varname exclusive-count result</var>)<var> form ...<a name="index-dotimes-1206"></a></var><br>
+&mdash; Syntax: <b>dotimes</b> (<var>varname exclusive-count</var>)<var> form ...<a name="index-dotimes-1252"></a></var><br>
+&mdash; Syntax: <b>dotimes</b> (<var>varname exclusive-count result</var>)<var> form ...<a name="index-dotimes-1253"></a></var><br>
 <blockquote><p>Loop evaluating the <var>form</var>s and assigning <var>varname</var> to an
 integer from zero inclusive to <var>exclusive-count</var>.  Return
 <var>result</var>, or <code>#f</code> if <var>result</var> is not given.
@@ -170,8 +196,8 @@ integer from zero inclusive to <var>exclusive-count</var>.  Return
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Syntax: <b>dolist</b> (<var>varname list</var>)<var> form ...<a name="index-dolist-1207"></a></var><br>
-&mdash; Syntax: <b>dolist</b> (<var>varname list result</var>)<var> form ...<a name="index-dolist-1208"></a></var><br>
+&mdash; Syntax: <b>dolist</b> (<var>varname list</var>)<var> form ...<a name="index-dolist-1254"></a></var><br>
+&mdash; Syntax: <b>dolist</b> (<var>varname list result</var>)<var> form ...<a name="index-dolist-1255"></a></var><br>
 <blockquote><p>Loop evaluating the <var>form</var>s and assigning <var>varname</var> to the
 elements from <var>list</var>.  Return <var>result</var>, or <code>#f</code> if
 <var>result</var> is not given.
@@ -186,8 +212,8 @@ elements from <var>list</var>.  Return <var>result</var>, or <code>#f</code> if
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Syntax: <b>loop-upon-list</b> (<var>varname list</var>) (<var>break-when test</var>)<var> form ...<a name="index-loop_002dupon_002dlist-1209"></a></var><br>
-&mdash; Syntax: <b>loop-upon-list</b> (<var>varname list result</var>) (<var>break-when test</var>)<var> form ...<a name="index-loop_002dupon_002dlist-1210"></a></var><br>
+&mdash; Syntax: <b>loop-upon-list</b> (<var>varname list</var>) (<var>break-when test</var>)<var> form ...<a name="index-loop_002dupon_002dlist-1256"></a></var><br>
+&mdash; Syntax: <b>loop-upon-list</b> (<var>varname list result</var>) (<var>break-when test</var>)<var> form ...<a name="index-loop_002dupon_002dlist-1257"></a></var><br>
 <blockquote><p>Loop evaluating the <var>form</var>s and assigning <var>varname</var> to the
 elements from <var>list</var>.  Return <var>result</var>, or <code>#f</code> if
 <var>result</var> is not given.  The loop is broken if <var>test</var> evaluates
@@ -204,7 +230,7 @@ to true.
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Syntax: <b>recursion</b><var> formals body<a name="index-recursion-1211"></a></var><br>
+&mdash; Syntax: <b>recursion</b><var> formals body<a name="index-recursion-1258"></a></var><br>
 <blockquote><p>Allow the simple and non&ndash;imperative construction of self&ndash;referential
 expressions.  The implementation is:
 

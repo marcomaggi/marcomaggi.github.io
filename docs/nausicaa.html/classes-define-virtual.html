@@ -10,7 +10,7 @@
 <link rel="next" href="classes-define-tagged.html#classes-define-tagged" title="classes define tagged">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
-This document describes version 0.2d8 of Nausicaa/Scheme, a set of
+This document describes version 0.2d11 of Nausicaa/Scheme, a set of
 Scheme libraries defining a slightly modified R6RS Scheme language
 and augmenting the features of the base and standard R6RS libraries.
 
@@ -108,14 +108,13 @@ Up:&nbsp;<a rel="up" accesskey="u" href="classes-define.html#classes-define">cla
 <hr>
 </div>
 
-<h4 class="subsection">25.1.7 Defining class having virtual fields</h4>
+<h4 class="subsection">24.1.8 Defining class having virtual fields</h4>
 
 <div class="defun">
-&mdash; Auxiliary Syntax: <b>virtual-fields</b><var> field-spec ...<a name="index-virtual_002dfields-1450"></a></var><br>
+&mdash; Auxiliary Syntax: <b>virtual-fields</b><var> field-spec ...<a name="index-virtual_002dfields-1504"></a></var><br>
 <blockquote><p>Add virtual fields to the enclosing class definition; the
-<var>field-spec</var> arguments have the same syntax as the <code>fields</code>
-ones, but with different semantics.  This clause can be used multiple
-times.
+<var>field-spec</var> arguments have syntax similar to <code>fields</code> ones,
+but with different semantics.  This clause can be used multiple times.
 
         <p>An immutable virtual field is defined by a field name and a field
 accessor which can be applied to a class instance to compute a value.  A
@@ -180,7 +179,55 @@ field to the record type, thereby creating the accessor and possibly the
 mutator; then select the public names of accessors and mutators.  With
 <code>virtual-fields</code> we select the name of a virtual field whose
 accessor and mutator functions or syntaxes must be explicitly defined in
-some other way. 
+some other way.
+
+        <p><var>field-spec</var> can be have of the following formats:
+
+     <pre class="example">          <var>field-name</var>
+          (immutable <var>tagged-field-name</var>)
+          (immutable <var>tagged-field-name</var> <var>accessor</var>)
+          (mutable   <var>tagged-field-name</var>)
+          (mutable   <var>tagged-field-name</var> <var>accessor</var> <var>mutator</var>)
+</pre>
+        <p class="noindent">where <var>field-name</var> must be an identifier representing the field
+name; <var>tagged-field-name</var> can have one of the formats:
+
+     <pre class="example">          <var>field-name</var>
+          (<var>field-name</var> <var>tag</var> ...)
+</pre>
+        <p class="noindent">where <var>tag</var> must be identifiers representing class or label names;
+<var>accessor</var> and <var>mutator</var> can be identifiers, referencing
+accessor and mutator functions or syntaxes, or expressions evaluating to
+a function:
+
+          <ul>
+<li>For accessors, the function must accept one argument being the object
+instance.
+
+          <li>For mutators, the function must accept two arguments being the object
+instance and the new value for the virtual field. 
+</ul>
+
+        <p>The following is the same example as above with inline accessor and
+mutator expressions:
+
+     <pre class="example">          (define-class &lt;fraction&gt;
+            (fields (mutable number))
+            (virtual-fields
+              (mutable numerator
+                       (lambda/with-class ((o &lt;fraction&gt;))
+                         (numerator o.number))
+                       (lambda/with-class ((o &lt;fraction&gt;) v)
+                         (set! o.number (/ v (denominator o.number)))))
+              (mutable denominator
+                       (lambda/with-class ((o &lt;fraction&gt;))
+                         (denominator o.number))
+                       (lambda/with-class ((o &lt;fraction&gt;) v)
+                         (set! o.number (/ (numerator o.number) v))))))
+</pre>
+        <p>When using inline expressions for accessors and mutators, the
+expressions are automatically given names derived from the class name
+and the field name, exactly as for the <code>fields</code> clause. 
 </p></blockquote></div>
 
 <!-- page -->

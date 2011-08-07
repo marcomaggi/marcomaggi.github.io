@@ -1,0 +1,353 @@
+<html lang="en">
+<head>
+<title>classes dot bindings let - Nausicaa for Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Nausicaa for Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="classes-dot-bindings.html#classes-dot-bindings" title="classes dot bindings">
+<link rel="next" href="classes-dot-bindings-letval.html#classes-dot-bindings-letval" title="classes dot bindings letval">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d11 of Nausicaa/Scheme, a set of
+Scheme libraries defining a slightly modified R6RS Scheme language
+and augmenting the features of the base and standard R6RS libraries.
+
+The project home page of Nausicaa is at:
+
+             `http://marcomaggi.github.com/nausicaa.html'
+
+
+development of Nausicaa takes place at:
+
+               `http://github.com/marcomaggi/nausicaa/'
+
+
+Copyright (C) 2008-2011 by Marco Maggi.
+
+Copyright (C) 1996, 1997, 2000, 2001, 2002, 2003, 2004, 2005
+Free Software Foundation.
+
+Copyright (C) 1996, 1999-2005 Dorai Sitaram.
+
+Copyright (C) 1998 Oleg Kiselyov.
+
+Copyright (C) 1998, 1999, 2000 Olin Shivers.
+
+Copyright (C) 1999 John David Stone.
+
+Copyright (C) 1999, 2002 Marc Feeley.
+
+Copyright (C) 2001, 2009 Danny Dube'
+
+Copyright (C) 2002 Dr. Mirko Luedde.
+
+Copyright (C) 2002, 2003, 2005, 2006 Sebastian Egner.
+
+Copyright (C) 2003 Ray Dillinger.
+
+Copyright (C) 2003 Taylor Campbell.
+
+Copyright (C) 2005 Jens Axel Soegaard.
+
+Copyright (C) 2005-2009 Alex Shinn.
+
+Copyright (C) 2008 Taro Minowa (Higepon).
+
+Copyright (C) 2005-2008 Dominique Boucher.
+
+Copyright (C) 2004, 2005 Tony Garnock-Jones
+
+Copyright (C) 2005 LShift Ltd.
+
+Copyright (C) 2007, 2008 Philip L. Bewig.
+
+Copyright (C) 2000 Will Fitzgerald.
+
+Copyright (C) 2000 Neodesic Corporation.
+
+Copyright (C) 2000-2006 Joachim Henke.
+
+Copyright (C) 2004-2009 Neil Van Dyke.
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with no Invariant Sections being ``GNU Free
+     Documentation License'' and ``GNU General Public License'', no
+     Front--Cover Texts, and no Back--Cover Texts.  A copy of the
+     license is included in the section entitled ``GNU Free
+     Documentation License''.
+
+This document embeds an unofficial assemblage of several documents
+reformatted in Texinfo; the reformatting author and maintainer is
+Marco Maggi <marco.maggi-ipsu@poste.it>.  See the appendix ``Credits'' for
+the list of original documents and their authors.  See also the
+`README' and `CREDITS' files for additional attributions.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="classes-dot-bindings-let"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="classes-dot-bindings-letval.html#classes-dot-bindings-letval">classes dot bindings letval</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="classes-dot-bindings.html#classes-dot-bindings">classes dot bindings</a>
+<hr>
+</div>
+
+<h5 class="subsubsection">24.7.2.1 Tagged bindings with <code>let</code> semantics</h5>
+
+<div class="defun">
+&mdash; Syntax: <b>let/with-class</b> ((<var>var init</var>)<var> ...</var>)<var> . body<a name="index-let_002fwith_002dclass-1558"></a></var><br>
+&mdash; Syntax: <b>let/with-class</b><var> name </var>((<var>var init</var>)<var> ...</var>)<var> . body<a name="index-let_002fwith_002dclass-1559"></a></var><br>
+<blockquote><p>Like <code>let</code> (both named and unnamed) but automatically enclose the
+body in a <code>with-class</code> syntax using the specified tags.  For
+example, the form:
+
+     <pre class="example">          (let/with-class (((a &lt;red&gt;)  1)
+                           ((b &lt;blue&gt;) 2))
+            (list a b))
+</pre>
+        <p class="noindent">is expanded to:
+
+     <pre class="example">          (let ((a 1)
+                (b 2))
+            (with-class ((a &lt;red&gt;)
+                         (b &lt;blue&gt;))
+              (list a b)))
+</pre>
+        <p>Each <var>var</var> element can be one among:
+
+     <pre class="example">          <var>id</var>
+          (<var>id</var> <var>tag</var> ...)
+</pre>
+        <p class="noindent">in which: <var>id</var> must be an identifier representing the variable name,
+<var>tag</var> must be identifiers representing class or label names.
+
+        <p>If all the <var>var</var> arguments are in the first form (untagged
+identifier): <code>let/with-class</code> defaults to <code>let</code> as defined by
+<acronym>R6RS</acronym>.  If at least one <var>var</var> has tags: the untagged ones default
+to bindings with <code>&lt;top&gt;</code> as conventional class name.
+
+     <pre class="example">          #!r6rs
+          (import (nausicaa))
+          
+          (define-class &lt;fraction&gt;
+            (fields (mutable number))
+            (virtual-fields (immutable numerator)
+                            (immutable denominator)))
+          
+          (define (&lt;fraction&gt;-numerator o)
+            (numerator (&lt;fraction&gt;-number o)))
+          
+          (define (&lt;fraction&gt;-denominator o)
+            (denominator (&lt;fraction&gt;-number o)))
+          
+          (let/with-class (((a &lt;fraction&gt;) (make &lt;fraction&gt; 2/3))
+                           ((b &lt;fraction&gt;) (make &lt;fraction&gt; 4/5)))
+            (list a.numerator b.denominator))
+          &rArr; (2 5)
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>let*/with-class</b> ((<var>var init</var>)<var> ...</var>)<var> . body<a name="index-let_002a_002fwith_002dclass-1560"></a></var><br>
+<blockquote><p>Like <code>let*</code> but, binding by binding, automatically enclose the body
+in a <code>with-class</code> syntax using the specified tags.  For example,
+the form:
+
+     <pre class="example">          (let*/with-class (((a &lt;red&gt;)  1)
+                            ((b &lt;blue&gt;) 2))
+            (list a b))
+</pre>
+        <p class="noindent">is expanded to an equivalent of:
+
+     <pre class="example">          (let/with-class (((a &lt;red&gt;) 1))
+            (let/with-class (((b &lt;blue&gt;) 2))
+              (list a b)))
+</pre>
+        <p class="noindent">and in the end to:
+
+     <pre class="example">          (let ((a 1))
+            (with-class ((a &lt;red&gt;))
+              (let ((b 2))
+                (with-class ((b &lt;blue&gt;))
+                  (list a b)))))
+</pre>
+        <p>Each <var>var</var> element can be one among:
+
+     <pre class="example">          <var>id</var>
+          (<var>id</var> <var>tag</var> ...)
+</pre>
+        <p class="noindent">in which: <var>id</var> must be an identifier representing the variable name,
+<var>tag</var> must be identifiers representing class names.
+
+        <p>If all the <var>var</var> arguments are in the first form (untagged
+identifier): <code>let*/with-class</code> defaults to <code>let*</code> as defined
+by <acronym>R6RS</acronym>.  If at least one <var>var</var> has tags: the untagged ones
+default to bindings with <code>&lt;top&gt;</code> as conventional class name.
+
+        <p>Given two bindings <var>var1</var>, <var>init1</var> and <var>var2</var>, <var>init2</var>
+defined in sequence: <var>init2</var> is evaluated in the region of the
+identifier syntaxes used to access the fields of <var>var1</var>.
+
+     <pre class="smallexample">          #!r6rs
+          (import (nausicaa))
+          
+          (define-class &lt;fraction&gt;
+            (fields (mutable number))
+            (virtual-fields (immutable numerator)
+                            (immutable denominator)))
+          
+          (define (&lt;fraction&gt;-numerator o)
+            (numerator (&lt;fraction&gt;-number o)))
+          
+          (define (&lt;fraction&gt;-denominator o)
+            (denominator (&lt;fraction&gt;-number o)))
+          
+          (let*/with-class (((a &lt;fraction&gt;) (make &lt;fraction&gt; 2/3))
+                            ((b &lt;fraction&gt;) (make &lt;fraction&gt;
+                                              (/ a.numerator 5))))
+            b.number)
+          &rArr; 2/5
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>letrec/with-class</b> ((<var>var init</var>)<var> ...</var>)<var> . body<a name="index-letrec_002fwith_002dclass-1561"></a></var><br>
+<blockquote><p>Like <code>letrec</code> but automatically enclose the body in a
+<code>with-class</code> syntax using the specified tags.  For example, the
+form:
+
+     <pre class="example">          (letrec/with-class (((a &lt;red&gt;)  1)
+                              ((b &lt;blue&gt;) 2))
+            (list a b))
+</pre>
+        <p class="noindent">is expanded to an equivalent of:
+
+     <pre class="example">          (let ((a #&lt;undefined&gt;)
+                (b #&lt;undefined&gt;))
+            (with-class ((a &lt;red&gt;))
+                         (b &lt;blue&gt;))
+              ;; do not enforce the order of evaluation
+              ;; of the init expressions
+              (let ((T1 1)
+                    (T2 2))
+                (set! a T1)
+                (set! b T2)
+                (list a b)))
+</pre>
+        <p>Each <var>var</var> element can be one among:
+
+     <pre class="example">          <var>id</var>
+          (<var>id</var> <var>tag</var> ...)
+</pre>
+        <p class="noindent">in which: <var>id</var> must be an identifier representing the variable name,
+<var>tag</var> must be identifiers representing class or label names.
+
+        <p>If all the <var>var</var> arguments are in the first form (untagged
+identifier): <code>letrec/with-class</code> defaults to <code>letrec</code> as
+defined by <acronym>R6RS</acronym>.  If at least one <var>var</var> has tags: the untagged
+ones default to bindings with <code>&lt;top&gt;</code> as conventional class name.
+
+        <p>The <var>init</var> expressions can contain references to both the <var>ID</var>
+identifiers and the identifier syntaxes defined by <code>with-class</code>, as
+long as they are not resolved.
+
+     <pre class="smallexample">          (define-class &lt;alpha&gt;
+            (fields (immutable value)
+                    (immutable proc)))
+          
+          (define-class &lt;beta&gt;
+            (fields (immutable value)
+                    (immutable proc)))
+          
+          (letrec/with-class
+               (((a &lt;alpha&gt;) (make &lt;alpha&gt;
+                               1 (lambda ()
+                                   (cons a.value b.value))))
+                ((b &lt;beta&gt;)  (make &lt;beta&gt;
+                               2 (lambda ()
+                                   (cons a.value b.value)))))
+            (list (a.proc) (b.proc)))
+          &rArr; ((1 . 2) (1 . 2))
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>letrec*/with-class</b> ((<var>var init</var>)<var> ...</var>)<var> . body<a name="index-letrec_002a_002fwith_002dclass-1562"></a></var><br>
+<blockquote><p>Like <code>letrec*</code> but automatically enclose the body in a
+<code>with-class</code> syntax using the specified tags.  For example, the
+form:
+
+     <pre class="example">          (letrec*/with-class (((a &lt;red&gt;)  1)
+                               ((b &lt;blue&gt;) 2))
+            (list a b))
+</pre>
+        <p class="noindent">is expanded to an equivalent of:
+
+     <pre class="example">          (let ((a #&lt;undefined&gt;)
+                (b #&lt;undefined&gt;))
+            (with-class ((a &lt;red&gt;))
+                         (b &lt;blue&gt;))
+              ;; enforce the order of evaluation
+              ;; of the init expressions
+              (set! a 1)
+              (set! b 2)
+              (list a b))
+</pre>
+        <p>Each <var>var</var> element can be one among:
+
+     <pre class="example">          <var>id</var>
+          (<var>id</var> <var>tag</var> ...)
+</pre>
+        <p class="noindent">in which: <var>id</var> must be an identifier representing the variable name,
+<var>tag</var> must be identifiers representing class or label names.
+
+        <p>If all the <var>var</var> arguments are in the first form (untagged
+identifier): <code>letrec*/with-class</code> defaults to <code>letrec*</code> as
+defined by <acronym>R6RS</acronym>.  If at least one <var>var</var> has tags: the untagged
+ones default to bindings with <code>&lt;top&gt;</code> as conventional class name.
+
+        <p>The <var>init</var> expressions can contain references to the identifier
+syntaxes, as long as they are not resolved.
+
+        <p>The only difference between <code>letrec/with-class</code> and
+<code>letrec*/with-class</code> is that the latter enforces the order of
+evaluation of the <var>init</var> expressions.
+
+     <pre class="smallexample">          (define-class &lt;alpha&gt;
+            (fields (immutable value)
+                    (immutable proc)))
+          
+          (define-class &lt;beta&gt;
+            (fields (immutable value)
+                    (immutable proc)))
+          
+          (letrec*/with-class
+              (((a &lt;alpha&gt;) (make &lt;alpha&gt;
+                              1 (lambda ()
+                                  (cons a.value b.value))))
+               ((b &lt;beta&gt;)  (make &lt;beta&gt;
+                              2 (lambda ()
+                                  (cons a.value b.value))))
+               ((c &lt;top&gt;)   (list (a.proc) (b.proc))))
+            c)
+          &rArr; ((1 . 2) (1 . 2))
+</pre>
+        </blockquote></div>
+
+<!-- page -->
+   </body></html>
+

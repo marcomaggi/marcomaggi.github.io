@@ -9,7 +9,7 @@
 <link rel="next" href="r6rs-parser-inter.html#r6rs-parser-inter" title="r6rs parser inter">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
-This document describes version 0.2d8 of Nausicaa/Scheme, a set of
+This document describes version 0.2d11 of Nausicaa/Scheme, a set of
 Scheme libraries defining a slightly modified R6RS Scheme language
 and augmenting the features of the base and standard R6RS libraries.
 
@@ -106,13 +106,13 @@ Up:&nbsp;<a rel="up" accesskey="u" href="r6rs-parser.html#r6rs-parser">r6rs pars
 <hr>
 </div>
 
-<h4 class="subsection">76.2.1 Parsing source code</h4>
+<h4 class="subsection">77.2.1 Parsing source code</h4>
 
-<p>The following bindings are exported by the <code>(nausicaa r6rs
-parser)</code> library.
+<p>The following bindings are exported by the <code>(nausicaa
+parser-tools r6rs parser)</code> library.
 
 <div class="defun">
-&mdash; Function: <b>make-r6rs-parser</b><var><a name="index-make_002dr6rs_002dparser-5556"></a></var><br>
+&mdash; Function: <b>make-r6rs-parser</b><var><a name="index-make_002dr6rs_002dparser-6169"></a></var><br>
 <blockquote><p>Build and return a parser function exposing the <acronym>API</acronym> of <acronym>LALR</acronym>
 parsers (see <a href="lalr-parser.html#lalr-parser">lalr parser</a>).
 
@@ -123,15 +123,32 @@ bound to <code>yycustom</code>.  Its return value is the <strong>list</strong> o
 datums parsed from the lexer.
 
         <p>The semantic actions of the parser table make use of the functions
-referenced by the parameters exported by the <code>(nausicaa r6rs
-parser)</code> library (see <a href="r6rs-parser-params.html#r6rs-parser-params">r6rs parser params</a>).  The default parameter
-functions build an S&ndash;expression almost as the <code>read</code> function from
-<code>(rnrs io simple (6))</code> does.
+referenced by the parameters exported by the <code>(nausicaa
+parser-tools r6rs parser)</code> library (see <a href="r6rs-parser-params.html#r6rs-parser-params">r6rs parser params</a>).  The
+default parametrised functions build an S&ndash;expression almost as the
+<code>read</code> function from <code>(rnrs io simple (6))</code> does.
+
+        <p>The value returned by the parser function with the default parametrised
+functions is a list of datums read from the input system; notice the
+following special cases:
+
+          <ul>
+<li>If the input is empty (the first read operation from the input system
+returns end&ndash;of-input): the returned value is null.
+
+          <li>If the input is the unquoted empty list &lsquo;<samp><span class="samp">()</span></samp>&rsquo;: the returned value is
+the symbolic expression &lsquo;<samp><span class="samp">(())</span></samp>&rsquo;.
+
+          <li>If the input is the quoted empty list &lsquo;<samp><span class="samp">'()</span></samp>&rsquo; or the equivalent
+&lsquo;<samp><span class="samp">(quote ())</span></samp>&rsquo;: the returned value is the symbolic expression
+&lsquo;<samp><span class="samp">((quote ()))</span></samp>&rsquo;. 
+</ul>
 
         <p>Notice that the returned lexer function is <strong>not</strong> equivalent to
 <code>read</code> or <code>get-datum</code> as defined by <acronym>R6RS</acronym>: the returned
 lexer consumes characters from its input system until the end&ndash;of&ndash;input
-is found. 
+is found, <code>read</code> and <code>get-datum</code> return the first datum and
+leave the rest untouched. 
 </p></blockquote></div>
 
    <p>The following example shows: the libraries to import; a simple error
@@ -140,10 +157,10 @@ field; the definition of a function that directly parses a string:
 
 <pre class="example">     #!r6rs
      (import (nausicaa)
-       (nausicaa parser-tools)
-       (prefix (nausicaa silex lexer) lex.)
-       (prefix (nausicaa r6rs lexer)  r6.)
-       (prefix (nausicaa r6rs parser) r6.))
+       (nausicaa parser-tools lexical-tokens)
+       (prefix (nausicaa parser-tools silex lexer) lex.)
+       (prefix (nausicaa parser-tools r6rs lexer)  r6.)
+       (prefix (nausicaa parser-tools r6rs parser) r6.))
      
      (define (error-handler message (T &lt;lexical-token&gt;))
        (raise
@@ -162,8 +179,39 @@ field; the definition of a function that directly parses a string:
               (parser  (r6.make-r6rs-parser)))
          (parser lexer error-handler #f)))
      
-     (parse "(ciao \"mamma\" #\\A)")
-     &rArr; ((ciao "mamma" #\A))
+     ;; empty input
+     (parse "")              &rArr; ()
+     
+     ;; null input
+     (parse "()")            &rArr; (())
+     
+     ;; quoted null
+     (parse "'()")           &rArr; ((quote ()))
+     (parse "(quote ())")    &rArr; ((quote ()))
+     
+     ;; single datums
+     (parse "ciao")          &rArr; (ciao)
+     (parse "\"ciao\"")      &rArr; ("ciao")
+     (parse "123")           &rArr; (123)
+     (parse "#t")            &rArr; (#t)
+     (parse "#f")            &rArr; (#f)
+     (parse "#\\newline")    &rArr; (#\newline)
+     (parse "#\\A")          &rArr; (#\A)
+     
+     ;; multiple datums
+     (parse "ciao 123 #\\A \"bau\"")         &rArr; (ciao 123 #\A "bau")
+     
+     ;; datums in compound datums
+     (parse "(ciao \"bau\" #\\A)")     &rArr; ((ciao "bau" #\A))
+     (parse "[ciao \"bau\" #\\A]")     &rArr; ((ciao "bau" #\A))
+     (parse "#(ciao \"bau\" #\\A)")    &rArr; (#(ciao "bau" #\A))
+     (parse "#vu8(1 2 3)")             &rArr; (#vu8(1 2 3))
+     
+     (parse "(1 2 3) (4 5 6) (7 8 9)")
+     &rArr; ((1 2 3) (4 5 6) (7 8 9))
+     
+     (parse "(1 (4 5 6) 2 (7 8 9) 3)")
+     &rArr; ((1 (4 5 6) 2 (7 8 9) 3))
 </pre>
    <!-- page -->
    </body></html>

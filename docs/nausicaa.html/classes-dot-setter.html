@@ -10,7 +10,7 @@
 <link rel="next" href="classes-dot-misc.html#classes-dot-misc" title="classes dot misc">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
-This document describes version 0.2d8 of Nausicaa/Scheme, a set of
+This document describes version 0.2d11 of Nausicaa/Scheme, a set of
 Scheme libraries defining a slightly modified R6RS Scheme language
 and augmenting the features of the base and standard R6RS libraries.
 
@@ -108,7 +108,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="classes-dot.html#classes-dot">classes d
 <hr>
 </div>
 
-<h4 class="subsection">25.7.4 Setters and getters</h4>
+<h4 class="subsection">24.7.4 Setters and getters</h4>
 
 <p>Setters and getters have the purpose of providing a shorter syntax to
 access storage locations; they are especially useful with vector objects
@@ -130,8 +130,8 @@ and similar:
 <code>setf</code> and <code>getf</code> &ldquo;methods&rdquo;.
 
 <div class="defun">
-&mdash; Macro: <b>setf</b><var> place value<a name="index-setf-1508"></a></var><br>
-&mdash; Macro: <b>setf</b><var> identifier value<a name="index-setf-1509"></a></var><br>
+&mdash; Syntax: <b>setf</b><var> place value<a name="index-setf-1580"></a></var><br>
+&mdash; Syntax: <b>setf</b><var> identifier value<a name="index-setf-1581"></a></var><br>
 <blockquote><p>Apply a class setter to the specified <var>place</var> with the purpose of
 storing there <var>value</var>.  The <var>place</var> argument must have the form:
 
@@ -145,7 +145,7 @@ following meaningless example shows the mechanism:
             (fields (mutable a))
             (setter &lt;alpha&gt;-setf))
           
-          (define/with-class (&lt;alpha&gt;-setf (o &lt;alpha&gt;) key0 key1 value)
+          (define/with-class (&lt;alpha&gt;-setf (o &lt;alpha&gt;) value key0 key1)
             (set! o.a (list key0 key1 value)))
           
           (let/with-class (((o &lt;alpha&gt;) (make &lt;alpha&gt; 1)))
@@ -157,6 +157,15 @@ following meaningless example shows the mechanism:
 enforced by the function or macro selected in the <code>setter</code> clause
 of <code>define-class</code>.
 
+        <p>Notice that handing to the specified setter the arguments with order
+instance, new value and finally keys allows us to write setters like:
+
+     <pre class="example">          (define-inline (array-Setter ?self ?value . ?position)
+            (array-set! ?self (array-position . ?position) ?value))
+</pre>
+        <p class="noindent">in which an undefined list of key values are first handed to a function
+or syntax for further processing.
+
         <p>When used with the <var>identifier</var> argument: <code>setf</code> behaves as an
 alias of <code>set!</code> (notice, though, that renaming <code>setf</code> to
 <code>set!</code> when importing the library, causes problems when using the
@@ -164,7 +173,8 @@ alias of <code>set!</code> (notice, though, that renaming <code>setf</code> to
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Macro: <b>getf</b><var> place<a name="index-getf-1510"></a></var><br>
+&mdash; Syntax: <b>getf</b><var> variable-name<a name="index-getf-1582"></a></var><br>
+&mdash; Syntax: <b>getf</b><var> place<a name="index-getf-1583"></a></var><br>
 <blockquote><p>Apply a class getter to the specified <var>place</var> with the purpose of
 accessing the value stored there.  The <var>place</var> argument must have
 the form:
@@ -172,15 +182,22 @@ the form:
      <pre class="example">          (<var>variable-name</var> <var>key0</var> <var>key</var> ...)
 </pre>
         <p class="noindent">where <var>variable-name</var> must be an identifier bound to the class
-instance, the <var>key</var> values should select a storage location.  The
-following meaningless example shows the mechanism:
+instance, the <var>key</var> values should select a storage location.
+
+        <p>When the first form is used (without <var>key</var> elements), the
+<code>getf</code> form is equivalent to the <var>variable-name</var> identifier
+itself:
+
+     <pre class="example">          (getf a) ==&gt; a
+</pre>
+        <p>The following meaningless example shows the mechanism:
 
      <pre class="example">          (define-class &lt;alpha&gt;
             (fields (mutable a))
             (setter &lt;alpha&gt;-setf)
             (getter &lt;alpha&gt;-getf))
           
-          (define/with-class (&lt;alpha&gt;-setf (o &lt;alpha&gt;) key0 key1 value)
+          (define/with-class (&lt;alpha&gt;-setf (o &lt;alpha&gt;) value key0 key1)
             (set! o.a (list key0 key1 value)))
           
           (define/with-class (&lt;alpha&gt;-getf (o &lt;alpha&gt;) key0 key1)
