@@ -10,7 +10,7 @@
 <link rel="next" href="packrat-comb-left.html#packrat-comb-left" title="packrat comb left">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
-This document describes version 0.2d11 of Nausicaa/Scheme, a set of
+This document describes version 0.2d12 of Nausicaa/Scheme, a set of
 Scheme libraries defining a slightly modified R6RS Scheme language
 and augmenting the features of the base and standard R6RS libraries.
 
@@ -111,125 +111,125 @@ Up:&nbsp;<a rel="up" accesskey="u" href="packrat-comb.html#packrat-comb">packrat
 <h4 class="subsection">76.4.7 The grammar combinator</h4>
 
 <div class="defun">
-&mdash; Syntax: <b>make-grammar-combinator</b><var> &lt;start&gt; &lt;nonterminal&gt; ...<a name="index-make_002dgrammar_002dcombinator-6029"></a></var><br>
+&mdash; Syntax: <b>make-grammar-combinator</b><var> ?start ?nonterminal ...<a name="index-make_002dgrammar_002dcombinator-6068"></a></var><br>
 <blockquote><p>Provide syntactic sugar for building complex parser combinators from
-simpler combinators.  Each <var>&lt;nonterminal&gt;</var> must be like this:
+simpler combinators.  Each <var>?nonterminal</var> must be like this:
 
-     <pre class="example">          <var>&lt;nonterminal&gt;</var> -&gt; (<var>&lt;identifier&gt;</var> <var>&lt;rule&gt;</var>*)
+     <pre class="example">          <var>?nonterminal</var> -&gt; (<var>?identifier</var> <var>?rule</var>*)
           
-          <var>&lt;rule&gt;</var> -&gt; (<var>&lt;sequence&gt;</var> <var>&lt;semantic-clause&gt;</var>)
+          <var>?rule</var> -&gt; (<var>?sequence</var> <var>?semantic-clause</var>)
           
-          <var>&lt;sequence&gt;</var> -&gt; (<var>&lt;part&gt;</var>*)
-                     |  (<var>&lt;part&gt;</var>* :error <var>&lt;message&gt;</var>)
-                     |  (<var>&lt;part&gt;</var>* :exception)
+          <var>?sequence</var> -&gt; (<var>?part</var>*)
+                     |  (<var>?part</var>* :error <var>?message</var>)
+                     |  (<var>?part</var>* :exception)
           
-          <var>&lt;part&gt;</var> -&gt; (:not <var>&lt;part&gt;</var>*)
-                 |  <var>&lt;var&gt;</var> &lt;- (quote <var>&lt;terminal&gt;</var>)
-                 |  <var>&lt;var&gt;</var> &lt;- <var>&lt;identifier&gt;</var>
-                 |  <var>&lt;var&gt;</var> &lt;- :source-location
-                 |  (quote <var>&lt;terminal&gt;</var>)
-                 |  <var>&lt;identifier&gt;</var>
+          <var>?part</var> -&gt; (:not <var>?part</var>*)
+                 |  <var>?var</var> &lt;- (quote <var>?terminal</var>)
+                 |  <var>?var</var> &lt;- <var>?identifier</var>
+                 |  <var>?var</var> &lt;- :source-location
+                 |  (quote <var>?terminal</var>)
+                 |  <var>?identifier</var>
 </pre>
         <p class="noindent">and it expands into a combinator:
 
      <pre class="example">          (make-memoize-combinator (lambda (state) ---))
 </pre>
         <p class="noindent">each non&ndash;terminal combinator is bound by a <code>letrec*</code> form to the
-respective <var>&lt;identifier&gt;</var>:
+respective <var>?identifier</var>:
 
-     <pre class="example">          (letrec* ((<var>&lt;identifier&gt;</var> (make-memoize-combinator ---))
+     <pre class="example">          (letrec* ((<var>?identifier</var> (make-memoize-combinator ---))
                     ...)
-            <var>&lt;start&gt;</var>)
+            <var>?start</var>)
 </pre>
         <p class="noindent">the last expression in the body of the generated <code>letrec*</code> is
-<var>&lt;start&gt;</var>, which can be any expression but must evaluate to a
-combinator function.  The simplest <var>&lt;start&gt;</var> is an <var>&lt;identifier&gt;</var>,
+<var>?start</var>, which can be any expression but must evaluate to a
+combinator function.  The simplest <var>?start</var> is an <var>?identifier</var>,
 which causes the macro to return the combinator bound to it.
 
         <p>Since <code>begin</code> forms within <code>letrec*</code> forms are flattened
-(spliced into the <var>&lt;body&gt;</var>, <a href="../nausicaa/baselib-bodies.html#baselib-bodies">Bodies</a>): By
-making <var>&lt;start&gt;</var> a <code>begin</code> form we can introduce bindings to
+(spliced into the <var>?body</var>, <a href="../nausicaa/baselib-bodies.html#baselib-bodies">Bodies</a>): By
+making <var>?start</var> a <code>begin</code> form we can introduce bindings to
 hand&ndash;written combinators which can call (and can be called by) the
 non&ndash;terminal combinators.
 
-        <p>Each <var>&lt;sequence&gt;</var> expands into a combinator; the <var>&lt;sequence&gt;</var>
+        <p>Each <var>?sequence</var> expands into a combinator; the <var>?sequence</var>
 combinators of a non&ndash;terminal combinator, are all alternatives for its
 matching.
 
         <p>When a non&ndash;terminal combinator is applied to a <code>&lt;state&gt;</code> record, it
-attempts to match the input tokens against the <var>&lt;sequence&gt;</var>
-combinators in its <var>&lt;rule&gt;</var> elements.  The first <var>&lt;rule&gt;</var> is tried
+attempts to match the input tokens against the <var>?sequence</var>
+combinators in its <var>?rule</var> elements.  The first <var>?rule</var> is tried
 first, then the second and so on, stopping at the first match.  If
-matching is successful, the <var>&lt;semantic-clause&gt;</var> is evaluated to
+matching is successful, the <var>?semantic-clause</var> is evaluated to
 produce a value returned as field of a <code>&lt;success&gt;</code> record; else an
 <code>&lt;error&gt;</code> record is returned.
 
-        <p>Each <var>&lt;part&gt;</var> expands to a combinator which, if successful, invokes
-the combinator generated by its subsequent <var>&lt;part&gt;</var>; the first
-<var>&lt;part&gt;</var> combinator of a <var>&lt;sequence&gt;</var> is invoked by the
-<var>&lt;sequence&gt;</var> combinator; the last <var>&lt;part&gt;</var> combinator of a
-<var>&lt;sequence&gt;</var> must generate a <code>&lt;result&gt;</code> record by itself.
+        <p>Each <var>?part</var> expands to a combinator which, if successful, invokes
+the combinator generated by its subsequent <var>?part</var>; the first
+<var>?part</var> combinator of a <var>?sequence</var> is invoked by the
+<var>?sequence</var> combinator; the last <var>?part</var> combinator of a
+<var>?sequence</var> must generate a <code>&lt;result&gt;</code> record by itself.
 
-        <p>If a <var>&lt;part&gt;</var> combinator, which is not the last in a <var>&lt;sequence&gt;</var>,
+        <p>If a <var>?part</var> combinator, which is not the last in a <var>?sequence</var>,
 matches one or more tokens: It must call <code>next-state</code> to generate a
-new <code>&lt;state&gt;</code> record and hand it to the next <var>&lt;part&gt;</var> combinator.
+new <code>&lt;state&gt;</code> record and hand it to the next <var>?part</var> combinator.
 
-        <p>If all the <var>&lt;part&gt;</var> combinators in a <var>&lt;sequence&gt;</var> match the
+        <p>If all the <var>?part</var> combinators in a <var>?sequence</var> match the
 tokens, a <code>&lt;success&gt;</code> record is generated by the last one and
 returned.  The <code>&lt;success&gt;</code> record is registered in the memoized
 results of the <code>&lt;state&gt;</code> record that started a non&ndash;terminal match,
-using <var>&lt;identifier&gt;</var> as keyword.
+using <var>?identifier</var> as keyword.
 
-        <p>If a <var>&lt;sequence&gt;</var> combinator matches, but its last <var>&lt;part&gt;</var> is
+        <p>If a <var>?sequence</var> combinator matches, but its last <var>?part</var> is
 &lsquo;<samp><span class="samp">:error</span></samp>&rsquo;, an <code>&lt;error&gt;</code> record is returned and registered in the
 memoized results of the <code>&lt;state&gt;</code> record that started the
 non&ndash;terminal match.
 
-        <p>If a <var>&lt;sequence&gt;</var> matches, but its last <var>&lt;part&gt;</var> is
+        <p>If a <var>?sequence</var> matches, but its last <var>?part</var> is
 &lsquo;<samp><span class="samp">:exception</span></samp>&rsquo;, a continuable exception is raised.
 
-        <p>If a <var>&lt;part&gt;</var> fails to match: An <code>&lt;error&gt;</code> record is generated
+        <p>If a <var>?part</var> fails to match: An <code>&lt;error&gt;</code> record is generated
 and returned.  The <code>&lt;error&gt;</code> record is registered in the memoized
 results of the <code>&lt;state&gt;</code> record that started the non&ndash;terminal
 mismatch.
 
-        <p>The <var>&lt;part&gt;</var> elements can be of the following forms.
+        <p>The <var>?part</var> elements can be of the following forms.
 
           <dl>
-<dt>&lsquo;<samp><span class="samp">(quote </span><var>&lt;terminal&gt;</var><span class="samp">)</span></samp>&rsquo;<dd>Matches if the lookahead token has category <code>eq?</code> to
-<var>&lt;terminal&gt;</var>; the semantic value of the token is discarded.  Consume
-one token.  This <var>&lt;part&gt;</var> makes use of a combinator generated by
+<dt>&lsquo;<samp><span class="samp">(quote </span><var>?terminal</var><span class="samp">)</span></samp>&rsquo;<dd>Matches if the lookahead token has category <code>eq?</code> to
+<var>?terminal</var>; the semantic value of the token is discarded.  Consume
+one token.  This <var>?part</var> makes use of a combinator generated by
 <code>make-terminal-combinator</code>.
 
-          <br><dt>&lsquo;<samp><var>&lt;var&gt;</var><span class="samp"> &lt;- (quote </span><var>&lt;terminal&gt;</var><span class="samp">)</span></samp>&rsquo;<dd>Matches if the lookahead token has category <code>eq?</code> to
-<var>&lt;terminal&gt;</var>; bind the token's semantic value to <var>&lt;var&gt;</var> and
+          <br><dt>&lsquo;<samp><var>?var</var><span class="samp"> &lt;- (quote </span><var>?terminal</var><span class="samp">)</span></samp>&rsquo;<dd>Matches if the lookahead token has category <code>eq?</code> to
+<var>?terminal</var>; bind the token's semantic value to <var>?var</var> and
 continue parsing; the subsequent combinators are evaluated in the
-augmented environment.  Consume one token.  This <var>&lt;part&gt;</var> makes use
+augmented environment.  Consume one token.  This <var>?part</var> makes use
 of a combinator generated by <code>make-terminal-combinator</code>.
 
-          <br><dt>&lsquo;<samp><var>&lt;identifier&gt;</var></samp>&rsquo;<dd>Apply the combinator bound to <var>&lt;identifier&gt;</var> to the current state. 
+          <br><dt>&lsquo;<samp><var>?identifier</var></samp>&rsquo;<dd>Apply the combinator bound to <var>?identifier</var> to the current state. 
 The applied combinator may consume any number of tokens.
 
-          <br><dt>&lsquo;<samp><var>&lt;var&gt;</var><span class="samp"> &lt;- </span><var>&lt;identifier&gt;</var></samp>&rsquo;<dd>Apply the combinator bound to <var>&lt;identifier&gt;</var> to the current state. 
-If successful, bind the resulting semantic value to <var>&lt;var&gt;</var>; the
+          <br><dt>&lsquo;<samp><var>?var</var><span class="samp"> &lt;- </span><var>?identifier</var></samp>&rsquo;<dd>Apply the combinator bound to <var>?identifier</var> to the current state. 
+If successful, bind the resulting semantic value to <var>?var</var>; the
 subsequent combinators are evaluated in the augmented environment.  The
 applied combinator may consume any number of tokens.
 
-          <br><dt>&lsquo;<samp><span class="samp">(:not </span><var>&lt;fail-part&gt;</var><span class="samp"> ...)</span></samp>&rsquo;<dd>Matches if the lookahead tokens do not match the <var>&lt;fail-part&gt;</var>
-elements.  This <var>&lt;part&gt;</var> makes use of a combinator generated by
+          <br><dt>&lsquo;<samp><span class="samp">(:not </span><var>?fail-part</var><span class="samp"> ...)</span></samp>&rsquo;<dd>Matches if the lookahead tokens do not match the <var>?fail-part</var>
+elements.  This <var>?part</var> makes use of a combinator generated by
 <code>make-unless-combinator</code>.
 
-          <br><dt>&lsquo;<samp><var>&lt;var&gt;</var><span class="samp"> &lt;- :source-location</span></samp>&rsquo;<dd>Bind the <code>&lt;source-location&gt;</code> record in the lookahead token to
-<var>&lt;var&gt;</var>; the subsequent combinators are evaluated in the augmented
+          <br><dt>&lsquo;<samp><var>?var</var><span class="samp"> &lt;- :source-location</span></samp>&rsquo;<dd>Bind the <code>&lt;source-location&gt;</code> record in the lookahead token to
+<var>?var</var>; the subsequent combinators are evaluated in the augmented
 environement.  Consumes no tokens.  This can be used to annotate
 abstract syntax trees with source location informations.
 
-          <br><dt>&lsquo;<samp><span class="samp">:error </span><var>&lt;message&gt;</var></samp>&rsquo;<dd>Matches only as last <var>&lt;part&gt;</var> of a <var>&lt;sequence&gt;</var> and consumes no
-tokens.  Return an <code>&lt;error&gt;</code> record using <var>&lt;message&gt;</var> as value
+          <br><dt>&lsquo;<samp><span class="samp">:error </span><var>?message</var></samp>&rsquo;<dd>Matches only as last <var>?part</var> of a <var>?sequence</var> and consumes no
+tokens.  Return an <code>&lt;error&gt;</code> record using <var>?message</var> as value
 for the &lsquo;<samp><span class="samp">message</span></samp>&rsquo; field.
 
-          <br><dt>&lsquo;<samp><span class="samp">:exception</span></samp>&rsquo;<dd>Matches only as last <var>&lt;part&gt;</var> of a <var>&lt;sequence&gt;</var> and consumes no
-tokens.  The <var>&lt;semantic-clause&gt;</var> of the <var>&lt;rule&gt;</var> is evaluated and
+          <br><dt>&lsquo;<samp><span class="samp">:exception</span></samp>&rsquo;<dd>Matches only as last <var>?part</var> of a <var>?sequence</var> and consumes no
+tokens.  The <var>?semantic-clause</var> of the <var>?rule</var> is evaluated and
 it must return a condition object, which is handed to
 <code>raise-continuable</code>.  If the exception handler returns, it must
 return a <code>&lt;result&gt;</code> record.  <a href="../nausicaa/stdlib-exceptions-conditions.html#stdlib-exceptions-conditions">Conditions</a>

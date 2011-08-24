@@ -10,7 +10,7 @@
 <link rel="next" href="classes-define-virtual.html#classes-define-virtual" title="classes define virtual">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
-This document describes version 0.2d11 of Nausicaa/Scheme, a set of
+This document describes version 0.2d12 of Nausicaa/Scheme, a set of
 Scheme libraries defining a slightly modified R6RS Scheme language
 and augmenting the features of the base and standard R6RS libraries.
 
@@ -111,19 +111,58 @@ Up:&nbsp;<a rel="up" accesskey="u" href="classes-define.html#classes-define">cla
 <h4 class="subsection">24.1.7 Defining class predicates</h4>
 
 <div class="defun">
-&mdash; Auxiliary Syntax: <b>predicate</b><var> predicate-name<a name="index-predicate-1503"></a></var><br>
+&mdash; Auxiliary Syntax: <b>predicate</b><var> ?predicate-identifier<a name="index-predicate-1504"></a></var><br>
+&mdash; Auxiliary Syntax: <b>predicate</b><var> ?predicate-expression<a name="index-predicate-1505"></a></var><br>
 <blockquote><p>Select a custom predicate function or syntax to be used to identify
-instances of classes with the <code>is-a?</code> macro.  When not given, the
-predicate of the underlying record type is used.  This clause is useful
-especially to select custom predicates for the builtin class types;
-example:
+instances of classes with the <code>is-a?</code> macro.  When not given in a
+class definition, the predicate of the underlying record type is used.
+
+        <p>This clause is useful especially to select custom predicates for the
+builtin class types; example:
 
      <pre class="example">          (define-label &lt;pair&gt;
             (predicate pair?)
             (virtual-fields (immutable car car)
                             (immutable cdr cdr)))
 </pre>
-        </blockquote></div>
+        <p class="noindent">another example:
+
+     <pre class="example">          (define-label &lt;alpha&gt;
+            (predicate (lambda (o)
+                         (and (integer? o) (exact? o)))))
+          
+          (is-a? 123   &lt;alpha&gt;)   &rArr; #t
+          (is-a? 123.4 &lt;alpha&gt;)   &rArr; #f
+</pre>
+        <p>When the form with <var>?predicate-identifier</var> is used, the argument
+must be an identifier referencing a function or macro.
+
+        <p>When the non&ndash;identifier <var>?predicate-expression</var> form is used: it
+must be an expression evaluating to the predicate function.  The
+<code>predicate</code> clause with a non&ndash;identifier argument is equivalent
+to the clause:
+
+     <pre class="example">          (predicate predicate-name)
+</pre>
+        <p class="noindent">and the associated definition:
+
+     <pre class="example">          (define predicate-name <var>?predicate-expression</var>)
+</pre>
+        <p class="noindent">where <code>predicate-name</code> is an automatically generated identifier
+built by appending a dash and <code>custom-predicate</code> to the class or
+label name. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Auxiliary Syntax: <b>predicate-syntax</b><var> ?predicate-identifier<a name="index-predicate_002dsyntax-1506"></a></var><br>
+&mdash; Auxiliary Syntax: <b>predicate-syntax</b><var> ?predicate-expression<a name="index-predicate_002dsyntax-1507"></a></var><br>
+<blockquote><p>This clause works exactly like <code>predicate</code>, but when the argument
+is a non&ndash;identifier the associated definition is:
+
+     <pre class="example">          (define-syntax predicate-name <var>?predicate-expression</var>)
+</pre>
+        <p class="noindent">that is: it uses <code>define-syntax</code> rather than <code>define</code>. 
+</p></blockquote></div>
 
 <!-- page -->
    </body></html>

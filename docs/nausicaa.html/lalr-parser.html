@@ -10,7 +10,7 @@
 <link rel="next" href="lalr-grammar.html#lalr-grammar" title="lalr grammar">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
-This document describes version 0.2d11 of Nausicaa/Scheme, a set of
+This document describes version 0.2d12 of Nausicaa/Scheme, a set of
 Scheme libraries defining a slightly modified R6RS Scheme language
 and augmenting the features of the base and standard R6RS libraries.
 
@@ -176,17 +176,16 @@ may stop, depending on how the program deals with it.
 
 <pre class="example">     (define (error-handler message token)
        (error #f
-         (if (or (not (&lt;lexical-token&gt;? token))
-                 (not (&lt;lexical-token&gt;-location token)))
+         (if (not (is-a? token &lt;lexical-token&gt;))
              message
-           (let* ((position  (&lt;lexical-token&gt;-source   token))
-                  (line      (&lt;source-location&gt;-line   position))
-                  (column    (&lt;source-location&gt;-column position)))
-             (string-append message
-               " line "
-               (if line   (number-&gt;string line)   "unknown")
-               " column "
-               (if column (number-&gt;string column) "unknown"))))
+           (let (((T &lt;lexical-token&gt;) token))
+             (if (not (is-a? T.location &lt;source-location&gt;))
+                 message
+               (let (((P &lt;source-location&gt;) T.location))
+                 (string-append
+                   message
+                   " line "   (if P.line   P.line.string   "?")
+                   " column " (if P.column P.column.string "?"))))))
          token))
 </pre>
    <p class="noindent">notice how the handler detects if the &lsquo;<samp><span class="samp">location</span></samp>&rsquo; field of the
