@@ -9,7 +9,7 @@
 <link rel="prev" href="scheme-lex-datum-bytevectors.html#scheme-lex-datum-bytevectors" title="scheme lex datum bytevectors">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
-This document describes version 0.2d12 of Nausicaa/Scheme, a set of
+This document describes version 0.2d13 of Nausicaa/Scheme, a set of
 Scheme libraries defining a slightly modified R6RS Scheme language
 and augmenting the features of the base and standard R6RS libraries.
 
@@ -18,9 +18,9 @@ The project home page of Nausicaa is at:
              `http://marcomaggi.github.com/nausicaa.html'
 
 
-development of Nausicaa takes place at:
+development of Nausicaa/Scheme takes place at:
 
-               `http://github.com/marcomaggi/nausicaa/'
+            `http://github.com/marcomaggi/nausicaa-scheme/'
 
 
 Copyright (C) 2008-2011 by Marco Maggi.
@@ -131,6 +131,44 @@ Up:&nbsp;<a rel="up" accesskey="u" href="scheme-lex-datum.html#scheme-lex-datum"
 
      <br><dt><code>#,@&lt;datum&gt;</code><dd>for <code>(unsyntax-splicing &lt;datum&gt;)</code>. 
 </dl>
+
+   <p>Notice that it is the source code <em>reader</em> (the lexer and parser)
+which builds the symbolic expression:
+
+<pre class="example">     (quote (a b c))
+</pre>
+   <p class="noindent">from the sequence of characters:
+
+<pre class="example">     '(a b c)
+</pre>
+   <p class="noindent">and this happens before any library is loaded, so the source code
+expander only sees the symbolic expression with the <code>quote</code> symbol
+in it.  So, while the following program works because the library
+<code>(rnrs)</code> exports the <code>quote</code> identifier:
+
+<pre class="example">     #!r6rs
+     (import (rnrs))
+     (write '(a b c))
+</pre>
+   <p class="noindent">the following program will fail:
+
+<pre class="example">     #!r6rs
+     (import (except (rnrs) quote))
+     (write '(a b c))
+</pre>
+   <p class="noindent">in exactly the same way the following program will fail:
+
+<pre class="example">     #!r6rs
+     (import (except (rnrs) quote))
+     (write (quote (a b c)))
+</pre>
+   <p class="noindent">because we have explicitly excluded <code>quote</code> from the import set. 
+The same happens with <code>syntax</code> and the other abbreviations.
+
+   <p>Summary: once our eyes have adapted to use the abbreviations, and it may
+take a while, they are of friendly usage; but we have to remember to
+import libraries exporting <code>quote</code>, <code>syntax</code> and the other
+abbreviated identifiers.
 
 <!-- page -->
    </body></html>

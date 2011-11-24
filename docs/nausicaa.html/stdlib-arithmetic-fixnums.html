@@ -10,7 +10,7 @@
 <link rel="next" href="stdlib-arithmetic-flonums.html#stdlib-arithmetic-flonums" title="stdlib arithmetic flonums">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
-This document describes version 0.2d12 of Nausicaa/Scheme, a set of
+This document describes version 0.2d13 of Nausicaa/Scheme, a set of
 Scheme libraries defining a slightly modified R6RS Scheme language
 and augmenting the features of the base and standard R6RS libraries.
 
@@ -19,9 +19,9 @@ The project home page of Nausicaa is at:
              `http://marcomaggi.github.com/nausicaa.html'
 
 
-development of Nausicaa takes place at:
+development of Nausicaa/Scheme takes place at:
 
-               `http://github.com/marcomaggi/nausicaa/'
+            `http://github.com/marcomaggi/nausicaa-scheme/'
 
 
 Copyright (C) 2008-2011 by Marco Maggi.
@@ -328,23 +328,25 @@ representation of <var>fx</var>.  If <var>fx</var> is 0, then -1 is returned.
 
 <div class="defun">
 &mdash; Procedure: <b>fxbit-set?</b><var> fx1 fx2<a name="index-fxbit_002dset_003f-712"></a></var><br>
-<blockquote><p><var>fx2</var> must be non&ndash;negative and less than <code>(fixnum-width)</code>.
+<blockquote><p><var>fx2</var> must be non&ndash;negative.
 
         <p>The <code>fxbit-set?</code> procedure returns <code>#t</code> if the <var>fx2</var>th bit
 is 1 in the two's complement representation of <var>fx1</var>, and <code>#f</code>
 otherwise.  This is the fixnum result of the following computation:
 
-     <pre class="example">          (not
-            (fxzero?
-              (fxand <var>fx1</var>
-                     (fxarithmetic-shift-left 1 <var>fx2</var>))))
+     <pre class="example">          (if (fx&gt;= <var>fx2</var> (fx- (fixnum-width) 1))
+              (fxnegative? <var>fx1</var>)
+              (not
+                (fxzero?
+                   (fxand <var>fx1</var>
+                          (fxarithmetic-shift-left 1 <var>fx2</var>)))))
 </pre>
         </blockquote></div>
 
 <div class="defun">
 &mdash; Procedure: <b>fxcopy-bit</b><var> fx1 fx2 fx3<a name="index-fxcopy_002dbit-713"></a></var><br>
-<blockquote><p><var>fx2</var> must be non&ndash;negative and less than <code>(fixnum-width)</code>. 
-<var>Fx3</var> must be 0 or 1.
+<blockquote><p><var>fx2</var> must be non&ndash;negative and less than w-1.  <var>Fx3</var>
+must be 0 or 1.
 
         <p>The <code>fxcopy-bit</code> procedure returns the result of replacing the
 <var>fx2</var>th bit of <var>fx1</var> by <var>fx3</var>, which is the result of the
@@ -429,8 +431,8 @@ condition type <code>&amp;implementation-restriction</code> is raised.
 &mdash; Procedure: <b>fxrotate-bit-field</b><var> fx1 fx2 fx3 fx4<a name="index-fxrotate_002dbit_002dfield-719"></a></var><br>
 <blockquote><p><var>fx2</var>, <var>fx3</var>, and <var>fx4</var> must be non&ndash;negative and less
 than <code>(fixnum-width)</code>.  <var>fx2</var> must be less than or equal to
-<var>fx3</var>.  <var>fx4</var> must be less than the difference between
-<var>fx3</var> and <var>fx2</var>.
+<var>fx3</var>.  <var>fx4</var> must be less than or equal to the difference
+between <var>fx3</var> and <var>fx2</var>.
 
         <p>The <code>fxrotate-bit-field</code> procedure returns the result of cyclically
 permuting in <var>fx1</var> the bits at positions from <var>fx2</var> (inclusive)
@@ -442,19 +444,12 @@ significant bits, which is the result of the following computation:
                  (end   <var>fx3</var>)
                  (count <var>fx4</var>)
                  (width (fx- end start)))
-            (if (fxpositive? width)
-                (let* ((count (fxmod count width))
-                       (field0
-                         (fxbit-field n start end))
-                       (field1
-                         (fxarithmetic-shift-left
-                           field0 count))
-                       (field2
-                         (fxarithmetic-shift-right
-                           field0 (fx- width count)))
-                       (field (fxior field1 field2)))
-                  (fxcopy-bit-field n start end field))
-                n))
+            (fxcopy-bit-field n start end
+              (fxior
+                (fxarithmetic-shift-left
+                  (fxbit-field n start (fx- end count)) count)
+                (fxarithmetic-shift-right
+                  (fxbit-field n start end) (fx- width count)))))
 </pre>
         </blockquote></div>
 
