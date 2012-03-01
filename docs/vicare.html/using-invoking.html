@@ -1,0 +1,228 @@
+<html lang="en">
+<head>
+<title>using invoking - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="using.html#using" title="using">
+<link rel="prev" href="using-interactive.html#using-interactive" title="using interactive">
+<link rel="next" href="using-script.html#using-script" title="using script">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d9 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The Vicarus Scheme package is distributed under the terms of the GNU
+General Public License (GPL) and can be downloaded from:
+
+            `http://github.com/marcomaggi/vicare/downloads'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+Copyright (C) 2010-2012 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="using-invoking"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="using-script.html#using-script">using script</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="using-interactive.html#using-interactive">using interactive</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="using.html#using">using</a>
+<hr>
+</div>
+
+<h3 class="section">2.2 Command line arguments</h3>
+
+<p>The synopsis of the <samp><span class="command">vicare</span></samp> program is as follows:
+
+<pre class="smallexample">     vicare [<var>OPTIONS</var>] [PROGRAM]                      [-- [<var>PROGRAM OPTS</var>]]
+     vicare [<var>OPTIONS</var>] --r6rs-script PROGRAM          [-- [<var>PROGRAM OPTS</var>]]
+     vicare [<var>OPTIONS</var>] --r6rs-repl PROGRAM            [-- [<var>PROGRAM OPTS</var>]]
+     vicare [<var>OPTIONS</var>] --script CODE                  [-- [<var>PROGRAM OPTS</var>]]
+     vicare [<var>OPTIONS</var>] --compile-dependencies PROGRAM [-- [<var>PROGRAM OPTS</var>]]
+</pre>
+   <p class="noindent">the <var>OPTIONS</var> are interpreted by <samp><span class="command">vicare</span></samp>, <var>PROGRAM
+OPTS</var> can be obtained using the <code>command-line</code> procedure in the
+<code>(rnrs programs)</code> library; when running the <acronym>REPL</acronym>: the first
+element of the returned list will be the string &lsquo;<samp><span class="samp">*interactive*</span></samp>&rsquo;,
+corresponding to the script name in <acronym>R6RS</acronym>&ndash;script mode.
+
+   <p>Some options cause code to be evaluated in the interaction environment:
+it initially contains all the bindings exported from the
+<code>(ikarus)</code> library.
+
+   <p>The <samp><span class="command">vicare</span></samp> executable recognises a few command line switches
+that influence how Vicare Scheme starts; the following are the main
+options, driving the execution mode.  It is an error to put on the
+command line two or more of these options.
+
+     <dl>
+<dt><code>--r6rs-script </code><var>PROGRAM</var><dd>Start Vicare in <acronym>R6RS</acronym>&ndash;script mode.  The <var>PROGRAM</var> file is handled
+as an <acronym>R6RS</acronym> program.  Example:
+
+     <pre class="example">          $ cat test.sps
+          (import (rnrs))
+          (write (command-line))
+          (newline)
+          
+          $ vicare --r6rs-script test.sps hi there
+          ("test.sps" "hi" "there")
+</pre>
+     <br><dt><code>--r6rs-repl </code><var>PROGRAM</var><dd>Start Vicare in <acronym>R6RS</acronym>-script mode.  Act as if the
+<samp><span class="option">--r6rs-script</span></samp> option had been used but, after the program
+execution, enter the <acronym>REPL</acronym> rather than exiting.  This allows
+inspection of bindings and state left behind by the program.
+
+     <br><dt><code>--script </code><var>CODEFILE</var><dd>Start Vicare in evaluation mode.  The <var>CODEFILE</var> is handled as a
+sequence of <acronym>R6RS</acronym> expressions: such expressions are used as first
+argument for <code>eval</code> under the interaction environment.  Example:
+
+     <pre class="example">          $ cat test.sps
+          (write (command-line))
+          (newline)
+          
+          $ vicare --script test.sps hi there
+          ("test.sps" "hi" "there")
+</pre>
+     <br><dt><code>--compile-dependencies </code><var>IMPORTS-FILE</var><dd>Load the <acronym>R6RS</acronym> program <var>IMPORTS-FILE</var>, compile all the libraries
+upon which it depends and store them in the FASL repository. 
+<var>IMPORTS-FILE</var> itself is not evaluated. 
+</dl>
+
+   <p>When none of these options is given, but a standalone <var>PROGRAM</var>
+argument is present on the command line: act as if the
+<samp><span class="option">--r6rs-script</span></samp> option had been used with the given file name. 
+If no standalone <var>PROGRAM</var> argument is present: enter the <acronym>REPL</acronym>.
+
+   <p>The rest of the command line arguments are recognised by the standard
+Scheme run time system.
+
+     <dl>
+<dt><code>-b path/to/boot/file.boot</code><dt><code>--boot path/to/boot/file.boot</code><dd>Use the specified boot file as the initial system boot file.  The boot
+file is a binary file that contains all the code and data of the Scheme
+system.  In the absence of the <samp><span class="option">-b</span></samp> flag, the executable will use
+the default boot file.  Running <samp><span class="command">vicare</span></samp> with the <samp><span class="option">-h</span></samp>
+option shows the location where the default boot file was installed.
+
+     <br><dt><code>--no-rcfile</code><dd>Disable loading of run&ndash;command files.
+
+     <br><dt><code>--rcfile </code><var>FILE</var><dd>Load and evaluate <var>FILE</var> as an <acronym>R6RS</acronym> program at startup, before
+loading libraries, evaluating codes and running the main script.  This
+option can be used multiple times.
+
+     <br><dt><code>-l </code><var>LIBFILE</var><dt><code>--load-library </code><var>LIBFILE</var><dd>Load <var>libfile</var> expecting it to contain one or more <acronym>R6RS</acronym>
+libraries; after executing the RC files, load the libraries in the
+internal collection, but do not add them to any environment.  This
+option can be used multiple times.
+
+     <br><dt><code>-f </code><var>CODEFILE</var><dt><code>--eval-file </code><var>CODEFILE</var><dd>Load <var>CODEFILE</var> expecting it to contain valid <acronym>R6RS</acronym> expressions;
+after instantiating the libraries hand the code to <code>eval</code> under the
+interaction environment.  Bindings left behind by this code are
+available if we enter the <acronym>REPL</acronym>.  This option can be used multiple
+times.
+
+     <br><dt><code>-e </code><var>EXPRESSION</var><dt><code>--eval-expr </code><var>EXPRESSION</var><dd>After instantiating the libraries hand the <var>EXPRESSION</var> to
+<code>eval</code> under the interaction environment.  Bindings left behind by
+this code are available if we enter the <acronym>REPL</acronym>. This option can be used
+multiple times.
+
+     <br><dt><code>-L </code><var>DIRECTORY</var><dt><code>--search-path </code><var>DIRECTORY</var><dd>Add <var>directory</var> to the library search path.  This option can be used
+multiple times.
+
+     <br><dt><code>--more-file-extensions</code><dd>Rather than searching only libraries with extension &lsquo;<samp><span class="samp">.vicare.sls</span></samp>&rsquo;
+and &lsquo;<samp><span class="samp">.sls</span></samp>&rsquo;, search also for &lsquo;<samp><span class="samp">.vicare.ss</span></samp>&rsquo;, &lsquo;<samp><span class="samp">.ss</span></samp>&rsquo;,
+&lsquo;<samp><span class="samp">.vicare.scm</span></samp>&rsquo;, &lsquo;<samp><span class="samp">.scm</span></samp>&rsquo; and the &lsquo;<samp><span class="samp">main</span></samp>&rsquo; file.  <a href="using-libraries-searching.html#using-libraries-searching">using libraries searching</a> for more details.
+
+     <br><dt><code>--prompt </code><var>STRING</var><dd>Use <var>STRING</var> as prompt for the <acronym>REPL</acronym>.  Defaults to &lsquo;<samp><span class="samp">vicare</span></samp>&rsquo;,
+to which the character &lsquo;<samp><span class="samp">&gt;</span></samp>&rsquo; is appended for each nested <acronym>REPL</acronym>
+level.  <a href="iklib-cafe.html#iklib-cafe">iklib cafe</a> for more details.
+
+     <br><dt><code>--repl-on-sigint</code><dd>When this option is used an interprocess signal handler is registered at
+program startup to enter a debugging <acronym>REPL</acronym> whenever a <code>SIGINT</code>
+signal is received.
+
+     <br><dt><code>--raw-repl</code><dd>Do not create a readline console input port even if the readline
+interface is available.
+
+     <br><dt><code>-d</code><dt><code>--debug</code><dd>Turn on debugging mode.  With this unhandled exceptions in the program
+will result in starting the debugger, which allows stack trace
+inspection.
+
+     <br><dt><code>-nd</code><dt><code>--no-debug</code><dd>Turn off debugging mode.
+
+     <br><dt><code>-O0</code><dt><code>-O1</code><dt><code>-O2</code><dd>Turn on various levels of compile optimisations (currently unsupported).
+
+     <br><dt><code>--print-assembly</code><dd>Print to the current error port the assembly instructions generated when
+compiling code.
+
+     <br><dt><code>--print-optimizer</code><dt><code>--print-optimiser</code><dd>Print to the current error port a symbolic expression which results from
+running the optimiser.
+
+     <br><dt><code>-V</code><dt><code>--version</code><dd>Display the version message then exit.
+
+     <br><dt><code>--version-only</code><dd>Display only the version number on the standard error port, followed by
+a newline, then exit.
+
+     <br><dt><code>--license</code><dd>Display the license message then exit.
+
+     <br><dt><code>-h</code><dd>Display the help message then exit.
+
+     <br><dt><code>--</code><dd>Mark the end of <samp><span class="command">vicare</span></samp> options; all the arguments after this
+marker can be obtained by calling the <code>command-line</code> procedure. 
+</dl>
+
+   <p><a name="index-g_t_0040env_007bVICARE_005fRC_005fFILES_007d-13"></a>If neither the <samp><span class="option">--no-rcfile</span></samp> nor the <samp><span class="option">--rcfile</span></samp> options
+are used: a list of run&ndash;command files is read from the environment
+variable <samp><span class="env">VICARE_RC_FILES</span></samp>, which must contain a colon separated
+list of pathnames.  If the enviroment variable is empty or unset, by
+default the file <samp><span class="file">.vicarerc</span></samp> is used searching it in the directory
+selected by the <samp><span class="env">HOME</span></samp> environment variable.
+
+<!-- page -->
+   </body></html>
+

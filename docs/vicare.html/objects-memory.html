@@ -1,0 +1,367 @@
+<html lang="en">
+<head>
+<title>objects memory - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="objects.html#objects" title="objects">
+<link rel="prev" href="objects-refs.html#objects-refs" title="objects refs">
+<link rel="next" href="objects-fixnums.html#objects-fixnums" title="objects fixnums">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d9 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The Vicarus Scheme package is distributed under the terms of the GNU
+General Public License (GPL) and can be downloaded from:
+
+            `http://github.com/marcomaggi/vicare/downloads'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+Copyright (C) 2010-2012 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="objects-memory"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="objects-fixnums.html#objects-fixnums">objects fixnums</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="objects-refs.html#objects-refs">objects refs</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="objects.html#objects">objects</a>
+<hr>
+</div>
+
+<h3 class="section">11.2 Memory allocation and collection</h3>
+
+<p>In short, memory allocation which may trigger a garbage collection is
+performed as follows:
+
+<pre class="example">     ikpcb *   pcb = ik_the_pcb();
+     long int  number_of_bytes = the_number_of_bytes;
+     ikptr     p = ik_safe_alloc(pcb, IK_ALIGN(number_of_bytes));
+</pre>
+   <p class="noindent">while memory allocation without garbage collection is performed as
+follows:
+
+<pre class="example">     ikpcb *   pcb = ik_the_pcb();
+     long int  number_of_bytes = the_number_of_bytes;
+     ikptr     p = ik_unsafe_alloc(pcb, IK_ALIGN(number_of_bytes));
+</pre>
+   <p class="noindent">where <code>p</code> is an untagged memory pointer and <code>pcb</code> is a pointer
+to the &ldquo;Process Control Block&rdquo; data structure.
+
+   <p>To add a tag, for example the <code>vector_tag</code>, to an untagged memory
+pointer we can do:
+
+<pre class="example">     ikpcb * pcb = ik_the_pcb();
+     long    len = IK_ALIGN(the_number_of_bytes);
+     ikptr   ref = ik_safe_alloc(pcb, len) | vector_tag;
+</pre>
+   <p>Objects subject to garbage collection are allocated on the Scheme heap,
+which is an array of contiguous memory segments; the next object is
+allocated in the &ldquo;current segment&rdquo; of the heap:
+
+<pre class="example">         allocated  allocated      allocated
+         block      block          block
+     ...|----------|--------------|--------|------...
+         ^          ^              ^        ^
+         |          |              |        |
+       pointer    pointer        pointer   pointer to
+                                           next block
+</pre>
+   <p class="noindent">every pointer must satisfy alignment constraints with the following
+purposes:
+
+     <ol type=1 start=1>
+<li>To make pointer indirection efficient for the underlying platform.
+
+     <li>To have pointer values with the 3 least significant bits set to
+zero, so that such bits can be used to hold an object's type tag.
+        </ol>
+
+<p class="noindent">for these reasons we must always filter the requested size (in bytes)
+through the <code>IK_ALIGN()</code> macro.  The <acronym>PCB</acronym> always references a
+&ldquo;pointer to the next free block&rdquo; with alignment constraints satisfied;
+if we filter the requested number of bytes through <code>IK_ALIGN()</code>, we
+obtain a number of bytes which, added to the pointer, gives a correctly
+aligned pointer:
+
+<pre class="example">     uint8_t * allocated_block = (uint8_t *)pcb-&gt;allocation_pointer;
+     long      requested_size  = ...;
+     long      align_size      = IK_ALIGN(requested_size);
+     uint8_t * next_free_block = allocated_block + align_size;
+     pcb-&gt;allocation_pointer   = (ikptr)next_free_block;
+     
+     /* use "allocated_block" */
+     
+     
+                 requested size
+            |.......................|
+                 aligned size
+            |..........................|
+     ...----|--------------------------|-----------....
+             ^                          ^
+             |                          |
+           pointer to an              pointer to the
+           allocated block            next block
+</pre>
+   <div class="defun">
+&mdash; Function: ikpcb * <b>ik_the_pcb</b> (<var>void</var>)<var><a name="index-ik_005fthe_005fpcb-1475"></a></var><br>
+<blockquote><p>Return a pointer to the current process control block.  It is rarely
+needed because when calling a C function from Scheme a pointer to the
+<acronym>PCB</acronym> is always pushed on the C stack as last argument. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Preprocessor Macro: unsigned long <b>IK_ALIGN</b> (<var>unsigned long number_of_bytes</var>)<var><a name="index-IK_005fALIGN-1476"></a></var><br>
+<blockquote><p>Convert <var>number_of_bytes</var> to the number of bytes requested to
+satisfy pointer alignment constraints.  The aligned size is always an
+exact multiple of the underlying platform's word size (32-bit or
+64-bit); precisely: it is the smallest multiple of the wordsize which is
+greater than <var>number_of_bytes</var>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: ikptr <b>ik_safe_alloc</b> (<var>ikpcb * pcb, unsigned long align_size</var>)<var><a name="index-ik_005fsafe_005falloc-1477"></a></var><br>
+<blockquote><p>Allocate a memory block on the heap and return a reference to it as an
+<strong>untagged</strong> pointer.  <var>pcb</var> must reference the process control
+block, <var>align_size</var> must be the requested number of bytes filtered
+through <code>IK_ALIGN()</code>.
+
+        <p>If not enough memory is available on the current heap segment: a garbage
+collection is triggered; then allocation is tried again: if it still
+fails the process is terminated with exit status <code>EXIT_FAILURE</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: ikptr <b>ik_unsafe_alloc</b> (<var>ikpcb * pcb, unsigned long align_size</var>)<var><a name="index-ik_005funsafe_005falloc-1478"></a></var><br>
+<blockquote><p>Allocate a memory block on the Scheme heap and return a reference to it
+as an <strong>untagged</strong> pointer.  <var>pcb</var> must reference the process
+control block, <var>align_size</var> must be the requested number of bytes
+filtered through <code>IK_ALIGN()</code>.
+
+        <p>If not enough memory is available on the current heap segment: a new
+heap segment is allocated; if such allocation fails: the process is
+terminated with exit status <code>EXIT_FAILURE</code>.
+
+        <p>We notice explicitly that this function <strong>does not</strong> trigger a
+garbage collection run, so, when using it, it is not needed to register
+C pointers as garbage collection roots. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Preprocessor Macro: <b>IK_ASS</b> (<var>ikptr left, ikptr right</var>)<var><a name="index-IK_005fASS-1479"></a></var><br>
+<blockquote><p>Perform a C language assignment enforcing the order of evaluation of the
+left&ndash;side and right&ndash;side expressions.  First evaluate <var>right</var>,
+then evaluate <var>left</var>, finally store the result of <var>right</var> in the
+lvalue resulting from evaluating <var>left</var>. 
+</p></blockquote></div>
+
+<!--  -->
+<h5 class="subsubheading">Writing correct C language code</h5>
+
+<p>The garbage collector considers an object &ldquo;in use&rdquo; if at least one
+reference to it is reachable from the roots of the garbage collection;
+if an <code>ikptr</code> reference exists only in a <acronym>CPU</acronym> register or on
+the C language stack, or on the C language heap out of segments
+allocated for Scheme: the garbage collector will not see it.  This
+allows to avoid scanning the full process' stack for references to
+values, but imposes care when writing C language code.
+
+   <p>Whenever we call <code>ik_safe_alloc()</code> or a function relying on it for
+memory allocation: a garbage collection may run and Scheme objects may
+be moved from their location in memory to another memory segment; this
+renders invalid all the pointers in the <acronym>CPU</acronym> registers, on the
+C stack and the C heap.  Notice that this includes the arguments to C
+functions called from Scheme through the macro <code>foreign-call</code>.
+
+   <p>We must write C code with the following constraints:
+
+     <ul>
+<li>Before a call to <code>ik_safe_alloc()</code>: we must make sure that all the
+Scheme objects we are using in C code are reachable by the garbage
+collector.  This is done by registering an object as garbage collector
+root through the <code>root</code> fields of the <acronym>PCB</acronym>.
+
+     <li>After a call to <code>ik_safe_alloc()</code>: we must reobtain all the pointers
+to the internals of the objects we are using. 
+</ul>
+
+   <p>To help identification of C functions and macros allocating memory: the
+ones calling <code>ik_safe_alloc()</code> are prefixed with <code>ika_</code> and
+<code>IKA_</code>; the ones calling <code>ik_unsafe_alloc()</code> are prefixed with
+<code>iku_</code> and <code>IKU_</code>.
+
+   <p>Example of <strong>correct</strong> code: <code>s_one</code> is protected while
+allocating <code>s_two</code>:
+
+<pre class="example">     ikpcb * pcb = ik_the_pcb();
+     ikptr   s_one, s_two;
+     
+     s_one = ika_bytevector_alloc(pcb, 10);
+     pcb-&gt;root0 = &amp;s_one;
+     {
+       s_two = ika_bytevector_alloc(pcb, 10); /* GOOD */
+     }
+     pcb-&gt;root0 = NULL;
+</pre>
+   <p class="noindent">example of <strong>wrong</strong> code: after the second call to the allocation
+function the value in <code>s_one</code> may be invalid:
+
+<pre class="example">     ikpcb * pcb = ik_the_pcb();
+     ikptr   s_one, s_two;
+     
+     s_one = ika_bytevector_alloc(pcb, 10);
+     s_two = ika_bytevector_alloc(pcb, 10);
+     /* do something with "s_one" and "s_two" */ /* WRONG */
+</pre>
+   <p>Example of <strong>correct</strong> code: <code>s_one</code> is protected while
+allocating <code>s_two</code> and after the second allocation the pointer to
+the data area of <code>s_one</code> is retrieved again:
+
+<pre class="example">     ikpcb * pcb = ik_the_pcb();
+     ikptr   s_one;
+     ikptr   s_two;
+     char *  one;
+     char *  two;
+     
+     s_one = ika_bytevector_alloc(pcb, 10);
+     one   = IK_BYTEVECTOR_DATA_CHARP(s_one);
+     /* do something with "one" */
+     pcb-&gt;root0 = &amp;s_one;
+     {
+       s_two = ika_bytevector_alloc(pcb, 10);
+     }
+     pcb-&gt;root0 = NULL;
+     one   = IK_BYTEVECTOR_DATA_CHARP(s_one); /* GOOD */
+     two   = IK_BYTEVECTOR_DATA_CHARP(s_two);
+     /* do something with "one" and "two" */
+</pre>
+   <p class="noindent">example of <strong>wrong</strong> code: after the second call to the allocation
+function the pointer to the data area of <code>s_one</code> may be invalid:
+
+<pre class="example">     ikpcb * pcb = ik_the_pcb();
+     ikptr   s_one;
+     ikptr   s_two;
+     char *  one;
+     char *  two;
+     
+     s_one = ika_bytevector_alloc(pcb, 10);
+     one   = IK_BYTEVECTOR_DATA_CHARP(s_one);
+     /* do something with "one" */
+     pcb-&gt;root0 = &amp;s_one;
+     {
+       s_two = ika_bytevector_alloc(pcb, 10);
+     }
+     pcb-&gt;root0 = NULL;
+     two   = IK_BYTEVECTOR_DATA_CHARP(s_two);
+     /* do something with "one" and "two" */ /* WRONG */
+</pre>
+   <p>Notice that, according to the C standard Section 6.5.16 &ldquo;Assignment
+operators&rdquo;: the order of evaluation of the operands is
+unspecified<a rel="footnote" href="#fn-1" name="fnd-1"><sup>1</sup></a>.  In the following code:
+
+<pre class="example">     IK_CAR(s_pair) = ika_bytevector_alloc(pcb, 8); /* WRONG */
+</pre>
+   <p class="noindent">the left&ndash;side expression may be evaluated before the right&ndash;side one,
+resulting in the value referenced by <code>s_pair</code> to be invalid when
+the memory assigment actually takes place; so we have to code:
+
+<pre class="example">     ikptr   s_tmp;
+     s_tmp          = ika_bytevector_alloc(pcb, 8); /* GOOD */
+     IK_CAR(s_pair) = s_tmp;
+</pre>
+   <p class="noindent">or:
+
+<pre class="example">     IK_ASS(IK_CAR(s_pair), ika_bytevector_alloc(pcb, 8)); /* GOOD */
+</pre>
+   <p class="noindent">yes, it is a hard life.
+
+   <p>Let's consider the following snippet, which is <strong>wrong</strong>:
+
+<pre class="example">     ikpcb * pcb = ik_the_pcb();
+     ikptr   s_one, s_two;
+     
+     s_one = IKA_PAIR_ALLOC(pcb); /* WRONG */
+     pcb-&gt;root0 = &amp;s_one;
+     {
+       s_two = IKA_PAIR_ALLOC(pcb);
+     }
+     pcb-&gt;root0 = NULL;
+</pre>
+   <p class="noindent">when the second pair is allocated, the first pair has car and cdr still
+uninitialised: the content of these words is undefined; this may cause
+undefined behaviour while the second allocation takes place and the
+garbage collection tries to scan the first pair.  The <strong>correct</strong>
+code is:
+
+<pre class="example">     ikpcb * pcb = ik_the_pcb();
+     ikptr   s_one, s_two;
+     
+     s_one = ika_pair_alloc(pcb); /* GOOD */
+     pcb-&gt;root0 = &amp;s_one;
+     {
+       s_two = IKA_PAIR_ALLOC(pcb);
+     }
+     pcb-&gt;root0 = NULL;
+</pre>
+   <p class="noindent">because <code>ika_pair_alloc()</code> initialises the car and the cdr.
+
+<!-- page -->
+   <div class="footnote">
+<hr>
+<h4>Footnotes</h4><p class="footnote"><small>[<a name="fn-1" href="#fnd-1">1</a>]</small> For an introduction to such problems see
+(<acronym>URL</acronym> last verified Jan 12, 2012):
+
+<div align="center"><a href="http://en.wikipedia.org/wiki/Sequence_point">http://en.wikipedia.org/wiki/Sequence_point</a></div>
+   <p></p>
+
+   <hr></div>
+
+   </body></html>
+

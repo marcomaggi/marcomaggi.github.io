@@ -1,0 +1,173 @@
+<html lang="en">
+<head>
+<title>gcc - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="libs.html#libs" title="libs">
+<link rel="prev" href="readline.html#readline" title="readline">
+<link rel="next" href="wtables.html#wtables" title="wtables">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d9 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The Vicarus Scheme package is distributed under the terms of the GNU
+General Public License (GPL) and can be downloaded from:
+
+            `http://github.com/marcomaggi/vicare/downloads'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+Copyright (C) 2010-2012 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="gcc"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="wtables.html#wtables">wtables</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="readline.html#readline">readline</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="libs.html#libs">libs</a>
+<hr>
+</div>
+
+<h3 class="section">10.5 A toy library interface to <acronym>GCC</acronym></h3>
+
+<p>The library <code>(vicare gcc)</code> is installed along with
+Vicare; it implements a toy interface to <samp><span class="command">gcc</span></samp>, the
+<acronym>GNU</acronym> C Compiler.  Its purpose is to build, at runtime, a C language
+shared library from possibly dynamically constructed C code; then load
+the library and access a C function as <acronym>FFI</acronym> callout.
+
+   <p><code>(vicare gcc)</code> must be considered as a toy to demonstrate the
+features of Vicare; it is installed only if the <acronym>POSIX</acronym>,
+<acronym>GNU</acronym> C library and Libffi <acronym>API</acronym>s are enabled at package configuration
+time.
+
+   <p>The following is an example of function to increment an integer:
+
+<pre class="example">     #!r6rs
+     (import (vicare)
+       (prefix (vicare gcc) gcc.))
+     
+     (gcc.initialise "/usr/local/bin/gcc" "/home/marco/var/tmp/")
+     
+     (gcc.define-c-function
+       signed-int incr (signed-int)
+       "#include &lt;stdio.h&gt;
+        int incr (int a) {
+          return 1+a;
+        }")
+     
+     (incr 1)        &rArr; 2
+</pre>
+   <p class="noindent">the code creates a shared library <code>libincr.so</code> in a subdirectory of
+the given initialisation directory, then load it and access the symbol
+<code>incr</code>.
+
+   <p><code>(vicare gcc)</code> depends upon the following libraries:
+
+<pre class="example">     (vicare ffi)
+     (vicare posix)
+     (vicare glibc)
+     (vicare platform-constants)
+     (vicare syntactic-extensions)
+</pre>
+   <div class="defun">
+&mdash; Function: <b>initialise</b><var> gcc tmpdir<a name="index-initialise-1429"></a></var><br>
+<blockquote><p>Initialise the library.  <var>gcc</var> must be the string full filename of
+the <acronym>GCC</acronym> executable.  <var>tmpdir</var> must be the string pathname of an
+existing directory on a partition with executable permissions; it is
+used to create temporary files, including the shared libraries.
+
+        <p>Temporary files go in a subdirectory of <var>tmpdir</var>; it is the
+responsibility of the system administrator to clean up regularly such
+subdirectories. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>define-c-function</b><var> &lt;retval&gt; &lt;name&gt; &lt;args&gt; &lt;code&gt;<a name="index-define_002dc_002dfunction-1430"></a></var><br>
+<blockquote><p>Define a new Scheme function wrapping a C function from a shared
+library.  &lt;name&gt; must be an identifier representing the name of the
+function.
+
+        <p>&lt;retval&gt; must be a symbol selecting the type of the return value;
+&lt;args&gt; must be a list of symbols selecting the types of the
+arguments; <a href="ffi-call-types.html#ffi-call-types">ffi call types</a> for details.
+
+        <p>&lt;code&gt; must be a Scheme string representing the C code to be
+compiled. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Parameter: <b>COMPILE-FLAGS</b><var><a name="index-COMPILE_002dFLAGS-1431"></a></var><br>
+<blockquote><p>References a list of string.  Base options for the compiler, it is
+initialised to <code>("-c")</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Parameter: <b>LINK-FLAGS</b><var><a name="index-LINK_002dFLAGS-1432"></a></var><br>
+<blockquote><p>References a list of string.  Base options for the linker, it is
+initialised to <code>("-pipe" "-shared" "-fPIC")</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Parameter: <b>CFLAGS</b><var><a name="index-CFLAGS-1433"></a></var><br>
+<blockquote><p>References a list of string.  Additional options for the compiler, it is
+initialised to <code>("-O2")</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Parameter: <b>LDFLAGS</b><var><a name="index-LDFLAGS-1434"></a></var><br>
+<blockquote><p>References a list of string.  Additional options for the linker, it is
+initialised to nil. 
+</p></blockquote></div>
+
+<!-- page -->
+   </body></html>
+

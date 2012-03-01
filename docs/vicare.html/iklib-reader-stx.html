@@ -1,0 +1,183 @@
+<html lang="en">
+<head>
+<title>iklib reader stx - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="iklib-reader.html#iklib-reader" title="iklib reader">
+<link rel="prev" href="iklib-reader-chars.html#iklib-reader-chars" title="iklib reader chars">
+<link rel="next" href="iklib-reader-fun.html#iklib-reader-fun" title="iklib reader fun">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d9 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The Vicarus Scheme package is distributed under the terms of the GNU
+General Public License (GPL) and can be downloaded from:
+
+            `http://github.com/marcomaggi/vicare/downloads'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+Copyright (C) 2010-2012 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="iklib-reader-stx"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="iklib-reader-fun.html#iklib-reader-fun">iklib reader fun</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="iklib-reader-chars.html#iklib-reader-chars">iklib reader chars</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="iklib-reader.html#iklib-reader">iklib reader</a>
+<hr>
+</div>
+
+<h4 class="subsection">3.2.4 Miscellaneous additional syntaxes</h4>
+
+<p>The following syntaxes are available only when the input port mode is
+set to <code>vicare</code>.
+
+<div class="defun">
+&mdash; Reader Syntax: <b>|</b><var>symbol</var><b>|</b><var><a name="index-g_t_007c_0040var_007bsymbol_007d_007c-64"></a></var><br>
+<blockquote><p>The vertical bars can be used to specify symbols whose name do not
+comply with the <acronym>R6RS</acronym> specifications; this syntax is available only
+when the port mode is <code>#!vicare</code>.  Examples:
+
+     <pre class="example">          (define port (open-string-input-port "|123|"))
+          (set-port-mode! port 'vicare)
+          (define sym (read port))
+          
+          (symbol? sym)           &rArr; #t
+          (symbol-&gt;string sym)    &rArr; "123"
+</pre>
+        <p class="noindent">backslash sequences are allowed in bar symbols:
+
+     <pre class="example">          (define port (open-string-input-port "|123-\x41;\x42;\x43;|"))
+          (set-port-mode! port 'vicare)
+          (define sym (read port))
+          
+          (symbol? sym)           &rArr; #t
+          (symbol-&gt;string sym)    &rArr; "123-\x41;\x42;\x43;"
+</pre>
+        <p class="noindent">notice that the sequence of characters <code>|ciao|hello|</code> is split into
+<code>ciao</code>, <code>hello</code>, <code>|</code> and the ending vertical bar would
+cause an error if read:
+
+     <pre class="example">          (define port (open-string-input-port "|ciao|hello|"))
+          (set-port-mode! port 'vicare)
+          
+          (read port)             &rArr; ciao
+          (read port)             &rArr; hello
+          (port-eof? port)        &rArr; #f
+          (get-char port)         &rArr; #\|
+          (port-eof? port)        &rArr; #t
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Reader Syntax: <b>#!eof</b><var><a name="index-g_t_0023_0021eof-65"></a></var><br>
+<blockquote><p>The end&ndash;of&ndash;file marker, <code>#!eof</code>, is an extension to the <acronym>R6RS</acronym>
+syntax.  The primary utility of the <code>#!eof</code> marker is to stop the
+reader (e.g. <code>read</code> and <code>get-datum</code>) from reading the rest of
+the file.
+
+     <pre class="example">          (import (ikarus))
+          &lt;some code&gt;
+          (display "goodbye\n")
+          
+          #!eof
+          &lt;some junk&gt;
+</pre>
+        <p>The <code>#!eof</code> marker also serves as a datum in Vicare, much
+like <code>#t</code> and <code>#f</code>, when it is found inside other expressions.
+
+     <pre class="example">          &gt; (eof-object)
+          #!eof
+          &gt; (read (open-input-string ""))
+          #!eof
+          &gt; (read (open-input-string "#!eof"))
+          #!eof
+          &gt; (quote #!eof)
+          #!eof
+          &gt; (eof-object? '#!eof)
+          #t
+          &gt; #!r6rs #!eof
+          Unhandled exception
+          Condition components:
+            1. &amp;error
+            2. &amp;who: tokenize
+            3. &amp;message: "invalid syntax: #!e"
+          &gt; #!vicare #!eof
+          $
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Reader Syntax: <b>#ci</b><var> form<a name="index-g_t_0023ci-66"></a></var><br>
+&mdash; Reader Syntax: <b>#cs</b><var> form<a name="index-g_t_0023cs-67"></a></var><br>
+<blockquote><p>Switch between case sensitive and case insensitive identifiers; the
+default for <acronym>R6RS</acronym> source code is case sensitive.  When <code>#ci</code> is
+read: the next form read has case insensitive identifiers.  When
+<code>#cs</code> is read: the next form read has case sensitive identifiers.
+
+     <pre class="example">          #ci(1 2 3)              &rArr; (1 2 3)
+          #cs(1 2 3)              &rArr; (1 2 3)
+          
+          #ci(1 A 3)              &rArr; (1 a 3)
+          #cs(1 A 3)              &rArr; (1 A 3)
+          
+          #ci CIAO #cs CIAO       &rArr; ciao CIAO
+          #ci CIAO CIAO           &rArr; ciao CIAO
+          
+          #ci(A #csB C)           &rArr; (a B c)
+          #ci(A #cs B C)          &rArr; (a B c)
+</pre>
+        </blockquote></div>
+
+<!-- page -->
+   </body></html>
+

@@ -1,0 +1,188 @@
+<html lang="en">
+<head>
+<title>using libraries searching - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="using-libraries.html#using-libraries" title="using libraries">
+<link rel="prev" href="using-libraries-intro.html#using-libraries-intro" title="using libraries intro">
+<link rel="next" href="using-libraries-summary.html#using-libraries-summary" title="using libraries summary">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d9 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The Vicarus Scheme package is distributed under the terms of the GNU
+General Public License (GPL) and can be downloaded from:
+
+            `http://github.com/marcomaggi/vicare/downloads'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+Copyright (C) 2010-2012 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="using-libraries-searching"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="using-libraries-summary.html#using-libraries-summary">using libraries summary</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="using-libraries-intro.html#using-libraries-intro">using libraries intro</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="using-libraries.html#using-libraries">using libraries</a>
+<hr>
+</div>
+
+<h4 class="subsection">2.4.2 How Vicare finds libraries</h4>
+
+<p><a name="index-library_002dpath-14"></a>
+
+   <p>In Vicare, a library is a file with the same name as the last
+component of the library name.  For example, the library
+<code>(sample)</code> will correspond to a file named <samp><span class="file">sample.sls</span></samp>
+somewhere in the file system.  The file extension <code>.sls</code> stands for
+&ldquo;Scheme library source&rdquo;; although Vicare will also accept the
+extensions <code>.ss</code> and <code>.scm</code> when the command line option
+<samp><span class="option">--more-file-extensions</span></samp> is used, these really indicate scripts
+rather than libraries.
+
+   <p>Vicare has a search algorithm for libraries that is similar to
+those used in other languages.  Vicare's search path comprises
+a series of directories; when we try to import a library whose name
+contains just one component, Vicare will examine each directory
+in the search path for a file with a matching name.  Importing a library
+whose name is a list of components causes Vicare to match to a
+series of subdirectories with matching names.
+
+   <p>Here is an example of each case:
+
+     <ul>
+<li>Importing <code>(sample)</code> causes Vicare to look in each
+directory on the path for a file named <samp><span class="file">sample.sls</span></samp>.
+
+     <li>Importing <code>(yoyodyne sample)</code> causes Vicare to look in
+each directory on the path for a directory named <samp><span class="file">yoyodyne</span></samp>, and
+within that a file named <samp><span class="file">sample.sls</span></samp>.  The <code>library</code> form for
+this library must still specify the library name as <code>(yoyodyne
+sample)</code>, not <code>(sample)</code>. 
+</ul>
+
+   <p><a name="index-g_t_0040env_007bVICARE_005fLIBRARY_005fPATH_007d-15"></a>Vicare's own Scheme libraries are installed in the directory
+<code>$(libdir)/scheme</code>, for example on <acronym>GNU</acronym>+Linux systems
+<samp><span class="file">/usr/local/lib/scheme</span></samp>, and are under the <code>(vicare
+---)</code> hierarchy.  Additional libraries, and the boot image, are
+installed in the directory <code>$(libdir)/vicare</code>.  User libraries that
+are meant to be usable by Vicare should be installed in the
+<code>$(libdir)/scheme</code> directory.
+
+   <p>Vicare always places its own library directories at the end of
+the search path, so, as example, the default value of the search path on
+<acronym>GNU</acronym>+Linux systems has the following directories:
+
+<pre class="example">     /usr/local/lib/scheme
+     /usr/local/lib/vicare
+</pre>
+   <p class="noindent">other library directories can be added to the search path in two ways:
+by modifying an environment variable, or by setting Vicare's
+<code>library-path</code> parameter.  Vicare consults the environment
+variable <samp><span class="env">VICARE_LIBRARY_PATH</span></samp> at the beginning of execution, and
+places each of the directories there into its search path.  The search
+path is then set to the value of the parameter <code>library-path</code>,
+which can be updated as necessary.
+
+   <p>In the following example session: the user sets
+<samp><span class="env">VICARE_LIBRARY_PATH</span></samp>; the settings are reflected in the value of
+<code>(library-path)</code>; a further directory is then set during the
+session:
+
+<pre class="example">     $ export VICARE_LIBRARY_PATH=$HOME/scheme:/tmp/library
+     $ echo $VICARE_LIBRARY_PATH
+     /home/marco/scheme:/tmp/library
+     $ vicare
+     ...
+     
+     &gt; (library-path)
+     ("/home/marco/scheme"
+      "/tmp/library"
+      "/usr/local/lib/scheme"
+      "/usr/local/lib/vicare")
+     &gt; (library-path (cons "/opt/sw/extra-libraries" (library-path)))
+     &gt; (library-path)
+     ("/opt/sw/extra-libraries"
+      "/home/marco/scheme"
+      "/tmp/library"
+      "/usr/local/lib/scheme"
+      "/usr/local/lib/vicare")
+</pre>
+   <p>In programs intended to be distributed, you should resist the urge to
+set <code>(library-path)</code>, as the user's file hierarchies might not
+match yours.  For most libraries, simply telling the user to install the
+library in one of the libraries on the search path is good enough.
+
+   <p>There are two refinements of the library search algorithm, which are
+performed when the <samp><span class="option">--more-file-extensions</span></samp> command line option
+is used.
+
+     <ul>
+<li>A common pattern is to distribute a main library along with a number of
+additional extensions: we might have a main library named <code>(lib)</code>,
+and additional optional extensions named <code>(lib extras)</code> and
+<code>(lib frills)</code>.
+
+     <p>Although the previous packaging method can be used, Vicare
+allows you to use a simpler technique where the main library is stored
+in <samp><span class="file">lib/main.sls</span></samp>, and the extensions are stored in
+<samp><span class="file">lib/extras.sls</span></samp> and <samp><span class="file">lib/frills.sls</span></samp>, respectively.
+
+     <li>Vicare will also look in <samp><span class="file">lib/main.vicare.sls</span></samp> before
+trying <samp><span class="file">lib/main.sls</span></samp>.  This allows you to provide a
+Vicare&ndash;specific implementation as well as a generic
+implementation. 
+</ul>
+
+<!-- page -->
+   </body></html>
+

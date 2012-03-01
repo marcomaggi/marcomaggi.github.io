@@ -1,0 +1,280 @@
+<html lang="en">
+<head>
+<title>iklib cstrings - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="iklib.html#iklib" title="iklib">
+<link rel="prev" href="iklib-memory.html#iklib-memory" title="iklib memory">
+<link rel="next" href="iklib-errno.html#iklib-errno" title="iklib errno">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d9 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The Vicarus Scheme package is distributed under the terms of the GNU
+General Public License (GPL) and can be downloaded from:
+
+            `http://github.com/marcomaggi/vicare/downloads'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+Copyright (C) 2010-2012 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="iklib-cstrings"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="iklib-errno.html#iklib-errno">iklib errno</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="iklib-memory.html#iklib-memory">iklib memory</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="iklib.html#iklib">iklib</a>
+<hr>
+</div>
+
+<h3 class="section">3.26 Raw C strings</h3>
+
+<p>The following functions perform operations on raw <acronym>ASCII</acronym> coded strings
+terminated by a zero byte, for short <acronym>ASCIIZ</acronym> strings.  The following
+bindings are exported by the libraries <code>(vicare)</code>,
+<code>(ikarus)</code> and <code>(ikarus system $foreign)</code> and reexported by
+the library <code>(vicare ffi)</code>.
+
+<div class="defun">
+&mdash; Function: <b>bytevector-&gt;cstring</b><var> bv<a name="index-bytevector_002d_003ecstring-427"></a></var><br>
+&mdash; Function: <b>bytevector-&gt;guarded-cstring</b><var> bv<a name="index-bytevector_002d_003eguarded_002dcstring-428"></a></var><br>
+<blockquote><p>Convert from a Scheme bytevector to an <acronym>ASCIIZ</acronym> string.  If successful
+return a pointer object referencing the string, else return <code>#f</code>.
+
+        <p>Memory allocated by <code>bytevector-&gt;cstring</code> must be explicitly
+released by <code>free</code>; memory allocated by
+<code>bytevector-&gt;guarded-cstring</code> is automatically released by the
+garbage collector whenever the returned pointer is garbage collected. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>bytevector-&gt;cstring*</b><var> bv<a name="index-bytevector_002d_003ecstring_002a-429"></a></var><br>
+&mdash; Function: <b>bytevector-&gt;guarded-cstring*</b><var> bv<a name="index-bytevector_002d_003eguarded_002dcstring_002a-430"></a></var><br>
+<blockquote><p>Like <code>bytevector-&gt;cstring*</code> and <code>bytevector-&gt;guarded-cstring</code>,
+but if allocation fails raise a non&ndash;continuable exception with
+components: <code>&amp;who</code>, <code>&amp;message</code>,
+<code>&amp;out-of-memory-error</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>cstring-&gt;bytevector</b><var> pointer<a name="index-cstring_002d_003ebytevector-431"></a></var><br>
+&mdash; Function: <b>cstring-&gt;bytevector</b><var> pointer count<a name="index-cstring_002d_003ebytevector-432"></a></var><br>
+<blockquote><p>Convert between an <acronym>ASCIIZ</acronym> string and a Scheme bytevector.  When used,
+<var>count</var> must be a fixnum representing the number of bytes to include
+in the bytevector. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>string-&gt;cstring</b><var> str<a name="index-string_002d_003ecstring-433"></a></var><br>
+&mdash; Function: <b>string-&gt;guarded-cstring</b><var> str<a name="index-string_002d_003eguarded_002dcstring-434"></a></var><br>
+<blockquote><p>Convert from a Scheme string to an <acronym>ASCIIZ</acronym> string.  If successful
+return a pointer object referencing the string, else return <code>#f</code>.
+
+        <p>The string argument must contain only characters with Unicode code
+points in the range [0, 255].
+
+        <p>Memory allocated by <code>string-&gt;cstring</code> must be explicitly
+released by <code>free</code>; memory allocated by
+<code>string-&gt;guarded-cstring</code> is automatically released by the
+garbage collector whenever the returned pointer is garbage collected. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>string-&gt;cstring*</b><var> str<a name="index-string_002d_003ecstring_002a-435"></a></var><br>
+&mdash; Function: <b>string-&gt;guarded-cstring*</b><var> str<a name="index-string_002d_003eguarded_002dcstring_002a-436"></a></var><br>
+<blockquote><p>Like <code>string-&gt;cstring</code> and <code>string-&gt;guarded-cstring</code>, but if
+allocation fails raise a non&ndash;continuable exception with components:
+<code>&amp;who</code>, <code>&amp;message</code>, <code>&amp;out-of-memory-error</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>cstring-&gt;string</b><var> pointer<a name="index-cstring_002d_003estring-437"></a></var><br>
+&mdash; Function: <b>cstring-&gt;string</b><var> pointer count<a name="index-cstring_002d_003estring-438"></a></var><br>
+<blockquote><p>Convert between an <acronym>ASCIIZ</acronym> string and a Scheme string.  When used,
+<var>count</var> must be a fixnum representing the number of bytes to include
+in the string. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>strlen</b><var> pointer<a name="index-strlen-439"></a></var><br>
+<blockquote><p>Interface to the C function <code>strlen()</code>, <a href="../libc/String-Length.html#String-Length">strlen</a>.  Return an exact integer representing the length of the
+<acronym>ASCIIZ</acronym> string referenced by <var>pointer</var>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>strcmp</b><var> pointer1 pointer2<a name="index-strcmp-440"></a></var><br>
+<blockquote><p>Interface to the C function <code>strcmp()</code>, <a href="../libc/String_002fArray-Comparison.html#String_002fArray-Comparison">strcmp</a>.  Return a fixnum representing the classic
+comparison ternary result of comparing the <acronym>ASCIIZ</acronym> strings referenced
+by <var>pointer1</var> and <var>pointer2</var>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>strncmp</b><var> pointer1 pointer2 count<a name="index-strncmp-441"></a></var><br>
+<blockquote><p>Interface to the C function <code>strncmp()</code>, <a href="../libc/String_002fArray-Comparison.html#String_002fArray-Comparison">strncmp</a>.  Return a fixnum representing the classic
+comparison ternary result of comparing the first <var>count</var> bytes in
+the <acronym>ASCIIZ</acronym> strings referenced by <var>pointer1</var> and <var>pointer2</var>. 
+<var>count</var> must be a fixnum. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>strdup</b><var> pointer<a name="index-strdup-442"></a></var><br>
+&mdash; Function: <b>guarded-strdup</b><var> pointer<a name="index-guarded_002dstrdup-443"></a></var><br>
+<blockquote><p>Interface to the C function <code>strdup()</code>, <a href="../libc/Copying-and-Concatenation.html#Copying-and-Concatenation">strdup</a>.  Duplicate the <acronym>ASCIIZ</acronym> string referenced by
+<var>pointer</var>; if successful return a new pointer object, else return
+<code>#f</code>.
+
+        <p>Memory allocated by <code>strdup</code> must be explicitly released by
+<code>free</code>; memory allocated by <code>guarded-strdup</code> is automatically
+released by the garbage collector whenever the returned pointer is
+garbage collected. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>strdup*</b><var> pointer<a name="index-strdup_002a-444"></a></var><br>
+&mdash; Function: <b>guarded-strdup*</b><var> pointer<a name="index-guarded_002dstrdup_002a-445"></a></var><br>
+<blockquote><p>Like <code>strdup</code> and <code>guarded-strdup</code>, but if allocation fails
+raise a non&ndash;continuable exception with components: <code>&amp;who</code>,
+<code>&amp;message</code>, <code>&amp;out-of-memory-error</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>strndup</b><var> pointer count<a name="index-strndup-446"></a></var><br>
+&mdash; Function: <b>guarded-strndup</b><var> pointer count<a name="index-guarded_002dstrndup-447"></a></var><br>
+<blockquote><p>Interface to the C function <code>strndup()</code>, <a href="../libc/Copying-and-Concatenation.html#Copying-and-Concatenation">strndup</a>.  Duplicate the first <var>count</var> bytes in the
+<acronym>ASCIIZ</acronym> string referenced by <var>pointer</var>; if successful return a new
+pointer object, else return <code>#f</code>.  <var>count</var> must be a fixnum.
+
+        <p>Memory allocated by <code>strdup</code> must be explicitly released by
+<code>free</code>; memory allocated by <code>guarded-strdup</code> is automatically
+released by the garbage collector whenever the returned pointer is
+garbage collected. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>strndup*</b><var> pointer<a name="index-strndup_002a-448"></a></var><br>
+&mdash; Function: <b>guarded-strndup*</b><var> pointer<a name="index-guarded_002dstrndup_002a-449"></a></var><br>
+<blockquote><p>Like <code>strndup</code> and <code>guarded-strndup</code>, but if allocation fails
+raise a non&ndash;continuable exception with components: <code>&amp;who</code>,
+<code>&amp;message</code>, <code>&amp;out-of-memory-error</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>bytevectors-&gt;argv</b><var> list-of-bytevectors<a name="index-bytevectors_002d_003eargv-450"></a></var><br>
+&mdash; Function: <b>bytevectors-&gt;guarded-argv</b><var> list-of-bytevectors<a name="index-bytevectors_002d_003eguarded_002dargv-451"></a></var><br>
+<blockquote><p>Given a list of bytevectors: convert them into <acronym>ASCIIZ</acronym> strings and
+build a <code>NULL</code> terminated array of C pointers referencing the strings. 
+Return a pointer to the array.  The strings and the array are stored in
+a single memory block.
+
+        <p>Memory allocated by <code>bytevectors-&gt;argv</code> must be explicitly released
+by <code>free</code>; memory allocated by <code>bytevectors-&gt;guarded-argv</code> is
+automatically released by the garbage collector whenever the returned
+pointer is garbage collected. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>bytevectors-&gt;argv*</b><var> list-of-bytevectors<a name="index-bytevectors_002d_003eargv_002a-452"></a></var><br>
+&mdash; Function: <b>bytevectors-&gt;guarded-argv*</b><var> list-of-bytevectors<a name="index-bytevectors_002d_003eguarded_002dargv_002a-453"></a></var><br>
+<blockquote><p>Like <code>bytevectors-&gt;argv*</code> and <code>bytevectors-&gt;guarded-argv*</code>,
+but if allocation fails raise a non&ndash;continuable exception with
+components: <code>&amp;who</code>, <code>&amp;message</code>,
+<code>&amp;out-of-memory-error</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>argv-&gt;bytevectors</b><var> pointer<a name="index-argv_002d_003ebytevectors-454"></a></var><br>
+<blockquote><p>Given a pointer to a <code>NULL</code> terminated array of C pointers referencing
+<acronym>ASCIIZ</acronym> strings: build and return a list of bytevectors holding the
+same bytes of the strings. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>strings-&gt;argv</b><var> list-of-strings<a name="index-strings_002d_003eargv-455"></a></var><br>
+&mdash; Function: <b>strings-&gt;guarded-argv</b><var> list-of-strings<a name="index-strings_002d_003eguarded_002dargv-456"></a></var><br>
+<blockquote><p>Given a list of Scheme strings: convert them into <acronym>ASCIIZ</acronym> strings and
+build a <code>NULL</code> terminated array of C pointers referencing the strings. 
+Return a pointer to the array.  The strings and the array are stored in
+a single memory block.
+
+        <p>The string arguments must contain only characters with Unicode code
+points in the range [0, 255].
+
+        <p>Memory allocated by <code>strings-&gt;argv</code> must be explicitly released
+by <code>free</code>; memory allocated by <code>strings-&gt;guarded-argv</code> is
+automatically released by the garbage collector whenever the returned
+pointer is garbage collected. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>strings-&gt;argv*</b><var> list-of-strings<a name="index-strings_002d_003eargv_002a-457"></a></var><br>
+&mdash; Function: <b>strings-&gt;guarded-argv*</b><var> list-of-strings<a name="index-strings_002d_003eguarded_002dargv_002a-458"></a></var><br>
+<blockquote><p>Like <code>strings-&gt;argv</code> and <code>strings-&gt;guarded-argv</code>, but if
+allocation fails raise a non&ndash;continuable exception with components:
+<code>&amp;who</code>, <code>&amp;message</code>, <code>&amp;out-of-memory-error</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>argv-&gt;strings</b><var> pointer<a name="index-argv_002d_003estrings-459"></a></var><br>
+<blockquote><p>Given a pointer to a <code>NULL</code> terminated array of C pointers referencing
+<acronym>ASCIIZ</acronym> strings: build and return a list of strings holding the same
+bytes of the strings. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>argv-length</b><var> argv<a name="index-argv_002dlength-460"></a></var><br>
+<blockquote><p>Return the number of strings in the <code>NULL</code>&ndash;terminated array of
+strings referenced by the <var>argv</var> pointer. 
+</p></blockquote></div>
+
+<!-- page -->
+   </body></html>
+

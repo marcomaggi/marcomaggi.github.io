@@ -1,0 +1,149 @@
+<html lang="en">
+<head>
+<title>objects symbols - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="objects.html#objects" title="objects">
+<link rel="prev" href="objects-strings.html#objects-strings" title="objects strings">
+<link rel="next" href="objects-bignums.html#objects-bignums" title="objects bignums">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d9 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The Vicarus Scheme package is distributed under the terms of the GNU
+General Public License (GPL) and can be downloaded from:
+
+            `http://github.com/marcomaggi/vicare/downloads'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+Copyright (C) 2010-2012 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="objects-symbols"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="objects-bignums.html#objects-bignums">objects bignums</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="objects-strings.html#objects-strings">objects strings</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="objects.html#objects">objects</a>
+<hr>
+</div>
+
+<h3 class="section">11.10 Symbol objects</h3>
+
+<p>A symbol is a fixed length memory block referenced by machine words
+tagged as vectors.  The first machine word of a symbol block is tagged
+has symbol in its least significant bits and it has the most significant
+bits set to zero.
+
+<pre class="example">     |------------------------|-------------| reference to symbol
+           heap pointer         vector tag
+     
+     |------------------------|-------------| symbol first word
+        all set to zero         symbol tag
+</pre>
+   <p>A symbol memory block is 6 words wide and contains references to
+the following fields: <code>string</code>, <code>ustring</code>, <code>value</code>,
+<code>proc</code>, <code>plist</code>.
+
+<!--  -->
+<h5 class="subsubheading">Basic operations</h5>
+
+<p>Symbol objects are allocated on the heap and must be interned, that is
+registered in a global symbol table.
+
+<div class="defun">
+&mdash; Preprocessor Symbol: <b>symbol_mask</b><var><a name="index-symbol_005fmask-1583"></a></var><br>
+&mdash; Preprocessor Symbol: <b>symbol_tag</b><var><a name="index-symbol_005ftag-1584"></a></var><br>
+<blockquote><p>Integer values used to tag and recognise the first word in symbol memory
+blocks.  <code>symbol_mask</code> isolates the tag bits from an <code>ikptr</code> and
+<code>symbol_tag</code> represents the tag bits. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Preprocessor Symbol: <b>symbol_record_size</b><var><a name="index-symbol_005frecord_005fsize-1585"></a></var><br>
+<blockquote><p>Number of bytes needed to hold a symbol memory block. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Preprocessor Symbol: <b>disp_symbol_record_tag</b><var><a name="index-disp_005fsymbol_005frecord_005ftag-1586"></a></var><br>
+&mdash; Preprocessor Symbol: <b>disp_symbol_record_string</b><var><a name="index-disp_005fsymbol_005frecord_005fstring-1587"></a></var><br>
+&mdash; Preprocessor Symbol: <b>disp_symbol_record_ustring</b><var><a name="index-disp_005fsymbol_005frecord_005fustring-1588"></a></var><br>
+&mdash; Preprocessor Symbol: <b>disp_symbol_record_value</b><var><a name="index-disp_005fsymbol_005frecord_005fvalue-1589"></a></var><br>
+&mdash; Preprocessor Symbol: <b>disp_symbol_record_proc</b><var><a name="index-disp_005fsymbol_005frecord_005fproc-1590"></a></var><br>
+&mdash; Preprocessor Symbol: <b>disp_symbol_record_plist</b><var><a name="index-disp_005fsymbol_005frecord_005fplist-1591"></a></var><br>
+<blockquote><p>Symbol field displacements.  The number of bytes to add to an untagged
+pointer to symbol to get the pointer to the first byte in the word
+holding the specified field. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Preprocessor Symbol: <b>off_symbol_record_tag</b><var><a name="index-off_005fsymbol_005frecord_005ftag-1592"></a></var><br>
+&mdash; Preprocessor Symbol: <b>off_symbol_record_string</b><var><a name="index-off_005fsymbol_005frecord_005fstring-1593"></a></var><br>
+&mdash; Preprocessor Symbol: <b>off_symbol_record_ustring</b><var><a name="index-off_005fsymbol_005frecord_005fustring-1594"></a></var><br>
+&mdash; Preprocessor Symbol: <b>off_symbol_record_value</b><var><a name="index-off_005fsymbol_005frecord_005fvalue-1595"></a></var><br>
+&mdash; Preprocessor Symbol: <b>off_symbol_record_proc</b><var><a name="index-off_005fsymbol_005frecord_005fproc-1596"></a></var><br>
+&mdash; Preprocessor Symbol: <b>off_symbol_record_plist</b><var><a name="index-off_005fsymbol_005frecord_005fplist-1597"></a></var><br>
+<blockquote><p>Symbol field offsets.  The number of bytes to add to an tagged pointer
+to symbol to get the pointer to the first byte in the word holding the
+specified field. 
+</p></blockquote></div>
+
+<!--  -->
+<h5 class="subsubheading">Operations on symbols</h5>
+
+<div class="defun">
+&mdash; Function: int <b>ik_is_symbol</b> (<var>ikptr obj</var>)<var><a name="index-ik_005fis_005fsymbol-1598"></a></var><br>
+<blockquote><p>Return true if <var>obj</var> is a symbol. 
+</p></blockquote></div>
+
+<!-- page -->
+   </body></html>
+

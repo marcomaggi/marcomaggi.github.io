@@ -1,0 +1,127 @@
+<html lang="en">
+<head>
+<title>fasl foreign - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="fasl.html#fasl" title="fasl">
+<link rel="prev" href="fasl-api.html#fasl-api" title="fasl api">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d9 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The Vicarus Scheme package is distributed under the terms of the GNU
+General Public License (GPL) and can be downloaded from:
+
+            `http://github.com/marcomaggi/vicare/downloads'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+Copyright (C) 2010-2012 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="fasl-foreign"></a>
+<p>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="fasl-api.html#fasl-api">fasl api</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="fasl.html#fasl">fasl</a>
+<hr>
+</div>
+
+<h3 class="appendixsec">E.3 Associating foreign libraries to <acronym>FASL</acronym> files</h3>
+
+<p><a name="index-g_t_0040func_007bforeign_002dcall_007d-1721"></a>
+
+   <p>The macro <code>foreign-call</code>, exported by the libraries
+<code>(ikarus)</code> and <code>(vicare)</code>, is expanded to compiled code
+which invokes a C function from the process image; the first argument to
+<code>foreign-call</code> is a string naming the C function.  Whenever the
+code is compiled, the C pointer to the named function is retrieved with
+a call to:
+
+<pre class="example">     dlsym(RTLD_DEFAULT, function_name);
+</pre>
+   <p class="noindent">so all the public functions from the running <samp><span class="command">vicare</span></samp> executable
+are available and also all the functions from host's shared libraries
+loaded with <code>dlopen()</code> using the flags <code>RTLD_NOW |
+RTLD_GLOBAL</code>.
+
+   <p>It is possible to associate one or more host's shared libraries to a
+<acronym>FASL</acronym> file, so that: whenever the <acronym>FASL</acronym> file is loaded, the shared
+library is loaded too and the functions required by <code>foreign-call</code>
+are available.  This is especially useful to implement bindings to
+foreign libraries without relying on the <acronym>FFI</acronym> and making full use of
+garbage collection facilities and access to Scheme values' memory
+representations.
+
+   <blockquote>
+<strong>NOTE</strong> The mechanism described below is a temporary
+implementation which may change in the future. 
+</blockquote>
+
+   <p>Whenever Vicare's source code reader, in <code>#!vicare</code> mode,
+finds a form like:
+
+<pre class="example">     #!(load-shared-library "vicarecre2")
+</pre>
+   <p class="noindent">it handles it as a special comment which causes no code to be expanded
+nor compiled.  Rather a foreign shared library whose identifier is
+<code>vicarecre2</code> is immediately loaded.
+
+   <p>If the library file containing such special comment is compiled to a
+<acronym>FASL</acronym> file, an object field with header <code>O</code> is written to the
+<strong>beginning</strong> of the <acronym>FASL</acronym> file: such object will cause the
+foreign library to be loaded whenever the <acronym>FASL</acronym> file is loaded.
+
+   <p>On Unix&ndash;like systems: the library identifier is prefixed with
+<code>lib</code> and suffixed with <code>.so</code> to compose a library file name.
+
+<!-- page -->
+   </body></html>
+

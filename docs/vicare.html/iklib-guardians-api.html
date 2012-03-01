@@ -1,0 +1,141 @@
+<html lang="en">
+<head>
+<title>iklib guardians api - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="iklib-guardians.html#iklib-guardians" title="iklib guardians">
+<link rel="prev" href="iklib-guardians-examples.html#iklib-guardians-examples" title="iklib guardians examples">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d9 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The Vicarus Scheme package is distributed under the terms of the GNU
+General Public License (GPL) and can be downloaded from:
+
+            `http://github.com/marcomaggi/vicare/downloads'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+Copyright (C) 2010-2012 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="iklib-guardians-api"></a>
+<p>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="iklib-guardians-examples.html#iklib-guardians-examples">iklib guardians examples</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="iklib-guardians.html#iklib-guardians">iklib guardians</a>
+<hr>
+</div>
+
+<h4 class="subsection">3.22.2 Guardians programming interface</h4>
+
+<div class="defun">
+&mdash; Function: <b>make-guardian</b><var><a name="index-make_002dguardian-272"></a></var><br>
+<blockquote><p>Build and return a new guardian object: a closure that can be called
+with one or zero arguments, and that is interfaced with the garbage
+collector of Vicare in a non&ndash;portable way.
+
+        <p>The guardian work like this:
+
+          <ul>
+<li>When the closure is called with one argument: it adds the argument to an
+internal set of &ldquo;guarded values&rdquo;, accessible to the garbage collector;
+the return value if the argument itself.
+
+          <li>When the garbage collector detects no other references to a value in the
+set of guarded values: the guardian removes it from the set and appends
+it to an internal queue (<acronym>FIFO</acronym>).
+
+          <li>When the closure is called with zero arguments: it removes the first
+value from the internal queue and returns it; if no values are in the
+queue it returns <code>#f</code>. 
+</ul>
+
+        <p>After an object has been returned by the guardian, it is no more
+&ldquo;guarded&rdquo; so it will be garbage collected when it will become
+inaccessible (unless it is again registered in a guardian).
+
+        <blockquote>
+<strong>NOTE</strong> It is possible to register an object in more than one
+guardian; when the object is found inaccessible all the guardian
+closures that have it will return it to the caller.  This may lead to
+invalid finalisation operations, it is the responsibility of the
+programmer to avoid this. 
+</blockquote>
+
+        <blockquote>
+<strong>NOTE</strong> It is possible to register an object multiple times in the
+same guardian; when the object is found inaccessible the guardian
+closure that has it will return it to the caller multiple times.  This
+may lead to invalid finalisation operations, it is the responsibility of
+the programmer to avoid this. 
+</blockquote>
+        </p></blockquote></div>
+
+<div class="defun">
+&mdash; Parameter: <b>post-gc-hooks</b><var><a name="index-post_002dgc_002dhooks-273"></a></var><br>
+<blockquote><p>Hold a list of thunks evaluated after each garbage collection run.  It
+can be used to run a guardian cleanup function like this (using the
+example in the previous section):
+
+     <pre class="example">          (define (run-block-guardian)
+            (do ((p (block-guardian) (block-guardian)))
+                ((not p))
+              (free p)))
+          
+          (post-gc-hooks
+           (cons run-block-guardian
+            (post-gc-hooks)))
+</pre>
+        </blockquote></div>
+
+<!-- page -->
+   </body></html>
+

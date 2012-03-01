@@ -1,0 +1,204 @@
+<html lang="en">
+<head>
+<title>objects chars - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="objects.html#objects" title="objects">
+<link rel="prev" href="objects-structs.html#objects-structs" title="objects structs">
+<link rel="next" href="objects-strings.html#objects-strings" title="objects strings">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d9 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The Vicarus Scheme package is distributed under the terms of the GNU
+General Public License (GPL) and can be downloaded from:
+
+            `http://github.com/marcomaggi/vicare/downloads'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+Copyright (C) 2010-2012 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="objects-chars"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="objects-strings.html#objects-strings">objects strings</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="objects-structs.html#objects-structs">objects structs</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="objects.html#objects">objects</a>
+<hr>
+</div>
+
+<h3 class="section">11.8 Character objects</h3>
+
+<p>A Scheme character has two representations:
+
+     <ul>
+<li>As a standalone Scheme object, it is a machine word whose least
+significant bits are set to the character tag and whose most significant
+bits are set to the character's Unicode code point.
+
+     <li>When embedded in a Scheme string, it is a 32-bit value whose least
+significant bits are set to the character tag and whose most significant
+bits are set to the character's Unicode code point. 
+</ul>
+
+<p class="noindent">the least significant 32 bits of the two representations are equal. 
+<a href="unicode.html#unicode">unicode</a> for details on Unicode.
+
+   <p>Let's say that machine words are 32-bit values, which means the word
+size is 4 bytes; then the representation of a character is:
+
+<pre class="example">     |    Unicode code point    | char tag
+     
+     |--------|--------|--------|--------|
+       byte3    byte2    byte1    byte0
+</pre>
+   <p class="noindent">the least significant byte is set to <code>#x0F</code>: this &ldquo;tags&rdquo; the
+machine words which embed characters.  On 64-bit machines, the layout
+is:
+
+<pre class="example">             Unused              |Unicode code point  |char tag
+     |...........................|....................|......|
+     
+     |------|------|------|------|------|------|------|------|
+      byte7  byte6  byte5  byte4  byte3  byte2  byte1  byte0
+</pre>
+   <p>At the Scheme level: standalone characters are moved around as <code>ikptr</code>
+values, but when characters are stored in a string the <code>ikptr</code> value is
+converted to a 32-bit integer of type <code>ikchar</code>.
+
+<!--  -->
+<h5 class="subsubheading">Basic operations</h5>
+
+<p>Standalone characters are encoded into <code>ikptr</code> values as follows:
+
+<pre class="example">     unsigned long   unicode_code_point = the_code_point;
+     ikptr           s_char;
+     
+     s_char = (unicode_code_point &lt;&lt; char_shift) | char_tag;
+</pre>
+   <p class="noindent">decoded to <code>unsigned long</code> values as follows:
+
+<pre class="example">     ikptr           s_char = the_character;
+     unsigned long   unicode_code_point;
+     
+     unicode_code_point = s_char &gt;&gt; char_shift;
+</pre>
+   <p class="noindent">and identified as follows:
+
+<pre class="example">     ikptr   X = the_value;
+     
+     if (char_tag == (char_mask &amp; X))
+       it_is_a_character();
+     else
+       it_is_not();
+</pre>
+   <p>Characters from a Scheme string are decoded from <code>ikchar</code> to
+<code>unsigned long</code> as follows:
+
+<pre class="example">     ikchar          ch = the_32bit_character;
+     unsigned long   unicode_code_point;
+     
+     unicode_code_point = s_char &gt;&gt; char_shift;
+</pre>
+   <p class="noindent">and encoded from <code>unsigned long</code> to <code>ikchar</code> as follows:
+
+<pre class="example">     unsigned long   unicode_code_point = the_code_point;
+     ikchar          ch;
+     
+     ch = (ikchar)((unicode_code_point &lt;&lt; char_shift) | char_tag);
+</pre>
+   <div class="defun">
+&mdash; Type Definition: <b>ikchar</b><var><a name="index-ikchar-1563"></a></var><br>
+<blockquote><p>An alias for <code>uint32_t</code> used to store a Unicode code point tagged
+as character. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Preprocessor Symbol: <b>char_mask</b><var><a name="index-char_005fmask-1564"></a></var><br>
+&mdash; Preprocessor Symbol: <b>char_tag</b><var><a name="index-char_005ftag-1565"></a></var><br>
+<blockquote><p>Integer values used to tag and recognise <code>ikptr</code> values representing
+characters.  <code>char_mask</code> isolates the tag bits from an <code>ikptr</code> and
+<code>char_tag</code> represents the tag bits. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Preprocessor Symbol: <b>char_shift</b><var><a name="index-char_005fshift-1566"></a></var><br>
+<blockquote><p>Integer value representing the number of bits we must shift left to turn
+a C language <code>long</code> into a machine word ready to be tagged as
+Scheme character. 
+</p></blockquote></div>
+
+<!--  -->
+<h5 class="subsubheading">Convenience preprocessor macros</h5>
+
+<div class="defun">
+&mdash; Preprocessor Macro: int <b>IK_IS_CHAR</b> (<var>ikptr X</var>)<var><a name="index-IK_005fIS_005fCHAR-1567"></a></var><br>
+<blockquote><p>Evaluate to true if <var>X</var> is a Scheme character. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Preprocessor Macro: ikptr <b>IK_CHAR_FROM_INTEGER</b> (<var>unsigned long X</var>)<var><a name="index-IK_005fCHAR_005fFROM_005fINTEGER-1568"></a></var><br>
+&mdash; Preprocessor Macro: unsigned long <b>IK_CHAR_TO_INTEGER</b> (<var>ikptr X</var>)<var><a name="index-IK_005fCHAR_005fTO_005fINTEGER-1569"></a></var><br>
+<blockquote><p>Convert a Scheme character to and from an <code>unsigned long</code> value
+representing the Unicode code point. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Preprocessor Macro: ikchar <b>IK_CHAR32_FROM_INTEGER</b> (<var>unsigned long X</var>)<var><a name="index-IK_005fCHAR32_005fFROM_005fINTEGER-1570"></a></var><br>
+<blockquote><p>Convert a <code>unsigned long</code> value representing the Unicode code
+point into a 32-bit integer representing a Scheme character to be stored
+into a string. 
+</p></blockquote></div>
+
+<!-- page -->
+   </body></html>
+

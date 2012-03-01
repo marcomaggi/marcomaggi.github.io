@@ -1,0 +1,193 @@
+<html lang="en">
+<head>
+<title>fasl format - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="fasl.html#fasl" title="fasl">
+<link rel="next" href="fasl-api.html#fasl-api" title="fasl api">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d9 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The Vicarus Scheme package is distributed under the terms of the GNU
+General Public License (GPL) and can be downloaded from:
+
+            `http://github.com/marcomaggi/vicare/downloads'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+Copyright (C) 2010-2012 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="fasl-format"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="fasl-api.html#fasl-api">fasl api</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="fasl.html#fasl">fasl</a>
+<hr>
+</div>
+
+<h3 class="appendixsec">E.1 Binary format of a <acronym>FASL</acronym> file</h3>
+
+<p>A <acronym>FASL</acronym> object is a header followed by one or more object fields
+followed by an end&ndash;of&ndash;<acronym>FASL</acronym> marker.  After the end&ndash;of&ndash;<acronym>FASL</acronym>
+marker the file must be at its <acronym>EOF</acronym>.
+
+   <p>The header is the string <code>#@IK0</code>, followed by <code>1</code> if fixnum
+width is 30 bits, else followed by <code>2</code>; the end of fasl
+marker is <code>@</code>.
+
+   <p>If the same object is referenced multiple times in the <acronym>FASL</acronym> file: it
+can be included only once and &ldquo;marked&rdquo; with a fixnum; such mark is
+later dereferenced to insert a reference to the object in the loaded
+code.
+
+   <p>A data word is an exact signed integer of 32-bit or 64-bit depending on
+the word size of the underlying platform.
+
+   <p>An object field is a character in <acronym>ASCII</acronym> encoding, optionally followed
+by data representing the serialisation of a Scheme value:
+
+     <dl>
+<dt>"N"<dd>Denotes the empty list.
+
+     <br><dt>"T"<dd>Denotes <code>#t</code>.
+
+     <br><dt>"F"<dd>Denotes <code>#f</code>.
+
+     <br><dt>"E"<dd>Denotes the end of file object.
+
+     <br><dt>"U"<dd>Denotes the unspecified value (void).
+
+     <br><dt>"I" + word<dd>A fixnum stored as a big endian word.
+
+     <br><dt>"s" + word(N) + octet ...<dd>An <acronym>ASCII</acronym> string of N characters followed by N octets
+representing the characters in <acronym>ASCII</acronym> encoding.  The data word
+N must represent an exact integer in the range of fixnums.
+
+     <br><dt>"S" + word(N) + int32 ...<dd>A Unicode string of N characters followed by N 32-bit
+integers in native order representing the characters as Unicode code
+points.  The data word N must represent an exact integer in the
+range of fixnums.
+
+     <br><dt>"M" + symbol-name<dd>A symbol.  <code>symbol-name</code> is a string field.
+
+     <br><dt>"G" + pretty-name + unique-name<dd>A gensym.  Both <code>pretty-name</code> and <code>unique-name</code> are strings.
+
+     <br><dt>"c" + octet<dd>A character in the <acronym>ASCII</acronym> range (&lt;= 255).
+
+     <br><dt>"C" + int32<dd>A character store as 32-bit integer representing a Unicode code point.
+
+     <br><dt>"P" + object1 + object2<dd>A pair.
+
+     <br><dt>"V" + word(N) + object ...<dd>A vector of length N followed by N object fields.  The
+data word N must represent an exact integer in the range of
+fixnums.
+
+     <br><dt>"v" + word(N) + octet ...<dd>A bytevector of length N followed by N octets.  The data
+word N must represent an exact integer in the range of fixnums.
+
+     <br><dt>"R" + rtd-name + rtd-symbol + field-count + name ...<dd>A struct type descriptor.  <code>rtd-name</code> must be a symbol. 
+<code>rtd-symbol</code> must be a symbol.  <code>field-count</code> must be a word
+in the fixnum range.  The <code>name</code> object fields must be symbols
+representing the field name and there must be <code>field-count</code> of
+them.
+
+     <br><dt>"{" + field-count + rtd + field ...<dd>A structure instance.  <code>field-count</code> must be a word in the fixnum
+range.  <code>rtd</code> must be a struct type descriptor.  The <code>field</code>
+object fields must be the fields of the structure instance and there
+must be <code>field-count</code> of them.
+
+     <br><dt>"r" + denominator + numerator<dd>Ratnum.
+
+     <br><dt>"f" + 8-byte<dd><acronym>IEEE</acronym> double precision flonum.  The bytes are stored: most significant
+first, least significant last.
+
+     <br><dt>"b" + word(N) + octet ...<dd>Denotes a bignum.  <var>N</var> is a signed integer word whose sign is the
+sign of the bignum and whose modulo is the number of octets representing
+the bignum.
+
+     <br><dt>"i" + real-part + imag-part<dd>Complex numbers, both cflonum and compnum.
+
+     <br><dt>"l" + octet(N) + object ...<dd>A list of N &lt;= 255 elements followed by the elements.
+
+     <br><dt>"L" + word(N) + object ...<dd>A list of N &gt; 255 elements followed by the elements.
+
+     <br><dt>"h" + vector + vector<dd><code>eq?</code>  hashtable, first vector keys, second vector values.
+
+     <br><dt>"H" + vector + vector<dd><code>eqv?</code> hashtable, first vector keys, second vector values.
+
+     <br><dt>"W" + name + parent + uid + sealed? + opaque? + count + (bool + field) ...<dd>An <acronym>R6RS</acronym> record type descriptor.  <code>name</code> must be the return
+value of <code>record-type-name</code>.  <code>parent</code> must be the return
+value of <code>record-type-parent</code>.  <code>uid</code> must be the return value
+of <code>record-type-uid</code>.  <code>sealed?</code> must be the return value of
+<code>record-type-sealed?</code>.  <code>opaque?</code> must be the return value of
+<code>record-type-opaque?</code>.  <code>count</code> must be a fixnum representing
+the number of fields.  Each <code>bool + field</code> sequence must be a
+boolean representing the mutability of the record field, followed by
+symbol representing the name of the record field.
+
+     <br><dt>"x"<dd>Denotes code.
+
+     <br><dt>"Q"<dd>Procedure; followed by code.
+
+     <br><dt>"&gt;" + int32(I)<dd>Mark the next object with index I.
+
+     <br><dt>"&lt;" + int32(I)<dd>Dereference the object marked with index I.
+
+     <br><dt>"O" + libid<dd>Foreign library identifier.  <code>libid</code> must be a string representing
+the foreign shared library identifier: on Unix&ndash;like systems it is
+prefixed with <code>lib</code> and suffixed with <code>.so</code> to compose a
+library file name. 
+</dl>
+
+<!-- page -->
+   </body></html>
+

@@ -1,0 +1,158 @@
+<html lang="en">
+<head>
+<title>using script - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="using.html#using" title="using">
+<link rel="prev" href="using-invoking.html#using-invoking" title="using invoking">
+<link rel="next" href="using-libraries.html#using-libraries" title="using libraries">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d9 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The Vicarus Scheme package is distributed under the terms of the GNU
+General Public License (GPL) and can be downloaded from:
+
+            `http://github.com/marcomaggi/vicare/downloads'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+Copyright (C) 2010-2012 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="using-script"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="using-libraries.html#using-libraries">using libraries</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="using-invoking.html#using-invoking">using invoking</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="using.html#using">using</a>
+<hr>
+</div>
+
+<h3 class="section">2.3 Using <samp><span class="command">scheme-script</span></samp></h3>
+
+<p>Scheme scripts can be executed using the following command:
+
+<pre class="example">     vicare <var>PROGRAM</var>
+</pre>
+   <p class="noindent">Vicare Scheme does <strong>not</strong> follow the <acronym>R6RS</acronym> recommendations
+and does not install a wrapper program called <samp><span class="command">scheme-script</span></samp> to
+avoid conflicts with other Scheme implementations.
+
+   <p>Here is a sample script (Pig Latin&mdash;&ldquo;Igpay Atinlay&rdquo;&mdash;is a code that
+was at one time popular among very young North American children).
+
+<pre class="example">     (import (rnrs))
+     
+     ;;; Convert a string to its Pig Latin equivalent.
+     ;;;
+     ;;; If the first character is a vowel, append "yay".
+     ;;; "egg" -&gt; "eggyay"
+     ;;;
+     ;;; If the first character is a consonant, remove it,
+     ;;; and append it plus "ay" to the string.
+     ;;; "foo" -&gt; "oofay"
+     
+     (define pig-latin
+       (lambda (str)
+         (let ((first (string-ref str 0)))
+           (if (memv first '(#\a #\e #\i #\o #\u))
+     	  (string-append str "yay")
+     	  (string-append
+      	    (substring str 1 (string-length str))
+     	    (string first) "ay")))))
+     
+     (display
+      (map pig-latin
+          (cdr (command-line))))
+     (newline)
+</pre>
+   <p>Assuming we have stored the script in the file <samp><span class="file">demo.sps</span></samp>, we can
+invoke this script via <samp><span class="command">vicare</span></samp>:
+
+<pre class="example">     $ vicare --r6rs-script demo.sps ice cream after dinner
+     (iceyay reamcay afteryay innerday)
+</pre>
+   <p>On Unix/Linux systems, scripts generally start with a &ldquo;shebang&rdquo; line
+(<em>sh</em>arp plus <em>bang</em>) which names an interpreter for the
+script.  All modern systems have the <samp><span class="command">env</span></samp> command which
+searches for a command in the user's path.
+
+<pre class="example">     #!/usr/bin/env vicare --r6rs-script
+     (import (rnrs))
+     
+     ...
+</pre>
+   <p>Now we can make the file executable, and use it directly.
+
+<pre class="example">     $ chmod +x demo.sps
+     $ ./demo.sps ice cream after dinner
+     (iceyay reamcay afteryay innerday)
+</pre>
+   <p>There are a few fine points.
+
+     <ul>
+<li>If the first two bytes of a script represent the sequence &lsquo;<samp><span class="samp">#!</span></samp>&rsquo; in
+<acronym>ASCII</acronym> encoding: the first line is discarded and not parsed as Scheme
+code.  This allows scripts on Unix systems to start with the command
+line needed to use them; notice that this will discard valid sharp&ndash;bang
+comments (like <code>#!r6rs</code>) if the are at the very beginning of a
+file.
+
+     <li>Under Mac OS X, if a script name ends with the <code>.command</code>
+extension, then it can be executed from the Finder by double&ndash;clicking
+on it.  This brings up a terminal window in which the script is
+executed.  The <code>.command</code> extension can be hidden from the
+<em>Get Info</em> item from the Finder's File menu. 
+</ul>
+
+<!-- page -->
+   </body></html>
+

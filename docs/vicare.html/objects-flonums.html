@@ -1,0 +1,211 @@
+<html lang="en">
+<head>
+<title>objects flonums - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="objects.html#objects" title="objects">
+<link rel="prev" href="objects-ratnums.html#objects-ratnums" title="objects ratnums">
+<link rel="next" href="objects-compnums.html#objects-compnums" title="objects compnums">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d9 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The Vicarus Scheme package is distributed under the terms of the GNU
+General Public License (GPL) and can be downloaded from:
+
+            `http://github.com/marcomaggi/vicare/downloads'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+Copyright (C) 2010-2012 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="objects-flonums"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="objects-compnums.html#objects-compnums">objects compnums</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="objects-ratnums.html#objects-ratnums">objects ratnums</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="objects.html#objects">objects</a>
+<hr>
+</div>
+
+<h3 class="section">11.13 Flonum objects</h3>
+
+<p>Flonums are double&ndash;precision floating point numbers (8 bytes
+wide) implemented as specified by <acronym>IEEE</acronym> 754 on the hosting platform. 
+A flonum is a fixed length memory block referenced by machine words
+tagged as vectors.  The first machine word of a flonum block is tagged
+has flonum in its least significant bits and it has the most significant
+bits set to zero.
+
+<pre class="example">     |------------------------|-------------| reference to flonum
+           heap pointer         vector tag
+     
+     |------------------------|-------------| flonum first word
+        all set to zero         flonum tag
+</pre>
+   <p>A flonum memory block is 16 bytes wide on both 32-bit and 64-bit
+platforms; to allow for the same binary layout on both platforms, on a
+32-bit platform the actual number is stored in the last two words:
+
+<pre class="example">        1st word     2nd word     3rd word     4th word
+     |------------|------------|------------|------------|
+      tagged word     unused           data words
+</pre>
+   <p class="noindent">on a 64-bit platform the actual number is stored in the second word:
+
+<pre class="example">               1st word                 2nd word
+     |-------------------------|-------------------------|
+              tagged word               data word
+</pre>
+   <!--  -->
+<h5 class="subsubheading">Basic operations</h5>
+
+<p>Flonums are allcated on the heap as follows:
+
+<pre class="example">     ikpcb * pcb  = ik_the_pcb();
+     ikptr   s_fl;
+     
+     s_fl = ik_safe_alloc(pcb, flonum_size) | vector_tag;
+     IK_REF(s_fl, off_flonum_tag) = (ikptr)flonum_tag
+</pre>
+   <p class="noindent">to identify an object as flonum we do:
+
+<pre class="example">     ikptr  X = the_object;
+     
+     if ((vector_tag == IK_TAGOF(X)) &amp;&amp;
+         (flonum_tag == IK_REF(X, -vector_tag)))
+       it_is_a_flonum();
+     else
+       it_is_not();
+</pre>
+   <p class="noindent">to obtain a pointer to the data area we do:
+
+<pre class="example">     ikptr     s_fl = the_flonum;
+     double *  data;
+     
+     data = (double*)((long)(X) + off_flonum_data);
+</pre>
+   <div class="defun">
+&mdash; Preprocessor Symbol: <b>flonum_size</b><var><a name="index-flonum_005fsize-1658"></a></var><br>
+<blockquote><p>The number of bytes to allocate to hold a flonum memory block. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Preprocessor Symbol: <b>flonum_tag</b><var><a name="index-flonum_005ftag-1659"></a></var><br>
+<blockquote><p>The tag of <code>ikptr</code> values used as first words in bignum memory blocks. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Preprocessor Symbol: <b>disp_flonum_tag</b><var><a name="index-disp_005fflonum_005ftag-1660"></a></var><br>
+<blockquote><p>Displacement of secondary tag word.  The number of bytes to add to an
+untagged pointer to flonum to get the pointer to the first byte in the
+word holding the flonum tag. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Preprocessor Symbol: <b>disp_flonum_data</b><var><a name="index-disp_005fflonum_005fdata-1661"></a></var><br>
+<blockquote><p>Displacement of data area.  The number of bytes to add to an untagged
+pointer to flonum to get the pointer to the first byte in the data area
+holding the actual <code>double</code> value. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Preprocessor Symbol: <b>off_flonum_tag</b><var><a name="index-off_005fflonum_005ftag-1662"></a></var><br>
+<blockquote><p>An integer to add to add to a tagged <code>ikptr</code> pointer to flonum to get
+the pointer to the first byte in the word holding the flonum tag. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Preprocessor Symbol: <b>off_flonum_data</b><var><a name="index-off_005fflonum_005fdata-1663"></a></var><br>
+<blockquote><p>An integer to add to a tagged <code>ikptr</code> pointer to flonum to get the
+pointer to the first byte in the data area holding the actual
+<code>double</code> value. 
+</p></blockquote></div>
+
+<!--  -->
+<h5 class="subsubheading">Convenience preprocessor macros</h5>
+
+<div class="defun">
+&mdash; Preprocessor Macro: double <b>IK_FLONUM_DATA</b> (<var>ikptr fl</var>)<var><a name="index-IK_005fFLONUM_005fDATA-1664"></a></var><br>
+<blockquote><p>Set or retrieve the floating point number.  A use of this macro can
+appear both as operand or left&ndash;side of assignment:
+
+     <pre class="example">          ikptr  s_fl = the_flonum;
+          double num;
+          
+          IK_FLONUM_DATA(s_fl) = 1.2;
+          num = IK_FLONUM_DATA(s_fl);
+</pre>
+        </blockquote></div>
+
+<!--  -->
+<h5 class="subsubheading">Operations on flonums</h5>
+
+<div class="defun">
+&mdash; Function: int <b>ik_is_flonum</b> (<var>ikptr obj</var>)<var><a name="index-ik_005fis_005fflonum-1665"></a></var><br>
+<blockquote><p>Return true if <var>obj</var> is a flonum object. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: ikptr <b>iku_flonum_alloc</b> (<var>ikpcb * pcb, double N</var>)<var><a name="index-iku_005fflonum_005falloc-1666"></a></var><br>
+<blockquote><p>Allocate and return a new flonum object, using <code>ik_unsafe_alloc()</code>,
+intialised with <var>N</var>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: ikptr <b>ika_flonum_from_double</b> (<var>ikpcb * pcb, double N</var>)<var><a name="index-ika_005fflonum_005ffrom_005fdouble-1667"></a></var><br>
+<blockquote><p>Allocate and return a new flonum object, using <code>ik_safe_alloc()</code>,
+intialised with <var>N</var>. 
+</p></blockquote></div>
+
+<!-- page -->
+   </body></html>
+

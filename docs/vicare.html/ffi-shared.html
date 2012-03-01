@@ -1,0 +1,258 @@
+<html lang="en">
+<head>
+<title>ffi shared - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="ffi.html#ffi" title="ffi">
+<link rel="prev" href="ffi-dl.html#ffi-dl" title="ffi dl">
+<link rel="next" href="ffi-call.html#ffi-call" title="ffi call">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d9 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The Vicarus Scheme package is distributed under the terms of the GNU
+General Public License (GPL) and can be downloaded from:
+
+            `http://github.com/marcomaggi/vicare/downloads'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+Copyright (C) 2010-2012 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="ffi-shared"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="ffi-call.html#ffi-call">ffi call</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="ffi-dl.html#ffi-dl">ffi dl</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="ffi.html#ffi">ffi</a>
+<hr>
+</div>
+
+<h3 class="section">4.3 System&ndash;agnostic shared libraries <acronym>API</acronym></h3>
+
+<p>This <acronym>API</acronym> to load shared libraries is more system&ndash;agnostic with
+respect to the functions described in <a href="ffi-dl.html#ffi-dl">ffi dl</a>.  The following
+bindings are exported by <code>(vicare ffi)</code>.
+
+<div class="defun">
+&mdash; Function: <b>open-shared-object</b><var><a name="index-open_002dshared_002dobject-479"></a></var><br>
+&mdash; Function: <b>open-shared-object</b><var> so-name<a name="index-open_002dshared_002dobject-480"></a></var><br>
+<blockquote><p>Load a platform shared library and return a pointer object representing
+a handler for the library.  If the library cannot be loaded: raise a
+non&ndash;continuable exception with condition types <code>&amp;who</code>,
+<code>&amp;message</code>, <code>&amp;shared-object-opening-error</code>.
+
+        <p>When no arguments are present: the returned pointer handler references
+the current process and it can be used to retrieve pointers to functions
+already loaded, for example the functions exported by the standard C
+library.
+
+        <p>When given: <var>so-name</var> must be a string representing the name of the
+library; library names are system&ndash;dependent and must include the
+appropriate suffix (for exapmle <code>*.so</code> on Linux, <code>*.dylib</code> on
+Darwin and <code>*.dll</code> on Cygwin).  <var>so-name</var> may include a full
+path which identifies the location of the library, or it may just be the
+name of the library.
+
+        <blockquote>
+<strong>For Unix</strong> We can find documentation about the search path of
+shared objects in the manual page of <code>dlopen()</code>.  The system will
+lookup the library name using the <samp><span class="env">LD_LIBRARY_PATH</span></samp> environment
+variable. 
+</blockquote>
+        </p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>close-shared-object</b><var> so-handle<a name="index-close_002dshared_002dobject-481"></a></var><br>
+<blockquote><p>Release the resources loaded from the library referenced by the
+<var>so-handle</var>.  If the library cannot be closed: raise a
+non&ndash;continuable exception with condition types <code>&amp;who</code>,
+<code>&amp;message</code>, <code>&amp;shared-object-closing-error</code>.
+
+        <p>Closing a library renders all symbols and static data structures that
+the library exports invalid and the program may crash or corrupt its
+memory if such symbols are used after a library is closed. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>lookup-shared-object</b><var> so-handle name<a name="index-lookup_002dshared_002dobject-482"></a></var><br>
+<blockquote><p>Search the loaded library referenced by the <var>so-handle</var> for an
+exported symbol whose name is represented by the Scheme string
+<var>name</var>.  If successful return a pointer object, else raise a
+non&ndash;continuable exception with condition types <code>&amp;who</code>,
+<code>&amp;message</code>, <code>&amp;shared-object-lookup-error</code>.
+
+        <p>If the returned value references a function: it can be used as argument
+to the callout generators built by <code>make-c-callout-maker</code>. 
+</p></blockquote></div>
+
+<!--  -->
+<h5 class="subsubheading">Shared object errors</h5>
+
+<div class="defun">
+&mdash; Condition Type: <b>&amp;shared-object-error</b><var><a name="index-g_t_0026shared_002dobject_002derror-483"></a></var><br>
+<blockquote><p>Base condition type for all the exceptions associated to a shared
+object; it is derived from <code>&amp;error</code>.  It has no fields. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>make-shared-object-error</b><var><a name="index-make_002dshared_002dobject_002derror-484"></a></var><br>
+<blockquote><p>Build and return a new instance of <code>&amp;shared-object-error</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>shared-object-error?</b><var> obj<a name="index-shared_002dobject_002derror_003f-485"></a></var><br>
+<blockquote><p>Return <code>#t</code> if <var>obj</var> is an instance of
+<code>&amp;shared-object-error</code>, else return <code>#f</code>. 
+</p></blockquote></div>
+
+<!--  -->
+<h5 class="subsubheading">Opening shared objects</h5>
+
+<div class="defun">
+&mdash; Condition Type: <b>&amp;shared-object-opening-error</b><var><a name="index-g_t_0026shared_002dobject_002dopening_002derror-486"></a></var><br>
+<blockquote><p>Condition type tagging exceptions associated to opening a shared object;
+it is derived from <code>&amp;shared-object-error</code>.  It has the
+following fields:
+
+          <dl>
+<dt><code>name</code><dd>Scheme string representing the file name of the shared object. 
+</dl>
+        </p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>make-shared-object-opening-error</b><var> so-name<a name="index-make_002dshared_002dobject_002dopening_002derror-487"></a></var><br>
+<blockquote><p>Build and return a new instance of
+<code>&amp;shared-object-opening-error</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>shared-object-opening-error?</b><var> obj<a name="index-shared_002dobject_002dopening_002derror_003f-488"></a></var><br>
+<blockquote><p>Return <code>#t</code> if <var>obj</var> is an instance of
+<code>&amp;shared-object-opening-error</code>, else return <code>#f</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>condition-shared-object-opening-name</b><var> so-opening<a name="index-condition_002dshared_002dobject_002dopening_002dname-489"></a></var><br>
+<blockquote><p>Accessor for the field of <code>&amp;shared-object-opening-error</code>. 
+</p></blockquote></div>
+
+<!--  -->
+<h5 class="subsubheading">Closing shared objects</h5>
+
+<div class="defun">
+&mdash; Condition Type: <b>&amp;shared-object-closing-error</b><var><a name="index-g_t_0026shared_002dobject_002dclosing_002derror-490"></a></var><br>
+<blockquote><p>Condition type tagging exceptions associated to closing a shared object;
+it is derived from <code>&amp;shared-object-error</code>.  It has the
+following fields:
+
+          <dl>
+<dt><code>so-handle</code><dd>Pointer object referencing the shared object; it is the value returned
+by <code>open-shared-object</code>. 
+</dl>
+        </p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>make-shared-object-closing-error</b><var> so-handle<a name="index-make_002dshared_002dobject_002dclosing_002derror-491"></a></var><br>
+<blockquote><p>Build and return a new instance of
+<code>&amp;shared-object-closing-error</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>shared-object-closing-error?</b><var> obj<a name="index-shared_002dobject_002dclosing_002derror_003f-492"></a></var><br>
+<blockquote><p>Return <code>#t</code> if <var>obj</var> is an instance of
+<code>&amp;shared-object-closing-error</code>, else return <code>#f</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>condition-shared-object-closing-so-handle</b><var> so-closing<a name="index-condition_002dshared_002dobject_002dclosing_002dso_002dhandle-493"></a></var><br>
+<blockquote><p>Accessor for the field of <code>&amp;shared-object-closing-error</code>. 
+</p></blockquote></div>
+
+<!--  -->
+<h5 class="subsubheading">Inspecting shared objects</h5>
+
+<div class="defun">
+&mdash; Condition Type: <b>&amp;shared-object-lookup-error</b><var><a name="index-g_t_0026shared_002dobject_002dlookup_002derror-494"></a></var><br>
+<blockquote><p>Condition type tagging exceptions associated to looking up a symbol in a
+shared object; it is derived from <code>&amp;shared-object-error</code>.  It
+has the following fields:
+
+          <dl>
+<dt><code>so-handle</code><dd>Pointer object referencing the shared object; it is the value returned
+by <code>open-shared-object</code>.
+
+          <br><dt><code>foreign-symbol</code><dd>Scheme string representing the shared object exported symbol whose
+address was requested. 
+</dl>
+        </p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>make-shared-object-lookup-error</b><var> so-handle symbol<a name="index-make_002dshared_002dobject_002dlookup_002derror-495"></a></var><br>
+<blockquote><p>Build and return a new instance of
+<code>&amp;shared-object-lookup-error</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>shared-object-lookup-error?</b><var> obj<a name="index-shared_002dobject_002dlookup_002derror_003f-496"></a></var><br>
+<blockquote><p>Return <code>#t</code> if <var>obj</var> is an instance of
+<code>&amp;shared-object-lookup-error</code>, else return <code>#f</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>condition-shared-object-lookup-so-handle</b><var> so-lookup<a name="index-condition_002dshared_002dobject_002dlookup_002dso_002dhandle-497"></a></var><br>
+&mdash; Function: <b>condition-shared-object-lookup-foreign-symbol</b><var> so-lookup<a name="index-condition_002dshared_002dobject_002dlookup_002dforeign_002dsymbol-498"></a></var><br>
+<blockquote><p>Accessors for the fields of <code>&amp;shared-object-lookup-error</code>. 
+</p></blockquote></div>
+
+<!-- page -->
+   </body></html>
+

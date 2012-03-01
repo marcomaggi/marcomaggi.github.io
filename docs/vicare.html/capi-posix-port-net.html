@@ -1,0 +1,139 @@
+<html lang="en">
+<head>
+<title>capi posix port net - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="capi-posix-port.html#capi-posix-port" title="capi posix port">
+<link rel="prev" href="capi-posix-port-event.html#capi-posix-port-event" title="capi posix port event">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d9 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The Vicarus Scheme package is distributed under the terms of the GNU
+General Public License (GPL) and can be downloaded from:
+
+            `http://github.com/marcomaggi/vicare/downloads'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+Copyright (C) 2010-2012 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="capi-posix-port-net"></a>
+<p>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="capi-posix-port-event.html#capi-posix-port-event">capi posix port event</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="capi-posix-port.html#capi-posix-port">capi posix port</a>
+<hr>
+</div>
+
+<h5 class="subsubsection">9.2.4.5 Handling sockets</h5>
+
+<div class="defun">
+&mdash; Function: ikptr <b>ikrt_tcp_connect</b> (<var>ikptr host, ikptr srvc</var>)<var><a name="index-ikrt_005ftcp_005fconnect-1156"></a></var><br>
+&mdash; Function: ikptr <b>ikrt_ucp_connect</b> (<var>ikptr host, ikptr srvc</var>)<var><a name="index-ikrt_005fucp_005fconnect-1157"></a></var><br>
+<blockquote><p>Interface to the <code>getaddrinfo()</code>, <code>socket()</code> and <code>connect()</code>
+C functions.  <a href="../libc/Sockets.html#Sockets">Sockets</a>.  Establish a client
+connection to a remote server using the <code>SOCK_STREAM</code> or
+<code>SOCK_DGRAM</code> style.
+
+        <p><var>host</var> must reference a bytevector holding the remote server
+hostname; <var>srvc</var> must reference a bytevector holding the service
+specification.
+
+        <p>If successful return a fixnum representing the socket; if an error
+occurs resolving the host name and address, return <code>false_object</code>;
+if an error occurs in one of the C function calls, return the return
+value of <code>ik_errno_to_code()</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: ikptr <b>ikrt_listen</b> (<var>ikptr port-number</var>)<var><a name="index-ikrt_005flisten-1158"></a></var><br>
+<blockquote><p>Interface to the <code>socket()</code>, <code>bind()</code>, <code>listen()</code> and
+<code>setsockopt()</code> C functions.  <a href="../libc/Sockets.html#Sockets">Sockets</a>.  Create a
+server socket bound to the given port number for the local host, using
+the <code>AF_INET</code> namespace and the <code>SOCK_STREAM</code> style; the
+option <code>SO_REUSEADDR</code> is set for the server socket; at most
+1024 concurrent connections to the socket will be enqueued.
+
+        <p><var>port-number</var> must be a fixnum representing the port number to use.
+
+        <p>If successful return a fixnum representing the server socket; if an
+error occurs in one of the C function calls, return the return value of
+<code>ik_errno_to_code()</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: ikptr <b>ikrt_accept</b> (<var>ikptr sock, ikptr sockaddr</var>)<var><a name="index-ikrt_005faccept-1159"></a></var><br>
+<blockquote><p>Interface to the <code>accept()</code> C function.  <a href="../libc/Accepting-Connections.html#Accepting-Connections">accept</a>.  Accept a connection to a server socket.
+
+        <p><var>sock</var> must be a fixnum representing the server socket;
+<var>sockaddr</var> must reference a bytevector object which will hold the
+<code>struct sockaddr</code> describing the client's address.
+
+        <p>If successful return a fixnum representing the client socket and fill
+<var>sockaddr</var> with the client address; if an error occurs in
+<code>accept()</code>, return the return value of <code>ik_errno_to_code()</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: ikptr <b>ikrt_shutdown</b> (<var>ikptr sock</var>)<var><a name="index-ikrt_005fshutdown-1160"></a></var><br>
+<blockquote><p>Interface to the <code>shutdown()</code> C function.  <a href="../libc/Closing-a-Socket.html#Closing-a-Socket">shutdown</a>.  Close a socket for both reading and writing.
+
+        <p><var>sock</var> must be a fixnum representing the socket.
+
+        <p>If successful return the raw C language <code>NULL</code> pointer; if an error
+occurs in <code>shutdown()</code>, return the return value of
+<code>ik_errno_to_code()</code>. 
+</p></blockquote></div>
+
+<!-- page -->
+   </body></html>
+

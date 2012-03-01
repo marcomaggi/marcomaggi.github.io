@@ -1,0 +1,240 @@
+<html lang="en">
+<head>
+<title>objects strings - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="objects.html#objects" title="objects">
+<link rel="prev" href="objects-chars.html#objects-chars" title="objects chars">
+<link rel="next" href="objects-symbols.html#objects-symbols" title="objects symbols">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d9 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The Vicarus Scheme package is distributed under the terms of the GNU
+General Public License (GPL) and can be downloaded from:
+
+            `http://github.com/marcomaggi/vicare/downloads'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+Copyright (C) 2010-2012 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="objects-strings"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="objects-symbols.html#objects-symbols">objects symbols</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="objects-chars.html#objects-chars">objects chars</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="objects.html#objects">objects</a>
+<hr>
+</div>
+
+<h3 class="section">11.9 String objects</h3>
+
+<p>Strings are variable&ndash;length blocks of memory referenced by machine
+words tagged as strings; strings are <strong>not</strong> stored in memory in
+<acronym>UTF</acronym>-32 format.  The first word in the memory block is a fixnum
+representing the number of characters in the data area; a string is
+capable of holding at most a number of characters equal to the return
+value of <code>greatest-fixnum</code>.
+
+<pre class="example">     |------------------------|-------------| reference to string
+           heap pointer         string tag
+     
+     |------------------------|-------------| string first word
+          number of words       fixnum tag
+</pre>
+   <p>All the remaining space in the memory block is filled with 32-bit
+unsigned integers whose least significant bits are set to the character
+tag and whose most significant bits are set to the character's Unicode
+code point.
+
+<!--  -->
+<h5 class="subsubheading">Basic operations</h5>
+
+<p>String objects are allocated on the heap; to perform the allocation we
+compute the whole size of the data area, add to it room for meta data
+and finally compute the aligned block size:
+
+<pre class="example">     ikpcb * pcb            = ik_the_pcb();
+     long    length         = the_number_of_chars;
+     long    requested_size = sizeof(ikchar) * length;
+     long    block_size     = disp_string_data + requested_size;
+     long    align_size     = IK_ALIGN(block_size);
+     ikptr   str = ik_safe_alloc(pcb, align_size) | string_tag;
+</pre>
+   <p class="noindent"><code>ik_safe_alloc()</code> returns an <code>ikptr</code> value representing the aligned
+pointer, having the 3 least significant bits set to zero; we add
+to it the string tag (an integer value fitting in 3 bits) which
+allows to recognise strings among all the other built in objects.
+
+   <p>We have to explicitly store the string length in the memory block as a
+fixnum, so usually a full allocation looks like this:
+
+<pre class="example">     ikptr
+     ik_string_alloc (ikpcb * pcb, long number_of_chars)
+     {
+       long  align_size;
+       ikptr str;
+       align_size = IK_ALIGN(disp_string_data
+                             + number_of_chars * sizeof(ikchar));
+       str        = ik_safe_alloc(pcb, align_size) | string_tag;
+       IK_REF(str, off_string_length) = IK_FIX(number_of_chars);
+       return str;
+     }
+</pre>
+   <p>To fill a string of 3 chars with characters we should do:
+
+<pre class="example">     ikptr     s_str = the_string;
+     ikchar *  ch    = (ikchar*)(s_str + off_string_data);
+     
+     ch[0] = IK_CHAR32_FROM_INTEGER(10);
+     ch[1] = IK_CHAR32_FROM_INTEGER(20);
+     ch[2] = IK_CHAR32_FROM_INTEGER(30);
+</pre>
+   <p class="noindent">to retrieve the character at index 2 we do:
+
+<pre class="example">     long      index  = 2;
+     ikptr     s_str  = the_string;
+     ikchar *  ch     = (ikchar*)(s_str + off_string_data);
+     ikptr     s_char = (ikptr)ch[index];
+</pre>
+   <p class="noindent">and to retrieve the string length:
+
+<pre class="example">     ikptr  s_str    = the_string;
+     ikptr  s_length = IK_REF(s_str, off_string_length);
+     long   length   = IK_UNFIX(s_length);
+</pre>
+   <div class="defun">
+&mdash; Preprocessor Symbol: <b>string_char_size</b><var><a name="index-string_005fchar_005fsize-1571"></a></var><br>
+<blockquote><p>Integer value representing the number of bytes in a Scheme character
+stored in a Scheme string. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Preprocessor Symbol: <b>string_mask</b><var><a name="index-string_005fmask-1572"></a></var><br>
+&mdash; Preprocessor Symbol: <b>string_tag</b><var><a name="index-string_005ftag-1573"></a></var><br>
+<blockquote><p>Integer values used to tag and recognise <code>ikptr</code> values representing
+string references.  <code>string_mask</code> isolates the tag bits from an
+<code>ikptr</code> and <code>string_tag</code> represents the tag bits. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Preprocessor Symbol: <b>disp_string_length</b><var><a name="index-disp_005fstring_005flength-1574"></a></var><br>
+<blockquote><p>Displacement of length.  The number of bytes to add to an untagged
+pointer to string to get the pointer to the first byte in the word
+holding the string length as fixnum. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Preprocessor Symbol: <b>disp_string_data</b><var><a name="index-disp_005fstring_005fdata-1575"></a></var><br>
+<blockquote><p>Displacement of data area.  The number of bytes to add to an untagged
+pointer to string to get the pointer to the first byte in the data area. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Preprocessor Symbol: <b>off_string_length</b><var><a name="index-off_005fstring_005flength-1576"></a></var><br>
+<blockquote><p>An integer to add to a tagged <code>ikptr</code> reference to retrieve the pointer
+to the first byte of the string length as fixnum. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Preprocessor Symbol: <b>off_string_data</b><var><a name="index-off_005fstring_005fdata-1577"></a></var><br>
+<blockquote><p>An integer to add to a tagged <code>ikptr</code> string reference to retrieve the
+pointer to the first byte of the data area. 
+</p></blockquote></div>
+
+<!--  -->
+<h5 class="subsubheading">Convenience preprocessor macros</h5>
+
+<div class="defun">
+&mdash; Preprocessor Macro: int <b>IK_IS_STRING</b> (<var>ikptr obj</var>)<var><a name="index-IK_005fIS_005fSTRING-1578"></a></var><br>
+<blockquote><p>Return true if <var>obj</var> is a reference to a string object. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Preprocessor Macro: ikptr <b>IK_STRING_LENGTH_FX</b> (<var>ikptr str</var>)<var><a name="index-IK_005fSTRING_005fLENGTH_005fFX-1579"></a></var><br>
+<blockquote><p>Return a fixnum representing the number of characters in the string
+<var>str</var>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Preprocessor Macro: long <b>IK_STRING_LENGTH</b> (<var>ikptr str</var>)<var><a name="index-IK_005fSTRING_005fLENGTH-1580"></a></var><br>
+<blockquote><p>Return an integer representing the number of characters in the string
+<var>str</var>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Preprocessor Macro: ikchar <b>IK_CHAR32</b> (<var>ikptr str, long idx</var>)<var><a name="index-IK_005fCHAR32-1581"></a></var><br>
+<blockquote><p>Evaluate to the 32-bit character representation at index <var>idx</var> in
+the string <var>str</var>.  A use of this macro can appear both as operand
+and as left&ndash;side of an assignment; example:
+
+     <pre class="example">          long    idx   = the_index;
+          ikptr   s_str = the_string;
+          ikchar  ch;
+          
+          IK_CHAR32(s_str, idx) = IK_CHAR32_FROM_INTEGER(10);
+          ch = IK_CHAR32(s_str, idx);
+</pre>
+        </blockquote></div>
+
+<!--  -->
+<h5 class="subsubheading">Operations on strings</h5>
+
+<div class="defun">
+&mdash; Function: ikptr <b>ika_string_alloc</b> (<var>ikpcb * pcb, long number_of_chars</var>)<var><a name="index-ika_005fstring_005falloc-1582"></a></var><br>
+<blockquote><p>Allocate, initialise and return a new string object capable of holding
+the specified number of chars. 
+</p></blockquote></div>
+
+<!-- page -->
+   </body></html>
+

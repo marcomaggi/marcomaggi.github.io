@@ -1,0 +1,234 @@
+<html lang="en">
+<head>
+<title>iklib gensym - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="iklib.html#iklib" title="iklib">
+<link rel="prev" href="iklib-parameters.html#iklib-parameters" title="iklib parameters">
+<link rel="next" href="iklib-printing.html#iklib-printing" title="iklib printing">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d9 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The Vicarus Scheme package is distributed under the terms of the GNU
+General Public License (GPL) and can be downloaded from:
+
+            `http://github.com/marcomaggi/vicare/downloads'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+Copyright (C) 2010-2012 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="iklib-gensym"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="iklib-printing.html#iklib-printing">iklib printing</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="iklib-parameters.html#iklib-parameters">iklib parameters</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="iklib.html#iklib">iklib</a>
+<hr>
+</div>
+
+<h3 class="section">3.18 Gensyms</h3>
+
+<p>Gensym stands for <em>generated symbol</em>&mdash;a fresh symbol that is
+generated at run time and is guaranteed to be <em>not</em> <code>eq?</code> to
+any other symbol present in the system.  Gensyms are useful in many
+applications including expanders, compilers, and interpreters when
+generating an arbitrary number of unique names is needed.
+
+   <p>Vicare is similar to Chez Scheme in that the readers (including the
+<code>read</code> procedure) and writers (including <code>write</code> and
+<code>pretty-print</code>) maintain the read/write invariance on gensyms. 
+When a gensym is written to an output port, the system automatically
+generates a random unique identifier for the gensym.  When the gensym is
+read back though the <code>#{gensym}</code> read syntax, a new gensym is
+<em>not</em> regenerated, but instead, it is looked up in the global
+symbol table.
+
+   <p>A gensym's name is composed of two parts: a <em>pretty</em> string and a
+<em>unique</em> string.  The Scheme procedure <code>symbol-&gt;string</code>
+returns the pretty string of the gensym and not its unique string. 
+Gensyms are printed by default as <code>#{pretty-string unique-string}</code>.
+
+<div class="defun">
+&mdash; Procedure: <b>gensym</b><var><a name="index-gensym-221"></a></var><br>
+&mdash; Procedure: <b>gensym</b><var> string<a name="index-gensym-222"></a></var><br>
+&mdash; Procedure: <b>gensym</b><var> symbol<a name="index-gensym-223"></a></var><br>
+<blockquote><p>Construct a new gensym.  If passed no arguments, construct a gensym with
+no pretty name.  The pretty name is constructed when and if the pretty
+name of the resulting gensym is needed.  If <code>gensym</code> is passed a
+string, that string is used as the pretty name.  If <code>gensym</code> is
+passed a symbol, the pretty name of the symbol is used as the pretty
+name of the returned gensym.  See <code>gensym-prefix</code> and
+<code>gensym-count</code> for details.
+
+     <pre class="example">          &gt; (gensym)
+          #{g0 |y0zf&gt;GlFvcTJE0xw|}
+          &gt; (gensym)
+          #{g1 |U%X&amp;sF6kX!YC8LW=|}
+          &gt; (eq? (gensym) (gensym))
+          #f
+</pre>
+        <p><code>(gensym string)</code> constructs a new gensym with <var>string</var> as its
+pretty name.  Similarly, <code>(gensym symbol)</code> constructs a new gensym
+with the pretty name of <var>symbol</var>, if it has one, as its pretty name.
+
+     <pre class="example">          &gt; (gensym "foo")
+          #{foo |&gt;VgOllCM&amp;$dSvRN=|}
+          &gt; (gensym 'foo)
+          #{foo |!TqQLmtw2hoEYfU&gt;|}
+          &gt; (gensym (gensym 'foo))
+          #{foo |N2C&gt;5O0&gt;C?OROUBU|}
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Procedure: <b>gensym?</b><var> x<a name="index-gensym_003f-224"></a></var><br>
+<blockquote><p>Return <code>#t</code> if its argument is a gensym, return <code>#f</code> otherwise.
+
+     <pre class="example">          &gt; (gensym? (gensym))
+          #t
+          &gt; (gensym? 'foo)
+          #f
+          &gt; (gensym? 12)
+          #f
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Procedure: <b>gensym-&gt;unique-string</b><var> gensym<a name="index-gensym_002d_003eunique_002dstring-225"></a></var><br>
+<blockquote><p>Return the unique name associated with the gensym argument.
+
+     <pre class="example">          &gt; (gensym-&gt;unique-string (gensym))
+          "YukrolLMgP?%ElcR"
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Reader Syntax: <b>#{gensym}</b><var><a name="index-g_t_0023_0040_007bgensym_0040_007d-226"></a></var><br>
+&mdash; Reader Syntax: <b>#{unique-name}</b><var><a name="index-g_t_0023_0040_007bunique_002dname_0040_007d-227"></a></var><br>
+&mdash; Reader Syntax: <b>#{pretty-name unique-name}</b><var><a name="index-g_t_0023_0040_007bpretty_002dname-unique_002dname_0040_007d-228"></a></var><br>
+&mdash; Reader Syntax: <b>#:pretty-name</b><var><a name="index-g_t_0023_003apretty_002dname-229"></a></var><br>
+<blockquote><p>Vicare's <code>read</code> and <code>write</code> procedures extend the lexical
+syntax of Scheme by the ability to read and write gensyms using one of
+these three forms.
+
+        <p><code>#{unique-name}</code> constructs, at read time, a gensym whose unique
+name is the one specified.  If a gensym with the same unique name
+already exists in the system's symbol table, that gensym is returned.
+
+     <pre class="example">          &gt; '#{some-long-name}
+          #{g0 |some-long-name|}
+          &gt; (gensym? '#{some-long-unique-name})
+          #t
+          &gt; (eq? '#{another-unique-name} '#{another-unique-name})
+          #t
+</pre>
+        <p>The two&ndash;part <code>#{pretty-name unique-name}</code> gensym syntax is
+similar to the syntax shown above with the exception that if a new
+gensym is constructed (that is, if the gensym did not already exist in
+the symbol table), the pretty name of the constructed gensym is set to
+<code>pretty-name</code>.
+
+     <pre class="example">          &gt; '#{foo unique-identifier}
+          #{foo |unique-identifier|}
+          &gt; '#{unique-identifier}
+          #{foo |unique-identifier|}
+          &gt; '#{bar unique-identifier}
+          #{foo |unique-identifier|}
+</pre>
+        <p>The <code>#:pretty-name</code> form constructs, at read time, a gensym whose
+pretty name is <code>pretty-name</code> and whose unique name is fresh.  This
+form guarantees that the resulting gensym is not <code>eq?</code> to any other
+symbol in the system.
+
+     <pre class="example">          &gt; '#:foo
+          #{foo |j=qTGlEwS/Zlp2Dj|}
+          &gt; (eq? '#:foo '#:foo)
+          #f
+</pre>
+        </blockquote></div>
+
+<!--  -->
+<h4 class="subsection">3.18.1 An example</h4>
+
+<p class="noindent">The <code>(rnrs syntax-case)</code> library provides a
+<code>generate-temporaries</code> procedure, which takes a syntax object
+(representing a list of things) and returns a list of fresh identifiers. 
+Using <code>gensym</code>, that procedure can be defined as follows:
+
+<pre class="example">     (define (generate-temporaries* stx)
+       (syntax-case stx ()
+         [(x* ...)
+          (map (lambda (x)
+                 (datum-&gt;syntax #'unimportant
+                   (gensym
+                     (if (identifier? x)
+                         (syntax-&gt;datum x)
+                         't))))
+               #'(x* ...))]))
+</pre>
+   <p>The above definition works by taking the input <var>stx</var> and
+destructuring it into the list of syntax objects <code>x* ...</code>.  The
+inner procedure maps each <var>x</var> into a new syntax object (constructed
+with <code>datum-&gt;syntax</code>).  The datum is a gensym, whose name is the
+same name as <var>x</var> if <var>x</var> is an identifier, or the symbol <code>t</code>
+if <var>x</var> is not an identifier.  The output of
+<code>generate-temporaries*</code> generates names similar to their input
+counterpart:
+
+<pre class="example">     &gt; (print-gensym #f)
+     &gt; (generate-temporaries* #'(x y z 1 2))
+     (#&lt;syntax x&gt; #&lt;syntax y&gt; #&lt;syntax z&gt; #&lt;syntax t&gt; #&lt;syntax t&gt;)
+</pre>
+   <!-- page -->
+   </body></html>
+

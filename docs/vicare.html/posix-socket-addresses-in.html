@@ -1,0 +1,129 @@
+<html lang="en">
+<head>
+<title>posix socket addresses in - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="posix-socket-addresses.html#posix-socket-addresses" title="posix socket addresses">
+<link rel="prev" href="posix-socket-addresses-local.html#posix-socket-addresses-local" title="posix socket addresses local">
+<link rel="next" href="posix-socket-addresses-in6.html#posix-socket-addresses-in6" title="posix socket addresses in6">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d9 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The Vicarus Scheme package is distributed under the terms of the GNU
+General Public License (GPL) and can be downloaded from:
+
+            `http://github.com/marcomaggi/vicare/downloads'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+Copyright (C) 2010-2012 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="posix-socket-addresses-in"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="posix-socket-addresses-in6.html#posix-socket-addresses-in6">posix socket addresses in6</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="posix-socket-addresses-local.html#posix-socket-addresses-local">posix socket addresses local</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="posix-socket-addresses.html#posix-socket-addresses">posix socket addresses</a>
+<hr>
+</div>
+
+<h5 class="subsubsection">5.14.1.2 <acronym>IP</acronym>v4 addresses</h5>
+
+<p>Instances of <code>struct sockaddr_in</code> can be handled at the Scheme
+level as follows:
+
+<pre class="example">     (import (vicare)
+       (prefix (vicare posix) px.))
+     
+     (define sockaddr
+       (px.make-sockaddr_in '#vu8(1 2 3 4) 88))
+     
+     (px.sockaddr_in.in_addr sockaddr)  &rArr; #vu8(1 2 3 4)
+     (px.sockaddr_in.in_port sockaddr)  &rArr; 88
+</pre>
+   <p class="noindent">and we can use constant values to initialise the fields:
+
+<pre class="example">     (import (vicare)
+       (prefix (vicare posix) px.)
+       (vicare platform-constants))
+     
+     (define addr (make-bytevector 4))
+     (bytevector-u32-set! bv 0 INADDR_LOOPBACK (endianness big))
+     
+     (define sockaddr (px.make-sockaddr_in addr 88))
+     
+     (px.sockaddr_in.in_addr sockaddr)  &rArr; #vu8(127 0 0 1)
+     (px.sockaddr_in.in_port sockaddr)  &rArr; 88
+</pre>
+   <p class="noindent">care must be taken when handling such raw values.
+
+<div class="defun">
+&mdash; Function: <b>make-sockaddr_in</b><var> host-address port<a name="index-make_002dsockaddr_005fin-685"></a></var><br>
+<blockquote><p>Given a bytevector <var>host-address</var> holding a <code>struct in_addr</code>
+and a fixnum <var>port</var> representing a network port number, build and
+return a bytevector holding a <code>struct sockaddr_in</code> initialised with
+this data. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>sockaddr_in.in_addr</b><var> socket-address<a name="index-sockaddr_005fin_002ein_005faddr-686"></a></var><br>
+&mdash; Function: <b>sockaddr_in.in_port</b><var> socket-address<a name="index-sockaddr_005fin_002ein_005fport-687"></a></var><br>
+<blockquote><p>Given a bytevector <var>socket-address</var> holding a <code>struct
+sockaddr_in</code>, extract the <code>in_addr</code> and <code>in_port</code> fields and
+return them as bytevector holding the corresponding <code>struct
+in_addr</code> and as fixnum.  If the data in <var>socket_address</var> is invalid:
+an exception is raised. 
+</p></blockquote></div>
+
+<!-- page -->
+   </body></html>
+

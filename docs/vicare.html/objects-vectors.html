@@ -1,0 +1,264 @@
+<html lang="en">
+<head>
+<title>objects vectors - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="objects.html#objects" title="objects">
+<link rel="prev" href="objects-bytevectors.html#objects-bytevectors" title="objects bytevectors">
+<link rel="next" href="objects-structs.html#objects-structs" title="objects structs">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d9 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The Vicarus Scheme package is distributed under the terms of the GNU
+General Public License (GPL) and can be downloaded from:
+
+            `http://github.com/marcomaggi/vicare/downloads'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+Copyright (C) 2010-2012 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="objects-vectors"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="objects-structs.html#objects-structs">objects structs</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="objects-bytevectors.html#objects-bytevectors">objects bytevectors</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="objects.html#objects">objects</a>
+<hr>
+</div>
+
+<h3 class="section">11.6 Vector objects</h3>
+
+<p>Vectors are variable length blocks of memory referenced by machine words
+tagged as vectors.  The first machine word of a vector block contains a
+fixnum representing the vector length; a vector is capable of holding at
+most a number of values equal to the return value of
+<code>greatest-fixnum</code>.  This means that the first word of a vector is
+tagged as a fixnum.
+
+<pre class="example">     |------------------------|-------------| reference to vector
+           heap pointer         vector tag
+     
+     |------------------------|-------------| vector first word
+          number of words       fixnum tag
+</pre>
+   <!--  -->
+<h5 class="subsubheading">Basic operations</h5>
+
+<p>Vector objects are allocated on the heap; to perform the allocation we
+compute the whole size of the data area, add to it room for meta data
+and finally compute the aligned block size:
+
+<pre class="example">     ikpcb * pcb            = ik_the_pcb();
+     long    length         = the_number_of_items;
+     long    requested_size = wordsize * length;
+     long    block_size     = disp_vector_data + requested_size;
+     long    align_size     = IK_ALIGN(block_size);
+     ikptr   vec = ik_safe_alloc(pcb, align_size) | vector_tag;
+</pre>
+   <p class="noindent"><code>ik_safe_alloc()</code> returns an <code>ikptr</code> value representing the
+aligned pointer, having the 3 least significant bits set to zero;
+we add to it the vector tag (an integer value fitting in 3 bits)
+which allows to recognise vectors among all the other built in objects.
+
+   <p>We have to explicitly store the vector length in the memory block as a
+fixnum, so usually a full allocation looks like this:
+
+<pre class="example">     ikptr
+     ika_vector_alloc (ikpcb * pcb, long number_of_items)
+     {
+       long  align_size;
+       ikptr s_len;
+       ikptr s_vec;
+       s_len      = IK_FIX(number_of_items);
+       align_size = IK_ALIGN(disp_vector_data + s_len);
+       s_vec      = ik_safe_alloc(pcb, align_size) | vector_tag;
+       IK_REF(s_vec, off_vector_length) = s_len;
+       return s_vec;
+     }
+</pre>
+   <p class="noindent">notice how we exploit the fact that the fixnum representing the number
+of elements equals the number of bytes in the data area needed to hold
+such elements.
+
+   <p>The allocation operations described above leaves the data area
+uninitialised: its content is undefined.  This is bad if the garbage
+collector moves the newly built vector before the elements are
+initialised to a correct Scheme value.  The following function resets
+the data area to a vector of zero fixnums:
+
+<pre class="example">     ikptr
+     ikrt_vector_clean (ikptr s_vec)
+     {
+       ikptr	s_len = IK_VECTOR_LENGTH_FX(s_vec);
+       memset((char*)(long)(s_vec + off_vector_data), 0, s_len);
+       return s_vec;
+     }
+</pre>
+   <p>To fill a vector of 3 items with fixnums we should do:
+
+<pre class="example">     ikptr  s_vec = the_vector;
+     IK_REF(s_vec, off_vector_data + 0 * wordsize) = IK_FIX(10);
+     IK_REF(s_vec, off_vector_data + 1 * wordsize) = IK_FIX(20);
+     IK_REF(s_vec, off_vector_data + 2 * wordsize) = IK_FIX(30);
+</pre>
+   <p class="noindent">to retrieve the item at index 2 we do:
+
+<pre class="example">     ikptr  s_vec  = the_vector;
+     ikptr  s_item = IK_REF(s_vec, off_vector_data + 2 * wordsize);
+</pre>
+   <p class="noindent">and to retrieve the vector length:
+
+<pre class="example">     ikptr  s_vec  = the_vector;
+     ikptr  s_len  = IK_REF(s_vec, off_vector_length);
+     long   length = IK_UNFIX(s_len);
+</pre>
+   <div class="defun">
+&mdash; Preprocessor Symbol: <b>vector_tag</b><var><a name="index-vector_005ftag-1527"></a></var><br>
+<blockquote><p>An integer used to tag <code>ikptr</code> references  to vector memory blocks. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Preprocessor Symbol: <b>disp_vector_length</b><var><a name="index-disp_005fvector_005flength-1528"></a></var><br>
+<blockquote><p>Displacement of length.  The number of bytes to add to an untagged
+pointer to vector to get the pointer to the first byte in the word
+holding the vector length as fixnum. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Preprocessor Symbol: <b>disp_vector_data</b><var><a name="index-disp_005fvector_005fdata-1529"></a></var><br>
+<blockquote><p>Displacement of data area.  The number of bytes to add to an untagged
+pointer to vector to get the pointer to the first byte in the data area. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Preprocessor Symbol: <b>off_vector_length</b><var><a name="index-off_005fvector_005flength-1530"></a></var><br>
+<blockquote><p>An integer to add to a tagged <code>ikptr</code> reference to retrieve the pointer
+to the first byte of the vector length as fixnum. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Preprocessor Symbol: <b>off_vector_data</b><var><a name="index-off_005fvector_005fdata-1531"></a></var><br>
+<blockquote><p>An integer to add to a tagged <code>ikptr</code> vector reference to retrieve the
+pointer to the first byte of the data area. 
+</p></blockquote></div>
+
+<!--  -->
+<h5 class="subsubheading">Convenience preprocessor macros</h5>
+
+<div class="defun">
+&mdash; Preprocessor Macro: ikptr <b>IK_VECTOR_LENGTH_FX</b> (<var>ikptr vec</var>)<var><a name="index-IK_005fVECTOR_005fLENGTH_005fFX-1532"></a></var><br>
+<blockquote><p>Return a fixnum representing the number of items in the vector
+<var>vec</var>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Preprocessor Macro: long <b>IK_VECTOR_LENGTH</b> (<var>ikptr vec</var>)<var><a name="index-IK_005fVECTOR_005fLENGTH-1533"></a></var><br>
+<blockquote><p>Return an integer representing the number of items in the vector
+<var>vec</var>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Preprocessor Macro: ikptr <b>IK_ITEM</b> (<var>ikptr vec, long idx</var>)<var><a name="index-IK_005fITEM-1534"></a></var><br>
+<blockquote><p>Evaluate to the item at index <var>idx</var> in the vector <var>vec</var>.  A use
+of this macro can appear both as operand and as left&ndash;side of an
+assignment; example:
+
+     <pre class="example">          long    idx   = the_index;
+          ikptr   s_vec = the_vector;
+          ikptr   fx;
+          
+          IK_ITEM(s_vec, idx) = IK_FIX(10);
+          fx = IK_ITEM(s_vec, idx);
+</pre>
+        </blockquote></div>
+
+<!--  -->
+<h5 class="subsubheading">Operations on vectors</h5>
+
+<div class="defun">
+&mdash; Function: ikptr <b>ika_vector_alloc_no_init</b> (<var>ikpcb * pcb, long number_of_items</var>)<var><a name="index-ika_005fvector_005falloc_005fno_005finit-1535"></a></var><br>
+<blockquote><p>Allocate, initialise and return a new vector object capable of holding
+the specified number of items.  Leave the data area uninitialised. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: ikptr <b>ika_vector_alloc_and_init</b> (<var>ikpcb * pcb, long number_of_items</var>)<var><a name="index-ika_005fvector_005falloc_005fand_005finit-1536"></a></var><br>
+<blockquote><p>Allocate, initialise and return a new vector object capable of holding
+the specified number of items.  Initialise the data area so that all the
+items are set to the fixnum zero. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: int <b>ik_is_vector</b> (<var>ikptr vec</var>)<var><a name="index-ik_005fis_005fvector-1537"></a></var><br>
+<blockquote><p>Return true if <var>vec</var> is a reference to a vector object.  This
+predicate tests that <var>vec</var> is tagged as vector reference and that
+the first machine word in the referenced memory block is a fixnum. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: ikptr <b>ikrt_vector_clean</b> (<var>ikptr vec</var>)<var><a name="index-ikrt_005fvector_005fclean-1538"></a></var><br>
+<blockquote><p>Clean the data area so that all the items are set to the fixnum
+zero. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: ikptr <b>ikrt_vector_copy</b> (<var>ikptr dst, ikptr dst_start, ikptr src, ikptr src_start, ikptr count</var>)<var><a name="index-ikrt_005fvector_005fcopy-1539"></a></var><br>
+<blockquote><p>Copy <var>count</var> items from vector <var>src</var> starting at offset
+<var>src_start</var>, to vector <var>dst</var> starting at offset <var>dst_start</var>;
+<var>src_start</var>, <var>dst_start</var> and <var>count</var> must be non&ndash;negative
+fixnums.  Return unspecified values. 
+</p></blockquote></div>
+
+<!-- page -->
+   </body></html>
+

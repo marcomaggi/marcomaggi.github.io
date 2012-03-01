@@ -1,0 +1,395 @@
+<html lang="en">
+<head>
+<title>posix fd - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="posix.html#posix" title="posix">
+<link rel="prev" href="posix-dir.html#posix-dir" title="posix dir">
+<link rel="next" href="posix-mmap.html#posix-mmap" title="posix mmap">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d9 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The Vicarus Scheme package is distributed under the terms of the GNU
+General Public License (GPL) and can be downloaded from:
+
+            `http://github.com/marcomaggi/vicare/downloads'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+Copyright (C) 2010-2012 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="posix-fd"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="posix-mmap.html#posix-mmap">posix mmap</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="posix-dir.html#posix-dir">posix dir</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="posix.html#posix">posix</a>
+<hr>
+</div>
+
+<h3 class="section">5.12 File descriptors</h3>
+
+<div class="defun">
+&mdash; Function: <b>open</b><var> pathname flags mode<a name="index-open-648"></a></var><br>
+<blockquote><p>Interface to the C function <code>open()</code>, <a href="../libc/Opening-and-Closing-Files.html#Opening-and-Closing-Files">open</a>.  Open a file descriptor for the file system entry
+<var>pathname</var>; <var>flags</var> and <var>mode</var> must be fixnums.  If
+successful return a fixnum representing the file descriptor, else raise
+an exception.
+
+        <p>Example:
+
+     <pre class="example">          #!r6rs
+          (import (vicare)
+            (prefix (vicare posix) px.)
+            (vicare platform-constants))
+          
+          (define fd
+            (px.open "name.ext"
+                     (fxior O_CREAT O_EXCL O_RDWR)
+                     (fxior S_IRUSR S_IWUSR)))
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>close</b><var> fd<a name="index-close-649"></a></var><br>
+<blockquote><p>Interface to the C function <code>close()</code>, <a href="../libc/Opening-and-Closing-Files.html#Opening-and-Closing-Files">close</a>.  Close a file descriptor represented by <var>fd</var>, which
+must be a fixnum.  If successful return unspecified values, else raise
+an exception. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>read</b><var> fd buffer<a name="index-read-650"></a></var><br>
+&mdash; Function: <b>read</b><var> fd buffer size<a name="index-read-651"></a></var><br>
+<blockquote><p>Interface to the C function <code>read()</code>, <a href="../libc/I_002fO-Primitives.html#I_002fO-Primitives">read</a>.  Read bytes from the file descriptor <var>fd</var> and store them in
+the bytevector <var>buffer</var>; if <var>size</var> is a fixnum, read <var>size</var>
+bytes; if <var>size</var> is false or not given, read a number of bytes equal
+to the length of <var>buffer</var>.  If successful return a non&ndash;negative
+fixnum representing the number of bytes read, else raise an exception. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>pread</b><var> fd buffer size off<a name="index-pread-652"></a></var><br>
+<blockquote><p>Interface to the C function <code>pread()</code>, <a href="../libc/I_002fO-Primitives.html#I_002fO-Primitives">pread</a>.  Like <code>read</code>, but start reading at offset <var>off</var> from
+the start of the file; <var>off</var> must be a non&ndash;negative exact integer. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>write</b><var> fd buffer<a name="index-write-653"></a></var><br>
+&mdash; Function: <b>write</b><var> fd buffer size<a name="index-write-654"></a></var><br>
+<blockquote><p>Interface to the C function <code>write()</code>, <a href="../libc/I_002fO-Primitives.html#I_002fO-Primitives">write</a>.  Write bytes to the file descriptor <var>fd</var> from the bytevector
+<var>buffer</var>; if <var>size</var> is a fixnum, read <var>size</var> bytes; if
+<var>size</var> is false or not given, read a number of bytes equal to the
+length of <var>buffer</var>.  If successful return a non&ndash;negative fixnum
+representing the number of written bytes, else raise an exception. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>pwrite</b><var> fd buffer size off<a name="index-pwrite-655"></a></var><br>
+<blockquote><p>Interface to the C function <code>pwrite()</code>, <a href="../libc/I_002fO-Primitives.html#I_002fO-Primitives">pwrite</a>.  Like <code>write</code>, but start writing at offset <var>off</var> from
+the start of the file; <var>off</var> must be a non&ndash;negative exact integer. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>lseek</b><var> fd off whence<a name="index-lseek-656"></a></var><br>
+<blockquote><p>Interface to the C function <code>lseek()</code>, <a href="../libc/File-Position-Primitive.html#File-Position-Primitive">lseek</a>.  Change the file position of the file descriptor
+<var>fd</var> to <var>off</var> from <var>whence</var>; <var>whence</var> must a fixnum,
+<var>off</var> must be an exact integer.  If successful return a
+non&ndash;negative exact integer representing the number of bytes from the
+beginning of the file, else raise an exception. 
+</p></blockquote></div>
+
+<!--  -->
+<div class="defun">
+&mdash; Function: <b>readv</b><var> fd buffers<a name="index-readv-657"></a></var><br>
+<blockquote><p>Interface to the C function <code>readv()</code>, <a href="../libc/Scatter_002dGather.html#Scatter_002dGather">readv</a>.  Read bytes from the file descriptor <var>fd</var> and store them
+into the list of bytevectors referenced by <var>buffers</var>.  If successful
+return a non&ndash;negative exact integer representing the number of bytes
+actually read, else raise an exception. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>writev</b><var> fd buffers<a name="index-writev-658"></a></var><br>
+<blockquote><p>Interface to the C function <code>writev()</code>, <a href="../libc/Scatter_002dGather.html#Scatter_002dGather">writev</a>.  Write bytes to the file descriptor <var>fd</var> from the list of
+bytevectors referenced by <var>buffers</var>.  If successful return a
+non&ndash;negative exact integer representing the number of bytes actually
+written, else raise an exception. 
+</p></blockquote></div>
+
+<!--  -->
+<div class="defun">
+&mdash; Function: <b>select</b><var> nfds read-fds write-fds except-fds sec usec<a name="index-select-659"></a></var><br>
+<blockquote><p>Interface to the C function <code>select()</code>, <a href="../libc/Waiting-for-I_002fO.html#Waiting-for-I_002fO">select</a>.  Wait for read, write or exceptional events on selected lists
+of file descriptors.
+
+        <p><var>nfds</var> must be false or a non&ndash;negative fixnum, when false it
+defaults to the maximum file descriptor value in the given lists; it is
+the maximum file descriptor number in the sets to be checked for events,
+plus one.  <var>read-fds</var>, <var>write-fds</var> and <var>except-fds</var> must be
+nil or lists of file descriptors to be checked for events.  <var>sec</var>
+and <var>usec</var> must be fixnums representing timeout seconds and
+microseconds.
+
+        <p>If the timeout expires before any event arrives: return 3 values all
+being nil.  If an error occurs: raise an exception.  Else return 3
+values being lists of file descriptors, respectively, ready for reading,
+writing or an exceptional condition. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>select-fd</b><var> fd sec usec<a name="index-select_002dfd-660"></a></var><br>
+<blockquote><p>Interface to the C function <code>select()</code>, <a href="../libc/Waiting-for-I_002fO.html#Waiting-for-I_002fO">select</a>.  Wait for read, write or exceptional events on the single file
+descriptor <var>fd</var>.  <var>sec</var> and <var>usec</var> must be fixnums
+representing timeout seconds and microseconds.
+
+        <p>If the timeout expires before any event arrives: return 3 values all
+being false.  If an error occurs: raise an exception.  Else return 3
+values being false or <var>fd</var>, respectively, if <var>fd</var> is ready for
+reading, writing or an exceptional condition. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>select-fd-readable?</b><var> fd sec usec<a name="index-select_002dfd_002dreadable_003f-661"></a></var><br>
+<blockquote><p>Interface to the C function <code>select()</code>, <a href="../libc/Waiting-for-I_002fO.html#Waiting-for-I_002fO">select</a>.  Wait for a readable event on the single file descriptor
+<var>fd</var>.  <var>sec</var> and <var>usec</var> must be fixnums representing timeout
+seconds and microseconds.
+
+        <p>If the timeout expires before any event arrives: return <code>#f</code>.  If an
+error occurs: raise an exception.  Else return <code>#t</code> if the file
+descriptor becomes readable. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>select-fd-writable?</b><var> fd sec usec<a name="index-select_002dfd_002dwritable_003f-662"></a></var><br>
+<blockquote><p>Interface to the C function <code>select()</code>, <a href="../libc/Waiting-for-I_002fO.html#Waiting-for-I_002fO">select</a>.  Wait for a writable event on the single file descriptor
+<var>fd</var>.  <var>sec</var> and <var>usec</var> must be fixnums representing timeout
+seconds and microseconds.
+
+        <p>If the timeout expires before any event arrives: return <code>#f</code>.  If an
+error occurs: raise an exception.  Else return <code>#t</code> if the file
+descriptor becomes writable. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>select-fd-exceptional?</b><var> fd sec usec<a name="index-select_002dfd_002dexceptional_003f-663"></a></var><br>
+<blockquote><p>Interface to the C function <code>select()</code>, <a href="../libc/Waiting-for-I_002fO.html#Waiting-for-I_002fO">select</a>.  Wait for an exceptional event on the single file descriptor
+<var>fd</var>.  <var>sec</var> and <var>usec</var> must be fixnums representing timeout
+seconds and microseconds.
+
+        <p>If the timeout expires before any event arrives: return <code>#f</code>.  If an
+error occurs: raise an exception.  Else return <code>#t</code> if the file
+descriptor receives an exceptional notification. 
+</p></blockquote></div>
+
+<!--  -->
+<div class="defun">
+&mdash; Function: <b>poll</b><var> fds timeout<a name="index-poll-664"></a></var><br>
+<blockquote><p>Interface to the C function <code>poll()</code>, see the manual page
+<code>poll(2)</code>.  Poll for events the file descriptors selected by
+<var>fds</var>; <var>timeout</var> must be an exact integer representing the
+timeout in milliseconds.  If successful: return the number of file
+descriptors ready for an event, else raise an exception.
+
+        <p><var>fds</var> must be a vector of vectors each having 3 elements: a
+fixnum representing the file descriptor, a fixnum representing the
+<code>events</code> field of a <code>struct pollfd</code>, a fixnum representing the
+<code>revents</code> field of a <code>struct pollfd</code>.  On successful return:
+the third element of the subvectors is mutated to represent the events
+for which the file descriptor is ready. 
+</p></blockquote></div>
+
+<!--  -->
+<div class="defun">
+&mdash; Function: <b>fcntl</b><var> fd command<a name="index-fcntl-665"></a></var><br>
+&mdash; Function: <b>fcntl</b><var> fd command arg<a name="index-fcntl-666"></a></var><br>
+<blockquote><p>Interface to the C function <code>fcntl()</code>, <a href="../libc/Control-Operations.html#Control-Operations">fcntl</a>.  Perform the operation specified by <var>command</var> on the file
+descriptor <var>fd</var> using <var>arg</var>; <var>fd</var> and <var>command</var> must be
+fixnums; <var>arg</var> must be <code>#f</code>, a fixnum, a bytevector or a
+pointer, if it is <code>#f</code> or not given no argument is handed to
+<code>fcntl()</code>.  If successful return a fixnum representing the return
+value of <code>fcntl()</code>, else raise an exception. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>ioctl</b><var> fd command<a name="index-ioctl-667"></a></var><br>
+&mdash; Function: <b>ioctl</b><var> fd command arg<a name="index-ioctl-668"></a></var><br>
+<blockquote><p>Interface to the C function <code>ioctl()</code>, <a href="../libc/IOCTLs.html#IOCTLs">ioctl</a>. 
+Perform the operation specified by <var>command</var> on the file descriptor
+<var>fd</var> using <var>arg</var>; <var>fd</var> and <var>command</var> must be fixnums;
+<var>arg</var> must be <code>#f</code>, a fixnum, a bytevector or a pointer, if it
+is <code>#f</code> or not given no argument is handed to <code>ioctl()</code>.  If
+successful return a fixnum representing the return value of
+<code>ioctl()</code>, else raise an exception. 
+</p></blockquote></div>
+
+<!--  -->
+<div class="defun">
+&mdash; Function: <b>dup</b><var> fd<a name="index-dup-669"></a></var><br>
+<blockquote><p>Interface to the C function <code>dup()</code>, <a href="../libc/Duplicating-Descriptors.html#Duplicating-Descriptors">dup</a>.  Duplicate the file descriptor <var>fd</var>.  If
+successful return a non&ndash;negative fixnum representing the new
+descriptor, else raise an exception. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>dup2</b><var> old new<a name="index-dup2-670"></a></var><br>
+<blockquote><p>Interface to the C function <code>dup2()</code>, <a href="../libc/Duplicating-Descriptors.html#Duplicating-Descriptors">dup</a>.  Duplicate the file descriptor <var>old</var> to
+<var>new</var>.  If successful return unspecified values, else raise an
+exception. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>pipe</b><var><a name="index-pipe-671"></a></var><br>
+<blockquote><p>Interface to the C function <code>pipe()</code>, <a href="../libc/Creating-a-Pipe.html#Creating-a-Pipe">pipe</a>.  Create a pair of file descriptors connected through a pipe.  If
+successful return two values being fixnums representing the file
+descriptors, else raise an exception.
+
+        <p>Simple example of process writing to itself through a pipe:
+
+     <pre class="example">          #!r6rs
+          (import (vicare)
+            (prefix (vicare posix) px.))
+          
+          (let-values (((in ou) (px.pipe)))
+            (px.write ou '#vu8(1 2 3 4) 4)
+            (let ((bv (make-bytevector 4)))
+              (px.read in bv 4)
+              bv))
+          &rArr; #vu8(1 2 3 4)
+</pre>
+        <p class="noindent">here is how to fork a process and setup stdin and stdout in the children
+to use newly created pipe file descriptors to communicate with the
+parent:
+
+     <pre class="example">          #!r6rs
+          (import (vicare)
+            (prefix (vicare posix) px.))
+          
+          (let-values
+              (((child-stdin       parent-to-child) (px.pipe))
+               ((parent-from-child child-stdout)    (px.pipe)))
+            (fork
+          
+              (lambda (pid) ;parent
+                (let ((buf (make-bytevector 1)))
+                  (px.read  parent-from-child buf 1)
+                  (px.write parent-to-child '#vu8(2) 1)
+                  buf))
+          
+              (lambda () ;child
+                (begin ;setup stdin
+                  (close-input-port (current-input-port))
+                  (px.dup2 child-stdin 0)
+                  (px.close child-stdin))
+          
+                (begin ;setup stdout
+                  (close-output-port (current-output-port))
+                  (px.dup2 child-stdout 1)
+                  (px.close child-stdout))
+          
+                (let ((buf (make-bytevector 1)))
+                  (px.write 1 '#vu8(1) 1)
+                  (px.read  0 buf 1)
+                  (exit 0)))))
+          &rArr; #vu8(1)
+</pre>
+        <p class="noindent">here is how to fork a process and setup stdin and stdout in the children
+to use newly created pipe file descriptors, through Scheme ports, to
+communicate with the parent:
+
+     <pre class="example">          #!r6rs
+          (import (vicare)
+            (prefix (vicare posix) px.))
+          
+          (let-values (((child-stdin       parent-to-child) (px.pipe))
+                       ((parent-from-child child-stdout)    (px.pipe)))
+            (fork
+             (lambda (pid)        ;parent
+               (let* ((inp (make-textual-file-descriptor-input-port
+                            parent-from-child "in" (native-transcoder)))
+                      (oup (make-textual-file-descriptor-output-port
+                            parent-to-child "out" (native-transcoder)))
+                      (buf (get-string-n inp 4)))
+                 (display "hello" oup)
+                 (flush-output-port oup)
+                 buf))
+          
+             (lambda ()           ;child
+          
+               (begin      ;setup stdin
+                 (close-input-port (current-input-port))
+                 (current-input-port
+                  (make-textual-file-descriptor-input-port
+                   child-stdin "*stdin*" (native-transcoder))))
+          
+               (begin ;setup stdout
+                 (close-output-port (current-output-port))
+                 (current-output-port
+                  (make-textual-file-descriptor-output-port
+                   child-stdout "*stdout*" (native-transcoder))))
+          
+               (display "ciao")
+               (flush-output-port (current-output-port))
+               (get-string-n (current-input-port) 5)
+               (exit 0))))
+          &rArr; "ciao"
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>mkfifo</b><var> pathname mode<a name="index-mkfifo-672"></a></var><br>
+<blockquote><p>Interface to the C function <code>mkfifo()</code>, <a href="../libc/FIFO-Special-Files.html#FIFO-Special-Files">mkfifo</a>.  Create a FIFO special file with name <var>pathname</var> and
+mode <var>mode</var>, which must be a fixnum.  If successful return
+unspecified values, else raise an exception. 
+</p></blockquote></div>
+
+<!-- page -->
+   </body></html>
+

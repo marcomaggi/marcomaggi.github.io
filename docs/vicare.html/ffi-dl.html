@@ -1,0 +1,167 @@
+<html lang="en">
+<head>
+<title>ffi dl - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="ffi.html#ffi" title="ffi">
+<link rel="prev" href="ffi-libffi.html#ffi-libffi" title="ffi libffi">
+<link rel="next" href="ffi-shared.html#ffi-shared" title="ffi shared">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d9 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The Vicarus Scheme package is distributed under the terms of the GNU
+General Public License (GPL) and can be downloaded from:
+
+            `http://github.com/marcomaggi/vicare/downloads'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+Copyright (C) 2010-2012 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="ffi-dl"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="ffi-shared.html#ffi-shared">ffi shared</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="ffi-libffi.html#ffi-libffi">ffi libffi</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="ffi.html#ffi">ffi</a>
+<hr>
+</div>
+
+<h3 class="section">4.2 Accessing foreign objects from Scheme</h3>
+
+<p>Most system implementations of dynamic loading employ reference counting
+for <code>dlopen</code> and <code>dlclose</code> in that library resources are not
+freed until the number of calls to <code>dlclose</code> matches the number of
+calls to <code>dlopen</code>.  The following bindings are exported by
+<code>(vicare ffi)</code>.
+
+<div class="defun">
+&mdash; Function: <b>dlopen</b><var><a name="index-dlopen-473"></a></var><br>
+&mdash; Function: <b>dlopen</b><var> library-name<a name="index-dlopen-474"></a></var><br>
+&mdash; Function: <b>dlopen</b><var> library-name lazy? global?<a name="index-dlopen-475"></a></var><br>
+<blockquote><p>Interface to the C function <code>dlopen()</code>, see the manual page
+<code>dlopen(3)</code>.  Load a platform shared library and return a pointer
+object representing a handler for the library, which can be used as
+argument for <code>dlsym</code> and <code>dlclose</code>.  If the library cannot be
+loaded: return <code>#f</code> and the procedure <code>dlerror</code> can be used to
+obtain the cause of the failure.
+
+        <p>When no arguments are present: the returned pointer handler references
+the current process and it can be used to retrieve pointers to functions
+already loaded, for example the functions exported by the standard C
+library.  The <var>lazy?</var> and <var>global?</var> arguments are meaningless in
+this case.
+
+        <p>When given: <var>library-name</var> must be a string or a bytevector
+representing the name of the library; if it is a string: it is converted
+to bytevector using the function referenced by
+<code>filename-&gt;string-func</code>.
+
+        <p>Library names are system&ndash;dependent and must include the appropriate
+suffix (for exapmle <code>*.so</code> on Linux, <code>*.dylib</code> on Darwin and
+<code>*.dll</code> on Cygwin).  <var>library-name</var> may include a full path
+which identifies the location of the library, or it may just be the name
+of the library in which case the system will lookup the library name
+using the <samp><span class="env">LD_LIBRARY_PATH</span></samp> environment variable.
+
+        <p>The argument <var>lazy?</var> specifies how library dependencies are loaded. 
+If true, <code>dlopen</code> delays the resolution and loading of dependent
+libraries until they are actually used.  If false, all library
+dependencies are loaded before the call to <code>dlopen</code> returns. 
+<var>lazy?</var> defaults to <code>#f</code>.
+
+        <p>The argument <var>global?</var> specifies the scope of the symbols exported
+from the loaded library.  If true, all exported symbols become part of
+the running image, and subsequent <code>dlsym</code> calls may not need to
+specify the library from which the symbol is loaded.  If false, the
+exported symbols are not global and the library pointer needs to be
+specified for <code>dlsym</code>.  <var>global?</var> defaults to <code>#f</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>dlclose</b><var> handle<a name="index-dlclose-476"></a></var><br>
+<blockquote><p>Interface to the C function <code>dlclose()</code>, see the manual page
+<code>dlclose(3)</code>.  Release the resources loaded from the library
+referenced by the pointer handler <var>handle</var>.  If successful return
+<code>#t</code>, else return <code>#f</code> and <code>dlerror</code> can be used to obtain
+the cause of the error.
+
+        <p>Closing a library renders all symbols and static data structures that
+the library exports invalid and the program may crash or corrupt its
+memory if such symbols are used after a library is closed. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>dlsym</b><var> handle name<a name="index-dlsym-477"></a></var><br>
+<blockquote><p>Interface to the C function <code>dlsym()</code>, see the manual page
+<code>dlsym(3)</code>.  Search the loaded library referenced by the pointer
+<var>handle</var> for an exported symbol whose name is represented by the
+string <var>name</var>.  If successful return a pointer object, else return
+<code>#f</code> and <code>dlerror</code> can be used to obtain the cause of the
+error.
+
+        <p>If the returned value references a function: it can be used as argument
+to the callout generators built by <code>make-c-callout-maker</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>dlerror</b><var><a name="index-dlerror-478"></a></var><br>
+<blockquote><p>Interface to the C function <code>dlerror()</code>, see the manual page
+<code>dlerror(3)</code>.  If any of the dynamic loading operations fails, the
+cause of the error can be obtained by calling <code>dlerror</code> which
+returns a string describing the error; return <code>#f</code> if there was no
+dynamic loading error. 
+</p></blockquote></div>
+
+<!-- page -->
+   </body></html>
+

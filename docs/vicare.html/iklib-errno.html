@@ -1,0 +1,137 @@
+<html lang="en">
+<head>
+<title>iklib errno - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="iklib.html#iklib" title="iklib">
+<link rel="prev" href="iklib-cstrings.html#iklib-cstrings" title="iklib cstrings">
+<link rel="next" href="iklib-readline.html#iklib-readline" title="iklib readline">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d9 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The Vicarus Scheme package is distributed under the terms of the GNU
+General Public License (GPL) and can be downloaded from:
+
+            `http://github.com/marcomaggi/vicare/downloads'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+Copyright (C) 2010-2012 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="iklib-errno"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="iklib-readline.html#iklib-readline">iklib readline</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="iklib-cstrings.html#iklib-cstrings">iklib cstrings</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="iklib.html#iklib">iklib</a>
+<hr>
+</div>
+
+<h3 class="section">3.27 Interface to <code>errno</code></h3>
+
+<p>Most C language system functions report errors by setting a the special
+variable <code>errno</code> to some predefined integer constant,
+<a href="../libc/Checking-for-Errors.html#Checking-for-Errors">errno</a>.  The Scheme code accessing
+<code>errno</code> values should be agnostic with respect to the actual error
+codes; for this to happen we should use the following facilities along
+with bindings from <code>(vicare errno)</code>, <a href="errno.html#errno">errno</a> for details.
+
+   <p>Values for the C language variable <code>errno</code> are encoded as negated
+fixnum values: if <code>EPERM</code> is defined to <code>1</code> at the C language
+level, Vicare defines it as the fixnum <code>-1</code>; at present
+all the known error codes fit into fixnums range.  One syntax identifier
+binding for each known <code>errno</code> value is exported by the library
+<code>(vicare errno)</code> and reexported by the library <code>(vicare
+platform-constants)</code>.
+
+   <p>If some error codes are not defined on a platform: the corresponding
+binding evaluates to <code>#t</code>.  Notice that if no error occurred
+<code>errno</code> is set to the fixnum zero.
+
+   <p>The following bindings are exported by the libraries <code>(vicare)</code>,
+<code>(ikarus)</code> and <code>(ikarus system $foreign)</code> and reexported by
+the library <code>(vicare ffi)</code>.
+
+<div class="defun">
+&mdash; Function: <b>errno</b><var><a name="index-errno-461"></a></var><br>
+&mdash; Function: <b>errno</b><var> code<a name="index-errno-462"></a></var><br>
+<blockquote><p>Interface to the C language level <code>errno</code> variable to be used with
+the foreign&ndash;functions interface (<acronym>FFI</acronym>).
+
+        <p>When called with no values return the value of the C variable
+<code>errno</code> right after the last call to a C function performed by the
+current process through the <acronym>FFI</acronym>.  When called with one argument: set
+the C variable <code>errno</code> of the current process to <var>code</var>,
+appropriately handling the coding of the value.
+
+        <p>Notice that bindings exported by <code>(vicare posix)</code>, <code>(vicare
+glibc)</code> and <code>(vicare linux)</code> do <strong>not</strong> use this mechanism;
+rather they raise an exception whenever an error happen.
+
+        <p>As special cases: when the C variable <code>errno</code> is set to zero,
+<code>errno</code> returns <code>#f</code>; when <var>code</var> is <code>#f</code>, the C
+variable <code>errno</code> is set to zero; when <var>code</var> is <code>#t</code>, the C
+variable <code>errno</code> is set to <code>EFAULT</code>.
+
+        <p>The mechanism is such that the following form:
+
+     <pre class="example">          (let ((rv (call-foreign-function)))
+            (values rv (errno)))
+</pre>
+        <p class="noindent">performs a foreign&ndash;function call and evaluates to two values: the
+return value from the foreign function and the value of the C variable
+<code>errno</code> right after the foreign call. 
+</p></blockquote></div>
+
+<!-- page -->
+   </body></html>
+

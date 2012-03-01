@@ -1,0 +1,232 @@
+<html lang="en">
+<head>
+<title>unicode - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="prev" href="credits.html#credits" title="credits">
+<link rel="next" href="fasl.html#fasl" title="fasl">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d9 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The Vicarus Scheme package is distributed under the terms of the GNU
+General Public License (GPL) and can be downloaded from:
+
+            `http://github.com/marcomaggi/vicare/downloads'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+Copyright (C) 2010-2012 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="unicode"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="fasl.html#fasl">fasl</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="credits.html#credits">credits</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="index.html#Top">Top</a>
+<hr>
+</div>
+
+<h2 class="appendix">Appendix D On Unicode and <acronym>UTF</acronym> encodings</h2>
+
+<p>As required by <acronym>R6RS</acronym>, the Scheme implementations must support Unicode
+characters and input/output libraries must implement transcoders for
+textual ports supporting encoding and decoding between Scheme characters
+and <acronym>UTF</acronym>-8 and <acronym>UTF</acronym>-16.
+
+   <p>The mandatory starting points to learn about this stuff are the
+following (<acronym>URL</acronym>s last verified on Sep 9, 2011):
+
+<div align="center"><a href="http://www.unicode.org/faq/utf_bom.html">http://www.unicode.org/faq/utf_bom.html</a></div>
+<div align="center"><a href="http://en.wikipedia.org/wiki/Universal_Character_Set">http://en.wikipedia.org/wiki/Universal_Character_Set</a></div>
+<div align="center"><a href="http://en.wikipedia.org/wiki/Unicode">http://en.wikipedia.org/wiki/Unicode</a></div>
+<div align="center"><a href="http://en.wikipedia.org/wiki/Byte_order_mark">http://en.wikipedia.org/wiki/Byte_order_mark</a></div>
+<div align="center"><a href="http://en.wikipedia.org/wiki/UTF-8">http://en.wikipedia.org/wiki/UTF-8</a></div>
+<div align="center"><a href="http://en.wikipedia.org/wiki/UTF-16">http://en.wikipedia.org/wiki/UTF-16</a></div>
+<div align="center"><a href="http://en.wikipedia.org/wiki/UTF-32">http://en.wikipedia.org/wiki/UTF-32</a></div>
+
+<p class="noindent">here we give only a brief overview of the main definitions, drawing text
+from those pages.
+
+   <p>The <dfn>Universal Character Set</dfn> (<acronym>UCS</acronym>) is a standard set of
+characters upon which many character encodings are based; it contains
+abstract characters, each identified by an unambiguous name and an
+integer number called its &ldquo;code point&rdquo;.
+
+   <p><dfn>Unicode</dfn> is a computing industry standard for the consistent
+encoding, representation and handling of text expressed in most of the
+world's writing systems.
+
+   <p><acronym>UCS</acronym> and Unicode have an identical repertoire and numbers: the
+same characters with the same numbers exist in both standards. 
+<acronym>UCS</acronym> is a simple character map, Unicode adds rules for
+collation, normalization of forms, and the bidirectional algorithm for
+scripts.
+
+   <p>The Unicode Consortium, the nonprofit organization that coordinates
+Unicode's development, has the goal of eventually replacing existing
+character encoding schemes with Unicode and its standard &ldquo;Unicode
+Transformation Format&rdquo; alias &ldquo;<acronym>UCS</acronym> Transformation Format&rdquo;
+(<acronym>UTF</acronym>) schemes.
+
+   <p>By convention a Unicode code point is referred to by writing <code>U+</code>
+followed by its hexadecimal number with at least 4 digits
+(<code>U+0044</code> is fine, <code>U+12</code> is not).
+
+   <p>In practice, Unicode code points are exact integers in the range
+[0, #x10FFFF], but outside the range [#xD800, #xDFFF]
+which has special meaning in <acronym>UTF</acronym> schemes.  A code point can be stored
+in 21 bits:
+
+<pre class="example">     (string-length (number-&gt;string #x10FFFF 2)) &rArr; 21
+</pre>
+   <p class="noindent"><acronym>R6RS</acronym> defines fixnums to have at least 24 bits, so a fixnum is
+wide enough to hold a code point:
+
+<pre class="example">     (fixnum? #x10FFFF) &rArr; #t
+</pre>
+   <p class="noindent">and indeed Scheme characters are a disjoint type of value holding such
+fixnums:
+
+<pre class="example">     (integer-&gt;char #x10FFFF) &rArr; #\x10FFFF
+</pre>
+   <!--  -->
+<h5 class="subsubheading"><acronym>UTF</acronym>-8 scheme</h5>
+
+<p><acronym>UTF</acronym>-8 is a multioctet character encoding for Unicode which can
+represent every character in the Unicode set, that is it can represent
+every code point in the ranges [0, #xD800) and (#xDFFF,
+#x10FFFF].
+
+   <p>A stream of <acronym>UTF</acronym>-8 encoded characters is meant to be stored octet by
+octet in fixed order (and so without the need to specify the endianness
+of words).
+
+   <p>The encoding scheme uses sequences of 1, 2, 3 or
+4 octets to encode a each code point as shown in the following
+table; the first octet in a sequence has a unique bit pattern in the
+most significant bits and so it allows the determination of the sequence
+length; every octet contains a number of payload bits which must be
+concatenated (bitwise inclusive OR) to reconstruct the integer
+representation of a code point:
+
+<pre class="example">     | # of octets | 1st octet | 2nd octet | 3rd octet | 4th octet |
+     |-------------+-----------+-----------+-----------+-----------|
+     |     1        #b0xxxxxxx
+     |     2        #b110xxxxx  #b10xxxxxx
+     |     3        #b1110xxxx  #b10xxxxxx  #b10xxxxxx
+     |     4        #b11110xxx  #b10xxxxxx  #b10xxxxxx  #b10xxxxxx
+     
+     | # of octets | # of payload bits |       hex range     |
+     |-------------+-------------------+---------------------|
+     |     1                         7    [#x0000,   #x007F]
+     |     2                5 + 6 = 11    [#x0080,   #x07FF]
+     |     3            4 + 6 + 6 = 16    [#x0800,   #xFFFF]
+     |     4        3 + 6 + 6 + 6 = 21  [#x010000, #x10FFFF]
+</pre>
+   <p>Note that octets <code>#xFE</code> and <code>#xFF</code> cannot appear in a valid
+stream of <acronym>UTF</acronym>-8 encoded characters.  The sequence of 3 octets
+is the one that could encode (but must not) the forbidden range
+[#xD800, #xDFFF].
+
+   <p>The first 128 characters of the Unicode character set correspond
+one&ndash;to&ndash;one with <acronym>ASCII</acronym> and are encoded using a single octet with the
+same binary value as the corresponding <acronym>ASCII</acronym> character, making valid
+<acronym>ASCII</acronym> text valid <acronym>UTF</acronym>-8 encoded Unicode text as well.  Such encoded
+octets have the Most Significant Bit (<acronym>MSB</acronym>) set to zero.
+
+   <p>Although the standard does not define it, many programs start a <acronym>UTF</acronym>-8
+stream with a Byte Order Mark (<acronym>BOM</acronym>) composed of the 3
+octets: <code>#xEF</code>, <code>#xBB</code>, <code>#xBF</code>.
+
+<!--  -->
+<h5 class="subsubheading"><acronym>UTF</acronym>-16 decoding</h5>
+
+<p>Given a 16-bit word in a <acronym>UTF</acronym>-16 stream, represented in Scheme as a
+fixnum in the range [#x0000, #xFFFF], we can classify it on the
+following axis:
+
+<pre class="example">     0000        D7FF D800    DBFF DC00      DFFF E000       FFFF
+      |-------------||-----------||-------------||------------|
+       single word    first in     second in      single word
+       character      pair         pair           character
+</pre>
+   <p class="noindent">or the following logic:
+
+<pre class="example">     word in [#x0000, #xD7FF] =&gt; single word character
+     word in [#xD800, #xDBFF] =&gt; first in surrogate pair
+     word in [#xDC00, #xDFFF] =&gt; second in surrogate pair
+     word in [#xE000, #xFFFF] =&gt; single word character
+</pre>
+   <!--  -->
+   <p><acronym>ISO</acronym>/<acronym>IEC</acronym> 8859-1 also known as Latin-1
+
+   <p>Latin-1 uses 1 octet per character.  The first 256 Unicode
+code points are identical to the content of Latin-1, the first
+127 Latin-1 code points are identical to <acronym>ASCII</acronym>.  For an
+itroduction see:
+
+<div align="center"><a href="http://en.wikipedia.org/wiki/ISO/IEC_8859-1">http://en.wikipedia.org/wiki/ISO/IEC_8859-1</a></div>
+
+   <p>Latin-1 code points are identical to their octet encoding.
+
+   <p>Latin-1 code points in the range [0, 127] are identical to the
+same code points encoded in both <acronym>ASCII</acronym> and in <acronym>UTF</acronym>-8.
+
+   <p>Latin-1 code points in the range [128, 255] are
+<strong>different</strong> from the same code points encoded in <acronym>UTF</acronym>-8.
+
+   <p>Every octet (that is: every fixnum in the range [0, 255]) can be
+interpreted as a character in Latin-1 encoding.
+
+<!-- page -->
+   </body></html>
+

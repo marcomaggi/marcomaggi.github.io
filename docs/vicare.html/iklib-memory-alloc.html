@@ -1,0 +1,210 @@
+<html lang="en">
+<head>
+<title>iklib memory alloc - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="iklib-memory.html#iklib-memory" title="iklib memory">
+<link rel="prev" href="iklib-memory-intro.html#iklib-memory-intro" title="iklib memory intro">
+<link rel="next" href="iklib-memory-ops.html#iklib-memory-ops" title="iklib memory ops">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d9 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The Vicarus Scheme package is distributed under the terms of the GNU
+General Public License (GPL) and can be downloaded from:
+
+            `http://github.com/marcomaggi/vicare/downloads'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+Copyright (C) 2010-2012 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="iklib-memory-alloc"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="iklib-memory-ops.html#iklib-memory-ops">iklib memory ops</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="iklib-memory-intro.html#iklib-memory-intro">iklib memory intro</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="iklib-memory.html#iklib-memory">iklib memory</a>
+<hr>
+</div>
+
+<h4 class="subsection">3.25.2 Allocating and freeing memory</h4>
+
+<p>The following bindings are exported by the libraries <code>(vicare)</code>,
+<code>(ikarus)</code> and <code>(ikarus system $foreign)</code> and reexported by
+the library <code>(vicare ffi)</code>.
+
+<div class="defun">
+&mdash; Function: <b>malloc</b><var> number-of-bytes<a name="index-malloc-400"></a></var><br>
+&mdash; Function: <b>guarded-malloc</b><var> number-of-bytes<a name="index-guarded_002dmalloc-401"></a></var><br>
+<blockquote><p>Interface to the C function <code>malloc()</code>, <a href="../libc/Basic-Allocation.html#Basic-Allocation">malloc</a>.  Allocate a block of memory <var>number-of-bytes</var> wide;
+<var>number-of-bytes</var> must be a non&ndash;negative fixnum.  If successful
+return a pointer object, else return <code>#f</code>.
+
+        <p>Memory allocated by <code>malloc</code> must be released by <code>free</code>;
+memory allocated by <code>guarded-malloc</code> is automatically released
+whenever the returned pointer object is garbage collected. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>malloc*</b><var> number-of-bytes<a name="index-malloc_002a-402"></a></var><br>
+&mdash; Function: <b>guarded-malloc*</b><var> number-of-bytes<a name="index-guarded_002dmalloc_002a-403"></a></var><br>
+<blockquote><p>Like <code>malloc</code> and <code>guarded-malloc</code>, but if allocation fails
+raise a non&ndash;continuable exception with components: <code>&amp;who</code>,
+<code>&amp;message</code>, <code>&amp;out-of-memory-error</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>realloc</b><var> pointer number-of-bytes<a name="index-realloc-404"></a></var><br>
+&mdash; Function: <b>guarded-realloc</b><var> pointer number-of-bytes<a name="index-guarded_002drealloc-405"></a></var><br>
+<blockquote><p>Interface to the C function <code>realloc()</code>, <a href="../libc/Changing-Block-Size.html#Changing-Block-Size">realloc</a>.  Reallocate the block of memory referenced by
+<var>pointer</var> to the new size <var>number-of-bytes</var>, which must be a
+non&ndash;negative fixnum.
+
+        <p>If successful: mutate <var>pointer</var> to reference a the new memory block
+and return <var>pointer</var> itself.  If an error occurs: return <code>#f</code>
+and leave untouched both <var>pointer</var> and its referenced memory.
+
+        <p>Memory allocated by <code>realloc</code> must be released by <code>free</code>;
+memory allocated by <code>guarded-realloc</code> is automatically released
+whenever the returned pointer object is garbage collected. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>realloc*</b><var> pointer number-of-bytes<a name="index-realloc_002a-406"></a></var><br>
+&mdash; Function: <b>guarded-realloc*</b><var> pointer number-of-bytes<a name="index-guarded_002drealloc_002a-407"></a></var><br>
+<blockquote><p>Like <code>realloc</code> and <code>guarded-realloc</code>, but if allocation fails
+raise a non&ndash;continuable exception with components: <code>&amp;who</code>,
+<code>&amp;message</code>, <code>&amp;out-of-memory-error</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>calloc</b><var> number-of-elements element-size<a name="index-calloc-408"></a></var><br>
+&mdash; Function: <b>guarded-calloc</b><var> number-of-elements element-size<a name="index-guarded_002dcalloc-409"></a></var><br>
+<blockquote><p>Interface to the C function <code>calloc()</code>, <a href="../libc/Allocating-Cleared-Space.html#Allocating-Cleared-Space">calloc</a>.  Allocate and clear to zero a block of memory capable of
+holding <var>number-of-elements</var> each <var>element-size</var> wide; both the
+arguments must be non&ndash;negative fixnums.  If successful return a pointer
+object, else return <code>#f</code>.
+
+        <p>Memory allocated by <code>calloc</code> must be released by <code>free</code>;
+memory allocated by <code>guarded-calloc</code> is automatically released
+whenever the returned pointer object is garbage collected. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>calloc</b><var> number-of-elements element-size<a name="index-calloc-410"></a></var><br>
+&mdash; Function: <b>guarded-calloc</b><var> number-of-elements element-size<a name="index-guarded_002dcalloc-411"></a></var><br>
+<blockquote><p>Like <code>calloc</code> and <code>guarded-calloc</code>, but if allocation fails
+raise a non&ndash;continuable exception with components: <code>&amp;who</code>,
+<code>&amp;message</code>, <code>&amp;out-of-memory-error</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>free</b><var> pointer<a name="index-free-412"></a></var><br>
+<blockquote><p>Release the memory referenced by <var>pointer</var>, which must be the return
+value of <code>malloc()</code>, <code>realloc()</code>, <code>calloc()</code> or a similar
+system procedure.  <var>pointer</var> is mutated to reference the <code>NULL</code>
+pointer.
+
+        <p>If memory allocated by a guarding function is released by <code>free</code>:
+Vicare will <strong>not</strong> try to automatically release the old
+memory again.
+
+        <p>If <var>pointer</var> is <code>NULL</code> nothing happens. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>with-local-storage</b><var> lengths proc<a name="index-with_002dlocal_002dstorage-413"></a></var><br>
+<blockquote><p>Call <var>proc</var> with arguments being pointers to memory blocks allocated
+just for the dynamic extent of <var>proc</var>.  The number and size of the
+memory blocks is determined by <var>lengths</var>, which must be a vector of
+non&ndash;negative fixnums.
+
+        <p><strong>NOTE</strong> We must not let control flow go through a call to
+<code>with-local-storage</code> with an escaping continuation.
+
+     <pre class="example">          #!r6rs
+          (import (rnrs)
+            (prefix (vicare ffi) ffi.))
+          
+          ;; no allocated memory
+          (let ((a 1) (b 2))
+            (ffi.with-local-storage '#()
+              (lambda ()
+                (+ a b 4))))
+          &rArr; 7
+          
+          ;; allocate a single block of 4 bytes
+          (let ((a 1) (b 2))
+            (ffi.with-local-storage '#(4)
+              (lambda (&amp;int32)
+                (ffi.pointer-set-c-sint32! &amp;int32 0 4)
+                (+ a b (ffi.pointer-ref-c-sint32 &amp;int32 0)))))
+          &rArr; 7
+          
+          ;; allocate two blocks of 4 and 8 bytes
+          (let ((a 1) (b 2))
+            (ffi.with-local-storage '#(4 8)
+              (lambda (&amp;int32 &amp;int64)
+                (ffi.pointer-set-c-sint32! &amp;int32 0 4)
+                (ffi.pointer-set-c-sint64! &amp;int64 0 8)
+                (+ a b
+                   (ffi.pointer-ref-c-sint32 &amp;int32 0)
+                   (ffi.pointer-ref-c-sint64 &amp;int64 0)))))
+          &rArr; 15
+</pre>
+        <p>The memory blocks are actually allocated on the stack of
+Vicare's runtime. 
+</p></blockquote></div>
+
+<!-- page -->
+   </body></html>
+

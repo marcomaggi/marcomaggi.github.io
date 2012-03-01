@@ -1,0 +1,392 @@
+<html lang="en">
+<head>
+<title>objects bignums - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="objects.html#objects" title="objects">
+<link rel="prev" href="objects-symbols.html#objects-symbols" title="objects symbols">
+<link rel="next" href="objects-ratnums.html#objects-ratnums" title="objects ratnums">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d9 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The Vicarus Scheme package is distributed under the terms of the GNU
+General Public License (GPL) and can be downloaded from:
+
+            `http://github.com/marcomaggi/vicare/downloads'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+Copyright (C) 2010-2012 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="objects-bignums"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="objects-ratnums.html#objects-ratnums">objects ratnums</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="objects-symbols.html#objects-symbols">objects symbols</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="objects.html#objects">objects</a>
+<hr>
+</div>
+
+<h3 class="section">11.11 Bignum objects</h3>
+
+<p>Bignums are multi&ndash;precision exact integers bigger than fixnums; they
+are implemented using the <code>mpn</code> <acronym>API</acronym> of <acronym>GNU</acronym> <acronym>GMP</acronym>,
+See <a href="../gmp/Low_002dlevel-Functions.html#Low_002dlevel-Functions">mpn</a>.
+
+   <p>Vicare only uses a bignum to represent an exact integer when
+the value does not fit in a fixnum; it follows that the following ranges
+are enforced:
+
+<pre class="example">     negative bignums &lt; (least-fixnum) &lt;= all fixnums
+     
+     all fixnums &lt;= (greatest-fixnum) &lt; positive bignums
+</pre>
+   <p>A bignum is a variable length memory block referenced by machine words
+tagged as vectors.  The first machine word of a bignum block is tagged
+has bignum in its least significant bits; then comes a sign bit, zero if
+positive; the remaining most significant bits represent the number of
+words in the memory block after the first one.
+
+<pre class="example">     |------------------------|-------------| reference to bignum
+           heap pointer         vector tag
+     
+                          sign bit
+     |----------------------|-|-------------| bignum first word
+        number of words         bignum tag
+</pre>
+   <p>A pointer to the second machine word in a bignum memory block is the
+pointer of type <code>mp_limb_t</code> accepted by the <code>mpn_</code> functions
+of <acronym>GMP</acronym>; <dfn>limb</dfn>, in <acronym>GMP</acronym> jargon, is a machine word holding a
+portion of multi&ndash;precision number.  The layout of a bignum memory block
+is as follows:
+
+<pre class="example">     |----|-----|-----|-----|-----| ...
+      fst  limb0 limb1 limb2 limb3
+</pre>
+   <p class="noindent">where the first word <code>fst</code> is header of meta informations encoded
+as explained above and each limb is a machine word stored in native
+endianness; the big number is the concatenation of limbs with
+<code>limb0</code> being the least significant one.  There is always at least
+one limb; when a bignum is composed of a single limb, its value is
+always non&ndash;zero and outside the range of fixnums.
+
+<!--  -->
+<h5 class="subsubheading">Basic operations</h5>
+
+<p>To allocate a bignum we must know the number of required limbs:
+
+<pre class="example">     ikpcb * pcb        = ik_the_pcb();
+     long    nlimbs     = the_number_of_limbs;
+     long    block_size = disp_bignum_data + nlimbs * wordsize;
+     long    align_size = IK_ALIGN(block_size);
+     ikptr s_bn = ik_safe_alloc(pcb, align_size) | vector_tag;
+</pre>
+   <p class="noindent">we must explicitly build and encode the first word; the number of limbs
+is encoded as follows:
+
+<pre class="example">     long   nlimbs      = the_number_of_limbs;
+     ikptr  meta_nlimbs = nlimbs &lt;&lt; bignum_nlimbs_shift;
+</pre>
+   <p class="noindent">the sign bit is encoded as follows:
+
+<pre class="example">     long   sign      = zero_if_positive_one_if_negative;
+     ikptr  meta_sign = sign &lt;&lt; bignum_sign_shift;
+</pre>
+   <p class="noindent">and the full first word is composed and stored as follows:
+
+<pre class="example">     ikptr  s_bn        = the_bignum;
+     ikptr  meta_nlimbs = ...;
+     ikptr  meta_sign   = ...;
+     ikptr  s_fst       = meta_nlimbs | meta_sign | bignum_tag;
+     
+     IK_REF(s_bn, off_bignum_tag) = s_fst;
+</pre>
+   <p>To identify an object as bignum we do:
+
+<pre class="example">     ikptr  X = the_object;
+     
+     if ((vector_tag == IK_TAGOF(X)) &amp;&amp;
+         (bignum_tag == (bignum_mask &amp; IK_REF(X, -vector_tag))))
+       it_is_a_bignum();
+     else
+       it_is_not();
+</pre>
+   <p class="noindent">to extract meta informations we must first extract the first word:
+
+<pre class="example">     ikptr   s_bn  = the_bignum;
+     ikptr   s_fst = IK_REF(s_bn, off_bignum_tag);
+     long    nlimbs;
+     long    meta_sign;
+     
+     nlimbs    = ((ik_ulong)s_fst) &gt;&gt; bignum_nlimbs_shift;
+     meta_sign = ((ik_ulong)s_fst) &amp;  bignum_sign_mask;
+</pre>
+   <p class="noindent">if <code>meta_sign</code> is zero the bignum is positive, else it is negative.
+
+   <p>To acquire a pointer to the data area we do:
+
+<pre class="example">     ikptr        s_bn = the_bignum;
+     mp_limb_t *  data;
+     
+     data = (mp_limb_t*)(long)(s_bn + off_bignum_data);
+</pre>
+   <p class="noindent">to extract the N-th limb we do:
+
+<pre class="example">     ikptr      s_bn = the_bignum;
+     long       N    = the_index;
+     mp_limb_t  limb;
+     
+     limb = (mp_limb_t)IK_REF(s_bn, off_bignum_data + N * wordsize);
+</pre>
+   <div class="defun">
+&mdash; Preprocessor Symbol: <b>bignum_mask</b><var><a name="index-bignum_005fmask-1599"></a></var><br>
+&mdash; Preprocessor Symbol: <b>bignum_tag</b><var><a name="index-bignum_005ftag-1600"></a></var><br>
+<blockquote><p><code>bignum_mask</code> is the bit pattern used to isolate a bignum tag from
+an <code>ikptr</code> value; <code>bignum_tag</code> is the tag of <code>ikptr</code> values used
+as first words in bignum memory blocks. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Preprocessor Symbol: <b>bignum_sign_mask</b><var><a name="index-bignum_005fsign_005fmask-1601"></a></var><br>
+<blockquote><p>A bit pattern used to isolate the sign bit from the <code>ikptr</code> value
+used as first word in bignum memory blocks. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Preprocessor Symbol: <b>bignum_sign_shift</b><var><a name="index-bignum_005fsign_005fshift-1602"></a></var><br>
+<blockquote><p>The number representing the bit left&ndash;shift offset of the sign bit in
+the <code>ikptr</code> value used as first word in bignum memory blocks. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Preprocessor Symbol: <b>bignum_nlimbs_shift</b><var><a name="index-bignum_005fnlimbs_005fshift-1603"></a></var><br>
+<blockquote><p>The number representing the bit left&ndash;shift offset of the number of
+limbs in the <code>ikptr</code> value used as first word in bignum memory
+blocks. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Preprocessor Symbol: <b>disp_bignum_tag</b><var><a name="index-disp_005fbignum_005ftag-1604"></a></var><br>
+<blockquote><p>Offset in bytes of the first word in a bignum memory block from the
+beginning of the block.  It is zero. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Preprocessor Symbol: <b>disp_bignum_data</b><var><a name="index-disp_005fbignum_005fdata-1605"></a></var><br>
+<blockquote><p>Offset in bytes of the first byte in the data area of a bignum memory
+block from the beginning of the block. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Preprocessor Symbol: <b>off_bignum_tag</b><var><a name="index-off_005fbignum_005ftag-1606"></a></var><br>
+<blockquote><p>Number to add to a tagged <code>ikptr</code> reference to bignum to obtain a
+pointer to the first word in a bignum memory block. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Preprocessor Symbol: <b>off_bignum_data</b><var><a name="index-off_005fbignum_005fdata-1607"></a></var><br>
+<blockquote><p>Number to add to a tagged <code>ikptr</code> reference to bignum to obtain a
+pointer to the first byte in the data area of bignum memory block. 
+</p></blockquote></div>
+
+<!--  -->
+<h5 class="subsubheading">Convenience preprocessor macros</h5>
+
+<div class="defun">
+&mdash; Preprocessor Macro: long <b>IK_BIGNUM_ALLOC_SIZE</b> (<var>long nlimbs</var>)<var><a name="index-IK_005fBIGNUM_005fALLOC_005fSIZE-1608"></a></var><br>
+<blockquote><p>Given a number of limbs: evaluate to the aligned size of the memory
+block needed to hold the bignum. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Preprocessor Macro: ikptr <b>IKA_BIGNUM_ALLOC</b> (<var>ikpcb * pcb, long nlimb</var>)<var><a name="index-IKA_005fBIGNUM_005fALLOC-1609"></a></var><br>
+<blockquote><p>Given a number of limbs: allocate, using <code>ik_safe_alloc()</code>, the
+memory block needed to hold the bignum and return an untagged pointer to
+it. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Preprocessor Macro: ikptr <b>IK_COMPOSE_BIGNUM_FIRST_WORD</b> (<var>long nlimb, ikptr meta_sign</var>)<var><a name="index-IK_005fCOMPOSE_005fBIGNUM_005fFIRST_005fWORD-1610"></a></var><br>
+<blockquote><p>Given a number of limbs and the encoded sign bit: evaluate to the first
+word of a bignum object.  It is equivalent to the following:
+
+     <pre class="example">          ikptr  meta_nlimbs;
+          ikptr  s_fst;
+          
+          meta_nlimbs = (<var>nlimbs</var> &lt;&lt; bignum_nlimbs_shift)
+          s_fst       = meta_nlimbs | <var>meta_sign</var> | bignum_tag;
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Preprocessor Macro: ikptr <b>IK_POSITIVE_BIGNUM_FIRST_WORD</b> (<var>long nlimb</var>)<var><a name="index-IK_005fPOSITIVE_005fBIGNUM_005fFIRST_005fWORD-1611"></a></var><br>
+&mdash; Preprocessor Macro: ikptr <b>IK_NEGATIVE_BIGNUM_FIRST_WORD</b> (<var>long nlimb</var>)<var><a name="index-IK_005fNEGATIVE_005fBIGNUM_005fFIRST_005fWORD-1612"></a></var><br>
+<blockquote><p>Given a number of limbs evaluate to the corresponding first word of
+bignum representing a positive or negative number. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Preprocessor Macro: ikptr <b>IK_BIGNUM_FIRST</b> (<var>ikptr bn</var>)<var><a name="index-IK_005fBIGNUM_005fFIRST-1613"></a></var><br>
+<blockquote><p>Given a reference to bignum: evaluate to the location of the first word
+holding meta informations.  Can be used both as operand or left&ndash;side of
+assignment:
+
+     <pre class="example">          ikptr  s_bn = the_bignum;
+          ikptr  s_fst;
+          
+          s_fst = IK_BIGNUM_FIRST(s_bn);
+          IK_BIGNUM_FIRST(s_bn) = s_fst;
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Preprocessor Macro: ikptr <b>IK_LIMB</b> (<var>ikptr bn, long N</var>)<var><a name="index-IK_005fLIMB-1614"></a></var><br>
+<blockquote><p>Given a reference to bignum: evaluate to the location of the <var>N</var>-th
+limb in the data area.  Can be used both as operand or left&ndash;side of
+assignment:
+
+     <pre class="example">          ikptr      s_bn = the_bignum;
+          mp_limb_t  limb;
+          
+          limb = (mp_limb_t)IK_LIMB(s_bn);
+          IK_LIMB(s_bn) = (ikptr)limb;
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Preprocessor Macro: mp_limb_t * <b>IK_BIGNUM_DATA_LIMBP</b> (<var>ikptr bn</var>)<var><a name="index-IK_005fBIGNUM_005fDATA_005fLIMBP-1615"></a></var><br>
+<blockquote><p>Given a reference to bignum: evaluate to a pointer to the first byte in
+the data area, which is a pointer to the least significant limb. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Preprocessor Macro: mp_limb_t <b>IK_BIGNUM_FIRST_LIMB</b> (<var>ikptr bn</var>)<var><a name="index-IK_005fBIGNUM_005fFIRST_005fLIMB-1616"></a></var><br>
+<blockquote><p>Given a reference to bignum: evaluate to the least significant limb in
+the data area. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Preprocessor Macro: mp_limb_t <b>IK_BIGNUM_LAST_LIMB</b> (<var>ikptr bn, long nlimbs</var>)<var><a name="index-IK_005fBIGNUM_005fLAST_005fLIMB-1617"></a></var><br>
+<blockquote><p>Given a reference to bignum and its number of limbs: evaluate to the
+most significant limb in the data area. 
+</p></blockquote></div>
+
+<!--  -->
+<h5 class="subsubheading">Operations on exact integers</h5>
+
+<div class="defun">
+&mdash; Function: int <b>ik_is_bignum</b> (<var>ikptr obj</var>)<var><a name="index-ik_005fis_005fbignum-1618"></a></var><br>
+<blockquote><p>Return true if <var>obj</var> is a bignum. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: ikptr <b>ika_integer_from_int</b> (<var>ikpcb * pcb, int N</var>)<var><a name="index-ika_005finteger_005ffrom_005fint-1619"></a></var><br>
+&mdash; Function: ikptr <b>ika_integer_from_long</b> (<var>ikpcb * pcb, long N</var>)<var><a name="index-ika_005finteger_005ffrom_005flong-1620"></a></var><br>
+&mdash; Function: ikptr <b>ika_integer_from_llong</b> (<var>ikpcb * pcb, ik_llong N</var>)<var><a name="index-ika_005finteger_005ffrom_005fllong-1621"></a></var><br>
+&mdash; Function: ikptr <b>ika_integer_from_uint</b> (<var>ikpcb * pcb, ik_uint N</var>)<var><a name="index-ika_005finteger_005ffrom_005fuint-1622"></a></var><br>
+&mdash; Function: ikptr <b>ika_integer_from_ulong</b> (<var>ikpcb * pcb, ik_ulong N</var>)<var><a name="index-ika_005finteger_005ffrom_005fulong-1623"></a></var><br>
+&mdash; Function: ikptr <b>ika_integer_from_ullong</b> (<var>ikpcb * pcb, ik_ullong N</var>)<var><a name="index-ika_005finteger_005ffrom_005fullong-1624"></a></var><br>
+<blockquote><p>Build and return a new exact integer object from the given C language
+value. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: ikptr <b>ika_integer_from_sint32</b> (<var>ikpcb * pcb, int32_t N</var>)<var><a name="index-ika_005finteger_005ffrom_005fsint32-1625"></a></var><br>
+&mdash; Function: ikptr <b>ika_integer_from_sint64</b> (<var>ikpcb * pcb, int64_t N</var>)<var><a name="index-ika_005finteger_005ffrom_005fsint64-1626"></a></var><br>
+&mdash; Function: ikptr <b>ika_integer_from_uint32</b> (<var>ikpcb * pcb, uint32_t N</var>)<var><a name="index-ika_005finteger_005ffrom_005fuint32-1627"></a></var><br>
+&mdash; Function: ikptr <b>ika_integer_from_uint64</b> (<var>ikpcb * pcb, uint64_t N</var>)<var><a name="index-ika_005finteger_005ffrom_005fuint64-1628"></a></var><br>
+<blockquote><p>Build and return a new exact integer object from the given C language
+value. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: ikptr <b>ika_integer_from_off_t</b> (<var>ikpcb * pcb, off_t N</var>)<var><a name="index-ika_005finteger_005ffrom_005foff_005ft-1629"></a></var><br>
+&mdash; Function: ikptr <b>ika_integer_from_ssize_t</b> (<var>ikpcb * pcb, ssize_t N</var>)<var><a name="index-ika_005finteger_005ffrom_005fssize_005ft-1630"></a></var><br>
+&mdash; Function: ikptr <b>ika_integer_from_size_t</b> (<var>ikpcb * pcb, size_t N</var>)<var><a name="index-ika_005finteger_005ffrom_005fsize_005ft-1631"></a></var><br>
+<blockquote><p>Build and return a new exact integer object from the given C language
+value. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: int <b>ik_integer_to_int</b> (<var>ikptr X</var>)<var><a name="index-ik_005finteger_005fto_005fint-1632"></a></var><br>
+&mdash; Function: long <b>ik_integer_to_long</b> (<var>ikptr X</var>)<var><a name="index-ik_005finteger_005fto_005flong-1633"></a></var><br>
+&mdash; Function: ik_llong <b>ik_integer_to_llong</b> (<var>ikptr X</var>)<var><a name="index-ik_005finteger_005fto_005fllong-1634"></a></var><br>
+&mdash; Function: ik_uint <b>ik_integer_to_uint</b> (<var>ikptr X</var>)<var><a name="index-ik_005finteger_005fto_005fuint-1635"></a></var><br>
+&mdash; Function: ik_ulong <b>ik_integer_to_ulong</b> (<var>ikptr X</var>)<var><a name="index-ik_005finteger_005fto_005fulong-1636"></a></var><br>
+&mdash; Function: ik_ullong <b>ik_integer_to_ullong</b> (<var>ikptr X</var>)<var><a name="index-ik_005finteger_005fto_005fullong-1637"></a></var><br>
+<blockquote><p>Return a C language number from a Scheme exact integer object.  The
+object <var>X</var> must be in the correct range for the requested
+conversion. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: int32_t <b>ik_integer_to_sint32</b> (<var>ikptr X</var>)<var><a name="index-ik_005finteger_005fto_005fsint32-1638"></a></var><br>
+&mdash; Function: int64_t <b>ik_integer_to_sint64</b> (<var>ikptr X</var>)<var><a name="index-ik_005finteger_005fto_005fsint64-1639"></a></var><br>
+&mdash; Function: uint32_t <b>ik_integer_to_uint32</b> (<var>ikptr X</var>)<var><a name="index-ik_005finteger_005fto_005fuint32-1640"></a></var><br>
+&mdash; Function: uint64_t <b>ik_integer_to_uint64</b> (<var>ikptr X</var>)<var><a name="index-ik_005finteger_005fto_005fuint64-1641"></a></var><br>
+<blockquote><p>Return a C language number from a Scheme exact integer object.  The
+object <var>X</var> must be in the correct range for the requested
+conversion. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: off_t <b>ik_integer_to_off_t</b> (<var>ikptr x</var>)<var><a name="index-ik_005finteger_005fto_005foff_005ft-1642"></a></var><br>
+&mdash; Function: size_t <b>ik_integer_to_size_t</b> (<var>ikptr x</var>)<var><a name="index-ik_005finteger_005fto_005fsize_005ft-1643"></a></var><br>
+&mdash; Function: ssize_t <b>ik_integer_to_ssize_t</b> (<var>ikptr x</var>)<var><a name="index-ik_005finteger_005fto_005fssize_005ft-1644"></a></var><br>
+<blockquote><p>Return a C language number from a Scheme exact integer object.  The
+object <var>X</var> must be in the correct range for the requested
+conversion. 
+</p></blockquote></div>
+
+<!-- page -->
+   </body></html>
+

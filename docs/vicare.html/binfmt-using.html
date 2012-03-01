@@ -1,0 +1,137 @@
+<html lang="en">
+<head>
+<title>binfmt using - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="binfmt.html#binfmt" title="binfmt">
+<link rel="prev" href="binfmt-registry.html#binfmt-registry" title="binfmt registry">
+<link rel="next" href="binfmt-control.html#binfmt-control" title="binfmt control">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d9 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The Vicarus Scheme package is distributed under the terms of the GNU
+General Public License (GPL) and can be downloaded from:
+
+            `http://github.com/marcomaggi/vicare/downloads'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+Copyright (C) 2010-2012 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="binfmt-using"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="binfmt-control.html#binfmt-control">binfmt control</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="binfmt-registry.html#binfmt-registry">binfmt registry</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="binfmt.html#binfmt">binfmt</a>
+<hr>
+</div>
+
+<h3 class="appendixsec">G.4 Using the mechanism</h3>
+
+<p>We may want to add the binary formats in one of the shell scripts that
+are executed at system boot time.  For example, on a Slackware Linux
+system we can use <samp><span class="file">/etc/rc.d/rc.local</span></samp>.
+
+   <p>To do it we can add to the shell script a chunk of code like the
+following, which activates the mechanism for Scheme programs compiled
+with Vicare:
+
+<pre class="example">     if test -f /proc/sys/fs/binfmt_misc/register
+     then
+       if test -f /proc/sys/fs/binfmt_misc/VICARE
+       then echo -1 &gt;/proc/sys/fs/binfmt_misc/VICARE
+       fi
+       echo \
+        ':VICARE:M:0:;;;!vicare::/usr/local/bin/vicare:' \
+        &gt;/proc/sys/fs/binfmt_misc/register
+     fi
+</pre>
+   <p class="noindent">which does the following:
+
+     <ol type=1 start=1>
+<li>Verify if the <code>binfmt_misc</code> kernel module has been loaded by
+testing the existence of the <samp><span class="file">register</span></samp> file; if the module is not
+there, nothing happens.
+
+     <li>Remove the configuration from the registry if it is already there; this
+is done by testing the existence of the special file:
+
+     <pre class="example">          /proc/sys/fs/binfmt_misc/VICARE
+</pre>
+     <p class="noindent">echoing <code>-1</code> in it removes the Vicare record.
+
+     <li>echo the Vicare record into the registry with the following fields:
+
+          <dl>
+<dt><code>VICARE</code><dd>It is the name of the special file representing the record in the
+registry.
+
+          <br><dt><code>M</code><dd>Activates first bytes recognition.
+
+          <br><dt><code>0</code><dd>The offset of the magic string into the file.
+
+          <br><dt><code>;;;!vicare</code><dd>The magic string itself.
+
+          <br><dt><code>/usr/local/bin/vicare</code><dd>The full pathname to the Vicare runtime system executable. 
+</dl>
+     </ol>
+
+   <p>We see that the <code>mask</code> field is set to the empty string, that is:
+no mask is applied and <code>#!vicare</code> is matched literally.
+
+   <p>We have to care about the order of added entries: entries added later
+are matched first.
+
+<!-- page -->
+   </body></html>
+

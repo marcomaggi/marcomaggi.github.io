@@ -1,0 +1,296 @@
+<html lang="en">
+<head>
+<title>iklib printing - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="iklib.html#iklib" title="iklib">
+<link rel="prev" href="iklib-gensym.html#iklib-gensym" title="iklib gensym">
+<link rel="next" href="iklib-tracing.html#iklib-tracing" title="iklib tracing">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d9 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The Vicarus Scheme package is distributed under the terms of the GNU
+General Public License (GPL) and can be downloaded from:
+
+            `http://github.com/marcomaggi/vicare/downloads'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+Copyright (C) 2010-2012 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="iklib-printing"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="iklib-tracing.html#iklib-tracing">iklib tracing</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="iklib-gensym.html#iklib-gensym">iklib gensym</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="iklib.html#iklib">iklib</a>
+<hr>
+</div>
+
+<h3 class="section">3.19 Printing</h3>
+
+<div class="defun">
+&mdash; Procedure: <b>pretty-print</b><var> datum<a name="index-pretty_002dprint-230"></a></var><br>
+&mdash; Procedure: <b>pretty-print</b><var> datum output-port<a name="index-pretty_002dprint-231"></a></var><br>
+<blockquote><p>The procedure <code>pretty-print</code> is intended for printing Scheme data,
+typically Scheme programs, in a format close to how a Scheme programmer
+would write it.  Unlike <code>write</code>, which writes its input all in one
+line, <code>pretty-print</code> inserts spaces and new lines in order to
+produce more pleasant output.
+
+     <pre class="example">          (define fact-code
+            '(letrec ([fact (lambda (n)
+                              (if (zero? n)
+                                  1
+                                (* n (fact (- n 1)))))])
+               (fact 5)))
+          
+          &gt; (pretty-print fact-code)
+          (letrec ((fact
+                    (lambda (n) (if (zero? n) 1 (* n (fact (- n 1)))))))
+            (fact 5))
+</pre>
+        <p>The second argument to <code>pretty-print</code>, if supplied, must be an
+output port.  If not supplied, the <code>current-output-port</code> is used.
+
+        <blockquote>
+<em>Limitations:</em> As shown in the output above, the current
+implementation of <code>pretty-print</code> does not handle printing of square
+brackets properly. 
+</blockquote>
+        </p></blockquote></div>
+
+<div class="defun">
+&mdash; Parameter: <b>pretty-width</b><var><a name="index-pretty_002dwidth-232"></a></var><br>
+&mdash; Parameter: <b>pretty-width</b><var> n<a name="index-pretty_002dwidth-233"></a></var><br>
+<blockquote><p>The parameter <code>pretty-width</code> controls the number of characters
+after which the <code>pretty-print</code> starts breaking long lines into
+multiple lines.  The initial value of <code>pretty-width</code> is set to 60
+characters, which is suitable for most terminals and printed material.
+
+     <pre class="example">          &gt; (parameterize ([pretty-width 40])
+               (pretty-print fact-code))
+          (letrec ((fact
+                    (lambda (n)
+                      (if (zero? n)
+                          1
+                          (* n (fact (- n 1)))))))
+            (fact 5))
+</pre>
+        <p>Note that <code>pretty-width</code> does not guarantee that the output will
+not extend beyond the specified number.  Very long symbols, for
+examples, cannot be split into multiple lines and may force the printer
+to go beyond the value of <code>pretty-width</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Procedure: <b>format</b><var> fmt-string args ...<a name="index-format-234"></a></var><br>
+<blockquote><p>The procedure <code>format</code> produces a string formatted according to
+<code>fmt-string</code> and the supplied arguments.  The format string
+contains markers in which the string representation of each argument is
+placed.  The markers include:
+
+          <dl>
+<dt><code>~s</code><dd>instructs the formatter to place the next argument as if the procedure
+<code>write</code> has printed it; if the argument contains a string, the
+string will be quoted and all quotes and backslashes in the string will
+be escaped; similarly, characters will be printed using the <code>#\x</code>
+notation;
+
+          <br><dt><code>~a</code><dd>instructs the formatter to place the next argument as if the procedure
+<code>display</code> has printed it; strings and characters are placed as they
+are in the output;
+
+          <br><dt><code>~b</code><dd>instructs the formatter to convert the next argument to its binary (base
+2) representation; the argument must be an exact number;
+
+          <br><dt><code>~o</code><dd>is similar to <code>~b</code> except that the number is printed in octal (base
+8);
+
+          <br><dt><code>~x</code><dd>is similar to <code>~b</code> except that the number is printed in hexadecimal
+(base 16);
+
+          <br><dt><code>~d</code><dd>outputs the next argument, which can be an exact or inexact number, in
+its decimal (base 10) representation;
+
+          <br><dt><code>~~</code><dd>instructs the formatter to place a tilde character, <code>~</code>, in the
+output without consuming an argument;
+
+          <br><dt><code>~%</code><dd>instructs the formatter to place a newline character in the output
+without consuming an argument. 
+</dl>
+
+        <p>Note that the <code>#b</code>, <code>#o</code>, and <code>#x</code> numeric prefixes are
+not added to the output when <code>~b</code>, <code>~o</code>, and <code>~x</code> are
+used.
+
+     <pre class="example">          &gt; (format "message: ~s, ~s, and ~s" 'symbol "string" #\c)
+          "message: symbol, \"string\", and #\\c"
+          
+          &gt; (format "message: ~a, ~a, and ~a" 'symbol "string" #\c)
+          "message: symbol, string, and c"
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Procedure: <b>printf</b><var> fmt-string args ...<a name="index-printf-235"></a></var><br>
+<blockquote><p>The procedure <code>printf</code> is similar to <code>format</code> except that the
+output is sent to the <code>current-output-port</code> instead of being
+collected in a string.
+
+     <pre class="example">          &gt; (let ([n (+ (expt 2 32) #b11001)])
+              (printf "~d = #b~b = #x~x\n" n n n))
+          4294967321 = #b100000000000000000000000000011001 = #x100000019
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Procedure: <b>fprintf</b><var> output-port fmt-string args ...<a name="index-fprintf-236"></a></var><br>
+<blockquote><p>The procedure <code>fprintf</code> is similar to <code>printf</code> except that the
+output port to which the output is sent is specified as the first
+argument. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Parameter: <b>print-unicode</b><var><a name="index-print_002dunicode-237"></a></var><br>
+&mdash; Parameter: <b>print-unicode</b><var> #t<a name="index-print_002dunicode-238"></a></var><br>
+&mdash; Parameter: <b>print-unicode</b><var> #f<a name="index-print_002dunicode-239"></a></var><br>
+<blockquote><p>If set to true: print Scheme Unicode characters outside of the printable
+<acronym>ASCII</acronym> range in hex format, else print them using the encoding of the
+output port.  The default is false. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Parameter: <b>print-gensym</b><var><a name="index-print_002dgensym-240"></a></var><br>
+&mdash; Parameter: <b>print-gensym</b><var> #t<a name="index-print_002dgensym-241"></a></var><br>
+&mdash; Parameter: <b>print-gensym</b><var> #f<a name="index-print_002dgensym-242"></a></var><br>
+&mdash; Parameter: <b>print-gensym</b><var> 'pretty<a name="index-print_002dgensym-243"></a></var><br>
+<blockquote><p>The parameter <code>print-gensym</code> controls how gensyms are printed by
+the various writers.
+
+        <p>If the value of <code>print-gensym</code> is <code>#f</code>, then gensym syntax is
+suppressed by the writers and only the gensyms' pretty names are
+printed.  If the value of <code>print-gensym</code> is <code>#t</code>, then the full
+<code>#{pretty unique}</code> syntax is printed.  Finally, if the value of
+<code>print-gensym</code> is the symbol <code>pretty</code>, then gensyms are
+printed using the <code>#:pretty</code> notation.
+
+     <pre class="example">          &gt; (parameterize ([print-gensym #f])
+              (pretty-print (list (gensym) (gensym))))
+          (g0 g1)
+          
+          &gt; (parameterize ([print-gensym #t])
+              (pretty-print (list (gensym) (gensym))))
+          (#{g2 |KR1M2&amp;CTt1&lt;B0n/m|} #{g3 |FBAb&amp;7NC6&amp;=c82!O|})
+          
+          &gt; (parameterize ([print-gensym 'pretty])
+              (pretty-print (list (gensym) (gensym))))
+          (#:g4 #:g5)
+</pre>
+        <p>The initial value of <code>print-gensym</code> is <code>#t</code>.
+
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Parameter: <b>gensym-prefix</b><var><a name="index-gensym_002dprefix-244"></a></var><br>
+&mdash; Parameter: <b>gensym-prefix</b><var> string<a name="index-gensym_002dprefix-245"></a></var><br>
+<blockquote><p>The parameter <code>gensym-prefix</code> specifies the string to be used as
+the prefix to generated pretty names.  The default value of
+<code>gensym-prefix</code> is the string <code>g</code>, which causes generated
+strings to have pretty names in the sequence <code>g0</code>, <code>g1</code>,
+<code>g2</code>, etc.
+
+     <pre class="example">          &gt; (parameterize ([gensym-prefix "var"]
+                           [print-gensym #f])
+               (pretty-print (list (gensym) (gensym) (gensym))))
+          (var0 var1 var2)
+</pre>
+        <p>Beware that the <code>gensym-prefix</code> controls how pretty names are
+generated, and has nothing to do with how <code>gensym</code> constructs a new
+gensym.  In particular, notice the difference between the output in the
+first example with the output of the examples below:
+
+     <pre class="example">          &gt; (pretty-print
+              (parameterize ([gensym-prefix "var"] [print-gensym #f])
+                (list (gensym) (gensym) (gensym))))
+          (g3 g4 g5)
+          
+          &gt; (let ([ls (list (gensym) (gensym) (gensym))])
+              (parameterize ([gensym-prefix "var"] [print-gensym #f])
+                (pretty-print ls)))
+          (var5 var6 var7)
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Parameter: <b>gensym-count</b><var><a name="index-gensym_002dcount-246"></a></var><br>
+&mdash; Parameter: <b>gensym-count</b><var> n<a name="index-gensym_002dcount-247"></a></var><br>
+<blockquote><p>The parameter <code>gensym-count</code> determines the number which is
+attached to the <code>gensym-prefix</code> when gensyms' pretty names are
+generated.  The initial value of <code>gensym-count</code> is 0 and is
+incremented every time a pretty name is generated.  It might be set to
+any non-negative integer value.
+
+     <pre class="example">          &gt; (let ([x (gensym)])
+              (parameterize ([gensym-count 100] [print-gensym #f])
+                (pretty-print (list (gensym) x (gensym)))))
+          (g100 g101 g102)
+</pre>
+        </blockquote></div>
+
+   <p>Notice from all the examples so far that pretty names are generated in
+the order at which the gensyms are printed, not in the order in which
+gensyms were created.
+
+<!-- page -->
+   </body></html>
+

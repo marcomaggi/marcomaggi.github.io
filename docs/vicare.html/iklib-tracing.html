@@ -1,0 +1,181 @@
+<html lang="en">
+<head>
+<title>iklib tracing - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="iklib.html#iklib" title="iklib">
+<link rel="prev" href="iklib-printing.html#iklib-printing" title="iklib printing">
+<link rel="next" href="iklib-timing.html#iklib-timing" title="iklib timing">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d9 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The Vicarus Scheme package is distributed under the terms of the GNU
+General Public License (GPL) and can be downloaded from:
+
+            `http://github.com/marcomaggi/vicare/downloads'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+Copyright (C) 2010-2012 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="iklib-tracing"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="iklib-timing.html#iklib-timing">iklib timing</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="iklib-printing.html#iklib-printing">iklib printing</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="iklib.html#iklib">iklib</a>
+<hr>
+</div>
+
+<h3 class="section">3.20 Tracing</h3>
+
+<div class="defun">
+&mdash; Syntax: <b>trace-define</b> (<var>name . args</var>)<var> body body* ...<a name="index-trace_002ddefine-248"></a></var><br>
+&mdash; Syntax: <b>trace-define</b><var> name expression<a name="index-trace_002ddefine-249"></a></var><br>
+<blockquote><p>The <code>trace-define</code> syntax is similar to <code>define</code> except that
+the bound value, which must be a procedure, becomes a traced procedure. 
+A traced procedure prints its arguments when it is called and prints its
+values when it returns.
+
+     <pre class="example">          &gt; (trace-define (fact n)
+              (if (zero? n) 1 (* n (fact (- n 1)))))
+          &gt; (fact 5)
+          |(fact 5)
+          | (fact 4)
+          | |(fact 3)
+          | | (fact 2)
+          | | |(fact 1)
+          | | | (fact 0)
+          | | | 1
+          | | |1
+          | | 2
+          | |6
+          | 24
+          |120
+          120
+</pre>
+        <p>The tracing facility in Vicare preserves and shows tail recursion and
+distinguishes it from non&ndash;tail recursion by showing tail calls starting
+at the same line in which their parent was called.
+
+     <pre class="example">          &gt; (trace-define (fact n)
+              (trace-define (fact-aux n m)
+                (if (zero? n) m (fact-aux (- n 1) (* n m))))
+              (fact-aux n 1))
+          &gt; (fact 5)
+          |(fact 5)
+          |(fact-aux 5 1)
+          |(fact-aux 4 5)
+          |(fact-aux 3 20)
+          |(fact-aux 2 60)
+          |(fact-aux 1 120)
+          |(fact-aux 0 120)
+          |120
+          120
+</pre>
+        <p>Moreover, the tracing facility interacts well with continuations and
+exceptions.
+
+     <pre class="example">          &gt; (call/cc
+              (lambda (k)
+                (trace-define (loop n)
+                  (if (zero? n)
+                      (k 'done)
+                      (+ (loop (- n 1)) 1)))
+                (loop 5)))
+          |(loop 5)
+          | (loop 4)
+          | |(loop 3)
+          | | (loop 2)
+          | | |(loop 1)
+          | | | (loop 0)
+          done
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>trace-lambda</b><var> name args body body* ...<a name="index-trace_002dlambda-250"></a></var><br>
+<blockquote><p>The <code>trace-lambda</code> macro is similar to <code>lambda</code> except that
+the resulting procedure is traced: it prints the arguments it receives
+and the results it returns. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Procedure: <b>make-traced-procedure</b><var> name proc<a name="index-make_002dtraced_002dprocedure-251"></a></var><br>
+<blockquote><p>The procedure <code>make-traced-procedure</code> takes a name (typically a
+symbol) and a procedure.  It returns a procedure similar to <var>proc</var>
+except that it traces its arguments and values.
+
+     <pre class="example">          &gt; (define (fact n)
+              (if (zero? n)
+                  (lambda (k) (k 1))
+                  (lambda (k)
+                    ((fact (- n 1))
+                     (make-traced-procedure `(k ,n)
+                       (lambda (v)
+                         (k (* v n))))))))
+          &gt; (call/cc
+              (lambda (k)
+                ((fact 5) (make-traced-procedure 'K k))))
+          |((k 1) 1)
+          |((k 2) 1)
+          |((k 3) 2)
+          |((k 4) 6)
+          |((k 5) 24)
+          |(K 120)
+          120
+</pre>
+        </blockquote></div>
+
+<!-- page -->
+   </body></html>
+

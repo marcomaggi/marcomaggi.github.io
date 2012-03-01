@@ -1,0 +1,154 @@
+<html lang="en">
+<head>
+<title>ffi call back - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="ffi-call.html#ffi-call" title="ffi call">
+<link rel="prev" href="ffi-call-out.html#ffi-call-out" title="ffi call out">
+<link rel="next" href="ffi-call-types.html#ffi-call-types" title="ffi call types">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d9 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The Vicarus Scheme package is distributed under the terms of the GNU
+General Public License (GPL) and can be downloaded from:
+
+            `http://github.com/marcomaggi/vicare/downloads'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+Copyright (C) 2010-2012 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="ffi-call-back"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="ffi-call-types.html#ffi-call-types">ffi call types</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="ffi-call-out.html#ffi-call-out">ffi call out</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="ffi-call.html#ffi-call">ffi call</a>
+<hr>
+</div>
+
+<h4 class="subsection">4.4.3 Calling back to Scheme</h4>
+
+<p>In order to arrange for a foreign library to callback to a Scheme
+function we need a suitable Scheme function and the signature of the
+procedure the foreign library expects.  The signature must usually be
+hard&ndash;coded in the program.
+
+   <p>Using the signature, the <acronym>FFI</acronym> determines how native values are
+converted to and from Scheme values; a signature is composed of two
+parts: a Scheme symbol specifying the return type, a list of Scheme
+symbols specifying the argument types.  The signature format is the same
+as the one used for callouts; <a href="ffi-call-out.html#ffi-call-out">ffi call out</a> for details.
+
+   <p>Note that a callback function is indistinguishable from other native
+procedures whose address is obtained using <code>dlsym</code> or similar
+means.  In particular, such native pointers can be passed to callout
+generators resulting in a Scheme procedure that calls out to the native
+procedure that in turn calls back into Scheme.
+
+   <p>The following example shows how to create an identity function for
+native integers composed by a Scheme function calling out to a foreign
+function, calling back to the Scheme function <code>values</code>:
+
+<pre class="example">     #!r6rs
+     (import (vicare)
+       (prefix (vicare ffi) ffi.))
+     
+     (define callout-maker
+       (ffi.make-c-callout-maker  'unsigned-int '(unsigned-int)))
+     
+     (define callback-maker
+       (ffi.make-c-callback-maker 'unsigned-int '(unsigned-int)))
+     
+     (define identity
+       (callout-maker (callback-maker values)))
+     
+     (identity 123)  &rArr; 123
+</pre>
+   <p class="noindent">using the <acronym>FFI</acronym> we build a callback function generator which can be
+used to create any number of callback functions having the same
+signature.  Generated callback functions are <strong>not</strong> garbage
+collected like the other Scheme values.
+
+<div class="defun">
+&mdash; Function: <b>make-c-callback-maker</b><var> ret-type arg-types<a name="index-make_002dc_002dcallback_002dmaker-501"></a></var><br>
+<blockquote><p>Build and return a function to be used to generate callback functions
+following the C language conventions for calling, arguments and return
+values and wrapping Scheme functions.
+
+        <p>The returned generator function accepts as single argument the Scheme
+function to be wrapped; the value returned by the generator function is
+a pointer object referencing a native function.  The wrapper native
+function takes care of marshaling Scheme values as appropriate for the
+underlying platform.
+
+        <p><var>ret-type</var> must be a Scheme symbol specifying the type of the
+returned value; if the callback function must return no value:
+<var>ret-type</var> must be the symbol <code>void</code>.
+
+        <p><var>arg-types</var> must be a list of Scheme symbols specifying the type of
+the arguments; if the callback function must accept no arguments:
+<var>arg-types</var> must be nil or the list <code>(void)</code>.
+
+        <p><a href="ffi-call-types.html#ffi-call-types">ffi call types</a> for the specification of accepted type symbols. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>free-c-callback</b><var> c-callback-pointer<a name="index-free_002dc_002dcallback-502"></a></var><br>
+<blockquote><p>Release the resources associated to the given C pointer referencing a
+callback function.  If the pointer is not a callback pointer: raise an
+assertion violation. 
+</p></blockquote></div>
+
+<!-- page -->
+   </body></html>
+

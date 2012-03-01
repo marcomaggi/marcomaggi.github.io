@@ -1,0 +1,340 @@
+<html lang="en">
+<head>
+<title>objects structs - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="objects.html#objects" title="objects">
+<link rel="prev" href="objects-vectors.html#objects-vectors" title="objects vectors">
+<link rel="next" href="objects-chars.html#objects-chars" title="objects chars">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d9 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The Vicarus Scheme package is distributed under the terms of the GNU
+General Public License (GPL) and can be downloaded from:
+
+            `http://github.com/marcomaggi/vicare/downloads'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+Copyright (C) 2010-2012 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="objects-structs"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="objects-chars.html#objects-chars">objects chars</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="objects-vectors.html#objects-vectors">objects vectors</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="objects.html#objects">objects</a>
+<hr>
+</div>
+
+<h3 class="section">11.7 Struct objects</h3>
+
+<p>A data structure is a variable&ndash;length block of memory referenced by
+machine words tagged as vectors; the first machine word of the structure
+is a reference to the type descriptor (<acronym>RTD</acronym>), which is itself a data
+structure; the subsequent words, if any, are the fields of the
+structure.  A block of memory is a data structure if and only if: a
+reference to it is tagged as vector and its first word is tagged as
+vector.
+
+<pre class="example">     |----------------|----------| reference to structure
+       heap pointer    vector tag
+     
+     |----------------|----------| first word of structure
+       heap pointer    vector tag    = reference to rtd
+                                     = reference to structure
+</pre>
+   <p>The type descriptor of the type descriptors is the return value of
+<code>base-rtd</code> at the Scheme level and the structure referenced by the
+field <code>base_rtd</code> in the process control block.  Such base type
+descriptor is built at Vicare's startup.  The graph of
+references for a structure and its type descriptor is as follows:
+
+<pre class="example">           rtd ref
+          |-------|---------------| structure instance
+              |
+       ---&lt;---
+      |
+      |     rtd ref
+       --&gt;|-------|---------------| type descriptor
+              |
+       ---&lt;---
+      |
+      |     rtd ref
+      +--&gt;|-------|---------------| base type descriptor
+      |       |
+       ---&lt;---
+</pre>
+   <p class="noindent">the type descriptor of the base type descriptor is the base type
+descriptor itself.
+
+   <p>A type descriptor is a fixed&ndash;length block of memory composed of
+6 machine words interpreted as follows:
+
+     <ol type=1 start=1>
+<li>A reference to the base <acronym>RTD</acronym>.
+
+     <li>A fixnum representing the number of machine words in the structure minus
+1; this is the number of fields in the structure excluding the
+reference to the <acronym>RTD</acronym>.  This value is 5 in the base <acronym>RTD</acronym>.
+
+     <li>Scheme symbol representing the name of this structure type.
+
+     <li>Scheme list of symbols representing the names of fields in structures of
+this type.
+
+     <li>False or a reference to closure used to print to a Scheme port the
+structures of this type.  This is the printer function.
+
+     <li>Scheme symbol used as unique identifier for this type.
+        </ol>
+
+   <p>Type descriptors are best defined at the Scheme level using the
+functions from the <code>(vicare)</code> library, <a href="iklib-structs.html#iklib-structs">iklib structs</a> for
+details.  To instantiate a structure at the C language level we should
+write a C function accepting the type descriptor as argument, and have
+the Scheme code hand the descriptor to it.  For example, at the Scheme
+level we do:
+
+<pre class="example">     (define-struct timeval
+       (tv_sec tv_usec))
+     
+     (define (gettimeofday)
+       (foreign-call "ikrt_posix_gettimeofday"
+                     (type-descriptor timeval)))
+</pre>
+   <p class="noindent">and at the C level we do:
+
+<pre class="example">     ikptr
+     ikrt_posix_gettimeofday (ikptr s_rtd, ikpcb * pcb)
+     {
+       /* build and return an instance of "timeval" */
+     }
+</pre>
+   <!--  -->
+<h5 class="subsubheading">Basic operations</h5>
+
+<p>Data structure objects are allocated on the heap; to perform the
+allocation we compute the whole size of the structure:
+
+<pre class="example">     ikpcb * pcb        = ik_the_pcb();
+     long    num_of_fields = ...;
+     long    block_size = disp_record_data +
+                          wordsize * num_of_fields;
+     long    align_size = IK_ALIGN(block_size);
+     ikptr   s_stru     = ik_safe_alloc(pcb, align_size) | record_tag;
+</pre>
+   <p class="noindent"><code>ik_safe_alloc()</code> returns an <code>ikptr</code> value representing the aligned
+pointer, having the 3 least significant bits set to zero; we add
+to it the record tag (an integer value fitting in 3 bits) which
+allows to recognise records among all the other built in objects.
+
+   <p>We have to explicitly store a reference to the <acronym>RTD</acronym> in the first
+machine word of the structure, so a full allocation looks like this:
+
+<pre class="example">     ikptr
+     ika_struct_alloc (ikpcb * pcb, ikptr s_rtd)
+     {
+       long	num_of_fields;
+       long  align_size;
+       ikptr s_stru;
+       num_of_fields = IK_UNFIX(IK_REF(s_rtd, off_rtd_length));
+       align_size = IK_ALIGN(disp_record_data +
+                             num_of_fields * wordsize);
+       pcb-&gt;root9 = &amp;s_rtd;
+       {
+         s_ stru = ik_safe_alloc(pcb, align_size) | record_tag;
+       }
+       pcb-&gt;root9 = NULL;
+       IK_REF(s_stru, off_record_rtd) = s_rtd;
+       return s_stru;
+     }
+</pre>
+   <p>The allocation operation described above leaves the data area
+uninitialised: its content is undefined.  This is bad if the garbage
+collector moves the newly built record before the elements are
+initialised to a correct Scheme value.
+
+   <p>To recognise an <code>ikptr</code> value as reference to a structure we do:
+
+<pre class="example">     ikptr   R = the_value;
+     
+     if ((record_tag == (record_mask &amp; R)) &amp;&amp;
+         (record_tag == (record_mask &amp; IK_REF(R, off_record_rtd))))
+       it_is_a_structure();
+     else
+       it_is_not();
+</pre>
+   <p class="noindent">structure fields are identified at the C level by a zero&ndash;based index;
+to store a value in field 2 of a structure we do:
+
+<pre class="example">     ikptr  s_stru  = the_structure;
+     ikptr  s_field = the_field;
+     
+     IK_REF(s_stru, off_record_data + 2 * wordsize) = the_field;
+</pre>
+   <p class="noindent">and to retrieve a the value of field 2 we do:
+
+<pre class="example">     ikptr  s_stru  = the_structure;
+     ikptr  s_field;
+     
+     s_field = IK_REF(s_stru, off_record_data + 2 * wordsize);
+</pre>
+   <div class="defun">
+&mdash; Preprocessor Symbol: <b>record_mask</b><var><a name="index-record_005fmask-1540"></a></var><br>
+&mdash; Preprocessor Symbol: <b>record_tag</b><var><a name="index-record_005ftag-1541"></a></var><br>
+<blockquote><p>Integer values used to tag and recognise <code>ikptr</code> references to
+structures.  <code>record_mask</code> isolates the tag bits from an <code>ikptr</code>
+and <code>record_tag</code> represents the tag bits.  These values are the
+same used for vectors. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Preprocessor Symbol: <b>disp_record_rtd</b><var><a name="index-disp_005frecord_005frtd-1542"></a></var><br>
+<blockquote><p>Displacement of the <acronym>RTD</acronym> from the beginning of a structure block.  The
+number of bytes to add to an untagged pointer to structure to get the
+pointer to the first byte in the word holding the <acronym>RTD</acronym>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Preprocessor Symbol: <b>disp_record_data</b><var><a name="index-disp_005frecord_005fdata-1543"></a></var><br>
+<blockquote><p>Displacement of data area.  The number of bytes to add to an untagged
+pointer to structure to get the pointer to the first byte of the first
+field in the data area. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Preprocessor Symbol: <b>off_record_rtd</b><var><a name="index-off_005frecord_005frtd-1544"></a></var><br>
+<blockquote><p>An integer to add to a tagged <code>ikptr</code> structure reference to retrieve
+the pointer to the first byte of the <acronym>RTD</acronym>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Preprocessor Symbol: <b>off_record_data</b><var><a name="index-off_005frecord_005fdata-1545"></a></var><br>
+<blockquote><p>An integer to add to a tagged <code>ikptr</code> structure reference to retrieve
+the pointer to the first byte of the first field of the structure. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Preprocessor Symbol: <b>disp_rtd_rtd</b><var><a name="index-disp_005frtd_005frtd-1546"></a></var><br>
+<blockquote><p>Displacement of the base <acronym>RTD</acronym> from the beginning of an <acronym>RTD</acronym> block. 
+The number of bytes to add to an untagged pointer to <acronym>RTD</acronym> to get the
+pointer to the first byte of the reference to <acronym>RTD</acronym>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Preprocessor Symbol: <b>disp_rtd_name</b><var><a name="index-disp_005frtd_005fname-1547"></a></var><br>
+&mdash; Preprocessor Symbol: <b>disp_rtd_length</b><var><a name="index-disp_005frtd_005flength-1548"></a></var><br>
+&mdash; Preprocessor Symbol: <b>disp_rtd_fields</b><var><a name="index-disp_005frtd_005ffields-1549"></a></var><br>
+&mdash; Preprocessor Symbol: <b>disp_rtd_printer</b><var><a name="index-disp_005frtd_005fprinter-1550"></a></var><br>
+&mdash; Preprocessor Symbol: <b>disp_rtd_symbol</b><var><a name="index-disp_005frtd_005fsymbol-1551"></a></var><br>
+<blockquote><p>Displacements of the fields of an <acronym>RTD</acronym>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Preprocessor Symbol: <b>rtd_size</b><var><a name="index-rtd_005fsize-1552"></a></var><br>
+<blockquote><p>The total number of bytes in a memory block holding an <acronym>RTD</acronym>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Preprocessor Symbol: <b>off_rtd_rtd</b><var><a name="index-off_005frtd_005frtd-1553"></a></var><br>
+&mdash; Preprocessor Symbol: <b>off_rtd_name</b><var><a name="index-off_005frtd_005fname-1554"></a></var><br>
+&mdash; Preprocessor Symbol: <b>off_rtd_length</b><var><a name="index-off_005frtd_005flength-1555"></a></var><br>
+&mdash; Preprocessor Symbol: <b>off_rtd_fields</b><var><a name="index-off_005frtd_005ffields-1556"></a></var><br>
+&mdash; Preprocessor Symbol: <b>off_rtd_printer</b><var><a name="index-off_005frtd_005fprinter-1557"></a></var><br>
+&mdash; Preprocessor Symbol: <b>off_rtd_symbol</b><var><a name="index-off_005frtd_005fsymbol-1558"></a></var><br>
+<blockquote><p>Integer to add to a tagged <code>ikptr</code> <acronym>RTD</acronym> reference to retrieve the
+pointer to the first byte of the fields. 
+</p></blockquote></div>
+
+<!--  -->
+<h5 class="subsubheading">Convenience preprocessor macros</h5>
+
+<div class="defun">
+&mdash; Preprocessor Macro: ikptr <b>IK_FIELD</b> (<var>ikptr stru, idx</var>)<var><a name="index-IK_005fFIELD-1559"></a></var><br>
+<blockquote><p>Evaluate to the location of the field at zero&ndash;based index <var>idx</var> for
+the structure <var>stru</var>.  A use of this macro can appear both as
+operand and as left&ndash;side of an assignment.
+
+     <pre class="example">          ikptr   s_stru = the_structure;
+          ikptr   s_field;
+          
+          s_field = IK_FIELD(s_stru, 2);
+          IK_FIELD(s_stru, 2) = s_field;
+</pre>
+        </blockquote></div>
+
+<!--  -->
+<h5 class="subsubheading">Operations on vectors</h5>
+
+<div class="defun">
+&mdash; Function: ikptr <b>ika_struct_alloc_no_init</b> (<var>ikpcb * pcb, ikptr rtd</var>)<var><a name="index-ika_005fstruct_005falloc_005fno_005finit-1560"></a></var><br>
+<blockquote><p>Allocate, initialise and return a new structure instance of type
+<var>rtd</var>.  The first word of the allocated block is initialised with
+<var>rtd</var>, the other words are left uninitialised. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: ikptr <b>ika_struct_alloc_and_init</b> (<var>ikpcb * pcb, ikptr rtd</var>)<var><a name="index-ika_005fstruct_005falloc_005fand_005finit-1561"></a></var><br>
+<blockquote><p>Allocate, initialise and return a new structure instance of type
+<var>rtd</var>.  The first word of the allocated block is initialised with
+<var>rtd</var>, the other words are initialised to the fixnum zero. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: int <b>ik_is_struct</b> (<var>ikptr R</var>)<var><a name="index-ik_005fis_005fstruct-1562"></a></var><br>
+<blockquote><p>Return true if <var>R</var> is a reference to a structure. 
+</p></blockquote></div>
+
+<!-- page -->
+   </body></html>
+
