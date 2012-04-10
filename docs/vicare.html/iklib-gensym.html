@@ -10,7 +10,7 @@
 <link rel="next" href="iklib-printing.html#iklib-printing" title="iklib printing">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
-This document describes version 0.2d9 of Vicare Scheme, an
+This document describes version 0.2d10 of Vicare Scheme, an
 R6RS compliant native compiler for the Scheme language producing
 single threaded programs running on Intel x86 32-bit processors, with
 experimental support for 64-bit machines.  _Vicare_ is pronounced
@@ -76,7 +76,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="iklib.html#iklib">iklib</a>
 <hr>
 </div>
 
-<h3 class="section">3.18 Gensyms</h3>
+<h3 class="section">3.21 Gensyms</h3>
 
 <p>Gensym stands for <em>generated symbol</em>&mdash;a fresh symbol that is
 generated at run time and is guaranteed to be <em>not</em> <code>eq?</code> to
@@ -98,10 +98,12 @@ symbol table.
 returns the pretty string of the gensym and not its unique string. 
 Gensyms are printed by default as <code>#{pretty-string unique-string}</code>.
 
+   <p>The reader supports special syntaxes to generate symbols, <a href="iklib-reader-stx.html#iklib-reader-stx">iklib reader stx</a>.
+
 <div class="defun">
-&mdash; Procedure: <b>gensym</b><var><a name="index-gensym-221"></a></var><br>
-&mdash; Procedure: <b>gensym</b><var> string<a name="index-gensym-222"></a></var><br>
-&mdash; Procedure: <b>gensym</b><var> symbol<a name="index-gensym-223"></a></var><br>
+&mdash; Procedure: <b>gensym</b><var><a name="index-gensym-250"></a></var><br>
+&mdash; Procedure: <b>gensym</b><var> string<a name="index-gensym-251"></a></var><br>
+&mdash; Procedure: <b>gensym</b><var> symbol<a name="index-gensym-252"></a></var><br>
 <blockquote><p>Construct a new gensym.  If passed no arguments, construct a gensym with
 no pretty name.  The pretty name is constructed when and if the pretty
 name of the resulting gensym is needed.  If <code>gensym</code> is passed a
@@ -131,7 +133,7 @@ with the pretty name of <var>symbol</var>, if it has one, as its pretty name.
         </blockquote></div>
 
 <div class="defun">
-&mdash; Procedure: <b>gensym?</b><var> x<a name="index-gensym_003f-224"></a></var><br>
+&mdash; Procedure: <b>gensym?</b><var> x<a name="index-gensym_003f-253"></a></var><br>
 <blockquote><p>Return <code>#t</code> if its argument is a gensym, return <code>#f</code> otherwise.
 
      <pre class="example">          &gt; (gensym? (gensym))
@@ -144,7 +146,7 @@ with the pretty name of <var>symbol</var>, if it has one, as its pretty name.
         </blockquote></div>
 
 <div class="defun">
-&mdash; Procedure: <b>gensym-&gt;unique-string</b><var> gensym<a name="index-gensym_002d_003eunique_002dstring-225"></a></var><br>
+&mdash; Procedure: <b>gensym-&gt;unique-string</b><var> gensym<a name="index-gensym_002d_003eunique_002dstring-254"></a></var><br>
 <blockquote><p>Return the unique name associated with the gensym argument.
 
      <pre class="example">          &gt; (gensym-&gt;unique-string (gensym))
@@ -152,55 +154,10 @@ with the pretty name of <var>symbol</var>, if it has one, as its pretty name.
 </pre>
         </blockquote></div>
 
-<div class="defun">
-&mdash; Reader Syntax: <b>#{gensym}</b><var><a name="index-g_t_0023_0040_007bgensym_0040_007d-226"></a></var><br>
-&mdash; Reader Syntax: <b>#{unique-name}</b><var><a name="index-g_t_0023_0040_007bunique_002dname_0040_007d-227"></a></var><br>
-&mdash; Reader Syntax: <b>#{pretty-name unique-name}</b><var><a name="index-g_t_0023_0040_007bpretty_002dname-unique_002dname_0040_007d-228"></a></var><br>
-&mdash; Reader Syntax: <b>#:pretty-name</b><var><a name="index-g_t_0023_003apretty_002dname-229"></a></var><br>
-<blockquote><p>Vicare's <code>read</code> and <code>write</code> procedures extend the lexical
-syntax of Scheme by the ability to read and write gensyms using one of
-these three forms.
-
-        <p><code>#{unique-name}</code> constructs, at read time, a gensym whose unique
-name is the one specified.  If a gensym with the same unique name
-already exists in the system's symbol table, that gensym is returned.
-
-     <pre class="example">          &gt; '#{some-long-name}
-          #{g0 |some-long-name|}
-          &gt; (gensym? '#{some-long-unique-name})
-          #t
-          &gt; (eq? '#{another-unique-name} '#{another-unique-name})
-          #t
-</pre>
-        <p>The two&ndash;part <code>#{pretty-name unique-name}</code> gensym syntax is
-similar to the syntax shown above with the exception that if a new
-gensym is constructed (that is, if the gensym did not already exist in
-the symbol table), the pretty name of the constructed gensym is set to
-<code>pretty-name</code>.
-
-     <pre class="example">          &gt; '#{foo unique-identifier}
-          #{foo |unique-identifier|}
-          &gt; '#{unique-identifier}
-          #{foo |unique-identifier|}
-          &gt; '#{bar unique-identifier}
-          #{foo |unique-identifier|}
-</pre>
-        <p>The <code>#:pretty-name</code> form constructs, at read time, a gensym whose
-pretty name is <code>pretty-name</code> and whose unique name is fresh.  This
-form guarantees that the resulting gensym is not <code>eq?</code> to any other
-symbol in the system.
-
-     <pre class="example">          &gt; '#:foo
-          #{foo |j=qTGlEwS/Zlp2Dj|}
-          &gt; (eq? '#:foo '#:foo)
-          #f
-</pre>
-        </blockquote></div>
-
 <!--  -->
-<h4 class="subsection">3.18.1 An example</h4>
+<h5 class="subsubheading">An example</h5>
 
-<p class="noindent">The <code>(rnrs syntax-case)</code> library provides a
+<p>The <code>(rnrs syntax-case)</code> library provides a
 <code>generate-temporaries</code> procedure, which takes a syntax object
 (representing a list of things) and returns a list of fresh identifiers. 
 Using <code>gensym</code>, that procedure can be defined as follows:

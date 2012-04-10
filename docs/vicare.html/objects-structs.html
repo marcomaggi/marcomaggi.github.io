@@ -10,7 +10,7 @@
 <link rel="next" href="objects-chars.html#objects-chars" title="objects chars">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
-This document describes version 0.2d9 of Vicare Scheme, an
+This document describes version 0.2d10 of Vicare Scheme, an
 R6RS compliant native compiler for the Scheme language producing
 single threaded programs running on Intel x86 32-bit processors, with
 experimental support for 64-bit machines.  _Vicare_ is pronounced
@@ -117,7 +117,32 @@ references for a structure and its type descriptor is as follows:
    <p class="noindent">the type descriptor of the base type descriptor is the base type
 descriptor itself.
 
-   <p>A type descriptor is a fixed&ndash;length block of memory composed of
+   <p>An <acronym>R6RS</acronym> record&ndash;type descriptor is a struct instance of type <acronym>RTD</acronym>. 
+An <acronym>R6RS</acronym> record instance is a struct instance whose first word
+references its type descriptor, that is a struct instance of type
+<acronym>RTD</acronym>.
+
+<pre class="example">          RTD ref
+         |-------|---------------| R6RS record instance
+             |
+      ---&lt;---
+     |
+     |     std ref
+      --&gt;|-------|---------------| R6RS record type descriptor
+             |                      = struct instance of type RTD
+      ---&lt;---
+     |
+     |     std ref
+     +--&gt;|-------|---------------| RTD type descriptor
+             |
+      ---&lt;---
+     |
+     |     std ref
+     +--&gt;|-------|---------------| base struct type descriptor
+     |       |
+      ---&lt;---
+</pre>
+   <p>A struct type descriptor is a fixed&ndash;length block of memory composed of
 6 machine words interpreted as follows:
 
      <ol type=1 start=1>
@@ -230,8 +255,8 @@ to store a value in field 2 of a structure we do:
      s_field = IK_REF(s_stru, off_record_data + 2 * wordsize);
 </pre>
    <div class="defun">
-&mdash; Preprocessor Symbol: <b>record_mask</b><var><a name="index-record_005fmask-1540"></a></var><br>
-&mdash; Preprocessor Symbol: <b>record_tag</b><var><a name="index-record_005ftag-1541"></a></var><br>
+&mdash; Preprocessor Symbol: <b>record_mask</b><var><a name="index-record_005fmask-1635"></a></var><br>
+&mdash; Preprocessor Symbol: <b>record_tag</b><var><a name="index-record_005ftag-1636"></a></var><br>
 <blockquote><p>Integer values used to tag and recognise <code>ikptr</code> references to
 structures.  <code>record_mask</code> isolates the tag bits from an <code>ikptr</code>
 and <code>record_tag</code> represents the tag bits.  These values are the
@@ -239,59 +264,59 @@ same used for vectors.
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Preprocessor Symbol: <b>disp_record_rtd</b><var><a name="index-disp_005frecord_005frtd-1542"></a></var><br>
+&mdash; Preprocessor Symbol: <b>disp_record_rtd</b><var><a name="index-disp_005frecord_005frtd-1637"></a></var><br>
 <blockquote><p>Displacement of the <acronym>RTD</acronym> from the beginning of a structure block.  The
 number of bytes to add to an untagged pointer to structure to get the
 pointer to the first byte in the word holding the <acronym>RTD</acronym>. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Preprocessor Symbol: <b>disp_record_data</b><var><a name="index-disp_005frecord_005fdata-1543"></a></var><br>
+&mdash; Preprocessor Symbol: <b>disp_record_data</b><var><a name="index-disp_005frecord_005fdata-1638"></a></var><br>
 <blockquote><p>Displacement of data area.  The number of bytes to add to an untagged
 pointer to structure to get the pointer to the first byte of the first
 field in the data area. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Preprocessor Symbol: <b>off_record_rtd</b><var><a name="index-off_005frecord_005frtd-1544"></a></var><br>
+&mdash; Preprocessor Symbol: <b>off_record_rtd</b><var><a name="index-off_005frecord_005frtd-1639"></a></var><br>
 <blockquote><p>An integer to add to a tagged <code>ikptr</code> structure reference to retrieve
 the pointer to the first byte of the <acronym>RTD</acronym>. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Preprocessor Symbol: <b>off_record_data</b><var><a name="index-off_005frecord_005fdata-1545"></a></var><br>
+&mdash; Preprocessor Symbol: <b>off_record_data</b><var><a name="index-off_005frecord_005fdata-1640"></a></var><br>
 <blockquote><p>An integer to add to a tagged <code>ikptr</code> structure reference to retrieve
 the pointer to the first byte of the first field of the structure. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Preprocessor Symbol: <b>disp_rtd_rtd</b><var><a name="index-disp_005frtd_005frtd-1546"></a></var><br>
+&mdash; Preprocessor Symbol: <b>disp_rtd_rtd</b><var><a name="index-disp_005frtd_005frtd-1641"></a></var><br>
 <blockquote><p>Displacement of the base <acronym>RTD</acronym> from the beginning of an <acronym>RTD</acronym> block. 
 The number of bytes to add to an untagged pointer to <acronym>RTD</acronym> to get the
 pointer to the first byte of the reference to <acronym>RTD</acronym>. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Preprocessor Symbol: <b>disp_rtd_name</b><var><a name="index-disp_005frtd_005fname-1547"></a></var><br>
-&mdash; Preprocessor Symbol: <b>disp_rtd_length</b><var><a name="index-disp_005frtd_005flength-1548"></a></var><br>
-&mdash; Preprocessor Symbol: <b>disp_rtd_fields</b><var><a name="index-disp_005frtd_005ffields-1549"></a></var><br>
-&mdash; Preprocessor Symbol: <b>disp_rtd_printer</b><var><a name="index-disp_005frtd_005fprinter-1550"></a></var><br>
-&mdash; Preprocessor Symbol: <b>disp_rtd_symbol</b><var><a name="index-disp_005frtd_005fsymbol-1551"></a></var><br>
+&mdash; Preprocessor Symbol: <b>disp_rtd_name</b><var><a name="index-disp_005frtd_005fname-1642"></a></var><br>
+&mdash; Preprocessor Symbol: <b>disp_rtd_length</b><var><a name="index-disp_005frtd_005flength-1643"></a></var><br>
+&mdash; Preprocessor Symbol: <b>disp_rtd_fields</b><var><a name="index-disp_005frtd_005ffields-1644"></a></var><br>
+&mdash; Preprocessor Symbol: <b>disp_rtd_printer</b><var><a name="index-disp_005frtd_005fprinter-1645"></a></var><br>
+&mdash; Preprocessor Symbol: <b>disp_rtd_symbol</b><var><a name="index-disp_005frtd_005fsymbol-1646"></a></var><br>
 <blockquote><p>Displacements of the fields of an <acronym>RTD</acronym>. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Preprocessor Symbol: <b>rtd_size</b><var><a name="index-rtd_005fsize-1552"></a></var><br>
+&mdash; Preprocessor Symbol: <b>rtd_size</b><var><a name="index-rtd_005fsize-1647"></a></var><br>
 <blockquote><p>The total number of bytes in a memory block holding an <acronym>RTD</acronym>. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Preprocessor Symbol: <b>off_rtd_rtd</b><var><a name="index-off_005frtd_005frtd-1553"></a></var><br>
-&mdash; Preprocessor Symbol: <b>off_rtd_name</b><var><a name="index-off_005frtd_005fname-1554"></a></var><br>
-&mdash; Preprocessor Symbol: <b>off_rtd_length</b><var><a name="index-off_005frtd_005flength-1555"></a></var><br>
-&mdash; Preprocessor Symbol: <b>off_rtd_fields</b><var><a name="index-off_005frtd_005ffields-1556"></a></var><br>
-&mdash; Preprocessor Symbol: <b>off_rtd_printer</b><var><a name="index-off_005frtd_005fprinter-1557"></a></var><br>
-&mdash; Preprocessor Symbol: <b>off_rtd_symbol</b><var><a name="index-off_005frtd_005fsymbol-1558"></a></var><br>
+&mdash; Preprocessor Symbol: <b>off_rtd_rtd</b><var><a name="index-off_005frtd_005frtd-1648"></a></var><br>
+&mdash; Preprocessor Symbol: <b>off_rtd_name</b><var><a name="index-off_005frtd_005fname-1649"></a></var><br>
+&mdash; Preprocessor Symbol: <b>off_rtd_length</b><var><a name="index-off_005frtd_005flength-1650"></a></var><br>
+&mdash; Preprocessor Symbol: <b>off_rtd_fields</b><var><a name="index-off_005frtd_005ffields-1651"></a></var><br>
+&mdash; Preprocessor Symbol: <b>off_rtd_printer</b><var><a name="index-off_005frtd_005fprinter-1652"></a></var><br>
+&mdash; Preprocessor Symbol: <b>off_rtd_symbol</b><var><a name="index-off_005frtd_005fsymbol-1653"></a></var><br>
 <blockquote><p>Integer to add to a tagged <code>ikptr</code> <acronym>RTD</acronym> reference to retrieve the
 pointer to the first byte of the fields. 
 </p></blockquote></div>
@@ -300,7 +325,7 @@ pointer to the first byte of the fields.
 <h5 class="subsubheading">Convenience preprocessor macros</h5>
 
 <div class="defun">
-&mdash; Preprocessor Macro: ikptr <b>IK_FIELD</b> (<var>ikptr stru, idx</var>)<var><a name="index-IK_005fFIELD-1559"></a></var><br>
+&mdash; Preprocessor Macro: ikptr <b>IK_FIELD</b> (<var>ikptr stru, idx</var>)<var><a name="index-IK_005fFIELD-1654"></a></var><br>
 <blockquote><p>Evaluate to the location of the field at zero&ndash;based index <var>idx</var> for
 the structure <var>stru</var>.  A use of this macro can appear both as
 operand and as left&ndash;side of an assignment.
@@ -317,21 +342,21 @@ operand and as left&ndash;side of an assignment.
 <h5 class="subsubheading">Operations on vectors</h5>
 
 <div class="defun">
-&mdash; Function: ikptr <b>ika_struct_alloc_no_init</b> (<var>ikpcb * pcb, ikptr rtd</var>)<var><a name="index-ika_005fstruct_005falloc_005fno_005finit-1560"></a></var><br>
+&mdash; Function: ikptr <b>ika_struct_alloc_no_init</b> (<var>ikpcb * pcb, ikptr rtd</var>)<var><a name="index-ika_005fstruct_005falloc_005fno_005finit-1655"></a></var><br>
 <blockquote><p>Allocate, initialise and return a new structure instance of type
 <var>rtd</var>.  The first word of the allocated block is initialised with
 <var>rtd</var>, the other words are left uninitialised. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: ikptr <b>ika_struct_alloc_and_init</b> (<var>ikpcb * pcb, ikptr rtd</var>)<var><a name="index-ika_005fstruct_005falloc_005fand_005finit-1561"></a></var><br>
+&mdash; Function: ikptr <b>ika_struct_alloc_and_init</b> (<var>ikpcb * pcb, ikptr rtd</var>)<var><a name="index-ika_005fstruct_005falloc_005fand_005finit-1656"></a></var><br>
 <blockquote><p>Allocate, initialise and return a new structure instance of type
 <var>rtd</var>.  The first word of the allocated block is initialised with
 <var>rtd</var>, the other words are initialised to the fixnum zero. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: int <b>ik_is_struct</b> (<var>ikptr R</var>)<var><a name="index-ik_005fis_005fstruct-1562"></a></var><br>
+&mdash; Function: int <b>ik_is_struct</b> (<var>ikptr R</var>)<var><a name="index-ik_005fis_005fstruct-1657"></a></var><br>
 <blockquote><p>Return true if <var>R</var> is a reference to a structure. 
 </p></blockquote></div>
 
