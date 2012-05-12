@@ -7,7 +7,7 @@
 <link title="Top" rel="top" href="#Top">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
-This document describes version 0.1b0 of CRE2, a C
+This document describes version 0.1b2 of CRE2, a C
 language wrapper for the C++ library RE2: a fast, safe, thread--friendly
 alternative to backtracking regular expression engines like those used
 in PCRE, Perl, and Python.
@@ -59,7 +59,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#dir">(dir)</a>
 
 <h2 class="unnumbered">C wrapper for RE2</h2>
 
-<p>This document describes version 0.1b0 of CRE2, a C
+<p>This document describes version 0.1b2 of CRE2, a C
 language wrapper for the C++ library RE2: a fast, safe, thread&ndash;friendly
 alternative to backtracking regular expression engines like those used
 in PCRE, Perl, and Python.
@@ -178,7 +178,38 @@ will succeed when no memory allocation errors happen).  These
 <samp><span class="file">cre2.h</span></samp> and, at present, are not considered part of the public
 <acronym>API</acronym> of CRE2.
 
-<!-- page -->
+   <p>It is sometimes useful to try a program in the original C++ to verify if
+a problem is caused by CRE2 or is in the original RE2 code;
+we may want to start by customising this program:
+
+<pre class="example">     /* compile and run with:
+     
+        $ g++ -Wall -o proof proof.cpp -lre2 &amp;&amp; ./proof
+     */
+     
+     #include &lt;re2/re2.h&gt;
+     #include &lt;assert.h&gt;
+     
+     static void try_match (RE2::Options&amp; opt, const char * text);
+     
+     int
+     main (int argc, const char *const argv[])
+     {
+       RE2::Options opt;
+       opt.set_never_nl(true);
+       try_match(opt, "abcdef");
+       return 0;
+     }
+     void
+     try_match (RE2::Options&amp; opt, const char * text)
+     {
+       RE2 re("abcdef", opt);
+       assert(re.ok());
+       assert(RE2::FullMatch(text, re));
+       //assert(RE2::PartialMatch(text, re));
+     }
+</pre>
+   <!-- page -->
 <div class="node">
 <a name="version"></a>
 <p><hr>
@@ -539,7 +570,19 @@ defining a regular expression pattern:
 &mdash; Function: int <b>cre2_opt_never_nl</b> (<var>cre2_options_t * opt</var>)<var><a name="index-cre2_005fopt_005fnever_005fnl-48"></a></var><br>
 &mdash; Function: void <b>cre2_opt_set_never_nl</b> (<var>cre2_options_t * opt, int flag</var>)<var><a name="index-cre2_005fopt_005fset_005fnever_005fnl-49"></a></var><br>
 <blockquote><p>Never match a newline character, even if it is in the regular expression
-pattern.  Default is disabled. 
+pattern:
+
+          <ul>
+<li>When set to true: matching always fails if the text or the regexp
+contains a newline.
+
+          <li>When set to false: matching succeeds or fails taking normal account of
+newlines.
+
+          <li>The option does <strong>not</strong> cause newlines to be skipped. 
+</ul>
+
+        <p>Default is disabled. 
 </p></blockquote></div>
 
 <div class="defun">
@@ -603,7 +646,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
      const char *      pattern = "(ciao) (hello)";
      
      opt = cre2_opt_new();
-     cre2_opt_posix_syntax(opt, 1);
+     cre2_opt_set_posix_syntax(opt, 1);
      
      rex = cre2_new(pattern, strlen(pattern), opt);
      {
