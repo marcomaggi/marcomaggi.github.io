@@ -1,0 +1,236 @@
+<html lang="en">
+<head>
+<title>linux inotify - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="linux.html#linux" title="linux">
+<link rel="prev" href="linux-timerfd.html#linux-timerfd" title="linux timerfd">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d13 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package is distributed under the terms of the GNU General Public
+License (GPL) and can be downloaded from:
+
+               `http://code.google.com/p/vicare-scheme/'
+
+
+or:
+
+            `http://github.com/marcomaggi/vicare/downloads'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2012 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="linux-inotify"></a>
+<p>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="linux-timerfd.html#linux-timerfd">linux timerfd</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="linux.html#linux">linux</a>
+<hr>
+</div>
+
+<h3 class="section">7.7 Monitoring file system events</h3>
+
+<p>The <code>inotify</code> <acronym>API</acronym> allows us to monitor file system events; for
+an overview of the <acronym>API</acronym> we must refer to the <code>inotify(7)</code> manual
+page.
+
+<div class="defun">
+&mdash; Struct Type: <b>struct-inotify-event</b><var><a name="index-struct_002dinotify_002devent-1206"></a></var><br>
+<blockquote><p>Scheme level representation of the C language type <code>struct
+inotify-event</code>, see the <code>inotify(7)</code> manual page.  It has the
+following fields:
+
+          <dl>
+<dt><code>wd</code><dd>An exact integer in the range of the C language type <code>int</code>.
+
+          <br><dt><code>mask</code><dd>An exact integer in the range of the C language type <code>uint32_t</code>.
+
+          <br><dt><code>cookie</code><dd>An exact integer in the range of the C language type <code>uint32_t</code>.
+
+          <br><dt><code>len</code><dd>An exact integer in the range of the C language type <code>uint32_t</code>. 
+Zero or the number of bytes in the pathname represented by the
+<code>name</code> field.
+
+          <br><dt><code>name</code><dd>A bytevector representing a file system pathname or <code>#f</code>. 
+</dl>
+        </p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>make-struct-inotify-event</b><var><a name="index-make_002dstruct_002dinotify_002devent-1207"></a></var><br>
+&mdash; Function: <b>make-struct-inotify-event</b><var> wd mask cookie len name<a name="index-make_002dstruct_002dinotify_002devent-1208"></a></var><br>
+<blockquote><p>Build and return a new instance of <code>struct-inotify-event</code>.  When no
+arguments are given: all the fields are set to the fixnum zero, but the
+field <var>name</var> which is set to <code>#f</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>struct-inotify-event?</b><var> obj<a name="index-struct_002dinotify_002devent_003f-1209"></a></var><br>
+<blockquote><p>Return <code>#t</code> if <var>obj</var> is an instance of
+<code>struct-inotify-event</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>struct-inotify-event-wd</b><var> iev<a name="index-struct_002dinotify_002devent_002dwd-1210"></a></var><br>
+&mdash; Function: <b>struct-inotify-event-mask</b><var> iev<a name="index-struct_002dinotify_002devent_002dmask-1211"></a></var><br>
+&mdash; Function: <b>struct-inotify-event-cookie</b><var> iev<a name="index-struct_002dinotify_002devent_002dcookie-1212"></a></var><br>
+&mdash; Function: <b>struct-inotify-event-len</b><var> iev<a name="index-struct_002dinotify_002devent_002dlen-1213"></a></var><br>
+&mdash; Function: <b>struct-inotify-event-name</b><var> iev<a name="index-struct_002dinotify_002devent_002dname-1214"></a></var><br>
+<blockquote><p>Accessors for the fields of <code>struct-inotify-event</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>set-struct-inotify-event-wd!</b><var> iev value<a name="index-set_002dstruct_002dinotify_002devent_002dwd_0021-1215"></a></var><br>
+&mdash; Function: <b>set-struct-inotify-event-mask!</b><var> iev value<a name="index-set_002dstruct_002dinotify_002devent_002dmask_0021-1216"></a></var><br>
+&mdash; Function: <b>set-struct-inotify-event-cookie!</b><var> iev value<a name="index-set_002dstruct_002dinotify_002devent_002dcookie_0021-1217"></a></var><br>
+&mdash; Function: <b>set-struct-inotify-event-len!</b><var> iev value<a name="index-set_002dstruct_002dinotify_002devent_002dlen_0021-1218"></a></var><br>
+&mdash; Function: <b>set-struct-inotify-event-name!</b><var> iev value<a name="index-set_002dstruct_002dinotify_002devent_002dname_0021-1219"></a></var><br>
+<blockquote><p>Mutators for the fields of <code>struct-inotify-event</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>inotify-init</b><var><a name="index-inotify_002dinit-1220"></a></var><br>
+<blockquote><p>Interface to the C function <code>inotify_init()</code>, see the manual page
+<code>inotify_init(2)</code>.  Initialise a new <code>inotify</code> instance; if
+successful return a file descriptor associated to a new event queue,
+else raise an exception. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>inotify-init1</b><var> flags<a name="index-inotify_002dinit1-1221"></a></var><br>
+<blockquote><p>Interface to the C function <code>inotify_init1()</code>, see the manual page
+<code>inotify_init1(2)</code>.  Initialise a new <code>inotify</code> instance; if
+successful return a file descriptor associated to a new event queue,
+else raise an exception.
+
+        <p><var>flags</var> must be a fixnum representing the bitwise inclusive OR
+combination of <code>IN_NONBLOCK</code> and <code>IN_CLOEXEC</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>inotify-add-watch</b><var> fd pathname mask<a name="index-inotify_002dadd_002dwatch-1222"></a></var><br>
+<blockquote><p>Interface to the C function <code>inotify_add_watch()</code>, see the manual
+page <code>inotify_add_watch(2)</code>.  Add a watch to an initialised
+<code>inotify</code> instance; if successful return an exact integer
+representing watch descriptor, else raise an exception.
+
+        <p><var>fd</var> must be a finxum representing the file descriptor associated to
+the <code>inotify</code> instance.  <var>pathname</var> must be a Scheme string or
+bytevector representing the pathname to watch.  <var>mask</var> must be an
+exact integer in the range of the C language type <code>uint32_t</code>
+representing the watch mask. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>inotify-rm-watch</b><var> fd wd<a name="index-inotify_002drm_002dwatch-1223"></a></var><br>
+<blockquote><p>Interface to the C function <code>inotify_rm_watch()</code>, see the manual
+page <code>inotify_rm_watch(2)</code>.  Remove an existing watch from an
+<code>inotify</code> instance; if successful return unspecified values, else
+raise an exception.
+
+        <p><var>fd</var> must be a fixnum representing the file descriptor associated to
+the <code>inotify</code> instance.  <var>wd</var> must be an exact integer in the
+range of the C language type <code>int</code> representing the watch
+descriptor. 
+</p></blockquote></div>
+
+   <p>The following meaningless example shows how to watch for a modification
+event on a file:
+
+<pre class="example">     #!r6rs
+     (import (vicare)
+       (prefix (vicare linux) lx.)
+       (prefix (vicare posix) px.)
+       (vicare platform-constants)
+       (vicare syntactic-extensions))
+     
+     (let* ((infd     (lx.inotify-init))
+            (pathname "inotify.test")
+            (fd       (px.open pathname
+                               (fxior O_CREAT O_EXCL O_RDWR)
+                               (fxior S_IRUSR S_IWUSR))))
+       (unwind-protect
+            (let ((wd (lx.inotify-add-watch infd pathname
+                                            IN_MODIFY)))
+              (unwind-protect
+                   (begin
+                     (px.write fd #vu8(1 2 3))
+                     ;; let the event happen
+                     (px.select-fd infd 1 0)
+                     (let ((ev (lx.inotify-read infd)))
+                       (lx.struct-inotify-event? ev)
+                       &rArr; #t
+                       (= wd (lx.struct-inotify-event-wd ev))
+                       &rArr; #t
+                       (lx.struct-inotify-event-len ev)
+                       &rArr; 0
+                       (lx.struct-inotify-event-name ev)
+                       &rArr; #f
+                       ))
+                   (lx.inotify-rm-watch infd wd)))
+          (px.close fd)
+          (delete-file pathname)))
+</pre>
+   <!-- page -->
+   </body></html>
+

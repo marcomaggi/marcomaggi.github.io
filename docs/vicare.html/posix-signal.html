@@ -10,7 +10,7 @@
 <link rel="next" href="posix-stat.html#posix-stat" title="posix stat">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
-This document describes version 0.2d12 of Vicare Scheme, an
+This document describes version 0.2d13 of Vicare Scheme, an
 R6RS compliant native compiler for the Scheme language, producing
 single threaded programs running on Intel x86 32-bit processors, with
 experimental support for 64-bit machines.  _Vicare_ is pronounced
@@ -173,6 +173,183 @@ acquiring new signals always returns the empty list.
 
         <p>This function interferes with <code>signal-bub-delivered?</code>. 
 </p></blockquote></div>
+
+<!--  -->
+<h5 class="subsubheading">Synchronously waiting for signals</h5>
+
+<div class="defun">
+&mdash; Struct Type: <b>struct-siginfo_t</b><var><a name="index-struct_002dsiginfo_005ft-587"></a></var><br>
+<blockquote><p>Scheme representation of the C language type <code>siginfo_t</code> which is a
+structure typedef.  It has the following fields (some of them are not
+present on all the architectures):
+
+          <dl>
+<dt><code>si_signo</code><dd>Signal number.
+
+          <br><dt><code>si_errno</code><dd>An <code>errno</code> value.
+
+          <br><dt><code>si_code</code><dd>Signal code.
+
+          <br><dt><code>si_trapno</code><dd>Trap number that caused hardware&ndash;generated signal (unused on most
+architectures).
+
+          <br><dt><code>si_pid</code><dd>Sending process ID.
+
+          <br><dt><code>si_uid</code><dd>Real user ID of sending process.
+
+          <br><dt><code>si_status</code><dd>Exit value or signal.
+
+          <br><dt><code>si_utime</code><dd>User time consumed.
+
+          <br><dt><code>si_stime</code><dd>System time consumed.
+
+          <br><dt><code>si_value.sival_int</code><dt><code>si_value.sival_ptr</code><dd>Signal value.  The C language type <code>sigval_t</code> is a union with
+fields <code>int sival_int</code> and <code>void *sival_ptr</code>.
+
+          <br><dt><code>si_int</code><dd>POSIX.1b signal.
+
+          <br><dt><code>si_ptr</code><dd>POSIX.1b signal.
+
+          <br><dt><code>si_overrun</code><dd>Timer overrun count; POSIX.1b timers.
+
+          <br><dt><code>si_timerid</code><dd>Timer ID; POSIX.1b timers.
+
+          <br><dt><code>si_addr</code><dd>Memory location which caused fault.
+
+          <br><dt><code>si_band</code><dd>Band event.
+
+          <br><dt><code>si_fd</code><dd>File descriptor.
+
+          <br><dt><code>si_addr_lsb</code><dd>Least significant bit of address. 
+</dl>
+
+        <blockquote>
+<strong>NOTE</strong> On <acronym>GNU</acronym>+Linux: for details on the <code>struct
+siginfo_t</code> type see the manual page <code>sigaction(2)</code>. 
+</blockquote>
+        </p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>make-struct-siginfo_t</b><var><a name="index-make_002dstruct_002dsiginfo_005ft-588"></a></var><br>
+&mdash; Function: <b>make-struct-siginfo_t</b><var> signo errno code trapno pid uid status utime stime value-int value-ptr int ptr overrun timerid addr band fd addr_lsb<a name="index-make_002dstruct_002dsiginfo_005ft-589"></a></var><br>
+<blockquote><p>Build and return a new instance of <code>struct-siginfo_t</code>.  If no
+arguments are given: all the fields are initialised to <code>#f</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>struct-siginfo_t?</b><var> obj<a name="index-struct_002dsiginfo_005ft_003f-590"></a></var><br>
+<blockquote><p>Return <code>#t</code> if <var>obj</var> is an instance of <code>struct-siginfo_t</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>struct-siginfo_t-si_signo</b><var> info<a name="index-struct_002dsiginfo_005ft_002dsi_005fsigno-591"></a></var><br>
+&mdash; Function: <b>struct-siginfo_t-si_errno</b><var> info<a name="index-struct_002dsiginfo_005ft_002dsi_005ferrno-592"></a></var><br>
+&mdash; Function: <b>struct-siginfo_t-si_code</b><var> info<a name="index-struct_002dsiginfo_005ft_002dsi_005fcode-593"></a></var><br>
+&mdash; Function: <b>struct-siginfo_t-si_trapno</b><var> info<a name="index-struct_002dsiginfo_005ft_002dsi_005ftrapno-594"></a></var><br>
+&mdash; Function: <b>struct-siginfo_t-si_pid</b><var> info<a name="index-struct_002dsiginfo_005ft_002dsi_005fpid-595"></a></var><br>
+&mdash; Function: <b>struct-siginfo_t-si_uid</b><var> info<a name="index-struct_002dsiginfo_005ft_002dsi_005fuid-596"></a></var><br>
+&mdash; Function: <b>struct-siginfo_t-si_status</b><var> info<a name="index-struct_002dsiginfo_005ft_002dsi_005fstatus-597"></a></var><br>
+&mdash; Function: <b>struct-siginfo_t-si_utime</b><var> info<a name="index-struct_002dsiginfo_005ft_002dsi_005futime-598"></a></var><br>
+&mdash; Function: <b>struct-siginfo_t-si_stime</b><var> info<a name="index-struct_002dsiginfo_005ft_002dsi_005fstime-599"></a></var><br>
+&mdash; Function: <b>struct-siginfo_t-si_value.sival_int</b><var> info<a name="index-struct_002dsiginfo_005ft_002dsi_005fvalue_002esival_005fint-600"></a></var><br>
+&mdash; Function: <b>struct-siginfo_t-si_value.sival_ptr</b><var> info<a name="index-struct_002dsiginfo_005ft_002dsi_005fvalue_002esival_005fptr-601"></a></var><br>
+&mdash; Function: <b>struct-siginfo_t-si_int</b><var> info<a name="index-struct_002dsiginfo_005ft_002dsi_005fint-602"></a></var><br>
+&mdash; Function: <b>struct-siginfo_t-si_ptr</b><var> info<a name="index-struct_002dsiginfo_005ft_002dsi_005fptr-603"></a></var><br>
+&mdash; Function: <b>struct-siginfo_t-si_overrun</b><var> info<a name="index-struct_002dsiginfo_005ft_002dsi_005foverrun-604"></a></var><br>
+&mdash; Function: <b>struct-siginfo_t-si_timerid</b><var> info<a name="index-struct_002dsiginfo_005ft_002dsi_005ftimerid-605"></a></var><br>
+&mdash; Function: <b>struct-siginfo_t-si_addr</b><var> info<a name="index-struct_002dsiginfo_005ft_002dsi_005faddr-606"></a></var><br>
+&mdash; Function: <b>struct-siginfo_t-si_band</b><var> info<a name="index-struct_002dsiginfo_005ft_002dsi_005fband-607"></a></var><br>
+&mdash; Function: <b>struct-siginfo_t-si_fd</b><var> info<a name="index-struct_002dsiginfo_005ft_002dsi_005ffd-608"></a></var><br>
+&mdash; Function: <b>struct-siginfo_t-si_addr_lsb</b><var> info<a name="index-struct_002dsiginfo_005ft_002dsi_005faddr_005flsb-609"></a></var><br>
+<blockquote><p>Accessors for the fields of <code>struct-siginfo_t</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>set-struct-siginfo_t-si_signo!</b><var> info value<a name="index-set_002dstruct_002dsiginfo_005ft_002dsi_005fsigno_0021-610"></a></var><br>
+&mdash; Function: <b>set-struct-siginfo_t-si_errno!</b><var> info value<a name="index-set_002dstruct_002dsiginfo_005ft_002dsi_005ferrno_0021-611"></a></var><br>
+&mdash; Function: <b>set-struct-siginfo_t-si_code!</b><var> info value<a name="index-set_002dstruct_002dsiginfo_005ft_002dsi_005fcode_0021-612"></a></var><br>
+&mdash; Function: <b>set-struct-siginfo_t-si_trapno!</b><var> info value<a name="index-set_002dstruct_002dsiginfo_005ft_002dsi_005ftrapno_0021-613"></a></var><br>
+&mdash; Function: <b>set-struct-siginfo_t-si_pid!</b><var> info value<a name="index-set_002dstruct_002dsiginfo_005ft_002dsi_005fpid_0021-614"></a></var><br>
+&mdash; Function: <b>set-struct-siginfo_t-si_uid!</b><var> info value<a name="index-set_002dstruct_002dsiginfo_005ft_002dsi_005fuid_0021-615"></a></var><br>
+&mdash; Function: <b>set-struct-siginfo_t-si_status!</b><var> info value<a name="index-set_002dstruct_002dsiginfo_005ft_002dsi_005fstatus_0021-616"></a></var><br>
+&mdash; Function: <b>set-struct-siginfo_t-si_utime!</b><var> info value<a name="index-set_002dstruct_002dsiginfo_005ft_002dsi_005futime_0021-617"></a></var><br>
+&mdash; Function: <b>set-struct-siginfo_t-si_stime!</b><var> info value<a name="index-set_002dstruct_002dsiginfo_005ft_002dsi_005fstime_0021-618"></a></var><br>
+&mdash; Function: <b>set-struct-siginfo_t-si_value.sival_int!</b><var> info value<a name="index-set_002dstruct_002dsiginfo_005ft_002dsi_005fvalue_002esival_005fint_0021-619"></a></var><br>
+&mdash; Function: <b>set-struct-siginfo_t-si_value.sival_ptr!</b><var> info value<a name="index-set_002dstruct_002dsiginfo_005ft_002dsi_005fvalue_002esival_005fptr_0021-620"></a></var><br>
+&mdash; Function: <b>set-struct-siginfo_t-si_int!</b><var> info value<a name="index-set_002dstruct_002dsiginfo_005ft_002dsi_005fint_0021-621"></a></var><br>
+&mdash; Function: <b>set-struct-siginfo_t-si_ptr!</b><var> info value<a name="index-set_002dstruct_002dsiginfo_005ft_002dsi_005fptr_0021-622"></a></var><br>
+&mdash; Function: <b>set-struct-siginfo_t-si_overrun!</b><var> info value<a name="index-set_002dstruct_002dsiginfo_005ft_002dsi_005foverrun_0021-623"></a></var><br>
+&mdash; Function: <b>set-struct-siginfo_t-si_timerid!</b><var> info value<a name="index-set_002dstruct_002dsiginfo_005ft_002dsi_005ftimerid_0021-624"></a></var><br>
+&mdash; Function: <b>set-struct-siginfo_t-si_addr!</b><var> info value<a name="index-set_002dstruct_002dsiginfo_005ft_002dsi_005faddr_0021-625"></a></var><br>
+&mdash; Function: <b>set-struct-siginfo_t-si_band!</b><var> info value<a name="index-set_002dstruct_002dsiginfo_005ft_002dsi_005fband_0021-626"></a></var><br>
+&mdash; Function: <b>set-struct-siginfo_t-si_fd!</b><var> info value<a name="index-set_002dstruct_002dsiginfo_005ft_002dsi_005ffd_0021-627"></a></var><br>
+&mdash; Function: <b>set-struct-siginfo_t-si_addr_lsb!</b><var> info value<a name="index-set_002dstruct_002dsiginfo_005ft_002dsi_005faddr_005flsb_0021-628"></a></var><br>
+<blockquote><p>Mutators for the fields of <code>struct-siginfo_t</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>sigwaitinfo</b><var> signo<a name="index-sigwaitinfo-629"></a></var><br>
+&mdash; Function: <b>sigwaitinfo</b><var> signo siginfo<a name="index-sigwaitinfo-630"></a></var><br>
+<blockquote><p>Interface to the C function <code>sigwaitinfo()</code>, see the manual page
+<code>sigwaitinfo(2)</code>.  Synchronously wait for a queued signal; if
+successful return two values: a fixnum representing a signal number and
+<var>siginfo</var>; else raise an exception.
+
+        <p><var>signo</var> must be a fixnum representing an interprocess signal code.
+
+        <p>The optional <var>siginfo</var> must be an instance of
+<code>struct-siginfo_t</code>, which is filled with the informations attached
+to the signal; when not given a new instance is allocated internally.
+
+     <pre class="example">          #!r6rs
+          (import (vicare)
+            (prefix (vicare posix) px.)
+            (vicare platform-constants)
+            (vicare syntactic-extensions))
+          
+          (px.signal-bub-init)
+          (px.raise SIGALRM)
+          (let-values
+              (((signo info) (px.sigwaitinfo SIGALRM)))
+            signo &rArr; SIGALRM
+            (px.struct-siginfo_t-si_signo info)) &rArr; SIGALRM
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>sigtimedwait</b><var> signo timeout<a name="index-sigtimedwait-631"></a></var><br>
+&mdash; Function: <b>sigtimedwait</b><var> signo siginfo timeout<a name="index-sigtimedwait-632"></a></var><br>
+<blockquote><p>Interface to the C function <code>sigtimedwait()</code>, see the manual page
+<code>sigtimedwait(2)</code>.  Synchronously wait for a queued signal, with a
+timeout; if successful return two values: a fixnum representing a signal
+number and <var>siginfo</var>; else raise an exception.
+
+        <p><var>signo</var> must be a fixnum representing an interprocess signal code.
+
+        <p><var>siginfo</var> must be an instance of <code>struct-siginfo_t</code>, which is
+filled with the informations attached to the signal; when not given a
+new instance is allocated internally.
+
+        <p><var>timeout</var> must be an instance of <code>struct-timespec</code>: it
+represents the maximum interval of time to wait for the signal;
+<a href="posix-time-timespec.html#posix-time-timespec">posix time timespec</a> for details.
+
+     <pre class="example">          #!r6rs
+          (import (vicare)
+            (prefix (vicare posix) px.)
+            (vicare platform-constants)
+            (vicare syntactic-extensions))
+          
+          (px.signal-bub-init)
+          (px.raise SIGUSR1)
+          (let-values
+              (((signo info)
+                (px.sigtimedwait SIGUSR1
+                                 (px.make-struct-timespec 1 0))))
+            signo &rArr; SIGUSR1
+            (px.struct-siginfo_t-si_signo info)) &rArr; SIGUSR1
+</pre>
+        </blockquote></div>
 
 <!-- page -->
    </body></html>

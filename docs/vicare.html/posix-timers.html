@@ -1,0 +1,247 @@
+<html lang="en">
+<head>
+<title>posix timers - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="posix.html#posix" title="posix">
+<link rel="prev" href="posix-time.html#posix-time" title="posix time">
+<link rel="next" href="posix-config.html#posix-config" title="posix config">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d13 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package is distributed under the terms of the GNU General Public
+License (GPL) and can be downloaded from:
+
+               `http://code.google.com/p/vicare-scheme/'
+
+
+or:
+
+            `http://github.com/marcomaggi/vicare/downloads'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2012 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="posix-timers"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="posix-config.html#posix-config">posix config</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="posix-time.html#posix-time">posix time</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="posix.html#posix">posix</a>
+<hr>
+</div>
+
+<h3 class="section">5.18 <acronym>POSIX</acronym> per&ndash;process timers</h3>
+
+<p><a name="index-g_t_0040posix_007b_007d-timers-974"></a><a name="index-g_t_0040posix_007b_007d-per_002d_002dprocess-timers-975"></a><a name="index-Timer_002c-_0040posix_007b_007d-per_002d_002dprocess-timers-976"></a><a name="index-Per_002d_002dprocess-timers-977"></a>
+
+   <p>The <acronym>POSIX</acronym> timer <acronym>API</acronym> allows the creation of per&ndash;process timers
+triggering time&ndash;periodic events by specification of two time intervals:
+
+     <ol type=1 start=1>
+<li>Initial expiration: how much time before the first event.
+
+     <li>Period: how much time between two time&ndash;adjacent events.  When the
+period is zero: only one event notification is delivered.
+        </ol>
+
+<pre class="example">         time before the
+         first event       period      period      period
+        |               |           |           |           |
+     ---+---------------+-----------+-----------+-----------+----
+        ^               ^           ^           ^           ^
+       now          1st event   2nd event   3rd event   4th event
+</pre>
+   <p>Each timer can be started, stopped, reconfigured and queried for how
+much time until the next event.
+
+<div class="defun">
+&mdash; Function: <b>timer-create</b><var> clock-id<a name="index-timer_002dcreate-978"></a></var><br>
+<blockquote><p>Interface to the C function <code>timer_create()</code>, see the manual page
+<code>timer_create(2)</code>.  Create a new per&ndash;process interval timer,
+initially disarmed; if successful return an exact integer representing
+the timer identifier, else raise an exception.
+
+        <p><var>clock-id</var> must be an exact integer representing the identifier of a
+clock to be used to measure time; it can be one of the constants:
+
+     <pre class="example">          CLOCK_REALTIME                  CLOCK_MONOTONIC
+          CLOCK_PROCESS_CPUTIME_ID        CLOCK_THREAD_CPUTIME_ID
+</pre>
+        <p class="noindent">or the return value of <code>clock-getcpuclockid</code>.
+
+        <p>The call sets up the notification as with a C language <code>struct
+sigevent</code> having: <code>sigev_notify</code> set to <code>SIGEV_SIGNAL</code>,
+<code>sigev_signo</code> set to <code>SIGALRM</code>, <code>sigev.sival_int</code> set to
+the timer identifier.  This means the timer expirations are notified to
+the process by delivering <code>SIGALRM</code> signals.
+
+        <blockquote>
+<strong>NOTE</strong> On <acronym>GNU</acronym>+Linux systems: for details on <code>struct
+sigevent</code> see the manual page <code>sigevent(7)</code>. 
+</blockquote>
+        </p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>timer-delete</b><var> timer-id<a name="index-timer_002ddelete-979"></a></var><br>
+<blockquote><p>Interface to the C function <code>timer_delete()</code>, see the manual page
+<code>timer_delete(2)</code>.  Delete the timer referenced by <var>timer-id</var>;
+if successful return unspecified values, else raise an exception. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>timer-settime</b><var> timer-id flags new<a name="index-timer_002dsettime-980"></a></var><br>
+&mdash; Function: <b>timer-settime</b><var> timer-id flags new old<a name="index-timer_002dsettime-981"></a></var><br>
+<blockquote><p>Interface to the C function <code>timer_settime()</code>, see the manual page
+<code>timer_settime(2)</code>.  Arm or disarm the timer referenced by
+<var>timer-id</var>.  If successful return <var>old</var> or <code>#f</code> when
+<var>old</var> is not given; if an error occurs raise an exception.
+
+        <p><var>flags</var> can be either the fixnum zero or <code>TIMER_ABSTIME</code>. 
+<var>new</var> must be a valid instance of <code>struct-itimerspec</code>, which is
+used to set the timer.  The optional <var>old</var> can be <code>#f</code> or a
+valid instance of <code>struct-itimerspec</code>; when given: it is filled
+with the old timer specification. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>timer-gettime</b><var> timer-id<a name="index-timer_002dgettime-982"></a></var><br>
+&mdash; Function: <b>timer-gettime</b><var> timer-id curr<a name="index-timer_002dgettime-983"></a></var><br>
+<blockquote><p>Interface to the C function <code>timer_gettime()</code>, see the manual page
+<code>timer_gettime(2)</code>.  Retrieve the current timer specification
+associated to the timer identifier <var>timer-id</var>.  If successful return
+<var>curr</var> or a newly built instance of <code>struct-itimerspec</code>; if an
+error occurs: raise an exception.
+
+        <p>The optional <var>curr</var> must be a valid instance of
+<code>struct-itimerspec</code>, when not given a new instance of this
+structure type is internally built: it is filled with the current timer
+specification. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>timer-getoverrun</b><var> timer-id<a name="index-timer_002dgetoverrun-984"></a></var><br>
+<blockquote><p>Interface to the C function <code>timer_getoverrun()</code>, see the manual
+page <code>timer_getoverrun(2)</code>.  Get overrun count for the timer
+referenced by <var>timer-id</var>; if successful return a non&ndash;negative exact
+integer representing the overrun count of the specified timer, else
+raise an exception. 
+</p></blockquote></div>
+
+   <p>In the following example program:
+
+     <ol type=1 start=1>
+<li>We use the <acronym>BUB</acronym> <acronym>API</acronym> to block all the signals, so including
+<code>SIGALRM</code>.
+
+     <li>Then we create a <acronym>POSIX</acronym> timer whose expirations are notified by
+delivering <code>SIGALRM</code> signals.
+
+     <li>Then we use <code>sigtimedwait</code> to count the expirations.
+        </ol>
+
+   <p>Note very well that to recognise that a <code>SIGALRM</code> signal is
+delivered by the expiration of the timer, we have to check the
+<code>si_value.sival_int</code> field of the <code>struct-siginfo_t</code>,
+<strong>not</strong> the <code>si_timerid</code> field.
+
+<pre class="example">     #!r6rs
+     (import (vicare)
+       (prefix (vicare posix) px.)
+       (vicare platform-constants)
+       (vicare syntactic-extensions))
+     
+     (px.signal-bub-init)
+     
+     (define timer-id
+       (px.timer-create CLOCK_REALTIME))
+     (px.timer-settime timer-id 0
+           (px.make-struct-itimerspec
+              ;;one event every 1 seconds
+              (px.make-struct-timespec 1 0)
+              ;;the first event after 1 nanosecond
+              (px.make-struct-timespec 0 1)))
+     
+     (unwind-protect
+         (let next ((count 0))
+           (if (fx= count 3)
+               count
+             (let-values
+                 (((signo info)
+                   (px.sigtimedwait SIGALRM
+                      (px.make-struct-timespec 2 0))))
+               (define was-sigalrm?
+                 (= signo SIGALRM))
+               (define right-timer?
+                 (= timer-id
+                    (px.struct-siginfo_t-si_value.sival_int info)))
+               (next (if (and was-sigalrm? right-timer?)
+                         (+ 1 count)
+                       count)))))
+       (px.timer-delete timer-id)
+       (px.signal-bub-final))
+     &rArr; 3
+</pre>
+   <!-- page -->
+   </body></html>
+
