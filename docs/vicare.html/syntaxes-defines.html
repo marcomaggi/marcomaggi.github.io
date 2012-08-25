@@ -1,0 +1,176 @@
+<html lang="en">
+<head>
+<title>syntaxes defines - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="syntaxes.html#syntaxes" title="syntaxes">
+<link rel="next" href="syntaxes-bindings.html#syntaxes-bindings" title="syntaxes bindings">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d15 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package is distributed under the terms of the GNU General Public
+License (GPL) and can be downloaded from:
+
+               `http://code.google.com/p/vicare-scheme/'
+
+
+or:
+
+            `http://github.com/marcomaggi/vicare/downloads'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2012 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="syntaxes-defines"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="syntaxes-bindings.html#syntaxes-bindings">syntaxes bindings</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="syntaxes.html#syntaxes">syntaxes</a>
+<hr>
+</div>
+
+<h4 class="subsection">10.12.1 Special definitions</h4>
+
+<p>The following bindings are exported by the library <code>(vicare
+syntactic-extensions)</code>.
+
+<div class="defun">
+&mdash; Macro: <b>Syntax</b><var> define-inline </var>(<var>?name ?arg ... . ?rest</var>)<var> ?form0 ?form ...<a name="index-Syntax-1766"></a></var><br>
+<blockquote><p>Wrapper for <code>syntax-rules</code>, expand to:
+
+     <pre class="example">          (define-syntax <var>?name</var>
+            (syntax-rules ()
+              ((_ <var>?arg</var> ... . <var>?rest</var>)
+               (begin <var>?form0</var> <var>?form</var> ...))))
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>define-constant</b><var> ?name ?expr<a name="index-define_002dconstant-1767"></a></var><br>
+<blockquote><p>Wrapper for <code>identifier-syntax</code>, expand to:
+
+     <pre class="example">          (begin
+            (define ghost <var>?expr</var>)
+            (define-syntax <var>?name</var>
+              (identifier-syntax ghost)))
+</pre>
+        <p class="noindent"><var>?expr</var> is evaluated once and the identifier syntax <var>?name</var> can
+be used to access the result; it is impossible to modify the value by
+acting upon <var>?name</var>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>define-inline-constant</b><var> ?name ?value<a name="index-define_002dinline_002dconstant-1768"></a></var><br>
+<blockquote><p>Wrapper for <code>identifier-syntax</code>, expand to:
+
+     <pre class="example">          (define-syntax <var>?name</var>
+            (identifier-syntax <var>?value</var>))
+</pre>
+        <p class="noindent"><var>?value</var> is evaluated every time <var>?name</var> is referenced; it is
+impossible to modify the <var>?value</var> by acting upon <var>?name</var>.  This
+syntax is useful to defined constants resulting from <acronym>GNU</acronym> Autoconf
+expansion:
+
+     <pre class="example">          (define-inline-constant SEEK_SET @VALUEOF_SEEK_SET@)
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>define-syntax*</b> (<var>?who ?stx</var>)<var> . ?body<a name="index-define_002dsyntax_002a-1769"></a></var><br>
+<blockquote><p>Wrapper for <code>define-syntax</code>, expand to:
+
+     <pre class="example">          (define-syntax <var>?who</var>
+            (lambda (<var>?stx</var>) . <var>?body</var>))
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>define-auxiliary-syntaxes</b><var> ?name0 ?name ...<a name="index-define_002dauxiliary_002dsyntaxes-1770"></a></var><br>
+<blockquote><p>Define auxiliary syntaxes to be used as literal identifiers by
+<code>syntax-rules</code>, <code>syntax-case</code> and similar macros; expand to:
+
+     <pre class="example">          (define-syntax <var>?name0</var> (syntax-rules ()))
+          (define-syntax <var>?name</var>  (syntax-rules ()))
+          ...
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>define-exact-integer-&gt;symbol-function</b><var> ?who </var>(<var>?code ...</var>)<var><a name="index-define_002dexact_002dinteger_002d_003esymbol_002dfunction-1771"></a></var><br>
+<blockquote><p>Define a function used to convert exact intgers to the corresponding
+symbolic name.  Expand to:
+
+     <pre class="example">          (define (<var>?who</var> code)
+            (define who '<var>?who</var>)
+            (with-arguments-validation (who)
+                ((exact-integer      code))
+              (case-integers code
+                ((<var>?code</var>)     '<var>?code</var>)
+                ...
+                (else #f))))
+</pre>
+        </blockquote></div>
+
+<!-- page -->
+   </body></html>
+
