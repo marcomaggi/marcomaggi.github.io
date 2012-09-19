@@ -9,7 +9,7 @@
 <link rel="next" href="iklib-structs-using.html#iklib-structs-using" title="iklib structs using">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
-This document describes version 0.2d15 of Vicare Scheme, an
+This document describes version 0.2d17 of Vicare Scheme, an
 R6RS compliant native compiler for the Scheme language, producing
 single threaded programs running on Intel x86 32-bit processors, with
 experimental support for 64-bit machines.  _Vicare_ is pronounced
@@ -94,7 +94,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="iklib-structs.html#iklib-structs">iklib
 <p>The following bindings are exported by the <code>(ikarus)</code> library.
 
 <div class="defun">
-&mdash; Syntax: <b>define-struct</b><var> ?name </var>(<var>?field ...</var>)<var><a name="index-define_002dstruct-105"></a></var><br>
+&mdash; Syntax: <b>define-struct</b><var> ?name </var>(<var>?field ...</var>)<var><a name="index-define_002dstruct-107"></a></var><br>
 <blockquote><p>Define a new data structure type.  This macro is embedded in the
 expander.
 
@@ -123,21 +123,33 @@ The constructor makes use of the <code>$struct</code> low level operation.
 and other values.  This predicate makes use of the <code>$struct/rtd?</code>
 low level operation.
 
-          <br><dt><code>color-red </code><var>stru</var><dt><code>color-green </code><var>stru</var><dt><code>color-blue </code><var>stru</var><dd>Accessors for the fields of the structure.  These accessors make use of
-the <code>$struct/rtd?</code> low level operation to validate the argument and
-if successful they use <code>$struct-ref</code> to extract the value; if the
-argument is of invalid type: an assertion violation is raised.
+          <br><dt><code>color-red </code><var>stru</var><dt><code>color-green </code><var>stru</var><dt><code>color-blue </code><var>stru</var><dd>Accessor functions for the fields of the structure.  These accessors
+make use of the <code>$struct/rtd?</code> low level operation to validate the
+argument and if successful they use <code>$struct-ref</code> to extract the
+value; if the argument is of invalid type: an assertion violation is
+raised.
 
-          <br><dt><code>set-color-red! </code><var>stru</var> <var>red</var><dt><code>set-color-green! </code><var>stru</var> <var>green</var><dt><code>set-color-blue! </code><var>stru</var> <var>blue</var><dd>Mutators for the fields of the structure.  These mutators make use of
-the <code>$struct/rtd?</code> low level operation to validate the argument and
-if successful they use <code>$struct-set!</code> to extract the value; if the
-argument is of invalid type: an assertion violation is raised. 
+          <br><dt><code>set-color-red! </code><var>stru</var> <var>red</var><dt><code>set-color-green! </code><var>stru</var> <var>green</var><dt><code>set-color-blue! </code><var>stru</var> <var>blue</var><dd>Mutator functions for the fields of the structure.  These mutators make
+use of the <code>$struct/rtd?</code> low level operation to validate the
+argument <var>stru</var> and if successful they use <code>$struct-set!</code> to
+set the value; if the argument <var>stru</var> is of invalid type: an
+assertion violation is raised.
+
+          <br><dt><code>$color-red </code><var>stru</var><dt><code>$color-green </code><var>stru</var><dt><code>$color-blue </code><var>stru</var><dd>Unsafe accessor syntaxes for the fields of the structure.  These
+accessors do not validate the arguments and expand directly to a use of
+<code>$struct-ref</code> to extract the value; if the argument is invalid: the
+behaviour is undefined.
+
+          <br><dt><code>$set-color-red! </code><var>stru</var> <var>red</var><dt><code>$set-color-green! </code><var>stru</var> <var>green</var><dt><code>$set-color-blue! </code><var>stru</var> <var>blue</var><dd>Unsafe mutator syntaxes for the fields of the structure.  These mutators
+do not validate the arguments and expand directly to a use of
+<code>$struct-set!</code> to set the value; if the argument <var>stru</var> is
+invalid: the behaviour is undefined. 
 </dl>
         </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>make-struct-type</b><var> name fields<a name="index-make_002dstruct_002dtype-106"></a></var><br>
-&mdash; Function: <b>make-struct-type</b><var> name fields uid<a name="index-make_002dstruct_002dtype-107"></a></var><br>
+&mdash; Function: <b>make-struct-type</b><var> name fields<a name="index-make_002dstruct_002dtype-108"></a></var><br>
+&mdash; Function: <b>make-struct-type</b><var> name fields uid<a name="index-make_002dstruct_002dtype-109"></a></var><br>
 <blockquote><p>Build and return a new structure type descriptor.  <var>name</var> must be a
 string representing the type name.  <var>fields</var> must be a list of
 symbols representing the field names.
@@ -150,35 +162,133 @@ descriptor equal to the newly created RTD.
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Syntax: <b>type-descriptor</b><var> ?name<a name="index-type_002ddescriptor-108"></a></var><br>
+&mdash; Syntax: <b>type-descriptor</b><var> ?name<a name="index-type_002ddescriptor-110"></a></var><br>
 <blockquote><p>Evaluate to the type descriptor of the data structure <var>?name</var>, which
 must be the first argument to a previous use of <code>define-struct</code>. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>struct-type-name</b><var> rtd<a name="index-struct_002dtype_002dname-109"></a></var><br>
+&mdash; Function: <b>struct-type-name</b><var> rtd<a name="index-struct_002dtype_002dname-111"></a></var><br>
 <blockquote><p>Return a string represnting the name of structures of type <var>rtd</var>. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>struct-type-symbol</b><var> rtd<a name="index-struct_002dtype_002dsymbol-110"></a></var><br>
-<blockquote><p>Return a symbol uniquely identifying the data structure type <var>RTD</var>. 
+&mdash; Function: <b>struct-type-symbol</b><var> rtd<a name="index-struct_002dtype_002dsymbol-112"></a></var><br>
+<blockquote><p>Return a symbol uniquely identifying the data structure type <var>rtd</var>. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>struct-type-field-names</b><var> rtd<a name="index-struct_002dtype_002dfield_002dnames-111"></a></var><br>
+&mdash; Function: <b>struct-type-field-names</b><var> rtd<a name="index-struct_002dtype_002dfield_002dnames-113"></a></var><br>
 <blockquote><p>Return a list of symbols representing the names of fields in structures
 of type <var>rtd</var>. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>set-rtd-printer!</b><var> rtd printer<a name="index-set_002drtd_002dprinter_0021-112"></a></var><br>
-<blockquote><p>Select the procedure <var>printer</var> as printer for data structures of
-type <var>rtd</var>.  The printer accepts as 3 arguments: the
-structure to be printed, the port to which write a string represention
-of the structure with <code>display</code>, a function to be optionally
-applied to the field values to print them. 
+&mdash; Function: <b>struct-type-destructor</b><var> rtd<a name="index-struct_002dtype_002ddestructor-114"></a></var><br>
+<blockquote><p>Return <code>#f</code> or a procedure being the destructor for instances of
+<var>rtd</var>.  The destructor is registered in a structure type descritpor
+with <code>set-rtd-destructor!</code>. 
 </p></blockquote></div>
+
+<!--  -->
+<div class="defun">
+&mdash; Function: <b>set-rtd-printer!</b><var> rtd printer<a name="index-set_002drtd_002dprinter_0021-115"></a></var><br>
+<blockquote><p>Select the procedure <var>printer</var> as printer for data structures of
+type <var>rtd</var>; return unspecified values.  The printer accepts as
+3 arguments: the structure to be printed, the port to which write
+a string represention of the structure with <code>display</code>, a function
+to be optionally applied to the field values to print them. 
+</p></blockquote></div>
+
+<!--  -->
+<h5 class="subsubheading">Automatic finalisation of structures</h5>
+
+<div class="defun">
+&mdash; Function: <b>set-rtd-destructor!</b><var> rtd destructor<a name="index-set_002drtd_002ddestructor_0021-116"></a></var><br>
+<blockquote><p>Select the procedure <var>destructor</var> as destructor for data structures
+of type <var>rtd</var>; return unspecified values.  The destructor accepts a
+single argument being the structure instance to finalise; the destructor
+can return unspecified values.
+
+        <p>After a destructor is registered in <var>rtd</var>: new instances of this
+structure type are registered, upon creation, into an internal guardian,
+<a href="iklib-guardians.html#iklib-guardians">iklib guardians</a> for details; whenever such structures are garbage
+collected: the guardian applies <var>destructor</var> to them.
+
+        <p>Exceptions raised by <var>destructor</var> are catched with <code>guard</code> and
+discarded: destructor functions should take care of exceptions by
+themselves. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Parameter: <b>struct-guardian-logger</b><var><a name="index-struct_002dguardian_002dlogger-117"></a></var><br>
+<blockquote><p>Select data structure destruction logging mode for debugging purposes. 
+When a structure is finalised by the garbage collector, using the
+destructor registered in the <acronym>RTD</acronym>:
+
+          <ul>
+<li>If this parameter is set to <code>#f</code>: no additional actions are
+performed.
+
+          <li>If this parameter is set to <code>#t</code>: the function
+<code>struct-guardian-log</code> is used to log the operations to the textual
+output port returned by <code>current-error-port</code>.
+
+          <li>If this parameter is set to a procedure: such procedure is used to log
+the operations in a user selected way. 
+</ul>
+
+        <p>See the documentation of <code>struct-guardian-log</code> for the calling
+protocol of the logger functions. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>struct-guardian-log</b><var> struct exception action<a name="index-struct_002dguardian_002dlog-118"></a></var><br>
+<blockquote><p>Built in logger function to be used to log data structure finalisation
+operations by the garbage collector.  <var>struct</var> is the structure to
+be finalised; <var>exception</var> is <code>#f</code> or an object raised by the
+structure destructor; <var>action</var> is one of the symbols:
+<code>before-destruction</code>, <code>after-destruction</code>, <code>exception</code>.
+
+        <p>When this function is used as value for the parameter
+<code>struct-guardian-logger</code>:
+
+          <ul>
+<li>The function is called just before the structucture is finalised with
+<var>action</var> set to the symbol <code>before-destruction</code> and
+<var>exception</var> set to <code>#f</code>.
+
+          <li>The function is called right after the structucture has been finalised
+with <var>action</var> set to the symbol <code>after-destruction</code> and
+<var>exception</var> set to <code>#f</code>.
+
+          <li>If an exception is raised by the destructor: such exception is catched
+and this function is called with <var>action</var> set to <code>exception</code>
+and <var>exception</var> set to the raised object. 
+</ul>
+
+        <p>The current implementation is the following:
+
+     <pre class="smallexample">          (define (struct-guardian-log S E action)
+            (case action
+              ((before-destruction)
+               (fprintf (current-error-port)
+                 "*** Vicare debug: struct guardian: before destruction:\n\
+                  ***\t~s\n" S))
+              ((after-destruction)
+               (fprintf (current-error-port)
+                 "*** Vicare debug: struct guardian: after destruction:\n\
+                  ***\t~s\n" S))
+              ((exception)
+               (fprintf (current-error-port)
+                 "*** Vicare debug: struct guardian: exception:\n\
+                  ***\t~s\n\
+                  ***\t~s\n" S E))
+              (else
+               (assertion-violation 'struct-guardian-log
+                 "invalid action in struct destruction process" S action))))
+</pre>
+        </blockquote></div>
 
 <!-- page -->
    </body></html>

@@ -10,7 +10,7 @@
 <link rel="next" href="posix-status.html#posix-status" title="posix status">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
-This document describes version 0.2d15 of Vicare Scheme, an
+This document describes version 0.2d17 of Vicare Scheme, an
 R6RS compliant native compiler for the Scheme language, producing
 single threaded programs running on Intel x86 32-bit processors, with
 experimental support for 64-bit machines.  _Vicare_ is pronounced
@@ -94,7 +94,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="posix.html#posix">posix</a>
 <h3 class="section">5.5 Spawning processes and the like</h3>
 
 <div class="defun">
-&mdash; Function: <b>system</b><var> command<a name="index-system-553"></a></var><br>
+&mdash; Function: <b>system</b><var> command<a name="index-system-634"></a></var><br>
 <blockquote><p>Interface to the C function <code>system()</code>, <a href="../libc/Running-a-Command.html#Running-a-Command">system</a>.  Execute a command through the system shell; <var>command</var> must
 be a string holding the command to execute.  If successful return the
 termination status of the executed process, <a href="posix-status.html#posix-status">posix status</a> for
@@ -105,9 +105,9 @@ details; if an error occurs: an exception is raised.
         </blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>fork</b><var><a name="index-fork-554"></a></var><br>
-&mdash; Function: <b>fork</b><var> parent-proc child-thunk<a name="index-fork-555"></a></var><br>
-<blockquote><p><a name="index-Forking-processes-556"></a><a name="index-Processes_002c-forking-557"></a>Interface to the C function <code>fork()</code>, <a href="../libc/Creating-a-Process.html#Creating-a-Process">fork</a>.
+&mdash; Function: <b>fork</b><var><a name="index-fork-635"></a></var><br>
+&mdash; Function: <b>fork</b><var> parent-proc child-thunk<a name="index-fork-636"></a></var><br>
+<blockquote><p><a name="index-Forking-processes-637"></a><a name="index-Processes_002c-forking-638"></a>Interface to the C function <code>fork()</code>, <a href="../libc/Creating-a-Process.html#Creating-a-Process">fork</a>.
 
         <p>When called with no arguments: create a new process by forking the
 current one; if successful return a non&ndash;negative fixnum representing
@@ -120,27 +120,35 @@ value; if successful: the child process evaluates the <var>child-thunk</var>
 and returns its return value; if an error occurs: an exception is
 raised.
 
-     <pre class="example">          (fork
-            (lambda (child-pid)
-              (printf "in parent, child pid = ~s\n" child-pid))
-            (lambda ()
-              (printf "in child\n")
-              (exit)))
+     <pre class="example">          #!r6rs
+          (import (vicare)
+            (prefix (vicare posix) px.))
+          
+          (px.fork
+           (lambda (child-pid)
+             (printf "in parent pid = ~a, child pid = ~s\n"
+          	   (px.getpid) child-pid)
+             (flush-output-port (current-output-port)))
+           (lambda ()
+             (printf "in child, pid = ~a\n" (px.getpid))
+             (flush-output-port (current-output-port))
+             (exit)))
           
           (printf "here we are in the parent\n")
+          (flush-output-port (current-output-port))
 </pre>
         </blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>execv</b><var> filename argv<a name="index-execv-558"></a></var><br>
-<blockquote><p><a name="index-Executing-processes-559"></a><a name="index-Processes_002c-executing-560"></a>Interface to the C function <code>execv()</code>, <a href="../libc/Executing-a-File.html#Executing-a-File">execv</a>.  <var>filename</var> must be the pathname of an executable file;
+&mdash; Function: <b>execv</b><var> filename argv<a name="index-execv-639"></a></var><br>
+<blockquote><p><a name="index-Executing-processes-640"></a><a name="index-Processes_002c-executing-641"></a>Interface to the C function <code>execv()</code>, <a href="../libc/Executing-a-File.html#Executing-a-File">execv</a>.  <var>filename</var> must be the pathname of an executable file;
 <var>argv</var> must be a list of strings representing command line
 arguments.  Execute the command; if the function returns: an error has
 occurred, an exception is raised. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>execve</b><var> filename argv env<a name="index-execve-561"></a></var><br>
+&mdash; Function: <b>execve</b><var> filename argv env<a name="index-execve-642"></a></var><br>
 <blockquote><p>Interface to the C function <code>execve()</code>, <a href="../libc/Executing-a-File.html#Executing-a-File">execve</a>.  <var>filename</var> must be the pathname of an executable file;
 <var>argv</var> must be a list of strings representing command line
 arguments; <var>env</var> must be a list of strings representing environment
@@ -149,7 +157,7 @@ error has occurred, an exception is raised.
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>execvp</b><var> filename argv<a name="index-execvp-562"></a></var><br>
+&mdash; Function: <b>execvp</b><var> filename argv<a name="index-execvp-643"></a></var><br>
 <blockquote><p>Interface to the C function <code>execvp()</code>, <a href="../libc/Executing-a-File.html#Executing-a-File">execvp</a>.  <var>filename</var> must be the pathname of an executable file
 reachable in the current <samp><span class="env">PATH</span></samp>; <var>argv</var> must be a list of
 strings representing command line arguments.  Execute the command; if
@@ -157,23 +165,23 @@ the function returns: an error has occurred, an exception is raised.
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>execl</b><var> filename arg0 arg ...<a name="index-execl-563"></a></var><br>
+&mdash; Function: <b>execl</b><var> filename arg0 arg ...<a name="index-execl-644"></a></var><br>
 <blockquote><p>Like <code>execv</code> but allows the arguments to be given expliticly. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>execle</b><var> filename argv env ...<a name="index-execle-564"></a></var><br>
+&mdash; Function: <b>execle</b><var> filename argv env ...<a name="index-execle-645"></a></var><br>
 <blockquote><p>Like <code>execve</code> but allows the environment to be given expliticly. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>execlp</b><var> filename arg0 arg ...<a name="index-execlp-565"></a></var><br>
+&mdash; Function: <b>execlp</b><var> filename arg0 arg ...<a name="index-execlp-646"></a></var><br>
 <blockquote><p>Like <code>execvp</code> but allows the arguments to be given expliticly. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>find-executable-as-bytevector</b><var> bv-pathname<a name="index-find_002dexecutable_002das_002dbytevector-566"></a></var><br>
-&mdash; Function: <b>find-executable-as-string</b><var> str-pathname<a name="index-find_002dexecutable_002das_002dstring-567"></a></var><br>
+&mdash; Function: <b>find-executable-as-bytevector</b><var> bv-pathname<a name="index-find_002dexecutable_002das_002dbytevector-647"></a></var><br>
+&mdash; Function: <b>find-executable-as-string</b><var> str-pathname<a name="index-find_002dexecutable_002das_002dstring-648"></a></var><br>
 <blockquote><p>Given an absolute or relative file pathname or just the name of a file,
 search the file system for a matching executable file; when found return
 its absolute pathname as bytevector or Scheme string, else return
@@ -202,8 +210,8 @@ string.
         </blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>vicare-executable-as-bytevector</b><var><a name="index-vicare_002dexecutable_002das_002dbytevector-568"></a></var><br>
-&mdash; Function: <b>vicare-executable-as-string</b><var><a name="index-vicare_002dexecutable_002das_002dstring-569"></a></var><br>
+&mdash; Function: <b>vicare-executable-as-bytevector</b><var><a name="index-vicare_002dexecutable_002das_002dbytevector-649"></a></var><br>
+&mdash; Function: <b>vicare-executable-as-string</b><var><a name="index-vicare_002dexecutable_002das_002dstring-650"></a></var><br>
 <blockquote><p>Acquire the return value of <code>vicare-argv0</code> and search the file
 system for a matching executable file; when found return its absolute
 pathname as bytevector or Scheme string, else return <code>#f</code>.  If an

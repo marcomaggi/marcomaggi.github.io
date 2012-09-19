@@ -1,0 +1,207 @@
+<html lang="en">
+<head>
+<title>overview extensions - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="overview.html#overview" title="overview">
+<link rel="prev" href="overview-restrictions.html#overview-restrictions" title="overview restrictions">
+<link rel="next" href="overview-repl.html#overview-repl" title="overview repl">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d17 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package is distributed under the terms of the GNU General Public
+License (GPL) and can be downloaded from:
+
+               `http://code.google.com/p/vicare-scheme/'
+
+
+or:
+
+            `http://github.com/marcomaggi/vicare/downloads'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2012 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="overview-extensions"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="overview-repl.html#overview-repl">overview repl</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="overview-restrictions.html#overview-restrictions">overview restrictions</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="overview.html#overview">overview</a>
+<hr>
+</div>
+
+<h3 class="section">1.7 Implementation extensions</h3>
+
+<p>Here is a list of implementation extensions which may be non&ndash;compliant
+with <acronym>R6RS</acronym>.
+
+     <ol type=1 start=1>
+<li>According to <acronym>R6RS</acronym>: if the parent of a record type has a custom
+protocol function, the record type itself must have a custom protocol
+function; that is:
+
+     <pre class="example">          (import (rnrs))
+          
+          (define-record-type alpha
+            (fields a)
+            (protocol (lambda (A) ---)))
+          
+          ;; this is good
+          (define-record-type beta
+            (parent alpha)
+            (fields b)
+            (protocol (lambda (A B) ---)))
+          
+          ;; this is bad according to R6RS!!!
+          (define-record-type gamma
+            (parent alpha)
+            (fields b))
+</pre>
+     <p>This restriction is violated by Vicare, which allows the
+following:
+
+     <pre class="example">          (import (rnrs))
+          
+          (define-record-type alpha
+            (fields a)
+            (protocol (lambda (A) ---)))
+          
+          ;; this is good in Vicare!!!
+          (define-record-type beta
+            (parent alpha)
+            (fields b))
+</pre>
+     <p class="noindent">Vicare just expects the parent protocol function to have the
+same interface of a default protocol function.
+
+     <li>The syntax <code>define-record-type</code> automatically generates unsafe
+field accessor and mutator syntaxes; in the following example:
+
+     <pre class="example">          (define-record-type color
+            (fields (mutable red)
+                    (mutable green)
+                    (mutable blue)))
+</pre>
+     <p class="noindent">in addition to the safe accessor and mutator definitions for:
+
+     <pre class="example">          color-red           color-red-set!
+          color-green         color-green-set!
+          color-blue          color-blue-set!
+</pre>
+     <p class="noindent">unsafe accessors and mutator definitions for:
+
+     <pre class="example">          $color-red          $color-red-set!
+          $color-green        $color-green-set!
+          $color-blue         $color-blue-set!
+</pre>
+     <p class="noindent">are generated with code like:
+
+     <pre class="example">          (define-syntax $color-red
+            (syntax-rules ()
+              ((_ x)
+               ($struct-ref x 0))))
+          
+          (define-syntax $color-red-set!
+            (syntax-rules ()
+              ((_ x v)
+               ($struct-set! x 0 v))))
+</pre>
+     <p>Notice that the name of the unsafe accessors and mutators is always
+built from the field name, <strong>not</strong> from the custom names given in
+the definition; for example:
+
+     <pre class="example">          (import (rnrs))
+          
+          (define-record-type color
+            (fields (mutable red   the-red   set-the-red!)
+                    (mutable green the-green set-the-green!)
+                    (mutable blue  the-blue  set-the-blue!)))
+          
+          (define X
+            (make-color 1 2 3))
+          
+          (define Y
+            (make-color 1 2 3))
+          
+          (set-the-red!   X 10)
+          (set-the-green! X 20)
+          (set-the-blue!  X 30)
+          (list (the-red   X)
+                (the-green X)
+                (the-blue  X)))
+          &rArr; (10 20 30)
+          
+          ($color-red-set!   Y 10)
+          ($color-green-set! Y 20)
+          ($color-blue-set!  Y 30)
+          (list ($color-red   Y)
+                ($color-green Y)
+                ($color-blue  Y)))
+          &rArr; (10 20 30)
+</pre>
+     </ol>
+
+<!-- page -->
+   </body></html>
+
