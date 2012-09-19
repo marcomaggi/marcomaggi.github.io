@@ -1,13 +1,13 @@
 <html lang="en">
 <head>
-<title>Expat backend for Vicare</title>
+<title>Expat for Vicare</title>
 <meta http-equiv="Content-Type" content="text/html">
-<meta name="description" content="Expat backend for Vicare">
+<meta name="description" content="Expat for Vicare">
 <meta name="generator" content="makeinfo 4.13">
 <link title="Top" rel="top" href="#Top">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
-This document describes version 1.0b0 of Vicare/Expat, a
+This document describes version 1.0b3 of Vicare/Expat, a
 distribution of C and Scheme libraries for Vicare Scheme, an R6RS
 compliant Scheme implementation; it provides bindings for the Expat C
 language library, an XML parser library.
@@ -53,7 +53,7 @@ Copyright (C) 2012 by Marco Maggi <marco.maggi.ipsu@poste.it>
 --></style>
 </head>
 <body>
-<h1 class="settitle">Expat backend for Vicare</h1>
+<h1 class="settitle">Expat for Vicare</h1>
 <div class="node">
 <a name="Top"></a>
 <p><hr>
@@ -62,9 +62,9 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#dir">(dir)</a>
 
 </div>
 
-<h2 class="unnumbered">Expat backend for Vicare</h2>
+<h2 class="unnumbered">Expat for Vicare</h2>
 
-<p>This document describes version 1.0b0 of Vicare/Expat, a
+<p>This document describes version 1.0b3 of Vicare/Expat, a
 distribution of C and Scheme libraries for Vicare Scheme, an <acronym>R6RS</acronym>
 compliant Scheme implementation; it provides bindings for the Expat C
 language library, an <acronym>XML</acronym> parser library.
@@ -98,24 +98,25 @@ entitled &ldquo;<acronym>GNU</acronym> Free Documentation License&rdquo;.
 <li><a accesskey="1" href="#overview">overview</a>:                     Overview of the package. 
 <li><a accesskey="2" href="#parsers">parsers</a>:                      Building and running parsers. 
 <li><a accesskey="3" href="#handlers">handlers</a>:                     Building and registering callbacks. 
-<li><a accesskey="4" href="#version">version</a>:                      Expat version informations.
+<li><a accesskey="4" href="#version">version</a>:                      Expat version informations. 
+<li><a accesskey="5" href="#nau">nau</a>:                          Nausicaa front end.
 
 </li></ul>
 <p>Appendices
 
 </p>
 <ul class="menu">
-<li><a accesskey="5" href="#Package-License">Package License</a>:              GNU General Public License. 
-<li><a accesskey="6" href="#Documentation-License">Documentation License</a>:        GNU Free Documentation License. 
-<li><a accesskey="7" href="#references">references</a>:                   Bibliography and references.
+<li><a accesskey="6" href="#Package-License">Package License</a>:              GNU General Public License. 
+<li><a accesskey="7" href="#Documentation-License">Documentation License</a>:        GNU Free Documentation License. 
+<li><a accesskey="8" href="#references">references</a>:                   Bibliography and references.
 
 </li></ul>
 <p>Indexes
 
 </p>
 <ul class="menu">
-<li><a accesskey="8" href="#concept-index">concept index</a>:                An entry for each concept. 
-<li><a accesskey="9" href="#function-index">function index</a>:               An entry for each function. 
+<li><a accesskey="9" href="#concept-index">concept index</a>:                An entry for each concept. 
+<li><a href="#function-index">function index</a>:               An entry for each function. 
 <li><a href="#variable-index">variable index</a>:               An entry for each variable. 
 <li><a href="#type-index">type index</a>:                   An entry for each type. 
 </ul>
@@ -138,9 +139,12 @@ supporting <acronym>GNU</acronym>+Linux systems.  Vicare/Expat is a distribution
 language and Scheme language libraries for Vicare Scheme; it provides
 bindings for the Expat C language library, an <acronym>XML</acronym> parser library.
 
-   <p>While Vicare/Expat can be used alone, its purpose is to provide a
-backend Expat interface for Nausicaa/Expat: a higher level interface
-adding syntactic sugar.
+   <p>Vicare Scheme needs to be compiled with <acronym>FFI</acronym> support enabled, because
+Expat heavily relies on C callbacks.
+
+   <p>If the package Nausicaa/Scheme is installed: a Nausicaa front end
+library for Vicare/Expat is installed, providing higher level
+constructs.
 
    <p>The last time the author bothered to update this paragraph, he had
 tested Expat version 2.0.1; the Expat library is available at:
@@ -172,51 +176,57 @@ function, with the exception of:
      XML_MemRealloc
      XML_MemFree
      XML_SetUnknownEncodingHandler
+     XML_SetExternalEntityRefHandlerArg
 </pre>
    <p class="noindent">additionally the library <code>(vicare expat constants)</code> exports one
 binding for each constant value defined in the C language header
 <samp><span class="file">expat.h</span></samp>.
 
+   <p>The Nausicaa front end installs the library <code>(nausicaa xml
+expat)</code>; such library may still need some bindings from <code>(vicare
+expat)</code>.
+
    <p>This document contains only a brief description of the functions: refer
 to the Expat's documentation for details.
 
-   <p>Here is an example program:
+   <p>Here is an example program using the core interface:
 
 <pre class="example">     #!r6rs
      (import (vicare)
        (vicare expat)
        (vicare expat constants)
-       (prefix (vicare ffi) ffi.))
+       (prefix (only (vicare ffi)
+                     free-c-callack)
+               ffi.))
      
      (define xml-utf8
-       (string-&gt;utf8
-        "&lt;!-- this is a test document --&gt;\
-        &lt;stuff&gt;\
-        &lt;thing colour=\"yellow\"&gt;\
-        &lt;alpha&gt;one&lt;/alpha&gt;\
-        &lt;beta&gt;two&lt;/beta&gt;\
-        &lt;/thing&gt;\
-        &lt;thing&gt;\
-        &lt;alpha&gt;123&lt;/alpha&gt;\
-        &lt;beta&gt;456&lt;/beta&gt;\
-        &lt;/thing&gt;\
-        &lt;/stuff&gt;"))
+       "&lt;!-- this is a test document --&gt;\
+       &lt;stuff&gt;\
+       &lt;thing colour=\"yellow\"&gt;\
+       &lt;alpha&gt;one&lt;/alpha&gt;\
+       &lt;beta&gt;two&lt;/beta&gt;\
+       &lt;/thing&gt;\
+       &lt;thing&gt;\
+       &lt;alpha&gt;123&lt;/alpha&gt;\
+       &lt;beta&gt;456&lt;/beta&gt;\
+       &lt;/thing&gt;\
+       &lt;/stuff&gt;")
      
      (define (start-callback data element attributes)
-       (let ((element    (ffi.cstring-&gt;string element))
-             (attributes (ffi.argv-&gt;strings attributes)))
+       (let ((element    (cstring-&gt;string element))
+             (attributes (argv-&gt;strings attributes)))
          (pretty-print (list 'start element attributes))))
      
      (define (end-callback data element)
-       (let ((element (ffi.cstring-&gt;string element)))
+       (let ((element (cstring-&gt;string element)))
          (pretty-print (list 'end element))))
      
      (define (cdata-callback data buf.ptr buf.len)
-       (let ((text (ffi.cstring-&gt;string buf.ptr buf.len)))
+       (let ((text (cstring-&gt;string buf.ptr buf.len)))
          (pretty-print (list 'cdata text))))
      
      (define (comment-callback data cstr)
-       (let ((text (ffi.cstring-&gt;string cstr)))
+       (let ((text (cstring-&gt;string cstr)))
          (pretty-print (list 'comment text))))
      
      (let ((parser   (XML_ParserCreate))
@@ -227,7 +237,7 @@ to the Expat's documentation for details.
        (XML_SetElementHandler       parser start end)
        (XML_SetCharacterDataHandler parser cdata)
        (XML_SetCommentHandler       parser comment)
-       (XML_Parse parser xml-utf8 #f #t)
+       (XML_Parse parser (string-&gt;utf8 xml) #f #t)
        (ffi.free-c-callback start)
        (ffi.free-c-callback end)
        (ffi.free-c-callback cdata)
@@ -256,6 +266,54 @@ to the Expat's documentation for details.
      (end "beta")
      (end "thing")
      (end "stuff")
+</pre>
+   <p class="noindent">and here is the same example using the Nausicaa front end:
+
+<pre class="example">     #!r6rs
+     (import (nausicaa)
+       (nausicaa xml expat)
+       (prefix (vicare language-extensions)
+               ik.))
+     
+     (define (doit xml)
+       (let (((P &lt;expat-parser&gt;) (make &lt;expat-parser&gt;)))
+         (P.start-element-handler  start-callback)
+         (P.end-element-handler    end-callback)
+         (P.character-data-handler cdata-callback)
+         (P.comment-handler        comment-callback)
+         (P.parse (string-&gt;utf8 xml) #f #t)))
+     
+     (define (start-callback data element attributes)
+       (let ((element    (ik.cstring-&gt;string element))
+             (attributes (ik.argv-&gt;strings attributes)))
+         (pretty-print (list 'start element attributes))))
+     
+     (define (end-callback data element)
+       (let ((element (ik.cstring-&gt;string element)))
+         (pretty-print (list 'end element))))
+     
+     (define (cdata-callback data buf.ptr buf.len)
+       (let ((text (ik.cstring-&gt;string buf.ptr buf.len)))
+         (pretty-print (list 'cdata text))))
+     
+     (define (comment-callback data cstr)
+       (let ((text (ik.cstring-&gt;string cstr)))
+         (pretty-print (list 'comment text))))
+     
+     (doit
+      "&lt;!-- this is a test document --&gt;\
+       &lt;stuff&gt;\
+         &lt;thing colour=\"yellow\"&gt;\
+           &lt;alpha&gt;one&lt;/alpha&gt;\
+           &lt;beta&gt;two&lt;/beta&gt;\
+         &lt;/thing&gt;\
+         &lt;thing&gt;\
+           &lt;alpha&gt;123&lt;/alpha&gt;\
+           &lt;beta&gt;456&lt;/beta&gt;\
+         &lt;/thing&gt;\
+       &lt;/stuff&gt;")
+     
+     (flush-output-port (current-output-port))
 </pre>
    <!-- page -->
 <div class="node">
@@ -298,9 +356,10 @@ library.
 &mdash; Function: <b>XML_ParserCreate</b><var><a name="index-XML_005fParserCreate-1"></a></var><br>
 &mdash; Function: <b>XML_ParserCreate</b><var> encoding<a name="index-XML_005fParserCreate-2"></a></var><br>
 <blockquote><p>See <a href="expat.html#api-create">XML_ParserCreate</a>.  Build a new parser and return
-a pointer object referencing it.  Values returned by this function must
-be finalised with <code>XML_ParserFree</code>; this will happen automatically
-when the pointer object is garbage collected.
+a pointer object referencing it; if an error occurs return <code>#f</code>. 
+Values returned by this function must be finalised with
+<code>XML_ParserFree</code>; this will happen automatically when the pointer
+object is garbage collected.
 
         <p>The optional <var>encoding</var> must be <code>#f</code> or one of the Scheme
 symbols: <code>UTF-8</code>, <code>UTF-16</code>, <code>ISO-8859-1</code>,
@@ -365,9 +424,10 @@ among:
 &mdash; Function: <b>XML_ExternalEntityParserCreate</b><var> parser context encoding<a name="index-XML_005fExternalEntityParserCreate-8"></a></var><br>
 <blockquote><p>See <a href="expat.html#api-external">XML_ExternalEntityParserCreate</a>.  Build a new
 parser to parse an external entity for <var>parser</var> and return a pointer
-object referencing it.  Values returned by this function must be
-finalised with <code>XML_ParserFree</code>; this will happen automatically
-when the pointer object is garbage collected.
+object referencing it; if an error occurs return <code>#f</code>.  Values
+returned by this function must be finalised with <code>XML_ParserFree</code>;
+this will happen automatically when the pointer object is garbage
+collected.
 
         <p><var>parser</var> is a pointer object to the main parser.  <var>context</var> must
 be a pointer object.  <var>encoding</var> is as in <code>XML_ParserCreate</code>. 
@@ -522,9 +582,9 @@ that: namespaces are <strong>not</strong> for modular <acronym>DTD</acronym> com
 &mdash; Function: <b>XML_ParserCreateNS</b><var> encoding namespace-separator<a name="index-XML_005fParserCreateNS-15"></a></var><br>
 <blockquote><p>See <a href="expat.html#api-create">XML_ParserCreateNS</a>.  Build a new parser, having
 namespace processing in effect, and return a pointer object referencing
-it.  Values returned by this function must be finalised with
-<code>XML_ParserFree</code>; this will happen automatically when the pointer
-object is garbage collected.
+it; if an error occurs return <code>#f</code>.  Values returned by this
+function must be finalised with <code>XML_ParserFree</code>; this will happen
+automatically when the pointer object is garbage collected.
 
         <p><var>encoding</var> is as in <code>XML_ParserCreate</code>. 
 <var>namespace-separator</var> must be a Scheme character in the <acronym>ASCII</acronym>
@@ -839,7 +899,7 @@ value of <code>XML_GetErrorCode</code>.
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>XML_GetCurrentByteIndex</b><var> parser<a name="index-XML_005fGetCurrentByteIndex-27"></a></var><br>
+&mdash; Function: <b>XML_GetCurrentLineNumber</b><var> parser<a name="index-XML_005fGetCurrentLineNumber-27"></a></var><br>
 &mdash; Function: <b>XML_GetCurrentColumnNumber</b><var> parser<a name="index-XML_005fGetCurrentColumnNumber-28"></a></var><br>
 &mdash; Function: <b>XML_GetCurrentByteIndex</b><var> parser<a name="index-XML_005fGetCurrentByteIndex-29"></a></var><br>
 &mdash; Function: <b>XML_GetCurrentByteCount</b><var> parser<a name="index-XML_005fGetCurrentByteCount-30"></a></var><br>
@@ -2609,7 +2669,7 @@ Maker and setter for processing instruction handlers.
 <div class="node">
 <a name="version"></a>
 <p><hr>
-Next:&nbsp;<a rel="next" accesskey="n" href="#Package-License">Package License</a>,
+Next:&nbsp;<a rel="next" accesskey="n" href="#nau">nau</a>,
 Previous:&nbsp;<a rel="previous" accesskey="p" href="#handlers">handlers</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 
@@ -2648,6 +2708,498 @@ representing the features of the running version of Expat.  Example:
         </blockquote></div>
 
 <!-- page -->
+<div class="node">
+<a name="nau"></a>
+<p><hr>
+Next:&nbsp;<a rel="next" accesskey="n" href="#Package-License">Package License</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#version">version</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
+
+</div>
+
+<h2 class="chapter">5 Nausicaa front end</h2>
+
+<ul class="menu">
+<li><a accesskey="1" href="#nau-conditions">nau conditions</a>:               Condition object types. 
+<li><a accesskey="2" href="#nau-base">nau base</a>:                     Base parser class. 
+<li><a accesskey="3" href="#nau-namespace">nau namespace</a>:                Namespace-enabled parser class. 
+<li><a accesskey="4" href="#nau-entity">nau entity</a>:                   External entity parser class. 
+<li><a accesskey="5" href="#nau-parsing">nau parsing</a>:                  Parsing operations. 
+<li><a accesskey="6" href="#nau-stop">nau stop</a>:                     Stopping and resuming. 
+<li><a accesskey="7" href="#nau-status">nau status</a>:                   Parsing status. 
+<li><a accesskey="8" href="#nau-report">nau report</a>:                   Inspecting errors. 
+<li><a accesskey="9" href="#nau-misc">nau misc</a>:                     Miscellaneous functions. 
+</ul>
+
+<!-- page -->
+<div class="node">
+<a name="nau-conditions"></a>
+<p><hr>
+Next:&nbsp;<a rel="next" accesskey="n" href="#nau-base">nau base</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#nau">nau</a>
+
+</div>
+
+<h3 class="section">5.1 Condition object types</h3>
+
+<p>The condition types are defined using Nausicaa's facilities,
+<a href="nausicaa-scheme.html#conditions">More condition types</a>.  The following bindings are
+exported by the library <code>(nausicaa xml expat)</code>.
+
+<div class="defun">
+&mdash; Condition Type: <b>&amp;expat-error</b><var><a name="index-g_t_0026expat_002derror-99"></a></var><br>
+<blockquote><p>Represent an error in an Expat operation; it is derived from
+<code>&amp;error</code>.  It has the following fields:
+
+          <dl>
+<dt><code>code</code><dd>A fixnum representing an Expat error code among the <code>XML_ERROR_</code>
+constants.  It can be <code>XML_ERROR_NONE</code> if the error was in the use
+of the Scheme <acronym>API</acronym> rather than returned by an Expat function. 
+</dl>
+        </p></blockquote></div>
+
+<!-- page -->
+<div class="node">
+<a name="nau-base"></a>
+<p><hr>
+Next:&nbsp;<a rel="next" accesskey="n" href="#nau-namespace">nau namespace</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#nau-conditions">nau conditions</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#nau">nau</a>
+
+</div>
+
+<h3 class="section">5.2 Base parser class</h3>
+
+<p>To instantiate a basic Expat parser we just do the following:
+
+<pre class="example">     #!r6rs
+     (import (nausicaa)
+       (nausicaa xml expat))
+     
+     (define parser
+       (make &lt;expat-parser&gt;))
+</pre>
+   <p>The following bindings are exported by the library <code>(nausicaa xml
+expat)</code>.
+
+<div class="defun">
+&mdash; Class: <b>&lt;expat-parser&gt;</b><var><a name="index-g_t_0040aclass_007bexpat_002dparser_007d-100"></a></var><br>
+<blockquote><p>Class type wrapping Expat parsers.  It is derived from <code>&lt;top&gt;</code>.
+
+        <p>The Expat parser finalises itself with <code>XML_ParserFree</code> whenever
+the pointer object referencing it is garbage collected, See <a href="expat.html#api-create">XML_ParserFree</a>.  In addition: all the C callbacks created by
+and registered in this instance are automatically finalised whenever the
+returned instance is garbage collected. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Default constructor on &lt;expat-parser&gt;: <b>constructor</b><var> encoding<a name="index-constructor-on-_0040aclass_007bexpat_002dparser_007d-101"></a></var><br>
+<blockquote><p>Build and return a class instance wrapping a newly built Expat parser;
+See <a href="expat.html#api-create">XML_ParserCreate</a>.  If an error occurs raise an
+exception with components: <code>&amp;expat-error</code>, <code>&amp;who</code>,
+<code>&amp;message</code>, <code>&amp;irritants</code>.
+
+        <p><var>encoding</var> must be <code>#f</code> or one of the Scheme symbols:
+<code>UTF-8</code>, <code>UTF-16</code>, <code>ISO-8859-1</code>, <code>US-ASCII</code>; when
+<code>#f</code>: the parser will honour the encoding specification in the
+document. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Superclass constructor on &lt;expat-parser&gt;: <b>constructor</b><var> parser<a name="index-constructor-on-_0040aclass_007bexpat_002dparser_007d-102"></a></var><br>
+<blockquote><p>Build and return a class instance wrapping an already built Expat parser
+referenced by <var>parser</var>, which must be a pointer object. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>make &lt;expat-parser&gt;</b><var> &lt;option&gt; ...<a name="index-make-_0040aclass_007bexpat_002dparser_007d-103"></a></var><br>
+&mdash; Auxiliary Syntax: <b>encoding:</b><var> encoding<a name="index-encoding_003a-104"></a></var><br>
+<blockquote><p>Build and return a new instance using the default constructor. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Immutable field of &lt;expat-parser&gt;: <b>parser</b><var><a name="index-parser-105"></a></var><br>
+<blockquote><p>Pointer object referencing the actual Expat parser.  We rarely need to
+access this pointer directly. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Method on &lt;expat-parser&gt;: <b>reset</b><var><a name="index-reset-on-_0040aclass_007bexpat_002dparser_007d-106"></a></var><br>
+&mdash; Method on &lt;expat-parser&gt;: <b>reset</b><var> encoding<a name="index-reset-on-_0040aclass_007bexpat_002dparser_007d-107"></a></var><br>
+<blockquote><p>Reset a parser so that it can be used again; return a boolean value:
+<code>#t</code> if success, <code>#f</code> if this parser cannot be reset. 
+See <a href="expat.html#api-create">XML_ParserReset</a>.
+
+        <p><var>encoding</var> is as described for the default constructor and it
+defaults to <code>#f</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Method on &lt;expat-parser&gt;: <b>set-encoding</b><var> encoding<a name="index-set_002dencoding-on-_0040aclass_007bexpat_002dparser_007d-108"></a></var><br>
+<blockquote><p>Set the encoding to be used while parsing; See <a href="expat.html#api-misc">XML_SetEncoding</a>.  If the parser has been already used for a parsing
+operation, raise an exception with components: <code>&amp;expat-error</code>,
+<code>&amp;who</code>, <code>&amp;message</code>, <code>&amp;irritants</code>.
+
+        <p><var>encoding</var> is as described for the default constructor. 
+</p></blockquote></div>
+
+<!-- page -->
+<div class="node">
+<a name="nau-namespace"></a>
+<p><hr>
+Next:&nbsp;<a rel="next" accesskey="n" href="#nau-entity">nau entity</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#nau-base">nau base</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#nau">nau</a>
+
+</div>
+
+<h3 class="section">5.3 Namespace&ndash;enabled parser class</h3>
+
+<p>The use of namespaces in <acronym>XML</acronym> 1.0 is defined in the recommendation
+at:
+
+<div align="center"><a href="http://www.w3.org/TR/xml-names/">http://www.w3.org/TR/xml-names/</a></div>
+
+<p class="noindent">and allows to tag <acronym>XML</acronym> elements with the same name as belonging to
+different sets.  When first learning about <acronym>XML</acronym> namespaces, remember
+that: namespaces are <strong>not</strong> for modular <acronym>DTD</acronym> composition.
+
+   <p>To instantiate an Expat parser with namespace processing enabled, we
+just do the following:
+
+<pre class="example">     #!r6rs
+     (import (nausicaa)
+       (nausicaa xml expat))
+     
+     (define parser
+       (make &lt;expat-ns-parser&gt;))
+</pre>
+   <p>The following bindings are exported by the library <code>(nausicaa xml
+expat)</code>.
+
+<div class="defun">
+&mdash; Class: <b>&lt;expat-ns-parser&gt;</b><var><a name="index-g_t_0040aclass_007bexpat_002dns_002dparser_007d-109"></a></var><br>
+<blockquote><p>Class type wrapping Expat parsers with namespaces enabled; it is derived
+from <code>&lt;expat-parser&gt;</code>.
+
+        <p>Instances of this class finalise themselves in the same way instances of
+<code>&lt;expat-parser&gt;</code> do. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Default constructor on &lt;expat-ns-parser&gt;: <b>constructor</b><var> encoding namespace-separator<a name="index-constructor-on-_0040aclass_007bexpat_002dns_002dparser_007d-110"></a></var><br>
+<blockquote><p>Build and return a class instance wrapping a newly built Expat parser
+with namespaces enabled; See <a href="expat.html#api-create">XML_ParserCreateNS</a>.  If
+an error occurs raise an exception with components:
+<code>&amp;expat-error</code>, <code>&amp;who</code>, <code>&amp;message</code>,
+<code>&amp;irritants</code>.
+
+        <p><var>encoding</var> is as in the constructor of <code>&lt;expat-parser&gt;</code>. 
+<var>namespace-separator</var> must be a Scheme character in the <acronym>ASCII</acronym>
+range. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>make &lt;expat-ns-parser&gt;</b><var> &lt;option&gt; ...<a name="index-make-_0040aclass_007bexpat_002dns_002dparser_007d-111"></a></var><br>
+&mdash; Auxiliary Syntax: <b>encoding:</b><var> encoding<a name="index-encoding_003a-112"></a></var><br>
+&mdash; Auxiliary Syntax: <b>namespace-separator:</b><var> char<a name="index-namespace_002dseparator_003a-113"></a></var><br>
+<blockquote><p>Build and return a new instance using the default constructor. 
+<var>encoding</var> defaults to <code>#f</code>; <var>char</var> defaults to <code>#\:</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Method on &lt;expat-ns-parser&gt;: <b>set-return-ns-triplet</b><var> do-nst?<a name="index-set_002dreturn_002dns_002dtriplet-on-_0040aclass_007bexpat_002dns_002dparser_007d-114"></a></var><br>
+<blockquote><p>If <var>do-nst?</var> is true: turn on returning namespace qualified names as
+triplets: <acronym>URI</acronym>, local name, prefix, rather than the default pairs:
+<acronym>URI</acronym>, local name; if <var>do-nst?</var> is false: turn this off. 
+See <a href="expat.html#api-misc">XML_SetReturnNSTriplet</a>. 
+</p></blockquote></div>
+
+<!-- page -->
+<div class="node">
+<a name="nau-entity"></a>
+<p><hr>
+Next:&nbsp;<a rel="next" accesskey="n" href="#nau-parsing">nau parsing</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#nau-namespace">nau namespace</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#nau">nau</a>
+
+</div>
+
+<h3 class="section">5.4 External entity parser class</h3>
+
+<p>The following bindings are exported by the library <code>(nausicaa xml
+expat)</code>.
+
+<div class="defun">
+&mdash; Method on &lt;expat-parser&gt;: <b>set-param-entity-parsing</b><var> code<a name="index-set_002dparam_002dentity_002dparsing-on-_0040aclass_007bexpat_002dparser_007d-115"></a></var><br>
+<blockquote><p>Enable or disable external entity parsing; See <a href="expat.html#api-misc">XML_SetParamEntityParsing</a>.
+
+        <p><var>code</var> must be a fixnum among:
+
+     <pre class="example">          XML_PARAM_ENTITY_PARSING_NEVER
+          XML_PARAM_ENTITY_PARSING_UNLESS_STANDALONE
+          XML_PARAM_ENTITY_PARSING_ALWAYS
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Method on &lt;expat-parser&gt;: <b>external-entity-ref-handler</b><var> scheme-callback<a name="index-external_002dentity_002dref_002dhandler-on-_0040aclass_007bexpat_002dparser_007d-116"></a></var><br>
+<blockquote><p>Register a new external entity handler; See <a href="expat.html#api-external">XML_ExternalEntityRefHandler</a>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Class: <b>&lt;expat-entity-parser&gt;</b><var><a name="index-g_t_0040aclass_007bexpat_002dentity_002dparser_007d-117"></a></var><br>
+<blockquote><p>Class type wrapping Expat parsers for external entities; it is derived
+from <code>&lt;expat-parser&gt;</code>.
+
+        <p>Instances of this class finalise themselves in the same way instances of
+<code>&lt;expat-parser&gt;</code> do. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Default constructor on &lt;expat-entity-parser&gt;: <b>constructor</b><var> root-parser context encoding<a name="index-constructor-on-_0040aclass_007bexpat_002dentity_002dparser_007d-118"></a></var><br>
+<blockquote><p>Build and return a class instance wrapping a newly built Expat parser
+for entity parsing; See <a href="expat.html#api-external">XML_ExternalEntityParserCreate</a>.  If an error occurs raise an exception
+with components: <code>&amp;error</code>, <code>&amp;who</code>,
+<code>&amp;message</code>.
+
+        <p><var>root-parser</var> is a pointer object referencing the ancestor Expat
+parser.  <var>context</var> must be a pointer object and it is managed by
+Expat itself.  <var>encoding</var> is as described for the default
+constructor of <code>&lt;expat-parser&gt;</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>make &lt;expat-entity-parser&gt;</b><var> &lt;root-parser&gt; &lt;context&gt; &lt;option&gt; ...<a name="index-make-_0040aclass_007bexpat_002dentity_002dparser_007d-119"></a></var><br>
+&mdash; Auxiliary Syntax: <b>encoding:</b><var> encoding<a name="index-encoding_003a-120"></a></var><br>
+<blockquote><p>Build and return a new instance using the default constructor. 
+<var>encoding</var> defaults to <code>UTF-8</code>. 
+</p></blockquote></div>
+
+<!-- page -->
+<div class="node">
+<a name="nau-parsing"></a>
+<p><hr>
+Next:&nbsp;<a rel="next" accesskey="n" href="#nau-stop">nau stop</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#nau-entity">nau entity</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#nau">nau</a>
+
+</div>
+
+<h3 class="section">5.5 Parsing operations</h3>
+
+<p>All the following bindings are exported by the <code>(nausicaa xml
+expat)</code> library.
+
+<div class="defun">
+&mdash; Method on &lt;expat-parser&gt;: <b>parse</b><var> buffer length final?<a name="index-parse-on-_0040aclass_007bexpat_002dparser_007d-121"></a></var><br>
+<blockquote><p>Parse the next portion of the document; return a fixnum representing a
+status code.  See <a href="expat.html#api-parse">XML_Parse</a>.
+
+        <p><var>buffer</var> must be a bytevector or a pointer object; <var>length</var> must
+be <code>#f</code> or a non&ndash;negative exact integer in the range of the C
+language type <code>int</code>.  If <var>buffer</var> is a pointer: <var>length</var>
+must be an integer representing the number of bytes to consume from the
+buffer; if <var>buffer</var> is a bytevector: <var>length</var> is ignored and the
+whole bytevector is consumed.
+
+        <p>If <var>final?</var> is true: expect this buffer to contain the end of the
+document; <var>final?</var> defaults to <code>#f</code>.
+
+        <p>While actually running the parse operation: the
+<code>current-expat-parser</code> parameter is set to the parser instance. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Parameter: <b>current-expat-parser</b><var><a name="index-current_002dexpat_002dparser-122"></a></var><br>
+<blockquote><p>References the <code>&lt;expat-parser&gt;</code> instance currently in use for a
+parsing operation. 
+</p></blockquote></div>
+
+<!--  -->
+<h5 class="subsubheading">Parsing data from an internal buffer</h5>
+
+<div class="defun">
+&mdash; Method on &lt;expat-parser&gt;: <b>get-buffer</b><var> length<a name="index-get_002dbuffer-on-_0040aclass_007bexpat_002dparser_007d-123"></a></var><br>
+<blockquote><p>Allocate an internal buffer <var>length</var> bytes wide and return a pointer
+object to it; See <a href="expat.html#api-parse">XML_GetBuffer</a>.  If the allocation
+fails raise an exception with components: <code>&amp;error</code>,
+<code>&amp;who</code>, <code>&amp;message</code>, <code>&amp;irritants</code>.
+
+        <p>The returned value is meant to be filled with the next portion of the
+document and processed by the method <code>parse-buffer</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Method on &lt;expat-parser&gt;: <b>parse-buffer</b><var> length final?<a name="index-parse_002dbuffer-on-_0040aclass_007bexpat_002dparser_007d-124"></a></var><br>
+<blockquote><p>Parse the next portion of the document from the internal buffer
+allocated by a previous call to the method <code>get-buffer</code>.  Return a
+fixnum representing a status code.  See <a href="expat.html#api-parse">XML_ParseBuffer</a>.
+
+        <p>While actually running the parse operation: the
+<code>current-expat-parser</code> parameter is set to the parser instance. 
+</p></blockquote></div>
+
+<!-- page -->
+<div class="node">
+<a name="nau-stop"></a>
+<p><hr>
+Next:&nbsp;<a rel="next" accesskey="n" href="#nau-status">nau status</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#nau-parsing">nau parsing</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#nau">nau</a>
+
+</div>
+
+<h3 class="section">5.6 Stopping and resuming</h3>
+
+<p>All the following bindings are exported by the <code>(nausicaa xml
+expat)</code> library.
+
+<div class="defun">
+&mdash; Method on &lt;expat-parser&gt;: <b>stop-parser</b><var> resumable?<a name="index-stop_002dparser-on-_0040aclass_007bexpat_002dparser_007d-125"></a></var><br>
+<blockquote><p>Stop parsing causing the parse function to return; return a fixnum
+representing a status code.  See <a href="expat.html#api-parse">XML_StopParser</a>.
+
+        <p>If <var>resumable?</var> is true: suspend the parsing for later resumption;
+if <var>resumable?</var> is false: abort the parsing. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Method on &lt;expat-parser&gt;: <b>resume-parser</b><var><a name="index-resume_002dparser-on-_0040aclass_007bexpat_002dparser_007d-126"></a></var><br>
+<blockquote><p>Resume parsing for a suspended parser; See <a href="expat.html#api-parse">XML_ResumeParser</a>.
+
+        <p>While actually running the parse operation: the
+<code>current-expat-parser</code> parameter is set to the parser instance. 
+</p></blockquote></div>
+
+<!-- page -->
+<div class="node">
+<a name="nau-status"></a>
+<p><hr>
+Next:&nbsp;<a rel="next" accesskey="n" href="#nau-report">nau report</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#nau-stop">nau stop</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#nau">nau</a>
+
+</div>
+
+<h3 class="section">5.7 Parsing status</h3>
+
+<p>All the following bindings are exported by the <code>(nausicaa xml
+expat)</code> library.
+
+<div class="defun">
+&mdash; Method on &lt;expat-parser&gt;: <b>get-parsing-status</b><var><a name="index-get_002dparsing_002dstatus-on-_0040aclass_007bexpat_002dparser_007d-127"></a></var><br>
+<blockquote><p>Acquire the current status of the parser and return an object accessible
+through the <code>&lt;expat-parsing-status&gt;</code> label.  See <a href="expat.html#api-parse">XML_GetParsingStatus</a>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Label: <b>&lt;expat-parsing-status&gt;</b><var><a name="index-g_t_0040aclass_007bexpat_002dparsing_002dstatus_007d-128"></a></var><br>
+<blockquote><p>Label type wrapping a structure representing the current parser status
+as mirror of the C data structure <code>XML_ParsingStatus</code>;
+See <a href="expat.html#api-parse">XML_ParsingStatus</a>.  It has the following fields:
+
+          <dl>
+<dt><code>parsing</code><dd>A fixnum.
+
+          <br><dt><code>final-buffer?</code><dd>A boolean. 
+</dl>
+        </p></blockquote></div>
+
+<!-- page -->
+<div class="node">
+<a name="nau-report"></a>
+<p><hr>
+Next:&nbsp;<a rel="next" accesskey="n" href="#nau-misc">nau misc</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#nau-status">nau status</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#nau">nau</a>
+
+</div>
+
+<h3 class="section">5.8 Inspecting errors</h3>
+
+<p>All the following bindings are exported by the <code>(nausicaa xml
+expat)</code> library.
+
+<div class="defun">
+&mdash; Method on &lt;expat-parser&gt;: <b>get-error-code</b><var><a name="index-get_002derror_002dcode-on-_0040aclass_007bexpat_002dparser_007d-129"></a></var><br>
+<blockquote><p>Return a fixnum representing an error code for the last error while
+parsing.  See <a href="expat.html#api-report">XML_GetErrorCode</a>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Method on &lt;expat-parser&gt;: <b>error-string</b><var><a name="index-error_002dstring-on-_0040aclass_007bexpat_002dparser_007d-130"></a></var><br>
+<blockquote><p>Return a Scheme string describing the error associated to the last error
+while parsing.  See <a href="expat.html#api-report">XML_ErrorString</a>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Method on &lt;expat-parser&gt;: <b>get-current-line-number</b><var><a name="index-get_002dcurrent_002dline_002dnumber-on-_0040aclass_007bexpat_002dparser_007d-131"></a></var><br>
+&mdash; Method on &lt;expat-parser&gt;: <b>get-current-column-number</b><var><a name="index-get_002dcurrent_002dcolumn_002dnumber-on-_0040aclass_007bexpat_002dparser_007d-132"></a></var><br>
+&mdash; Method on &lt;expat-parser&gt;: <b>get-current-byte-index</b><var><a name="index-get_002dcurrent_002dbyte_002dindex-on-_0040aclass_007bexpat_002dparser_007d-133"></a></var><br>
+&mdash; Method on &lt;expat-parser&gt;: <b>get-current-byte-count</b><var><a name="index-get_002dcurrent_002dbyte_002dcount-on-_0040aclass_007bexpat_002dparser_007d-134"></a></var><br>
+<blockquote><p>Inspect the current parsing position.  See <a href="expat.html#api-report">XML_GetCurrentByteIndex</a>. 
+</p></blockquote></div>
+
+<!-- page -->
+<div class="node">
+<a name="nau-misc"></a>
+<p><hr>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#nau-report">nau report</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#nau">nau</a>
+
+</div>
+
+<h3 class="section">5.9 Miscellaneous functions</h3>
+
+<p>All the following bindings are exported by the <code>(nausicaa xml
+expat)</code> library.
+
+<div class="defun">
+&mdash; Method on &lt;expat-parser&gt;: <b>set-user-data</b><var> pointer<a name="index-set_002duser_002ddata-on-_0040aclass_007bexpat_002dparser_007d-135"></a></var><br>
+&mdash; Method on &lt;expat-parser&gt;: <b>get-user-data</b><var><a name="index-get_002duser_002ddata-on-_0040aclass_007bexpat_002dparser_007d-136"></a></var><br>
+<blockquote><p>Setter and getter for custom data pointer used as first argument to many
+handlers.  See <a href="expat.html#api-misc">XML_SetUserData</a>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Method on &lt;expat-parser&gt;: <b>use-parser-as-handler-arg</b><var><a name="index-use_002dparser_002das_002dhandler_002darg-on-_0040aclass_007bexpat_002dparser_007d-137"></a></var><br>
+<blockquote><p>Set the parser pointer as first argument to many handlers; notice that
+it is a raw pointer object that is handed to the callback, not the
+instance of <code>&lt;expat-parser&gt;</code>.  See <a href="expat.html#api-misc">XML_UseParserAsHandlerArg</a>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Method on &lt;expat-parser&gt;: <b>set-base</b><var> base<a name="index-set_002dbase-on-_0040aclass_007bexpat_002dparser_007d-138"></a></var><br>
+<blockquote><p>Set the base to resolve relative <acronym>URI</acronym>s.  <var>base</var> can be a
+bytevector representing a string or <code>#f</code>, in which case the base is
+reset.  See <a href="expat.html#api-misc">XML_SetBase</a>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Method on &lt;expat-parser&gt;: <b>get-base</b><var><a name="index-get_002dbase-on-_0040aclass_007bexpat_002dparser_007d-139"></a></var><br>
+<blockquote><p>Get the base to resolve relative <acronym>URI</acronym>s and return it as bytevector. 
+If there is no base set: the return value is <code>#f</code>.  See <a href="expat.html#api-misc">XML_GetBase</a>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Method on &lt;expat-parser&gt;: <b>get-specified-attribute-count</b><var><a name="index-get_002dspecified_002dattribute_002dcount-on-_0040aclass_007bexpat_002dparser_007d-140"></a></var><br>
+<blockquote><p>Refer to the original documentation.  See <a href="expat.html#api-misc">XML_GetSpecifiedAttributeCount</a>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Method on &lt;expat-parser&gt;: <b>get-id-attribute-index</b><var><a name="index-get_002did_002dattribute_002dindex-on-_0040aclass_007bexpat_002dparser_007d-141"></a></var><br>
+<blockquote><p>Refer to the original documentation.  See <a href="expat.html#api-misc">XML_GetIdAttributeIndex</a>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Method on &lt;expat-parser&gt;: <b>use-foreign-dtd</b><var> use-dtd?<a name="index-use_002dforeign_002ddtd-on-_0040aclass_007bexpat_002dparser_007d-142"></a></var><br>
+<blockquote><p>If <var>use-dtd?</var> is true: allow the application to provide an external
+<acronym>DTD</acronym>.  Return a fixnum representing an error code, if successful
+<code>XML_ERROR_NONE</code>.  See <a href="expat.html#api-misc">XML_UseForeignDTD</a>. 
+</p></blockquote></div>
+
+<!-- page -->
 <!--  -->
 <!-- Appendices. -->
 <!--  -->
@@ -2655,7 +3207,7 @@ representing the features of the running version of Expat.  Example:
 <a name="Package-License"></a>
 <p><hr>
 Next:&nbsp;<a rel="next" accesskey="n" href="#Documentation-License">Documentation License</a>,
-Previous:&nbsp;<a rel="previous" accesskey="p" href="#version">version</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#nau">nau</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 
 </div>
@@ -3369,7 +3921,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 
 <h2 class="appendix">Appendix B GNU Free Documentation License</h2>
 
-<p><a name="index-FDL_002c-GNU-Free-Documentation-License-99"></a><div align="center">Version 1.3, 3 November 2008</div>
+<p><a name="index-FDL_002c-GNU-Free-Documentation-License-143"></a><div align="center">Version 1.3, 3 November 2008</div>
 
 <!-- This file is intended to be included within another document, -->
 <!-- hence no sectioning command or @node. -->
@@ -3891,7 +4443,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 <h2 class="appendix">Appendix D An entry for each concept</h2>
 
 <ul class="index-cp" compact>
-<li><a href="#index-FDL_002c-GNU-Free-Documentation-License-99">FDL, GNU Free Documentation License</a>: <a href="#Documentation-License">Documentation License</a></li>
+<li><a href="#index-FDL_002c-GNU-Free-Documentation-License-143">FDL, GNU Free Documentation License</a>: <a href="#Documentation-License">Documentation License</a></li>
 </ul><div class="node">
 <a name="function-index"></a>
 <p><hr>
@@ -3906,9 +4458,45 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 
 
 <ul class="index-fn" compact>
+<li><a href="#index-constructor-on-_0040aclass_007bexpat_002dentity_002dparser_007d-118"><code>constructor on &lt;expat-entity-parser&gt;</code></a>: <a href="#nau-entity">nau entity</a></li>
+<li><a href="#index-constructor-on-_0040aclass_007bexpat_002dns_002dparser_007d-110"><code>constructor on &lt;expat-ns-parser&gt;</code></a>: <a href="#nau-namespace">nau namespace</a></li>
+<li><a href="#index-constructor-on-_0040aclass_007bexpat_002dparser_007d-101"><code>constructor on &lt;expat-parser&gt;</code></a>: <a href="#nau-base">nau base</a></li>
+<li><a href="#index-current_002dexpat_002dparser-122"><code>current-expat-parser</code></a>: <a href="#nau-parsing">nau parsing</a></li>
+<li><a href="#index-encoding_003a-120"><code>encoding:</code></a>: <a href="#nau-entity">nau entity</a></li>
+<li><a href="#index-encoding_003a-112"><code>encoding:</code></a>: <a href="#nau-namespace">nau namespace</a></li>
+<li><a href="#index-encoding_003a-104"><code>encoding:</code></a>: <a href="#nau-base">nau base</a></li>
+<li><a href="#index-error_002dstring-on-_0040aclass_007bexpat_002dparser_007d-130"><code>error-string on &lt;expat-parser&gt;</code></a>: <a href="#nau-report">nau report</a></li>
+<li><a href="#index-external_002dentity_002dref_002dhandler-on-_0040aclass_007bexpat_002dparser_007d-116"><code>external-entity-ref-handler on &lt;expat-parser&gt;</code></a>: <a href="#nau-entity">nau entity</a></li>
+<li><a href="#index-get_002dbase-on-_0040aclass_007bexpat_002dparser_007d-139"><code>get-base on &lt;expat-parser&gt;</code></a>: <a href="#nau-misc">nau misc</a></li>
+<li><a href="#index-get_002dbuffer-on-_0040aclass_007bexpat_002dparser_007d-123"><code>get-buffer on &lt;expat-parser&gt;</code></a>: <a href="#nau-parsing">nau parsing</a></li>
+<li><a href="#index-get_002dcurrent_002dbyte_002dcount-on-_0040aclass_007bexpat_002dparser_007d-134"><code>get-current-byte-count on &lt;expat-parser&gt;</code></a>: <a href="#nau-report">nau report</a></li>
+<li><a href="#index-get_002dcurrent_002dbyte_002dindex-on-_0040aclass_007bexpat_002dparser_007d-133"><code>get-current-byte-index on &lt;expat-parser&gt;</code></a>: <a href="#nau-report">nau report</a></li>
+<li><a href="#index-get_002dcurrent_002dcolumn_002dnumber-on-_0040aclass_007bexpat_002dparser_007d-132"><code>get-current-column-number on &lt;expat-parser&gt;</code></a>: <a href="#nau-report">nau report</a></li>
+<li><a href="#index-get_002dcurrent_002dline_002dnumber-on-_0040aclass_007bexpat_002dparser_007d-131"><code>get-current-line-number on &lt;expat-parser&gt;</code></a>: <a href="#nau-report">nau report</a></li>
+<li><a href="#index-get_002derror_002dcode-on-_0040aclass_007bexpat_002dparser_007d-129"><code>get-error-code on &lt;expat-parser&gt;</code></a>: <a href="#nau-report">nau report</a></li>
+<li><a href="#index-get_002did_002dattribute_002dindex-on-_0040aclass_007bexpat_002dparser_007d-141"><code>get-id-attribute-index on &lt;expat-parser&gt;</code></a>: <a href="#nau-misc">nau misc</a></li>
+<li><a href="#index-get_002dparsing_002dstatus-on-_0040aclass_007bexpat_002dparser_007d-127"><code>get-parsing-status on &lt;expat-parser&gt;</code></a>: <a href="#nau-status">nau status</a></li>
+<li><a href="#index-get_002dspecified_002dattribute_002dcount-on-_0040aclass_007bexpat_002dparser_007d-140"><code>get-specified-attribute-count on &lt;expat-parser&gt;</code></a>: <a href="#nau-misc">nau misc</a></li>
+<li><a href="#index-get_002duser_002ddata-on-_0040aclass_007bexpat_002dparser_007d-136"><code>get-user-data on &lt;expat-parser&gt;</code></a>: <a href="#nau-misc">nau misc</a></li>
+<li><a href="#index-make-_0040aclass_007bexpat_002dentity_002dparser_007d-119"><code>make &lt;expat-entity-parser&gt;</code></a>: <a href="#nau-entity">nau entity</a></li>
+<li><a href="#index-make-_0040aclass_007bexpat_002dns_002dparser_007d-111"><code>make &lt;expat-ns-parser&gt;</code></a>: <a href="#nau-namespace">nau namespace</a></li>
+<li><a href="#index-make-_0040aclass_007bexpat_002dparser_007d-103"><code>make &lt;expat-parser&gt;</code></a>: <a href="#nau-base">nau base</a></li>
 <li><a href="#index-make_002dXML_005fContent-52"><code>make-XML_Content</code></a>: <a href="#handlers-dtd-element">handlers dtd element</a></li>
 <li><a href="#index-make_002dXML_005fParsingStatus-20"><code>make-XML_ParsingStatus</code></a>: <a href="#parsers-status">parsers status</a></li>
+<li><a href="#index-namespace_002dseparator_003a-113"><code>namespace-separator:</code></a>: <a href="#nau-namespace">nau namespace</a></li>
+<li><a href="#index-parse-on-_0040aclass_007bexpat_002dparser_007d-121"><code>parse on &lt;expat-parser&gt;</code></a>: <a href="#nau-parsing">nau parsing</a></li>
+<li><a href="#index-parse_002dbuffer-on-_0040aclass_007bexpat_002dparser_007d-124"><code>parse-buffer on &lt;expat-parser&gt;</code></a>: <a href="#nau-parsing">nau parsing</a></li>
 <li><a href="#index-pointer_002d_003eXML_005fContent-59"><code>pointer-&gt;XML_Content</code></a>: <a href="#handlers-dtd-element">handlers dtd element</a></li>
+<li><a href="#index-reset-on-_0040aclass_007bexpat_002dparser_007d-106"><code>reset on &lt;expat-parser&gt;</code></a>: <a href="#nau-base">nau base</a></li>
+<li><a href="#index-resume_002dparser-on-_0040aclass_007bexpat_002dparser_007d-126"><code>resume-parser on &lt;expat-parser&gt;</code></a>: <a href="#nau-stop">nau stop</a></li>
+<li><a href="#index-set_002dbase-on-_0040aclass_007bexpat_002dparser_007d-138"><code>set-base on &lt;expat-parser&gt;</code></a>: <a href="#nau-misc">nau misc</a></li>
+<li><a href="#index-set_002dencoding-on-_0040aclass_007bexpat_002dparser_007d-108"><code>set-encoding on &lt;expat-parser&gt;</code></a>: <a href="#nau-base">nau base</a></li>
+<li><a href="#index-set_002dparam_002dentity_002dparsing-on-_0040aclass_007bexpat_002dparser_007d-115"><code>set-param-entity-parsing on &lt;expat-parser&gt;</code></a>: <a href="#nau-entity">nau entity</a></li>
+<li><a href="#index-set_002dreturn_002dns_002dtriplet-on-_0040aclass_007bexpat_002dns_002dparser_007d-114"><code>set-return-ns-triplet on &lt;expat-ns-parser&gt;</code></a>: <a href="#nau-namespace">nau namespace</a></li>
+<li><a href="#index-set_002duser_002ddata-on-_0040aclass_007bexpat_002dparser_007d-135"><code>set-user-data on &lt;expat-parser&gt;</code></a>: <a href="#nau-misc">nau misc</a></li>
+<li><a href="#index-stop_002dparser-on-_0040aclass_007bexpat_002dparser_007d-125"><code>stop-parser on &lt;expat-parser&gt;</code></a>: <a href="#nau-stop">nau stop</a></li>
+<li><a href="#index-use_002dforeign_002ddtd-on-_0040aclass_007bexpat_002dparser_007d-142"><code>use-foreign-dtd on &lt;expat-parser&gt;</code></a>: <a href="#nau-misc">nau misc</a></li>
+<li><a href="#index-use_002dparser_002das_002dhandler_002darg-on-_0040aclass_007bexpat_002dparser_007d-137"><code>use-parser-as-handler-arg on &lt;expat-parser&gt;</code></a>: <a href="#nau-misc">nau misc</a></li>
 <li><a href="#index-XML_005fAttlistDeclHandler-61"><code>XML_AttlistDeclHandler</code></a>: <a href="#handlers-dtd-attlist">handlers dtd attlist</a></li>
 <li><a href="#index-XML_005fCharacterDataHandler-74"><code>XML_CharacterDataHandler</code></a>: <a href="#handlers-char-data">handlers char data</a></li>
 <li><a href="#index-XML_005fCommentHandler-76"><code>XML_CommentHandler</code></a>: <a href="#handlers-comment">handlers comment</a></li>
@@ -3936,8 +4524,9 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 <li><a href="#index-XML_005fGetBase-35"><code>XML_GetBase</code></a>: <a href="#parsers-misc">parsers misc</a></li>
 <li><a href="#index-XML_005fGetBuffer-13"><code>XML_GetBuffer</code></a>: <a href="#parsers-parsing">parsers parsing</a></li>
 <li><a href="#index-XML_005fGetCurrentByteCount-30"><code>XML_GetCurrentByteCount</code></a>: <a href="#parsers-report">parsers report</a></li>
-<li><a href="#index-XML_005fGetCurrentByteIndex-27"><code>XML_GetCurrentByteIndex</code></a>: <a href="#parsers-report">parsers report</a></li>
+<li><a href="#index-XML_005fGetCurrentByteIndex-29"><code>XML_GetCurrentByteIndex</code></a>: <a href="#parsers-report">parsers report</a></li>
 <li><a href="#index-XML_005fGetCurrentColumnNumber-28"><code>XML_GetCurrentColumnNumber</code></a>: <a href="#parsers-report">parsers report</a></li>
+<li><a href="#index-XML_005fGetCurrentLineNumber-27"><code>XML_GetCurrentLineNumber</code></a>: <a href="#parsers-report">parsers report</a></li>
 <li><a href="#index-XML_005fGetErrorCode-25"><code>XML_GetErrorCode</code></a>: <a href="#parsers-report">parsers report</a></li>
 <li><a href="#index-XML_005fGetFeatureList-98"><code>XML_GetFeatureList</code></a>: <a href="#version">version</a></li>
 <li><a href="#index-XML_005fGetIdAttributeIndex-37"><code>XML_GetIdAttributeIndex</code></a>: <a href="#parsers-misc">parsers misc</a></li>
@@ -4012,6 +4601,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 
 
 <ul class="index-vr" compact>
+<li><a href="#index-parser-105"><code>parser</code></a>: <a href="#nau-base">nau base</a></li>
    </ul><div class="node">
 <a name="type-index"></a>
 <p><hr>
@@ -4025,13 +4615,18 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 
 
 <ul class="index-tp" compact>
+<li><a href="#index-g_t_0026expat_002derror-99"><code>&amp;expat-error</code></a>: <a href="#nau-conditions">nau conditions</a></li>
+<li><a href="#index-g_t_0040aclass_007bexpat_002dentity_002dparser_007d-117"><code>&lt;expat-entity-parser&gt;</code></a>: <a href="#nau-entity">nau entity</a></li>
+<li><a href="#index-g_t_0040aclass_007bexpat_002dns_002dparser_007d-109"><code>&lt;expat-ns-parser&gt;</code></a>: <a href="#nau-namespace">nau namespace</a></li>
+<li><a href="#index-g_t_0040aclass_007bexpat_002dparser_007d-100"><code>&lt;expat-parser&gt;</code></a>: <a href="#nau-base">nau base</a></li>
+<li><a href="#index-g_t_0040aclass_007bexpat_002dparsing_002dstatus_007d-128"><code>&lt;expat-parsing-status&gt;</code></a>: <a href="#nau-status">nau status</a></li>
 <li><a href="#index-XML_005fContent-51"><code>XML_Content</code></a>: <a href="#handlers-dtd-element">handlers dtd element</a></li>
 <li><a href="#index-XML_005fParsingStatus-19"><code>XML_ParsingStatus</code></a>: <a href="#parsers-status">parsers status</a></li>
    </ul>
 <div class="contents">
 <h2>Table of Contents</h2>
 <ul>
-<li><a name="toc_Top" href="#Top">Expat backend for Vicare</a>
+<li><a name="toc_Top" href="#Top">Expat for Vicare</a>
 <li><a name="toc_overview" href="#overview">1 Overview of the package</a>
 <li><a name="toc_parsers" href="#parsers">2 Building and running parsers</a>
 <ul>
@@ -4063,6 +4658,18 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 <li><a href="#handlers-procinst">3.15 Processing instruction handlers</a>
 </li></ul>
 <li><a name="toc_version" href="#version">4 Expat version informations</a>
+<li><a name="toc_nau" href="#nau">5 Nausicaa front end</a>
+<ul>
+<li><a href="#nau-conditions">5.1 Condition object types</a>
+<li><a href="#nau-base">5.2 Base parser class</a>
+<li><a href="#nau-namespace">5.3 Namespace&ndash;enabled parser class</a>
+<li><a href="#nau-entity">5.4 External entity parser class</a>
+<li><a href="#nau-parsing">5.5 Parsing operations</a>
+<li><a href="#nau-stop">5.6 Stopping and resuming</a>
+<li><a href="#nau-status">5.7 Parsing status</a>
+<li><a href="#nau-report">5.8 Inspecting errors</a>
+<li><a href="#nau-misc">5.9 Miscellaneous functions</a>
+</li></ul>
 <li><a name="toc_Package-License" href="#Package-License">Appendix A <acronym>GNU</acronym> General Public License</a>
 <li><a name="toc_Documentation-License" href="#Documentation-License">Appendix B GNU Free Documentation License</a>
 <li><a name="toc_references" href="#references">Appendix C Bibliography and references</a>
