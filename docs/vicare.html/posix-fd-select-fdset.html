@@ -1,0 +1,230 @@
+<html lang="en">
+<head>
+<title>posix fd select fdset - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="posix-fd-select.html#posix-fd-select" title="posix fd select">
+<link rel="next" href="posix-fd-select-select.html#posix-fd-select-select" title="posix fd select select">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d18 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package is distributed under the terms of the GNU General Public
+License (GPL) and can be downloaded from:
+
+               `http://code.google.com/p/vicare-scheme/'
+
+
+or:
+
+            `http://github.com/marcomaggi/vicare/downloads'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2012 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="posix-fd-select-fdset"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="posix-fd-select-select.html#posix-fd-select-select">posix fd select select</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="posix-fd-select.html#posix-fd-select">posix fd select</a>
+<hr>
+</div>
+
+<h5 class="subsubsection">5.12.6.1 Allocating and accessing file descriptor sets</h5>
+
+<p>At low level, the <acronym>POSIX</acronym> function <code>select()</code> keeps track of file
+descriptors organised in sets, represented by instances of the C
+language type <code>fd_set</code>; we can think of such data structures as
+arrays of integers, holding <code>FD_SETSIZE</code> bits, in which each bit
+represents a file descriptor: <code>1</code> for inclusion, <code>0</code> for
+exclusion.
+
+<div class="defun">
+&mdash; Function: <b>sizeof-fd-set</b><var><a name="index-sizeof_002dfd_002dset-850"></a></var><br>
+&mdash; Function: <b>sizeof-fd-set</b><var> count<a name="index-sizeof_002dfd_002dset-851"></a></var><br>
+<blockquote><p>Return an exact integer representing the number of bytes needed to hold
+<var>count</var> instances of the C language type <code>fd_set</code>.  The
+optional <var>count</var> must be a positive fixnum; when not given: it
+defaults to <code>1</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>make-fd-set-bytevector</b><var><a name="index-make_002dfd_002dset_002dbytevector-852"></a></var><br>
+&mdash; Function: <b>make-fd-set-bytevector</b><var> count<a name="index-make_002dfd_002dset_002dbytevector-853"></a></var><br>
+<blockquote><p>Build and return a new bytevector capable of holding <var>count</var>
+instances of the C language type <code>fd_set</code> defined in
+<samp><span class="file">sys/types.h</span></samp>; every allocated <code>fd_set</code> is initialised with
+<code>FD_ZERO()</code>.  The optional <var>count</var> must be a positive fixnum;
+when not given: allocate enough room for a single instance of
+<code>fd_set</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>make-fd-set-pointer</b><var><a name="index-make_002dfd_002dset_002dpointer-854"></a></var><br>
+&mdash; Function: <b>make-fd-set-pointer</b><var> count<a name="index-make_002dfd_002dset_002dpointer-855"></a></var><br>
+<blockquote><p>Use <code>malloc()</code> to allocate a memory block capable of holding
+<var>count</var> instances of the C language type <code>fd_set</code> defined in
+<samp><span class="file">sys/types.h</span></samp>; every allocated <code>fd_set</code> is initialised with
+<code>FD_ZERO()</code>.
+
+        <p>The optional <var>count</var> must be a positive fixnum; when not given:
+allocate enough room for a single instance of <code>fd_set</code>.
+
+        <p>If successful: return a pointer object referencing the memory block;
+else return <code>#f</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>make-fd-set-memory-block</b><var><a name="index-make_002dfd_002dset_002dmemory_002dblock-856"></a></var><br>
+&mdash; Function: <b>make-fd-set-memory-block</b><var> count<a name="index-make_002dfd_002dset_002dmemory_002dblock-857"></a></var><br>
+<blockquote><p>Use <code>malloc()</code> to allocate a memory block capable of holding
+<var>count</var> instances of the C language type <code>fd_set</code> defined in
+<samp><span class="file">sys/types.h</span></samp>; every allocated <code>fd_set</code> is initialised with
+<code>FD_ZERO()</code>.
+
+        <p>The optional <var>count</var> must be a positive fixnum; when not given:
+allocate enough room for a single instance of <code>fd_set</code>.
+
+        <p>If successful: return an instance of <code>memory-block</code> referencing the
+memory block; else return <code>#f</code>. 
+</p></blockquote></div>
+
+<!--  -->
+<div class="defun">
+&mdash; Function: <b>FD_ZERO</b><var> fdsets<a name="index-FD_005fZERO-858"></a></var><br>
+&mdash; Function: <b>FD_ZERO</b><var> fdsets idx<a name="index-FD_005fZERO-859"></a></var><br>
+<blockquote><p>Reset to empty the given file descriptor set; return unspecified values;
+<a href="../libc/Waiting-for-I_002fO.html#Waiting-for-I_002fO">FD_ZERO</a>.
+
+        <p><var>fdsets</var> must be a bytevector, pointer object or <code>memory-block</code>
+instance holding or referencing one or more instances of the C language
+type <code>fd_set</code>.
+
+        <p><var>idx</var> must be a non&ndash;negative fixnum representing the index of the
+selected <code>fd_set</code> in <var>fdsets</var>; when not given: it defaults to
+zero. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>FD_SET</b><var> fd fdsets<a name="index-FD_005fSET-860"></a></var><br>
+&mdash; Function: <b>FD_SET</b><var> fd fdsets idx<a name="index-FD_005fSET-861"></a></var><br>
+<blockquote><p>Add the file descriptor <var>fd</var> to the given set; return unspecified
+values; <a href="../libc/Waiting-for-I_002fO.html#Waiting-for-I_002fO">FD_SET</a>.
+
+        <p><var>fdsets</var> must be a bytevector, pointer object or <code>memory-block</code>
+instance holding or referencing one or more instances of the C language
+type <code>fd_set</code>.
+
+        <p>The optional <var>idx</var> must be a non&ndash;negative fixnum representing the
+index of the selected <code>fd_set</code> in <var>fdsets</var>; when not given: it
+defaults to zero. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>FD_CLR</b><var> fd fdsets<a name="index-FD_005fCLR-862"></a></var><br>
+&mdash; Function: <b>FD_CLR</b><var> fd fdsets idx<a name="index-FD_005fCLR-863"></a></var><br>
+<blockquote><p>Remove the file descriptor <var>fd</var> from the given set; return
+unspecified values; <a href="../libc/Waiting-for-I_002fO.html#Waiting-for-I_002fO">FD_CLR</a>.
+
+        <p><var>fdsets</var> must be a bytevector, pointer object or <code>memory-block</code>
+instance holding or referencing one or more instances of the C language
+type <code>fd_set</code>.
+
+        <p>The optional <var>idx</var> must be a non&ndash;negative fixnum representing the
+index of the selected <code>fd_set</code> in <var>fdsets</var>; when not given: it
+defaults to zero. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>FD_ISSET</b><var> fd fdsets<a name="index-FD_005fISSET-864"></a></var><br>
+&mdash; Function: <b>FD_ISSET</b><var> fd fdsets idx<a name="index-FD_005fISSET-865"></a></var><br>
+<blockquote><p>Return a boolean specifying if the file descriptor <var>fd</var> is contained
+in the given set; return unspecified values; <a href="../libc/Waiting-for-I_002fO.html#Waiting-for-I_002fO">FD_ISSET</a>.
+
+        <p><var>fdsets</var> must be a bytevector, pointer object or <code>memory-block</code>
+instance holding or referencing one or more instances of the C language
+type <code>fd_set</code>.
+
+        <p>The optional <var>idx</var> must be a non&ndash;negative fixnum representing the
+index of the selected <code>fd_set</code> in <var>fdsets</var>; when not given: it
+defaults to zero. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>fd-set-inspection</b><var> fdsets<a name="index-fd_002dset_002dinspection-866"></a></var><br>
+&mdash; Function: <b>fd-set-inspection</b><var> fdsets idx<a name="index-fd_002dset_002dinspection-867"></a></var><br>
+<blockquote><p>Return a list of fixnums representing the file descriptors set in the
+selected <code>fd_set</code> structure.  This function is for debugging
+purposes.
+
+        <p><var>fdsets</var> must be a bytevector, pointer object or <code>memory-block</code>
+instance holding or referencing one or more instances of the C language
+type <code>fd_set</code>.
+
+        <p>The optional <var>idx</var> must be a non&ndash;negative fixnum representing the
+index of the selected <code>fd_set</code> in <var>fdsets</var>; when not given: it
+defaults to zero. 
+</p></blockquote></div>
+
+<!-- page -->
+   </body></html>
+

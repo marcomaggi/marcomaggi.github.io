@@ -1,6 +1,6 @@
 <html lang="en">
 <head>
-<title>iklib collection - Vicare Scheme</title>
+<title>iklib gc - Vicare Scheme</title>
 <meta http-equiv="Content-Type" content="text/html">
 <meta name="description" content="Vicare Scheme">
 <meta name="generator" content="makeinfo 4.13">
@@ -10,7 +10,7 @@
 <link rel="next" href="iklib-guardians.html#iklib-guardians" title="iklib guardians">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
-This document describes version 0.2d17 of Vicare Scheme, an
+This document describes version 0.2d18 of Vicare Scheme, an
 R6RS compliant native compiler for the Scheme language, producing
 single threaded programs running on Intel x86 32-bit processors, with
 experimental support for 64-bit machines.  _Vicare_ is pronounced
@@ -83,7 +83,7 @@ Trademarks used herein are the property of their respective owners.-->
 </head>
 <body>
 <div class="node">
-<a name="iklib-collection"></a>
+<a name="iklib-gc"></a>
 <p>
 Next:&nbsp;<a rel="next" accesskey="n" href="iklib-guardians.html#iklib-guardians">iklib guardians</a>,
 Previous:&nbsp;<a rel="previous" accesskey="p" href="iklib-timing.html#iklib-timing">iklib timing</a>,
@@ -119,27 +119,54 @@ we retrieve the object reference and use it.
 &mdash; Function: <b>register-to-avoid-collecting</b><var> obj<a name="index-register_002dto_002davoid_002dcollecting-309"></a></var><br>
 <blockquote><p>Register <var>obj</var> in the internal state of Vicare so that it is not
 garbage collected even when we loose all the Scheme references to it;
-constant values (<code>#f</code>, <code>#t</code>, <small class="dots">...</small>) and fixnums cannot be
-registered in this way.  Return <var>obj</var> itself. 
+return a pointer object which can be used to uniquely identify the
+collected <var>obj</var>.
+
+        <p>If <var>obj</var> is the return value of <code>(void)</code>: the returned value is
+a <code>NULL</code> pointer. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>forget-to-avoid-collecting</b><var> obj<a name="index-forget_002dto_002davoid_002dcollecting-310"></a></var><br>
-<blockquote><p>Remove <var>obj</var> from the internal state of Vicare so that it is garbage
-collected when we loose all the Scheme references to it.  If <var>obj</var>
-was previously registered: return <var>obj</var> itself, else return
-<code>#f</code>. 
+&mdash; Function: <b>forget-to-avoid-collecting</b><var> pointer<a name="index-forget_002dto_002davoid_002dcollecting-310"></a></var><br>
+<blockquote><p>Remove the Scheme object associated to <var>pointer</var> from the internal
+state of Vicare, so that it is garbage collected when we loose all the
+Scheme references to it; return the referenced object.  <var>pointer</var>
+must be the return value of a previous call to
+<code>register-to-avoid-collecting</code>.
+
+        <p>If <var>pointer</var> is <code>NULL</code>: nothing happens and the returned value is
+<code>(void)</code>. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>collection-avoidance-list</b><var><a name="index-collection_002davoidance_002dlist-311"></a></var><br>
-<blockquote><p>Return the very list of object that where registered to avoid collection
-by <code>register-to-avoid-collecting</code>; it can be the empty list.  We
-must be very careful in handling and modifying this list. 
+&mdash; Function: <b>retrieve-to-avoid-collecting</b><var> pointer<a name="index-retrieve_002dto_002davoid_002dcollecting-311"></a></var><br>
+<blockquote><p>Return the Scheme object associated to <var>pointer</var> in the internal
+state of Vicare.  <var>pointer</var> must be the return value of a previous
+call to <code>register-to-avoid-collecting</code>.
+
+        <p>If <var>pointer</var> is <code>NULL</code>: nothing happens and the returned value is
+<code>(void)</code>. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>purge-collection-avoidance-list</b><var><a name="index-purge_002dcollection_002davoidance_002dlist-312"></a></var><br>
+&mdash; Function: <b>replace-to-avoid-collecting</b><var> pointer new-obj<a name="index-replace_002dto_002davoid_002dcollecting-312"></a></var><br>
+<blockquote><p>Replace the Scheme object associated to <var>pointer</var> in the internal
+state of Vicare with <var>new-obj</var>; return the previously registered
+object.  <var>pointer</var> must be the return value of a previous call to
+<code>register-to-avoid-collecting</code>.
+
+        <p>If <var>pointer</var> is <code>NULL</code>: nothing happens and the returned value is
+<code>(void)</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>collection-avoidance-list</b><var><a name="index-collection_002davoidance_002dlist-313"></a></var><br>
+<blockquote><p>Return the list of objects that where registered to avoid collection by
+<code>register-to-avoid-collecting</code>; it can be the empty list. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>purge-collection-avoidance-list</b><var><a name="index-purge_002dcollection_002davoidance_002dlist-314"></a></var><br>
 <blockquote><p>Reset to empty the list of objects registered to avoid collection with
 <code>register-to-avoid-collecting</code>.  Use with care. 
 </p></blockquote></div>
