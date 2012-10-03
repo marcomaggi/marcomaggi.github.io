@@ -10,7 +10,7 @@
 <link rel="next" href="syntaxes-misc.html#syntaxes-misc" title="syntaxes misc">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
-This document describes version 0.2d18 of Vicare Scheme, an
+This document describes version 0.2d19 of Vicare Scheme, an
 R6RS compliant native compiler for the Scheme language, producing
 single threaded programs running on Intel x86 32-bit processors, with
 experimental support for 64-bit machines.  _Vicare_ is pronounced
@@ -91,86 +91,17 @@ Up:&nbsp;<a rel="up" accesskey="u" href="syntaxes.html#syntaxes">syntaxes</a>
 <hr>
 </div>
 
-<h4 class="subsection">10.12.6 Arguments validation</h4>
+<h4 class="subsection">10.6.6 Arguments validation</h4>
 
-<p>Global arguments validation is enabled or disabled by setting to <code>#t</code>
-or <code>#f</code> the <code>arguments-validation</code> identifier syntax exported
-by <code>(vicare installation-configuration)</code>, the default is <code>#t</code>;
-such value can be configured at installation time with the
-<samp><span class="option">--enable-arguments-validation</span></samp> option of the <samp><span class="command">configure</span></samp>
-script.
+<p>The following bindings are imported and reexported by <code>(vicare
+syntactic-extension)</code> from the library <code>(vicare arguments
+validation)</code>:
 
-   <p>The following bindings are exported by the library <code>(vicare
-syntactic-extensions)</code>.
-
-<div class="defun">
-&mdash; Macro: <b>define-argument-validation</b> (<var>?name ?who ?arg ...</var>)<var> ?predicate ?error-handler<a name="index-define_002dargument_002dvalidation-1956"></a></var><br>
-<blockquote><p>Define a set of macros to validate arguments, to be used along with
-<code>WITH-ARGUMENTS-VALIDATION</code>.  Transform:
-
-     <pre class="example">          (define-argument-validation (bytevector who bv)
-            (bytevector? bv)
-            (assertion-violation who "expected a bytevector as argument" bv))
+<pre class="example">     define-argument-validation
+     with-arguments-validation
+     with-dangerous-arguments-validation
+     arguments-validation-forms
 </pre>
-        <p class="noindent">into:
-
-     <pre class="smallexample">          (define-inline (vicare.argument-validation-for-bytevector who bv . body)
-            (if (vicare.argument-validation-predicate-for-bytevector bv)
-                (begin . body)
-              (vicare.argument-validation-error-for-bytevector who bv)))
-          
-          (define-inline (vicare.argument-validation-predicate-for-bytevector bv)
-            (bytevector? bv))
-          
-          (define-inline (vicare.argument-validation-error-for-bytevector who bv))
-            (assertion-violation who "expected a bytevector as argument" bv))
-</pre>
-        <p>If we need to export a validator from a library: we can export just the
-identifier <code>vicare.argument-validation-for-</code><var>?name</var>, without
-prefixing it. 
-</p></blockquote></div>
-
-<div class="defun">
-&mdash; Macro: <b>arguments-validation-forms</b><var> . ?body<a name="index-arguments_002dvalidation_002dforms-1957"></a></var><br>
-<blockquote><p>If arguments validation is enabled, expand to:
-
-     <pre class="example">          (begin . <var>?body</var>)
-</pre>
-        <p class="noindent">else expand to <code>(values)</code>. 
-</p></blockquote></div>
-
-<div class="defun">
-&mdash; Macro: <b>with-arguments-validation</b> (<var>?who</var>) ((<var>?validator ?arg ...</var>)<var> ...</var>)<var> . ?body<a name="index-with_002darguments_002dvalidation-1958"></a></var><br>
-<blockquote><p>If arguments validation is enabled: expand to code that validates the
-<var>?arg</var> expressions according to the <var>?validator</var>, then evaluate
-<var>?body</var>; else just evaluate <var>?body</var>.
-
-        <p><var>?who</var> must be an identifier and it is used as first argument to the
-validator macro.
-
-        <p>For example:
-
-     <pre class="example">          (with-arguments-validation (who)
-               ((fixnum  X)
-                (integer Y))
-            (do-this)
-            (do-that))
-</pre>
-        <p class="noindent">expands into:
-
-     <pre class="example">          (vicare.argument-validation-for-fixnum who X
-           (vicare.argument-validation-for-integer who Y
-            (do-this)
-            (do-that)))
-</pre>
-        </blockquote></div>
-
-<div class="defun">
-&mdash; Macro: <b>with-dangerous-arguments-validation</b> (<var>?who</var>) ((<var>?validator ?arg ...</var>)<var> ...</var>)<var> . ?body<a name="index-with_002ddangerous_002darguments_002dvalidation-1959"></a></var><br>
-<blockquote><p>Like <code>with-arguments-validation</code>, but the validation is always
-performed even when global arguments validation is disabled. 
-</p></blockquote></div>
-
-<!-- page -->
+   <!-- page -->
    </body></html>
 

@@ -6,11 +6,11 @@
 <meta name="generator" content="makeinfo 4.13">
 <link title="Top" rel="start" href="index.html#Top">
 <link rel="up" href="iklib.html#iklib" title="iklib">
-<link rel="prev" href="iklib-import.html#iklib-import" title="iklib import">
+<link rel="prev" href="iklib-export.html#iklib-export" title="iklib export">
 <link rel="next" href="iklib-parameters.html#iklib-parameters" title="iklib parameters">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
-This document describes version 0.2d18 of Vicare Scheme, an
+This document describes version 0.2d19 of Vicare Scheme, an
 R6RS compliant native compiler for the Scheme language, producing
 single threaded programs running on Intel x86 32-bit processors, with
 experimental support for 64-bit machines.  _Vicare_ is pronounced
@@ -86,12 +86,12 @@ Trademarks used herein are the property of their respective owners.-->
 <a name="iklib-modules"></a>
 <p>
 Next:&nbsp;<a rel="next" accesskey="n" href="iklib-parameters.html#iklib-parameters">iklib parameters</a>,
-Previous:&nbsp;<a rel="previous" accesskey="p" href="iklib-import.html#iklib-import">iklib import</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="iklib-export.html#iklib-export">iklib export</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="iklib.html#iklib">iklib</a>
 <hr>
 </div>
 
-<h3 class="section">3.19 Local modules</h3>
+<h3 class="section">3.20 Local modules</h3>
 
 <p>Modules are somewhat like libraries in that they define a set of
 bindings in a &ldquo;private namespace&rdquo;; bindings can be exported from a
@@ -100,20 +100,312 @@ difference between modules and <acronym>R6RS</acronym> libraries is that modules
 defined in a single form nested into a library; so, in a way, they are
 sub&ndash;libraries.
 
-   <blockquote>
-<strong>NOTE</strong> In the official documentation of Vicare 0.0.3+
-(revision 1648) modules are yet not documented.  Please refer to Section
-10.5 of Chez Scheme User's Guide, Chapter 3 of Oscar Waddel's Ph.D
-Thesis, and its POPL99 paper for details on using the <code>module</code> and
-<code>import</code> keywords.  Vicare's internal module system is
-similar in spirit to that of Chez Scheme. 
-</blockquote>
+<div class="defun">
+&mdash; Syntax: <b>module</b><var> ?interface ?definition ... ?expression ...<a name="index-module-256"></a></var><br>
+&mdash; Syntax: <b>module</b><var> ?name ?interface ?definition ... ?expression ...<a name="index-module-257"></a></var><br>
+<blockquote><p>Define a new local module.  The first form defines an <em>anonymous</em>
+module, while the second form defines a <em>named</em> module called
+<var>?name</var>, which must be a symbol.
 
-<ul class="menu">
-<li><a accesskey="1" href="iklib-modules-examples.html#iklib-modules-examples">iklib modules examples</a>:       Usage example for modules. 
-<li><a accesskey="2" href="iklib-modules-api.html#iklib-modules-api">iklib modules api</a>:            Modules programming interface. 
-</ul>
+        <p><var>?interface</var> is a list of symbols selecting bindings from this
+module to be exported; every listed symbol must be bound in this
+module's <var>?definition</var>, otherwise an error is raised.
 
-<!-- page -->
+        <p><var>?definition</var> is a set of bindings like the one that may appear at
+the beginning of a <code>let</code> body, with the addition of <code>import</code>
+forms that may import bindings from libraries and other modules.
+
+        <p><var>?expression</var> is a set of expressions that is evaluated at module's
+definition time.
+
+        <p>Modules &ldquo;exist&rdquo; only in the enclosing region, bindings exported from a
+module are not accessible outside of the enclosing region.  Modules can
+be nested and import/export relations are possible according to the
+regions nesting hierarchy.
+
+        <p>Bindings in the <var>?interface</var> declared by anonymous modules are
+imported by default in the enclosing region: there is no need to use
+<code>import</code>.  Bindings in the <var>?interface</var> declared by named
+modules are visible only in regions that <code>import</code> the module.
+
+        <p><var>?definition</var> and <var>?expression</var> have no default access to the
+bindings in the enclosing region; only imported bindings are visible
+from the module. 
+</p></blockquote></div>
+
+<!--  -->
+<h5 class="subsubheading">Examples of anonymous modules</h5>
+
+<p>The following example defines an anonymous module, without expressions,
+and invokes its functions from the enclosing region (which is the top
+level):
+
+<pre class="example">     (import (vicare))
+     
+     (module (one two three)
+         (define (one)       'one)
+         (define (two)       'two)
+         (define (three)     (cons 'three (hidden)))
+         (define (hidden)    'hidden))
+     
+     (fprintf (current-error-port)
+              "calling anonymous: ~s ~s ~s\n" (one) (two) (three))
+</pre>
+   <p class="noindent">notice that the <code>hidden</code> function is visible inside the module but
+not in the enclosing region.
+
+   <p>The following example defines a module, with expressions, and invokes
+its functions from the enclosing region (which is the top level):
+
+<pre class="example">     (import (vicare))
+     
+     (module (one two three)
+         (define (one)       'one)
+         (define (two)       'two)
+         (define (three)     (cons 'three (hidden)))
+         (define (hidden)    'hidden)
+     
+         (fprintf (current-error-port)
+                  "defining an anonymous module\n"))
+     
+     (fprintf (current-error-port)
+              "calling anonymous: ~s ~s ~s\n" (one) (two) (three))
+</pre>
+   <p class="noindent">notice that when the enclosing region is the top level: the expressions
+at the end of a module are evaluated <strong>after</strong> the expressions at
+the top level; so the output from the example is:
+
+<pre class="example">     calling anonymous: one two (three . hidden)
+     defining an anonymous module
+</pre>
+   <p class="noindent">this can lead to undesired results if the module's expressions are meant
+to initialise the state of the module, and the expressions at the top
+level invoke the module's functions (before initialisation).  On the
+other hand: this behaviour allows the module to access definitions from
+the enclosing region and the top level region despite their placement in
+the file; see below for an example.  The same behaviour is shown by
+named modules.
+
+   <p>The following example defines a module, with expressions, and invokes
+its functions from the enclosing region (which is a <code>let</code> form):
+
+<pre class="example">     (import (vicare))
+     
+     (let ()
+       (module (one two three)
+           (define (one)       'one)
+           (define (two)       'two)
+           (define (three)     (cons 'three (hidden)))
+           (define (hidden)    'hidden)
+     
+           (printf (current-error-port)
+                   "defining an anonymous module\n"))
+     
+       (fprintf (current-error-port)
+                "calling anonymous: ~s ~s ~s\n" (one) (two) (three)))
+</pre>
+   <p class="noindent">notice that when the enclosing region is <strong>not</strong> the top level: the
+expressions at the end of a module are evaluated <strong>before</strong> the
+expressions in the body of the enclosing region; so the output from the
+example is:
+
+<pre class="example">     defining an anonymous module
+     calling anonymous: one two (three . hidden)
+</pre>
+   <p class="noindent">so the state of the module can be correctly initialised before its
+functions are invoked.  The same behaviour is shown by named modules.
+
+   <p>The following example shows that bindings from the enclosing region and
+the top level environment are accessible from the modules:
+
+<pre class="example">     (import (vicare))
+     
+     (define (top-level-before) 'top-level-before)
+     
+     (let ()
+     
+       (define (outer-before) 'outer-before)
+     
+       (module (one two three)
+         (define (one)       'one)
+         (define (two)       'two)
+         (define (three)     (list 'three
+                                   (outer-before)
+                                   (outer-after)
+                                   (top-level-before)
+                                   (top-level-after))))
+     
+       (define (outer-after) 'outer-after)
+     
+       (fprintf (current-error-port)
+                "calling anonymous: ~s ~s ~s\n" (one) (two) (three)))
+     
+     (define (top-level-after) 'top-level-after)
+</pre>
+   <p class="noindent">this happens both when the enclosing region is the top level and when
+the enclosing region is not the top level.  The same behaviour is shown
+by named modules.
+
+<!--  -->
+<h5 class="subsubheading">Named modules</h5>
+
+<p>The following example defines a module named <code>blue</code> and invokes
+functions from it in the top level region:
+
+<pre class="example">     (import (vicare))
+     
+     (module blue (blue-one blue-two blue-three)
+         (define (blue-one)          'blue-one)
+         (define (blue-two)          'blue-two)
+         (define (blue-three)        (cons 'blue-three (hidden)))
+         (define (hidden)            'blue-hidden))
+     
+     (import blue)
+     (fprintf (current-error-port)
+              "calling blue: ~s ~s ~s\n"
+              (blue-one) (blue-two) (blue-three))
+</pre>
+   <p class="noindent">notice that bindings from a named module are accessible only if imported
+in the enclosing region.
+
+   <p>The following example defines two modules named <code>green</code> and
+<code>red</code>, then it imports their bindings in different regions:
+
+<pre class="example">     (import (vicare))
+     
+     (let ()
+     
+       (module green (one two three)
+         (define (one)       'green-one)
+         (define (two)       'green-two)
+         (define (three)     (cons 'green-three (hidden)))
+         (define (hidden)    'green-hidden))
+     
+       (module red (one two three)
+         (define (one)       'red-one)
+         (define (two)       'red-two)
+         (define (three)     (cons 'red-three (hidden)))
+         (define (hidden)    'red-hidden))
+     
+       (import green)
+     
+       (let ()
+         (import red)
+         (fprintf (current-error-port)
+                  "calling red: ~s ~s ~s\n" (one) (two) (three)))
+     
+       (fprintf (current-error-port)
+                "calling green: ~s ~s ~s\n" (one) (two) (three)))
+</pre>
+   <p>The following example shows that modules in the same enclosing region
+can import their bindings:
+
+<pre class="example">     (import (vicare))
+     
+     (let ()
+     
+       (module green (one two)
+         (define (one)       'one)
+         (define (two)       'two))
+     
+       (module red (f g)
+         (import green)
+         (define (f)         (cons 'f (one)))
+         (define (g)         (cons 'g (two))))
+     
+       (import red)
+       (fprintf (current-error-port)
+                "calling red: ~s ~s\n" (f) (g)))
+</pre>
+   <p class="noindent">while the following example shows that bindings from an anonymous module
+are automatically available in modules defined in the same enclosing
+region:
+
+<pre class="example">     (import (vicare))
+     
+     (let ()
+     
+       (module (one two)
+         (define (one)       'one)
+         (define (two)       'two))
+     
+       (module red (f g)
+         (define (f)         (cons 'f (one)))
+         (define (g)         (cons 'g (two))))
+     
+       (import red)
+       (fprintf (current-error-port)
+                "calling red: ~s ~s\n" (f) (g)))
+</pre>
+   <p class="noindent">and the following example shows that the order of module definitions
+does not matter in determining visibility of bindings from
+<strong>anonymous</strong> modules:
+
+<pre class="example">     (import (vicare))
+     
+     (let ()
+     
+       (module red (f g)
+         (define (f)         (cons 'f (one)))
+         (define (g)         (cons 'g (two))))
+     
+       (module (one two)
+         (define (one)       'one)
+         (define (two)       'two))
+     
+       (import red)
+       (fprintf (current-error-port)
+                "calling red: ~s ~s\n" (f) (g)))
+</pre>
+   <p class="noindent">the following is an <strong>error</strong> because it tries to import bindings
+from a <strong>named</strong> module before its definition:
+
+<pre class="example">     (import (vicare))
+     
+     (let ()
+     
+       (module red (f g)
+         (import green) ;; error here!!!
+         (define (f)         (cons 'f (one)))
+         (define (g)         (cons 'g (two))))
+     
+       (module green (one two)
+         (define (one)       'one)
+         (define (two)       'two))
+     
+       (import red)
+       (fprintf (current-error-port)
+                "calling red: ~s ~s\n" (f) (g)))
+</pre>
+   <!--  -->
+<h5 class="subsubheading">Utilities examples</h5>
+
+<p>The following example shows how syntactic abstractions can be used to
+access definitions in a module without explicitly using the
+<code>import</code> form:
+
+<pre class="example">     (import (vicare))
+     
+     (let ()
+     
+       (define-syntax in-module
+         (syntax-rules ()
+           ((_ ?module ?expr ...)
+            (let () (import ?module) ?expr ...))))
+     
+       (module red (one two)
+         (define (one arg)   (cons 'red-one arg))
+         (define (two arg)   (cons 'red-two arg)))
+     
+       (module green (one two)
+         (define (one arg)   (cons 'green-one arg))
+         (define (two arg)   (cons 'green-two arg)))
+     
+       (fprintf (current-error-port)
+                "calling ones: ~s ~s\n"
+                ((in-module red one)   123)
+                ((in-module green one) 456)))
+</pre>
+   <!-- page -->
    </body></html>
 

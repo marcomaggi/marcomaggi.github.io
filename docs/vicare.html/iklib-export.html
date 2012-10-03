@@ -1,15 +1,16 @@
 <html lang="en">
 <head>
-<title>iklib modules api - Vicare Scheme</title>
+<title>iklib export - Vicare Scheme</title>
 <meta http-equiv="Content-Type" content="text/html">
 <meta name="description" content="Vicare Scheme">
 <meta name="generator" content="makeinfo 4.13">
 <link title="Top" rel="start" href="index.html#Top">
-<link rel="up" href="iklib-modules.html#iklib-modules" title="iklib modules">
-<link rel="prev" href="iklib-modules-examples.html#iklib-modules-examples" title="iklib modules examples">
+<link rel="up" href="iklib.html#iklib" title="iklib">
+<link rel="prev" href="iklib-import.html#iklib-import" title="iklib import">
+<link rel="next" href="iklib-modules.html#iklib-modules" title="iklib modules">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
-This document describes version 0.2d18 of Vicare Scheme, an
+This document describes version 0.2d19 of Vicare Scheme, an
 R6RS compliant native compiler for the Scheme language, producing
 single threaded programs running on Intel x86 32-bit processors, with
 experimental support for 64-bit machines.  _Vicare_ is pronounced
@@ -82,48 +83,59 @@ Trademarks used herein are the property of their respective owners.-->
 </head>
 <body>
 <div class="node">
-<a name="iklib-modules-api"></a>
+<a name="iklib-export"></a>
 <p>
-Previous:&nbsp;<a rel="previous" accesskey="p" href="iklib-modules-examples.html#iklib-modules-examples">iklib modules examples</a>,
-Up:&nbsp;<a rel="up" accesskey="u" href="iklib-modules.html#iklib-modules">iklib modules</a>
+Next:&nbsp;<a rel="next" accesskey="n" href="iklib-modules.html#iklib-modules">iklib modules</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="iklib-import.html#iklib-import">iklib import</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="iklib.html#iklib">iklib</a>
 <hr>
 </div>
 
-<h4 class="subsection">3.19.2 Modules programming interface</h4>
+<h3 class="section">3.19 Extended library exports</h3>
+
+<p>Vicare allows the <code>export</code> syntax to appear at the top
+level of a library among the definitions, not only as third form of a
+<code>library</code> form.
 
 <div class="defun">
-&mdash; Syntax: <b>module</b><var> interface definitions ... expressions ...<a name="index-module-252"></a></var><br>
-&mdash; Syntax: <b>module</b><var> name interface definitions ... expressions ...<a name="index-module-253"></a></var><br>
-<blockquote><p>Define a new local module.  The first form defines an <em>anonymous</em>
-module, while the second form defines a <em>named</em> module called
-<var>name</var>, which must be a symbol.
-
-        <p><var>interface</var> is a list of symbols that select bindings from this
-module to be exported.  Every listed symbol must be bound in this
-module's <var>definitions</var>, otherwise an error is raised.
-
-        <p><var>definitions</var> is a set of bindings like the one that may appear at
-the beginning of a <code>let</code> body, with the addition of <code>import</code>
-forms that may import bindings from libraries and other modules.
-
-        <p><var>expressions</var> is a set of expressions that is evaluated at module's
-definition time.
-
-        <p>Modules &ldquo;exist&rdquo; only in the enclosing region, bindings exported from a
-module are not accessible outside of the enclosing region.  Modules can
-be nested and import/export relations are possible according to the
-regions nesting hierarchy.
-
-        <p>Bindings in the <var>interface</var> declared by anonymous modules are
-imported by default in the enclosing region: there is no need to use
-<code>import</code>.  Bindings in the <var>interface</var> declared by named
-modules are visible only in regions that <code>import</code> the module.
-
-        <p><var>definitions</var> and <var>expressions</var> have no default access to the
-bindings in the enclosing region; only imported bindings are visible
-from the module. 
+&mdash; Syntax: <b>export</b><var> ?export-spec ...<a name="index-export-255"></a></var><br>
+<blockquote><p>Export the specified bidings from the current library or module.  When
+<code>export</code> appears at the top level of a library: it exports the
+specified bindings from the library.  When <code>export</code> appears in the
+body of a module: it exports the specified bindings from the module
+(<strong>not</strong> from the enclosing library). 
 </p></blockquote></div>
 
-<!-- page -->
+   <p>Here is an example of library exporting a binding with a <code>export</code>
+at the end:
+
+<pre class="example">     ;;; file "alpha.sls"
+     (library (alpha)
+       (export red)
+       (import (vicare))
+       (define (blue)
+         'blue)
+       (define (red)
+         'red)
+       (export blue))
+     
+     ;;; file "program.sps"
+     (import (vicare)
+       (alpha))
+     (pretty-print (red)  (current-error-port))
+     (pretty-print (blue) (current-error-port))
+</pre>
+   <p>Here is an example of module exporting a binding with <code>export</code>:
+
+<pre class="example">     (import (vicare))
+     
+     (module (green)
+       (define (green) 'green)
+       (define (yellow) 'yellow)
+       (export yellow))
+     
+     (list (green) (yellow)) &rArr; (green yellow)
+</pre>
+   <!-- page -->
    </body></html>
 
