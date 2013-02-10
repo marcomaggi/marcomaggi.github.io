@@ -1,0 +1,194 @@
+<html lang="en">
+<head>
+<title>compiler stack call - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="compiler-stack.html#compiler-stack" title="compiler stack">
+<link rel="prev" href="compiler-stack-args.html#compiler-stack-args" title="compiler stack args">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d20 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package is distributed under the terms of the GNU General Public
+License (GPL) and can be downloaded from:
+
+               `http://code.google.com/p/vicare-scheme/'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2012 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="compiler-stack-call"></a>
+<p>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="compiler-stack-args.html#compiler-stack-args">compiler stack args</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="compiler-stack.html#compiler-stack">compiler stack</a>
+<hr>
+</div>
+
+<h4 class="subsection">14.3.3 Executing a <code>call</code> instruction</h4>
+
+<p>The usual mechanism of performing an assembly language <code>call</code>
+instruction is this:
+
+<pre class="example">     caller's code   callee's code       stack
+      --- lo mem       --- lo mem         --- hi mem
+       .                .                  .
+       .                .                  .  caller stuff
+       .                .                  .
+      call FUNC        enter &lt;-- FUNC      .   &lt;--- %esp before
+      after &lt;-- ADDR    .                 ADDR &lt;--- %esp after
+       .                .                  .
+       .               ret                 .   calleee stuff
+       .                .                  .
+      --- hi mem       --- hi mem         --- lo mem
+</pre>
+   <p class="noindent">when the caller executes a <code>call</code> instruction:
+
+     <ol type=1 start=1>
+<li>The stack pointer register <code>%esp</code> is decremented by the size of a
+machine word.
+
+     <li>The memory address referencing the first byte of the instruction
+<code>after</code> is stored on the memory location referenced by the stack
+pointer register <code>%esp</code>.
+
+     <li>The execution flow jumps to the memory address <code>FUNC</code>, which must
+contain the first byte of the instruction <code>enter</code>.
+        </ol>
+
+   <p>The usual mechanism of performing an assembly language <code>ret</code>
+instruction is this:
+
+<pre class="example">     caller's code   callee's code       stack
+      --- lo mem       --- lo mem         --- hi mem
+       .                .                  .
+       .                .                  .  caller stuff
+       .                .                  .
+      call FUNC       enter &lt;-- FUNC       .   &lt;--- %esp after
+      after &lt;-- ADDR    .                 ADDR &lt;--- %esp before
+       .                .                  .
+       .               ret                 .   calleee stuff
+       .                .                  .
+      --- hi mem       --- hi mem         --- lo mem
+</pre>
+   <p class="noindent">when the callee executes a <code>ret</code> instruction:
+
+     <ol type=1 start=1>
+<li>The memory address referenced by the stack pointer register <code>%esp</code>
+is stored in then instruction pointer register.
+
+     <li>The stack pointer register <code>%esp</code> is incremented by the size of a
+machine word.
+
+     <li>The execution flow jumps to the memory address in the instruction
+pointer.
+        </ol>
+
+<p class="noindent">after the <code>ret</code> the stack is left in the same state it was at the
+moment the <code>call</code> was executed.
+
+   <p>Now let's say that, when generating binary code for a <code>call</code>
+instruction, we put some static data right before the <code>call</code>:
+
+<pre class="example">      caller's code              stack
+         --- lo mem               --- hi mem
+          .                        .
+          .                        .
+          .                        .
+         jmp L0                    .
+         data_machine_word_1       .   &lt;--- %esp before call
+         data_machine_word_2      ADDR &lt;--- %esp after call
+         data_machine_word_3       .
+         call FUNC  &lt;--- L0        .
+         after      &lt;--- ADDR      .
+          .                        .
+          .                        .
+          .                        .
+         --- hi mem               --- lo mem
+</pre>
+   <p class="noindent">let's name <code>call_size</code> the number of bytes occupied by the
+instruction <code>call FUNC</code>; when the callee begins execution:
+
+     <ul>
+<li>It can access the return address by retrieving the machine word at
+<code>%esp</code>.
+
+     <li>It can access the constant <code>data_machine_word_1</code> by retrieving the
+machine word at:
+
+     <pre class="example">          %esp - call_size - 0 * wordsize
+</pre>
+     <li>It can access the constant <code>data_machine_word_2</code> by retrieving the
+machine word at:
+
+     <pre class="example">          %esp - call_size - 1 * wordsize
+</pre>
+     <li>It can access the constant <code>data_machine_word_3</code> by retrieving the
+machine word at:
+
+     <pre class="example">          %esp - call_size - 2 * wordsize
+</pre>
+     </ul>
+
+<!-- end of file -->
+   </body></html>
+

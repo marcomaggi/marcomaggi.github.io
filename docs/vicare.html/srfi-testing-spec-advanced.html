@@ -1,0 +1,203 @@
+<html lang="en">
+<head>
+<title>srfi testing spec advanced - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="srfi-testing-spec.html#srfi-testing-spec" title="srfi testing spec">
+<link rel="prev" href="srfi-testing-spec-basic.html#srfi-testing-spec-basic" title="srfi testing spec basic">
+<link rel="next" href="srfi-testing-spec-runner.html#srfi-testing-spec-runner" title="srfi testing spec runner">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d20 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package is distributed under the terms of the GNU General Public
+License (GPL) and can be downloaded from:
+
+               `http://code.google.com/p/vicare-scheme/'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2012 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="srfi-testing-spec-advanced"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="srfi-testing-spec-runner.html#srfi-testing-spec-runner">srfi testing spec runner</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="srfi-testing-spec-basic.html#srfi-testing-spec-basic">srfi testing spec basic</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="srfi-testing-spec.html#srfi-testing-spec">srfi testing spec</a>
+<hr>
+</div>
+
+<h5 class="subsubsection">10.27.3.2 Conditonal test-suites and other advanced features</h5>
+
+<p>The following describes features for controlling which tests to execute,
+or specifing that some tests are expected to fail.
+
+<!--  -->
+<h5 class="subsubheading">Test specifiers</h5>
+
+<p>Sometimes we want to only run certain tests, or we know that certain
+tests are expected to fail.  A test specifier is a one&ndash;argument
+function that takes a test&ndash;runner and returns a boolean.  The specifier
+may be run before a test is performed, and the result may control
+whether the test is executed.  For convenience, a specifier may also be
+a non&ndash;procedure value, which is coerced to a specifier procedure, as
+described below for count and name.
+
+   <p>A simple example is:
+
+<pre class="example">     (if some-condition
+       (test-skip 2)) ;; skip next 2 tests
+</pre>
+   <div class="defun">
+&mdash; Function: <b>test-match-name</b><var> name<a name="index-test_002dmatch_002dname-3308"></a></var><br>
+<blockquote><p>The resulting specifier matches if the current test name (as returned by
+<code>test-runner-test-name</code>) is <code>equal?</code> to name. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>test-match-nth</b><var> N<a name="index-test_002dmatch_002dnth-3309"></a></var><br>
+&mdash; Function: <b>test-match-nth</b><var> N count<a name="index-test_002dmatch_002dnth-3310"></a></var><br>
+<blockquote><p>Evaluate to a stateful predicate: A counter keeps track of how many
+times it has been called.  The predicate matches the <var>N</var>'th time it
+is called (where 1 is the first time), and the next <code>(-
+</code><var>count</var><code> 1)</code> times, where count defaults to 1. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>test-match-any</b><var> specifier ...<a name="index-test_002dmatch_002dany-3311"></a></var><br>
+<blockquote><p>The resulting specifier matches if any specifier matches.  Each
+specifier is applied, in order, so side&ndash;effects from a later specifier
+happen even if an earlier specifier is true. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>test-match-all</b><var> specifier ...<a name="index-test_002dmatch_002dall-3312"></a></var><br>
+<blockquote><p>The resulting specifier matches if each specifier matches.  Each
+specifier is applied, in order, so side&ndash;effects from a later specifier
+happen even if an earlier specifier is false.
+
+          <dl>
+<dt><var>count</var><dd>An integer.  Convenience short&ndash;hand for:
+
+          <pre class="example">               (test-match-nth 1 <var>count</var>)
+</pre>
+          <br><dt><var>name</var><dd>A string.  Convenience short&ndash;hand for:
+
+          <pre class="example">               (test-match-name <var>name</var>)
+</pre>
+          </dl>
+        </p></blockquote></div>
+
+<!--  -->
+<h5 class="subsubheading">Skipping selected tests</h5>
+
+<p>In some cases you may want to skip a test.
+
+<div class="defun">
+&mdash; Syntax: <b>test-skip</b><var> ?specifier<a name="index-test_002dskip-3313"></a></var><br>
+<blockquote><p>Evaluating <code>test-skip</code> adds the resulting specifier to the set of
+currently active skip&ndash;specifiers.  Before each test (or test&ndash;group)
+the set of active skip&ndash;specifiers are applied to the active
+test&ndash;runner.  If any specifier matches, then the test is skipped.
+
+        <p>For convenience, if the specifier is a string that is syntactic sugar
+for <code>(test-match-name specifier)</code>.  For example:
+
+     <pre class="example">          (test-skip "test-b")
+          (test-assert "test-a")   ;; executed
+          (test-assert "test-b")   ;; skipped
+</pre>
+        <p>Any skip specifiers introduced by a test-skip are removed by a following
+non&ndash;nested <code>test-end</code>.
+
+     <pre class="example">          (test-begin "group1")
+          (test-skip "test-a")
+          (test-assert "test-a")   ;; skipped
+          (test-end "group1")      ;; Undoes the prior test-skip
+          (test-assert "test-a")   ;; executed
+</pre>
+        </blockquote></div>
+
+<!--  -->
+<h5 class="subsubheading">Expected failures</h5>
+
+<p>Sometimes you know a test case will fail, but you don't have time to or
+can't fix it.  Maybe a certain feature only works on certain platforms. 
+However, you want the test&ndash;case to be there to remind you to fix it. 
+You want to note that such tests are expected to fail.
+
+<div class="defun">
+&mdash; Syntax: <b>test-expect-fail</b><var> ?specifier<a name="index-test_002dexpect_002dfail-3314"></a></var><br>
+<blockquote><p>Matching tests (where matching is defined as in <code>test-skip</code>) are
+expected to fail.  This only affects test reporting, not test execution. 
+For example:
+
+     <pre class="example">          (test-expect-fail 2)
+          (test-eqv ...) ;; expected to fail
+          (test-eqv ...) ;; expected to fail
+          (test-eqv ...) ;; expected to pass
+</pre>
+        </blockquote></div>
+
+<!-- page -->
+   </body></html>
+

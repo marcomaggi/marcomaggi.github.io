@@ -1,0 +1,242 @@
+<html lang="en">
+<head>
+<title>srfi vector spec cons - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="srfi-vector-spec.html#srfi-vector-spec" title="srfi vector spec">
+<link rel="prev" href="srfi-vector-spec-intro.html#srfi-vector-spec-intro" title="srfi vector spec intro">
+<link rel="next" href="srfi-vector-spec-pred.html#srfi-vector-spec-pred" title="srfi vector spec pred">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d20 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package is distributed under the terms of the GNU General Public
+License (GPL) and can be downloaded from:
+
+               `http://code.google.com/p/vicare-scheme/'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2012 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="srfi-vector-spec-cons"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="srfi-vector-spec-pred.html#srfi-vector-spec-pred">srfi vector spec pred</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="srfi-vector-spec-intro.html#srfi-vector-spec-intro">srfi vector spec intro</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="srfi-vector-spec.html#srfi-vector-spec">srfi vector spec</a>
+<hr>
+</div>
+
+<h5 class="subsubsection">10.23.4.2 Constructors</h5>
+
+<div class="defun">
+&mdash; Function: <b>make-vector</b><var> size </var>[<var>fill</var>]<var> -&gt; vector<a name="index-make_002dvector-3243"></a></var><br>
+<blockquote><p><acronym>R5RS</acronym> Create and return a vector of size <var>size</var>, optionally
+filling it with <var>fill</var>.  The default value of <var>fill</var> is
+unspecified.
+
+        <p>Example:
+
+     <pre class="example">          (make-vector 5 3)
+          =&gt; #(3 3 3 3 3)
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>vector</b><var> x ... -&gt; vector<a name="index-vector-3244"></a></var><br>
+<blockquote><p><acronym>R5RS</acronym> Create and return a vector whose elements are <var>x</var> ...
+
+        <p>Example:
+
+     <pre class="example">          (vector 0 1 2 3 4)
+          =&gt; #(0 1 2 3 4)
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>vector-unfold</b><var> f length initial-seed ... -&gt; vector<a name="index-vector_002dunfold-3245"></a></var><br>
+<blockquote><p>The fundamental vector constructor.  Create a vector whose length is
+<var>length</var> and iterates across each index <var>k</var> between 0 and
+<var>length</var>, applying <var>f</var> at each iteration to the current index
+and current seeds, in that order, to receive <var>n</var><code> + 1</code> values:
+first, the element to put in the <var>k</var>-th slot of the new vector and
+<var>n</var> new seeds for the next iteration.  It is an error for the number
+of seeds to vary between iterations.
+
+        <p>Examples:
+
+     <pre class="example">          (vector-unfold (lambda (i x)
+                           (values x (- x 1)))
+                         10 0)
+          =&gt; #(0 -1 -2 -3 -4 -5 -6 -7 -8 -8)
+          
+          ;; construct a vector of the sequence of integers
+          ;; in the range [0,n)
+          (vector-unfold values n)
+          =&gt; #(0 1 2 ··· n-2 n-1)
+          
+          ;; copy a vector
+          (vector-unfold (lambda (i)
+                           (vector-ref vector i))
+                         (vector-length vector))
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>vector-unfold-right</b><var> f length initial-seed ... -&gt; vector<a name="index-vector_002dunfold_002dright-3246"></a></var><br>
+<blockquote><p>Like <code>vector-unfold</code>, but it uses <var>f</var> to generate elements from
+right&ndash;to&ndash;left, rather than left&ndash;to&ndash;right.
+
+        <p>Examples:
+
+     <pre class="example">          ;; Construct a vector in reverse of the integers
+          ;; in the range [0,n).
+          (vector-unfold-right (lambda (i x)
+                                 (values x (+ x 1)))
+                               n 0)
+          =&gt; #(n-1 n-2 ··· 2 1 0)
+          
+          ;; Reverse vector.
+          (vector-unfold-right (lambda (i x)
+                                 (values (vector-ref vector x) (+ x 1)))
+                               (vector-length vector)
+                               0)
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>vector-copy</b><var> vec </var>[<var>start </var>[<var>end </var>[<var>fill</var>]]]<var> -&gt; vector<a name="index-vector_002dcopy-3247"></a></var><br>
+<blockquote><p>Allocate a new vector whose length is <var>end</var><code> - </code><var>start</var> and
+fills it with elements from <var>vec</var>, taking elements from <var>vec</var>
+starting at index <var>start</var> and stopping at index <var>end</var>.
+
+        <p><var>start</var> defaults to 0 and <var>end</var> defaults to the value of
+<code>(vector-length </code><var>vec</var><code>)</code>.
+
+        <p>If <var>end</var> extends beyond the length of <var>vec</var>, the slots in the
+new vector that obviously cannot be filled by elements from <var>vec</var>
+are filled with <var>fill</var>, whose default value is unspecified.
+
+        <p>Examples:
+
+     <pre class="example">          (vector-copy '#(a b c d e f g h i))
+          =&gt; #(a b c d e f g h i)
+          
+          (vector-copy '#(a b c d e f g h i) 6)
+          =&gt; #(g h i)
+          
+          (vector-copy '#(a b c d e f g h i) 3 6)
+          =&gt; #(d e f)
+          
+          (vector-copy '#(a b c d e f g h i) 6 12 'x)
+          =&gt; #(g h i x x x)
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>vector-reverse-copy</b><var> vec </var>[<var>start </var>[<var>end</var>]]<var> -&gt; vector<a name="index-vector_002dreverse_002dcopy-3248"></a></var><br>
+<blockquote><p>Like <code>vector-copy</code>, but it copies the elements in the reverse order
+from <var>vec</var>.
+
+        <p>Example:
+
+     <pre class="example">          (vector-reverse-copy '#(5 4 3 2 1 0) 1 5)
+          =&gt; #(1 2 3 4)
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>vector-append</b><var> vec ... -&gt; vector<a name="index-vector_002dappend-3249"></a></var><br>
+<blockquote><p>Returns a newly allocated vector that contains all elements in order
+from the subsequent locations in <var>vec</var> ...
+
+        <p>Examples:
+
+     <pre class="example">          (vector-append '#(x) '#(y))
+          =&gt; #(x y)
+          
+          (vector-append '#(a) '#(b c d))
+          =&gt; #(a b c d)
+          
+          (vector-append '#(a #(b)) '#(#(c)))
+          =&gt; #(a #(b) #(c))
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>vector-concatenate</b><var> list-of-vectors -&gt; vector<a name="index-vector_002dconcatenate-3250"></a></var><br>
+<blockquote><p>Appends each vector in <var>list-of-vectors</var>.  This is equivalent to:
+
+     <pre class="example">          (apply vector-append list-of-vectors)
+</pre>
+        <p class="noindent">however, it may be implemented better.
+
+        <p>Example:
+
+     <pre class="example">          (vector-concatenate '(#(a b) #(c d)))
+          =&gt; #(a b c d)
+</pre>
+        </blockquote></div>
+
+<!-- page -->
+   </body></html>
+

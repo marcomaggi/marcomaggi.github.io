@@ -9,7 +9,7 @@
 <link rel="next" href="fasl-api.html#fasl-api" title="fasl api">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
-This document describes version 0.2d19 of Vicare Scheme, an
+This document describes version 0.2d20 of Vicare Scheme, an
 R6RS compliant native compiler for the Scheme language, producing
 single threaded programs running on Intel x86 32-bit processors, with
 experimental support for 64-bit machines.  _Vicare_ is pronounced
@@ -19,11 +19,6 @@ The package is distributed under the terms of the GNU General Public
 License (GPL) and can be downloaded from:
 
                `http://code.google.com/p/vicare-scheme/'
-
-
-or:
-
-            `http://github.com/marcomaggi/vicare/downloads'
 
 
 the home page of the project is at:
@@ -179,19 +174,48 @@ the bignum.
 
      <br><dt>"H" + vector + vector<dd><code>eqv?</code> hashtable, first vector keys, second vector values.
 
-     <br><dt>"W" + name + parent + uid + sealed? + opaque? + count + (bool + field) ...<dd>An <acronym>R6RS</acronym> record type descriptor.  <code>name</code> must be the return
-value of <code>record-type-name</code>.  <code>parent</code> must be the return
-value of <code>record-type-parent</code>.  <code>uid</code> must be the return value
-of <code>record-type-uid</code>.  <code>sealed?</code> must be the return value of
-<code>record-type-sealed?</code>.  <code>opaque?</code> must be the return value of
-<code>record-type-opaque?</code>.  <code>count</code> must be a fixnum representing
-the number of fields.  Each <code>bool + field</code> sequence must be a
-boolean representing the mutability of the record field, followed by
-symbol representing the name of the record field.
+     <br><dt>"W" + name + parent + uid + sealed? + opaque? + count + (bool + field) ...<dd>An <acronym>R6RS</acronym> record type descriptor.
 
-     <br><dt>"x"<dd>Denotes code.
+          <dl>
+<dt><code>name</code><dd>Must be the return value of <code>record-type-name</code>.
 
-     <br><dt>"Q"<dd>Procedure; followed by code.
+          <br><dt><code>parent</code><dd>Must be the return value of <code>record-type-parent</code>.
+
+          <br><dt><code>uid</code><dd>Must be the return value of <code>record-type-uid</code>.
+
+          <br><dt><code>sealed?</code><dd>Must be the return value of <code>record-type-sealed?</code>.
+
+          <br><dt><code>opaque?</code><dd>Must be the return value of <code>record-type-opaque?</code>.
+
+          <br><dt><code>count</code><dd>Must be a fixnum representing the number of fields. 
+</dl>
+
+     <p>Each <code>bool + field</code> sequence must be a boolean representing the
+mutability of the record field, followed by symbol representing the name
+of the record field.
+
+     <br><dt>"x" + int + int + annotation + bytes + relocation vector<dd>Denotes code.  A serialised code object is represented as follows, after
+the &lsquo;<samp><span class="samp">x</span></samp>&rsquo; header:
+
+          <ol type=1 start=1>
+<li>An exact integer representing the number of bytes actually used in the
+data area of the code object.  On 32-bit platforms: a big endian 32-bit
+integer.  On 64-bit platforms: a sequence of two big endian 32-bit
+integers.
+
+          <li>An exact integer representing the number of free variables in the code. 
+On 32-bit platforms: a big endian 32-bit integer.  On 64-bit platforms:
+a sequence of two big endian 32-bit integers.
+
+          <li>A Scheme object representing the code annotation.
+
+          <li>An array of bytes being the binary code.
+
+          <li>The code relocation vector as an ordinary Scheme vector.
+          </ol>
+
+     <br><dt>"Q" + "x" + code object<dd>Procedure.  A procedure is represented by the header <code>Q</code> followed
+by the serialisation of a code object, header <code>x</code> included.
 
      <br><dt>"&gt;" + int32(I)<dd>Mark the next object with index I.
 

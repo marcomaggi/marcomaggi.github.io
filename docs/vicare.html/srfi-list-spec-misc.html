@@ -1,0 +1,271 @@
+<html lang="en">
+<head>
+<title>srfi list spec misc - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="srfi-list-spec.html#srfi-list-spec" title="srfi list spec">
+<link rel="prev" href="srfi-list-spec-select.html#srfi-list-spec-select" title="srfi list spec select">
+<link rel="next" href="srfi-list-spec-fold.html#srfi-list-spec-fold" title="srfi list spec fold">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d20 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package is distributed under the terms of the GNU General Public
+License (GPL) and can be downloaded from:
+
+               `http://code.google.com/p/vicare-scheme/'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2012 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="srfi-list-spec-misc"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="srfi-list-spec-fold.html#srfi-list-spec-fold">srfi list spec fold</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="srfi-list-spec-select.html#srfi-list-spec-select">srfi list spec select</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="srfi-list-spec.html#srfi-list-spec">srfi list spec</a>
+<hr>
+</div>
+
+<h5 class="subsubsection">10.2.5.5 Miscellaneous: length, append, concatenate, reverse, zip and count</h5>
+
+<p><a name="index-List-length-2554"></a><a name="index-List-appending-2555"></a><a name="index-List-contatenation-2556"></a><a name="index-List-reversing-2557"></a><a name="index-List-zip-2558"></a><a name="index-List-counting-2559"></a>
+
+<div class="defun">
+&mdash; Function: <b>length</b><var> list<a name="index-length-2560"></a></var><br>
+&mdash; Function: <b>length+</b><var> clist<a name="index-length_002b-2561"></a></var><br>
+<blockquote><p>Both <code>length</code> and <code>length+</code> return the length of the argument. 
+It is an error to pass a value to <code>length</code> which is not a proper
+list (finite and nil&ndash;terminated).  In particular, this means an
+implementation may diverge or signal an error when <code>length</code> is
+applied to a circular list.
+
+        <p><code>length+</code>, on the other hand, returns <code>#f</code> when applied to a
+circular list.
+
+        <p>The length of a proper list is a non&ndash;negative integer <var>n</var> such that
+<code>cdr</code> applied <var>n</var> times to the list produces the empty list. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>append</b><var> list1 ...<a name="index-append-2562"></a></var><br>
+&mdash; Function: <b>append!</b><var> list1 ...<a name="index-append_0021-2563"></a></var><br>
+<blockquote><p><acronym>R5RS</acronym> <code>append</code> returns a list consisting of the elements of
+<var>list1</var> followed by the elements of the other list parameters.
+
+     <pre class="example">          (append '(x) '(y))        =&gt;  (x y)
+          (append '(a) '(b c d))    =&gt;  (a b c d)
+          (append '(a (b)) '((c)))  =&gt;  (a (b) (c))
+</pre>
+        <p>The resulting list is always newly allocated, except that it shares
+structure with the final <var>listi</var> argument.  This last argument may
+be any value at all; an improper list results if it is not a proper
+list.  All other arguments must be proper lists.
+
+     <pre class="example">          (append '(a b) '(c . d))  =&gt;  (a b c . d)
+          (append '() 'a)           =&gt;  a
+          (append '(x y))           =&gt;  (x y)
+          (append)                  =&gt;  ()
+</pre>
+        <p><code>append!</code> is the linear&ndash;update variant of <code>append</code>; it is
+allowed, but not required, to alter cons cells in the argument lists to
+construct the result list.  The last argument is never altered; the
+result list shares structure with this parameter. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>concatenate</b><var> list-of-lists<a name="index-concatenate-2564"></a></var><br>
+&mdash; Function: <b>concatenate!</b><var> list-of-lists<a name="index-concatenate_0021-2565"></a></var><br>
+<blockquote><p>These functions append the elements of their argument together.  That
+is, <code>concatenate</code> returns:
+
+     <pre class="example">          (apply append list-of-lists)
+</pre>
+        <p class="noindent">or, equivalently:
+
+     <pre class="example">          (reduce-right append '() list-of-lists)
+</pre>
+        <p><code>concatenate!</code> is the linear&ndash;update variant, defined in terms
+of <code>append!</code> instead of <code>append</code>.
+
+        <p>Note that some Scheme implementations do not support passing more than a
+certain number (e.g. 64) of arguments to an n&ndash;ary procedure.  In these
+implementations, the <code>(apply append ...)</code> idiom would fail when
+applied to long lists, but concatenate would continue to function
+properly.
+
+        <p>As with <code>append</code> and <code>append!</code>, the last element of the input
+list may be any value at all. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>reverse</b><var> list<a name="index-reverse-2566"></a></var><br>
+&mdash; Function: <b>reverse!</b><var> list<a name="index-reverse_0021-2567"></a></var><br>
+<blockquote><p><acronym>R5RS</acronym> <code>reverse</code> returns a newly allocated list consisting of the
+elements of <var>list</var> in reverse order.
+
+     <pre class="example">          (reverse '(a b c))              =&gt;  (c b a)
+          (reverse '(a (b c) d (e (f))))  =&gt;  ((e (f)) d (b c) a)
+</pre>
+        <p><code>reverse!</code> is the linear&ndash;update variant of <code>reverse</code>.  It
+is permitted, but not required, to alter the argument's cons cells to
+produce the reversed list. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>append-reverse</b><var> rev-head tail<a name="index-append_002dreverse-2568"></a></var><br>
+&mdash; Function: <b>append-reverse!</b><var> rev-head tail<a name="index-append_002dreverse_0021-2569"></a></var><br>
+<blockquote><p><code>append-reverse</code> returns:
+
+     <pre class="example">          (append (reverse rev-head) tail)
+</pre>
+        <p>It is provided because it is a common operation, a common
+list&ndash;processing style calls for this exact operation to transfer values
+accumulated in reverse order onto the front of another list, and because
+the implementation is significantly more efficient than the simple
+composition it replaces.
+
+        <blockquote>
+But note that this pattern of iterative computation followed by a
+<code>reverse</code> can frequently be rewritten as a recursion, dispensing
+with the <code>reverse</code> and <code>append-reverse</code> steps, and shifting
+temporary, intermediate storage from the heap to the stack, which is
+typically a win for reasons of cache locality and eager storage
+reclamation. 
+</blockquote>
+
+        <p><code>append-reverse!</code> is just the linear&ndash;update variant; it is
+allowed, but not required, to alter <var>rev-head</var>'s cons cells to
+construct the result. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>zip</b><var> clist1 clist2 ...<a name="index-zip-2570"></a></var><br>
+<blockquote><p>Defined as:
+
+     <pre class="example">          (lambda lists (apply map list lists))
+</pre>
+        <p>If <code>zip</code> is passed <var>n</var> lists, it returns a list as long as the
+shortest of these lists, each element of which is an <var>n</var>&ndash;element
+list comprised of the corresponding elements from the parameter lists.
+
+     <pre class="example">          (zip '(one two three)
+               '(1 2 3)
+               '(odd even odd even odd even odd even))
+            =&gt; ((one 1 odd) (two 2 even) (three 3 odd))
+          
+          (zip '(1 2 3))
+            =&gt; ((1) (2) (3))
+</pre>
+        <p>At least one of the argument lists must be finite:
+
+     <pre class="example">          (zip '(3 1 4 1) (circular-list #f #t))
+            =&gt; ((3 #f) (1 #t) (4 #f) (1 #t))
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>unzip1</b><var> list<a name="index-unzip1-2571"></a></var><br>
+&mdash; Function: <b>unzip2</b><var> list<a name="index-unzip2-2572"></a></var><br>
+&mdash; Function: <b>unzip3</b><var> list<a name="index-unzip3-2573"></a></var><br>
+&mdash; Function: <b>unzip4</b><var> list<a name="index-unzip4-2574"></a></var><br>
+&mdash; Function: <b>unzip5</b><var> list<a name="index-unzip5-2575"></a></var><br>
+<blockquote><p><code>unzip1</code> takes a list of lists, where every list must contain at
+least one element, and returns a list containing the initial element of
+each such list.  That is, it returns <code>(map car lists)</code>.
+
+        <p><code>unzip2</code> takes a list of lists, where every list must contain at
+least two elements, and returns two values: a list of the first
+elements, and a list of the second elements.
+
+        <p><code>unzip3</code> does the same for the first three elements of the lists,
+and so forth.
+
+     <pre class="example">          (unzip2 '((1 one) (2 two) (3 three)))
+            =&gt; (1 2 3)
+               (one two three)
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>count</b><var> pred clist1 ...<a name="index-count-2576"></a></var><br>
+<blockquote><p><var>pred</var> is a procedure taking as many arguments as there are lists
+and returning a single value.  It is applied element&ndash;wise to the
+elements of the lists, and a count is tallied of the number of elements
+that produce a true value.  This count is returned.
+
+        <p><code>count</code> is &ldquo;iterative&rdquo; in that it is guaranteed to apply
+<var>pred</var> to the list elements in a left&ndash;to&ndash;right order.  The
+counting stops when the shortest list expires.
+
+     <pre class="example">          (count even? '(3 1 4 1 5 9 2 5 6))                =&gt; 3
+          (count &lt;     '(1 2 4 8) '(2 4 6 8 10 12 14 16))   =&gt; 3
+</pre>
+        <p>At least one of the argument lists must be finite:
+
+     <pre class="example">          (count &lt; '(3 1 4 1) (circular-list 1 10)) =&gt; 2
+</pre>
+        </blockquote></div>
+
+<!-- page -->
+   </body></html>
+

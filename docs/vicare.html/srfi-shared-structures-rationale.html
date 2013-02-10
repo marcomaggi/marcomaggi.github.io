@@ -1,0 +1,129 @@
+<html lang="en">
+<head>
+<title>srfi shared structures rationale - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="srfi-shared-structures.html#srfi-shared-structures" title="srfi shared structures">
+<link rel="prev" href="srfi-shared-structures-abstract.html#srfi-shared-structures-abstract" title="srfi shared structures abstract">
+<link rel="next" href="srfi-shared-structures-spec.html#srfi-shared-structures-spec" title="srfi shared structures spec">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d20 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package is distributed under the terms of the GNU General Public
+License (GPL) and can be downloaded from:
+
+               `http://code.google.com/p/vicare-scheme/'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2012 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="srfi-shared-structures-rationale"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="srfi-shared-structures-spec.html#srfi-shared-structures-spec">srfi shared structures spec</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="srfi-shared-structures-abstract.html#srfi-shared-structures-abstract">srfi shared structures abstract</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="srfi-shared-structures.html#srfi-shared-structures">srfi shared structures</a>
+<hr>
+</div>
+
+<h4 class="subsection">10.14.3 Rationale</h4>
+
+<p><acronym>R5RS</acronym> scheme and <acronym>IEEE</acronym> scheme provide the procedure <code>write</code>,
+which prints machine&ndash;readable representations of lists and other
+objects.  However, the printed representation does not preserve
+information about what parts of the structure are shared, and in the
+case of self&ndash;referential objects the behavior of <code>write</code> itself is
+undefined; it is permitted to go into an infinite loop or invoke the
+dreaded curse of the nasal demons.
+
+   <p>For example, it is possible to have a list within which two or more
+members are the same string (in the sense of <code>eq?</code>), but when the
+list is written, there is not sufficient information in the
+representation to recover the <code>eq?</code> relationship.  When the list is
+read back in, there will be two or more copies of the string which are
+<code>eqv?</code> but not <code>eq?</code>.
+
+   <p>As an example of the second problem, the results of evaluating:
+
+<pre class="example">     (begin (define a (cons 'val1 'val2))
+            (set-cdr! a a)
+            (write a))
+</pre>
+   <p class="noindent">are undefined; in <acronym>R5RS</acronym> parlance, calling <code>write</code> on such a
+structure &ldquo;is an error&rdquo;, but not one that is necessarily signalled. 
+The routine is permitted to print a nonstandard notation such as the one
+proposed in this standard or a different one, fail silently, signal an
+error, go into an infinite loop, or make demons fly out of your nose. 
+Some of these results are unacceptable in some cases.  This <acronym>SRFI</acronym>
+hopes to provide a standard way of dealing with this problem by
+providing a method of writing data which is guaranteed to be
+well&ndash;behaved and predictable even on data containing shared structures.
+
+   <p>The extended functionality described below in the implementation of
+<code>write-with-shared-structure</code> is already present in the
+<code>write</code> function of several major scheme implementations (PLT,
+SISC, Chez, Bigloo, MIT scheme, and possibly others).
+
+<!-- page -->
+   </body></html>
+

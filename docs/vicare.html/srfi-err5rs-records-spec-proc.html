@@ -1,0 +1,258 @@
+<html lang="en">
+<head>
+<title>srfi err5rs records spec proc - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="srfi-err5rs-records-spec.html#srfi-err5rs-records-spec" title="srfi err5rs records spec">
+<link rel="next" href="srfi-err5rs-records-spec-insp.html#srfi-err5rs-records-spec-insp" title="srfi err5rs records spec insp">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d20 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package is distributed under the terms of the GNU General Public
+License (GPL) and can be downloaded from:
+
+               `http://code.google.com/p/vicare-scheme/'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2012 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="srfi-err5rs-records-spec-proc"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="srfi-err5rs-records-spec-insp.html#srfi-err5rs-records-spec-insp">srfi err5rs records spec insp</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="srfi-err5rs-records-spec.html#srfi-err5rs-records-spec">srfi err5rs records spec</a>
+<hr>
+</div>
+
+<h5 class="subsubsection">10.32.3.1 Procedural layer</h5>
+
+<p>The <code>(srfi :99 records procedural)</code> library exports the following
+procedures.
+
+<div class="defun">
+&mdash; Function: <b>make-rtd</b><var> name fieldspecs<a name="index-make_002drtd-3545"></a></var><br>
+&mdash; Function: <b>make-rtd</b><var> name fieldspecs parent<a name="index-make_002drtd-3546"></a></var><br>
+<blockquote><p><var>name</var> is a symbol, which matters only to the <code>rtd-name</code>
+procedure of the inspection layer.  <var>fieldspecs</var> is a vector of
+field specifiers, where each field specifier is one of:
+
+          <ul>
+<li>a symbol naming the (mutable) field;
+
+          <li>a list of the form <code>(mutable </code><var>name</var><code>)</code>, where <var>name</var> is a
+symbol naming the mutable field;
+
+          <li>a list of the form <code>(immutable </code><var>name</var><code>)</code>, where name is a symbol
+naming the immutable field. 
+</ul>
+
+        <p>The optional <var>parent</var> is an rtd or <code>#f</code>.  It is an error for any
+of the symbols in <var>fieldspecs</var> to name more than one of the fields
+specified by <var>fieldspecs</var>, but the field names in <var>fieldspecs</var>
+may shadow field names in the parent record&ndash;type.
+
+        <p>Implementations may wish to extend this procedure to support the
+non&ndash;generative, sealed, and/or opaque features of the <acronym>R6RS</acronym>.  The
+recommended way to support those features is to allow any combination of
+the following arguments to follow the optional parent argument:
+
+          <ul>
+<li>The symbol <code>sealed</code> means the new rtd cannot be used as the parent
+of other rtds.
+
+          <li>The symbol <code>opaque</code> means the <code>record?</code> predicate will not
+recognize instances of the new rtd.
+
+          <li>The symbol <code>uid</code>, following by another symbol <var>id</var>, means the
+new rtd is non&ndash;generative with uid <var>id</var>.  The semantics of this
+extension is the same as described by the <acronym>R6RS</acronym>. 
+</ul>
+
+        <p>The recommendation above is not binding on implementations of <acronym>SRFI</acronym>
+99.  There are other ways to realize sealed, opaque, or non-generative
+rtds.
+
+        <p>Returns an <acronym>R6RS</acronym>&ndash;compatible record&ndash;type descriptor.  Could be
+defined (without the recommended error checking, and without the
+extensions described above) in terms of the <acronym>R6RS</acronym> procedural layer
+by:
+
+     <pre class="example">          (define (make-rtd name fieldspecs . rest)
+            (make-record-type-descriptor
+             name
+             (if (null? rest) #f (car rest))
+             #f #f #f
+             (vector-map (lambda (fieldspec)
+                           (if (symbol? fieldspec)
+                               (list 'mutable fieldspec)
+                               fieldspec))
+                         fieldspecs)))
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>rtd?</b><var> obj<a name="index-rtd_003f-3547"></a></var><br>
+<blockquote><p>Equivalent to the <code>record-type-descriptor?</code> procedure of the
+<acronym>R6RS</acronym>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>rtd-constructor</b><var> rtd<a name="index-rtd_002dconstructor-3548"></a></var><br>
+&mdash; Function: <b>rtd-constructor</b><var> rtd fieldspecs<a name="index-rtd_002dconstructor-3549"></a></var><br>
+<blockquote><p><var>rtd</var> is a record&ndash;type descriptor, and <var>fieldspecs</var> is an
+optional vector of symbols.
+
+        <p>If no <var>fieldspecs</var> argument is supplied, then <code>rtd-constructor</code>
+returns a procedure that expects one argument for each field of the
+record&ndash;type described by <var>rtd</var> and returns an instance of that
+record&ndash;type with its fields initialized to the corresponding arguments. 
+Arguments that correspond to the fields of the record&ndash;type's parent (if
+any) come first.
+
+        <p>If <var>fieldspecs</var> is supplied, then <code>rtd-constructor</code> returns a
+procedure that expects one argument for each element of <var>fieldspecs</var>
+and returns an instance of the record&ndash;type described by <var>rtd</var> with
+the named fields initialized to the corresponding arguments.
+
+        <p>It is an error if some symbol occurs more than once in <var>fieldspecs</var>. 
+Fields of a derived record&ndash;type shadow fields of the same name in its
+parent; the <var>fieldspecs</var> argument cannot be used to initialize a
+shadowed field.
+
+        <blockquote>
+<strong>NOTE</strong> The optional second argument was proposed by Pavel Curtis,
+and interoperates well with <acronym>SRFI</acronym>-9. 
+</blockquote>
+
+        <p>Could be defined in terms of the <acronym>R6RS</acronym> procedural layer and
+<acronym>ERR5RS</acronym> inspection layer by:
+
+     <pre class="example">          (define (rtd-constructor rtd . rest)
+            ; Computes permutation and allocates permutation buffer
+            ; when the constructor is created, not when the constructor
+            ; is called.  More error checking is recommended.
+            (define (make-constructor fieldspecs allnames maker)
+              (let* ((k (length fieldspecs))
+                     (n (length allnames))
+                     (buffer (make-vector n (unspecified)))
+                     (reverse-all-names (reverse allnames)))
+          
+                (define (position fieldname)
+                  (let ((names (memq fieldname reverse-all-names)))
+                    (assert names)
+                    (- (length names) 1)))
+          
+                (let ((indexes (map position fieldspecs)))
+                  ; The following can be made quite efficient by
+                  ; hand-coding it in some lower-level language,
+                  ; e.g. Larceny's mal.  Even case-lambda would
+                  ; be good enough in most systems.
+                  (lambda args
+                    (assert (= (length args) k))
+                    (for-each (lambda (arg posn)
+                                (vector-set! buffer posn arg))
+                              args indexes)
+                    (apply maker (vector-&gt;list buffer))))))
+            (if (null? rest)
+                (record-constructor
+                 (make-record-constructor-descriptor rtd #f #f))
+                (begin (assert (null? (cdr rest)))
+                       (make-constructor
+                        (vector-&gt;list (car rest))
+                        (vector-&gt;list (rtd-all-field-names rtd))
+                        (record-constructor
+                         (make-record-constructor-descriptor rtd #f #f))))))
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>rtd-predicate</b><var> rtd<a name="index-rtd_002dpredicate-3550"></a></var><br>
+<blockquote><p>Equivalent to the record&ndash;predicate procedure of the <acronym>R6RS</acronym>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>rtd-accessor</b><var> rtd field<a name="index-rtd_002daccessor-3551"></a></var><br>
+<blockquote><p><var>field</var> is a symbol that names a field of the record&ndash;type described
+by the record&ndash;type descriptor <var>rtd</var>.  Return a unary procedure that
+accepts instances of <var>rtd</var> (or any record&ndash;type that inherits from
+<var>rtd</var>) and returns the current value of the named field.
+
+        <p>Fields in derived record&ndash;types shadow fields of the same name in a
+parent record&ndash;type. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>rtd-mutator</b><var> rtd field<a name="index-rtd_002dmutator-3552"></a></var><br>
+<blockquote><p><var>field</var> is a symbol that names a field of the record&ndash;type described
+by the record&ndash;type descriptor <var>rtd</var>.  Return a binary procedure
+that accepts instances of <var>rtd</var> (or any record&ndash;type that inherits
+from <var>rtd</var>) and a new value to be stored into the named field,
+performs that side effect, and returns an unspecified value.
+
+        <p>Fields in derived record&ndash;types shadow fields of the same name in a
+parent record&ndash;type. 
+</p></blockquote></div>
+
+<!-- page -->
+   </body></html>
+

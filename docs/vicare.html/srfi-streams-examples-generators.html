@@ -1,0 +1,164 @@
+<html lang="en">
+<head>
+<title>srfi streams examples generators - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="srfi-streams-examples.html#srfi-streams-examples" title="srfi streams examples">
+<link rel="prev" href="srfi-streams-examples-infinite.html#srfi-streams-examples-infinite" title="srfi streams examples infinite">
+<link rel="next" href="srfi-streams-examples-pipeline.html#srfi-streams-examples-pipeline" title="srfi streams examples pipeline">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d20 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package is distributed under the terms of the GNU General Public
+License (GPL) and can be downloaded from:
+
+               `http://code.google.com/p/vicare-scheme/'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2012 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="srfi-streams-examples-generators"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="srfi-streams-examples-pipeline.html#srfi-streams-examples-pipeline">srfi streams examples pipeline</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="srfi-streams-examples-infinite.html#srfi-streams-examples-infinite">srfi streams examples infinite</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="srfi-streams-examples.html#srfi-streams-examples">srfi streams examples</a>
+<hr>
+</div>
+
+<h5 class="subsubsection">10.21.8.2 Generators and co&ndash;routines</h5>
+
+<p>It is possible to model generators and co&ndash;routines using streams. 
+Consider the task, due to Carl Hewitt, of determining if two trees have
+the same sequence of leaves:
+
+<pre class="example">     (same-fringe? = '(1 (2 3)) '((1 2) 3))  =&gt; #t
+     
+     (same-fringe? = '(1 2 3) '(1 (3 2)))    =&gt; #f
+</pre>
+   <p>The simplest solution is to flatten both trees into lists and compare
+them element&ndash;by&ndash;element:
+
+<pre class="example">     (define (flatten tree)
+       (cond [(null? tree) '()]
+             [(pair? (car tree))
+              (append (flatten (car tree))
+                      (flatten (cdr tree)))]
+             [else (cons (car tree)
+                         (flatten (cdr tree)))]))
+     
+     (define (same-fringe? eql? tree1 tree2)
+       (let loop ([t1 (flatten tree1)]
+                  [t2 (flatten tree2)])
+         (cond [(and (null? t1) (null? t2)) #t]
+               [(or (null? t1) (null? t2)) #f]
+               [(not (eql? (car t1) (car t2))) #f]
+               [else (loop (cdr t1) (cdr t2))])))
+</pre>
+   <p>That works, but requires time to flatten both trees and space to store
+the flattened versions; if the trees are large, that can be a lot of
+time and space, and if the fringes differ, much of that time and space
+is wasted.
+
+   <p>Hewitt used a generator to flatten the trees one element at a time,
+storing only the current elements of the trees and the machines needed
+to continue flattening them, so <code>same-fringe?</code> could stop early if
+the trees differ.  Dorai Sitaram presents both the generator solution
+and a co&ndash;routine solution, which both involve tricky calls to
+<code>call-with-current-continuation</code> and careful coding to keep them
+synchronized.
+
+   <p>An alternate solution flattens the two trees to streams instead of
+lists, which accomplishes the same savings of time and space, and
+involves code that looks little different than the list solution
+presented above:
+
+<pre class="example">     (define-stream (flatten tree)
+       (cond [(null? tree) stream-null]
+             [(pair? (car tree))
+              (stream-append
+                (flatten (car tree))
+                (flatten (cdr tree)))]
+             [else (stream-cons
+                     (car tree)
+                     (flatten (cdr tree)))]))
+     
+     (define (same-fringe? eql? tree1 tree2)
+       (let loop ([t1 (flatten tree1)]
+                  [t2 (flatten tree2)])
+         (cond [(and (stream-null? t1)
+                     (stream-null? t2)) #t]
+               [(or  (stream-null? t1)
+                     (stream-null? t2)) #f]
+               [(not (eql? (stream-car t1)
+                           (stream-car t2))) #f]
+               [else (loop (stream-cdr t1)
+                           (stream-cdr t2))])))
+</pre>
+   <p>Note that streams, a data structure, replace generators or co&ndash;routines,
+which are control structures, providing a fine example of how lazy
+streams enhance modularity.
+
+<!-- page -->
+   </body></html>
+

@@ -1,0 +1,195 @@
+<html lang="en">
+<head>
+<title>srfi list spec alist - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="srfi-list-spec.html#srfi-list-spec" title="srfi list spec">
+<link rel="prev" href="srfi-list-spec-delete.html#srfi-list-spec-delete" title="srfi list spec delete">
+<link rel="next" href="srfi-list-spec-set.html#srfi-list-spec-set" title="srfi list spec set">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d20 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package is distributed under the terms of the GNU General Public
+License (GPL) and can be downloaded from:
+
+               `http://code.google.com/p/vicare-scheme/'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2012 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="srfi-list-spec-alist"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="srfi-list-spec-set.html#srfi-list-spec-set">srfi list spec set</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="srfi-list-spec-delete.html#srfi-list-spec-delete">srfi list spec delete</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="srfi-list-spec.html#srfi-list-spec">srfi list spec</a>
+<hr>
+</div>
+
+<h5 class="subsubsection">10.2.5.10 Association lists</h5>
+
+<p><a name="index-List_002c-association-lists-2623"></a><a name="index-Association-lists-2624"></a><a name="index-Alists-2625"></a>
+
+   <p>An &ldquo;association list&rdquo; (or &ldquo;alist&rdquo;) is a list of pairs.  The car of
+each pair contains a key value, and the cdr contains the associated data
+value.  They can be used to construct simple look&ndash;up tables in Scheme. 
+Note that association lists are probably inappropriate for
+performance&ndash;critical use on large data; in these cases, hash tables or
+some other alternative should be employed.
+
+<div class="defun">
+&mdash; Function: <b>assoc</b><var> key alist </var>[<var>=</var>]<var><a name="index-assoc-2626"></a></var><br>
+&mdash; Function: <b>assq</b><var> key alist<a name="index-assq-2627"></a></var><br>
+&mdash; Function: <b>assv</b><var> key alist<a name="index-assv-2628"></a></var><br>
+<blockquote><p><acronym>R5RS</acronym>+ <var>alist</var> must be an association list: a list of pairs. 
+These procedures find the first pair in <var>alist</var> whose car field is
+<var>key</var>, and returns that pair.  If no pair in <var>alist</var> has
+<var>key</var> as its car, then <code>#f</code> is returned.
+
+        <p><code>assq</code> uses <code>eq?</code> to compare <var>key</var> with the car fields of
+the pairs in <var>alist</var>, while <code>assv</code> uses <code>eqv?</code> and
+<code>assoc</code> uses <code>equal?</code>.
+
+        <p>Example:
+
+     <pre class="example">          (define e '((a 1) (b 2) (c 3)))
+          (assq 'a e)                            =&gt;  (a 1)
+          (assq 'b e)                            =&gt;  (b 2)
+          (assq 'd e)                            =&gt;  #f
+          (assq (list 'a) '(((a)) ((b)) ((c))))  =&gt;  #f
+          (assoc (list 'a) '(((a)) ((b)) ((c)))) =&gt;  ((a))
+          (assq 5 '((2 3) (5 7) (11 13)))    =&gt;  *unspecified*
+          (assv 5 '((2 3) (5 7) (11 13)))    =&gt;  (5 7)
+</pre>
+        <p><code>assoc</code> is extended from its <acronym>R5RS</acronym> definition to allow the
+client to pass in an optional equality procedure <var>=</var> used to compare
+keys.
+
+        <p>The comparison procedure is used to compare the elements <var>ei</var> of
+list to the key parameter in this way:
+
+     <pre class="example">          (= key (car ei)) ; list is (E1 ... En)
+</pre>
+        <p class="noindent">that is, the first argument is always <var>key</var>, and the second argument
+is one of the list elements.  Thus one can reliably find the first entry
+of <var>alist</var> whose <var>key</var> is greater than five with <code>(assoc 5
+alist &lt;)</code>.
+
+        <p>Note that fully general alist searching may be performed with the
+<code>find-tail</code> and <code>find</code> procedures:
+
+     <pre class="example">          ;; Look up the first association in alist with an even key:
+          (find (lambda (a)
+                  (even? (car a)))
+                alist)
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>alist-cons</b><var> key datum alist<a name="index-alist_002dcons-2629"></a></var><br>
+<blockquote><p>Defined as:
+
+     <pre class="example">          (lambda (key datum alist)
+            (cons (cons key datum) alist))
+</pre>
+        <p>Cons a new alist entry mapping <var>key</var> to <var>datum</var> onto
+<var>alist</var>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>alist-copy</b><var> alist<a name="index-alist_002dcopy-2630"></a></var><br>
+<blockquote><p>Make a fresh copy of <var>alist</var>.  This means copying each pair that
+forms an association as well as the spine of the list:
+
+     <pre class="example">          (lambda (a)
+            (map (lambda (elt)
+                   (cons (car elt) (cdr elt)))
+                 a))
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>alist-delete</b><var> key alist </var>[<var>=</var>]<var><a name="index-alist_002ddelete-2631"></a></var><br>
+&mdash; Function: <b>alist-delete!</b><var> key alist </var>[<var>=</var>]<var><a name="index-alist_002ddelete_0021-2632"></a></var><br>
+<blockquote><p>Delete all associations from <var>alist</var> with the given <var>key</var>, using
+the key-comparison procedure <var>=</var>, which defaults to <code>equal?</code>. 
+The dynamic order in which the various applications of <var>=</var> are made
+is not specified.
+
+        <p>Return values may share common tails with the <var>alist</var> argument.  The
+alist is not disordered: elements that appear in the result alist occur
+in the same order as they occur in <var>alist</var>.
+
+        <p>The comparison procedure is used to compare the element keys <var>ki</var> of
+<var>alist</var>'s entries to the key parameter in this way: <code>(= key
+ki)</code>.  Thus, one can reliably remove all entries of <var>alist</var> whose
+key is greater than five with <code>(alist-delete 5 alist &lt;)</code>.
+
+        <p><code>alist-delete!</code> is the linear&ndash;update variant of
+<code>alist-delete</code>; it is allowed, but not required, to alter cons
+cells from the alist parameter to construct the result. 
+</p></blockquote></div>
+
+<!-- page -->
+   </body></html>
+

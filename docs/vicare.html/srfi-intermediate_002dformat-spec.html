@@ -1,0 +1,268 @@
+<html lang="en">
+<head>
+<title>srfi intermediate-format spec - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="srfi-intermediate_002dformat.html#srfi-intermediate_002dformat" title="srfi intermediate-format">
+<link rel="prev" href="srfi-intermediate_002dformat-rationale.html#srfi-intermediate_002dformat-rationale" title="srfi intermediate-format rationale">
+<link rel="next" href="srfi-intermediate_002dformat-examples.html#srfi-intermediate_002dformat-examples" title="srfi intermediate-format examples">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d20 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package is distributed under the terms of the GNU General Public
+License (GPL) and can be downloaded from:
+
+               `http://code.google.com/p/vicare-scheme/'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2012 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="srfi-intermediate-format-spec"></a>
+<a name="srfi-intermediate_002dformat-spec"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="srfi-intermediate_002dformat-examples.html#srfi-intermediate_002dformat-examples">srfi intermediate-format examples</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="srfi-intermediate_002dformat-rationale.html#srfi-intermediate_002dformat-rationale">srfi intermediate-format rationale</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="srfi-intermediate_002dformat.html#srfi-intermediate_002dformat">srfi intermediate-format</a>
+<hr>
+</div>
+
+<h4 class="subsection">10.25.4 Specification</h4>
+
+<div class="defun">
+&mdash; Function: <b>format</b><var> format-string<a name="index-format-3285"></a></var><br>
+&mdash; Function: <b>format</b><var> format-string obj ...<a name="index-format-3286"></a></var><br>
+&mdash; Function: <b>format</b><var> port format-string<a name="index-format-3287"></a></var><br>
+&mdash; Function: <b>format</b><var> port format-string obj ...<a name="index-format-3288"></a></var><br>
+<blockquote><p>Accept a format template (a Scheme String), and process it, replacing
+any format directives in order with one or more characters, the
+characters themselves dependent on the semantics of the format directive
+encountered.  Each directive may consume one <var>obj</var>.  It is an error
+if fewer or more <var>obj</var> values are provided than format directives
+that require them.
+
+        <p>When a <var>port</var> is specified it must be either an output port or a
+boolean.
+
+          <ul>
+<li>If an output port is specified: the formatted output is output into that
+port.
+
+          <li>If the <var>port</var> argument is <code>#t</code>: output is to the
+<code>current-output-port</code>.
+
+          <li>If the <var>port</var> is <code>#f</code> or no <var>port</var> is specified: the output
+is returned as a string.
+
+          <li>If the <var>port</var> is specified and is <code>#t</code> or an output port: the
+return value of the <code>format</code> function is unspecified. 
+</ul>
+
+        <p>It is unspecified which encoding is used (e.g. <acronym>ASCII</acronym>,
+<acronym>EBCDIC</acronym>, Unicode).  A given implementation must specify which
+encoding is used.  The implementation may or may not allow the encoding
+to be selected or changed.
+
+        <p>It is an error if a format directive consumes an <var>obj</var> argument and
+that argument does not conform to a required type as noted in the table
+below.
+
+        <p>It is permissible, but highly discouraged, to implement
+<code>pretty-print</code> as:
+
+     <pre class="example">          (define pretty-print write)
+</pre>
+        <p>A format directive is a two character sequence in the string where the
+first character is a tilde <code>~</code>.  Directive characters are
+case&ndash;independent, i.e. upper and lower case characters are interpreted
+the same.  Each directive code's meaning is described in the following
+table:
+
+        <p><table summary=""><tr align="left"><th valign="top" width="17%">DIRECTIVE </th><th valign="top" width="20%">MNEMONIC </th><th valign="top" width="50%">ACTION </th><th valign="top" width="13%">CONSUMES? 
+<br></th></tr><tr align="left"><td valign="top" width="17%"><code>~a</code>
+</td><td valign="top" width="20%">Any
+</td><td valign="top" width="50%"><code>(display obj)</code> for humans. 
+</td><td valign="top" width="13%">yes
+<br></td></tr><tr align="left"><td valign="top" width="17%"><code>~s</code>
+</td><td valign="top" width="20%">Slashified
+</td><td valign="top" width="50%"><code>(write obj)</code> for parsers. 
+</td><td valign="top" width="13%">yes
+<br></td></tr><tr align="left"><td valign="top" width="17%"><code>~w</code>
+</td><td valign="top" width="20%">WriteCircular
+</td><td valign="top" width="50%"><code>(write-with-shared-structure obj)</code> like <code>~s</code>, but
+handles recursive structures. 
+</td><td valign="top" width="13%">yes
+<br></td></tr><tr align="left"><td valign="top" width="17%"><code>~d</code>
+</td><td valign="top" width="20%">Decimal
+</td><td valign="top" width="50%">The <var>obj</var> is a number which is output in decimal radix. 
+</td><td valign="top" width="13%">yes
+<br></td></tr><tr align="left"><td valign="top" width="17%"><code>~x</code>
+</td><td valign="top" width="20%">heXadecimal
+</td><td valign="top" width="50%">The <var>obj</var> is a number which is output in hexdecimal radix. 
+</td><td valign="top" width="13%">yes
+<br></td></tr><tr align="left"><td valign="top" width="17%"><code>~o</code>
+</td><td valign="top" width="20%">Octal
+</td><td valign="top" width="50%">The <var>obj</var> is a number which is output in octal radix. 
+</td><td valign="top" width="13%">yes
+<br></td></tr><tr align="left"><td valign="top" width="17%"><code>~b</code>
+</td><td valign="top" width="20%">Binary
+</td><td valign="top" width="50%">The <var>obj</var> is a number which is output in binary radix. 
+</td><td valign="top" width="13%">yes
+<br></td></tr><tr align="left"><td valign="top" width="17%"><code>~c</code>
+</td><td valign="top" width="20%">Character
+</td><td valign="top" width="50%">The single charater <var>obj</var> is output by <code>write-char</code>. 
+</td><td valign="top" width="13%">yes
+<br></td></tr><tr align="left"><td valign="top" width="17%"><code>~y</code>
+</td><td valign="top" width="20%">Yuppify
+</td><td valign="top" width="50%">The list <var>obj</var> is pretty-printed to the output. 
+</td><td valign="top" width="13%">yes
+<br></td></tr><tr align="left"><td valign="top" width="17%"><code>~?</code>
+</td><td valign="top" width="20%">Indirection
+</td><td valign="top" width="50%">The <var>obj</var> is another format&ndash;string and the following <var>obj</var> is a
+list of arguments; format is called recursively. 
+</td><td valign="top" width="13%">yes
+<br></td></tr><tr align="left"><td valign="top" width="17%"><code>~K</code>
+</td><td valign="top" width="20%">Indirection
+</td><td valign="top" width="50%">The same as <code>~?</code> for backward compatability with some existing
+implementations. 
+</td><td valign="top" width="13%">yes
+<br></td></tr><tr align="left"><td valign="top" width="17%"><code>~[w[,d]]F</code>
+</td><td valign="top" width="20%">Fixed
+</td><td valign="top" width="50%"><code>~w,dF</code> outputs a number with width <code>w</code> and <code>d</code>
+digits after the decimal; <code>~wF</code> outputs a string or number with
+width <code>w</code>. 
+</td><td valign="top" width="13%">yes
+<br></td></tr><tr align="left"><td valign="top" width="17%"><code>~~</code>
+</td><td valign="top" width="20%">Tilde
+</td><td valign="top" width="50%">Output a tilde. 
+</td><td valign="top" width="13%">no
+<br></td></tr><tr align="left"><td valign="top" width="17%"><code>~t</code>
+</td><td valign="top" width="20%">Tab
+</td><td valign="top" width="50%">Output a tab character. 
+</td><td valign="top" width="13%">no
+<br></td></tr><tr align="left"><td valign="top" width="17%"><code>~%</code>
+</td><td valign="top" width="20%">Newline
+</td><td valign="top" width="50%">Output a newline character. 
+</td><td valign="top" width="13%">no
+<br></td></tr><tr align="left"><td valign="top" width="17%"><code>~&amp;</code>
+</td><td valign="top" width="20%">Freshline
+</td><td valign="top" width="50%">Output a newline character if it is known that the previous output
+was not a newline. 
+</td><td valign="top" width="13%">no
+<br></td></tr><tr align="left"><td valign="top" width="17%"><code>~_</code>
+</td><td valign="top" width="20%">Space
+</td><td valign="top" width="50%">A single space character is output. 
+</td><td valign="top" width="13%">no
+<br></td></tr><tr align="left"><td valign="top" width="17%"><code>~h</code>
+</td><td valign="top" width="20%">Help
+</td><td valign="top" width="50%">Outputs one line of call synopsis, one line of comment, and one
+line of synopsis for each format directive, starting with the directive
+(e.g. <code>"~t"</code>). 
+</td><td valign="top" width="13%">no
+        <br></td></tr></table>
+
+        <p>The <code>~F</code>, fixed format, directive requires some elucidation.
+
+        <p><code>~wF</code> is useful for strings or numbers.  Where the string (or
+<code>number-&gt;string</code> of the number) has fewer characters than the
+integer width <code>w</code>, the string is padded on the left with space
+characters.
+
+        <p><code>~w,dF</code> is typically used only on numbers.  For strings, the
+<code>d</code> specifier is ignored.  For numbers, the integer <code>d</code>
+specifies the number of decimal digits after the decimal place.  Both
+<code>w</code> and <code>d</code> must be zero or positive.
+
+        <p>If <code>d</code> is specified, the number is processed as if added to
+<code>0.0</code>, i.e. it is converted to an inexact value.
+
+     <pre class="example">          (format "~8,2F" 1/3)    &rArr; "    0.33"
+</pre>
+        <p>If no <code>d</code> is specified, the number is not coerced to inexact.
+
+     <pre class="example">          (format "~6F" 32)       &rArr; "    32"
+</pre>
+        <p>Digits are padded to the right with zeros
+
+     <pre class="example">          (format "~8,2F" 32)     &rArr; "   32.00"
+</pre>
+        <p>If the number it too large to fit in the width specified, a string
+longer than the width is returned:
+
+     <pre class="example">          (format "~1,2F" 4321)   &rArr; "4321.00"
+</pre>
+        <p>If the number is complex, <code>d</code> is applied to both real and imaginal
+parts:
+
+     <pre class="example">          (format "~1,2F" (sqrt -3.9)) &rArr; "0.00+1.97i"
+</pre>
+        <p>For very large or very small numbers, the point where exponential
+notation is used is implementation defined.
+
+     <pre class="example">          (format "~8F" 32e5)     &rArr; "   3.2e6" or "3200000.0"
+</pre>
+        </blockquote></div>
+
+<!-- page -->
+   </body></html>
+

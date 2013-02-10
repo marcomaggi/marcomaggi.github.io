@@ -1,0 +1,244 @@
+<html lang="en">
+<head>
+<title>objects closures - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="objects.html#objects" title="objects">
+<link rel="prev" href="objects-codes.html#objects-codes" title="objects codes">
+<link rel="next" href="objects-continuations.html#objects-continuations" title="objects continuations">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d20 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package is distributed under the terms of the GNU General Public
+License (GPL) and can be downloaded from:
+
+               `http://code.google.com/p/vicare-scheme/'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2012 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="objects-closures"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="objects-continuations.html#objects-continuations">objects continuations</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="objects-codes.html#objects-codes">objects codes</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="objects.html#objects">objects</a>
+<hr>
+</div>
+
+<h3 class="section">12.24 Closure objects</h3>
+
+<p>Closure objects are actual procedures: closure objects are the ones for
+which the <code>procedure?</code> predicate returns <code>#t</code>.  A closure object
+is a fixed length memory block referenced by machine words tagged as
+closures; each closure object is associated to a code object that
+implements the procedure.  The memory layout of a closure object is as
+follows:
+
+<pre class="example">     |------------------------|-------------| reference to closure
+           heap pointer         closure tag
+     
+                            0   1   2   3   4   5
+     |--------------------|---|---|---|---|---|---| memory block
+       raw memory pointer    one slot for every
+       to binary code        free variable
+</pre>
+   <p class="noindent">the first word in the memory block holds a raw memory pointer
+referencing the first byte in the code object implementing the closure;
+the subsequent words (if any) are slots associated to the free variables
+referenced by the closure's code.
+
+<!--  -->
+<h5 class="subsubheading">Inspecting a closure's free variables</h5>
+
+<p>We can take a look at the free variables referenced by a closure with
+the facilities of the library <code>(ikarus system $codes)</code>.  In a
+normal application: we must <strong>not</strong> mess with the internals of
+closure and code objects.
+
+   <p>We start by noticing that in the following example: the function
+<code>f</code> has no &ldquo;true&rdquo; free variables, because it accesses only global
+variables:
+
+<pre class="example">     #!r6rs
+     (import (rnrs)
+       (ikarus system $codes))
+     (define a 123)
+     (define (f)
+       a)
+     ($code-freevars ($closure-code f))      &rArr; 0
+</pre>
+   <p>In the following example: the function <code>f</code> is the only one
+referencing the free variable <code>a</code>, so such variable is stored
+directly in the closure's slot:
+
+<pre class="example">     #!r6rs
+     (import (rnrs)
+       (ikarus system $codes))
+     (define f
+       (let ((a 123))
+         (lambda () a)))
+     ($code-freevars ($closure-code f))      &rArr; 1
+     ($cpref f 0)                            &rArr; 123
+</pre>
+   <p class="noindent">when there are two such variables:
+
+<pre class="example">     #!r6rs
+     (import (vicare)
+       (ikarus system $codes))
+     
+     (define f
+       (let ((a 123)
+             (b 456))
+         (lambda ()
+           (list a b))))
+     ($code-freevars ($closure-code f))      &rArr; 2
+     ($cpref f 0)                            &rArr; 456
+     ($cpref f 1)                            &rArr; 123
+</pre>
+   <p>When more than one closure references the same free variable, the
+storage of the variable is inside a Scheme vector and such vector is
+referenced by the slots of the closures:
+
+<pre class="example">     #!r6rs
+     (import (rnrs)
+       (ikarus system $codes))
+     (define f #f)
+     (define g #f)
+     (let ((a 123))
+       (set! f (lambda () a))
+       (set! g (lambda (x)
+                 (set! a x)
+                 a)))
+     ($code-freevars ($closure-code f))      &rArr; 1
+     ($cpref f 0)                            &rArr; #(123)
+     ($code-freevars ($closure-code g))      &rArr; 1
+     ($cpref g 0)                            &rArr; #(123)
+</pre>
+   <!--  -->
+<h5 class="subsubheading">Basic operations</h5>
+
+<p>Closure objects are allocated on the heap; to perform the allocation and
+initialisation we do:
+
+<pre class="example">     ikptr   p_closure;
+     ikptr   s_closure;
+     ikptr   s_code = ...;
+     
+     p_closure = ik_safe_alloc(pcb, IK_ALIGN(disp_closure_data));
+     s_closure = p_closure | closure_tag;
+     IK_REF(s_closure, off_closure_code) = s_code + off_code_data;
+</pre>
+   <p class="noindent"><code>ik_safe_alloc()</code> returns an <code>ikptr</code> value representing the aligned
+pointer, having the 3 least significant bits set to zero; we add
+to it the closure tag (an integer value fitting in 3 bits) which
+allows to recognise closures among all the other built in objects.
+
+<div class="defun">
+&mdash; Preprocessor Symbol: <b>closure_tag</b><var><a name="index-closure_005ftag-4305"></a></var><br>
+<blockquote><p>An integer used to tag <code>ikptr</code> references to closure memory blocks. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Preprocessor Symbol: <b>closure_mask</b><var><a name="index-closure_005fmask-4306"></a></var><br>
+<blockquote><p>An integer representing the bitmask used to extract (with a bitwise
+logic AND) the tag from <code>ikptr</code> references to closure objects. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Preprocessor Symbol: <b>disp_closure_code</b><var><a name="index-disp_005fclosure_005fcode-4307"></a></var><br>
+<blockquote><p>Displacement of code pointer.  The number of bytes to add to an
+<strong>untagged</strong> pointer to closure to get the pointer to the first
+byte in the word of the closure's data area. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Preprocessor Symbol: <b>disp_closure_data</b><var><a name="index-disp_005fclosure_005fdata-4308"></a></var><br>
+<blockquote><p>Number of bytes needed to hold a closure's memory block.  An integer to
+add to an <strong>untagged</strong> pointer to closure to obtain a pointer to
+the first byte after the closure's memory block. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Preprocessor Symbol: <b>off_closure_code</b><var><a name="index-off_005fclosure_005fcode-4309"></a></var><br>
+<blockquote><p>An integer to add to a tagged <code>ikptr</code> reference to retrieve the pointer
+to the first byte of the word in the closure's data area. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Preprocessor Symbol: <b>off_closure_data</b><var><a name="index-off_005fclosure_005fdata-4310"></a></var><br>
+<blockquote><p>An integer to add to a tagged <code>ikptr</code> vector reference to obtain a
+pointer to the first byte after the closure's memory block. 
+</p></blockquote></div>
+
+<!--  -->
+<h5 class="subsubheading">Convenience preprocessor macros</h5>
+
+<div class="defun">
+&mdash; Preprocessor Macro: int <b>IK_IS_CLOSURE</b> (<var>ikptr X</var>)<var><a name="index-IK_005fIS_005fCLOSURE-4311"></a></var><br>
+<blockquote><p>Evaluate to true if <var>X</var> is a reference to closure object. 
+</p></blockquote></div>
+
+<!-- page -->
+   </body></html>
+

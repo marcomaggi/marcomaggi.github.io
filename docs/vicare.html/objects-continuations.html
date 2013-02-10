@@ -1,0 +1,265 @@
+<html lang="en">
+<head>
+<title>objects continuations - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="objects.html#objects" title="objects">
+<link rel="prev" href="objects-closures.html#objects-closures" title="objects closures">
+<link rel="next" href="objects-misc.html#objects-misc" title="objects misc">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d20 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package is distributed under the terms of the GNU General Public
+License (GPL) and can be downloaded from:
+
+               `http://code.google.com/p/vicare-scheme/'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2012 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="objects-continuations"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="objects-misc.html#objects-misc">objects misc</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="objects-closures.html#objects-closures">objects closures</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="objects.html#objects">objects</a>
+<hr>
+</div>
+
+<h3 class="section">12.25 Continuation objects</h3>
+
+<p>Continuation objects are memory blocks referenced by machine words
+tagged as vectors, whose first word is tagged as continuation:
+
+<pre class="example">     |----------------|----------| reference to continuation
+       heap pointer    vector tag
+     
+     |----------------|----------| first word of continuation
+      all set to zero  vector tag
+</pre>
+   <p class="noindent">the layout of a continuation memory block is:
+
+<pre class="example">     |-----|-----|-----|-----|
+       tag   top  size  next
+</pre>
+   <p>To understand the contents of a continuation object, we have to recall
+how the Scheme stack is used:
+
+<pre class="example">      high memory
+     |            |
+     |------------|
+     |            | &lt;-- pcb-&gt;frame_base
+     |------------|
+     | used word  | &lt;-- pcb-&gt;frame_base - wordsize
+     |------------|
+     |     .      |
+     |     .      |
+     |     .      |
+     |------------|
+     | free word  | &lt;-- pcb-&gt;frame_pointer
+     |------------|
+     |     .      |
+     |     .      |
+     |     .      |
+     |------------|
+     | free word  | &lt;-- pcb-&gt;stack_base
+     |------------|
+     |            |
+       low memory
+</pre>
+   <p class="noindent">and remember that <code>pcb-&gt;frame_base</code> references a word that is
+one&ndash;off the end of the stack segment; so the first word in the stack
+is:
+
+<pre class="example">     pcb-&gt;frame_base - wordsize
+</pre>
+   <p class="noindent">A continuation references the portion of the Scheme stack memory segment
+between <code>frame_base</code> and <code>frame_pointer</code>.
+
+   <p>There are two kinds of continuation objects:
+
+     <dl>
+<dt><dfn>Scheme continuations</dfn><dd>Represent a Scheme continuation.  They are expliticly created by
+<code>call/cc</code>, but also used to represent a previous Scheme code
+execution when the allocated Scheme stack runs out of space.
+
+     <br><dt><dfn>system continuations</dfn><dd>Represent a C continuation.  They are used by the <acronym>FFI</acronym> to save the C
+execution context just before calling back to Scheme from C code. 
+</dl>
+
+   <p>The fields of a Scheme continuation are:
+
+     <dl>
+<dt><code>top</code><dd>Untagged pointer referencing the first free word on the Scheme stack.
+
+     <br><dt><code>size</code><dd>Number of bytes used on the Scheme stack, <strong>not</strong> counting the free
+word referenced by the frame pointer.
+
+     <br><dt><code>next</code><dd>Tagged pointer referencing a continuation object; it represents the
+continuation to go back to after the execution of tthis continuation is
+finished.  This &ldquo;going back&rdquo; is performed by the C function
+<code>ik_exec_code()</code>. 
+</dl>
+
+   <p>The fields of a Scheme continuation are:
+
+     <dl>
+<dt><code>top</code><dd>Untagged memory pointer referencing the C language stack last saved by
+Scheme code; it is the content of the field <code>pcb-&gt;system_stack</code> at
+the time this system continuation object was created.
+
+     <br><dt><code>size</code><dd>Unused.
+
+     <br><dt><code>next</code><dd>Tagged memory pointer referencing the next continuation; it is the
+content of the field <code>pcb-&gt;next_k</code> at the time this system
+continuation object was created. 
+</dl>
+
+   <p>Whatever the kind, usually a continuation is created and then saved in
+the field <code>pcb-&gt;next_k</code> in such a way that continuation objects
+create a linked list:
+
+<pre class="example">             next_k
+     |------|------|-----| PCB
+               |
+               v     next
+            |-------|----| continuation
+                       |
+                       v     next
+                    |-------|----| continuation
+                               |
+                                --&gt; NULL
+</pre>
+   <!--  -->
+<h5 class="subsubheading">Basic operations</h5>
+
+<div class="defun">
+&mdash; Preprocessor Symbol: <b>continuation_tag</b><var><a name="index-continuation_005ftag-4312"></a></var><br>
+&mdash; Preprocessor Symbol: <b>system_continuation_tag</b><var><a name="index-system_005fcontinuation_005ftag-4313"></a></var><br>
+<blockquote><p>Integer values used to tag and recognise the first word in continuation
+memory blocks. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Preprocessor Symbol: <b>continuation_size</b><var><a name="index-continuation_005fsize-4314"></a></var><br>
+&mdash; Preprocessor Symbol: <b>system_continuation_size</b><var><a name="index-system_005fcontinuation_005fsize-4315"></a></var><br>
+<blockquote><p>The number of bytes needed to hold a continuation memory block. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Preprocessor Symbol: <b>disp_continuation_tag</b><var><a name="index-disp_005fcontinuation_005ftag-4316"></a></var><br>
+&mdash; Preprocessor Symbol: <b>disp_continuation_top</b><var><a name="index-disp_005fcontinuation_005ftop-4317"></a></var><br>
+&mdash; Preprocessor Symbol: <b>disp_continuation_size</b><var><a name="index-disp_005fcontinuation_005fsize-4318"></a></var><br>
+&mdash; Preprocessor Symbol: <b>disp_continuation_next</b><var><a name="index-disp_005fcontinuation_005fnext-4319"></a></var><br>
+<blockquote><p>Scheme continuation field displacements.  The number of bytes to add to
+an untagged pointer to Scheme continuations to get the pointer to the
+first byte in the word holding the specified field. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Preprocessor Symbol: <b>disp_system_continuation_tag</b><var><a name="index-disp_005fsystem_005fcontinuation_005ftag-4320"></a></var><br>
+&mdash; Preprocessor Symbol: <b>disp_system_continuation_top</b><var><a name="index-disp_005fsystem_005fcontinuation_005ftop-4321"></a></var><br>
+&mdash; Preprocessor Symbol: <b>disp_system_continuation_size</b><var><a name="index-disp_005fsystem_005fcontinuation_005fsize-4322"></a></var><br>
+&mdash; Preprocessor Symbol: <b>disp_system_continuation_next</b><var><a name="index-disp_005fsystem_005fcontinuation_005fnext-4323"></a></var><br>
+<blockquote><p>System continuation field displacements.  The number of bytes to add to
+an untagged pointer to system continuations to get the pointer to the
+first byte in the word holding the specified field. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Preprocessor Symbol: <b>off_continuation_tag</b><var><a name="index-off_005fcontinuation_005ftag-4324"></a></var><br>
+&mdash; Preprocessor Symbol: <b>off_continuation_top</b><var><a name="index-off_005fcontinuation_005ftop-4325"></a></var><br>
+&mdash; Preprocessor Symbol: <b>off_continuation_size</b><var><a name="index-off_005fcontinuation_005fsize-4326"></a></var><br>
+&mdash; Preprocessor Symbol: <b>off_continuation_next</b><var><a name="index-off_005fcontinuation_005fnext-4327"></a></var><br>
+<blockquote><p>Scheme continuation field offsets.  The number of bytes to add to a
+tagged pointer to Scheme continuation to get the pointer to the first
+byte in the word holding the specified field. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Preprocessor Symbol: <b>off_system_continuation_tag</b><var><a name="index-off_005fsystem_005fcontinuation_005ftag-4328"></a></var><br>
+&mdash; Preprocessor Symbol: <b>off_system_continuation_top</b><var><a name="index-off_005fsystem_005fcontinuation_005ftop-4329"></a></var><br>
+&mdash; Preprocessor Symbol: <b>off_system_continuation_size</b><var><a name="index-off_005fsystem_005fcontinuation_005fsize-4330"></a></var><br>
+&mdash; Preprocessor Symbol: <b>off_system_continuation_next</b><var><a name="index-off_005fsystem_005fcontinuation_005fnext-4331"></a></var><br>
+<blockquote><p>System continuation field offsets.  The number of bytes to add to a
+tagged pointer to system continuation to get the pointer to the first
+byte in the word holding the specified field. 
+</p></blockquote></div>
+
+   <p>A Scheme continuation object is usually allocated as follows:
+
+<pre class="example">     ikpcb *     pcb = ...;
+     ikptr       s_kont;
+     
+     s_kont = ik_unsafe_alloc(pcb, IK_ALIGN(continuation_size)) \
+        | vector_tag;
+     IK_REF(s_kont, off_continuation_tag)  = continuation_tag;
+     IK_REF(s_kont, off_continuation_top)  = pcb-&gt;frame_pointer;
+     IK_REF(s_kont, off_continuation_size) = \
+        pcb-&gt;frame_base - pcb-&gt;frame_pointer - wordsize;
+     IK_REF(s_kont, off_continuation_next) = pcb-&gt;next_k;
+     pcb-&gt;next_k = s_kont;
+</pre>
+   <!-- page -->
+   </body></html>
+

@@ -1,0 +1,317 @@
+<html lang="en">
+<head>
+<title>compiler stack intro - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="compiler-stack.html#compiler-stack" title="compiler stack">
+<link rel="next" href="compiler-stack-args.html#compiler-stack-args" title="compiler stack args">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d20 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package is distributed under the terms of the GNU General Public
+License (GPL) and can be downloaded from:
+
+               `http://code.google.com/p/vicare-scheme/'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2012 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="compiler-stack-intro"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="compiler-stack-args.html#compiler-stack-args">compiler stack args</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="compiler-stack.html#compiler-stack">compiler stack</a>
+<hr>
+</div>
+
+<h4 class="subsection">14.3.1 Stack allocation and basic management</h4>
+
+<p>The Scheme stack is a block of memory allocated with <code>mmap()</code>;
+multiple blocks are allocated when more space is needed, each block is
+called <dfn>stack segment</dfn>.  At any moment, the stack segment currently
+in use is referenced by the following fields of the <acronym>PCB</acronym> structure:
+
+     <dl>
+<dt><code>ikptr stack_base</code><dd>Raw memory pointer referencing the first byte in the stack segment.
+
+     <br><dt><code>unsigned long stack_size</code><dd>Number of bytes allocated for this stack segment; it is always a
+multiple of the host system page size. 
+</dl>
+
+<pre class="example">     pcb-&gt;stack_base         use growth
+            v              &lt;-------------
+     lo mem |-------------------------------------| hi mem
+     
+            |.....................................| pcb-&gt;stack_size
+</pre>
+   <p>When first allocated by C code, the stack is empty.  In the tradition of
+stacks: the use of a stack segment grows from high memory addresses to
+low memory addresses.
+
+<!--  -->
+<h5 class="subsubheading">Calling Scheme functions and returning</h5>
+
+<p>Entering Scheme code from C code and exiting Scheme code to C code does
+not happen directly; rather it involves hand&ndash;written assembly code:
+
+     <ul>
+<li>The C code calls an assembly routine which prepares the <acronym>CPU</acronym>
+registers, then calls a Scheme function.
+
+     <li>The Scheme code returns to the assembly routine, which in turn restores
+the <acronym>CPU</acronym> registers and returns to the C code. 
+</ul>
+
+<p class="noindent">the assembly code is in the file <samp><span class="file">ikarus-enter.S</span></samp>, the C function
+calling the assembly routine is in the file <samp><span class="file">ikarus-exec.c</span></samp>.
+
+   <p>Calling functions and returning from them is performed as follows:
+
+     <ul>
+<li>Entering Scheme code execution from assembly code always involves the
+execution of the assembly instruction <code>call</code>.
+
+     <li>Calling a Scheme function from Scheme code happens through a <code>call</code>
+or <code>jmp</code> instruction.
+
+     <li>Returning from Scheme code to Scheme code happens through a <code>ret</code>
+or <code>jmp</code> instruction.
+
+     <li>Returning from Scheme code to assembly code happens through a <code>ret</code>
+or <code>jmp</code> instruction. 
+</ul>
+
+   <p>For simplicity in introducing the stack management, we assume that:
+
+     <ul>
+<li>Calling a Scheme function always happens through a <code>call</code>
+instruction.
+
+     <li>Returning from a function call always happens through a <code>ret</code>
+instruction.
+
+     <li>All the Scheme functions return a single value. 
+</ul>
+
+   <p>The assembly routine calling Scheme code is <code>ik_asm_enter</code> and its
+return address is labeled <code>ik_underflow_handler</code>; assuming
+<var>REG</var> is a <acronym>CPU</acronym> register holding the address of a Scheme function,
+the assembly code is similar to:
+
+<pre class="example">     ik_asm_enter:
+        ...                          ;assembly instructions
+        call *<var>REG</var>
+     ik_underflow_handler:
+        ...                          ;assembly instructions
+        ret                          ;return to C code
+</pre>
+   <p class="noindent">when the <code>call</code> is performed: the return address
+<code>ik_underflow_handler</code> is pushed on the stack.
+
+<!--  -->
+<h5 class="subsubheading">Stack frames</h5>
+
+<p>The <acronym>CPU</acronym> keeps track of the current position on the stack with the
+<dfn>Frame Pointer Register</dfn> (<acronym>FPR</acronym>, which is <code>%esp</code> on the Intel
+architecture); such register contains the memory address of the current
+stack location, the <dfn>top</dfn> of the stack.  The first function frame
+starts from the end of the stack segment; when we enter Scheme code for
+the first time, we set the <acronym>FPR</acronym> so that it references the machine word
+right after the end of the stack segment:
+
+<pre class="example">     pcb-&gt;stack_base         use growth           FPR
+            v              &lt;-------------          v
+     lo mem |-------------------------------------|-| hi mem
+     
+            |.....................................| pcb-&gt;stack_size
+</pre>
+   <p class="noindent">and perform a <code>call</code> instruction which pushes the return address
+<code>ik_underflow_handler</code> on the stack segment, decrementing <acronym>FPR</acronym> by
+a wordsize; so right after the first <code>call</code>, the stack segment
+looks as follows:
+
+<pre class="example">                             high memory
+                       |                      |
+                    -- |----------------------|          --
+                     . | ik_underflow_handler | &lt;-- FPR  . frame
+                     . |----------------------|          --
+     pcb-&gt;stack_size .            ...
+                     . |----------------------|
+                     . |                      | &lt;-- pcb-&gt;stack_base
+                    -- |----------------------|
+                       |                      |
+                              low memory
+</pre>
+   <p class="noindent">performing a <code>ret</code> assembly instruction in this situation would
+just increment the <acronym>FPR</acronym> and let the execution flow go back to the code
+at the assembly label <code>ik_underflow_handler</code>.  Notice that we first
+enter a Scheme program by calling a Scheme function with zero arguments.
+
+   <p><a href="compiler-stack-args.html#compiler-stack-args">compiler stack args</a> for details on how function arguments are put
+on the stack; here we only need to know that a function occupies some
+space on the stack, called a <dfn>stack frame</dfn>:
+
+<pre class="example">           high memory
+     |                      |
+     |----------------------|         --
+     |    return address    | &lt;-- FPR .
+     |----------------------|         .
+     |     local value 0    |         . function
+     |----------------------|         . stack
+     |     local value 1    |         . frame
+     |----------------------|         .
+     |     local value 2    |         .
+     |----------------------|         --
+     |                      |
+            low memory
+</pre>
+   <!--  -->
+<h5 class="subsubheading">Handling stack overflow</h5>
+
+<p>Nested function call after nested function call the stack segment fills
+up towards low memory addresses:
+
+<pre class="example">     pcb-&gt;stack_base         use growth
+            v              &lt;-------------
+     lo mem |-------------------------------------| hi mem
+     
+            |...................|.....|.....|.....|
+                                 frame frame frame
+</pre>
+   <p class="noindent">there is a limit, a &ldquo;red line&rdquo;, below which the current stack segment
+is considered full: we need to allocate a new one and allocate the
+function frames there.  The limit is registered in the <acronym>PCB</acronym> structure
+fields:
+
+     <dl>
+<dt><code>ikptr frame_redline</code><dd>Raw memory pointer referencing a location in the current stack segment;
+when Scheme code execution uses the stack crossing the &ldquo;red line&rdquo;
+represented by this field: the current stack segment is considered full. 
+</dl>
+
+   <p>A stack segment in stack overflow looks like this:
+
+<pre class="example">     pcb-&gt;stack_base  pcb-&gt;frame_redline
+            v          v
+     lo mem |----------+--------------------------| hi mem
+     
+            |.......|.....|.....|.....|.....|.....|
+             unused  frame frame frame frame frame
+</pre>
+   <p>Each compiled Scheme function contains, right at the beginning, code
+that checks if the red line has been crossed; so, when a stack segment
+is full, at the first subsequent Scheme function call, Vicare
+takes control and allocates a new stack segment doing what is needed to
+proceed the execution on the new stack.  This &ldquo;proceeding on the new
+stack&rdquo; is called <dfn>stack overflow</dfn>.
+
+   <p>How is this implemented?  Let's say we have called a function
+<code>alpha</code> whose frame has crossed the red line, then the function
+<code>beta</code> is called:
+
+<pre class="example">           high memory
+     |                      |
+     |----------------------|                         --
+     |    return address    |                         .
+     |----------------------|                         .
+     |     local value 0    |                         . alpha
+     |----------------------|                         . frame
+     |     local value 1    | &lt;-- pcb-&gt;frame_redline  .
+     |----------------------|                         .
+     |     local value 2    |                         .
+     |----------------------|                         --
+     |    return address    | &lt;-- FPR                 .
+     |----------------------|                         .
+     |     local value 0    |                         . beta
+     |----------------------|                         . frame
+     |     local value 1    |                         .
+     |----------------------|                         .
+     |     local value 2    |                         .
+     |----------------------|                         --
+     |                      |
+            low memory
+</pre>
+   <p class="noindent">the code in <code>beta</code> detects the situation simply by the comparison:
+
+<pre class="example">     pcb-&gt;frame_redline &lt; FPR
+</pre>
+   <p class="noindent">and calls an routine to exit Scheme code execution and call the C
+function <code>ik_stack_overflow()</code>.  A new stack segment is called
+
+<!-- QUIIIIIIIIIIIIIIIIIIIIII -->
+   <p>the current
+Scheme stack is stored away in a Scheme continuation and a new stack
+segment is allocated and installed as Scheme stack.  See the C function
+ for how this is implemented.  When the
+function returns: the stored continuation is reinstated and execution
+continues on the old stack.
+
+<!--  -->
+<h5 class="subsubheading">Context switching between Scheme code and C code</h5>
+
+     <dl>
+<dt><code>ikptr frame_pointer</code><br><dt><code>ikptr frame_base</code><dd></dl>
+
+<!-- page -->
+   </body></html>
+

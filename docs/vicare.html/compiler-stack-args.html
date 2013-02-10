@@ -1,0 +1,248 @@
+<html lang="en">
+<head>
+<title>compiler stack args - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="compiler-stack.html#compiler-stack" title="compiler stack">
+<link rel="prev" href="compiler-stack-intro.html#compiler-stack-intro" title="compiler stack intro">
+<link rel="next" href="compiler-stack-call.html#compiler-stack-call" title="compiler stack call">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d20 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package is distributed under the terms of the GNU General Public
+License (GPL) and can be downloaded from:
+
+               `http://code.google.com/p/vicare-scheme/'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2012 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="compiler-stack-args"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="compiler-stack-call.html#compiler-stack-call">compiler stack call</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="compiler-stack-intro.html#compiler-stack-intro">compiler stack intro</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="compiler-stack.html#compiler-stack">compiler stack</a>
+<hr>
+</div>
+
+<h4 class="subsection">14.3.2 Function arguments on the stack</h4>
+
+<p>Right after the first function call that enters Scheme code from
+assembly code, the stack segment looks as follows:
+
+<pre class="example">           high memory
+     |                      |
+     |----------------------|
+     |                      | &lt;-- pcb-&gt;frame_base
+     |----------------------|
+     | ik_underflow_handler | &lt;-- FPR
+     |----------------------|
+                ...
+     |----------------------|
+     |                      | &lt;-- pcb-&gt;stack_base
+     |----------------------|
+     |                      |
+            low memory
+</pre>
+   <p>If the called Scheme function needs some local variables, it allocates
+them on the stack:
+
+<pre class="example">           high memory
+     |                      |
+     |----------------------|                         --
+     | ik_underflow_handler | &lt;-- FPR                 .
+     |----------------------|                         .
+     |   local variable 0   | &lt;-- FPR - 1 * wordsize  . first
+     |----------------------|                         . called
+     |   local variable 1   | &lt;-- FPR - 2 * wordsize  . function
+     |----------------------|                         . frame
+     |   local variable 2   | &lt;-- FPR - 3 * wordsize  .
+     |----------------------|                         --
+     |                      |
+            low memory
+</pre>
+   <p class="noindent">notice that local values are &ldquo;moved&rdquo; on the stack, not &ldquo;pushed&rdquo;:
+executing the assembly instruction <code>push</code> would decrement the
+<acronym>FPR</acronym>, we do not want this; rather we reserve frame space for a
+function call and never mutate the <acronym>FPR</acronym> until the function returns or
+calls another function.
+
+   <p>If the Scheme function needs to call another Scheme function, as in:
+
+<pre class="example">     (sub-func arg0 arg1 arg2)
+</pre>
+   <p class="noindent">it moves the arguments on the stack, leaving an empty machine word:
+
+<pre class="example">           high memory
+     |                      |
+     |----------------------|         --
+     | ik_underflow_handler | &lt;-- FPR .
+     |----------------------|         .
+     |   local variable 0   |         . first
+     |----------------------|         . called
+     |   local variable 1   |         . function
+     |----------------------|         . frame
+     |   local variable 2   |         .
+     |----------------------|         --
+     |                      |
+     |----------------------|
+     |      argument 0      |
+     |----------------------|
+     |      argument 1      |
+     |----------------------|
+     |      argument 2      |
+     |----------------------|
+     |                      |
+            low memory
+</pre>
+   <p class="noindent">it adjusts the <acronym>FPR</acronym> by explicitly subtracting the appropriate offset
+from it:
+
+<pre class="example">           high memory
+     |                      |
+     |----------------------|         --
+     | ik_underflow_handler |         .
+     |----------------------|         .
+     |   local variable 0   |         . first
+     |----------------------|         . called
+     |   local variable 1   |         . function
+     |----------------------|         . frame
+     |   local variable 2   | &lt;-- FPR .
+     |----------------------|         --
+     |                      |
+     |----------------------|
+     |      argument 0      |
+     |----------------------|
+     |      argument 1      |
+     |----------------------|
+     |      argument 2      |
+     |----------------------|
+     |                      |
+            low memory
+</pre>
+   <p class="noindent">and finally it performs a <code>call</code> instruction, which pushes a return
+address on the stack right in the empty machine word:
+
+<pre class="example">           high memory
+     |                      |
+     |----------------------|         --
+     | ik_underflow_handler |         .
+     |----------------------|         .
+     |   local variable 0   |         . first
+     |----------------------|         . called
+     |   local variable 1   |         . function
+     |----------------------|         . frame
+     |   local variable 2   |         .
+     |----------------------|         --
+     |    return address    | &lt;-- FPR .
+     |----------------------|         .
+     |      argument 0      |         . sub-func
+     |----------------------|         . called
+     |      argument 1      |         . function
+     |----------------------|         . frame
+     |      argument 2      |         .
+     |----------------------|         --
+     |                      |
+            low memory
+</pre>
+   <p>When the function <code>sub-func</code> executes a <code>ret</code> instruction: the
+execution flow returns to <code>return address</code> and the <acronym>FPR</acronym> is
+incremented by a machine word:
+
+<pre class="example">           high memory
+     |                      |
+     |----------------------|         --
+     | ik_underflow_handler |         .
+     |----------------------|         .
+     |   local variable 0   |         . first
+     |----------------------|         . called
+     |   local variable 1   |         . function
+     |----------------------|         . frame
+     |   local variable 2   | &lt;-- FPR .
+     |----------------------|         --
+     |                      |
+            low memory
+</pre>
+   <p class="noindent">now the first called function adjusts the <acronym>FPR</acronym> by explicitly adding
+the appropriate offset to it:
+
+<pre class="example">           high memory
+     |                      |
+     |----------------------|         --
+     | ik_underflow_handler | &lt;-- FPR .
+     |----------------------|         .
+     |   local variable 0   |         . first
+     |----------------------|         . called
+     |   local variable 1   |         . function
+     |----------------------|         . frame
+     |   local variable 2   |         .
+     |----------------------|         --
+     |                      |
+            low memory
+</pre>
+   <p class="noindent">and is finally ready to go on with the execution.
+
+<!-- page -->
+   </body></html>
+

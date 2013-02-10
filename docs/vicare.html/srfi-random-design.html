@@ -1,0 +1,165 @@
+<html lang="en">
+<head>
+<title>srfi random design - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="srfi-random.html#srfi-random" title="srfi random">
+<link rel="prev" href="srfi-random-spec.html#srfi-random-spec" title="srfi random spec">
+<link rel="next" href="srfi-random-usage.html#srfi-random-usage" title="srfi random usage">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d20 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package is distributed under the terms of the GNU General Public
+License (GPL) and can be downloaded from:
+
+               `http://code.google.com/p/vicare-scheme/'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2012 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="srfi-random-design"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="srfi-random-usage.html#srfi-random-usage">srfi random usage</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="srfi-random-spec.html#srfi-random-spec">srfi random spec</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="srfi-random.html#srfi-random">srfi random</a>
+<hr>
+</div>
+
+<h4 class="subsection">10.16.5 Design rationale</h4>
+
+<h5 class="subsubheading">Why not combine <code>random-integer</code> and <code>random-real?</code></h5>
+
+<p>The two procedures are not combined into a single variable&ndash;arity
+procedures to save a little time and space during execution.  Although
+some Scheme systems can deal with variable arity as efficiently as with
+fixed arity this is not always the case and time efficiency is very
+important here.
+
+<!--  -->
+<h5 class="subsubheading">Why not some object&ndash;oriented interface?</h5>
+
+<p class="noindent">There are many alternatives to the interface as specified in this
+<acronym>SRFI</acronym>.  In particular, every framework for object&ndash;orientation can be
+used to define a class for random sources and specify the interface for
+the methods on random sources.  However, as the object&ndash;oriented
+frameworks differ considerably in terms of syntax and functionality,
+this <acronym>SRFI</acronym> does not make use of any particular framework.
+
+<!--  -->
+<h5 class="subsubheading">Why is there not just a generator with a fixed range?</h5>
+
+<p class="noindent">A bare fixed&ndash;range generator is of very limited use.  Nearly every
+application has to add some functionality to make use of the random
+numbers.  The most fundamental task in manipulating random numbers is to
+change the range and quantization.  This is exactly what is provided by
+<code>random-integer</code> and <code>random-real</code>.  In addition, is saves the
+user from the pitfall of changing the range with a simple
+modulo-computation which may substantially reduce the quality of the
+numbers being produced.
+
+   <p>The design of the interface is based on three prototype applications:
+
+     <ul>
+<li>Repeatedly choose from relatively small sets: As the size of the set is
+likely to vary from call to call, <code>random-integer</code> accepts a range
+argument <var>n</var> in every call.  The implementation should try to avoid
+boxing/unboxing of values if the ranges fit into immediate integers.
+
+     <li>Generate a few large integers with a fixed number of bits: As generating
+the random number itself is expensive, passing the range argument in
+every call does not hurt performance.  Hence, the same interface as in
+the first application can be used.
+
+     <li>Generate real numbers: Unlike the choose&ndash;from&ndash;set case, the range and
+the quantization is constant over a potentially very large number of
+calls.  In addition, there are usually just a few distinct instances of
+quantization and number type, most likely corresponding to underlying
+<code>float</code> and <code>double</code> representations.  Therefore,
+<code>random-real</code> does not accept any parameters but the procedure
+<code>random-source-make-reals</code> creates a properly configured
+<code>random-real</code> procedure. 
+</ul>
+
+<!--  -->
+<h5 class="subsubheading">Why bother about floating point numbers at all?</h5>
+
+<p class="noindent">A proper floating point implementation of a random number generator is
+potentially much more efficient that an integer implementation because
+it can use more powerful arithmetics hardware.  If in addition the
+application needs floating point random numbers it would be an
+intolerable waste to run an integer generator to produce floating point
+random numbers.  A secondary reason is to save the user from the &ldquo;not
+as easy as it seems&rdquo; task of converting an integer generator into a
+real generator.
+
+<!--  -->
+<h5 class="subsubheading">Why are zero and one excluded from <code>random-real</code>?</h5>
+
+<p class="noindent">The procedure <code>random-real</code> does not return <code>x = 0</code> or <code>x
+= 1</code> in order to allow <code>(log x)</code> and <code>(log (- 1 x))</code> without
+the danger of a numerical exception.
+
+<!-- page -->
+   </body></html>
+

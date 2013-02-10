@@ -1,0 +1,267 @@
+<html lang="en">
+<head>
+<title>srfi list spec select - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="srfi-list-spec.html#srfi-list-spec" title="srfi list spec">
+<link rel="prev" href="srfi-list-spec-pred.html#srfi-list-spec-pred" title="srfi list spec pred">
+<link rel="next" href="srfi-list-spec-misc.html#srfi-list-spec-misc" title="srfi list spec misc">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d20 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package is distributed under the terms of the GNU General Public
+License (GPL) and can be downloaded from:
+
+               `http://code.google.com/p/vicare-scheme/'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2012 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="srfi-list-spec-select"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="srfi-list-spec-misc.html#srfi-list-spec-misc">srfi list spec misc</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="srfi-list-spec-pred.html#srfi-list-spec-pred">srfi list spec pred</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="srfi-list-spec.html#srfi-list-spec">srfi list spec</a>
+<hr>
+</div>
+
+<h5 class="subsubsection">10.2.5.4 Selectors</h5>
+
+<p><a name="index-List-selectors-2524"></a>
+
+<div class="defun">
+&mdash; Function: <b>car</b><var> pair<a name="index-car-2525"></a></var><br>
+&mdash; Function: <b>cdr</b><var> pair<a name="index-cdr-2526"></a></var><br>
+<blockquote><p><acronym>R5RS</acronym> These functions return the contents of the car and cdr field of
+their argument, respectively.  Note that it is an error to apply them to
+the empty list.
+
+     <pre class="example">          (car '(a b c))     =&gt;  a       | (cdr '(a b c))     =&gt;  (b c)
+          (car '((a) b c d)) =&gt;  (a)     | (cdr '((a) b c d)) =&gt;  (b c d)
+          (car '(1 . 2))     =&gt;  1       | (cdr '(1 . 2))     =&gt;  2
+          (car '())          =&gt;  *error* | (cdr '())          =&gt;  *error*
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>caar</b><var> pair<a name="index-caar-2527"></a></var><br>
+&mdash; Function: <b>cadr</b><var> pair<a name="index-cadr-2528"></a></var><br>
+&mdash; Function: <b>c...r</b><var> pair<a name="index-c_002e_002e_002er-2529"></a></var><br>
+&mdash; Function: <b>cdddar</b><var> pair<a name="index-cdddar-2530"></a></var><br>
+&mdash; Function: <b>cddddr</b><var> pair<a name="index-cddddr-2531"></a></var><br>
+<blockquote><p><acronym>R5RS</acronym> These procedures are compositions of <code>car</code> and <code>cdr</code>,
+where for example <code>caddr</code> could be defined by:
+
+     <pre class="example">          (define caddr (lambda (x) (car (cdr (cdr x)))))
+</pre>
+        <p>Arbitrary compositions, up to four deep, are provided. There are
+twenty-eight of these procedures in all. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>list-ref</b><var> clist i<a name="index-list_002dref-2532"></a></var><br>
+<blockquote><p><acronym>R5RS</acronym> Return the <var>i</var>-th element of clist.  This is the same as
+the car of <code>(drop clist i)</code>.  It is an error if <code>i &gt;= n</code>,
+where <var>n</var> is the length of clist.
+
+     <pre class="example">          (list-ref '(a b c d) 2) =&gt; c
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>first</b><var> pair -&gt; object<a name="index-first-2533"></a></var><br>
+&mdash; Function: <b>second</b><var> pair<a name="index-second-2534"></a></var><br>
+&mdash; Function: <b>third</b><var> pair<a name="index-third-2535"></a></var><br>
+&mdash; Function: <b>fourth</b><var> pair<a name="index-fourth-2536"></a></var><br>
+&mdash; Function: <b>fifth</b><var> pair<a name="index-fifth-2537"></a></var><br>
+&mdash; Function: <b>sixth</b><var> pair<a name="index-sixth-2538"></a></var><br>
+&mdash; Function: <b>seventh</b><var> pair<a name="index-seventh-2539"></a></var><br>
+&mdash; Function: <b>eighth</b><var> pair<a name="index-eighth-2540"></a></var><br>
+&mdash; Function: <b>ninth</b><var> pair<a name="index-ninth-2541"></a></var><br>
+&mdash; Function: <b>tenth</b><var> pair<a name="index-tenth-2542"></a></var><br>
+<blockquote><p>Synonyms for <code>car</code>, <code>cadr</code>, <code>caddr</code>, ...
+
+     <pre class="example">          (third '(a b c d e)) =&gt; c
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>car+cdr</b><var> pair<a name="index-car_002bcdr-2543"></a></var><br>
+<blockquote><p>The fundamental pair deconstructor:
+
+     <pre class="example">          (lambda (p) (values (car p) (cdr p)))
+</pre>
+        <p>This can, of course, be implemented more efficiently by a compiler. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>take</b><var> x i<a name="index-take-2544"></a></var><br>
+&mdash; Function: <b>drop</b><var> x i<a name="index-drop-2545"></a></var><br>
+<blockquote><p><code>take</code> returns the first <var>i</var> elements of list <var>x</var>. 
+<code>drop</code> returns all but the first <var>i</var> elements of list <var>x</var>.
+
+     <pre class="example">          (take '(a b c d e)  2) =&gt; (a b)
+          (drop '(a b c d e)  2) =&gt; (c d e)
+</pre>
+        <p><var>x</var> may be any value: a proper, circular, or dotted list:
+
+     <pre class="example">          (take '(1 2 3 . d) 2) =&gt; (1 2)
+          (drop '(1 2 3 . d) 2) =&gt; (3 . d)
+          (take '(1 2 3 . d) 3) =&gt; (1 2 3)
+          (drop '(1 2 3 . d) 3) =&gt; d
+</pre>
+        <p>For a legal <var>i</var>, <code>take</code> and <code>drop</code> partition the list in a
+manner which can be inverted with append:
+
+     <pre class="example">          (append (take x i) (drop x i)) = x
+</pre>
+        <p><code>drop</code> is exactly equivalent to performing <var>i</var> <code>cdr</code>
+operations on <var>x</var>; the returned value shares a common tail with
+<var>x</var>.
+
+        <p>If the argument is a list of non&ndash;zero length, <code>take</code> is guaranteed
+to return a freshly&ndash;allocated list, even in the case where the entire
+list is taken, e.g. <code>(take lis (length lis))</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>take-right</b><var> flist i<a name="index-take_002dright-2546"></a></var><br>
+&mdash; Function: <b>drop-right</b><var> flist i<a name="index-drop_002dright-2547"></a></var><br>
+<blockquote><p><code>take-right</code> returns the last <var>i</var> elements of <var>flist</var>. 
+<code>drop-right</code> returns all but the last <var>i</var> elements of
+<var>flist</var>.
+
+     <pre class="example">          (take-right '(a b c d e) 2) =&gt; (d e)
+          (drop-right '(a b c d e) 2) =&gt; (a b c)
+</pre>
+        <p>The returned list may share a common tail with the argument list.
+
+        <p><var>flist</var> may be any finite list, either proper or dotted:
+
+     <pre class="example">          (take-right '(1 2 3 . d) 2) =&gt; (2 3 . d)
+          (drop-right '(1 2 3 . d) 2) =&gt; (1)
+          (take-right '(1 2 3 . d) 0) =&gt; d
+          (drop-right '(1 2 3 . d) 0) =&gt; (1 2 3)
+</pre>
+        <p>For a legal <var>i</var>, <code>take-right</code> and <var>drop-right</var> partition
+the list in a manner which can be inverted with append:
+
+     <pre class="example">          (append (take flist i) (drop flist i)) = flist
+</pre>
+        <p>The return value of <code>take-right</code> is guaranteed to share a common
+tail with <var>flist</var>.
+
+        <p>If the argument is a list of non&ndash;zero length, <code>drop-right</code> is
+guaranteed to return a freshly&ndash;allocated list, even in the case where
+nothing is dropped, e.g. <code>(drop-right lis 0)</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>take!</b><var> x i<a name="index-take_0021-2548"></a></var><br>
+&mdash; Function: <b>drop-right!</b><var> flist i<a name="index-drop_002dright_0021-2549"></a></var><br>
+<blockquote><p><code>take!</code> and <code>drop-right!</code> are linear&ndash;update variants of
+<code>take</code> and <code>drop-right</code>: the procedure is allowed, but not
+required, to alter the argument list to produce the result.
+
+        <p>If <var>x</var> is circular, <code>take!</code> may return a
+shorter&ndash;than&ndash;expected list:
+
+     <pre class="example">          (take! (circular-list 1 3 5) 8) =&gt; (1 3)
+          (take! (circular-list 1 3 5) 8) =&gt; (1 3 5 1 3 5 1 3)
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>split-at</b><var> x i<a name="index-split_002dat-2550"></a></var><br>
+&mdash; Function: <b>split-at!</b><var> x i<a name="index-split_002dat_0021-2551"></a></var><br>
+<blockquote><p><code>split-at</code> splits the list <var>x</var> at index <var>i</var>, returning a
+list of the first <var>i</var> elements, and the remaining tail.  It is
+equivalent to:
+
+     <pre class="example">          (values (take x i) (drop x i))
+</pre>
+        <p><code>split-at!</code> is the linear&ndash;update variant.  It is allowed, but not
+required, to alter the argument list to produce the result.
+
+     <pre class="example">          (split-at '(a b c d e f g h) 3)
+          =&gt; (a b c)
+             (d e f g h)
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>last</b><var> pair<a name="index-last-2552"></a></var><br>
+&mdash; Function: <b>last-pair</b><var> pair<a name="index-last_002dpair-2553"></a></var><br>
+<blockquote><p><code>last</code> returns the last element of the non&ndash;empty, finite list
+<var>pair</var>.  <code>last-pair</code> returns the last pair in the non&ndash;empty,
+finite list <var>pair</var>.
+
+     <pre class="example">          (last '(a b c)) =&gt; c
+          (last-pair '(a b c)) =&gt; (c)
+</pre>
+        </blockquote></div>
+
+<!-- page -->
+   </body></html>
+

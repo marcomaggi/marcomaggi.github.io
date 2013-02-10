@@ -1,0 +1,169 @@
+<html lang="en">
+<head>
+<title>srfi eager-comp abstract - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="srfi-eager_002dcomp.html#srfi-eager_002dcomp" title="srfi eager-comp">
+<link rel="prev" href="srfi-eager_002dcomp-license.html#srfi-eager_002dcomp-license" title="srfi eager-comp license">
+<link rel="next" href="srfi-eager_002dcomp-rationale.html#srfi-eager_002dcomp-rationale" title="srfi eager-comp rationale">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d20 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package is distributed under the terms of the GNU General Public
+License (GPL) and can be downloaded from:
+
+               `http://code.google.com/p/vicare-scheme/'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2012 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="srfi-eager-comp-abstract"></a>
+<a name="srfi-eager_002dcomp-abstract"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="srfi-eager_002dcomp-rationale.html#srfi-eager_002dcomp-rationale">srfi eager-comp rationale</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="srfi-eager_002dcomp-license.html#srfi-eager_002dcomp-license">srfi eager-comp license</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="srfi-eager_002dcomp.html#srfi-eager_002dcomp">srfi eager-comp</a>
+<hr>
+</div>
+
+<h4 class="subsection">10.22.2 Abstract</h4>
+
+<p>This <acronym>SRFI</acronym> defines a modular and portable mechanism for eager
+comprehensions extending the algorithmic language Scheme.  An eager
+comprehension is a convenient notation for one or more nested or
+parallel loops generating a sequence of values, and accumulating this
+sequence into a result.  In its most simple form, a comprehension
+according to this <acronym>SRFI</acronym> looks like this:
+
+<pre class="example">     (list-ec (: i 5)
+       (* i i))
+     =&gt; (0 1 4 9 16)
+</pre>
+   <p class="noindent">Here, <var>i</var> is a local variable that is sequentially bound to the
+values 0, 1, <small class="dots">...</small>, 4, and the squares of these numbers are collected
+in a list.  The following example illustrates most conventions of this
+<acronym>SRFI</acronym> with respect to nesting and syntax:
+
+<pre class="example">     (list-ec (: n 1 4)
+              (: i n)
+       (list n i))
+     =&gt; ((1 0) (2 0) (2 1) (3 0) (3 1) (3 2))
+</pre>
+   <p class="noindent">In the example, the variable <var>n</var> is first bound to 1 then to 2 and
+finally to 3, and for each binding of <var>n</var> the variable <var>i</var> is
+bound to the values 0, 1, ..., <var>n</var>-1 in turn.  The expression
+<code>(list n i)</code> constructs a two&ndash;element list for each bindings, and
+the comprehension <code>list-ec</code> collects all these results in a list.
+
+   <p>The mechanism defined in this <acronym>SRFI</acronym> has the following properties:
+
+     <ul>
+<li>The set of comprehensions defined for this <acronym>SRFI</acronym> is inspired by those
+procedures and macros of <acronym>R5RS</acronym> leading to natural comprehensions such
+as <code>list-ec</code>, <code>append-ec</code>, <code>sum-ec</code>, <code>min-ec</code>,
+<code>every?-ec</code>, <code>do-ec</code>, and others.  Some other natural
+comprehensions (e.g. <code>gcd-ec</code>) have not been included into this
+<acronym>SRFI</acronym> due to their low significance for most applications.  On the
+other hand, a few comprehensions (<code>fold-ec</code>, <code>fold3-ec</code>) not
+inspired by <acronym>R5RS</acronym> have been included due to their broad
+applicability.
+
+     <li>There are typed generators (<code>:list</code>, <code>:string</code>, <small class="dots">...</small>)
+expecting certain types of objects for their arguments.  These
+generators usually produce code as efficient as hand coded
+<code>do</code>&ndash;loops.
+
+     <li>There is also the special generator <code>:</code> (read &ldquo;run through&rdquo;)
+dispatching on the value of its argument list at runtime.  In the
+examples above, one or two integers were used to define a range.  The
+convenience of omitting the type comes at a certain performance penalty,
+both per iteration and during startup of the loop.
+
+     <li>Generators can be nested depth&ndash;first (as in the example above), run in
+parallel (with an optional index variable or more generally with
+<code>:parallel</code>), and can be stopped early before (<code>:while</code>) or
+after (<code>:until</code>) producing the current value.
+
+     <li>The sequence of values can be filtered (<code>if</code>, <code>not</code>,
+<code>and</code>, <code>or</code>), intermediate commands can be evaluated between
+generators (<code>begin</code>), and intermediate variables can be introduced
+(<code>:let</code>).
+
+     <li>The mechanism is fully modular.  This means that no existing macro or
+procedure needs to be modified when adding application&ndash;specific
+comprehensions, application&ndash;specific typed generators, or
+application&ndash;specific dispatching generators.
+
+     <li>Syntactically, this <acronym>SRFI</acronym> uses the <code>[outer .. inner | expr]</code>
+convention, meaning that the most right generator (<var>inner</var>) spins
+fastest and is followed by the result expression over which the
+comprehension ranges (<var>expr</var>).  <a href="srfi-eager_002dcomp-design.html#srfi-eager_002dcomp-design">srfi eager-comp design</a> for
+details.  Moreover, the syntax is strictly prefix and the naming
+convention <code>my-comprehension-ec</code>, <code>:my-generator</code> is used
+systematically. 
+</ul>
+
+<!-- page -->
+   </body></html>
+

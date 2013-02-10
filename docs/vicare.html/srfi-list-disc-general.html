@@ -1,0 +1,156 @@
+<html lang="en">
+<head>
+<title>srfi list disc general - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="srfi-list-discussion.html#srfi-list-discussion" title="srfi list discussion">
+<link rel="next" href="srfi-list-disc-linear-update.html#srfi-list-disc-linear-update" title="srfi list disc linear update">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d20 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package is distributed under the terms of the GNU General Public
+License (GPL) and can be downloaded from:
+
+               `http://code.google.com/p/vicare-scheme/'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2012 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="srfi-list-disc-general"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="srfi-list-disc-linear-update.html#srfi-list-disc-linear-update">srfi list disc linear update</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="srfi-list-discussion.html#srfi-list-discussion">srfi list discussion</a>
+<hr>
+</div>
+
+<h5 class="subsubsection">10.2.4.1 General discussion</h5>
+
+<p>A set of general criteria guided the design of this library.
+
+   <p>I don't require &ldquo;destructive&rdquo; (what I call &ldquo;linear update&rdquo;)
+procedures to alter and recycle cons cells from the argument lists. 
+They are allowed to, but not required to.  (And the reference
+implementations I have written do recycle the argument lists.)
+
+   <p>List&ndash;filtering procedures such as <code>filter</code> or <code>delete</code> do not
+disorder lists.  Elements appear in the answer list in the same order as
+they appear in the argument list.  This constrains implementation, but
+seems like a desirable feature, since in many uses of lists, order
+matters.  (In particular, disordering an alist is definitely a bad
+idea.)
+
+   <p>Contrariwise, although the reference implementations of the
+list&ndash;filtering procedures share longest common tails between argument
+and answer lists, it not is part of the spec.
+
+   <p>Because lists are an inherently sequential data structure (unlike, say,
+vectors), list&ndash;inspection functions such as <code>find</code>,
+<code>find-tail</code>, <code>for-each</code>, any and every commit to a
+left&ndash;to&ndash;right traversal order of their argument list.
+
+   <p>However, constructor functions, such as <code>list-tabulate</code> and the
+mapping procedures (<code>append-map</code>, <code>append-map!</code>, <code>map!</code>,
+<code>pair-for-each</code>, <code>filter-map</code>, <code>map-in-order</code>), do not
+specify the dynamic order in which their procedural argument is applied
+to its various values.
+
+   <p>Predicates return useful true values wherever possible.  Thus any must
+return the true value produced by its predicate, and every returns the
+final true value produced by applying its predicate argument to the last
+element of its argument list.
+
+   <p>Functionality is provided both in pure and linear&ndash;update (potentially
+destructive) forms wherever this makes sense.
+
+   <p>No special status accorded Scheme's built&ndash;in equality functions.  Any
+functionality provided in terms of <code>eq?</code>, <code>eqv?</code>,
+<code>equal?</code> is also available using a client&ndash;provided equality
+function.
+
+   <p>Proper design counts for more than backwards compatibility, but I have
+tried, ceteris paribus, to be as backwards&ndash;compatible as possible with
+existing list&ndash;processing libraries, in order to facilitate porting old
+code to run as a client of the procedures in this library.  Name choices
+and semantics are, for the most part, in agreement with existing
+practice in many current Scheme systems.  I have indicated some
+incompatibilities in the following text.
+
+   <p>These procedures are not &ldquo;sequence generic&rdquo;&mdash;&ndash;i.e. procedures that
+operate on either vectors and lists.  They are list&ndash;specific.  I prefer
+to keep the library simple and focused.
+
+   <p>I have named these procedures without a qualifying initial <code>list-</code>
+lexeme, which is in keeping with the existing set of list&ndash;processing
+utilities in Scheme.  I follow the general Scheme convention
+(<code>vector-length</code>, <code>string-ref</code>) of placing the type&ndash;name
+before the action when naming procedures&mdash;&ndash;so we have <code>list-copy</code>
+and <code>pair-for-each</code> rather than the perhaps more fluid, but less
+consistent, <code>copy-list</code> or <code>for-each-pair</code>.
+
+   <p>I have generally followed a regular and consistent naming scheme,
+composing procedure names from a set of basic lexemes.
+
+<!-- page -->
+   </body></html>
+

@@ -1,0 +1,175 @@
+<html lang="en">
+<head>
+<title>srfi records spec - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="srfi-records.html#srfi-records" title="srfi records">
+<link rel="prev" href="srfi-records-rationale.html#srfi-records-rationale" title="srfi records rationale">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d20 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package is distributed under the terms of the GNU General Public
+License (GPL) and can be downloaded from:
+
+               `http://code.google.com/p/vicare-scheme/'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2012 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="srfi-records-spec"></a>
+<p>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="srfi-records-rationale.html#srfi-records-rationale">srfi records rationale</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="srfi-records.html#srfi-records">srfi records</a>
+<hr>
+</div>
+
+<h4 class="subsection">10.6.4 Specification</h4>
+
+<p><a name="index-g_t_0040srfi_007b_007d-record-_0040api_007b_007d-2663"></a><a name="index-define_002drecord_002dtype-2664"></a>
+
+   <p>The syntax of a record&ndash;type definition is:
+
+<pre class="example">     &lt;command or definition&gt;
+       -&gt; &lt;record type definition&gt;           ; addition to 8.1.6 in R5RS
+     
+     &lt;record type definition&gt;
+       -&gt; (define-record-type &lt;type name&gt;
+            (&lt;constructor name&gt; &lt;field tag&gt; ...)
+            &lt;predicate name&gt;
+            &lt;field spec&gt; ...)
+     
+     &lt;field spec&gt; -&gt; (&lt;field tag&gt; &lt;accessor name&gt;)
+                  -&gt; (&lt;field tag&gt; &lt;accessor name&gt; &lt;modifier name&gt;)
+     
+     &lt;field tag&gt; -&gt; &lt;identifier&gt;
+     &lt;... name&gt;  -&gt; &lt;identifier&gt;
+</pre>
+   <p><code>define-record-type</code> is generative: each use creates a new record
+type that is distinct from all existing types, including other record
+types and Scheme's predefined types.  Record&ndash;type definitions may only
+occur at top&ndash;level (there are two possible semantics for &ldquo;internal&rdquo;
+record&ndash;type definitions, generative and nongenerative, and no consensus
+as to which is better).
+
+   <p>An instance of <code>define-record-type</code> is equivalent to the following
+definitions:
+
+     <ul>
+<li><code>&lt;type name&gt;</code> is bound to a representation of the record type
+itself.  Operations on record types, such as defining print methods,
+reflection, etc. are left to other <acronym>SRFI</acronym>s.
+
+     <li><code>&lt;constructor name&gt;</code> is bound to a procedure that takes as many
+arguments as there are <code>&lt;field tag&gt;</code>s in the <code>(&lt;constructor
+name&gt; ...)</code>  subform and returns a new <code>&lt;type name&gt;</code> record. 
+Fields whose tags are listed with <code>&lt;constructor name&gt;</code> have the
+corresponding argument as their initial value.  The initial values of
+all other fields are unspecified.
+
+     <li><code>&lt;predicate name&gt;</code> is a predicate that returns <code>#t</code> when given a
+value returned by <code>&lt;constructor name&gt;</code> and <code>#f</code> for everything
+else.
+
+     <li>Each <code>&lt;accessor name&gt;</code> is a procedure that takes a record of type
+<code>&lt;type name&gt;</code> and returns the current value of the corresponding
+field.  It is an error to pass an accessor a value which is not a record
+of the appropriate type.
+
+     <li>Each <code>&lt;modifier name&gt;</code> is a procedure that takes a record of type
+<code>&lt;type name&gt;</code> and a value which becomes the new value of the
+corresponding field; an unspecified value is returned.  It is an error
+to pass a modifier a first argument which is not a record of the
+appropriate type. 
+</ul>
+
+   <p>Records are disjoint from the types listed in Section 4.2 of <acronym>R5RS</acronym>.
+
+   <p><code>set!</code>&ndash;ing the value of any of these identifiers has no effect on
+the behavior of any of their original values.
+
+   <p>The following:
+
+<pre class="example">     (define-record-type :pare
+       (kons x y)
+       pare?
+       (x kar set-kar!)
+       (y kdr))
+</pre>
+   <p class="noindent">defines <var>kons</var> to be a constructor, <var>kar</var> and <var>kdr</var> to be
+accessors, <var>set-kar!</var> to be a modifier, and <var>pare?</var> to be a
+predicate for <code>:pare</code>s.
+
+   <p>Example:
+
+<pre class="example">     (pare? (kons 1 2))        =&gt; #t
+     (pare? (cons 1 2))        =&gt; #f
+     (kar (kons 1 2))          =&gt; 1
+     (kdr (kons 1 2))          =&gt; 2
+     (let ([k (kons 1 2)])
+       (set-kar! k 3)
+       (kar k))                =&gt; 3
+</pre>
+   <!-- end of file -->
+   </body></html>
+

@@ -1,0 +1,154 @@
+<html lang="en">
+<head>
+<title>srfi list spec filter - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="srfi-list-spec.html#srfi-list-spec" title="srfi list spec">
+<link rel="prev" href="srfi-list-spec-fold.html#srfi-list-spec-fold" title="srfi list spec fold">
+<link rel="next" href="srfi-list-spec-search.html#srfi-list-spec-search" title="srfi list spec search">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d20 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package is distributed under the terms of the GNU General Public
+License (GPL) and can be downloaded from:
+
+               `http://code.google.com/p/vicare-scheme/'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2012 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="srfi-list-spec-filter"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="srfi-list-spec-search.html#srfi-list-spec-search">srfi list spec search</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="srfi-list-spec-fold.html#srfi-list-spec-fold">srfi list spec fold</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="srfi-list-spec.html#srfi-list-spec">srfi list spec</a>
+<hr>
+</div>
+
+<h5 class="subsubsection">10.2.5.7 Filtering and partitioning</h5>
+
+<p><a name="index-List-filtering-2594"></a>
+
+<div class="defun">
+&mdash; Function: <b>filter</b><var> pred list<a name="index-filter-2595"></a></var><br>
+&mdash; Function: <b>filter!</b><var> pred list<a name="index-filter_0021-2596"></a></var><br>
+<blockquote><p>Return all the elements of <var>list</var> that satisfy predicate <var>pred</var>. 
+The list is not disordered: elements that appear in the result list
+occur in the same order as they occur in <var>list</var>.  The returned list
+may share a common tail with <var>list</var>.  The dynamic order in which the
+various applications of <var>pred</var> are made is not specified.
+
+     <pre class="example">          (filter even? '(0 7 8 8 43 -4)) =&gt; (0 8 8 -4)
+</pre>
+        <p><code>filter!</code> is the linear&ndash;update variant of <code>filter</code>.  It is
+allowed, but not required, to alter the cons cells in <var>list</var> to
+construct the result lists. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>partition</b><var> pred list<a name="index-partition-2597"></a></var><br>
+&mdash; Function: <b>partition!</b><var> pred list<a name="index-partition_0021-2598"></a></var><br>
+<blockquote><p>Partition the elements of <var>list</var> with predicate <var>pred</var>, and
+return two values: the list of in&ndash;elements and the list of
+out&ndash;elements.  The list is not disordered: elements occur in the result
+lists in the same order as they occur in <var>list</var>.  The dynamic order
+in which the various applications of <var>pred</var> are made is not
+specified.  One of the returned lists may share a common tail with
+<var>list</var>.
+
+     <pre class="example">          (partition symbol? '(one 2 3 four five 6))
+            =&gt; (one four five)
+               (2 3 6)
+</pre>
+        <p><code>partition!</code> is the linear&ndash;update variant of <code>partition</code>. 
+It is allowed, but not required, to alter the cons cells in <var>list</var>
+to construct the result lists. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>remove</b><var> pred list<a name="index-remove-2599"></a></var><br>
+&mdash; Function: <b>remove!</b><var> pred list<a name="index-remove_0021-2600"></a></var><br>
+<blockquote><p>Return <var>list</var> without the elements that satisfy predicate
+<var>pred</var>:
+
+     <pre class="example">          (lambda (pred list)
+            (filter (lambda (x)
+                      (not (pred x)))
+                    list))
+</pre>
+        <p>The list is not disordered: elements that appear in the result list
+occur in the same order as they occur in <var>list</var>.  The returned list
+may share a common tail with <var>list</var>.  The dynamic order in which the
+various applications of pred are made is not specified.
+
+     <pre class="example">          (remove even? '(0 7 8 8 43 -4)) =&gt; (7 43)
+</pre>
+        <p><code>remove!</code> is the linear&ndash;update variant of <code>remove</code>.  It is
+allowed, but not required, to alter the cons cells in <var>list</var> to
+construct the result lists. 
+</p></blockquote></div>
+
+<!-- page -->
+   </body></html>
+

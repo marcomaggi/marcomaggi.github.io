@@ -1,0 +1,143 @@
+<html lang="en">
+<head>
+<title>srfi receive rationale - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="srfi-receive.html#srfi-receive" title="srfi receive">
+<link rel="prev" href="srfi-receive-abstract.html#srfi-receive-abstract" title="srfi receive abstract">
+<link rel="next" href="srfi-receive-spec.html#srfi-receive-spec" title="srfi receive spec">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d20 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package is distributed under the terms of the GNU General Public
+License (GPL) and can be downloaded from:
+
+               `http://code.google.com/p/vicare-scheme/'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2012 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="srfi-receive-rationale"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="srfi-receive-spec.html#srfi-receive-spec">srfi receive spec</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="srfi-receive-abstract.html#srfi-receive-abstract">srfi receive abstract</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="srfi-receive.html#srfi-receive">srfi receive</a>
+<hr>
+</div>
+
+<h4 class="subsection">10.5.3 Rationale</h4>
+
+<p>Although <acronym>R5RS</acronym> supports multiple&ndash;valued expressions, it provides
+only the essential procedures <code>values</code> and <code>call-with-values</code>. 
+It is evident that the authors expected Scheme programmers to define
+other constructs in terms of these, abstracting common patterns of use.
+
+   <p>One such pattern consists in binding an identifier to each of the values
+of a multiple&ndash;valued expression and then evaluating an expression in
+the scope of the bindings.  As an instance of this pattern, consider the
+following excerpt from a quicksort procedure:
+
+<pre class="example">     (call-with-values
+       [lambda ()
+         (partition (precedes pivot) others)]
+       [lambda (fore aft)
+         (append (qsort fore) (cons pivot (qsort aft)))])
+</pre>
+   <p>Here <code>partition</code> is a multiple&ndash;valued procedure that takes two
+arguments, a predicate and a list, and returns two lists, one comprising
+the list elements that satisfy the predicate, the other those that do
+not.  The purpose of the expression shown is to partition the list
+<var>others</var>, sort each of the sublists, and recombine the results into
+a sorted list.
+
+   <p>For our purposes, the important step is the binding of the identifiers
+fore and aft to the values returned by <code>partition</code>.  Expressing the
+construction and use of these bindings with the <code>call-by-values</code>
+primitive is cumbersome: One must explicitly embed the expression that
+provides the values for the bindings in a parameterless procedure, and
+one must explicitly embed the expression to be evaluated in the scope of
+those bindings in another procedure, writing as its parameters the
+identifiers that are to be bound to the values received.
+
+   <p>These embeddings are boilerplate, exposing the underlying binding
+mechanism but not revealing anything relevant to the particular program
+in which it occurs.  So the use of a syntactic abstraction that exposes
+only the interesting parts (the identifiers to be bound, the
+multiple&ndash;valued expression that supplies the values, and the body of
+the receiving procedure) makes the code more concise and more readable:
+
+<pre class="example">     (receive (fore aft)
+         [partition (precedes pivot) others]
+       [append (qsort fore)
+               (cons pivot (qsort aft))])
+</pre>
+   <p>The advantages are similar to those of a <code>let</code>&ndash;expression over a
+procedure call with a <code>lambda</code>&ndash;expression as its operator.  In
+both cases, cleanly separating a &ldquo;header&rdquo; in which the bindings are
+established from a &ldquo;body&rdquo; in which they are used makes it easier to
+follow the code.
+
+<!-- page -->
+   </body></html>
+

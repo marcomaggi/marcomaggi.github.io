@@ -1,0 +1,240 @@
+<html lang="en">
+<head>
+<title>srfi compare-procedures intro - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="srfi-compare_002dprocedures.html#srfi-compare_002dprocedures" title="srfi compare-procedures">
+<link rel="prev" href="srfi-compare_002dprocedures-abstract.html#srfi-compare_002dprocedures-abstract" title="srfi compare-procedures abstract">
+<link rel="next" href="srfi-compare_002dprocedures-conv.html#srfi-compare_002dprocedures-conv" title="srfi compare-procedures conv">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d20 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package is distributed under the terms of the GNU General Public
+License (GPL) and can be downloaded from:
+
+               `http://code.google.com/p/vicare-scheme/'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2012 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="srfi-compare-procedures-intro"></a>
+<a name="srfi-compare_002dprocedures-intro"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="srfi-compare_002dprocedures-conv.html#srfi-compare_002dprocedures-conv">srfi compare-procedures conv</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="srfi-compare_002dprocedures-abstract.html#srfi-compare_002dprocedures-abstract">srfi compare-procedures abstract</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="srfi-compare_002dprocedures.html#srfi-compare_002dprocedures">srfi compare-procedures</a>
+<hr>
+</div>
+
+<h4 class="subsection">10.28.3 Introduction</h4>
+
+<p>This <acronym>SRFI</acronym> defines a mechanism for comparing Scheme values with
+respect to a total order (aka linear order) [1].  The mechanism provides
+operations for:
+
+     <ol type=1 start=1>
+<li>Comparing objects of the built in types.
+
+     <li>Using a total order in situations that arise in programs.
+
+     <li>Facilitating the definition of a new total order.
+        </ol>
+
+   <p>In the following, these aspects will briefly be illustrated.
+
+   <p>Traditionally, a total order is represented in Scheme by an order
+predicate, like <code>&lt;</code> or <code>char&lt;?</code>.  For the purpose of this
+<acronym>SRFI</acronym>, however, a total order is represented by a Scheme&ndash;procedure
+comparing its two arguments and returning either <code>-1</code>, <code>0</code>, or
+<code>+1</code> depending on whether the first argument is considered smaller,
+equal, or greater than the second argument respectively.  Examples of
+such compare procedures include:
+
+<pre class="example">     (lambda (x y) (sign (- x y)))
+</pre>
+   <p class="noindent">for comparing real numbers, but also:
+
+<pre class="example">     (lambda (x y) 0)
+</pre>
+   <p class="noindent">comparing anything.  For most built in types specified in the Revised5
+Report on the Algorithmic Language Scheme (<acronym>R5RS</acronym>, [3]) compare
+procedures are specified in Sections of this <acronym>SRFI</acronym>.  An axiomatic
+definition of &ldquo;compare procedure&rdquo; is given in another section.
+
+   <p>The primary reason for using 3-valued compare procedures instead of
+(2-valued) order predicates is efficiency: When comparison is
+computationally expensive, it is wasteful if two predicates are
+evaluated where a single 3-valued comparison would suffice.  This point
+is discussed in greater detail in a section.
+
+   <p>But dealing directly with 3-valued comparisons in the application
+program is inconvenient and obscures intention: For testing x &lt; y
+one would have to write:
+
+<pre class="example">     (eqv? (compare x y) -1)
+</pre>
+   <p>For this reason, an operation <code>&lt;?</code> is supplied which allows to
+phrase the same test as:
+
+<pre class="example">     (&lt;?  compare x y)
+</pre>
+   <p>This is an example of mapping the three possible outcomes of a
+comparison into the two boolean values <code>{#f, #t}</code>.  Since
+<code>&lt;?</code> takes the total order as an explicit parameter, a comfortably
+large arsenal of tests can be made available for each and every total
+order.  This deviates from the approach of <acronym>R5RS</acronym>, in which there are
+only five operations (<code>=</code>, <code>&lt;</code>, <code>&gt;</code>, <code>&lt;=</code>,
+<code>&gt;=</code>)&mdash;and for each total order (<code>real</code>/<code>number</code>,
+<code>char</code>, <code>char-ci</code>, <code>string</code>, <code>string-ci</code>) a complete
+set of these five operation is provided.
+
+   <p>But still, using <code>&lt;?</code> would be inconvenient if the compare
+procedure would have to be supplied explicitly every time.  For this
+reason, the parameter compare is often made optional in this
+<acronym>SRFI</acronym>&mdash;and the procedure <code>default-compare</code> is used whenever no
+compare procedure is passed explicitly.  <code>default-compare</code> defines
+some resonable total order on the built in types of <acronym>R5RS</acronym>.
+
+   <p>For the third aspect of this <acronym>SRFI</acronym>, defining compare procedures,
+special control structures (macros) are provided.  These control
+structures can be used in the definition of a (potentially recursive)
+compare procedure.  This is best explained by an extended example.
+
+<!--  -->
+<h5 class="subsubheading">Example</h5>
+
+<p>Assume there is a type length representing physical length.  The type
+has an accessor procedure meters returning the length in meters (a real
+number).  A compare procedure for lengths can then be defined in terms
+of <code>real-compare</code> as:
+
+<pre class="example">     (define (length-compare length1 length2)
+       (real-compare (meters length1) (meters length2)))
+</pre>
+   <p>Now,
+
+<pre class="example">     (&lt;? length-compare x y)
+</pre>
+   <p class="noindent">tests if length <var>x</var> is shorter than length <var>y</var>.  Also,
+
+<pre class="example">     (&lt;=/&lt;? length-compare a x b)
+</pre>
+   <p class="noindent">tests if length <var>x</var> lies between length <var>a</var> (inclusive) and
+length <var>b</var> (exclusive).  The expression:
+
+<pre class="example">     (min-compare length-compare x y z)
+</pre>
+   <p class="noindent">is a shortest of the lengths <var>x</var>, <var>y</var>, and <var>z</var>.  Likewise,
+
+<pre class="example">     (chain&lt;? length-compare x1 x2 x3 x4)
+</pre>
+   <p class="noindent">tests if the lengths <var>x1</var>, <var>x2</var>, <var>x3</var>, <var>x4</var> are strictly
+increasing, and so on.
+
+   <p>Furthermore, assume there is another type box representing a physical
+box.  The type has procedures width, height, and depth accessing the
+dimension (each giving a length).  A compare procedure for boxes,
+comparing first by width then by height and then by depth, can be
+defined using the control structure <code>refine-compare</code> as:
+
+<pre class="example">     (define (box-compare box1 box2)
+       (refine-compare
+         (length-compare (width  box1) (width  box2))
+         (length-compare (height box1) (height box2))
+         (length-compare (depth  box1) (depth  box2))))
+</pre>
+   <p>This time,
+
+<pre class="example">     (&lt;? box-compare b1 b2)
+</pre>
+   <p class="noindent">tests if box <var>b1</var> is smaller than box <var>b2</var>&mdash;in the sense of the
+order defined.  Of course, all the other tests, minimum, maximum
+etc. are available, too.
+
+   <p>As a final complication, assume that there is also a type <code>bowl</code>
+with accessors <code>radius</code> (a length) and <code>open?</code> (a boolean). 
+Bowls are to be compared first by whether they are open or closed, and
+then by radius.  However, bowls and boxes also need to be compared to
+each other, ordered such that a bowl is considered &ldquo;smaller&rdquo; than a
+box.  (There are type-test predicates <code>box?</code> and <code>bowl?</code>). 
+Using the control structure <code>select-compare</code> this can be expressed
+as:
+
+<pre class="example">     (define (container-compare c1 c2)
+       (select-compare c1 c2
+         (bowl? (boolean-compare (open?  c1) (open?  c2))
+                (length-compare  (radius c1) (radius c2)))
+         (box?  (box-compare c1 c2))
+         (else "neither bowls nor boxes" c1 c2)))
+</pre>
+   <p>This is an example of &ldquo;hierarchical extension&rdquo; of compare procedures. 
+Also note the implicit use of <code>refine-compare</code> in the <code>bowl?</code>
+case.
+
+   <p>The preceeding example illustrates the main functionality of this
+<acronym>SRFI</acronym>.
+
+<!-- page -->
+   </body></html>
+

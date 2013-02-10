@@ -10,7 +10,7 @@
 <link rel="next" href="objects-chars.html#objects-chars" title="objects chars">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
-This document describes version 0.2d19 of Vicare Scheme, an
+This document describes version 0.2d20 of Vicare Scheme, an
 R6RS compliant native compiler for the Scheme language, producing
 single threaded programs running on Intel x86 32-bit processors, with
 experimental support for 64-bit machines.  _Vicare_ is pronounced
@@ -20,11 +20,6 @@ The package is distributed under the terms of the GNU General Public
 License (GPL) and can be downloaded from:
 
                `http://code.google.com/p/vicare-scheme/'
-
-
-or:
-
-            `http://github.com/marcomaggi/vicare/downloads'
 
 
 the home page of the project is at:
@@ -91,13 +86,13 @@ Up:&nbsp;<a rel="up" accesskey="u" href="objects.html#objects">objects</a>
 <hr>
 </div>
 
-<h3 class="section">11.9 Struct objects</h3>
+<h3 class="section">12.9 Struct objects</h3>
 
 <p>A data structure is a variable&ndash;length block of memory referenced by
-machine words tagged as vectors; the first machine word of the structure
-is a reference to the type descriptor (<acronym>RTD</acronym>), which is itself a data
-structure; the subsequent words, if any, are the fields of the
-structure.  A block of memory is a data structure if and only if: a
+machine words tagged as vectors; the first machine word of a structure
+is a reference to its structure type descriptor (<acronym>STD</acronym>), which is
+itself a data structure; the subsequent words, if any, are the fields of
+the structure.  A block of memory is a data structure if and only if: a
 reference to it is tagged as vector and its first word is tagged as
 vector.
 
@@ -105,67 +100,88 @@ vector.
        heap pointer    vector tag
      
      |----------------|----------| first word of structure
-       heap pointer    vector tag    = reference to rtd
+       heap pointer    vector tag    = reference to STD
                                      = reference to structure
 </pre>
+   <p>The whole memory block layout of a struct with 5 fields is as
+follows:
+
+<pre class="example">     |-----|------|------|------|------|------|
+       STD  field0 field1 field2 field3 field4
+</pre>
+   <p class="noindent">fields are indexed starting at zero.
+
    <p>The type descriptor of the type descriptors is the return value of
 <code>base-rtd</code> at the Scheme level and the structure referenced by the
-field <code>base_rtd</code> in the process control block.  Such base type
-descriptor is built at Vicare's startup.  The graph of
-references for a structure and its type descriptor is as follows:
+field <code>base_rtd</code> in the process control block (<acronym>PCB</acronym>).  Such base
+type descriptor is built at Vicare's startup.
 
-<pre class="example">           rtd ref
+   <p>The graph of references for a structure and its type descriptor is as
+follows:
+
+<pre class="example">           STD ref
           |-------|---------------| structure instance
               |
        ---&lt;---
       |
-      |     rtd ref
-       --&gt;|-------|---------------| type descriptor
+      |    RTD ref
+       --&gt;|-------|---------------| struct type descriptor
               |
        ---&lt;---
       |
-      |     rtd ref
-      +--&gt;|-------|---------------| base type descriptor
+      |    STD ref
+      +--&gt;|-------|---------------| base struct type descriptor
       |       |
        ---&lt;---
 </pre>
-   <p class="noindent">the type descriptor of the base type descriptor is the base type
-descriptor itself.
+   <p class="noindent">the struct type descriptor of the base struct type descriptor is the
+base type descriptor itself.
 
-   <p>An <acronym>R6RS</acronym> record&ndash;type descriptor is a struct instance of type <acronym>RTD</acronym>. 
-An <acronym>R6RS</acronym> record instance is a struct instance whose first word
-references its type descriptor, that is a struct instance of type
-<acronym>RTD</acronym>.
+   <p>About <acronym>R6RS</acronym> records and their types:
+
+     <ul>
+<li>An <acronym>R6RS</acronym> record instance is a struct instance whose first word
+references its <acronym>R6RS</acronym> record type descriptor (<acronym>RTD</acronym>).
+
+     <li>An <acronym>R6RS</acronym> record type descriptor (<acronym>RTD</acronym>) is a struct instance of type
+<code>&lt;rtd&gt;</code>.
+
+     <li>An <acronym>R6RS</acronym> record constructor descriptor is a struct instance of type
+<code>&lt;rcd&gt;</code>. 
+</ul>
+
+   <p>The graph of references for an <acronym>R6RS</acronym> record and its type descriptor
+is as follows:
 
 <pre class="example">          RTD ref
          |-------|---------------| R6RS record instance
              |
       ---&lt;---
      |
-     |     std ref
+     |    STD ref
       --&gt;|-------|---------------| R6RS record type descriptor
-             |                      = struct instance of type RTD
+             |                      = struct instance of type &lt;rtd&gt;
       ---&lt;---
      |
-     |     std ref
-     +--&gt;|-------|---------------| RTD type descriptor
+     |    STD ref
+     +--&gt;|-------|---------------| &lt;rtd&gt; struct type descriptor
              |
       ---&lt;---
      |
-     |     std ref
+     |    STD ref
      +--&gt;|-------|---------------| base struct type descriptor
      |       |
       ---&lt;---
 </pre>
-   <p>A struct type descriptor is a fixed&ndash;length block of memory composed of
-6 machine words interpreted as follows:
+   <p>A struct type descriptor (<acronym>STD</acronym>) is a fixed&ndash;length block of memory
+composed of 6 machine words interpreted as follows:
 
      <ol type=1 start=1>
-<li>A reference to the base <acronym>RTD</acronym>.
+<li>A reference to the base <acronym>STD</acronym>.
 
      <li>A fixnum representing the number of machine words in the structure minus
 1; this is the number of fields in the structure excluding the
-reference to the <acronym>RTD</acronym>.  This value is 5 in the base <acronym>RTD</acronym>.
+reference to the <acronym>STD</acronym>.  This value is 5 in the base <acronym>STD</acronym>.
 
      <li>Scheme symbol representing the name of this structure type.
 
@@ -173,7 +189,7 @@ reference to the <acronym>RTD</acronym>.  This value is 5 in the base <acronym>R
 this type.
 
      <li>False or a reference to closure used to print to a Scheme port the
-structures of this type.  This is the printer function.
+structures of this type.  This is the <dfn>printer</dfn> function.
 
      <li>Scheme symbol used as unique identifier for this type.
         </ol>
@@ -270,8 +286,8 @@ to store a value in field 2 of a structure we do:
      s_field = IK_REF(s_stru, off_record_data + 2 * wordsize);
 </pre>
    <div class="defun">
-&mdash; Preprocessor Symbol: <b>record_mask</b><var><a name="index-record_005fmask-2233"></a></var><br>
-&mdash; Preprocessor Symbol: <b>record_tag</b><var><a name="index-record_005ftag-2234"></a></var><br>
+&mdash; Preprocessor Symbol: <b>record_mask</b><var><a name="index-record_005fmask-4111"></a></var><br>
+&mdash; Preprocessor Symbol: <b>record_tag</b><var><a name="index-record_005ftag-4112"></a></var><br>
 <blockquote><p>Integer values used to tag and recognise <code>ikptr</code> references to
 structures.  <code>record_mask</code> isolates the tag bits from an <code>ikptr</code>
 and <code>record_tag</code> represents the tag bits.  These values are the
@@ -279,59 +295,59 @@ same used for vectors.
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Preprocessor Symbol: <b>disp_record_rtd</b><var><a name="index-disp_005frecord_005frtd-2235"></a></var><br>
+&mdash; Preprocessor Symbol: <b>disp_record_rtd</b><var><a name="index-disp_005frecord_005frtd-4113"></a></var><br>
 <blockquote><p>Displacement of the <acronym>RTD</acronym> from the beginning of a structure block.  The
 number of bytes to add to an untagged pointer to structure to get the
 pointer to the first byte in the word holding the <acronym>RTD</acronym>. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Preprocessor Symbol: <b>disp_record_data</b><var><a name="index-disp_005frecord_005fdata-2236"></a></var><br>
+&mdash; Preprocessor Symbol: <b>disp_record_data</b><var><a name="index-disp_005frecord_005fdata-4114"></a></var><br>
 <blockquote><p>Displacement of data area.  The number of bytes to add to an untagged
 pointer to structure to get the pointer to the first byte of the first
 field in the data area. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Preprocessor Symbol: <b>off_record_rtd</b><var><a name="index-off_005frecord_005frtd-2237"></a></var><br>
+&mdash; Preprocessor Symbol: <b>off_record_rtd</b><var><a name="index-off_005frecord_005frtd-4115"></a></var><br>
 <blockquote><p>An integer to add to a tagged <code>ikptr</code> structure reference to retrieve
 the pointer to the first byte of the <acronym>RTD</acronym>. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Preprocessor Symbol: <b>off_record_data</b><var><a name="index-off_005frecord_005fdata-2238"></a></var><br>
+&mdash; Preprocessor Symbol: <b>off_record_data</b><var><a name="index-off_005frecord_005fdata-4116"></a></var><br>
 <blockquote><p>An integer to add to a tagged <code>ikptr</code> structure reference to retrieve
 the pointer to the first byte of the first field of the structure. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Preprocessor Symbol: <b>disp_rtd_rtd</b><var><a name="index-disp_005frtd_005frtd-2239"></a></var><br>
+&mdash; Preprocessor Symbol: <b>disp_rtd_rtd</b><var><a name="index-disp_005frtd_005frtd-4117"></a></var><br>
 <blockquote><p>Displacement of the base <acronym>RTD</acronym> from the beginning of an <acronym>RTD</acronym> block. 
 The number of bytes to add to an untagged pointer to <acronym>RTD</acronym> to get the
 pointer to the first byte of the reference to <acronym>RTD</acronym>. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Preprocessor Symbol: <b>disp_rtd_name</b><var><a name="index-disp_005frtd_005fname-2240"></a></var><br>
-&mdash; Preprocessor Symbol: <b>disp_rtd_length</b><var><a name="index-disp_005frtd_005flength-2241"></a></var><br>
-&mdash; Preprocessor Symbol: <b>disp_rtd_fields</b><var><a name="index-disp_005frtd_005ffields-2242"></a></var><br>
-&mdash; Preprocessor Symbol: <b>disp_rtd_printer</b><var><a name="index-disp_005frtd_005fprinter-2243"></a></var><br>
-&mdash; Preprocessor Symbol: <b>disp_rtd_symbol</b><var><a name="index-disp_005frtd_005fsymbol-2244"></a></var><br>
+&mdash; Preprocessor Symbol: <b>disp_rtd_name</b><var><a name="index-disp_005frtd_005fname-4118"></a></var><br>
+&mdash; Preprocessor Symbol: <b>disp_rtd_length</b><var><a name="index-disp_005frtd_005flength-4119"></a></var><br>
+&mdash; Preprocessor Symbol: <b>disp_rtd_fields</b><var><a name="index-disp_005frtd_005ffields-4120"></a></var><br>
+&mdash; Preprocessor Symbol: <b>disp_rtd_printer</b><var><a name="index-disp_005frtd_005fprinter-4121"></a></var><br>
+&mdash; Preprocessor Symbol: <b>disp_rtd_symbol</b><var><a name="index-disp_005frtd_005fsymbol-4122"></a></var><br>
 <blockquote><p>Displacements of the fields of an <acronym>RTD</acronym>. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Preprocessor Symbol: <b>rtd_size</b><var><a name="index-rtd_005fsize-2245"></a></var><br>
+&mdash; Preprocessor Symbol: <b>rtd_size</b><var><a name="index-rtd_005fsize-4123"></a></var><br>
 <blockquote><p>The total number of bytes in a memory block holding an <acronym>RTD</acronym>. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Preprocessor Symbol: <b>off_rtd_rtd</b><var><a name="index-off_005frtd_005frtd-2246"></a></var><br>
-&mdash; Preprocessor Symbol: <b>off_rtd_name</b><var><a name="index-off_005frtd_005fname-2247"></a></var><br>
-&mdash; Preprocessor Symbol: <b>off_rtd_length</b><var><a name="index-off_005frtd_005flength-2248"></a></var><br>
-&mdash; Preprocessor Symbol: <b>off_rtd_fields</b><var><a name="index-off_005frtd_005ffields-2249"></a></var><br>
-&mdash; Preprocessor Symbol: <b>off_rtd_printer</b><var><a name="index-off_005frtd_005fprinter-2250"></a></var><br>
-&mdash; Preprocessor Symbol: <b>off_rtd_symbol</b><var><a name="index-off_005frtd_005fsymbol-2251"></a></var><br>
+&mdash; Preprocessor Symbol: <b>off_rtd_rtd</b><var><a name="index-off_005frtd_005frtd-4124"></a></var><br>
+&mdash; Preprocessor Symbol: <b>off_rtd_name</b><var><a name="index-off_005frtd_005fname-4125"></a></var><br>
+&mdash; Preprocessor Symbol: <b>off_rtd_length</b><var><a name="index-off_005frtd_005flength-4126"></a></var><br>
+&mdash; Preprocessor Symbol: <b>off_rtd_fields</b><var><a name="index-off_005frtd_005ffields-4127"></a></var><br>
+&mdash; Preprocessor Symbol: <b>off_rtd_printer</b><var><a name="index-off_005frtd_005fprinter-4128"></a></var><br>
+&mdash; Preprocessor Symbol: <b>off_rtd_symbol</b><var><a name="index-off_005frtd_005fsymbol-4129"></a></var><br>
 <blockquote><p>Integer to add to a tagged <code>ikptr</code> <acronym>RTD</acronym> reference to retrieve the
 pointer to the first byte of the fields. 
 </p></blockquote></div>
@@ -340,7 +356,7 @@ pointer to the first byte of the fields.
 <h5 class="subsubheading">Convenience preprocessor macros</h5>
 
 <div class="defun">
-&mdash; Preprocessor Macro: ikptr <b>IK_FIELD</b> (<var>ikptr stru, idx</var>)<var><a name="index-IK_005fFIELD-2252"></a></var><br>
+&mdash; Preprocessor Macro: ikptr <b>IK_FIELD</b> (<var>ikptr stru, idx</var>)<var><a name="index-IK_005fFIELD-4130"></a></var><br>
 <blockquote><p>Evaluate to the location of the field at zero&ndash;based index <var>idx</var> for
 the structure <var>stru</var>.  A use of this macro can appear both as
 operand and as left&ndash;side of an assignment.
@@ -357,21 +373,21 @@ operand and as left&ndash;side of an assignment.
 <h5 class="subsubheading">Operations on vectors</h5>
 
 <div class="defun">
-&mdash; Function: ikptr <b>ika_struct_alloc_no_init</b> (<var>ikpcb * pcb, ikptr rtd</var>)<var><a name="index-ika_005fstruct_005falloc_005fno_005finit-2253"></a></var><br>
+&mdash; Function: ikptr <b>ika_struct_alloc_no_init</b> (<var>ikpcb * pcb, ikptr rtd</var>)<var><a name="index-ika_005fstruct_005falloc_005fno_005finit-4131"></a></var><br>
 <blockquote><p>Allocate, initialise and return a new structure instance of type
 <var>rtd</var>.  The first word of the allocated block is initialised with
 <var>rtd</var>, the other words are left uninitialised. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: ikptr <b>ika_struct_alloc_and_init</b> (<var>ikpcb * pcb, ikptr rtd</var>)<var><a name="index-ika_005fstruct_005falloc_005fand_005finit-2254"></a></var><br>
+&mdash; Function: ikptr <b>ika_struct_alloc_and_init</b> (<var>ikpcb * pcb, ikptr rtd</var>)<var><a name="index-ika_005fstruct_005falloc_005fand_005finit-4132"></a></var><br>
 <blockquote><p>Allocate, initialise and return a new structure instance of type
 <var>rtd</var>.  The first word of the allocated block is initialised with
 <var>rtd</var>, the other words are initialised to the fixnum zero. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: int <b>ik_is_struct</b> (<var>ikptr R</var>)<var><a name="index-ik_005fis_005fstruct-2255"></a></var><br>
+&mdash; Function: int <b>ik_is_struct</b> (<var>ikptr R</var>)<var><a name="index-ik_005fis_005fstruct-4133"></a></var><br>
 <blockquote><p>Return true if <var>R</var> is a reference to a structure. 
 </p></blockquote></div>
 

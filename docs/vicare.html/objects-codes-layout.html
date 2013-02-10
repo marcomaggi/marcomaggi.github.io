@@ -1,0 +1,145 @@
+<html lang="en">
+<head>
+<title>objects codes layout - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="objects-codes.html#objects-codes" title="objects codes">
+<link rel="next" href="objects-codes-reloc.html#objects-codes-reloc" title="objects codes reloc">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d20 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package is distributed under the terms of the GNU General Public
+License (GPL) and can be downloaded from:
+
+               `http://code.google.com/p/vicare-scheme/'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2012 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="objects-codes-layout"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="objects-codes-reloc.html#objects-codes-reloc">objects codes reloc</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="objects-codes.html#objects-codes">objects codes</a>
+<hr>
+</div>
+
+<h4 class="subsection">12.23.1 Memory layout of code objects</h4>
+
+<p>A code object is a fixed length memory block, of variable size equal to
+a multiple of the host's page size, referenced by machine words tagged
+as vectors; the memory is allocated with <code>mmap()</code> and is given read,
+write and execution protection.  The memory layout of a code object is
+as follows:
+
+<pre class="example">          page size          page size          page size
+     |..................|..................|..................|
+     |-----------|-----------------------------------|++++++++|
+       meta data                 data area             unused
+</pre>
+   <p class="noindent">if the requested memory is less than the exact multiple of a page size,
+the last allocated bytes are unused and set to zero at allocation time.
+
+   <p>The first machine word of a code memory block is tagged has code in its
+least significant bits and it has the most significant bits set to zero.
+
+<pre class="example">     |------------------------|-------------| reference to code
+         memory pointer         vector tag
+     
+     |------------------------|-------------| code first word
+        all set to zero          code tag
+</pre>
+   <!--  -->
+<h5 class="subsubheading">Meta data in a code memory block</h5>
+
+<p>The first words of a code memory block hold meta data:
+
+     <ol type=1 start=1>
+<li>The first word contains the secondary tag needed to recognise a Scheme
+object as code object.
+
+     <li>The second word contains a non&ndash;negative fixnum representing the number
+of used bytes in the allocated block; this is <strong>not</strong> the number of
+allocated bytes (multiple of the page size), just the number of bytes
+actually used by meta data and binary code.
+
+     <li>The third word contains the reference to a Scheme vector used as
+relocation vector.
+
+     <li>The fourth word contains a non&ndash;negative fixnum representing the number
+of free variables in the contained code.  If such values is zero: the
+code is a thunk.
+
+     <li>The fifth word contains a code annotation; it is initialised to
+<code>#f</code>.
+
+     <li>The sixth word is currently unused; it is initialised to the fixnum
+zero.
+        </ol>
+
+<p class="noindent">the subsequent words in the memory block are the code object's data
+area.
+
+<!-- page -->
+   </body></html>
+

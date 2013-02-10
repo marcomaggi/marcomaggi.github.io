@@ -1,0 +1,152 @@
+<html lang="en">
+<head>
+<title>syslib compiler - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="syslib.html#syslib" title="syslib">
+<link rel="prev" href="syslib-closures.html#syslib-closures" title="syslib closures">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.2d20 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package is distributed under the terms of the GNU General Public
+License (GPL) and can be downloaded from:
+
+               `http://code.google.com/p/vicare-scheme/'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2012 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="syslib-compiler"></a>
+<p>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="syslib-closures.html#syslib-closures">syslib closures</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="syslib.html#syslib">syslib</a>
+<hr>
+</div>
+
+<h3 class="section">8.20 Interface to compiler passes</h3>
+
+<p><a name="index-g_t_0040library_007bikarus-system-_0024compiler_007d_002c-library-2226"></a><a name="index-Library-_0040library_007bikarus-system-_0024compiler_007d-2227"></a>
+
+   <p>Vicare is a compiler for the Scheme language; internally it
+implements a multitude of passes, each of which performing a
+transformation from Scheme code to executable binary code.  The library
+<code>(ikarus system $compiler)</code> exports one binding for each compiler
+pass, allowing inspection of the performed transformations.
+
+   <p>The sequence in which the passes are performed <strong>cannot</strong> be
+changed; they must be performed in the specified order.  The passes
+functions are to be considered unsafe: if the input is invalid, the
+behaviour is undefined.
+
+   <p>This section contains some documentation for each pass; however, it is
+almost impossible to truly understand what a pass does without reading
+the source code, where additional documentation is present in the form
+of comments.
+
+<ul class="menu">
+<li><a accesskey="1" href="syslib-compiler-unparse.html#syslib-compiler-unparse">syslib compiler unparse</a>:        Unparsing intermediate
+                                  representations.
+
+</li></ul>
+<p>Compiler passes
+
+</p>
+<ul class="menu">
+<li><a accesskey="2" href="syslib-compiler-full.html#syslib-compiler-full">syslib compiler full</a>:           The full transformation. 
+<li><a accesskey="3" href="syslib-compiler-recordize.html#syslib-compiler-recordize">syslib compiler recordize</a>:      Scheme code to nested structs. 
+<li><a accesskey="4" href="syslib-compiler-direct-calls.html#syslib-compiler-direct-calls">syslib compiler direct calls</a>:   Optimisation for direct calls. 
+<li><a accesskey="5" href="syslib-compiler-letrec.html#syslib-compiler-letrec">syslib compiler letrec</a>:         Optimisation of <code>letrec</code> forms. 
+<li><a accesskey="6" href="syslib-compiler-optimisation.html#syslib-compiler-optimisation">syslib compiler optimisation</a>:   Source optimisation. 
+<li><a accesskey="7" href="syslib-compiler-assignments.html#syslib-compiler-assignments">syslib compiler assignments</a>:    Rewriting references and assignments. 
+<li><a accesskey="8" href="syslib-compiler-tags.html#syslib-compiler-tags">syslib compiler tags</a>:           Tagging known properties. 
+<li><a accesskey="9" href="syslib-compiler-vars.html#syslib-compiler-vars">syslib compiler vars</a>:           Introducing storage locations. 
+<li><a href="syslib-compiler-bindings.html#syslib-compiler-bindings">syslib compiler bindings</a>:       Sanitizing bindings. 
+<li><a href="syslib-compiler-direct-jumps.html#syslib-compiler-direct-jumps">syslib compiler direct jumps</a>:   Optimisation for direct jumps. 
+<li><a href="syslib-compiler-global.html#syslib-compiler-global">syslib compiler global</a>:         Inserting global assignments. 
+<li><a href="syslib-compiler-closures.html#syslib-compiler-closures">syslib compiler closures</a>:       Closures conversion. 
+<li><a href="syslib-compiler-lift.html#syslib-compiler-lift">syslib compiler lift</a>:           Closures optimization and codes
+                                  lifting. 
+<li><a href="syslib-compiler-cogen.html#syslib-compiler-cogen">syslib compiler cogen</a>:          Full assembly code generation. 
+<li><a href="syslib-compiler-assember.html#syslib-compiler-assember">syslib compiler assember</a>:       Binary code generation.
+
+</li></ul>
+<p>Code generation passes
+
+</p>
+<ul class="menu">
+<li><a href="syslib-compiler-primcall.html#syslib-compiler-primcall">syslib compiler primcall</a>:       Introducing primitive calls. 
+<li><a href="syslib-compiler-fix.html#syslib-compiler-fix">syslib compiler fix</a>:            Removing fixes. 
+<li><a href="syslib-compiler-engine.html#syslib-compiler-engine">syslib compiler engine</a>:         Inserting engine checks. 
+<li><a href="syslib-compiler-stack.html#syslib-compiler-stack">syslib compiler stack</a>:          Inserting stack overflow checks. 
+<li><a href="syslib-compiler-primop.html#syslib-compiler-primop">syslib compiler primop</a>:         Expanding primitive operations. 
+<li><a href="syslib-compiler-order.html#syslib-compiler-order">syslib compiler order</a>:          Imposing calling convention and
+                                  evaluation order. 
+<li><a href="syslib-compiler-frame.html#syslib-compiler-frame">syslib compiler frame</a>:          Assigning frame sizes. 
+<li><a href="syslib-compiler-color.html#syslib-compiler-color">syslib compiler color</a>:          Colorising by Chaitin. 
+<li><a href="syslib-compiler-flatten.html#syslib-compiler-flatten">syslib compiler flatten</a>:        Flattening codes. 
+</ul>
+
+<!-- page -->
+   </body></html>
+
