@@ -9,16 +9,17 @@
 <link rel="prev" href="objects-misc.html#objects-misc" title="objects misc">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
-This document describes version 0.2d20 of Vicare Scheme, an
+This document describes version 0.3d0 of Vicare Scheme, an
 R6RS compliant native compiler for the Scheme language, producing
 single threaded programs running on Intel x86 32-bit processors, with
 experimental support for 64-bit machines.  _Vicare_ is pronounced
 the etruscan way.
 
-The package is distributed under the terms of the GNU General Public
-License (GPL) and can be downloaded from:
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
 
-               `http://code.google.com/p/vicare-scheme/'
+        `http://sourceforge.net/projects/vicare-scheme/files/'
 
 
 the home page of the project is at:
@@ -36,17 +37,22 @@ and, as a backup, at:
                      `http://gitorious.org/vicare'
 
 
+and at:
+
+           `http://sourceforge.net/projects/vicare-scheme/'
+
+
 this project has a mailing list:
 
              `http://groups.google.com/group/vicare-users'
 
 
-Copyright (C) 2010-2012 by Marco Maggi.
+Copyright (C) 2010-2013 by Marco Maggi.
 
 Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
 
 This document is derived from the original Ikarus documentation by the
-Vicare Scheme contributors.
+Vicare Scheme contributors, see the ``History'' appendix for details.
 
      This program is free software: you can redistribute it and/or
      modify it under the terms of the GNU General Public License
@@ -84,33 +90,42 @@ Up:&nbsp;<a rel="up" accesskey="u" href="objects.html#objects">objects</a>
 <hr>
 </div>
 
-<h3 class="section">12.27 Notes on calling Scheme code from C</h3>
+<h3 class="section">14.27 Notes on calling Scheme code from C</h3>
 
 <p>While writing C language code interfacing with Scheme, if we call a C
 language function which calls back a Scheme function we have to save and
-restore the continuation:
+restore the current system continuation:
 
 <pre class="example">     ikpcb * pcb = the_pcb;
-     ikptr   sk;
      
-     sk = ik_enter_c_function(pcb);
+     ik_enter_c_function(pcb);
      {
        /* place here C code that calls Scheme code */
      }
-     ik_leave_c_function(pcb, sk);
+     ik_leave_c_function(pcb);
 </pre>
    <p class="noindent">else, upon returning from the Scheme code, the execution flow will go to
 the wrong continuation and undefined behaviour ensues.
 
 <div class="defun">
-&mdash; Function: ikptr <b>ik_enter_c_function</b> (<var>ikpcb * pcb</var>)<var><a name="index-ik_005fenter_005fc_005ffunction-4374"></a></var><br>
-<blockquote><p>Save the current Scheme continuation and return a reference to it. 
+&mdash; Function: void <b>ik_enter_c_function</b> (<var>ikpcb * pcb</var>)<var><a name="index-ik_005fenter_005fc_005ffunction-5026"></a></var><br>
+<blockquote><p>Save the current Scheme continuation and followed by the current system
+continuation.  A call to this function must be matched by a call to
+<code>ik_leave_c_function()</code>. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: ikptr <b>ik_leave_c_function</b> (<var>ikpcb * pcb, ikptr sk</var>)<var><a name="index-ik_005fleave_005fc_005ffunction-4375"></a></var><br>
-<blockquote><p>Restore the previously saved Scheme continuation <var>sk</var>. 
+&mdash; Function: void <b>ik_leave_c_function</b> (<var>ikpcb * pcb</var>)<var><a name="index-ik_005fleave_005fc_005ffunction-5027"></a></var><br>
+<blockquote><p>Restore the previously saved Scheme continuation.  A call to this
+function must be matched by a call to <code>ik_enter_c_function()</code>. 
 </p></blockquote></div>
+
+   <p>Notice that when Scheme calls C then C calls a Scheme: garbage
+collections can happen in the nested Scheme code, so the C code cannot
+rely on the Scheme value to keep their location.  Also, nested C code
+invocations can happen, so the C code calling out to Scheme
+<strong>cannot</strong> use the <code>pcb-&gt;root</code> fields to preserve Scheme
+values.
 
 <!-- end of file -->
    </body></html>

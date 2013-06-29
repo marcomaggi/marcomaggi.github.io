@@ -10,16 +10,17 @@
 <link rel="next" href="objects-continuations.html#objects-continuations" title="objects continuations">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
-This document describes version 0.2d20 of Vicare Scheme, an
+This document describes version 0.3d0 of Vicare Scheme, an
 R6RS compliant native compiler for the Scheme language, producing
 single threaded programs running on Intel x86 32-bit processors, with
 experimental support for 64-bit machines.  _Vicare_ is pronounced
 the etruscan way.
 
-The package is distributed under the terms of the GNU General Public
-License (GPL) and can be downloaded from:
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
 
-               `http://code.google.com/p/vicare-scheme/'
+        `http://sourceforge.net/projects/vicare-scheme/files/'
 
 
 the home page of the project is at:
@@ -37,17 +38,22 @@ and, as a backup, at:
                      `http://gitorious.org/vicare'
 
 
+and at:
+
+           `http://sourceforge.net/projects/vicare-scheme/'
+
+
 this project has a mailing list:
 
              `http://groups.google.com/group/vicare-users'
 
 
-Copyright (C) 2010-2012 by Marco Maggi.
+Copyright (C) 2010-2013 by Marco Maggi.
 
 Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
 
 This document is derived from the original Ikarus documentation by the
-Vicare Scheme contributors.
+Vicare Scheme contributors, see the ``History'' appendix for details.
 
      This program is free software: you can redistribute it and/or
      modify it under the terms of the GNU General Public License
@@ -86,14 +92,14 @@ Up:&nbsp;<a rel="up" accesskey="u" href="objects.html#objects">objects</a>
 <hr>
 </div>
 
-<h3 class="section">12.24 Closure objects</h3>
+<h3 class="section">14.24 Closure objects</h3>
 
 <p>Closure objects are actual procedures: closure objects are the ones for
 which the <code>procedure?</code> predicate returns <code>#t</code>.  A closure object
 is a fixed length memory block referenced by machine words tagged as
-closures; each closure object is associated to a code object that
-implements the procedure.  The memory layout of a closure object is as
-follows:
+closures; each closure object is associated to either a code object that
+implements the procedure or a routine directly coded in assembly.  The
+memory layout of a closure object is as follows:
 
 <pre class="example">     |------------------------|-------------| reference to closure
            heap pointer         closure tag
@@ -179,7 +185,7 @@ referenced by the slots of the closures:
 <h5 class="subsubheading">Basic operations</h5>
 
 <p>Closure objects are allocated on the heap; to perform the allocation and
-initialisation we do:
+initialisation for a closure object without free variables we do:
 
 <pre class="example">     ikptr   p_closure;
      ikptr   s_closure;
@@ -195,48 +201,75 @@ to it the closure tag (an integer value fitting in 3 bits) which
 allows to recognise closures among all the other built in objects.
 
 <div class="defun">
-&mdash; Preprocessor Symbol: <b>closure_tag</b><var><a name="index-closure_005ftag-4305"></a></var><br>
+&mdash; Preprocessor Symbol: <b>closure_tag</b><var><a name="index-closure_005ftag-4941"></a></var><br>
 <blockquote><p>An integer used to tag <code>ikptr</code> references to closure memory blocks. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Preprocessor Symbol: <b>closure_mask</b><var><a name="index-closure_005fmask-4306"></a></var><br>
+&mdash; Preprocessor Symbol: <b>closure_mask</b><var><a name="index-closure_005fmask-4942"></a></var><br>
 <blockquote><p>An integer representing the bitmask used to extract (with a bitwise
 logic AND) the tag from <code>ikptr</code> references to closure objects. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Preprocessor Symbol: <b>disp_closure_code</b><var><a name="index-disp_005fclosure_005fcode-4307"></a></var><br>
+&mdash; Preprocessor Symbol: <b>disp_closure_code</b><var><a name="index-disp_005fclosure_005fcode-4943"></a></var><br>
 <blockquote><p>Displacement of code pointer.  The number of bytes to add to an
-<strong>untagged</strong> pointer to closure to get the pointer to the first
-byte in the word of the closure's data area. 
+<strong>untagged</strong> pointer to closure to get a pointer to the word in the
+memory block holding the binary code entry point. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Preprocessor Symbol: <b>disp_closure_data</b><var><a name="index-disp_005fclosure_005fdata-4308"></a></var><br>
-<blockquote><p>Number of bytes needed to hold a closure's memory block.  An integer to
-add to an <strong>untagged</strong> pointer to closure to obtain a pointer to
-the first byte after the closure's memory block. 
+&mdash; Preprocessor Symbol: <b>disp_closure_data</b><var><a name="index-disp_005fclosure_005fdata-4944"></a></var><br>
+<blockquote><p>Displacement of free variables.  The number of bytes to add to an
+<strong>untagged</strong> pointer to closure to get a pointer to the first word
+in the data area of the memory block. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Preprocessor Symbol: <b>off_closure_code</b><var><a name="index-off_005fclosure_005fcode-4309"></a></var><br>
-<blockquote><p>An integer to add to a tagged <code>ikptr</code> reference to retrieve the pointer
-to the first byte of the word in the closure's data area. 
+&mdash; Preprocessor Symbol: <b>off_closure_code</b><var><a name="index-off_005fclosure_005fcode-4945"></a></var><br>
+<blockquote><p>An integer to add to a tagged <code>ikptr</code> closure reference to get a
+pointer to the word in the memory block holding the binary code entry
+point. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Preprocessor Symbol: <b>off_closure_data</b><var><a name="index-off_005fclosure_005fdata-4310"></a></var><br>
-<blockquote><p>An integer to add to a tagged <code>ikptr</code> vector reference to obtain a
-pointer to the first byte after the closure's memory block. 
+&mdash; Preprocessor Symbol: <b>off_closure_data</b><var><a name="index-off_005fclosure_005fdata-4946"></a></var><br>
+<blockquote><p>An integer to add to a tagged <code>ikptr</code> closure reference to get a
+pointer to the first word in the data area of the memory block. 
 </p></blockquote></div>
 
 <!--  -->
 <h5 class="subsubheading">Convenience preprocessor macros</h5>
 
 <div class="defun">
-&mdash; Preprocessor Macro: int <b>IK_IS_CLOSURE</b> (<var>ikptr X</var>)<var><a name="index-IK_005fIS_005fCLOSURE-4311"></a></var><br>
+&mdash; Preprocessor Macro: int <b>IK_IS_CLOSURE</b> (<var>ikptr X</var>)<var><a name="index-IK_005fIS_005fCLOSURE-4947"></a></var><br>
 <blockquote><p>Evaluate to true if <var>X</var> is a reference to closure object. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Preprocessor Macro: ikptr <b>IK_CLOSURE_ENTRY_POINT</b> (<var>X</var>)<var><a name="index-IK_005fCLOSURE_005fENTRY_005fPOINT-4948"></a></var><br>
+<blockquote><p>Given a reference to closure object: return the address of the binary
+code entry point. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Preprocessor Macro: ikptr <b>IK_CLOSURE_CODE_OBJECT</b> (<var>X</var>)<var><a name="index-IK_005fCLOSURE_005fCODE_005fOBJECT-4949"></a></var><br>
+<blockquote><p>Given a reference to closure object: return a reference to the
+associated code object.  <strong>Only works for closures associated to
+code objects.</strong>
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Preprocessor Macro: int <b>IK_CLOSURE_NUMBER_OF_FREE_VARS</b> (<var>X</var>)<var><a name="index-IK_005fCLOSURE_005fNUMBER_005fOF_005fFREE_005fVARS-4950"></a></var><br>
+<blockquote><p>Given a reference to closure object: return the number of free
+variables.  <strong>Only works for closures associated to code objects.</strong>
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Preprocessor Macro: ikptr <b>IK_CLOSURE_FREE_VAR</b> (<var>X, idx</var>)<var><a name="index-IK_005fCLOSURE_005fFREE_005fVAR-4951"></a></var><br>
+<blockquote><p>Given a reference to closure object: return a reference to value of the
+free variable at index <var>idx</var> in the data area.  <var>idx</var> must be
+less than the number of free variables in this closure object. 
 </p></blockquote></div>
 
 <!-- page -->

@@ -1,0 +1,144 @@
+<html lang="en">
+<head>
+<title>machinery simplifications - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="machinery.html#machinery" title="machinery">
+<link rel="next" href="machinery-registers.html#machinery-registers" title="machinery registers">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.3d0 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+        `http://sourceforge.net/projects/vicare-scheme/files/'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+and at:
+
+           `http://sourceforge.net/projects/vicare-scheme/'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the ``History'' appendix for details.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="machinery-simplifications"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="machinery-registers.html#machinery-registers">machinery registers</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="machinery.html#machinery">machinery</a>
+<hr>
+</div>
+
+<h3 class="section">16.1 Simplification assumptions</h3>
+
+<p>To make it easy to explain the run time behaviour of Vicare, we
+will assume the validity of the following simplifications:
+
+     <ol type=1 start=1>
+<li>At the start of a user program execution: the Scheme stack is empty. 
+This is false because, at Vicare launch time, the boot image is
+loaded and initialised, executing a lot of compiled Scheme code.  But
+starting with an empty stack makes reasoning simpler.
+
+     <li>No expressions and function calls are inlined.  This is false because
+the compiler precomputes some expressions, inlines some function calls
+and removes bindings whenever possible; this makes the executed code
+different from the original Scheme code.  But we want to show sample
+Scheme code as close as possible to the one that gets executed.
+
+     <li>Unless otherwise specified: no tail call optimisation (<acronym>TCO</acronym>) is
+performed.  This is false because, whenever it recognises a function
+call in tail position, Vicare always performs the call in such
+a way that the new stack frame overwrites the old one.  But we want to
+show simple functions that create new stack frames.
+
+     <li>The function <code>call/cc</code> is implemented without subordinate function
+calls.  This is depends upon the function call integration optimisations
+performed by the compiler.  But reasoning about simple function call is
+simpler.
+
+     <li>There is no dynamic environment to be captured by continuations.  This
+is false because whenever <code>dynamic-wind</code> is used stacks of
+in&ndash;guard and out&ndash;guard functions are created and captured by
+continuations; the continuation escape function, created by
+<code>call/cc</code>, does invoke such guard functions to keep the dynamic
+environment synchronised with the execution flow.  But learning about
+continuations alone already introduces enough complications.
+
+     <li>When discussing sample programs we assume that only the code we see is
+executed.  This is false because whenever a user program is run: the
+code is loaded and compiled, then some initialisation is performed
+before running it.  Rather when dissussing the execution of:
+
+     <pre class="example">          (import (rnrs))
+          (define (one a)
+            (+ a 1))
+          (one 2)
+</pre>
+     <p class="noindent">we assume that the first executed code is the expression <code>(one 2)</code>.
+        </ol>
+
+<!-- page -->
+   </body></html>
+

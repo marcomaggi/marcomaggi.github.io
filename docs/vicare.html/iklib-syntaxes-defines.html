@@ -1,0 +1,243 @@
+<html lang="en">
+<head>
+<title>iklib syntaxes defines - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="iklib-syntaxes.html#iklib-syntaxes" title="iklib syntaxes">
+<link rel="next" href="iklib-syntaxes-control.html#iklib-syntaxes-control" title="iklib syntaxes control">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.3d0 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+        `http://sourceforge.net/projects/vicare-scheme/files/'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+and at:
+
+           `http://sourceforge.net/projects/vicare-scheme/'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the ``History'' appendix for details.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="iklib-syntaxes-defines"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="iklib-syntaxes-control.html#iklib-syntaxes-control">iklib syntaxes control</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="iklib-syntaxes.html#iklib-syntaxes">iklib syntaxes</a>
+<hr>
+</div>
+
+<h4 class="subsection">3.2.1 Additional binding syntaxes</h4>
+
+<div class="defun">
+&mdash; Syntax: <b>define-constant</b><var> ?var ?expr<a name="index-define_002dconstant-29"></a></var><br>
+<blockquote><p>Like <code>define</code> but create an immutable binding.
+
+     <pre class="example">          (define-constant X 1)
+          X               &rArr; 1
+          (set! X 2)      error--&gt; &amp;syntax
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>define-inline-constant</b><var> ?name ?expr<a name="index-define_002dinline_002dconstant-30"></a></var><br>
+<blockquote><p><var>?expr</var> is evaluated only once at expand time, the result is
+returned by the macro transformer bound to <var>?name</var>.  It is
+impossible to modify the result of the expansion of <var>?name</var> by
+acting upon <var>?name</var>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>define-values</b> (<var>?var0 ?var <small class="dots">...</small></var>)<var> ?form0 ?form <small class="dots">...</small><a name="index-define_002dvalues-31"></a></var><br>
+<blockquote><p>Evaluate the given forms and bind the, possibly multiple, result of the
+last one to the given <var>?var</var> identifiers.
+
+     <pre class="example">          (define-values (a b c)
+            (values 1 2 3))
+          
+          (list a b c)    &rArr; (1 2 3)
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>define-constant-values</b> (<var>?var0 ?var <small class="dots">...</small></var>)<var> ?form0 ?form <small class="dots">...</small><a name="index-define_002dconstant_002dvalues-32"></a></var><br>
+<blockquote><p>Evaluate the given forms and bind the, possibly multiple, result of the
+last one to the given <var>?var</var> identifiers.  Make the <var>?var</var>
+identifiers immutable.
+
+     <pre class="example">          (define-constant-values (a b c)
+            (values 1 2 3))
+          
+          (list a b c)    &rArr; (1 2 3)
+          (set! a 99)     error--&gt; &amp;syntax
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>receive</b><var> ?formals ?expression ?body0 ?body <small class="dots">...</small><a name="index-receive-33"></a></var><br>
+<blockquote><p>Expect <var>?expression</var> to evaluate to multiple values and bind such
+values as specified by the <var>?formals</var>; evaluate the <var>?body</var> in
+the region of such bindings.  The expansion is:
+
+     <pre class="example">          (receive <var>?formals</var>
+              <var>?expression</var>
+            <var>?body0</var> <var>?body</var> ...)
+          ==&gt; (call-with-values
+                  (lambda ()
+                    <var>?expression</var>)
+                (lambda <var>?formals</var>
+                  <var>?body0</var> <var>?body</var> ...))
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>receive-and-return</b> (<var>?retval <small class="dots">...</small></var>)<var> ?expression ?body0 ?body <small class="dots">...</small><a name="index-receive_002dand_002dreturn-34"></a></var><br>
+<blockquote><p>Expect <var>?expression</var> to evaluate to multiple values and bind such
+values to the identifiers <var>?retval</var>; evaluate the <var>?body</var> forms
+in the region of such bindings; return the values bound to
+<var>?retval</var>.  The expansion is:
+
+     <pre class="example">          (receive-and-return (<var>?retval</var> ...)
+              <var>?expression</var>
+            <var>?body0</var> <var>?body</var> ...)
+          ==&gt; (call-with-values
+                  (lambda ()
+                    <var>?expression</var>)
+                (lambda (<var>?retval</var> ...)
+                  <var>?body0</var> <var>?body</var> ...
+                  (values <var>?retval</var> ...)))
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>define-inline</b> (<var>?name ?arg <small class="dots">...</small> . ?rest</var>)<var> ?body0 ?body <small class="dots">...</small><a name="index-define_002dinline-35"></a></var><br>
+<blockquote><p>Similar to <code>define</code>, but create a binding that is always expanded
+inline and can <strong>neither</strong> be invoked recursively <strong>nor</strong> used
+as function rgument.  This syntax only defines a syntax.
+
+     <pre class="example">          (define-inline (incr x)
+            (+ x 1))
+          
+          (incr 2)        &rArr; 3
+</pre>
+        <p>In the example above, we can think of <code>(incr 2)</code> as expanding to:
+
+     <pre class="example">          (let ((x 2))
+            (+ x 1))
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>define-integrable</b> (<var>?name ?arg <small class="dots">...</small> . ?rest</var>)<var> ?body0 ?body <small class="dots">...</small><a name="index-define_002dintegrable-36"></a></var><br>
+<blockquote><p>Similar to <code>define</code>, but create a binding that is always expanded
+inline and <strong>can</strong> be both invoked recursively and used as function
+argument.  This syntax defines both a syntax and a function.
+
+     <pre class="example">          (define-integrable (incr x)
+            (+ x 1))
+          
+          (incr 2)
+          &rArr; 3
+          
+          (map incr '(10 20 30)))
+          &rArr; (11 21 31)
+</pre>
+        <p>In the example above, we can think of <code>(incr 2)</code> as expanding to:
+
+     <pre class="example">          ((lambda (x)
+             (+ x 1))
+           2)
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>define-syntax-rule</b> (<var>?name ?pattern <small class="dots">...</small> . ?rest</var>)<var> ?body0 ?body <small class="dots">...</small><a name="index-define_002dsyntax_002drule-37"></a></var><br>
+<blockquote><p>Convenience syntax to define a <code>syntax-rules</code> transformer with a
+single clause.  Expand to:
+
+     <pre class="example">          (define-syntax-rule (<var>?name</var> <var>?pattern</var> ... . <var>?rest</var>)
+            <var>?body0</var> <var>?body</var> ...)
+          ==&gt; (define-syntax <var>?name</var>
+                (syntax-rules ()
+                  ((_ <var>?pattern</var> ... . <var>?rest</var>)
+                   (begin <var>?body0</var> <var>?body</var> ...))))
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>define-auxiliary-syntaxes</b><var> ?name0 ?name <small class="dots">...</small><a name="index-define_002dauxiliary_002dsyntaxes-38"></a></var><br>
+<blockquote><p>Define auxiliary syntaxes to be used as literal identifiers by
+<code>syntax-rules</code>, <code>syntax-case</code> and similar macros; expand to:
+
+     <pre class="example">          (define-syntax <var>?name0</var> (syntax-rules ()))
+          (define-syntax <var>?name</var>  (syntax-rules ()))
+          ...
+</pre>
+        </blockquote></div>
+
+<!-- page -->
+   </body></html>
+

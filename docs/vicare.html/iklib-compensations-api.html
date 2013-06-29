@@ -1,0 +1,156 @@
+<html lang="en">
+<head>
+<title>iklib compensations api - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="iklib-compensations.html#iklib-compensations" title="iklib compensations">
+<link rel="prev" href="iklib-compensations-usage.html#iklib-compensations-usage" title="iklib compensations usage">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.3d0 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+        `http://sourceforge.net/projects/vicare-scheme/files/'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+and at:
+
+           `http://sourceforge.net/projects/vicare-scheme/'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the ``History'' appendix for details.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="iklib-compensations-api"></a>
+<p>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="iklib-compensations-usage.html#iklib-compensations-usage">iklib compensations usage</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="iklib-compensations.html#iklib-compensations">iklib compensations</a>
+<hr>
+</div>
+
+<h4 class="subsection">3.3.2 Compensations <acronym>API</acronym></h4>
+
+<div class="defun">
+&mdash; Syntax: <b>with-compensations</b><var> ?body0 ?body <small class="dots">...</small><a name="index-with_002dcompensations-71"></a></var><br>
+<blockquote><p>Initialise a new local compensations stack, then evaluate all the
+<var>?body</var> forms in the given order.  If no error occurs: call
+<code>run-compensations</code>, reset the compensations stack to empty,
+finally return the result value of the last <var>?body</var> form.
+
+        <p>If a <var>?body</var> expression raises an exception: the exception is
+intercepted, <code>run-compensations</code> is called, the compensations stack
+is reset to empty, finally the exception is raised again as
+<strong>non&ndash;continuable</strong> exception.  It is <strong>not</strong> possible to
+return to the <var>?body</var> forms with a continuable exception. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>with-compensations/on-error</b><var> ?body0 ?body <small class="dots">...</small><a name="index-with_002dcompensations_002fon_002derror-72"></a></var><br>
+<blockquote><p>Initialise a new local compensations stack, then evaluate all the
+<var>?body</var> forms in the given order.  If no error occurs: reset the
+compensations stack to empty, return the result value of the last
+<var>?body</var> form.
+
+        <p>If a <var>?body</var> expression raises an exception: the exception is
+intercepted, <code>run-compensations</code> is called, the compensations stack
+is reset to empty, finally the exception is raised again as
+<strong>non&ndash;continuable</strong> exception.  It is <strong>not</strong> possible to
+return to the <var>?body</var> forms with a continuable exception. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>run-compensations</b><var><a name="index-run_002dcompensations-73"></a></var><br>
+<blockquote><p>Evaluate all the compensation thunks in the current stack, in last
+in/first out order.  If a compensation thunk raises an exception: the
+exception is catched by <code>guard</code> and silently discarded.
+
+        <p>This function must be called only inside the dynamic environment
+prepared by <code>with-continuations</code> and similar syntaxes.  It can be
+called multiple times: every time the compensation thunks are consumed
+and removed from the stack. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>compensate</b><var> ?alloc0 ?alloc <small class="dots">...</small> </var>(<var>with ?release0 ?release <small class="dots">...</small></var>)<var><a name="index-compensate-74"></a></var><br>
+&mdash; Auxiliary Fluid Syntax: <b>with</b><var><a name="index-with-75"></a></var><br>
+<blockquote><p>Evaluate all the <var>?alloc</var> expressions and, if no error occurs, push
+a thunk holding the <var>?release</var> forms on the current compensations
+stack.  Return the result of the last <var>?alloc</var> expression. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>push-compensation</b><var> ?release0 ?release <small class="dots">...</small><a name="index-push_002dcompensation-76"></a></var><br>
+<blockquote><p>Push a thunk holding the <var>?release</var> forms on the current
+compensations stack. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>push-compensation-thunk</b><var> thunk<a name="index-push_002dcompensation_002dthunk-77"></a></var><br>
+<blockquote><p>Push the given thunk on the current compensations stack. 
+</p></blockquote></div>
+
+<!-- page -->
+   </body></html>
+

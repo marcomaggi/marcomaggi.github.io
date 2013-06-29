@@ -1,0 +1,280 @@
+<html lang="en">
+<head>
+<title>ffi foreign wrapper binds - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="ffi-foreign-wrapper.html#ffi-foreign-wrapper" title="ffi foreign wrapper">
+<link rel="prev" href="ffi-foreign-wrapper-syntax.html#ffi-foreign-wrapper-syntax" title="ffi foreign wrapper syntax">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.3d0 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+        `http://sourceforge.net/projects/vicare-scheme/files/'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+and at:
+
+           `http://sourceforge.net/projects/vicare-scheme/'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the ``History'' appendix for details.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="ffi-foreign-wrapper-binds"></a>
+<p>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="ffi-foreign-wrapper-syntax.html#ffi-foreign-wrapper-syntax">ffi foreign wrapper syntax</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="ffi-foreign-wrapper.html#ffi-foreign-wrapper">ffi foreign wrapper</a>
+<hr>
+</div>
+
+<h4 class="subsection">4.5.2 Defined bindings</h4>
+
+<p>The syntax <code>define-foreign-pointer-wrapper</code> defines a number of
+bindings associated to the struct type; all the defined bindings are
+prefixed by the identifier <var>?type-id</var> or by <code>$</code> followed by the
+identifier <var>?type-id</var>.
+
+   <p>Here only the bindings in the public <acronym>API</acronym> are documented:
+
+     <dl>
+<dt><code>(make-</code><var>?type-id</var><code>/owner </code><var>pointer</var> <var>field</var><code> ...)</code><dt><code>(make-</code><var>?type-id</var><code>/owner </code><var>pointer</var> <var>collector</var> <var>field</var><code> ...)</code><dd>Build and return a new struct instance of type <var>?type-id</var> wrapping
+the pointer object <var>pointer</var>; the returned instance <strong>owns</strong>
+the <var>pointer</var> object.
+
+     <p>If the definition of <var>?type-id</var> includes a clause
+<code>collector-struct-type</code> with value <code>#f</code>: this maker function
+accepts a single argument.
+
+     <p>If the definition of <var>?type-id</var> includes a clause
+<code>collector-struct-type</code> with an identifier <var>?collector-id</var> as
+value: this maker function accepts two arguments, the second being the
+instance of type <var>?collector-id</var> or <code>#f</code> if there is no
+collector instance.
+
+     <p>If the definition of <var>?type-id</var> includes a clause <code>fields</code>: the
+constructor function accepts as many arguments as specified custom
+fields.
+
+     <br><dt><code>(make-</code><var>?type-id</var><code>/not-owner </code><var>pointer</var><code>)</code><dt><code>(make-</code><var>?type-id</var><code>/not-owner </code><var>pointer</var> <var>collector</var><code>)</code><dd>Build and return a new struct instance of type <var>?type-id</var> wrapping
+the pointer object <var>pointer</var>; the returned instance <strong>does not
+own</strong> the <var>pointer</var> object.
+
+     <p>If the definition of <var>?type-id</var> includes a clause
+<code>collector-struct-type</code> with value <code>#f</code>: this maker function
+accepts a single argument.
+
+     <p>If the definition of <var>?type-id</var> includes a clause
+<code>collector-struct-type</code> with an identifier <var>?collector-id</var> as
+value: this maker function accepts two arguments, the second being the
+instance of type <var>?collector-id</var> or <code>#f</code> if there is no
+collector instance.
+
+     <br><dt><code>($</code><var>?type-id</var><code>-finalise </code><var>struct</var><code>)</code><dd>Perform the finalisation procedure for this <var>struct</var> instance; it is
+safe to apply this finalisation function multiple times to the same
+<var>struct</var> instance: the first time the finalisation takes place,
+subsequent times nothing happens.  The argument to this function
+<strong>must</strong> be an instance of <var>?type-id</var>, else the behaviour is
+undefined.
+
+     <p>The finalisation procedure involves the following:
+
+          <ol type=1 start=1>
+<li>If a custom destructor function has been registered: it is applied to
+<var>struct</var> before any finalisation takes place.
+
+          <li>If <var>struct</var> has a collecting struct <var>collector</var>: <var>struct</var> is
+unregistered from <var>collector</var>.
+
+          <li>If <var>struct</var> collects instances of another type: all the collected
+instances are finalised by invoking their unsafe finalisation functions;
+any exception raised by these finalisation functions is catched by
+<code>guard</code> and discarded.
+
+          <li>If a foreign destructor function <var>?destructor-id</var> was specified in
+the definition of <var>?type-id</var> and this struct instance owns the
+pointer object: the foreign destructor is applied to <var>struct</var>; any
+exception raised by the destructor function is catched by <code>guard</code>
+and discarded.  The return value of the foreign destructor becomes the
+return value of this function.
+
+          <li>The internal field holding the <var>pointer</var> object is reset to
+<code>#f</code>, to mark this struct instance as already finalised.
+          </ol>
+
+     <p>About the returned value:
+
+          <ul>
+<li>If this is the first time the finalisation function is applied, there is
+a foreign destructor and its application is successful: the returned
+value is the return value from the foreign destructor.
+
+          <li>If this is the first time the finalisation function is applied, there is
+a foreign destructor and its application raises an exception: the
+returned value is <code>#f</code>.
+
+          <li>If this is <strong>not</strong> the first time the finalisation function is
+applied: the returned value is <code>#f</code>. 
+</ul>
+
+     <br><dt><code>(</code><var>?type-id</var><code>? </code><var>obj</var><code>)</code><dd>Type predicate function; it returns <code>#t</code> if <var>obj</var> is an instance
+of type <var>?type-id</var>, otherwise it returns <code>#f</code>.
+
+     <br><dt><code>(</code><var>?type-id</var><code>?/alive </code><var>obj</var><code>)</code><dd>Type and liveness predicate function; it returns <code>#t</code> if <var>obj</var> is
+an instance of type <var>?type-id</var> and its <var>pointer</var> object has not
+yet been finalised, otherwise it returns <code>#f</code>.
+
+     <blockquote>
+<strong>NOTE</strong> The returned information really represents the status of
+the foreign data structure only for struct instances that <strong>do
+own</strong> the foreign pointer. 
+</blockquote>
+
+     <br><dt><code>($</code><var>?type-id</var><code>-alive? </code><var>struct</var><code>)</code><dd>Unsafe liveness predicate function; it returns <code>#t</code> if <var>struct</var>
+has a <var>pointer</var> object not yet finalised, otherwise it returns
+<code>#f</code>.  The argument to this function <strong>must</strong> be an instance of
+<var>?type-id</var>, else the behaviour is undefined.
+
+     <blockquote>
+<strong>NOTE</strong> The returned information really represents the status of
+the foreign data structure only for struct instances that <strong>do
+own</strong> the foreign pointer. 
+</blockquote>
+
+     <br><dt><code>(</code><var>?type-id</var> <var>obj</var><code>)</code><dd>Validation form to be used with the facilities of the library
+<code>(vicare arguments validation)</code>.  Succeed if <var>obj</var> satisfies
+the predicate <var>?type-id</var><code>?</code>.
+
+     <br><dt><code>(</code><var>?type-id</var><code>/alive </code><var>obj</var><code>)</code><dd>Validation form to be used with the facilities of the library
+<code>(vicare arguments validation)</code>.  Succeed if <var>obj</var> satisfies
+the predicate <var>?type-id</var><code>?/alive</code>.
+
+     <br><dt><code>(false-or-</code><var>?type-id</var> <var>obj</var><code>)</code><dd>Validation form to be used with the facilities of the library
+<code>(vicare arguments validation)</code>.  Succeed if <var>obj</var> is <code>#f</code>
+or satisfies the predicate <var>?type-id</var><code>?</code>.
+
+     <br><dt><code>(false-or-</code><var>?type-id</var><code>/alive </code><var>obj</var><code>)</code><dd>Validation form to be used with the facilities of the library
+<code>(vicare arguments validation)</code>.  Succeed if <var>obj</var> is <code>#f</code>
+or satisfies the predicate <var>?type-id</var><code>?/alive</code>.
+
+     <br><dt><code>(</code><var>?type-id</var><code>-custom-destructor </code><var>struct</var><code>)</code><dt><code>(set-</code><var>?type-id</var><code>-custom-destructor! </code><var>struct</var> <var>destructor</var><code>)</code><dd>Retrieve or set a custom destructor function associated to <var>struct</var>. 
+Whenever the <var>struct</var> is finalised: <var>destructor</var> is applied to
+<var>struct</var> before the internal state of <var>struct</var> is finalised.
+
+     <br><dt><code>(</code><var>?type-id</var><code>-pointer </code><var>struct</var><code>)</code><dd>Return the pointer object referencing the foreign data structure; if
+<var>struct</var> has already been finalised: the returned value is <code>#f</code>.
+
+     <br><dt><code>(</code><var>?type-id</var><code>-pointer-owner? </code><var>struct</var><code>)</code><dd>Return <code>#t</code> if <var>struct</var> owns the pointer object, otherwise return
+<code>#f</code>.
+
+     <br><dt><code>(</code><var>?type-id</var><code>-putprop </code><var>struct</var> <var>key</var> <var>value</var><code>)</code><dd>Add a new property <var>key</var> with <var>value</var> to the property list of
+<var>struct</var>.  If <var>key</var> is already set: the old entry is mutated to
+reference <var>value</var>.  <var>key</var> must be a symbol.
+
+     <br><dt><code>(</code><var>?type-id</var><code>-getprop </code><var>struct</var> <var>key</var><code>)</code><dd>Return the value of the property <var>key</var> in the property list of
+<var>struct</var>; if <var>key</var> is not set return <code>#f</code>.  <var>key</var> must
+be a symbol.
+
+     <br><dt><code>(</code><var>?type-id</var><code>-remprop </code><var>struct</var> <var>key</var><code>)</code><dd>Remove the property <var>key</var> from the property list of <var>struct</var>. 
+<var>key</var> must be a symbol.
+
+     <br><dt><code>(</code><var>?type-id</var><code>-property-list </code><var>struct</var><code>)</code><dd>Return a new association list representing the property list of
+<var>struct</var>. 
+</dl>
+
+   <p>If the definition of <var>?type-id</var> includes a clause
+<code>collector-struct-type</code> with an identifier <var>?collector-id</var> as
+value, the following bindings are available:
+
+     <dl>
+<dt><code>(</code><var>?type-id</var><code>-collector-</code><var>?collector-id</var> <var>struct</var><code>)</code><dd>Return the instance of type <var>?collector-id</var> that was registered as
+collector for <var>struct</var>; if no collector was registered: return
+<code>#f</code>. 
+</dl>
+
+   <p>If the definition of <var>?type-id</var> includes a clause
+<code>collected-struct-type</code> with an identifier <var>?collected-id</var> as
+value, the following bindings are available:
+
+     <dl>
+<dt><code>($</code><var>?type-id</var><code>-register-</code><var>?collected-id</var><code>! </code><var>collector</var> <var>struct</var><code>)</code><dd>Register <var>struct</var> in the internal table of <var>collector</var>.  No
+arguments validation is peformed: <var>collector</var> must be of type
+<var>?type-id</var>; <var>struct</var> must be of type <var>?collected-id</var>.
+
+     <br><dt><code>($</code><var>?type-id</var><code>-forget-</code><var>?collected-id</var><code>! </code><var>collector</var> <var>collected</var><code>)</code><dd>Remove <var>collected</var> from the internal table of <var>collector</var>.  No
+arguments validation is peformed: <var>collector</var> must be of type
+<var>?type-id</var>; <var>collected</var> must be of type <var>?collected-id</var>.
+
+     <br><dt><code>($</code><var>?type-id</var><code>-contains-</code><var>?collected-id</var><code>? </code><var>collector</var> <var>struct</var><code>)</code><dd>Query the internal table of <var>collected</var> and return true if
+<var>struct</var> is present, otherwise return false.  No arguments
+validation is peformed: <var>collector</var> must be of type <var>?type-id</var>.
+
+     <br><dt><code>($</code><var>?type-id</var><code>-vector-of-collected-</code><var>?collected-id</var> <var>struct</var><code>)</code><dd>Return a Scheme vector containing the instances of type
+<var>?collected-id</var> collected by <var>struct</var>. 
+</dl>
+
+<!-- end of file -->
+   </body></html>
+

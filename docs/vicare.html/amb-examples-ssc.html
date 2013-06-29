@@ -1,0 +1,210 @@
+<html lang="en">
+<head>
+<title>amb examples ssc - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="amb-examples.html#amb-examples" title="amb examples">
+<link rel="prev" href="amb-examples-simple.html#amb-examples-simple" title="amb examples simple">
+<link rel="next" href="amb-examples-coloring.html#amb-examples-coloring" title="amb examples coloring">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.3d0 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+        `http://sourceforge.net/projects/vicare-scheme/files/'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+and at:
+
+           `http://sourceforge.net/projects/vicare-scheme/'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the ``History'' appendix for details.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="amb-examples-ssc"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="amb-examples-coloring.html#amb-examples-coloring">amb examples coloring</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="amb-examples-simple.html#amb-examples-simple">amb examples simple</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="amb-examples.html#amb-examples">amb examples</a>
+<hr>
+</div>
+
+<h5 class="subsubsection">12.5.2.2 Seed, square, cube</h5>
+
+<p>Given the seed numbers:
+
+<pre class="example">     1 3
+</pre>
+   <p class="noindent">let's say we want to select the one having the square among:
+
+<pre class="example">     5 9 11
+</pre>
+   <p class="noindent">and the cube among:
+
+<pre class="example">     13 27 31
+</pre>
+   <p class="noindent">we can imagine a search tree, <a href="fig_003aamb_005fssc_005ftree.html#fig_003aamb_005fssc_005ftree">amb examples ssc</a>.
+
+   <div class="float">
+<a name="fig_003aamb_005fssc_005ftree"></a>
+<pre class="example">          | A |    | B |    | C |
+     
+     o----- 1 -----  5 ----- 13
+        |       |        |-- 27
+        |       |         -- 31
+        |       |
+        |       |--  9 ----- 13
+        |       |        |-- 27
+        |       |         -- 31
+        |       |
+        |        -- 11 ----- 13
+        |                |-- 27
+        |                 -- 31
+        |
+         -- 3 -----  5 ----- 13
+                |        |-- 27
+                |         -- 31
+                |
+                |--  9 ----- 13
+                |        |-- 27
+                |         -- 31
+                |
+                 -- 11 ----- 13
+                         |-- 27
+                          -- 31
+</pre>
+   <p><strong class="float-caption">Figure 12.1: Search tree for the seed, square, cube problem.</strong></p></div>
+
+   <p>If we assign a selected seed to the variable A, a selected
+possible square to the variable B and a selected possible cube to
+the variable C, we want search for a tuple (A, B, C)
+satisfying the constraints: A^2 = B, A^3 = C.
+
+   <p>To select among the seeds we use the syntax:
+
+<pre class="example">     (amb 1 3)
+</pre>
+   <p class="noindent">to select among the possible squares we use the syntax:
+
+<pre class="example">     (amb 5 9 11)
+</pre>
+   <p class="noindent">to select among the possible cubes we use the syntax:
+
+<pre class="example">     (amb 13 27 31)
+</pre>
+   <p class="noindent">and the constraints can be expressed by the predicates:
+
+<pre class="example">     (= (square A) B)
+     (= (cube   A) C)
+</pre>
+   <p class="noindent">the resulting program follows:
+
+<pre class="example">     #!r6rs
+     (import (vicare)
+       (vicare language-extensions amb))
+     
+     (with-ambiguous-choices
+       (let* ((A (amb 1 3))
+              (B (amb 5 9 11)))
+         (amb-assert (= (square A) B))
+         (let ((C (amb 13 27 31)))
+           (amb-assert (= (cube A) C))
+           (list A B C))))
+     &rArr; (3 9 27)
+</pre>
+   <p>We can modify the program to show the search path:
+
+<pre class="example">     #!r6rs
+     (import (vicare)
+       (vicare language-extensions amb))
+     
+     (define (print . args)
+       (apply fprintf (current-error-port) args))
+     
+     (with-ambiguous-choices
+      (let ((A (amb 1 3)))
+        (print "A=~a\n" A)
+        (let ((B (amb 5 9 11)))
+          (print "\tB=~a\n" B)
+          (amb-assert (= (square A) B))
+          (let ((C (amb 13 27 31)))
+            (print "\t\tC=~a\n" C)
+            (amb-assert (= (cube A) C))
+            (list A B C)))))
+     &rArr; (3 9 27)
+     -| A=1
+     -|         B=5
+     -|         B=9
+     -|         B=11
+     -| A=3
+     -|         B=5
+     -|         B=9
+     -|                 C=13
+     -|                 C=27
+</pre>
+   <!-- page -->
+   </body></html>
+

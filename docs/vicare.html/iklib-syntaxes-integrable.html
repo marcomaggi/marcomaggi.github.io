@@ -1,0 +1,169 @@
+<html lang="en">
+<head>
+<title>iklib syntaxes integrable - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="iklib-syntaxes.html#iklib-syntaxes" title="iklib syntaxes">
+<link rel="prev" href="iklib-syntaxes-returnable.html#iklib-syntaxes-returnable" title="iklib syntaxes returnable">
+<link rel="next" href="iklib-syntaxes-stale.html#iklib-syntaxes-stale" title="iklib syntaxes stale">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.3d0 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+        `http://sourceforge.net/projects/vicare-scheme/files/'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+and at:
+
+           `http://sourceforge.net/projects/vicare-scheme/'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the ``History'' appendix for details.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="iklib-syntaxes-integrable"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="iklib-syntaxes-stale.html#iklib-syntaxes-stale">iklib syntaxes stale</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="iklib-syntaxes-returnable.html#iklib-syntaxes-returnable">iklib syntaxes returnable</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="iklib-syntaxes.html#iklib-syntaxes">iklib syntaxes</a>
+<hr>
+</div>
+
+<h4 class="subsection">3.2.4 Integrable expressions and functions</h4>
+
+<p><a name="index-Function-inlining-51"></a><a name="index-Function-integration-52"></a><a name="index-Expression-inlining-53"></a><a name="index-Expression-integration-54"></a><a name="index-Inlining-of-functions-and-expressions-55"></a><a name="index-Integration-of-functions-and-expressions-56"></a><a name="index-Expanding-functions-inline-57"></a><a name="index-Expanding-expressions-inline-58"></a>
+
+   <p>Compilers act upon &ldquo;compilation units&rdquo;, which for Vicare are:
+<acronym>R6RS</acronym> libraries, <acronym>R6RS</acronym> programs, symbolic expressions handed to
+<code>eval</code>; the latter includes standalone expressions typed at the
+<acronym>REPL</acronym>.  Under Vicare:
+
+     <ul>
+<li>Whenever a function defined in a compilation unit is called in the same
+compilation unit: the compiler has access to the source code, so it
+<strong>always</strong> attempts to integrate it (expand it inline); such
+integration can succeed or fail depending on the cost of such operation.
+
+     <li>Whenever a function defined in a compilation unit is called in another
+compilation unit: the compiler has <strong>no</strong> access to the source
+code, so it never attempts to integrate it. 
+</ul>
+
+<p class="noindent">this scenario is somewhat different from the one of languages like C,
+which make use of object files that allow inlining of functions defined
+in other files.
+
+   <p>Sometimes we do want to always integrate expressions, even across
+compilation unit boundaries; for this purpose Vicare provides
+<code>define-inline</code> to integrate expressions and
+<code>define-integrable</code> to integrate functions.
+
+<div class="defun">
+&mdash; Syntax: <b>define-inline</b> (<var>?name ?arg ... . ?rest</var>)<var> ?body0 ?body ...<a name="index-define_002dinline-59"></a></var><br>
+<blockquote><p>Similar to <code>define</code>, but create a binding for an expression that is
+always expanded inline and can <strong>neither</strong> be invoked recursively
+<strong>nor</strong> used as function argument.  This syntax only defines a
+syntax embedding the source code of the expression in a syntax object.
+
+     <pre class="example">          (define-inline (incr x)
+            (+ x 1))
+          
+          (incr 2)        &rArr; 3
+</pre>
+        <p>In the example above, we can think of <code>(incr 2)</code> as expanding to:
+
+     <pre class="example">          (let ((x 2))
+            (+ x 1))
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>define-integrable</b> (<var>?name ?arg ... . ?rest</var>)<var> ?body0 ?body ...<a name="index-define_002dintegrable-60"></a></var><br>
+<blockquote><p>Similar to <code>define</code>, but create a binding that is always expanded
+inline and <strong>can</strong> be both invoked recursively and used as function
+argument.  This syntax defines both a syntax and a function, with the
+syntax embedding the source code of the function in a syntax object.
+
+     <pre class="example">          (define-integrable (incr x)
+            (+ x 1))
+          
+          (incr 2)
+          &rArr; 3
+          
+          (map incr '(10 20 30)))
+          &rArr; (11 21 31)
+</pre>
+        <p>In the example above, we can think of <code>(incr 2)</code> as expanding to:
+
+     <pre class="example">          ((lambda (x)
+             (+ x 1))
+           2)
+</pre>
+        </blockquote></div>
+
+<!-- page -->
+   </body></html>
+

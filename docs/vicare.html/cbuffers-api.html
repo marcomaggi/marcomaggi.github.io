@@ -1,0 +1,215 @@
+<html lang="en">
+<head>
+<title>cbuffers api - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="cbuffers.html#cbuffers" title="cbuffers">
+<link rel="prev" href="cbuffers-strings.html#cbuffers-strings" title="cbuffers strings">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.3d0 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+        `http://sourceforge.net/projects/vicare-scheme/files/'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+and at:
+
+           `http://sourceforge.net/projects/vicare-scheme/'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the ``History'' appendix for details.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="cbuffers-api"></a>
+<p>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="cbuffers-strings.html#cbuffers-strings">cbuffers strings</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="cbuffers.html#cbuffers">cbuffers</a>
+<hr>
+</div>
+
+<h4 class="subsection">13.5.3 Programming interface to generalised C buffers and strings</h4>
+
+<p><a name="index-Library-_0040library_007bvicare-arguments-general_002dc_002dbuffers_007d-4516"></a><a name="index-g_t_0040library_007bvicare-arguments-general_002dc_002dbuffers_007d_002c-library-4517"></a>
+
+   <p>The <acronym>API</acronym> dealing with generalised C buffers and strings, is composed
+of syntaxes used to validate and normalise the arguments before handing
+them to the foreign function.
+
+   <p><a href="args-predefined-genbuffers.html#args-predefined-genbuffers">Validating generalised C buffer arguments</a> for details on how to validation generalised C buffer
+arguments.
+
+   <p><a href="args-predefined-genstrings.html#args-predefined-genstrings">Validating generalised C string arguments</a> for details on how to validation generalised C string
+arguments.
+
+   <p>The following bindings are exported by the library <code>(vicare
+arguments general-c-buffers)</code>.
+
+<div class="defun">
+&mdash; Function: <b>general-c-buffer-len</b><var> buf buf.len<a name="index-general_002dc_002dbuffer_002dlen-4518"></a></var><br>
+<blockquote><p>Return the number of bytes in a generalised C buffer object.
+
+        <p><var>buf</var> must be a bytevector, pointer object or <code>memory-block</code>
+struct instance.
+
+        <p>When <var>buf</var> is a pointer object: <var>buf.len</var> must be an exact
+integer (in the range of the C language type <code>size_t</code>) representing
+the number of bytes available in the referenced memory block.  Otherwise
+<var>buf.len</var> is ignored. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>with-general-c-strings</b> ((<var>?str ?expr</var>)<var> ...</var>) (<var>string-to-bytevector ?string-&gt;bytevector</var>)<var> ?body0 . ?body<a name="index-with_002dgeneral_002dc_002dstrings-4519"></a></var><br>
+&mdash; Syntax: <b>with-general-c-strings</b> ((<var>?str ?expr</var>)<var> ...</var>)<var> ?body0 . ?body<a name="index-with_002dgeneral_002dc_002dstrings-4520"></a></var><br>
+&mdash; Auxiliary Syntax: <b>string-to-bytevector</b><var><a name="index-string_002dto_002dbytevector-4521"></a></var><br>
+<blockquote><p>Prepare some generalised C strings to be used by a chunk of code
+expecting access to raw memory holding a C language string or input
+buffer.
+
+        <p>The values <var>?str</var> must be identifiers, unique according to
+<code>bound-identifier=?</code>.
+
+        <p>The values <var>?expr</var> must be expressions which will always be
+evaluated only once.
+
+        <p>The value <var>?string-&gt;bytevector</var> must be an expression evaluating to
+a procedure which converts a string to a bytevector, for example
+<code>string-&gt;ascii</code>.  In the second form of the syntax use:
+<var>?string-&gt;bytevector</var> defaults to <code>string-&gt;ascii</code>.
+
+        <p>For each couple <var>?str</var> and <var>?expr</var> do the following:
+
+          <ul>
+<li>If the result of evaluating <var>?expr</var> is a bytevector, pointer object
+or <code>memory-block</code> instance bind it to <var>?str</var>.
+
+          <li>If the result of evaluating <var>?expr</var> is a string: convert it to a
+bytevector using the procedure result of evaluating
+<var>?string-&gt;bytevector</var>, then bind it to <var>?str</var>. 
+</ul>
+
+        <p>Evaluate the <var>?body</var> forms in the region in which such bindings are
+effective.  Return the return value of the last <var>?body</var> form. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>with-general-c-strings/false</b> ((<var>?str ?expr</var>)<var> ...</var>) (<var>string-to-bytevector ?string-&gt;bytevector</var>)<var> ?body0 . ?body<a name="index-with_002dgeneral_002dc_002dstrings_002ffalse-4522"></a></var><br>
+&mdash; Syntax: <b>with-general-c-strings/false</b> ((<var>?str ?expr</var>)<var> ...</var>)<var> ?body0 . ?body<a name="index-with_002dgeneral_002dc_002dstrings_002ffalse-4523"></a></var><br>
+&mdash; Auxiliary Syntax: <b>string-to-bytevector</b><var><a name="index-string_002dto_002dbytevector-4524"></a></var><br>
+<blockquote><p>Like <code>with-general-c-strings</code> but if a <var>?expr</var> evaluates
+to <code>#f</code> accept the value. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>with-general-c-pathnames</b> ((<var>?ptn ?expr</var>)<var> ...</var>)<var> ?body0 . ?body<a name="index-with_002dgeneral_002dc_002dpathnames-4525"></a></var><br>
+<blockquote><p>Prepare some generalised C strings to be used by a chunk of code
+expecting access to raw memory holding a C language string representing
+a file system pathname.
+
+        <p>The values <var>?ptn</var> must be identifiers, unique according to
+<code>bound-identifier=?</code>.
+
+        <p>The values <var>?expr</var> must be expressions which will always be
+evaluated only once.
+
+        <p>For each couple <var>?ptn</var> and <var>?expr</var> do the following:
+
+          <ul>
+<li>If the result of evaluating <var>?expr</var> is a bytevector, pointer object
+or <code>memory-block</code> instance bind it to <var>?ptn</var>.
+
+          <li>If the result of evaluating <var>?expr</var> is a string: convert it to a
+bytevector using the function referenced by the parameter
+<code>string-&gt;pathname-func</code>, then bind it to <var>?ptn</var>. 
+</ul>
+
+        <p>Evaluate the <var>?body</var> forms in the region in which such bindings are
+effective.  Return the return value of the last <var>?body</var> form. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>with-general-c-pathnames/false</b> ((<var>?ptn ?expr</var>)<var> ...</var>)<var> ?body0 . ?body<a name="index-with_002dgeneral_002dc_002dpathnames_002ffalse-4526"></a></var><br>
+<blockquote><p>Like <code>with-general-c-pathnames</code> but if a <var>?expr</var> evaluates to
+<code>#f</code> accept the value. 
+</p></blockquote></div>
+
+   <p>As example, let's say we have loaded C language code exposing a function
+<code>ikptr_posix_file_size()</code>, which given a file pathname returns its
+size; we can interface it as follows:
+
+<pre class="example">     #!r6rs
+     (import (vicare)
+       (vicare arguments validation))
+     
+     (define (file-size pathname)
+       (define who 'file-size)
+       (with-arguments-validation (who)
+           ((general-c-string pathname))
+         (with-general-c-pathnames ((pathname^ pathname))
+           (foreign-call "ikptr_posix_file_size" pathname^))))
+</pre>
+   <!-- page -->
+   </body></html>
+
