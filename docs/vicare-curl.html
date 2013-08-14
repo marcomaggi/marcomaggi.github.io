@@ -7,7 +7,7 @@
 <link title="Top" rel="top" href="#Top">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
-This document describes version 0.2d0 of Vicare/cURL, a
+This document describes version 0.2d1 of Vicare/cURL, a
 distribution of C and Scheme libraries for Vicare Scheme, an R6RS
 compliant Scheme implementation; it provides bindings for the
 Libcurl C language library.
@@ -69,7 +69,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#dir">(dir)</a>
 
 <h2 class="unnumbered">Libcurl for Vicare</h2>
 
-<p>This document describes version 0.2d0 of Vicare/cURL, a
+<p>This document describes version 0.2d1 of Vicare/cURL, a
 distribution of C and Scheme libraries for Vicare Scheme, an <acronym>R6RS</acronym>
 compliant Scheme implementation; it provides bindings for the
 Libcurl C language library.
@@ -2363,7 +2363,8 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#plain">plain</a>
 <li><a href="#plain-callbacks-chunk">plain callbacks chunk</a>:        Processing informations about
                                 chunks of data. 
 <li><a href="#plain-callbacks-fnmatch">plain callbacks fnmatch</a>:      Implementing wildcard matching. 
-<li><a href="#plain-callbacks-sshkey">plain callbacks sshkey</a>:       Accepting or rejecting <acronym>SSH</acronym> connections.
+<li><a href="#plain-callbacks-sshkey">plain callbacks sshkey</a>:       Accepting or rejecting <acronym>SSH</acronym> connections. 
+<li><a href="#plain-callbacks-xferinfo">plain callbacks xferinfo</a>:     Getting notifications of timeouts.
 
 </li></ul>
 <p>Multi <acronym>API</acronym> callbacks
@@ -3389,7 +3390,7 @@ exceptions.
 <div class="node">
 <a name="plain-callbacks-sshkey"></a>
 <p><hr>
-Next:&nbsp;<a rel="next" accesskey="n" href="#plain-callbacks-socket">plain callbacks socket</a>,
+Next:&nbsp;<a rel="next" accesskey="n" href="#plain-callbacks-xferinfo">plain callbacks xferinfo</a>,
 Previous:&nbsp;<a rel="previous" accesskey="p" href="#plain-callbacks-fnmatch">plain callbacks fnmatch</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#plain-callbacks">plain callbacks</a>
 
@@ -3454,21 +3455,82 @@ exceptions.
 
 <!-- page -->
 <div class="node">
-<a name="plain-callbacks-socket"></a>
+<a name="plain-callbacks-xferinfo"></a>
 <p><hr>
-Next:&nbsp;<a rel="next" accesskey="n" href="#plain-callbacks-mtimer">plain callbacks mtimer</a>,
+Next:&nbsp;<a rel="next" accesskey="n" href="#plain-callbacks-socket">plain callbacks socket</a>,
 Previous:&nbsp;<a rel="previous" accesskey="p" href="#plain-callbacks-sshkey">plain callbacks sshkey</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#plain-callbacks">plain callbacks</a>
 
 </div>
 
-<h4 class="subsection">2.5.19 Getting informations about socket status</h4>
+<h4 class="subsection">2.5.19 Getting notifications of timeouts</h4>
 
 <p>The following bindings are exported by the library <code>(vicare net
 curl)</code>.
 
 <div class="defun">
-&mdash; Function: <b>make-curl-socket-callback</b><var> user-scheme-callback<a name="index-make_002dcurl_002dsocket_002dcallback-130"></a></var><br>
+&mdash; Function: <b>make-curl-xferinfo-callback</b><var> user-scheme-callback<a name="index-make_002dcurl_002dxferinfo_002dcallback-130"></a></var><br>
+<blockquote><p>Wrap a user supplied Scheme function and return a pointer object
+referencing a callback function suitable to be used as
+<code>curl_xferinfo_callback</code> callback; the returned pointer must be
+released with a call to <code>free-c-callback</code> from <code>(vicare
+ffi)</code>.
+
+        <p>This callback is associated to <code>curl-easy</code> instances with the
+<code>CURLOPT_XFERINFOFUNCTION</code> option of <code>curl-easy-setopt</code>; it is
+invoked to notify the application of statistics about the transferred
+data.  See <a href="*manpages*.html#curl_005feasy_005fsetopt">CURLOPT_XFERINFOFUNCTION</a>.
+
+        <p><var>user-scheme-callback</var> must accept 5 arguments:
+
+          <ol type=1 start=1>
+<li><code>#f</code> or a custom pointer selected by the application with the option
+<code>CURLOPT_XFERINFODATA</code>.
+
+          <li>An exact integer representing the number of bytes expected to be
+downloaded in this transfer.
+
+          <li>An exact integer representing the number of bytes downloaded so far.
+
+          <li>An exact integer representing the number of bytes expected to be
+uploaded in this transfer.
+
+          <li>An exact integer representing the number of bytes uploaded so far.
+             </ol>
+
+        <p><var>user-scheme-callback</var> must return a single value being an exact
+integer in the range of the C language type <code>signed int</code>; when the
+callback is successul: the return value should be zero, non&ndash;zero
+otherwise.
+
+        <p><var>user-scheme-callback</var> is wrapped in an internally generated Scheme
+function which does the following:
+
+          <ul>
+<li>Block and discard all the raised exceptions using <code>guard</code> from
+<code>(vicare)</code>; when an exception is catched: it is discarded and the
+callback returns <code>0</code> to the caller.  <var>user-scheme-callback</var>
+should take care of handling its own exceptions. 
+</ul>
+        </p></blockquote></div>
+
+<!-- page -->
+<div class="node">
+<a name="plain-callbacks-socket"></a>
+<p><hr>
+Next:&nbsp;<a rel="next" accesskey="n" href="#plain-callbacks-mtimer">plain callbacks mtimer</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#plain-callbacks-xferinfo">plain callbacks xferinfo</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#plain-callbacks">plain callbacks</a>
+
+</div>
+
+<h4 class="subsection">2.5.20 Getting informations about socket status</h4>
+
+<p>The following bindings are exported by the library <code>(vicare net
+curl)</code>.
+
+<div class="defun">
+&mdash; Function: <b>make-curl-socket-callback</b><var> user-scheme-callback<a name="index-make_002dcurl_002dsocket_002dcallback-131"></a></var><br>
 <blockquote><p>Wrap a user supplied Scheme function and return a pointer object
 referencing a callback function suitable to be used as
 <code>curl_socket_callback</code> callback; the returned pointer must be
@@ -3527,13 +3589,13 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#plain-callbacks">plain callbacks</a>
 
 </div>
 
-<h4 class="subsection">2.5.20 Getting notifications of timeouts</h4>
+<h4 class="subsection">2.5.21 Getting notifications of timeouts</h4>
 
 <p>The following bindings are exported by the library <code>(vicare net
 curl)</code>.
 
 <div class="defun">
-&mdash; Function: <b>make-curl-multi-timer-callback</b><var> user-scheme-callback<a name="index-make_002dcurl_002dmulti_002dtimer_002dcallback-131"></a></var><br>
+&mdash; Function: <b>make-curl-multi-timer-callback</b><var> user-scheme-callback<a name="index-make_002dcurl_002dmulti_002dtimer_002dcallback-132"></a></var><br>
 <blockquote><p>Wrap a user supplied Scheme function and return a pointer object
 referencing a callback function suitable to be used as
 <code>curl_multi_timer_callback</code> callback; the returned pointer must be
@@ -3591,8 +3653,8 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#plain">plain</a>
 curl)</code>.
 
 <div class="defun">
-&mdash; Function: <b>curl-slist-append</b><var> string<a name="index-curl_002dslist_002dappend-132"></a></var><br>
-&mdash; Function: <b>curl-slist-append</b><var> slist string<a name="index-curl_002dslist_002dappend-133"></a></var><br>
+&mdash; Function: <b>curl-slist-append</b><var> string<a name="index-curl_002dslist_002dappend-133"></a></var><br>
+&mdash; Function: <b>curl-slist-append</b><var> slist string<a name="index-curl_002dslist_002dappend-134"></a></var><br>
 <blockquote><p>Add a string to a list of strings, possibly creating a new list; if
 successful return a pointer object representing the head of the list,
 else return <code>#f</code>.  See <a href="*manpages*.html#curl_005fslist_005fappend">curl_slist_append</a>.
@@ -3620,7 +3682,7 @@ else return <code>#f</code>.  See <a href="*manpages*.html#curl_005fslist_005fap
         </blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-slist-free-all</b><var> slist<a name="index-curl_002dslist_002dfree_002dall-134"></a></var><br>
+&mdash; Function: <b>curl-slist-free-all</b><var> slist<a name="index-curl_002dslist_002dfree_002dall-135"></a></var><br>
 <blockquote><p>Release all the resources associated to <var>slist</var>, which must be the
 return value of a previous call to <code>curl-slist-append</code>; return
 unspecified values.  See <a href="*manpages*.html#curl_005fslist_005ffree_005fall">curl_slist_free_all</a>.
@@ -3635,8 +3697,8 @@ argument.
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-slist-&gt;list</b><var> slist<a name="index-curl_002dslist_002d_003elist-135"></a></var><br>
-&mdash; Function: <b>list-&gt;curl-slist</b><var> list-of-strings<a name="index-list_002d_003ecurl_002dslist-136"></a></var><br>
+&mdash; Function: <b>curl-slist-&gt;list</b><var> slist<a name="index-curl_002dslist_002d_003elist-136"></a></var><br>
+&mdash; Function: <b>list-&gt;curl-slist</b><var> list-of-strings<a name="index-list_002d_003ecurl_002dslist-137"></a></var><br>
 <blockquote><p>Convert a list of strings to and from a <code>curl-list</code>. 
 </p></blockquote></div>
 
@@ -3674,8 +3736,8 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#plain-forms">plain forms</a>
 curl)</code>.
 
 <div class="defun">
-&mdash; Struct Type: <b>curl-form-data</b><var><a name="index-curl_002dform_002ddata-137"></a></var><br>
-<blockquote><p><a name="index-g_t_0040var_007bhttppost_007d-argument-138"></a><a name="index-Argument-_0040var_007bhttppost_007d-139"></a>Opaque structure type referencing the first element in a C language
+&mdash; Struct Type: <b>curl-form-data</b><var><a name="index-curl_002dform_002ddata-138"></a></var><br>
+<blockquote><p><a name="index-g_t_0040var_007bhttppost_007d-argument-139"></a><a name="index-Argument-_0040var_007bhttppost_007d-140"></a>Opaque structure type referencing the first element in a C language
 <code>struct curl_httppost</code> chain.
 
         <p>When instances of this type are used as arguments to functions: this
@@ -3687,20 +3749,20 @@ Whenever an instance of this type is garbage collected:
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-form-data?</b><var> obj<a name="index-curl_002dform_002ddata_003f-140"></a></var><br>
+&mdash; Function: <b>curl-form-data?</b><var> obj<a name="index-curl_002dform_002ddata_003f-141"></a></var><br>
 <blockquote><p>Return <code>#t</code> if <var>obj</var> is an instance of <code>curl-form-data</code>;
 otherwise return <code>#f</code>. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-form-data?/alive</b><var> obj<a name="index-curl_002dform_002ddata_003f_002falive-141"></a></var><br>
+&mdash; Function: <b>curl-form-data?/alive</b><var> obj<a name="index-curl_002dform_002ddata_003f_002falive-142"></a></var><br>
 <blockquote><p>Return <code>#t</code> if <var>obj</var> is an instance of <code>curl-form-data</code> and
 it holds some contents; otherwise return <code>#f</code>. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-form-data-custom-destructor</b><var> httppost<a name="index-curl_002dform_002ddata_002dcustom_002ddestructor-142"></a></var><br>
-&mdash; Function: <b>set-curl-form-data-custom-destructor!</b><var> httppost func<a name="index-set_002dcurl_002dform_002ddata_002dcustom_002ddestructor_0021-143"></a></var><br>
+&mdash; Function: <b>curl-form-data-custom-destructor</b><var> httppost<a name="index-curl_002dform_002ddata_002dcustom_002ddestructor-143"></a></var><br>
+&mdash; Function: <b>set-curl-form-data-custom-destructor!</b><var> httppost func<a name="index-set_002dcurl_002dform_002ddata_002dcustom_002ddestructor_0021-144"></a></var><br>
 <blockquote><p>Retrieve or set a destructor function associated to the <var>httppost</var>.
 
         <p>Whenever the <var>httppost</var> is finalised, either explicitly with
@@ -3733,15 +3795,15 @@ associated to <var>httppost</var>; if we do:
 <code>(vicare arguments validation)</code>.
 
 <div class="defun">
-&mdash; Validation Clause: <b>curl-form-data</b><var> obj<a name="index-curl_002dform_002ddata-144"></a></var><br>
-&mdash; Validation Clause: <b>false-or-curl-form-data</b><var> obj<a name="index-false_002dor_002dcurl_002dform_002ddata-145"></a></var><br>
+&mdash; Validation Clause: <b>curl-form-data</b><var> obj<a name="index-curl_002dform_002ddata-145"></a></var><br>
+&mdash; Validation Clause: <b>false-or-curl-form-data</b><var> obj<a name="index-false_002dor_002dcurl_002dform_002ddata-146"></a></var><br>
 <blockquote><p>Succeed if <var>obj</var> satisfies the predicate <code>curl-form-data?</code>; the
 second clause also accepts <code>#f</code>. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Validation Clause: <b>curl-form-data/alive</b><var> obj<a name="index-curl_002dform_002ddata_002falive-146"></a></var><br>
-&mdash; Validation Clause: <b>false-or-curl-form-data/alive</b><var> obj<a name="index-false_002dor_002dcurl_002dform_002ddata_002falive-147"></a></var><br>
+&mdash; Validation Clause: <b>curl-form-data/alive</b><var> obj<a name="index-curl_002dform_002ddata_002falive-147"></a></var><br>
+&mdash; Validation Clause: <b>false-or-curl-form-data/alive</b><var> obj<a name="index-false_002dor_002dcurl_002dform_002ddata_002falive-148"></a></var><br>
 <blockquote><p>Succeed if <var>obj</var> satisfies the predicate
 <code>curl-form-data?/alive</code>; the second clause also accepts <code>#f</code>. 
 </p></blockquote></div>
@@ -3762,13 +3824,13 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#plain-forms">plain forms</a>
 curl)</code>.
 
 <div class="defun">
-&mdash; Function: <b>make-curl-form-data</b><var><a name="index-make_002dcurl_002dform_002ddata-148"></a></var><br>
+&mdash; Function: <b>make-curl-form-data</b><var><a name="index-make_002dcurl_002dform_002ddata-149"></a></var><br>
 <blockquote><p>Build and return a new instance of <code>curl-form-data</code> ready to be
 handed to <code>curl-formadd</code>. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-formfree</b><var> httppost<a name="index-curl_002dformfree-149"></a></var><br>
+&mdash; Function: <b>curl-formfree</b><var> httppost<a name="index-curl_002dformfree-150"></a></var><br>
 <blockquote><p>Release all the resources associated to <var>httppost</var>, which must be an
 instance of <code>curl-form-data</code>; return unspecified values. 
 See <a href="*manpages*.html#curl_005fformfree">curl_formfree</a>.
@@ -3794,14 +3856,14 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#plain-forms">plain forms</a>
 curl)</code>.
 
 <div class="defun">
-&mdash; Function: <b>curl-formadd</b><var> httppost opt1 val1<a name="index-curl_002dformadd-150"></a></var><br>
-&mdash; Function: <b>curl-formadd</b><var> httppost opt1 val1 end<a name="index-curl_002dformadd-151"></a></var><br>
-&mdash; Function: <b>curl-formadd</b><var> httppost opt1 val1 opt2 val2<a name="index-curl_002dformadd-152"></a></var><br>
-&mdash; Function: <b>curl-formadd</b><var> httppost opt1 val1 opt2 val2 end<a name="index-curl_002dformadd-153"></a></var><br>
-&mdash; Function: <b>curl-formadd</b><var> httppost opt1 val1 opt2 val2 opt3 val3<a name="index-curl_002dformadd-154"></a></var><br>
-&mdash; Function: <b>curl-formadd</b><var> httppost opt1 val1 opt2 val2 opt3 val3 end<a name="index-curl_002dformadd-155"></a></var><br>
-&mdash; Function: <b>curl-formadd</b><var> httppost opt1 val1 opt2 val2 opt3 val3 opt4 val4<a name="index-curl_002dformadd-156"></a></var><br>
-&mdash; Function: <b>curl-formadd</b><var> httppost opt1 val1 opt2 val2 opt3 val3 opt4 val4 end<a name="index-curl_002dformadd-157"></a></var><br>
+&mdash; Function: <b>curl-formadd</b><var> httppost opt1 val1<a name="index-curl_002dformadd-151"></a></var><br>
+&mdash; Function: <b>curl-formadd</b><var> httppost opt1 val1 end<a name="index-curl_002dformadd-152"></a></var><br>
+&mdash; Function: <b>curl-formadd</b><var> httppost opt1 val1 opt2 val2<a name="index-curl_002dformadd-153"></a></var><br>
+&mdash; Function: <b>curl-formadd</b><var> httppost opt1 val1 opt2 val2 end<a name="index-curl_002dformadd-154"></a></var><br>
+&mdash; Function: <b>curl-formadd</b><var> httppost opt1 val1 opt2 val2 opt3 val3<a name="index-curl_002dformadd-155"></a></var><br>
+&mdash; Function: <b>curl-formadd</b><var> httppost opt1 val1 opt2 val2 opt3 val3 end<a name="index-curl_002dformadd-156"></a></var><br>
+&mdash; Function: <b>curl-formadd</b><var> httppost opt1 val1 opt2 val2 opt3 val3 opt4 val4<a name="index-curl_002dformadd-157"></a></var><br>
+&mdash; Function: <b>curl-formadd</b><var> httppost opt1 val1 opt2 val2 opt3 val3 opt4 val4 end<a name="index-curl_002dformadd-158"></a></var><br>
 <blockquote><p>Add a section to a multipart/formdata <acronym>HTTP</acronym> <acronym>POST</acronym>; if
 successful return <code>CURL_FORMADD_OK</code>, else return a
 <code>CURL_FORMADD_</code> error code.  See <a href="*manpages*.html#curl_005fformadd">curl_formadd</a>.
@@ -3869,14 +3931,14 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#plain-forms">plain forms</a>
 curl)</code>.
 
 <div class="defun">
-&mdash; Function: <b>curl-form-data-string</b><var> httppost<a name="index-curl_002dform_002ddata_002dstring-158"></a></var><br>
+&mdash; Function: <b>curl-form-data-string</b><var> httppost<a name="index-curl_002dform_002ddata_002dstring-159"></a></var><br>
 <blockquote><p>Given an instance of <code>curl-form-data</code> extract a string representing
 the current contents; if successful return the string, else return
 <code>#f</code>. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-formget</b><var> httppost custom-data callback<a name="index-curl_002dformget-159"></a></var><br>
+&mdash; Function: <b>curl-formget</b><var> httppost custom-data callback<a name="index-curl_002dformget-160"></a></var><br>
 <blockquote><p>Invoke a <var>callback</var> for each line of content in <var>httppost</var>; when
 successful return <code>#f</code>, else return <code>#t</code>. 
 See <a href="*manpages*.html#curl_005fformget">curl_formget</a>.
@@ -3892,7 +3954,7 @@ the <code>NULL</code> pointer.
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>make-curl-formget-callback</b><var> user-scheme-function<a name="index-make_002dcurl_002dformget_002dcallback-160"></a></var><br>
+&mdash; Function: <b>make-curl-formget-callback</b><var> user-scheme-function<a name="index-make_002dcurl_002dformget_002dcallback-161"></a></var><br>
 <blockquote><p>Wrap a user supplied Scheme function and return a pointer object
 referencing a callback function suitable to be used as <var>callback</var>
 argument in calls to <code>curl-formget</code>; the returned pointer must be
@@ -4049,8 +4111,8 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#plain-shares">plain shares</a>
 curl)</code>.
 
 <div class="defun">
-&mdash; Struct Type: <b>curl-share</b><var><a name="index-curl_002dshare-161"></a></var><br>
-<blockquote><p><a name="index-g_t_0040var_007bshare_007d-argument-162"></a><a name="index-Argument-_0040var_007bshare_007d-163"></a>Opaque structure type used to reference instances of the C language type
+&mdash; Struct Type: <b>curl-share</b><var><a name="index-curl_002dshare-162"></a></var><br>
+<blockquote><p><a name="index-g_t_0040var_007bshare_007d-argument-163"></a><a name="index-Argument-_0040var_007bshare_007d-164"></a>Opaque structure type used to reference instances of the C language type
 <code>CURLSH</code>.  Such data structures can be registered in easy handles
 with the <code>CURLOPT_SHARE</code> option of <code>curl-easy-setopt</code>.
 
@@ -4064,20 +4126,20 @@ ignored.
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-share?</b><var> obj<a name="index-curl_002dshare_003f-164"></a></var><br>
+&mdash; Function: <b>curl-share?</b><var> obj<a name="index-curl_002dshare_003f-165"></a></var><br>
 <blockquote><p>Return <code>#t</code> if <var>obj</var> is an instance of <code>curl-share</code>;
 otherwise return <code>#f</code>. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-share?/alive</b><var> obj<a name="index-curl_002dshare_003f_002falive-165"></a></var><br>
+&mdash; Function: <b>curl-share?/alive</b><var> obj<a name="index-curl_002dshare_003f_002falive-166"></a></var><br>
 <blockquote><p>Return <code>#t</code> if <var>obj</var> is an instance of <code>curl-share</code> and it
 has not been finalised yet; otherwise return <code>#f</code>. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-share-custom-destructor</b><var> share<a name="index-curl_002dshare_002dcustom_002ddestructor-166"></a></var><br>
-&mdash; Function: <b>set-curl-share-custom-destructor!</b><var> share func<a name="index-set_002dcurl_002dshare_002dcustom_002ddestructor_0021-167"></a></var><br>
+&mdash; Function: <b>curl-share-custom-destructor</b><var> share<a name="index-curl_002dshare_002dcustom_002ddestructor-167"></a></var><br>
+&mdash; Function: <b>set-curl-share-custom-destructor!</b><var> share func<a name="index-set_002dcurl_002dshare_002dcustom_002ddestructor_0021-168"></a></var><br>
 <blockquote><p>Retrieve or set a destructor function associated to the <var>share</var>.
 
         <p>Whenever the <var>share</var> is finalised, either explicitly with
@@ -4110,15 +4172,15 @@ associated to <var>share</var>; if we do:
 <code>(vicare arguments validation)</code>.
 
 <div class="defun">
-&mdash; Validation Clause: <b>curl-share</b><var> obj<a name="index-curl_002dshare-168"></a></var><br>
-&mdash; Validation Clause: <b>false-or-curl-share</b><var> obj<a name="index-false_002dor_002dcurl_002dshare-169"></a></var><br>
+&mdash; Validation Clause: <b>curl-share</b><var> obj<a name="index-curl_002dshare-169"></a></var><br>
+&mdash; Validation Clause: <b>false-or-curl-share</b><var> obj<a name="index-false_002dor_002dcurl_002dshare-170"></a></var><br>
 <blockquote><p>Succeed if <var>obj</var> satisfies the predicate <code>curl-share?</code>; the
 second clause also accepts <code>#f</code>. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Validation Clause: <b>curl-share/alive</b><var> obj<a name="index-curl_002dshare_002falive-170"></a></var><br>
-&mdash; Validation Clause: <b>false-or-curl-share/alive</b><var> obj<a name="index-false_002dor_002dcurl_002dshare_002falive-171"></a></var><br>
+&mdash; Validation Clause: <b>curl-share/alive</b><var> obj<a name="index-curl_002dshare_002falive-171"></a></var><br>
+&mdash; Validation Clause: <b>false-or-curl-share/alive</b><var> obj<a name="index-false_002dor_002dcurl_002dshare_002falive-172"></a></var><br>
 <blockquote><p>Succeed if <var>obj</var> satisfies the predicate <code>curl-share?/alive</code>;
 the second clause also accepts <code>#f</code>. 
 </p></blockquote></div>
@@ -4139,13 +4201,13 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#plain-shares">plain shares</a>
 curl)</code>.
 
 <div class="defun">
-&mdash; Function: <b>curl-share-init</b><var><a name="index-curl_002dshare_002dinit-172"></a></var><br>
+&mdash; Function: <b>curl-share-init</b><var><a name="index-curl_002dshare_002dinit-173"></a></var><br>
 <blockquote><p>Build a new instance of <code>curl-share</code>; if successful return the
 instance, else return <code>#f</code>.  See <a href="*manpages*.html#curl_005fshare_005fcleaup">curl_share_cleaup</a>. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-share-cleanup</b><var> share<a name="index-curl_002dshare_002dcleanup-173"></a></var><br>
+&mdash; Function: <b>curl-share-cleanup</b><var> share<a name="index-curl_002dshare_002dcleanup-174"></a></var><br>
 <blockquote><p>Attempt to release all the resources associated to <var>share</var>, which
 must be an instance of <code>curl-share</code>.  If the finalisation happens
 and it is successful: return <code>CURLSHE_OK</code>; if the finalisation
@@ -4178,7 +4240,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#plain-shares">plain shares</a>
 curl)</code>.
 
 <div class="defun">
-&mdash; Function: <b>curl-share-setopt</b><var> share option parameter<a name="index-curl_002dshare_002dsetopt-174"></a></var><br>
+&mdash; Function: <b>curl-share-setopt</b><var> share option parameter<a name="index-curl_002dshare_002dsetopt-175"></a></var><br>
 <blockquote><p>Set <var>option</var> to <var>parameter</var> for the given <var>share</var>; if
 successful return <code>CURLSHE_OK</code>, else return a <code>CURLSHE_</code> error
 code.  See <a href="*manpages*.html#curl_005fshare_005fsetopt">curl_share_setopt</a>.
@@ -4207,7 +4269,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#plain-shares">plain shares</a>
 curl)</code>.
 
 <div class="defun">
-&mdash; Function: <b>make-curl-lock-function</b><var> user-scheme-function<a name="index-make_002dcurl_002dlock_002dfunction-175"></a></var><br>
+&mdash; Function: <b>make-curl-lock-function</b><var> user-scheme-function<a name="index-make_002dcurl_002dlock_002dfunction-176"></a></var><br>
 <blockquote><p>Wrap a user supplied Scheme function and return a pointer object
 referencing a callback function suitable to be used as <var>parameter</var>
 argument in calls to <code>curl-share-setopt</code> with <var>option</var> set to
@@ -4248,7 +4310,7 @@ discarded and the callback returns <code>(void)</code>.
         </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>make-curl-unlock-function</b><var> user-scheme-function<a name="index-make_002dcurl_002dunlock_002dfunction-176"></a></var><br>
+&mdash; Function: <b>make-curl-unlock-function</b><var> user-scheme-function<a name="index-make_002dcurl_002dunlock_002dfunction-177"></a></var><br>
 <blockquote><p>Wrap a user supplied Scheme function and return a pointer object
 referencing a callback function suitable to be used as <var>parameter</var>
 argument in calls to <code>curl-share-setopt</code> with <var>option</var> set to
@@ -4301,8 +4363,8 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#plain-shares">plain shares</a>
 curl)</code>.
 
 <div class="defun">
-&mdash; Function: <b>curl-share-strerror</b><var> errcode<a name="index-curl_002dshare_002dstrerror-177"></a></var><br>
-&mdash; Function: <b>curl-share-strerror/string</b><var> errcode<a name="index-curl_002dshare_002dstrerror_002fstring-178"></a></var><br>
+&mdash; Function: <b>curl-share-strerror</b><var> errcode<a name="index-curl_002dshare_002dstrerror-178"></a></var><br>
+&mdash; Function: <b>curl-share-strerror/string</b><var> errcode<a name="index-curl_002dshare_002dstrerror_002fstring-179"></a></var><br>
 <blockquote><p>Given an exact integer representing a <code>CURLSHE_</code> error code return
 an <acronym>ASCII</acronym> bytevector or string describing the associated error. 
 See <a href="*manpages*.html#curl_005fshare_005fstrerror">curl_share_strerror</a>. 
@@ -4344,11 +4406,11 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#plain-cstructs">plain cstructs</a>
 curl)</code>.
 
 <div class="defun">
-&mdash; Function: <b>curl-sockaddr.family</b><var> pointer<a name="index-curl_002dsockaddr_002efamily-179"></a></var><br>
-&mdash; Function: <b>curl-sockaddr.socktype</b><var> pointer<a name="index-curl_002dsockaddr_002esocktype-180"></a></var><br>
-&mdash; Function: <b>curl-sockaddr.protocol</b><var> pointer<a name="index-curl_002dsockaddr_002eprotocol-181"></a></var><br>
-&mdash; Function: <b>curl-sockaddr.addrlen</b><var> pointer<a name="index-curl_002dsockaddr_002eaddrlen-182"></a></var><br>
-&mdash; Function: <b>curl-sockaddr.addr</b><var> pointer<a name="index-curl_002dsockaddr_002eaddr-183"></a></var><br>
+&mdash; Function: <b>curl-sockaddr.family</b><var> pointer<a name="index-curl_002dsockaddr_002efamily-180"></a></var><br>
+&mdash; Function: <b>curl-sockaddr.socktype</b><var> pointer<a name="index-curl_002dsockaddr_002esocktype-181"></a></var><br>
+&mdash; Function: <b>curl-sockaddr.protocol</b><var> pointer<a name="index-curl_002dsockaddr_002eprotocol-182"></a></var><br>
+&mdash; Function: <b>curl-sockaddr.addrlen</b><var> pointer<a name="index-curl_002dsockaddr_002eaddrlen-183"></a></var><br>
+&mdash; Function: <b>curl-sockaddr.addr</b><var> pointer<a name="index-curl_002dsockaddr_002eaddr-184"></a></var><br>
 <blockquote><p>Given a pointer to a <code>struct curl_sockaddr</code>, return the value of
 each field in such structure.  All the functions return an exact
 integer, but <code>curl-sockaddr.addr</code> which returns a bytevector
@@ -4371,7 +4433,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#plain-cstructs">plain cstructs</a>
 curl)</code>.
 
 <div class="defun">
-&mdash; Struct Type: <b>curl-fileinfo</b><var><a name="index-curl_002dfileinfo-184"></a></var><br>
+&mdash; Struct Type: <b>curl-fileinfo</b><var><a name="index-curl_002dfileinfo-185"></a></var><br>
 <blockquote><p>Structure type mirroring a C language structure of type <code>struct
 curl_fileinfo</code>.  It has the following fields:
 
@@ -4407,50 +4469,50 @@ curl_fileinfo</code>.  It has the following fields:
         </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-fileinfo?</b><var> obj<a name="index-curl_002dfileinfo_003f-185"></a></var><br>
+&mdash; Function: <b>curl-fileinfo?</b><var> obj<a name="index-curl_002dfileinfo_003f-186"></a></var><br>
 <blockquote><p>Return <code>#t</code> if <var>obj</var> is an instance of <code>curl-fileinfo</code>. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>pointer-&gt;curl-fileinfo</b><var> pointer<a name="index-pointer_002d_003ecurl_002dfileinfo-186"></a></var><br>
+&mdash; Function: <b>pointer-&gt;curl-fileinfo</b><var> pointer<a name="index-pointer_002d_003ecurl_002dfileinfo-187"></a></var><br>
 <blockquote><p>Given a pointer object referencing a C language <code>struct
 curl_fileinfo</code>, build and return an instance of <code>curl-fileinfo</code>
 mirroring it. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-fileinfo-filename</b><var> fileinfo<a name="index-curl_002dfileinfo_002dfilename-187"></a></var><br>
-&mdash; Function: <b>curl-fileinfo-filetype</b><var> fileinfo<a name="index-curl_002dfileinfo_002dfiletype-188"></a></var><br>
-&mdash; Function: <b>curl-fileinfo-time</b><var> fileinfo<a name="index-curl_002dfileinfo_002dtime-189"></a></var><br>
-&mdash; Function: <b>curl-fileinfo-perm</b><var> fileinfo<a name="index-curl_002dfileinfo_002dperm-190"></a></var><br>
-&mdash; Function: <b>curl-fileinfo-uid</b><var> fileinfo<a name="index-curl_002dfileinfo_002duid-191"></a></var><br>
-&mdash; Function: <b>curl-fileinfo-gid</b><var> fileinfo<a name="index-curl_002dfileinfo_002dgid-192"></a></var><br>
-&mdash; Function: <b>curl-fileinfo-size</b><var> fileinfo<a name="index-curl_002dfileinfo_002dsize-193"></a></var><br>
-&mdash; Function: <b>curl-fileinfo-hardlinks</b><var> fileinfo<a name="index-curl_002dfileinfo_002dhardlinks-194"></a></var><br>
-&mdash; Function: <b>curl-fileinfo-strings.time</b><var> fileinfo<a name="index-curl_002dfileinfo_002dstrings_002etime-195"></a></var><br>
-&mdash; Function: <b>curl-fileinfo-strings.perm</b><var> fileinfo<a name="index-curl_002dfileinfo_002dstrings_002eperm-196"></a></var><br>
-&mdash; Function: <b>curl-fileinfo-strings.user</b><var> fileinfo<a name="index-curl_002dfileinfo_002dstrings_002euser-197"></a></var><br>
-&mdash; Function: <b>curl-fileinfo-strings.group</b><var> fileinfo<a name="index-curl_002dfileinfo_002dstrings_002egroup-198"></a></var><br>
-&mdash; Function: <b>curl-fileinfo-strings.target</b><var> fileinfo<a name="index-curl_002dfileinfo_002dstrings_002etarget-199"></a></var><br>
-&mdash; Function: <b>curl-fileinfo-flags</b><var> fileinfo<a name="index-curl_002dfileinfo_002dflags-200"></a></var><br>
+&mdash; Function: <b>curl-fileinfo-filename</b><var> fileinfo<a name="index-curl_002dfileinfo_002dfilename-188"></a></var><br>
+&mdash; Function: <b>curl-fileinfo-filetype</b><var> fileinfo<a name="index-curl_002dfileinfo_002dfiletype-189"></a></var><br>
+&mdash; Function: <b>curl-fileinfo-time</b><var> fileinfo<a name="index-curl_002dfileinfo_002dtime-190"></a></var><br>
+&mdash; Function: <b>curl-fileinfo-perm</b><var> fileinfo<a name="index-curl_002dfileinfo_002dperm-191"></a></var><br>
+&mdash; Function: <b>curl-fileinfo-uid</b><var> fileinfo<a name="index-curl_002dfileinfo_002duid-192"></a></var><br>
+&mdash; Function: <b>curl-fileinfo-gid</b><var> fileinfo<a name="index-curl_002dfileinfo_002dgid-193"></a></var><br>
+&mdash; Function: <b>curl-fileinfo-size</b><var> fileinfo<a name="index-curl_002dfileinfo_002dsize-194"></a></var><br>
+&mdash; Function: <b>curl-fileinfo-hardlinks</b><var> fileinfo<a name="index-curl_002dfileinfo_002dhardlinks-195"></a></var><br>
+&mdash; Function: <b>curl-fileinfo-strings.time</b><var> fileinfo<a name="index-curl_002dfileinfo_002dstrings_002etime-196"></a></var><br>
+&mdash; Function: <b>curl-fileinfo-strings.perm</b><var> fileinfo<a name="index-curl_002dfileinfo_002dstrings_002eperm-197"></a></var><br>
+&mdash; Function: <b>curl-fileinfo-strings.user</b><var> fileinfo<a name="index-curl_002dfileinfo_002dstrings_002euser-198"></a></var><br>
+&mdash; Function: <b>curl-fileinfo-strings.group</b><var> fileinfo<a name="index-curl_002dfileinfo_002dstrings_002egroup-199"></a></var><br>
+&mdash; Function: <b>curl-fileinfo-strings.target</b><var> fileinfo<a name="index-curl_002dfileinfo_002dstrings_002etarget-200"></a></var><br>
+&mdash; Function: <b>curl-fileinfo-flags</b><var> fileinfo<a name="index-curl_002dfileinfo_002dflags-201"></a></var><br>
 <blockquote><p>Accessors for the fields of a <code>curl-fileinfo</code> instance. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-fileinfo.filename</b><var> pointer<a name="index-curl_002dfileinfo_002efilename-201"></a></var><br>
-&mdash; Function: <b>curl-fileinfo.filetype</b><var> pointer<a name="index-curl_002dfileinfo_002efiletype-202"></a></var><br>
-&mdash; Function: <b>curl-fileinfo.time</b><var> pointer<a name="index-curl_002dfileinfo_002etime-203"></a></var><br>
-&mdash; Function: <b>curl-fileinfo.perm</b><var> pointer<a name="index-curl_002dfileinfo_002eperm-204"></a></var><br>
-&mdash; Function: <b>curl-fileinfo.uid</b><var> pointer<a name="index-curl_002dfileinfo_002euid-205"></a></var><br>
-&mdash; Function: <b>curl-fileinfo.gid</b><var> pointer<a name="index-curl_002dfileinfo_002egid-206"></a></var><br>
-&mdash; Function: <b>curl-fileinfo.size</b><var> pointer<a name="index-curl_002dfileinfo_002esize-207"></a></var><br>
-&mdash; Function: <b>curl-fileinfo.hardlinks</b><var> pointer<a name="index-curl_002dfileinfo_002ehardlinks-208"></a></var><br>
-&mdash; Function: <b>curl-fileinfo.strings.time</b><var> pointer<a name="index-curl_002dfileinfo_002estrings_002etime-209"></a></var><br>
-&mdash; Function: <b>curl-fileinfo.strings.perm</b><var> pointer<a name="index-curl_002dfileinfo_002estrings_002eperm-210"></a></var><br>
-&mdash; Function: <b>curl-fileinfo.strings.user</b><var> pointer<a name="index-curl_002dfileinfo_002estrings_002euser-211"></a></var><br>
-&mdash; Function: <b>curl-fileinfo.strings.group</b><var> pointer<a name="index-curl_002dfileinfo_002estrings_002egroup-212"></a></var><br>
-&mdash; Function: <b>curl-fileinfo.strings.target</b><var> pointer<a name="index-curl_002dfileinfo_002estrings_002etarget-213"></a></var><br>
-&mdash; Function: <b>curl-fileinfo.flags</b><var> pointer<a name="index-curl_002dfileinfo_002eflags-214"></a></var><br>
+&mdash; Function: <b>curl-fileinfo.filename</b><var> pointer<a name="index-curl_002dfileinfo_002efilename-202"></a></var><br>
+&mdash; Function: <b>curl-fileinfo.filetype</b><var> pointer<a name="index-curl_002dfileinfo_002efiletype-203"></a></var><br>
+&mdash; Function: <b>curl-fileinfo.time</b><var> pointer<a name="index-curl_002dfileinfo_002etime-204"></a></var><br>
+&mdash; Function: <b>curl-fileinfo.perm</b><var> pointer<a name="index-curl_002dfileinfo_002eperm-205"></a></var><br>
+&mdash; Function: <b>curl-fileinfo.uid</b><var> pointer<a name="index-curl_002dfileinfo_002euid-206"></a></var><br>
+&mdash; Function: <b>curl-fileinfo.gid</b><var> pointer<a name="index-curl_002dfileinfo_002egid-207"></a></var><br>
+&mdash; Function: <b>curl-fileinfo.size</b><var> pointer<a name="index-curl_002dfileinfo_002esize-208"></a></var><br>
+&mdash; Function: <b>curl-fileinfo.hardlinks</b><var> pointer<a name="index-curl_002dfileinfo_002ehardlinks-209"></a></var><br>
+&mdash; Function: <b>curl-fileinfo.strings.time</b><var> pointer<a name="index-curl_002dfileinfo_002estrings_002etime-210"></a></var><br>
+&mdash; Function: <b>curl-fileinfo.strings.perm</b><var> pointer<a name="index-curl_002dfileinfo_002estrings_002eperm-211"></a></var><br>
+&mdash; Function: <b>curl-fileinfo.strings.user</b><var> pointer<a name="index-curl_002dfileinfo_002estrings_002euser-212"></a></var><br>
+&mdash; Function: <b>curl-fileinfo.strings.group</b><var> pointer<a name="index-curl_002dfileinfo_002estrings_002egroup-213"></a></var><br>
+&mdash; Function: <b>curl-fileinfo.strings.target</b><var> pointer<a name="index-curl_002dfileinfo_002estrings_002etarget-214"></a></var><br>
+&mdash; Function: <b>curl-fileinfo.flags</b><var> pointer<a name="index-curl_002dfileinfo_002eflags-215"></a></var><br>
 <blockquote><p>Accessors for C language <code>struct curl_fileinfo</code> instances
 referenced by a pointer object.  When a struct field is of type
 <code>char *</code>: the corresponding accessor returns a pointer object. 
@@ -4463,8 +4525,8 @@ referenced by a pointer object.  When a struct field is of type
 <code>(vicare arguments validation)</code>.
 
 <div class="defun">
-&mdash; Validation Clause: <b>curl-fileinfo</b><var> obj<a name="index-curl_002dfileinfo-215"></a></var><br>
-&mdash; Validation Clause: <b>false-or-curl-fileinfo</b><var> obj<a name="index-false_002dor_002dcurl_002dfileinfo-216"></a></var><br>
+&mdash; Validation Clause: <b>curl-fileinfo</b><var> obj<a name="index-curl_002dfileinfo-216"></a></var><br>
+&mdash; Validation Clause: <b>false-or-curl-fileinfo</b><var> obj<a name="index-false_002dor_002dcurl_002dfileinfo-217"></a></var><br>
 <blockquote><p>Succeed if <var>obj</var> satisfies the predicate <code>curl-fileinfo?</code>; the
 second clause also accepts <code>#f</code>. 
 </p></blockquote></div>
@@ -4485,7 +4547,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#plain-cstructs">plain cstructs</a>
 curl)</code>.
 
 <div class="defun">
-&mdash; Function: <b>curl-khkey.key</b><var> pointer<a name="index-curl_002dkhkey_002ekey-217"></a></var><br>
+&mdash; Function: <b>curl-khkey.key</b><var> pointer<a name="index-curl_002dkhkey_002ekey-218"></a></var><br>
 <blockquote><p>Given a pointer object referencing a C language <code>struct
 curl_khkey</code>, return two values:
 
@@ -4513,13 +4575,13 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#plain-cstructs">plain cstructs</a>
 curl)</code>.
 
 <div class="defun">
-&mdash; Function: <b>curl-forms-sizeof-array</b><var> number-of-structs<a name="index-curl_002dforms_002dsizeof_002darray-218"></a></var><br>
+&mdash; Function: <b>curl-forms-sizeof-array</b><var> number-of-structs<a name="index-curl_002dforms_002dsizeof_002darray-219"></a></var><br>
 <blockquote><p>Return the number of bytes that need to be allocated to hold an array of
 <var>number-of-structs</var> instances of type <code>struct curl_forms</code>. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-forms.option</b><var> array index<a name="index-curl_002dforms_002eoption-219"></a></var><br>
+&mdash; Function: <b>curl-forms.option</b><var> array index<a name="index-curl_002dforms_002eoption-220"></a></var><br>
 <blockquote><p>Given <var>array</var> as bytevector or pointer object or <code>memory-block</code>
 holding an array of <code>struct curl_forms</code>, extract and return an
 exact integer representing the <code>option</code> field of the structure at
@@ -4527,7 +4589,7 @@ exact integer representing the <code>option</code> field of the structure at
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-forms.value</b><var> array index<a name="index-curl_002dforms_002evalue-220"></a></var><br>
+&mdash; Function: <b>curl-forms.value</b><var> array index<a name="index-curl_002dforms_002evalue-221"></a></var><br>
 <blockquote><p>Given <var>array</var> as bytevector or pointer object or <code>memory-block</code>
 holding an array of <code>struct curl_forms</code>, extract the <code>value</code>
 field of the structure at <var>index</var> and return <code>#f</code> if it is
@@ -4535,14 +4597,14 @@ field of the structure at <var>index</var> and return <code>#f</code> if it is
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-forms.option-set!</b><var> array index value<a name="index-curl_002dforms_002eoption_002dset_0021-221"></a></var><br>
+&mdash; Function: <b>curl-forms.option-set!</b><var> array index value<a name="index-curl_002dforms_002eoption_002dset_0021-222"></a></var><br>
 <blockquote><p>Given <var>array</var> as bytevector or pointer object or <code>memory-block</code>
 holding an array of <code>struct curl_forms</code>, store the exact integer
 <var>value</var> in the <code>option</code> field of the structure at <var>index</var>. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-forms.value-set!</b><var> array index value<a name="index-curl_002dforms_002evalue_002dset_0021-222"></a></var><br>
+&mdash; Function: <b>curl-forms.value-set!</b><var> array index value<a name="index-curl_002dforms_002evalue_002dset_0021-223"></a></var><br>
 <blockquote><p>Given <var>array</var> as bytevector or pointer object or <code>memory-block</code>
 holding an array of <code>struct curl_forms</code>, store the pointer from
 <code>value</code> in the field of the structure at <var>index</var>.
@@ -4566,7 +4628,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#plain-cstructs">plain cstructs</a>
 curl)</code>.
 
 <div class="defun">
-&mdash; Function: <b>curl-certinfo.certinfo</b><var> pointer<a name="index-curl_002dcertinfo_002ecertinfo-223"></a></var><br>
+&mdash; Function: <b>curl-certinfo.certinfo</b><var> pointer<a name="index-curl_002dcertinfo_002ecertinfo-224"></a></var><br>
 <blockquote><p>Given a pointer to an instance of <code>struct curl_certinfo</code>: return a
 vector holding one item for each certificate in the structure; each item
 is a list of strings representing informations about the certificate;
@@ -4592,27 +4654,27 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#plain-cstructs">plain cstructs</a>
 curl)</code>.
 
 <div class="defun">
-&mdash; Function: <b>curl-msg.msg</b><var> pointer<a name="index-curl_002dmsg_002emsg-224"></a></var><br>
+&mdash; Function: <b>curl-msg.msg</b><var> pointer<a name="index-curl_002dmsg_002emsg-225"></a></var><br>
 <blockquote><p>Given a pointer to an instance of <code>struct CURLMsg</code>, return an exact
 integer representing the value of the field <code>CURLMSG msg</code>. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-msg.easy_handle</b><var> pointer<a name="index-curl_002dmsg_002eeasy_005fhandle-225"></a></var><br>
+&mdash; Function: <b>curl-msg.easy_handle</b><var> pointer<a name="index-curl_002dmsg_002eeasy_005fhandle-226"></a></var><br>
 <blockquote><p>Given a pointer to an instance of <code>struct CURLMsg</code>, return a
 temporary instance of <code>curl-easy</code> referencing the value of the
 field <code>CURL *easy_handle</code>. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-msg.data.whatever</b><var> pointer<a name="index-curl_002dmsg_002edata_002ewhatever-226"></a></var><br>
+&mdash; Function: <b>curl-msg.data.whatever</b><var> pointer<a name="index-curl_002dmsg_002edata_002ewhatever-227"></a></var><br>
 <blockquote><p>Given a pointer to an instance of <code>struct CURLMsg</code>, return a
 pointer object representing the value of the field <code>void *
 whatever</code> in the union <code>data</code>. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-msg.data.result</b><var> pointer<a name="index-curl_002dmsg_002edata_002eresult-227"></a></var><br>
+&mdash; Function: <b>curl-msg.data.result</b><var> pointer<a name="index-curl_002dmsg_002edata_002eresult-228"></a></var><br>
 <blockquote><p>Given a pointer to an instance of <code>struct CURLMsg</code>, return an exact
 integer representing the value of the field <code>CURLcode result</code> in
 the union <code>data</code>. 
@@ -4634,7 +4696,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#plain">plain</a>
 curl)</code>.
 
 <div class="defun">
-&mdash; Function: <b>curl-free</b><var> pointer<a name="index-curl_002dfree-228"></a></var><br>
+&mdash; Function: <b>curl-free</b><var> pointer<a name="index-curl_002dfree-229"></a></var><br>
 <blockquote><p>Release memory allocated through a call to the cURL library; return
 unspecified values.  See <a href="*manpages*.html#curl_005ffree">curl_free</a>.
 
@@ -4647,8 +4709,8 @@ the <code>NULL</code> pointer.
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-escape</b><var> str.data<a name="index-curl_002descape-229"></a></var><br>
-&mdash; Function: <b>curl-escape</b><var> str.data str.len<a name="index-curl_002descape-230"></a></var><br>
+&mdash; Function: <b>curl-escape</b><var> str.data<a name="index-curl_002descape-230"></a></var><br>
+&mdash; Function: <b>curl-escape</b><var> str.data str.len<a name="index-curl_002descape-231"></a></var><br>
 <blockquote><p>Obsolete function.  Escape all the characters in the input string to
 make it ready to be an <acronym>URL</acronym> component; if successful return a
 bytevector holding the <acronym>ASCII</acronym> encoding of the string, else return
@@ -4659,14 +4721,14 @@ bytevector holding the <acronym>ASCII</acronym> encoding of the string, else ret
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-escape/string</b><var> str.data<a name="index-curl_002descape_002fstring-231"></a></var><br>
-&mdash; Function: <b>curl-escape/string</b><var> str.data str.len<a name="index-curl_002descape_002fstring-232"></a></var><br>
+&mdash; Function: <b>curl-escape/string</b><var> str.data<a name="index-curl_002descape_002fstring-232"></a></var><br>
+&mdash; Function: <b>curl-escape/string</b><var> str.data str.len<a name="index-curl_002descape_002fstring-233"></a></var><br>
 <blockquote><p>Like <code>curl-escape</code> but return a Scheme string. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-unescape</b><var> str.data<a name="index-curl_002dunescape-233"></a></var><br>
-&mdash; Function: <b>curl-unescape</b><var> str.data str.len<a name="index-curl_002dunescape-234"></a></var><br>
+&mdash; Function: <b>curl-unescape</b><var> str.data<a name="index-curl_002dunescape-234"></a></var><br>
+&mdash; Function: <b>curl-unescape</b><var> str.data str.len<a name="index-curl_002dunescape-235"></a></var><br>
 <blockquote><p>Obsolete function.  Unescape all the characters in the input string as
 if it comes from a <acronym>URL</acronym> component; if successful return a bytevector
 holding the <acronym>ASCII</acronym> encoding of the string, else return <code>#f</code>. 
@@ -4677,13 +4739,13 @@ See <a href="*manpages*.html#curl_005funescape">curl_unescape</a>.
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-unescape/string</b><var> str.data<a name="index-curl_002dunescape_002fstring-235"></a></var><br>
-&mdash; Function: <b>curl-unescape/string</b><var> str.data str.len<a name="index-curl_002dunescape_002fstring-236"></a></var><br>
+&mdash; Function: <b>curl-unescape/string</b><var> str.data<a name="index-curl_002dunescape_002fstring-236"></a></var><br>
+&mdash; Function: <b>curl-unescape/string</b><var> str.data str.len<a name="index-curl_002dunescape_002fstring-237"></a></var><br>
 <blockquote><p>Like <code>curl-unescape</code> but return a Scheme string. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-getdate</b><var> date<a name="index-curl_002dgetdate-237"></a></var><br>
+&mdash; Function: <b>curl-getdate</b><var> date<a name="index-curl_002dgetdate-238"></a></var><br>
 <blockquote><p>Convert a date string to the the number of seconds since the Epoch. 
 See <a href="*manpages*.html#curl_005fgetdate">curl_getdate</a>.
 
@@ -4713,79 +4775,79 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#plain">plain</a>
 curl)</code>.
 
 <div class="defun">
-&mdash; Function: <b>curl-constant-httppost-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dhttppost_002d_003esymbol-238"></a></var><br>
+&mdash; Function: <b>curl-constant-httppost-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dhttppost_002d_003esymbol-239"></a></var><br>
 <blockquote><p>Given one among the <code>HTTPPOST_</code> constants return a symbol
 representing its name. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-constant-filetype-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dfiletype_002d_003esymbol-239"></a></var><br>
+&mdash; Function: <b>curl-constant-filetype-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dfiletype_002d_003esymbol-240"></a></var><br>
 <blockquote><p>Given one among the <code>CURLFILETYPE_</code> constants return a symbol
 representing its name. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-constant-infoflag-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dinfoflag_002d_003esymbol-240"></a></var><br>
+&mdash; Function: <b>curl-constant-infoflag-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dinfoflag_002d_003esymbol-241"></a></var><br>
 <blockquote><p>Given one among the <code>CURLFINFOFLAG_</code> constants return a symbol
 representing its name. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-constant-chunk-bgn-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dchunk_002dbgn_002d_003esymbol-241"></a></var><br>
+&mdash; Function: <b>curl-constant-chunk-bgn-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dchunk_002dbgn_002d_003esymbol-242"></a></var><br>
 <blockquote><p>Given one among the <code>CURL_CHUNK_BGN_</code> constants return a symbol
 representing its name. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-constant-chunk-end-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dchunk_002dend_002d_003esymbol-242"></a></var><br>
+&mdash; Function: <b>curl-constant-chunk-end-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dchunk_002dend_002d_003esymbol-243"></a></var><br>
 <blockquote><p>Given one among the <code>CURL_CHUNK_END_</code> constants return a symbol
 representing its name. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-constant-fnmatch-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dfnmatch_002d_003esymbol-243"></a></var><br>
+&mdash; Function: <b>curl-constant-fnmatch-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dfnmatch_002d_003esymbol-244"></a></var><br>
 <blockquote><p>Given one among the <code>CURL_FNMATCHFUNC_</code> constants return a symbol
 representing its name. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-constant-seekfunc-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dseekfunc_002d_003esymbol-244"></a></var><br>
+&mdash; Function: <b>curl-constant-seekfunc-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dseekfunc_002d_003esymbol-245"></a></var><br>
 <blockquote><p>Given one among the <code>CURL_SEEKFUNC_</code> constants return a symbol
 representing its name. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-constant-readfunc-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dreadfunc_002d_003esymbol-245"></a></var><br>
+&mdash; Function: <b>curl-constant-readfunc-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dreadfunc_002d_003esymbol-246"></a></var><br>
 <blockquote><p>Given one among the <code>CURL_READFUNC_</code> constants return a symbol
 representing its name. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-constant-socktype-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dsocktype_002d_003esymbol-246"></a></var><br>
+&mdash; Function: <b>curl-constant-socktype-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dsocktype_002d_003esymbol-247"></a></var><br>
 <blockquote><p>Given one among the <code>CURLSOCKTYPE_</code> constants return a symbol
 representing its name. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-constant-sockopt-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dsockopt_002d_003esymbol-247"></a></var><br>
+&mdash; Function: <b>curl-constant-sockopt-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dsockopt_002d_003esymbol-248"></a></var><br>
 <blockquote><p>Given one among the <code>CURL_SOCKOPT_</code> constants return a symbol
 representing its name. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-constant-ioe-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dioe_002d_003esymbol-248"></a></var><br>
+&mdash; Function: <b>curl-constant-ioe-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dioe_002d_003esymbol-249"></a></var><br>
 <blockquote><p>Given one among the <code>CURLIOE_</code> constants return a symbol
 representing its name. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-constant-iocmd-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002diocmd_002d_003esymbol-249"></a></var><br>
+&mdash; Function: <b>curl-constant-iocmd-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002diocmd_002d_003esymbol-250"></a></var><br>
 <blockquote><p>Given one among the <code>CURLIOCMD_</code> constants return a symbol
 representing its name. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-constant-info-debug-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dinfo_002ddebug_002d_003esymbol-250"></a></var><br>
+&mdash; Function: <b>curl-constant-info-debug-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dinfo_002ddebug_002d_003esymbol-251"></a></var><br>
 <blockquote><p>Given one among the <code>CURLINFO_TEXT</code>, <code>CURLINFO_HEADER_IN</code>,
 <code>CURLINFO_HEADER_OUT</code>, <code>CURLINFO_DATA_IN</code>,
 <code>CURLINFO_DATA_OUT</code>, <code>CURLINFO_SSL_DATA_IN</code>,
@@ -4794,163 +4856,163 @@ symbol representing its name.
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-constant-e-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002de_002d_003esymbol-251"></a></var><br>
+&mdash; Function: <b>curl-constant-e-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002de_002d_003esymbol-252"></a></var><br>
 <blockquote><p>Given one among the <code>CURLE_</code> constants return a symbol representing
 its name. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-constant-proxy-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dproxy_002d_003esymbol-252"></a></var><br>
+&mdash; Function: <b>curl-constant-proxy-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dproxy_002d_003esymbol-253"></a></var><br>
 <blockquote><p>Given one among the <code>CURLPROXY_</code> constants return a symbol
 representing its name. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-constant-auth-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dauth_002d_003esymbol-253"></a></var><br>
+&mdash; Function: <b>curl-constant-auth-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dauth_002d_003esymbol-254"></a></var><br>
 <blockquote><p>Given one among the <code>CURLAUTH_</code> constants return a symbol
 representing its name. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-constant-ssh-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dssh_002d_003esymbol-254"></a></var><br>
+&mdash; Function: <b>curl-constant-ssh-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dssh_002d_003esymbol-255"></a></var><br>
 <blockquote><p>Given one among the <code>CURLSSH_AUTH_</code> constants return a symbol
 representing its name. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-constant-gssapi-delegation-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dgssapi_002ddelegation_002d_003esymbol-255"></a></var><br>
+&mdash; Function: <b>curl-constant-gssapi-delegation-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dgssapi_002ddelegation_002d_003esymbol-256"></a></var><br>
 <blockquote><p>Given one among the <code>CURLGSSAPI_DELEGATION_</code> constants return a
 symbol representing its name. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-constant-khtype-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dkhtype_002d_003esymbol-256"></a></var><br>
+&mdash; Function: <b>curl-constant-khtype-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dkhtype_002d_003esymbol-257"></a></var><br>
 <blockquote><p>Given one among the <code>CURLKHTYPE_</code> constants return a symbol
 representing its name. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-constant-khstat-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dkhstat_002d_003esymbol-257"></a></var><br>
+&mdash; Function: <b>curl-constant-khstat-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dkhstat_002d_003esymbol-258"></a></var><br>
 <blockquote><p>Given one among the <code>CURLKHSTAT_</code> constants return a symbol
 representing its name. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-constant-khmatch-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dkhmatch_002d_003esymbol-258"></a></var><br>
+&mdash; Function: <b>curl-constant-khmatch-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dkhmatch_002d_003esymbol-259"></a></var><br>
 <blockquote><p>Given one among the <code>CURLKHMATCH_</code> constants return a symbol
 representing its name. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-constant-use-ssl-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002duse_002dssl_002d_003esymbol-259"></a></var><br>
+&mdash; Function: <b>curl-constant-use-ssl-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002duse_002dssl_002d_003esymbol-260"></a></var><br>
 <blockquote><p>Given one among the <code>CURLUSESSL_</code> constants return a symbol
 representing its name. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-constant-ftp-ssl-ccc-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dftp_002dssl_002dccc_002d_003esymbol-260"></a></var><br>
+&mdash; Function: <b>curl-constant-ftp-ssl-ccc-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dftp_002dssl_002dccc_002d_003esymbol-261"></a></var><br>
 <blockquote><p>Given one among the <code>CURLFTPSSL_CCC_</code> constants return a symbol
 representing its name. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-constant-ftp-auth-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dftp_002dauth_002d_003esymbol-261"></a></var><br>
+&mdash; Function: <b>curl-constant-ftp-auth-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dftp_002dauth_002d_003esymbol-262"></a></var><br>
 <blockquote><p>Given one among the <code>CURLFTPAUTH_</code> constants return a symbol
 representing its name. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-constant-ftp-create-dir-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dftp_002dcreate_002ddir_002d_003esymbol-262"></a></var><br>
+&mdash; Function: <b>curl-constant-ftp-create-dir-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dftp_002dcreate_002ddir_002d_003esymbol-263"></a></var><br>
 <blockquote><p>Given one among the <code>CURLFTP_CREATE_DIR_</code> constants return a symbol
 representing its name. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-constant-ftp-method-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dftp_002dmethod_002d_003esymbol-263"></a></var><br>
+&mdash; Function: <b>curl-constant-ftp-method-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dftp_002dmethod_002d_003esymbol-264"></a></var><br>
 <blockquote><p>Given one among the <code>CURLFTPMETHOD_</code> constants return a symbol
 representing its name. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-constant-proto-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dproto_002d_003esymbol-264"></a></var><br>
+&mdash; Function: <b>curl-constant-proto-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dproto_002d_003esymbol-265"></a></var><br>
 <blockquote><p>Given one among the <code>CURLPROTO_</code> constants return a symbol
 representing its name. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-constant-opt-type-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dopt_002dtype_002d_003esymbol-265"></a></var><br>
+&mdash; Function: <b>curl-constant-opt-type-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dopt_002dtype_002d_003esymbol-266"></a></var><br>
 <blockquote><p>Given one among the <code>CURLOPTTYPE_</code> constants return a symbol
 representing its name. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-constant-opt-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dopt_002d_003esymbol-266"></a></var><br>
+&mdash; Function: <b>curl-constant-opt-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dopt_002d_003esymbol-267"></a></var><br>
 <blockquote><p>Given one among the <code>CURLOPT_</code> constants return a symbol
 representing its name. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-constant-ip-resolve-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dip_002dresolve_002d_003esymbol-267"></a></var><br>
+&mdash; Function: <b>curl-constant-ip-resolve-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dip_002dresolve_002d_003esymbol-268"></a></var><br>
 <blockquote><p>Given one among the <code>CURL_IPRESOLVE_</code> constants return a symbol
 representing its name. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-constant-http-version-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dhttp_002dversion_002d_003esymbol-268"></a></var><br>
+&mdash; Function: <b>curl-constant-http-version-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dhttp_002dversion_002d_003esymbol-269"></a></var><br>
 <blockquote><p>Given one among the <code>CURL_HTTP_VERSION_</code> constants return a symbol
 representing its name. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-constant-rts-preq-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002drts_002dpreq_002d_003esymbol-269"></a></var><br>
+&mdash; Function: <b>curl-constant-rts-preq-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002drts_002dpreq_002d_003esymbol-270"></a></var><br>
 <blockquote><p>Given one among the <code>CURL_RTSPREQ_</code> constants return a symbol
 representing its name. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-constant-netrc-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dnetrc_002d_003esymbol-270"></a></var><br>
+&mdash; Function: <b>curl-constant-netrc-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dnetrc_002d_003esymbol-271"></a></var><br>
 <blockquote><p>Given one among the <code>CURL_NETRC_</code> constants return a symbol
 representing its name. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-constant-ssl-version-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dssl_002dversion_002d_003esymbol-271"></a></var><br>
+&mdash; Function: <b>curl-constant-ssl-version-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dssl_002dversion_002d_003esymbol-272"></a></var><br>
 <blockquote><p>Given one among the <code>CURL_SSLVERSION_</code> constants return a symbol
 representing its name. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-constant-tls-auth-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dtls_002dauth_002d_003esymbol-272"></a></var><br>
+&mdash; Function: <b>curl-constant-tls-auth-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dtls_002dauth_002d_003esymbol-273"></a></var><br>
 <blockquote><p>Given one among the <code>CURL_TLSAUTH_</code> constants return a symbol
 representing its name. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-constant-redir-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dredir_002d_003esymbol-273"></a></var><br>
+&mdash; Function: <b>curl-constant-redir-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dredir_002d_003esymbol-274"></a></var><br>
 <blockquote><p>Given one among the <code>CURL_REDIR_</code> constants return a symbol
 representing its name. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-constant-time-cond-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dtime_002dcond_002d_003esymbol-274"></a></var><br>
+&mdash; Function: <b>curl-constant-time-cond-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dtime_002dcond_002d_003esymbol-275"></a></var><br>
 <blockquote><p>Given one among the <code>CURL_TIMECOND_</code> constants return a symbol
 representing its name. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-constant-form-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dform_002d_003esymbol-275"></a></var><br>
+&mdash; Function: <b>curl-constant-form-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dform_002d_003esymbol-276"></a></var><br>
 <blockquote><p>Given one among the <code>CURLFORM_</code> constants return a symbol
 representing its name. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-constant-form-add-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dform_002dadd_002d_003esymbol-276"></a></var><br>
+&mdash; Function: <b>curl-constant-form-add-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dform_002dadd_002d_003esymbol-277"></a></var><br>
 <blockquote><p>Given one among the <code>CURL_FORMADD_</code> constants return a symbol
 representing its name. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-constant-info-type-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dinfo_002dtype_002d_003esymbol-277"></a></var><br>
+&mdash; Function: <b>curl-constant-info-type-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dinfo_002dtype_002d_003esymbol-278"></a></var><br>
 <blockquote><p>Given one among the <code>CURLINFO_STRING</code>, <code>CURLINFO_LONG</code>,
 <code>CURLINFO_DOUBLE</code>, <code>CURLINFO_SLIST</code>, <code>CURLINFO_MASK</code>,
 <code>CURLINFO_TYPEMASK</code> constants return a symbol representing its
@@ -4958,49 +5020,49 @@ name.
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-constant-info-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dinfo_002d_003esymbol-278"></a></var><br>
+&mdash; Function: <b>curl-constant-info-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dinfo_002d_003esymbol-279"></a></var><br>
 <blockquote><p>Given one among the <code>CURLINFO_</code> constants return a symbol
 representing its name. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-constant-close-policy-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dclose_002dpolicy_002d_003esymbol-279"></a></var><br>
+&mdash; Function: <b>curl-constant-close-policy-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dclose_002dpolicy_002d_003esymbol-280"></a></var><br>
 <blockquote><p>Given one among the <code>CURLCLOSEPOLICY_</code> constants return a symbol
 representing its name. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-constant-global-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dglobal_002d_003esymbol-280"></a></var><br>
+&mdash; Function: <b>curl-constant-global-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dglobal_002d_003esymbol-281"></a></var><br>
 <blockquote><p>Given one among the <code>CURL_GLOBAL_</code> constants return a symbol
 representing its name. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-constant-lock-data-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dlock_002ddata_002d_003esymbol-281"></a></var><br>
+&mdash; Function: <b>curl-constant-lock-data-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dlock_002ddata_002d_003esymbol-282"></a></var><br>
 <blockquote><p>Given one among the <code>CURL_LOCK_DATA_</code> constants return a symbol
 representing its name. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-constant-lock-access-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dlock_002daccess_002d_003esymbol-282"></a></var><br>
+&mdash; Function: <b>curl-constant-lock-access-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dlock_002daccess_002d_003esymbol-283"></a></var><br>
 <blockquote><p>Given one among the <code>CURL_LOCK_ACCESS_</code> constants return a symbol
 representing its name. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-constant-she-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dshe_002d_003esymbol-283"></a></var><br>
+&mdash; Function: <b>curl-constant-she-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dshe_002d_003esymbol-284"></a></var><br>
 <blockquote><p>Given one among the <code>CURLSHE_</code> constants return a symbol
 representing its name. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-constant-shopt-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dshopt_002d_003esymbol-284"></a></var><br>
+&mdash; Function: <b>curl-constant-shopt-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dshopt_002d_003esymbol-285"></a></var><br>
 <blockquote><p>Given one among the <code>CURLSHOPT_</code> constants return a symbol
 representing its name. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-constant-version-num-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dversion_002dnum_002d_003esymbol-285"></a></var><br>
+&mdash; Function: <b>curl-constant-version-num-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dversion_002dnum_002d_003esymbol-286"></a></var><br>
 <blockquote><p>Given one among the <code>CURLVERSION_FIRST</code>, <code>CURLVERSION_SECOND</code>,
 <code>CURLVERSION_THIRD</code>, <code>CURLVERSION_FOURTH</code>,
 <code>CURLVERSION_LAST</code>, <code>CURLVERSION_NOW</code> constants return a
@@ -5008,49 +5070,49 @@ symbol representing its name.
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-constant-version-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dversion_002d_003esymbol-286"></a></var><br>
+&mdash; Function: <b>curl-constant-version-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dversion_002d_003esymbol-287"></a></var><br>
 <blockquote><p>Given one among the <code>CURL_VERSION_</code> constants return a symbol
 representing its name. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-constant-pause-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dpause_002d_003esymbol-287"></a></var><br>
+&mdash; Function: <b>curl-constant-pause-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dpause_002d_003esymbol-288"></a></var><br>
 <blockquote><p>Given one among the <code>CURLPAUSE_</code> constants return a symbol
 representing its name. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-constant-m-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dm_002d_003esymbol-288"></a></var><br>
+&mdash; Function: <b>curl-constant-m-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dm_002d_003esymbol-289"></a></var><br>
 <blockquote><p>Given one among the <code>CURLM_</code> constants return a symbol representing
 its name. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-constant-msg-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dmsg_002d_003esymbol-289"></a></var><br>
+&mdash; Function: <b>curl-constant-msg-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dmsg_002d_003esymbol-290"></a></var><br>
 <blockquote><p>Given one among the <code>CURLMSG_</code> constants return a symbol
 representing its name. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-constant-poll-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dpoll_002d_003esymbol-290"></a></var><br>
+&mdash; Function: <b>curl-constant-poll-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dpoll_002d_003esymbol-291"></a></var><br>
 <blockquote><p>Given one among the <code>CURL_POLL_</code> constants return a symbol
 representing its name. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-constant-wait-poll-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dwait_002dpoll_002d_003esymbol-291"></a></var><br>
+&mdash; Function: <b>curl-constant-wait-poll-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dwait_002dpoll_002d_003esymbol-292"></a></var><br>
 <blockquote><p>Given one among the <code>CURL_WAIT_POLL</code> constants return a symbol
 representing its name. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-constant-cselect-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dcselect_002d_003esymbol-292"></a></var><br>
+&mdash; Function: <b>curl-constant-cselect-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dcselect_002d_003esymbol-293"></a></var><br>
 <blockquote><p>Given one among the <code>CURL_CSELECT_</code> constants return a symbol
 representing its name. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>curl-constant-mopt-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dmopt_002d_003esymbol-293"></a></var><br>
+&mdash; Function: <b>curl-constant-mopt-&gt;symbol</b><var> code<a name="index-curl_002dconstant_002dmopt_002d_003esymbol-294"></a></var><br>
 <blockquote><p>Given one among the <code>CURLMOPT_</code> constants return a symbol
 representing its name. 
 </p></blockquote></div>
@@ -5777,7 +5839,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 
 <h2 class="appendix">Appendix B GNU Free Documentation License</h2>
 
-<p><a name="index-FDL_002c-GNU-Free-Documentation-License-294"></a><div align="center">Version 1.3, 3 November 2008</div>
+<p><a name="index-FDL_002c-GNU-Free-Documentation-License-295"></a><div align="center">Version 1.3, 3 November 2008</div>
 
 <!-- This file is intended to be included within another document, -->
 <!-- hence no sectioning command or @node. -->
@@ -6296,18 +6358,18 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 <li><a href="#index-g_t_0040library_007bvicare-net-curl-unsafe_002dapi_007d_002c-library-1"><code>(vicare net curl unsafe-api)</code>, library</a>: <a href="#overview">overview</a></li>
 <li><a href="#index-g_t_0040library_007bvicare-net-curl_007d_002c-library-7"><code>(vicare net curl)</code>, library</a>: <a href="#plain">plain</a></li>
 <li><a href="#index-Argument-_0040var_007beasy_007d-44">Argument <var>easy</var></a>: <a href="#plain-easy-struct">plain easy struct</a></li>
-<li><a href="#index-Argument-_0040var_007bhttppost_007d-139">Argument <var>httppost</var></a>: <a href="#plain-forms-structs">plain forms structs</a></li>
+<li><a href="#index-Argument-_0040var_007bhttppost_007d-140">Argument <var>httppost</var></a>: <a href="#plain-forms-structs">plain forms structs</a></li>
 <li><a href="#index-Argument-_0040var_007bmulti_007d-76">Argument <var>multi</var></a>: <a href="#plain-multi-struct">plain multi struct</a></li>
-<li><a href="#index-Argument-_0040var_007bshare_007d-163">Argument <var>share</var></a>: <a href="#plain-shares-structs">plain shares structs</a></li>
+<li><a href="#index-Argument-_0040var_007bshare_007d-164">Argument <var>share</var></a>: <a href="#plain-shares-structs">plain shares structs</a></li>
 <li><a href="#index-g_t_0040var_007beasy_007d-argument-45"><var>easy</var> argument</a>: <a href="#plain-easy-struct">plain easy struct</a></li>
-<li><a href="#index-FDL_002c-GNU-Free-Documentation-License-294">FDL, GNU Free Documentation License</a>: <a href="#Documentation-License">Documentation License</a></li>
-<li><a href="#index-g_t_0040var_007bhttppost_007d-argument-138"><var>httppost</var> argument</a>: <a href="#plain-forms-structs">plain forms structs</a></li>
+<li><a href="#index-FDL_002c-GNU-Free-Documentation-License-295">FDL, GNU Free Documentation License</a>: <a href="#Documentation-License">Documentation License</a></li>
+<li><a href="#index-g_t_0040var_007bhttppost_007d-argument-139"><var>httppost</var> argument</a>: <a href="#plain-forms-structs">plain forms structs</a></li>
 <li><a href="#index-Library-_0040library_007bvicare-net-curl-constants_007d-4">Library <code>(vicare net curl constants)</code></a>: <a href="#overview">overview</a></li>
 <li><a href="#index-Library-_0040library_007bvicare-net-curl-features_007d-6">Library <code>(vicare net curl features)</code></a>: <a href="#overview">overview</a></li>
 <li><a href="#index-Library-_0040library_007bvicare-net-curl-unsafe_002dapi_007d-2">Library <code>(vicare net curl unsafe-api)</code></a>: <a href="#overview">overview</a></li>
 <li><a href="#index-Library-_0040library_007bvicare-net-curl_007d-8">Library <code>(vicare net curl)</code></a>: <a href="#plain">plain</a></li>
 <li><a href="#index-g_t_0040var_007bmulti_007d-argument-77"><var>multi</var> argument</a>: <a href="#plain-multi-struct">plain multi struct</a></li>
-<li><a href="#index-g_t_0040var_007bshare_007d-argument-162"><var>share</var> argument</a>: <a href="#plain-shares-structs">plain shares structs</a></li>
+<li><a href="#index-g_t_0040var_007bshare_007d-argument-163"><var>share</var> argument</a>: <a href="#plain-shares-structs">plain shares structs</a></li>
 </ul><div class="node">
 <a name="function-index"></a>
 <p><hr>
@@ -6322,63 +6384,63 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 
 
 <ul class="index-fn" compact>
-<li><a href="#index-curl_002dcertinfo_002ecertinfo-223"><code>curl-certinfo.certinfo</code></a>: <a href="#plain-cstructs-certinfo">plain cstructs certinfo</a></li>
-<li><a href="#index-curl_002dconstant_002dauth_002d_003esymbol-253"><code>curl-constant-auth-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
-<li><a href="#index-curl_002dconstant_002dchunk_002dbgn_002d_003esymbol-241"><code>curl-constant-chunk-bgn-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
-<li><a href="#index-curl_002dconstant_002dchunk_002dend_002d_003esymbol-242"><code>curl-constant-chunk-end-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
-<li><a href="#index-curl_002dconstant_002dclose_002dpolicy_002d_003esymbol-279"><code>curl-constant-close-policy-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
-<li><a href="#index-curl_002dconstant_002dcselect_002d_003esymbol-292"><code>curl-constant-cselect-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
-<li><a href="#index-curl_002dconstant_002de_002d_003esymbol-251"><code>curl-constant-e-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
-<li><a href="#index-curl_002dconstant_002dfiletype_002d_003esymbol-239"><code>curl-constant-filetype-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
-<li><a href="#index-curl_002dconstant_002dfnmatch_002d_003esymbol-243"><code>curl-constant-fnmatch-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
-<li><a href="#index-curl_002dconstant_002dform_002d_003esymbol-275"><code>curl-constant-form-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
-<li><a href="#index-curl_002dconstant_002dform_002dadd_002d_003esymbol-276"><code>curl-constant-form-add-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
-<li><a href="#index-curl_002dconstant_002dftp_002dauth_002d_003esymbol-261"><code>curl-constant-ftp-auth-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
-<li><a href="#index-curl_002dconstant_002dftp_002dcreate_002ddir_002d_003esymbol-262"><code>curl-constant-ftp-create-dir-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
-<li><a href="#index-curl_002dconstant_002dftp_002dmethod_002d_003esymbol-263"><code>curl-constant-ftp-method-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
-<li><a href="#index-curl_002dconstant_002dftp_002dssl_002dccc_002d_003esymbol-260"><code>curl-constant-ftp-ssl-ccc-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
-<li><a href="#index-curl_002dconstant_002dglobal_002d_003esymbol-280"><code>curl-constant-global-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
-<li><a href="#index-curl_002dconstant_002dgssapi_002ddelegation_002d_003esymbol-255"><code>curl-constant-gssapi-delegation-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
-<li><a href="#index-curl_002dconstant_002dhttp_002dversion_002d_003esymbol-268"><code>curl-constant-http-version-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
-<li><a href="#index-curl_002dconstant_002dhttppost_002d_003esymbol-238"><code>curl-constant-httppost-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
-<li><a href="#index-curl_002dconstant_002dinfo_002d_003esymbol-278"><code>curl-constant-info-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
-<li><a href="#index-curl_002dconstant_002dinfo_002ddebug_002d_003esymbol-250"><code>curl-constant-info-debug-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
-<li><a href="#index-curl_002dconstant_002dinfo_002dtype_002d_003esymbol-277"><code>curl-constant-info-type-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
-<li><a href="#index-curl_002dconstant_002dinfoflag_002d_003esymbol-240"><code>curl-constant-infoflag-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
-<li><a href="#index-curl_002dconstant_002diocmd_002d_003esymbol-249"><code>curl-constant-iocmd-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
-<li><a href="#index-curl_002dconstant_002dioe_002d_003esymbol-248"><code>curl-constant-ioe-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
-<li><a href="#index-curl_002dconstant_002dip_002dresolve_002d_003esymbol-267"><code>curl-constant-ip-resolve-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
-<li><a href="#index-curl_002dconstant_002dkhmatch_002d_003esymbol-258"><code>curl-constant-khmatch-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
-<li><a href="#index-curl_002dconstant_002dkhstat_002d_003esymbol-257"><code>curl-constant-khstat-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
-<li><a href="#index-curl_002dconstant_002dkhtype_002d_003esymbol-256"><code>curl-constant-khtype-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
-<li><a href="#index-curl_002dconstant_002dlock_002daccess_002d_003esymbol-282"><code>curl-constant-lock-access-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
-<li><a href="#index-curl_002dconstant_002dlock_002ddata_002d_003esymbol-281"><code>curl-constant-lock-data-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
-<li><a href="#index-curl_002dconstant_002dm_002d_003esymbol-288"><code>curl-constant-m-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
-<li><a href="#index-curl_002dconstant_002dmopt_002d_003esymbol-293"><code>curl-constant-mopt-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
-<li><a href="#index-curl_002dconstant_002dmsg_002d_003esymbol-289"><code>curl-constant-msg-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
-<li><a href="#index-curl_002dconstant_002dnetrc_002d_003esymbol-270"><code>curl-constant-netrc-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
-<li><a href="#index-curl_002dconstant_002dopt_002d_003esymbol-266"><code>curl-constant-opt-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
-<li><a href="#index-curl_002dconstant_002dopt_002dtype_002d_003esymbol-265"><code>curl-constant-opt-type-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
-<li><a href="#index-curl_002dconstant_002dpause_002d_003esymbol-287"><code>curl-constant-pause-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
-<li><a href="#index-curl_002dconstant_002dpoll_002d_003esymbol-290"><code>curl-constant-poll-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
-<li><a href="#index-curl_002dconstant_002dproto_002d_003esymbol-264"><code>curl-constant-proto-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
-<li><a href="#index-curl_002dconstant_002dproxy_002d_003esymbol-252"><code>curl-constant-proxy-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
-<li><a href="#index-curl_002dconstant_002dreadfunc_002d_003esymbol-245"><code>curl-constant-readfunc-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
-<li><a href="#index-curl_002dconstant_002dredir_002d_003esymbol-273"><code>curl-constant-redir-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
-<li><a href="#index-curl_002dconstant_002drts_002dpreq_002d_003esymbol-269"><code>curl-constant-rts-preq-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
-<li><a href="#index-curl_002dconstant_002dseekfunc_002d_003esymbol-244"><code>curl-constant-seekfunc-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
-<li><a href="#index-curl_002dconstant_002dshe_002d_003esymbol-283"><code>curl-constant-she-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
-<li><a href="#index-curl_002dconstant_002dshopt_002d_003esymbol-284"><code>curl-constant-shopt-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
-<li><a href="#index-curl_002dconstant_002dsockopt_002d_003esymbol-247"><code>curl-constant-sockopt-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
-<li><a href="#index-curl_002dconstant_002dsocktype_002d_003esymbol-246"><code>curl-constant-socktype-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
-<li><a href="#index-curl_002dconstant_002dssh_002d_003esymbol-254"><code>curl-constant-ssh-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
-<li><a href="#index-curl_002dconstant_002dssl_002dversion_002d_003esymbol-271"><code>curl-constant-ssl-version-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
-<li><a href="#index-curl_002dconstant_002dtime_002dcond_002d_003esymbol-274"><code>curl-constant-time-cond-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
-<li><a href="#index-curl_002dconstant_002dtls_002dauth_002d_003esymbol-272"><code>curl-constant-tls-auth-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
-<li><a href="#index-curl_002dconstant_002duse_002dssl_002d_003esymbol-259"><code>curl-constant-use-ssl-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
-<li><a href="#index-curl_002dconstant_002dversion_002d_003esymbol-286"><code>curl-constant-version-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
-<li><a href="#index-curl_002dconstant_002dversion_002dnum_002d_003esymbol-285"><code>curl-constant-version-num-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
-<li><a href="#index-curl_002dconstant_002dwait_002dpoll_002d_003esymbol-291"><code>curl-constant-wait-poll-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
+<li><a href="#index-curl_002dcertinfo_002ecertinfo-224"><code>curl-certinfo.certinfo</code></a>: <a href="#plain-cstructs-certinfo">plain cstructs certinfo</a></li>
+<li><a href="#index-curl_002dconstant_002dauth_002d_003esymbol-254"><code>curl-constant-auth-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
+<li><a href="#index-curl_002dconstant_002dchunk_002dbgn_002d_003esymbol-242"><code>curl-constant-chunk-bgn-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
+<li><a href="#index-curl_002dconstant_002dchunk_002dend_002d_003esymbol-243"><code>curl-constant-chunk-end-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
+<li><a href="#index-curl_002dconstant_002dclose_002dpolicy_002d_003esymbol-280"><code>curl-constant-close-policy-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
+<li><a href="#index-curl_002dconstant_002dcselect_002d_003esymbol-293"><code>curl-constant-cselect-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
+<li><a href="#index-curl_002dconstant_002de_002d_003esymbol-252"><code>curl-constant-e-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
+<li><a href="#index-curl_002dconstant_002dfiletype_002d_003esymbol-240"><code>curl-constant-filetype-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
+<li><a href="#index-curl_002dconstant_002dfnmatch_002d_003esymbol-244"><code>curl-constant-fnmatch-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
+<li><a href="#index-curl_002dconstant_002dform_002d_003esymbol-276"><code>curl-constant-form-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
+<li><a href="#index-curl_002dconstant_002dform_002dadd_002d_003esymbol-277"><code>curl-constant-form-add-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
+<li><a href="#index-curl_002dconstant_002dftp_002dauth_002d_003esymbol-262"><code>curl-constant-ftp-auth-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
+<li><a href="#index-curl_002dconstant_002dftp_002dcreate_002ddir_002d_003esymbol-263"><code>curl-constant-ftp-create-dir-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
+<li><a href="#index-curl_002dconstant_002dftp_002dmethod_002d_003esymbol-264"><code>curl-constant-ftp-method-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
+<li><a href="#index-curl_002dconstant_002dftp_002dssl_002dccc_002d_003esymbol-261"><code>curl-constant-ftp-ssl-ccc-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
+<li><a href="#index-curl_002dconstant_002dglobal_002d_003esymbol-281"><code>curl-constant-global-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
+<li><a href="#index-curl_002dconstant_002dgssapi_002ddelegation_002d_003esymbol-256"><code>curl-constant-gssapi-delegation-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
+<li><a href="#index-curl_002dconstant_002dhttp_002dversion_002d_003esymbol-269"><code>curl-constant-http-version-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
+<li><a href="#index-curl_002dconstant_002dhttppost_002d_003esymbol-239"><code>curl-constant-httppost-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
+<li><a href="#index-curl_002dconstant_002dinfo_002d_003esymbol-279"><code>curl-constant-info-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
+<li><a href="#index-curl_002dconstant_002dinfo_002ddebug_002d_003esymbol-251"><code>curl-constant-info-debug-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
+<li><a href="#index-curl_002dconstant_002dinfo_002dtype_002d_003esymbol-278"><code>curl-constant-info-type-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
+<li><a href="#index-curl_002dconstant_002dinfoflag_002d_003esymbol-241"><code>curl-constant-infoflag-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
+<li><a href="#index-curl_002dconstant_002diocmd_002d_003esymbol-250"><code>curl-constant-iocmd-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
+<li><a href="#index-curl_002dconstant_002dioe_002d_003esymbol-249"><code>curl-constant-ioe-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
+<li><a href="#index-curl_002dconstant_002dip_002dresolve_002d_003esymbol-268"><code>curl-constant-ip-resolve-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
+<li><a href="#index-curl_002dconstant_002dkhmatch_002d_003esymbol-259"><code>curl-constant-khmatch-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
+<li><a href="#index-curl_002dconstant_002dkhstat_002d_003esymbol-258"><code>curl-constant-khstat-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
+<li><a href="#index-curl_002dconstant_002dkhtype_002d_003esymbol-257"><code>curl-constant-khtype-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
+<li><a href="#index-curl_002dconstant_002dlock_002daccess_002d_003esymbol-283"><code>curl-constant-lock-access-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
+<li><a href="#index-curl_002dconstant_002dlock_002ddata_002d_003esymbol-282"><code>curl-constant-lock-data-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
+<li><a href="#index-curl_002dconstant_002dm_002d_003esymbol-289"><code>curl-constant-m-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
+<li><a href="#index-curl_002dconstant_002dmopt_002d_003esymbol-294"><code>curl-constant-mopt-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
+<li><a href="#index-curl_002dconstant_002dmsg_002d_003esymbol-290"><code>curl-constant-msg-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
+<li><a href="#index-curl_002dconstant_002dnetrc_002d_003esymbol-271"><code>curl-constant-netrc-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
+<li><a href="#index-curl_002dconstant_002dopt_002d_003esymbol-267"><code>curl-constant-opt-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
+<li><a href="#index-curl_002dconstant_002dopt_002dtype_002d_003esymbol-266"><code>curl-constant-opt-type-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
+<li><a href="#index-curl_002dconstant_002dpause_002d_003esymbol-288"><code>curl-constant-pause-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
+<li><a href="#index-curl_002dconstant_002dpoll_002d_003esymbol-291"><code>curl-constant-poll-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
+<li><a href="#index-curl_002dconstant_002dproto_002d_003esymbol-265"><code>curl-constant-proto-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
+<li><a href="#index-curl_002dconstant_002dproxy_002d_003esymbol-253"><code>curl-constant-proxy-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
+<li><a href="#index-curl_002dconstant_002dreadfunc_002d_003esymbol-246"><code>curl-constant-readfunc-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
+<li><a href="#index-curl_002dconstant_002dredir_002d_003esymbol-274"><code>curl-constant-redir-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
+<li><a href="#index-curl_002dconstant_002drts_002dpreq_002d_003esymbol-270"><code>curl-constant-rts-preq-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
+<li><a href="#index-curl_002dconstant_002dseekfunc_002d_003esymbol-245"><code>curl-constant-seekfunc-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
+<li><a href="#index-curl_002dconstant_002dshe_002d_003esymbol-284"><code>curl-constant-she-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
+<li><a href="#index-curl_002dconstant_002dshopt_002d_003esymbol-285"><code>curl-constant-shopt-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
+<li><a href="#index-curl_002dconstant_002dsockopt_002d_003esymbol-248"><code>curl-constant-sockopt-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
+<li><a href="#index-curl_002dconstant_002dsocktype_002d_003esymbol-247"><code>curl-constant-socktype-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
+<li><a href="#index-curl_002dconstant_002dssh_002d_003esymbol-255"><code>curl-constant-ssh-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
+<li><a href="#index-curl_002dconstant_002dssl_002dversion_002d_003esymbol-272"><code>curl-constant-ssl-version-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
+<li><a href="#index-curl_002dconstant_002dtime_002dcond_002d_003esymbol-275"><code>curl-constant-time-cond-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
+<li><a href="#index-curl_002dconstant_002dtls_002dauth_002d_003esymbol-273"><code>curl-constant-tls-auth-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
+<li><a href="#index-curl_002dconstant_002duse_002dssl_002d_003esymbol-260"><code>curl-constant-use-ssl-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
+<li><a href="#index-curl_002dconstant_002dversion_002d_003esymbol-287"><code>curl-constant-version-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
+<li><a href="#index-curl_002dconstant_002dversion_002dnum_002d_003esymbol-286"><code>curl-constant-version-num-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
+<li><a href="#index-curl_002dconstant_002dwait_002dpoll_002d_003esymbol-292"><code>curl-constant-wait-poll-&gt;symbol</code></a>: <a href="#plain-symbols">plain symbols</a></li>
 <li><a href="#index-curl_002deasy-50"><code>curl-easy</code></a>: <a href="#plain-easy-struct">plain easy struct</a></li>
 <li><a href="#index-curl_002deasy_002dcleanup-55"><code>curl-easy-cleanup</code></a>: <a href="#plain-easy-init">plain easy init</a></li>
 <li><a href="#index-curl_002deasy_002dcustom_002ddestructor-48"><code>curl-easy-custom-destructor</code></a>: <a href="#plain-easy-struct">plain easy struct</a></li>
@@ -6399,62 +6461,62 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 <li><a href="#index-curl_002deasy_002falive-52"><code>curl-easy/alive</code></a>: <a href="#plain-easy-struct">plain easy struct</a></li>
 <li><a href="#index-curl_002deasy_003f-46"><code>curl-easy?</code></a>: <a href="#plain-easy-struct">plain easy struct</a></li>
 <li><a href="#index-curl_002deasy_003f_002falive-47"><code>curl-easy?/alive</code></a>: <a href="#plain-easy-struct">plain easy struct</a></li>
-<li><a href="#index-curl_002descape-229"><code>curl-escape</code></a>: <a href="#plain-misc">plain misc</a></li>
-<li><a href="#index-curl_002descape_002fstring-231"><code>curl-escape/string</code></a>: <a href="#plain-misc">plain misc</a></li>
-<li><a href="#index-curl_002dfileinfo-215"><code>curl-fileinfo</code></a>: <a href="#plain-cstructs-fileinfo">plain cstructs fileinfo</a></li>
-<li><a href="#index-curl_002dfileinfo_002dfilename-187"><code>curl-fileinfo-filename</code></a>: <a href="#plain-cstructs-fileinfo">plain cstructs fileinfo</a></li>
-<li><a href="#index-curl_002dfileinfo_002dfiletype-188"><code>curl-fileinfo-filetype</code></a>: <a href="#plain-cstructs-fileinfo">plain cstructs fileinfo</a></li>
-<li><a href="#index-curl_002dfileinfo_002dflags-200"><code>curl-fileinfo-flags</code></a>: <a href="#plain-cstructs-fileinfo">plain cstructs fileinfo</a></li>
-<li><a href="#index-curl_002dfileinfo_002dgid-192"><code>curl-fileinfo-gid</code></a>: <a href="#plain-cstructs-fileinfo">plain cstructs fileinfo</a></li>
-<li><a href="#index-curl_002dfileinfo_002dhardlinks-194"><code>curl-fileinfo-hardlinks</code></a>: <a href="#plain-cstructs-fileinfo">plain cstructs fileinfo</a></li>
-<li><a href="#index-curl_002dfileinfo_002dperm-190"><code>curl-fileinfo-perm</code></a>: <a href="#plain-cstructs-fileinfo">plain cstructs fileinfo</a></li>
-<li><a href="#index-curl_002dfileinfo_002dsize-193"><code>curl-fileinfo-size</code></a>: <a href="#plain-cstructs-fileinfo">plain cstructs fileinfo</a></li>
-<li><a href="#index-curl_002dfileinfo_002dstrings_002egroup-198"><code>curl-fileinfo-strings.group</code></a>: <a href="#plain-cstructs-fileinfo">plain cstructs fileinfo</a></li>
-<li><a href="#index-curl_002dfileinfo_002dstrings_002eperm-196"><code>curl-fileinfo-strings.perm</code></a>: <a href="#plain-cstructs-fileinfo">plain cstructs fileinfo</a></li>
-<li><a href="#index-curl_002dfileinfo_002dstrings_002etarget-199"><code>curl-fileinfo-strings.target</code></a>: <a href="#plain-cstructs-fileinfo">plain cstructs fileinfo</a></li>
-<li><a href="#index-curl_002dfileinfo_002dstrings_002etime-195"><code>curl-fileinfo-strings.time</code></a>: <a href="#plain-cstructs-fileinfo">plain cstructs fileinfo</a></li>
-<li><a href="#index-curl_002dfileinfo_002dstrings_002euser-197"><code>curl-fileinfo-strings.user</code></a>: <a href="#plain-cstructs-fileinfo">plain cstructs fileinfo</a></li>
-<li><a href="#index-curl_002dfileinfo_002dtime-189"><code>curl-fileinfo-time</code></a>: <a href="#plain-cstructs-fileinfo">plain cstructs fileinfo</a></li>
-<li><a href="#index-curl_002dfileinfo_002duid-191"><code>curl-fileinfo-uid</code></a>: <a href="#plain-cstructs-fileinfo">plain cstructs fileinfo</a></li>
-<li><a href="#index-curl_002dfileinfo_002efilename-201"><code>curl-fileinfo.filename</code></a>: <a href="#plain-cstructs-fileinfo">plain cstructs fileinfo</a></li>
-<li><a href="#index-curl_002dfileinfo_002efiletype-202"><code>curl-fileinfo.filetype</code></a>: <a href="#plain-cstructs-fileinfo">plain cstructs fileinfo</a></li>
-<li><a href="#index-curl_002dfileinfo_002eflags-214"><code>curl-fileinfo.flags</code></a>: <a href="#plain-cstructs-fileinfo">plain cstructs fileinfo</a></li>
-<li><a href="#index-curl_002dfileinfo_002egid-206"><code>curl-fileinfo.gid</code></a>: <a href="#plain-cstructs-fileinfo">plain cstructs fileinfo</a></li>
-<li><a href="#index-curl_002dfileinfo_002ehardlinks-208"><code>curl-fileinfo.hardlinks</code></a>: <a href="#plain-cstructs-fileinfo">plain cstructs fileinfo</a></li>
-<li><a href="#index-curl_002dfileinfo_002eperm-204"><code>curl-fileinfo.perm</code></a>: <a href="#plain-cstructs-fileinfo">plain cstructs fileinfo</a></li>
-<li><a href="#index-curl_002dfileinfo_002esize-207"><code>curl-fileinfo.size</code></a>: <a href="#plain-cstructs-fileinfo">plain cstructs fileinfo</a></li>
-<li><a href="#index-curl_002dfileinfo_002estrings_002egroup-212"><code>curl-fileinfo.strings.group</code></a>: <a href="#plain-cstructs-fileinfo">plain cstructs fileinfo</a></li>
-<li><a href="#index-curl_002dfileinfo_002estrings_002eperm-210"><code>curl-fileinfo.strings.perm</code></a>: <a href="#plain-cstructs-fileinfo">plain cstructs fileinfo</a></li>
-<li><a href="#index-curl_002dfileinfo_002estrings_002etarget-213"><code>curl-fileinfo.strings.target</code></a>: <a href="#plain-cstructs-fileinfo">plain cstructs fileinfo</a></li>
-<li><a href="#index-curl_002dfileinfo_002estrings_002etime-209"><code>curl-fileinfo.strings.time</code></a>: <a href="#plain-cstructs-fileinfo">plain cstructs fileinfo</a></li>
-<li><a href="#index-curl_002dfileinfo_002estrings_002euser-211"><code>curl-fileinfo.strings.user</code></a>: <a href="#plain-cstructs-fileinfo">plain cstructs fileinfo</a></li>
-<li><a href="#index-curl_002dfileinfo_002etime-203"><code>curl-fileinfo.time</code></a>: <a href="#plain-cstructs-fileinfo">plain cstructs fileinfo</a></li>
-<li><a href="#index-curl_002dfileinfo_002euid-205"><code>curl-fileinfo.uid</code></a>: <a href="#plain-cstructs-fileinfo">plain cstructs fileinfo</a></li>
-<li><a href="#index-curl_002dfileinfo_003f-185"><code>curl-fileinfo?</code></a>: <a href="#plain-cstructs-fileinfo">plain cstructs fileinfo</a></li>
-<li><a href="#index-curl_002dform_002ddata-144"><code>curl-form-data</code></a>: <a href="#plain-forms-structs">plain forms structs</a></li>
-<li><a href="#index-curl_002dform_002ddata_002dcustom_002ddestructor-142"><code>curl-form-data-custom-destructor</code></a>: <a href="#plain-forms-structs">plain forms structs</a></li>
-<li><a href="#index-curl_002dform_002ddata_002dstring-158"><code>curl-form-data-string</code></a>: <a href="#plain-forms-inspect">plain forms inspect</a></li>
-<li><a href="#index-curl_002dform_002ddata_002falive-146"><code>curl-form-data/alive</code></a>: <a href="#plain-forms-structs">plain forms structs</a></li>
-<li><a href="#index-curl_002dform_002ddata_003f-140"><code>curl-form-data?</code></a>: <a href="#plain-forms-structs">plain forms structs</a></li>
-<li><a href="#index-curl_002dform_002ddata_003f_002falive-141"><code>curl-form-data?/alive</code></a>: <a href="#plain-forms-structs">plain forms structs</a></li>
-<li><a href="#index-curl_002dformadd-150"><code>curl-formadd</code></a>: <a href="#plain-forms-adding">plain forms adding</a></li>
-<li><a href="#index-curl_002dformfree-149"><code>curl-formfree</code></a>: <a href="#plain-forms-init">plain forms init</a></li>
-<li><a href="#index-curl_002dformget-159"><code>curl-formget</code></a>: <a href="#plain-forms-inspect">plain forms inspect</a></li>
-<li><a href="#index-curl_002dforms_002dsizeof_002darray-218"><code>curl-forms-sizeof-array</code></a>: <a href="#plain-cstructs-forms">plain cstructs forms</a></li>
-<li><a href="#index-curl_002dforms_002eoption-219"><code>curl-forms.option</code></a>: <a href="#plain-cstructs-forms">plain cstructs forms</a></li>
-<li><a href="#index-curl_002dforms_002eoption_002dset_0021-221"><code>curl-forms.option-set!</code></a>: <a href="#plain-cstructs-forms">plain cstructs forms</a></li>
-<li><a href="#index-curl_002dforms_002evalue-220"><code>curl-forms.value</code></a>: <a href="#plain-cstructs-forms">plain cstructs forms</a></li>
-<li><a href="#index-curl_002dforms_002evalue_002dset_0021-222"><code>curl-forms.value-set!</code></a>: <a href="#plain-cstructs-forms">plain cstructs forms</a></li>
-<li><a href="#index-curl_002dfree-228"><code>curl-free</code></a>: <a href="#plain-misc">plain misc</a></li>
-<li><a href="#index-curl_002dgetdate-237"><code>curl-getdate</code></a>: <a href="#plain-misc">plain misc</a></li>
+<li><a href="#index-curl_002descape-230"><code>curl-escape</code></a>: <a href="#plain-misc">plain misc</a></li>
+<li><a href="#index-curl_002descape_002fstring-232"><code>curl-escape/string</code></a>: <a href="#plain-misc">plain misc</a></li>
+<li><a href="#index-curl_002dfileinfo-216"><code>curl-fileinfo</code></a>: <a href="#plain-cstructs-fileinfo">plain cstructs fileinfo</a></li>
+<li><a href="#index-curl_002dfileinfo_002dfilename-188"><code>curl-fileinfo-filename</code></a>: <a href="#plain-cstructs-fileinfo">plain cstructs fileinfo</a></li>
+<li><a href="#index-curl_002dfileinfo_002dfiletype-189"><code>curl-fileinfo-filetype</code></a>: <a href="#plain-cstructs-fileinfo">plain cstructs fileinfo</a></li>
+<li><a href="#index-curl_002dfileinfo_002dflags-201"><code>curl-fileinfo-flags</code></a>: <a href="#plain-cstructs-fileinfo">plain cstructs fileinfo</a></li>
+<li><a href="#index-curl_002dfileinfo_002dgid-193"><code>curl-fileinfo-gid</code></a>: <a href="#plain-cstructs-fileinfo">plain cstructs fileinfo</a></li>
+<li><a href="#index-curl_002dfileinfo_002dhardlinks-195"><code>curl-fileinfo-hardlinks</code></a>: <a href="#plain-cstructs-fileinfo">plain cstructs fileinfo</a></li>
+<li><a href="#index-curl_002dfileinfo_002dperm-191"><code>curl-fileinfo-perm</code></a>: <a href="#plain-cstructs-fileinfo">plain cstructs fileinfo</a></li>
+<li><a href="#index-curl_002dfileinfo_002dsize-194"><code>curl-fileinfo-size</code></a>: <a href="#plain-cstructs-fileinfo">plain cstructs fileinfo</a></li>
+<li><a href="#index-curl_002dfileinfo_002dstrings_002egroup-199"><code>curl-fileinfo-strings.group</code></a>: <a href="#plain-cstructs-fileinfo">plain cstructs fileinfo</a></li>
+<li><a href="#index-curl_002dfileinfo_002dstrings_002eperm-197"><code>curl-fileinfo-strings.perm</code></a>: <a href="#plain-cstructs-fileinfo">plain cstructs fileinfo</a></li>
+<li><a href="#index-curl_002dfileinfo_002dstrings_002etarget-200"><code>curl-fileinfo-strings.target</code></a>: <a href="#plain-cstructs-fileinfo">plain cstructs fileinfo</a></li>
+<li><a href="#index-curl_002dfileinfo_002dstrings_002etime-196"><code>curl-fileinfo-strings.time</code></a>: <a href="#plain-cstructs-fileinfo">plain cstructs fileinfo</a></li>
+<li><a href="#index-curl_002dfileinfo_002dstrings_002euser-198"><code>curl-fileinfo-strings.user</code></a>: <a href="#plain-cstructs-fileinfo">plain cstructs fileinfo</a></li>
+<li><a href="#index-curl_002dfileinfo_002dtime-190"><code>curl-fileinfo-time</code></a>: <a href="#plain-cstructs-fileinfo">plain cstructs fileinfo</a></li>
+<li><a href="#index-curl_002dfileinfo_002duid-192"><code>curl-fileinfo-uid</code></a>: <a href="#plain-cstructs-fileinfo">plain cstructs fileinfo</a></li>
+<li><a href="#index-curl_002dfileinfo_002efilename-202"><code>curl-fileinfo.filename</code></a>: <a href="#plain-cstructs-fileinfo">plain cstructs fileinfo</a></li>
+<li><a href="#index-curl_002dfileinfo_002efiletype-203"><code>curl-fileinfo.filetype</code></a>: <a href="#plain-cstructs-fileinfo">plain cstructs fileinfo</a></li>
+<li><a href="#index-curl_002dfileinfo_002eflags-215"><code>curl-fileinfo.flags</code></a>: <a href="#plain-cstructs-fileinfo">plain cstructs fileinfo</a></li>
+<li><a href="#index-curl_002dfileinfo_002egid-207"><code>curl-fileinfo.gid</code></a>: <a href="#plain-cstructs-fileinfo">plain cstructs fileinfo</a></li>
+<li><a href="#index-curl_002dfileinfo_002ehardlinks-209"><code>curl-fileinfo.hardlinks</code></a>: <a href="#plain-cstructs-fileinfo">plain cstructs fileinfo</a></li>
+<li><a href="#index-curl_002dfileinfo_002eperm-205"><code>curl-fileinfo.perm</code></a>: <a href="#plain-cstructs-fileinfo">plain cstructs fileinfo</a></li>
+<li><a href="#index-curl_002dfileinfo_002esize-208"><code>curl-fileinfo.size</code></a>: <a href="#plain-cstructs-fileinfo">plain cstructs fileinfo</a></li>
+<li><a href="#index-curl_002dfileinfo_002estrings_002egroup-213"><code>curl-fileinfo.strings.group</code></a>: <a href="#plain-cstructs-fileinfo">plain cstructs fileinfo</a></li>
+<li><a href="#index-curl_002dfileinfo_002estrings_002eperm-211"><code>curl-fileinfo.strings.perm</code></a>: <a href="#plain-cstructs-fileinfo">plain cstructs fileinfo</a></li>
+<li><a href="#index-curl_002dfileinfo_002estrings_002etarget-214"><code>curl-fileinfo.strings.target</code></a>: <a href="#plain-cstructs-fileinfo">plain cstructs fileinfo</a></li>
+<li><a href="#index-curl_002dfileinfo_002estrings_002etime-210"><code>curl-fileinfo.strings.time</code></a>: <a href="#plain-cstructs-fileinfo">plain cstructs fileinfo</a></li>
+<li><a href="#index-curl_002dfileinfo_002estrings_002euser-212"><code>curl-fileinfo.strings.user</code></a>: <a href="#plain-cstructs-fileinfo">plain cstructs fileinfo</a></li>
+<li><a href="#index-curl_002dfileinfo_002etime-204"><code>curl-fileinfo.time</code></a>: <a href="#plain-cstructs-fileinfo">plain cstructs fileinfo</a></li>
+<li><a href="#index-curl_002dfileinfo_002euid-206"><code>curl-fileinfo.uid</code></a>: <a href="#plain-cstructs-fileinfo">plain cstructs fileinfo</a></li>
+<li><a href="#index-curl_002dfileinfo_003f-186"><code>curl-fileinfo?</code></a>: <a href="#plain-cstructs-fileinfo">plain cstructs fileinfo</a></li>
+<li><a href="#index-curl_002dform_002ddata-145"><code>curl-form-data</code></a>: <a href="#plain-forms-structs">plain forms structs</a></li>
+<li><a href="#index-curl_002dform_002ddata_002dcustom_002ddestructor-143"><code>curl-form-data-custom-destructor</code></a>: <a href="#plain-forms-structs">plain forms structs</a></li>
+<li><a href="#index-curl_002dform_002ddata_002dstring-159"><code>curl-form-data-string</code></a>: <a href="#plain-forms-inspect">plain forms inspect</a></li>
+<li><a href="#index-curl_002dform_002ddata_002falive-147"><code>curl-form-data/alive</code></a>: <a href="#plain-forms-structs">plain forms structs</a></li>
+<li><a href="#index-curl_002dform_002ddata_003f-141"><code>curl-form-data?</code></a>: <a href="#plain-forms-structs">plain forms structs</a></li>
+<li><a href="#index-curl_002dform_002ddata_003f_002falive-142"><code>curl-form-data?/alive</code></a>: <a href="#plain-forms-structs">plain forms structs</a></li>
+<li><a href="#index-curl_002dformadd-151"><code>curl-formadd</code></a>: <a href="#plain-forms-adding">plain forms adding</a></li>
+<li><a href="#index-curl_002dformfree-150"><code>curl-formfree</code></a>: <a href="#plain-forms-init">plain forms init</a></li>
+<li><a href="#index-curl_002dformget-160"><code>curl-formget</code></a>: <a href="#plain-forms-inspect">plain forms inspect</a></li>
+<li><a href="#index-curl_002dforms_002dsizeof_002darray-219"><code>curl-forms-sizeof-array</code></a>: <a href="#plain-cstructs-forms">plain cstructs forms</a></li>
+<li><a href="#index-curl_002dforms_002eoption-220"><code>curl-forms.option</code></a>: <a href="#plain-cstructs-forms">plain cstructs forms</a></li>
+<li><a href="#index-curl_002dforms_002eoption_002dset_0021-222"><code>curl-forms.option-set!</code></a>: <a href="#plain-cstructs-forms">plain cstructs forms</a></li>
+<li><a href="#index-curl_002dforms_002evalue-221"><code>curl-forms.value</code></a>: <a href="#plain-cstructs-forms">plain cstructs forms</a></li>
+<li><a href="#index-curl_002dforms_002evalue_002dset_0021-223"><code>curl-forms.value-set!</code></a>: <a href="#plain-cstructs-forms">plain cstructs forms</a></li>
+<li><a href="#index-curl_002dfree-229"><code>curl-free</code></a>: <a href="#plain-misc">plain misc</a></li>
+<li><a href="#index-curl_002dgetdate-238"><code>curl-getdate</code></a>: <a href="#plain-misc">plain misc</a></li>
 <li><a href="#index-curl_002dglobal_002dcleanup-42"><code>curl-global-cleanup</code></a>: <a href="#plain-init">plain init</a></li>
 <li><a href="#index-curl_002dglobal_002dinit-35"><code>curl-global-init</code></a>: <a href="#plain-init">plain init</a></li>
 <li><a href="#index-curl_002dglobal_002dinit_002dmem-36"><code>curl-global-init-mem</code></a>: <a href="#plain-init">plain init</a></li>
-<li><a href="#index-curl_002dkhkey_002ekey-217"><code>curl-khkey.key</code></a>: <a href="#plain-cstructs-khkey">plain cstructs khkey</a></li>
-<li><a href="#index-curl_002dmsg_002edata_002eresult-227"><code>curl-msg.data.result</code></a>: <a href="#plain-cstructs-msg">plain cstructs msg</a></li>
-<li><a href="#index-curl_002dmsg_002edata_002ewhatever-226"><code>curl-msg.data.whatever</code></a>: <a href="#plain-cstructs-msg">plain cstructs msg</a></li>
-<li><a href="#index-curl_002dmsg_002eeasy_005fhandle-225"><code>curl-msg.easy_handle</code></a>: <a href="#plain-cstructs-msg">plain cstructs msg</a></li>
-<li><a href="#index-curl_002dmsg_002emsg-224"><code>curl-msg.msg</code></a>: <a href="#plain-cstructs-msg">plain cstructs msg</a></li>
+<li><a href="#index-curl_002dkhkey_002ekey-218"><code>curl-khkey.key</code></a>: <a href="#plain-cstructs-khkey">plain cstructs khkey</a></li>
+<li><a href="#index-curl_002dmsg_002edata_002eresult-228"><code>curl-msg.data.result</code></a>: <a href="#plain-cstructs-msg">plain cstructs msg</a></li>
+<li><a href="#index-curl_002dmsg_002edata_002ewhatever-227"><code>curl-msg.data.whatever</code></a>: <a href="#plain-cstructs-msg">plain cstructs msg</a></li>
+<li><a href="#index-curl_002dmsg_002eeasy_005fhandle-226"><code>curl-msg.easy_handle</code></a>: <a href="#plain-cstructs-msg">plain cstructs msg</a></li>
+<li><a href="#index-curl_002dmsg_002emsg-225"><code>curl-msg.msg</code></a>: <a href="#plain-cstructs-msg">plain cstructs msg</a></li>
 <li><a href="#index-curl_002dmulti-82"><code>curl-multi</code></a>: <a href="#plain-multi-struct">plain multi struct</a></li>
 <li><a href="#index-curl_002dmulti_002dadd_002dhandle-88"><code>curl-multi-add-handle</code></a>: <a href="#plain-multi-easy">plain multi easy</a></li>
 <li><a href="#index-curl_002dmulti_002dassign-106"><code>curl-multi-assign</code></a>: <a href="#plain-multi-sockets-data">plain multi sockets data</a></li>
@@ -6476,26 +6538,26 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 <li><a href="#index-curl_002dmulti_002falive-84"><code>curl-multi/alive</code></a>: <a href="#plain-multi-struct">plain multi struct</a></li>
 <li><a href="#index-curl_002dmulti_003f-78"><code>curl-multi?</code></a>: <a href="#plain-multi-struct">plain multi struct</a></li>
 <li><a href="#index-curl_002dmulti_003f_002falive-79"><code>curl-multi?/alive</code></a>: <a href="#plain-multi-struct">plain multi struct</a></li>
-<li><a href="#index-curl_002dshare-168"><code>curl-share</code></a>: <a href="#plain-shares-structs">plain shares structs</a></li>
-<li><a href="#index-curl_002dshare_002dcleanup-173"><code>curl-share-cleanup</code></a>: <a href="#plain-shares-init">plain shares init</a></li>
-<li><a href="#index-curl_002dshare_002dcustom_002ddestructor-166"><code>curl-share-custom-destructor</code></a>: <a href="#plain-shares-structs">plain shares structs</a></li>
-<li><a href="#index-curl_002dshare_002dinit-172"><code>curl-share-init</code></a>: <a href="#plain-shares-init">plain shares init</a></li>
-<li><a href="#index-curl_002dshare_002dsetopt-174"><code>curl-share-setopt</code></a>: <a href="#plain-shares-opts">plain shares opts</a></li>
-<li><a href="#index-curl_002dshare_002dstrerror-177"><code>curl-share-strerror</code></a>: <a href="#plain-shares-misc">plain shares misc</a></li>
-<li><a href="#index-curl_002dshare_002dstrerror_002fstring-178"><code>curl-share-strerror/string</code></a>: <a href="#plain-shares-misc">plain shares misc</a></li>
-<li><a href="#index-curl_002dshare_002falive-170"><code>curl-share/alive</code></a>: <a href="#plain-shares-structs">plain shares structs</a></li>
-<li><a href="#index-curl_002dshare_003f-164"><code>curl-share?</code></a>: <a href="#plain-shares-structs">plain shares structs</a></li>
-<li><a href="#index-curl_002dshare_003f_002falive-165"><code>curl-share?/alive</code></a>: <a href="#plain-shares-structs">plain shares structs</a></li>
-<li><a href="#index-curl_002dslist_002d_003elist-135"><code>curl-slist-&gt;list</code></a>: <a href="#plain-slists">plain slists</a></li>
-<li><a href="#index-curl_002dslist_002dappend-132"><code>curl-slist-append</code></a>: <a href="#plain-slists">plain slists</a></li>
-<li><a href="#index-curl_002dslist_002dfree_002dall-134"><code>curl-slist-free-all</code></a>: <a href="#plain-slists">plain slists</a></li>
-<li><a href="#index-curl_002dsockaddr_002eaddr-183"><code>curl-sockaddr.addr</code></a>: <a href="#plain-cstructs-sockaddr">plain cstructs sockaddr</a></li>
-<li><a href="#index-curl_002dsockaddr_002eaddrlen-182"><code>curl-sockaddr.addrlen</code></a>: <a href="#plain-cstructs-sockaddr">plain cstructs sockaddr</a></li>
-<li><a href="#index-curl_002dsockaddr_002efamily-179"><code>curl-sockaddr.family</code></a>: <a href="#plain-cstructs-sockaddr">plain cstructs sockaddr</a></li>
-<li><a href="#index-curl_002dsockaddr_002eprotocol-181"><code>curl-sockaddr.protocol</code></a>: <a href="#plain-cstructs-sockaddr">plain cstructs sockaddr</a></li>
-<li><a href="#index-curl_002dsockaddr_002esocktype-180"><code>curl-sockaddr.socktype</code></a>: <a href="#plain-cstructs-sockaddr">plain cstructs sockaddr</a></li>
-<li><a href="#index-curl_002dunescape-233"><code>curl-unescape</code></a>: <a href="#plain-misc">plain misc</a></li>
-<li><a href="#index-curl_002dunescape_002fstring-235"><code>curl-unescape/string</code></a>: <a href="#plain-misc">plain misc</a></li>
+<li><a href="#index-curl_002dshare-169"><code>curl-share</code></a>: <a href="#plain-shares-structs">plain shares structs</a></li>
+<li><a href="#index-curl_002dshare_002dcleanup-174"><code>curl-share-cleanup</code></a>: <a href="#plain-shares-init">plain shares init</a></li>
+<li><a href="#index-curl_002dshare_002dcustom_002ddestructor-167"><code>curl-share-custom-destructor</code></a>: <a href="#plain-shares-structs">plain shares structs</a></li>
+<li><a href="#index-curl_002dshare_002dinit-173"><code>curl-share-init</code></a>: <a href="#plain-shares-init">plain shares init</a></li>
+<li><a href="#index-curl_002dshare_002dsetopt-175"><code>curl-share-setopt</code></a>: <a href="#plain-shares-opts">plain shares opts</a></li>
+<li><a href="#index-curl_002dshare_002dstrerror-178"><code>curl-share-strerror</code></a>: <a href="#plain-shares-misc">plain shares misc</a></li>
+<li><a href="#index-curl_002dshare_002dstrerror_002fstring-179"><code>curl-share-strerror/string</code></a>: <a href="#plain-shares-misc">plain shares misc</a></li>
+<li><a href="#index-curl_002dshare_002falive-171"><code>curl-share/alive</code></a>: <a href="#plain-shares-structs">plain shares structs</a></li>
+<li><a href="#index-curl_002dshare_003f-165"><code>curl-share?</code></a>: <a href="#plain-shares-structs">plain shares structs</a></li>
+<li><a href="#index-curl_002dshare_003f_002falive-166"><code>curl-share?/alive</code></a>: <a href="#plain-shares-structs">plain shares structs</a></li>
+<li><a href="#index-curl_002dslist_002d_003elist-136"><code>curl-slist-&gt;list</code></a>: <a href="#plain-slists">plain slists</a></li>
+<li><a href="#index-curl_002dslist_002dappend-133"><code>curl-slist-append</code></a>: <a href="#plain-slists">plain slists</a></li>
+<li><a href="#index-curl_002dslist_002dfree_002dall-135"><code>curl-slist-free-all</code></a>: <a href="#plain-slists">plain slists</a></li>
+<li><a href="#index-curl_002dsockaddr_002eaddr-184"><code>curl-sockaddr.addr</code></a>: <a href="#plain-cstructs-sockaddr">plain cstructs sockaddr</a></li>
+<li><a href="#index-curl_002dsockaddr_002eaddrlen-183"><code>curl-sockaddr.addrlen</code></a>: <a href="#plain-cstructs-sockaddr">plain cstructs sockaddr</a></li>
+<li><a href="#index-curl_002dsockaddr_002efamily-180"><code>curl-sockaddr.family</code></a>: <a href="#plain-cstructs-sockaddr">plain cstructs sockaddr</a></li>
+<li><a href="#index-curl_002dsockaddr_002eprotocol-182"><code>curl-sockaddr.protocol</code></a>: <a href="#plain-cstructs-sockaddr">plain cstructs sockaddr</a></li>
+<li><a href="#index-curl_002dsockaddr_002esocktype-181"><code>curl-sockaddr.socktype</code></a>: <a href="#plain-cstructs-sockaddr">plain cstructs sockaddr</a></li>
+<li><a href="#index-curl_002dunescape-234"><code>curl-unescape</code></a>: <a href="#plain-misc">plain misc</a></li>
+<li><a href="#index-curl_002dunescape_002fstring-236"><code>curl-unescape/string</code></a>: <a href="#plain-misc">plain misc</a></li>
 <li><a href="#index-curl_002dversion-13"><code>curl-version</code></a>: <a href="#plain-version">plain version</a></li>
 <li><a href="#index-curl_002dversion_002dfeature_003f-32"><code>curl-version-feature?</code></a>: <a href="#plain-version">plain version</a></li>
 <li><a href="#index-curl_002dversion_002dinfo-30"><code>curl-version-info</code></a>: <a href="#plain-version">plain version</a></li>
@@ -6523,16 +6585,16 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 <li><a href="#index-curl_002dwaitfd_003f-96"><code>curl-waitfd?</code></a>: <a href="#plain-multi-sockets-polls">plain multi sockets polls</a></li>
 <li><a href="#index-false_002dor_002dcurl_002deasy-51"><code>false-or-curl-easy</code></a>: <a href="#plain-easy-struct">plain easy struct</a></li>
 <li><a href="#index-false_002dor_002dcurl_002deasy_002falive-53"><code>false-or-curl-easy/alive</code></a>: <a href="#plain-easy-struct">plain easy struct</a></li>
-<li><a href="#index-false_002dor_002dcurl_002dfileinfo-216"><code>false-or-curl-fileinfo</code></a>: <a href="#plain-cstructs-fileinfo">plain cstructs fileinfo</a></li>
-<li><a href="#index-false_002dor_002dcurl_002dform_002ddata-145"><code>false-or-curl-form-data</code></a>: <a href="#plain-forms-structs">plain forms structs</a></li>
-<li><a href="#index-false_002dor_002dcurl_002dform_002ddata_002falive-147"><code>false-or-curl-form-data/alive</code></a>: <a href="#plain-forms-structs">plain forms structs</a></li>
+<li><a href="#index-false_002dor_002dcurl_002dfileinfo-217"><code>false-or-curl-fileinfo</code></a>: <a href="#plain-cstructs-fileinfo">plain cstructs fileinfo</a></li>
+<li><a href="#index-false_002dor_002dcurl_002dform_002ddata-146"><code>false-or-curl-form-data</code></a>: <a href="#plain-forms-structs">plain forms structs</a></li>
+<li><a href="#index-false_002dor_002dcurl_002dform_002ddata_002falive-148"><code>false-or-curl-form-data/alive</code></a>: <a href="#plain-forms-structs">plain forms structs</a></li>
 <li><a href="#index-false_002dor_002dcurl_002dmulti-83"><code>false-or-curl-multi</code></a>: <a href="#plain-multi-struct">plain multi struct</a></li>
 <li><a href="#index-false_002dor_002dcurl_002dmulti_002falive-85"><code>false-or-curl-multi/alive</code></a>: <a href="#plain-multi-struct">plain multi struct</a></li>
-<li><a href="#index-false_002dor_002dcurl_002dshare-169"><code>false-or-curl-share</code></a>: <a href="#plain-shares-structs">plain shares structs</a></li>
-<li><a href="#index-false_002dor_002dcurl_002dshare_002falive-171"><code>false-or-curl-share/alive</code></a>: <a href="#plain-shares-structs">plain shares structs</a></li>
+<li><a href="#index-false_002dor_002dcurl_002dshare-170"><code>false-or-curl-share</code></a>: <a href="#plain-shares-structs">plain shares structs</a></li>
+<li><a href="#index-false_002dor_002dcurl_002dshare_002falive-172"><code>false-or-curl-share/alive</code></a>: <a href="#plain-shares-structs">plain shares structs</a></li>
 <li><a href="#index-false_002dor_002dcurl_002dversion_002dinfo_002ddata-34"><code>false-or-curl-version-info-data</code></a>: <a href="#plain-version">plain version</a></li>
 <li><a href="#index-false_002dor_002dcurl_002dwaitfd-102"><code>false-or-curl-waitfd</code></a>: <a href="#plain-multi-sockets-polls">plain multi sockets polls</a></li>
-<li><a href="#index-list_002d_003ecurl_002dslist-136"><code>list-&gt;curl-slist</code></a>: <a href="#plain-slists">plain slists</a></li>
+<li><a href="#index-list_002d_003ecurl_002dslist-137"><code>list-&gt;curl-slist</code></a>: <a href="#plain-slists">plain slists</a></li>
 <li><a href="#index-make_002dcurl_002dcalloc_002dcallback-41"><code>make-curl-calloc-callback</code></a>: <a href="#plain-init">plain init</a></li>
 <li><a href="#index-make_002dcurl_002dchunk_002dbegin_002dcallback-126"><code>make-curl-chunk-begin-callback</code></a>: <a href="#plain-callbacks-chunk">plain callbacks chunk</a></li>
 <li><a href="#index-make_002dcurl_002dchunk_002dend_002dcallback-127"><code>make-curl-chunk-end-callback</code></a>: <a href="#plain-callbacks-chunk">plain callbacks chunk</a></li>
@@ -6542,33 +6604,34 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 <li><a href="#index-make_002dcurl_002dconv_002dto_002dnetwork_002dcallback-122"><code>make-curl-conv-to-network-callback</code></a>: <a href="#plain-callbacks-tonet">plain callbacks tonet</a></li>
 <li><a href="#index-make_002dcurl_002ddebug_002dcallback-120"><code>make-curl-debug-callback</code></a>: <a href="#plain-callbacks-debug">plain callbacks debug</a></li>
 <li><a href="#index-make_002dcurl_002dfnmatch_002dcallback-128"><code>make-curl-fnmatch-callback</code></a>: <a href="#plain-callbacks-fnmatch">plain callbacks fnmatch</a></li>
-<li><a href="#index-make_002dcurl_002dform_002ddata-148"><code>make-curl-form-data</code></a>: <a href="#plain-forms-init">plain forms init</a></li>
-<li><a href="#index-make_002dcurl_002dformget_002dcallback-160"><code>make-curl-formget-callback</code></a>: <a href="#plain-forms-inspect">plain forms inspect</a></li>
+<li><a href="#index-make_002dcurl_002dform_002ddata-149"><code>make-curl-form-data</code></a>: <a href="#plain-forms-init">plain forms init</a></li>
+<li><a href="#index-make_002dcurl_002dformget_002dcallback-161"><code>make-curl-formget-callback</code></a>: <a href="#plain-forms-inspect">plain forms inspect</a></li>
 <li><a href="#index-make_002dcurl_002dfree_002dcallback-38"><code>make-curl-free-callback</code></a>: <a href="#plain-init">plain init</a></li>
 <li><a href="#index-make_002dcurl_002dheader_002dcallback-119"><code>make-curl-header-callback</code></a>: <a href="#plain-callbacks-header">plain callbacks header</a></li>
 <li><a href="#index-make_002dcurl_002dinterleave_002dcallback-125"><code>make-curl-interleave-callback</code></a>: <a href="#plain-callbacks-interleave">plain callbacks interleave</a></li>
 <li><a href="#index-make_002dcurl_002dioctl_002dcallback-113"><code>make-curl-ioctl-callback</code></a>: <a href="#plain-callbacks-ioctl">plain callbacks ioctl</a></li>
-<li><a href="#index-make_002dcurl_002dlock_002dfunction-175"><code>make-curl-lock-function</code></a>: <a href="#plain-shares-callbacks">plain shares callbacks</a></li>
+<li><a href="#index-make_002dcurl_002dlock_002dfunction-176"><code>make-curl-lock-function</code></a>: <a href="#plain-shares-callbacks">plain shares callbacks</a></li>
 <li><a href="#index-make_002dcurl_002dmalloc_002dcallback-37"><code>make-curl-malloc-callback</code></a>: <a href="#plain-init">plain init</a></li>
-<li><a href="#index-make_002dcurl_002dmulti_002dtimer_002dcallback-131"><code>make-curl-multi-timer-callback</code></a>: <a href="#plain-callbacks-mtimer">plain callbacks mtimer</a></li>
+<li><a href="#index-make_002dcurl_002dmulti_002dtimer_002dcallback-132"><code>make-curl-multi-timer-callback</code></a>: <a href="#plain-callbacks-mtimer">plain callbacks mtimer</a></li>
 <li><a href="#index-make_002dcurl_002dopen_002dsocket_002dcallback-116"><code>make-curl-open-socket-callback</code></a>: <a href="#plain-callbacks-opensocket">plain callbacks opensocket</a></li>
 <li><a href="#index-make_002dcurl_002dprogress_002dcallback-118"><code>make-curl-progress-callback</code></a>: <a href="#plain-callbacks-progress">plain callbacks progress</a></li>
 <li><a href="#index-make_002dcurl_002dread_002dcallback-112"><code>make-curl-read-callback</code></a>: <a href="#plain-callbacks-read">plain callbacks read</a></li>
 <li><a href="#index-make_002dcurl_002drealloc_002dcallback-39"><code>make-curl-realloc-callback</code></a>: <a href="#plain-init">plain init</a></li>
 <li><a href="#index-make_002dcurl_002dseek_002dcallback-114"><code>make-curl-seek-callback</code></a>: <a href="#plain-callbacks-seek">plain callbacks seek</a></li>
-<li><a href="#index-make_002dcurl_002dsocket_002dcallback-130"><code>make-curl-socket-callback</code></a>: <a href="#plain-callbacks-socket">plain callbacks socket</a></li>
+<li><a href="#index-make_002dcurl_002dsocket_002dcallback-131"><code>make-curl-socket-callback</code></a>: <a href="#plain-callbacks-socket">plain callbacks socket</a></li>
 <li><a href="#index-make_002dcurl_002dsocket_002doption_002dcallback-115"><code>make-curl-socket-option-callback</code></a>: <a href="#plain-callbacks-sockopt">plain callbacks sockopt</a></li>
 <li><a href="#index-make_002dcurl_002dsshkey_002dcallback-129"><code>make-curl-sshkey-callback</code></a>: <a href="#plain-callbacks-sshkey">plain callbacks sshkey</a></li>
 <li><a href="#index-make_002dcurl_002dssl_002dctx_002dcallback-121"><code>make-curl-ssl-ctx-callback</code></a>: <a href="#plain-callbacks-sslctx">plain callbacks sslctx</a></li>
 <li><a href="#index-make_002dcurl_002dstrdup_002dcallback-40"><code>make-curl-strdup-callback</code></a>: <a href="#plain-init">plain init</a></li>
-<li><a href="#index-make_002dcurl_002dunlock_002dfunction-176"><code>make-curl-unlock-function</code></a>: <a href="#plain-shares-callbacks">plain shares callbacks</a></li>
+<li><a href="#index-make_002dcurl_002dunlock_002dfunction-177"><code>make-curl-unlock-function</code></a>: <a href="#plain-shares-callbacks">plain shares callbacks</a></li>
 <li><a href="#index-make_002dcurl_002dwaitfd-95"><code>make-curl-waitfd</code></a>: <a href="#plain-multi-sockets-polls">plain multi sockets polls</a></li>
 <li><a href="#index-make_002dcurl_002dwrite_002dcallback-111"><code>make-curl-write-callback</code></a>: <a href="#plain-callbacks-write">plain callbacks write</a></li>
-<li><a href="#index-pointer_002d_003ecurl_002dfileinfo-186"><code>pointer-&gt;curl-fileinfo</code></a>: <a href="#plain-cstructs-fileinfo">plain cstructs fileinfo</a></li>
+<li><a href="#index-make_002dcurl_002dxferinfo_002dcallback-130"><code>make-curl-xferinfo-callback</code></a>: <a href="#plain-callbacks-xferinfo">plain callbacks xferinfo</a></li>
+<li><a href="#index-pointer_002d_003ecurl_002dfileinfo-187"><code>pointer-&gt;curl-fileinfo</code></a>: <a href="#plain-cstructs-fileinfo">plain cstructs fileinfo</a></li>
 <li><a href="#index-set_002dcurl_002deasy_002dcustom_002ddestructor_0021-49"><code>set-curl-easy-custom-destructor!</code></a>: <a href="#plain-easy-struct">plain easy struct</a></li>
-<li><a href="#index-set_002dcurl_002dform_002ddata_002dcustom_002ddestructor_0021-143"><code>set-curl-form-data-custom-destructor!</code></a>: <a href="#plain-forms-structs">plain forms structs</a></li>
+<li><a href="#index-set_002dcurl_002dform_002ddata_002dcustom_002ddestructor_0021-144"><code>set-curl-form-data-custom-destructor!</code></a>: <a href="#plain-forms-structs">plain forms structs</a></li>
 <li><a href="#index-set_002dcurl_002dmulti_002dcustom_002ddestructor_0021-81"><code>set-curl-multi-custom-destructor!</code></a>: <a href="#plain-multi-struct">plain multi struct</a></li>
-<li><a href="#index-set_002dcurl_002dshare_002dcustom_002ddestructor_0021-167"><code>set-curl-share-custom-destructor!</code></a>: <a href="#plain-shares-structs">plain shares structs</a></li>
+<li><a href="#index-set_002dcurl_002dshare_002dcustom_002ddestructor_0021-168"><code>set-curl-share-custom-destructor!</code></a>: <a href="#plain-shares-structs">plain shares structs</a></li>
 <li><a href="#index-vicare_002dcurl_002dversion-12"><code>vicare-curl-version</code></a>: <a href="#plain-version">plain version</a></li>
 <li><a href="#index-vicare_002dcurl_002dversion_002dinterface_002dage-11"><code>vicare-curl-version-interface-age</code></a>: <a href="#plain-version">plain version</a></li>
 <li><a href="#index-vicare_002dcurl_002dversion_002dinterface_002dcurrent-9"><code>vicare-curl-version-interface-current</code></a>: <a href="#plain-version">plain version</a></li>
@@ -6601,10 +6664,10 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 
 <ul class="index-tp" compact>
 <li><a href="#index-curl_002deasy-43"><code>curl-easy</code></a>: <a href="#plain-easy-struct">plain easy struct</a></li>
-<li><a href="#index-curl_002dfileinfo-184"><code>curl-fileinfo</code></a>: <a href="#plain-cstructs-fileinfo">plain cstructs fileinfo</a></li>
-<li><a href="#index-curl_002dform_002ddata-137"><code>curl-form-data</code></a>: <a href="#plain-forms-structs">plain forms structs</a></li>
+<li><a href="#index-curl_002dfileinfo-185"><code>curl-fileinfo</code></a>: <a href="#plain-cstructs-fileinfo">plain cstructs fileinfo</a></li>
+<li><a href="#index-curl_002dform_002ddata-138"><code>curl-form-data</code></a>: <a href="#plain-forms-structs">plain forms structs</a></li>
 <li><a href="#index-curl_002dmulti-75"><code>curl-multi</code></a>: <a href="#plain-multi-struct">plain multi struct</a></li>
-<li><a href="#index-curl_002dshare-161"><code>curl-share</code></a>: <a href="#plain-shares-structs">plain shares structs</a></li>
+<li><a href="#index-curl_002dshare-162"><code>curl-share</code></a>: <a href="#plain-shares-structs">plain shares structs</a></li>
 <li><a href="#index-curl_002dversion_002dinfo_002ddata-14"><code>curl-version-info-data</code></a>: <a href="#plain-version">plain version</a></li>
 <li><a href="#index-curl_002dwaitfd-94"><code>curl-waitfd</code></a>: <a href="#plain-multi-sockets-polls">plain multi sockets polls</a></li>
    </ul>
@@ -6666,8 +6729,9 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 <li><a href="#plain-callbacks-chunk">2.5.16 Processing informations about chunks of data</a>
 <li><a href="#plain-callbacks-fnmatch">2.5.17 Implementing wildcard matching</a>
 <li><a href="#plain-callbacks-sshkey">2.5.18 Accepting or rejecting <acronym>SSH</acronym> connections</a>
-<li><a href="#plain-callbacks-socket">2.5.19 Getting informations about socket status</a>
-<li><a href="#plain-callbacks-mtimer">2.5.20 Getting notifications of timeouts</a>
+<li><a href="#plain-callbacks-xferinfo">2.5.19 Getting notifications of timeouts</a>
+<li><a href="#plain-callbacks-socket">2.5.20 Getting informations about socket status</a>
+<li><a href="#plain-callbacks-mtimer">2.5.21 Getting notifications of timeouts</a>
 </li></ul>
 <li><a href="#plain-slists">2.6 String lists</a>
 <li><a href="#plain-forms">2.7 Multipart/formdata composition</a>
