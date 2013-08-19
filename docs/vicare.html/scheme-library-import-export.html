@@ -1,0 +1,224 @@
+<html lang="en">
+<head>
+<title>scheme library import export - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="scheme-library.html#scheme-library" title="scheme library">
+<link rel="prev" href="scheme-library-form.html#scheme-library-form" title="scheme library form">
+<link rel="next" href="scheme-library-examples.html#scheme-library-examples" title="scheme library examples">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.3d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+        `http://sourceforge.net/projects/vicare-scheme/files/'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+and at:
+
+           `http://sourceforge.net/projects/vicare-scheme/'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the ``History'' appendix for details.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="scheme-library-import-export"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="scheme-library-examples.html#scheme-library-examples">scheme library examples</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="scheme-library-form.html#scheme-library-form">scheme library form</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="scheme-library.html#scheme-library">scheme library</a>
+<hr>
+</div>
+
+<h4 class="subsection">3.7.2 Import and export levels</h4>
+
+<p>Expanding a library may require run&ndash;time information from another
+library.  For example, if a macro transformer calls a procedure from
+library A, then the library A must be instantiated before
+expanding any use of the macro in library B.  Library A
+may not be needed when library B is eventually run as part of a
+program, or it may be needed for run time of library B, too.  The
+library mechanism distinguishes these times by phases, which are
+explained in this section.
+
+   <p>Every library can be characterized by expand&ndash;time information
+(minimally, its imported libraries, a list of the exported keywords, a
+list of the exported variables, and code to evaluate the transformer
+expressions) and run&ndash;time information (minimally, code to evaluate the
+variable definition right&ndash;hand&ndash;side expressions, and code to evaluate
+the body expressions).  The expand&ndash;time information must be available
+to expand references to any exported binding, and the run&ndash;time
+information must be available to evaluate references to any exported
+variable binding.
+
+   <p>A <em>phase</em> is a time at which the expressions within a library are
+evaluated.  Within a library body, top&ndash;level expressions and the
+right&ndash;hand sides of <code>define</code> forms are evaluated at run time,
+i.e. phase 0, and the right&ndash;hand sides of <code>define-syntax</code>
+forms are evaluated at expand time, i.e. phase 1.  When
+<code>define-syntax</code>, <code>let-syntax</code>, or <code>letrec-syntax</code> forms
+appear within code evaluated at phase n, the right&ndash;hand sides
+are evaluated at phase n+1.
+
+   <p>These phases are relative to the phase in which the library itself is
+used.  An <em>instance</em> of a library corresponds to an evaluation of
+its variable definitions and expressions in a particular phase relative
+to another library&mdash;a process called <em>instantiation</em>.  For
+example, if a top&ndash;level expression in a library B refers to a
+variable export from another library A, then it refers to the
+export from an instance of A at phase 0 (relative to the
+phase of B).  But if a phase 1 expression within B
+refers to the same binding from A, then it refers to the export
+from an instance of A at phase 1 (relative to the phase of
+B).
+
+   <p>A <em>visit</em> of a library corresponds to the evaluation of its syntax
+definitions in a particular phase relative to another library; a process
+called <em>visiting</em>.  For example, if a top&ndash;level expression in a
+library B refers to a macro export from another library A,
+then it refers to the export from a visit of A at phase 0
+(relative to the phase of B), which corresponds to the evaluation
+of the macro's transformer expression at phase 1.
+
+   <p>A <em>level</em> is a lexical property of an identifier that determines in
+which phases it can be referenced.  The level for each identifier bound
+by a definition within a library is 0; that is, the identifier
+can be referenced only at phase 0 within the library.  The level
+for each imported binding is determined by the enclosing <code>for</code> form
+of the <code>import</code> in the importing library, in addition to the levels
+of the identifier in the exporting library.  Import and export levels
+are combined by pairwise addition of all level combinations.  For
+example, references to an imported identifier exported for levels
+p_a and p_b and imported for levels q_a,
+q_b, and q_c are valid at levels p_a + q_a,
+p_a + q_b, p_a + q_c, p_b + q_a, p_b + q_b,
+and p_b + q_c.  An <var>?import-set</var> without an enclosing
+<code>for</code> is equivalent to <code>(for </code><var>?import-set</var><code> run)</code>, which is
+the same as <code>(for </code><var>?import-set</var><code> (meta 0))</code>.
+
+   <p>The export level of an exported binding is 0 for all bindings
+that are defined within the exporting library.  The export levels of a
+reexported binding, i.e. an export imported from another library, are
+the same as the effective import levels of that binding within the
+reexporting library.
+
+   <p>For the libraries defined in the library report, the export level is
+0 for nearly all bindings.  The exceptions are
+<code>syntax-rules</code>, <code>identifier-syntax</code>, <code>...</code>, and <code>_</code>
+from the <code>(rnrs base (6))</code> library, which are exported with level
+1, <code>set!</code> from the <code>(rnrs base (6))</code> library, which is
+exported with levels 0 and 1, and all bindings from the
+composite <code>(rnrs (6))</code> library, which are exported with levels
+0 and 1.
+
+   <p>Macro expansion within a library can introduce a reference to an
+identifier that is not explicitly imported into the library.  In that
+case, the phase of the reference must match the identifier's level as
+shifted by the difference between the phase of the source library (i.e.,
+the library that supplied the identifier's lexical context) and the
+library that encloses the reference.  For example, suppose that
+expanding a library invokes a macro transformer, and the evaluation of
+the macro transformer refers to an identifier that is exported from
+another library (so the phase 1 instance of the library is used);
+suppose further that the value of the binding is a syntax object
+representing an identifier with only a level n binding; then, the
+identifier must be used only at phase n+1 in the library being
+expanded.  This combination of levels and phases is why negative levels
+on identifiers can be useful, even though libraries exist only at
+non&ndash;negative phases.
+
+   <p>If any of a library's definitions are referenced at phase 0 in
+the expanded form of a program, then an instance of the referenced
+library is created for phase 0 before the program's definitions
+and expressions are evaluated.  This rule applies transitively: if the
+expanded form of one library references at phase 0 an identifier
+from another library, then before the referencing library is
+instantiated at phase n, the referenced library must be
+instantiated at phase n.  When an identifier is referenced at any
+phase n greater than 0, in contrast, then the defining
+library is instantiated at phase n at some unspecified time
+before the reference is evaluated.  Similarly, when a macro keyword is
+referenced at phase n during the expansion of a library, then the
+defining library is visited at phase n at some unspecified time
+before the reference is evaluated.
+
+   <p>An implementation may distinguish instances/visits of a library for
+different phases or to use an instance/visit at any phase as an
+instance/visit at any other phase.  An implementation may further expand
+each <code>library</code> form with distinct visits of libraries in any phase
+and/or instances of libraries in phases above 0.  An
+implementation may create instances/visits of more libraries at more
+phases than required to satisfy references.  When an identifier appears
+as an expression in a phase that is inconsistent with the identifier's
+level, then an implementation may raise an exception either at expand
+time or run time, or it may allow the reference.  Thus, a library whose
+meaning depends on whether the instances of a library are distinguished
+or shared across phases or <code>library</code> expansions may be unportable.
+
+<!-- page -->
+   </body></html>
+

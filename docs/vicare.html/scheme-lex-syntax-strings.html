@@ -1,0 +1,153 @@
+<html lang="en">
+<head>
+<title>scheme lex syntax strings - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="scheme-lex-syntax.html#scheme-lex-syntax" title="scheme lex syntax">
+<link rel="prev" href="scheme-lex-syntax-characters.html#scheme-lex-syntax-characters" title="scheme lex syntax characters">
+<link rel="next" href="scheme-lex-syntax-numbers.html#scheme-lex-syntax-numbers" title="scheme lex syntax numbers">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.3d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+        `http://sourceforge.net/projects/vicare-scheme/files/'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+and at:
+
+           `http://sourceforge.net/projects/vicare-scheme/'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the ``History'' appendix for details.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="scheme-lex-syntax-strings"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="scheme-lex-syntax-numbers.html#scheme-lex-syntax-numbers">scheme lex syntax numbers</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="scheme-lex-syntax-characters.html#scheme-lex-syntax-characters">scheme lex syntax characters</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="scheme-lex-syntax.html#scheme-lex-syntax">scheme lex syntax</a>
+<hr>
+</div>
+
+<h5 class="subsubsection">3.4.3.7 Strings</h5>
+
+<p>String are represented by sequences of characters enclosed within
+doublequotes (<code>"</code>).  Within a string literal, various escape
+sequences represent characters other than themselves.  Escape sequences
+always start with a backslash (<code>\</code>):
+
+     <dl>
+<dt><code>\a</code><dd>alarm, U+0007
+<br><dt><code>\b</code><dd>backspace, U+0008
+<br><dt><code>\t</code><dd>character tabulation, U+0009
+<br><dt><code>\n</code><dd>linefeed, U+000A
+<br><dt><code>\v</code><dd>line tabulation, U+000B
+<br><dt><code>\f</code><dd>formfeed, U+000C
+<br><dt><code>\r</code><dd>return, U+000D
+<br><dt><code>\"</code><dd>doublequote, U+0022
+<br><dt><code>\</code><dd>backslash, U+005C
+<br><dt><code>\&lt;intraline whitespace&gt;&lt;line ending&gt; &lt;intraline whitespace&gt;</code><dd>nothing
+<br><dt><code>\x&lt;hex scalar value&gt;;</code><dd>specified character (note the terminating semi&ndash;colon). 
+</dl>
+
+   <p>These escape sequences are case-sensitive, except that the alphabetic
+digits of a <var>?hex-scalar-value</var> can be uppercase or lowercase.
+
+   <p>Any other character in a string after a backslash is a syntax violation. 
+Except for a line ending, any character outside of an escape sequence
+and not a doublequote stands for itself in the string literal. 
+<!-- For example the single-character string literal {\tt "$\lambda$"} -->
+<!-- (doublequote, a lower case lambda, doublequote) represents the same -->
+<!-- string as {\tt "\{}x03bb;"}. -->
+A line ending that does not follow a backslash stands for a linefeed
+character.
+
+   <p>Examples:
+
+<pre class="example">     "abc"           U+0061, U+0062, U+0063
+     "\x41;bc"       "Abc" ; U+0041, U+0062, U+0063
+     "\x41; bc"      "A bc"
+                     U+0041, U+0020, U+0062, U+0063
+     "\x41bc;"       U+41BC
+     "\x41"          &amp;lexical exception
+     "\x;"           &amp;lexical exception
+     "\x41bx;"       &amp;lexical exception
+     "\x00000041;"   "A" ; U+0041
+     "\x0010FFFF;"   U+10FFFF
+     "\x00110000;"   &amp;lexical exception
+                     out of range
+     "\x000000001;"  U+0001
+     "\xD800;"       &amp;lexical exception
+                     in excluded range
+     "A
+     bc"             U+0041, U+000A, U+0062, U+0063
+                     if no space occurs after the A
+</pre>
+   <!-- page -->
+   </body></html>
+

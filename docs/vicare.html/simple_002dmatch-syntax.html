@@ -8,7 +8,7 @@
 <link rel="up" href="simple_002dmatch.html#simple_002dmatch" title="simple-match">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
-This document describes version 0.3d0 of Vicare Scheme, an
+This document describes version 0.3d1 of Vicare Scheme, an
 R6RS compliant native compiler for the Scheme language, producing
 single threaded programs running on Intel x86 32-bit processors, with
 experimental support for 64-bit machines.  _Vicare_ is pronounced
@@ -50,6 +50,8 @@ Copyright (C) 2010-2013 by Marco Maggi.
 
 Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
 
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
 This document is derived from the original Ikarus documentation by the
 Vicare Scheme contributors, see the ``History'' appendix for details.
 
@@ -89,7 +91,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="simple_002dmatch.html#simple_002dmatch"
 <hr>
 </div>
 
-<h4 class="subsection">12.7.1 Pattern matcher generator</h4>
+<h4 class="subsection">15.7.1 Pattern matcher generator</h4>
 
 <p>The following bindings are exported by the library <code>(vicare
 languge-extensions simple-match)</code>.  The auxiliary syntaxes are the
@@ -97,19 +99,20 @@ bindings exported by the library <code>(vicare)</code>, which are reexported
 by this library.
 
 <div class="defun">
-&mdash; Syntax: <b>match</b><var> ?expr ?clause ...<a name="index-match-4105"></a></var><br>
-&mdash; Auxiliary Syntax: <b>=&gt;</b><var><a name="index-g_t_003d_003e-4106"></a></var><br>
-&mdash; Auxiliary Syntax: <b>else</b><var><a name="index-else-4107"></a></var><br>
-&mdash; Auxiliary Syntax: <b>let</b><var><a name="index-let-4108"></a></var><br>
-&mdash; Auxiliary Syntax: <b>quote</b><var><a name="index-quote-4109"></a></var><br>
-&mdash; Auxiliary Syntax: <b>quasiquote</b><var><a name="index-quasiquote-4110"></a></var><br>
-&mdash; Auxiliary Syntax: <b>and</b><var><a name="index-and-4111"></a></var><br>
-&mdash; Auxiliary Syntax: <b>or</b><var><a name="index-or-4112"></a></var><br>
-&mdash; Auxiliary Syntax: <b>not</b><var><a name="index-not-4113"></a></var><br>
-&mdash; Auxiliary Syntax: <b>apply</b><var><a name="index-apply-4114"></a></var><br>
-&mdash; Auxiliary Syntax: <b>eval</b><var><a name="index-eval-4115"></a></var><br>
-&mdash; Auxiliary Syntax: <b>...</b><var><a name="index-g_t_002e_002e_002e-4116"></a></var><br>
-&mdash; Auxiliary Syntax: <b>_</b><var><a name="index-g_t_005f-4117"></a></var><br>
+&mdash; Syntax: <b>match</b><var> ?expr ?clause ...<a name="index-match-5186"></a></var><br>
+&mdash; Auxiliary Syntax: <b>=&gt;</b><var><a name="index-g_t_003d_003e-5187"></a></var><br>
+&mdash; Auxiliary Syntax: <b>else</b><var><a name="index-else-5188"></a></var><br>
+&mdash; Auxiliary Syntax: <b>let</b><var><a name="index-let-5189"></a></var><br>
+&mdash; Auxiliary Syntax: <b>quote</b><var><a name="index-quote-5190"></a></var><br>
+&mdash; Auxiliary Syntax: <b>quasiquote</b><var><a name="index-quasiquote-5191"></a></var><br>
+&mdash; Auxiliary Syntax: <b>syntax</b><var><a name="index-syntax-5192"></a></var><br>
+&mdash; Auxiliary Syntax: <b>and</b><var><a name="index-and-5193"></a></var><br>
+&mdash; Auxiliary Syntax: <b>or</b><var><a name="index-or-5194"></a></var><br>
+&mdash; Auxiliary Syntax: <b>not</b><var><a name="index-not-5195"></a></var><br>
+&mdash; Auxiliary Syntax: <b>apply</b><var><a name="index-apply-5196"></a></var><br>
+&mdash; Auxiliary Syntax: <b>eval</b><var><a name="index-eval-5197"></a></var><br>
+&mdash; Auxiliary Syntax: <b>...</b><var><a name="index-g_t_002e_002e_002e-5198"></a></var><br>
+&mdash; Auxiliary Syntax: <b>_</b><var><a name="index-g_t_005f-5199"></a></var><br>
 <blockquote><p>Match the symbolic expression <var>?expr</var> against the <var>?clause</var>
 arguments.  Each clause must have one of the formats:
 
@@ -300,6 +303,40 @@ is equal to the input expression according to <code>equal?</code>.
               (else       #f)))
           &rArr; #\B
 </pre>
+     <br><dt>&lsquo;<samp><span class="samp">(syntax </span><var>?pattern</var><span class="samp">)</span></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">(syntax </span><var>?pattern</var><span class="samp"> (</span><var>?literal</var><span class="samp"> ...))</span></samp>&rsquo;<dd>A <code>syntax-case</code> pattern with optional literal identifiers; the
+matching code is built as follows:
+
+     <pre class="example">          (syntax-case input-expr (<var>?literal</var> ...)
+            (<var>?pattern</var>
+             #;success)
+            (_
+             #;failure))
+</pre>
+     <p class="noindent">the body of the clause can access pattern variables in the same way they
+are accessed from the output expression of a <code>syntax-case</code> use.
+
+     <pre class="example">          (match '(1 2 3)
+            ((syntax (1 2 3))
+             #t)
+            (else #f))
+          &rArr; #t
+          
+          ;;match an identifier
+          (let ((ciao #f))
+            (match #'ciao
+              ((syntax ciao (ciao))
+               #t)
+              (else #f)))
+          &rArr; #t
+          
+          ;;match pattern variables
+          (let ((ciao #f))
+            (match '(1 2 3)
+              ((syntax (a b c))
+               (syntax-&gt;datum #'b))
+              (else #f)))
+          &rArr; 2
+</pre>
      <br><dt>&lsquo;<samp><span class="samp">()</span></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">(</span><var>?pattern1</var><span class="samp"> --- </span><var>?patternN</var><span class="samp">)</span></samp>&rsquo;<dd>Null or proper list of N elements.
 
      <pre class="example">          (match '()
@@ -435,7 +472,7 @@ The empty <code>or</code> fails.
             (else #f))
           &rArr; #t
 </pre>
-     <dt>&lsquo;<samp><span class="samp">(not </span><var>?pattern</var><span class="samp">)</span></samp>&rsquo;<dd>Matches if the subpattern <var>?pattern</var> does <strong>not</strong> match the
+     <br><dt>&lsquo;<samp><span class="samp">(not </span><var>?pattern</var><span class="samp">)</span></samp>&rsquo;<dd>Matches if the subpattern <var>?pattern</var> does <strong>not</strong> match the
 input expression.  The empty not fails.  The empty <code>not</code> pattern is
 a syntax error; the <code>not</code> pattern with multiple subpatterns is a
 syntax error.

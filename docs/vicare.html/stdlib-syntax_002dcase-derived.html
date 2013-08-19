@@ -1,0 +1,245 @@
+<html lang="en">
+<head>
+<title>stdlib syntax-case derived - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="stdlib-syntax_002dcase.html#stdlib-syntax_002dcase" title="stdlib syntax-case">
+<link rel="prev" href="stdlib-syntax_002dcase-temporaries.html#stdlib-syntax_002dcase-temporaries" title="stdlib syntax-case temporaries">
+<link rel="next" href="stdlib-syntax_002dcase-violations.html#stdlib-syntax_002dcase-violations" title="stdlib syntax-case violations">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.3d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+        `http://sourceforge.net/projects/vicare-scheme/files/'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+and at:
+
+           `http://sourceforge.net/projects/vicare-scheme/'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the ``History'' appendix for details.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="stdlib-syntax-case-derived"></a>
+<a name="stdlib-syntax_002dcase-derived"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="stdlib-syntax_002dcase-violations.html#stdlib-syntax_002dcase-violations">stdlib syntax-case violations</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="stdlib-syntax_002dcase-temporaries.html#stdlib-syntax_002dcase-temporaries">stdlib syntax-case temporaries</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="stdlib-syntax_002dcase.html#stdlib-syntax_002dcase">stdlib syntax-case</a>
+<hr>
+</div>
+
+<h4 class="subsection">5.12.9 Derived forms and procedures</h4>
+
+<p>The forms and procedures described in this section can be defined in
+terms of the forms and procedures described in earlier sections of this
+chapter.
+
+<div class="defun">
+&mdash; Syntax: <b>with-syntax</b> ((<var>?pattern ?expression</var>)<var> <small class="dots">...</small></var>)<var> ?body<a name="index-with_002dsyntax-926"></a></var><br>
+<blockquote><p>The <code>with-syntax</code> form is used to bind pattern variables, just as
+<code>let</code> is used to bind variables.  This allows a transformer to
+construct its output in separate pieces, then put the pieces together.
+
+        <p>Each <var>?pattern</var> is identical in form to a <code>syntax-case</code>
+pattern.  The value of each <var>?expression</var> is computed and
+destructured according to the corresponding <var>?pattern</var>, and pattern
+variables within the <var>?pattern</var> are bound as with
+<code>syntax-case</code> to the corresponding portions of the value within
+<var>?body</var>.
+
+        <p>The <code>with-syntax</code> form may be defined in terms of
+<code>syntax-case</code> as follows.
+
+     <pre class="example">          (define-syntax with-syntax
+            (lambda (x)
+              (syntax-case x ()
+                ((_ ((p e0) ...) e1 e2 ...)
+                 (syntax (syntax-case (list e0 ...) ()
+                           ((p ...) (let () e1 e2 ...))))))))
+</pre>
+        <p>As example of deconstructing a syntax object:
+
+     <pre class="example">          (define stx
+            (datum-&gt;syntax #'display '(1 2 3)))
+          
+          (with-syntax (((a b ...) stx))
+            (syntax-&gt;datum #'a))
+          &rArr; 1
+</pre>
+        <p>The following definition of <code>cond</code> demonstrates the use of
+<code>with-syntax</code> to support transformers that employ recursion
+internally to construct their output.  It handles all <code>cond</code> clause
+variations and takes care to produce one-armed <code>if</code> expressions
+where appropriate.
+
+     <pre class="example">          (define-syntax cond
+            (lambda (x)
+              (syntax-case x ()
+                ((_ c1 c2 ...)
+                 (let f ((c1 #'c1) (c2* #'(c2 ...)))
+                   (syntax-case c2* ()
+                     (()
+                      (syntax-case c1 (else =&gt;)
+                        ((else e1 e2 ...) #'(begin e1 e2 ...))
+                        ((e0) #'e0)
+                        ((e0 =&gt; e1)
+                         #'(let ((t e0)) (if t (e1 t))))
+                        ((e0 e1 e2 ...)
+                         #'(if e0 (begin e1 e2 ...)))))
+                     ((c2 c3 ...)
+                      (with-syntax ((rest (f #'c2 #'(c3 ...))))
+                        (syntax-case c1 (=&gt;)
+                          ((e0) #'(let ((t e0)) (if t t rest)))
+                          ((e0 =&gt; e1)
+                           #'(let ((t e0)) (if t (e1 t) rest)))
+                          ((e0 e1 e2 ...)
+                           #'(if e0
+                                 (begin e1 e2 ...)
+                               rest)))))))))))
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>quasisyntax</b><var> ?template<a name="index-quasisyntax-927"></a></var><br>
+&mdash; Auxiliary Syntax: <b>unsyntax</b><var><a name="index-unsyntax-928"></a></var><br>
+&mdash; Auxiliary Syntax: <b>unsyntax-splicing</b><var><a name="index-unsyntax_002dsplicing-929"></a></var><br>
+<blockquote><p>The <code>quasisyntax</code> form is similar to <code>syntax</code>, but it allows
+parts of the quoted text to be evaluated, in a manner similar to the
+operation of <code>quasiquote</code> (see <a href="baselib-quasiquotation.html#baselib-quasiquotation">baselib quasiquotation</a>).
+
+        <p>Within a <code>quasisyntax</code> <var>template</var>, subforms of <code>unsyntax</code>
+and <code>unsyntax-splicing</code> forms are evaluated, and everything else is
+treated as ordinary template material, as with <code>syntax</code>.
+
+        <p>The value of each <code>unsyntax</code> subform is inserted into the output in
+place of the <code>unsyntax</code> form, while the value of each
+<code>unsyntax-splicing</code> subform is spliced into the surrounding list or
+vector structure.  Uses of <code>unsyntax</code> and <code>unsyntax-splicing</code>
+are valid only within <code>quasisyntax</code> expressions.
+
+        <p>A <code>quasisyntax</code> expression may be nested, with each
+<code>quasisyntax</code> introducing a new level of syntax quotation and each
+<code>unsyntax</code> or <code>unsyntax-splicing</code> taking away a level of
+quotation.  An expression nested within n <code>quasisyntax</code>
+expressions must be within n <code>unsyntax</code> or
+<code>unsyntax-splicing</code> expressions to be evaluated.
+
+        <p>As noted in <a href="scheme-lex-datum-abbreviations.html#scheme-lex-datum-abbreviations">scheme lex datum abbreviations</a>:
+
+     <pre class="example">          #`<var>?template</var>   == (quasisyntax <var>?template</var>)
+          #,<var>?template</var>   == (unsyntax <var>?template</var>)
+          #,@<var>?template</var>  == (unsyntax-splicing <var>?template</var>)
+</pre>
+        <p>The <code>quasisyntax</code> keyword can be used in place of
+<code>with-syntax</code> in many cases.  For example, the definition of
+<code>case</code> shown under the description of <code>with-syntax</code> above can
+be rewritten using <code>quasisyntax</code> as follows.
+
+     <pre class="example">          (define-syntax case
+            (lambda (x)
+              (syntax-case x ()
+                ((_ e c1 c2 ...)
+                 #`(let ((t e))
+                     #,(let f ((c1 #'c1) (cmore #'(c2 ...)))
+                         (if (null? cmore)
+                             (syntax-case c1 (else)
+                               ((else e1 e2 ...)
+                                #'(begin e1 e2 ...))
+                               (((k ...) e1 e2 ...)
+                                #'(when (memv t '(k ...))
+                                    (begin e1 e2 ...))))
+                             (syntax-case c1 ()
+                               (((k ...) e1 e2 ...)
+                                #`(if (memv t '(k ...))
+                                      (begin e1 e2 ...)
+                                    #,(f (car cmore)
+                                         (cdr cmore))))))))))))
+</pre>
+        <p>Uses of <code>unsyntax</code> and <code>unsyntax-splicing</code> with zero or more
+than one subform are valid only in splicing (list or vector) contexts. 
+<code>(unsyntax </code><var>template</var><code> ...)</code> is equivalent to
+<code>(unsyntax </code><var>template</var><code>) ...</code>, and <code>(unsyntax-splicing
+</code><var>template</var><code> ...)</code> is equivalent to <code>(unsyntax-splicing
+</code><var>template</var><code>) ...</code>.  These forms are primarily useful as intermediate
+forms in the output of the <code>quasisyntax</code> expander.
+
+        <blockquote>
+<strong>NOTE</strong> Uses of <code>unsyntax</code> and <code>unsyntax-splicing</code> with
+zero or more than one subform enable certain idioms, such as
+&lsquo;<samp><span class="samp">#,@#,@</span></samp>&rsquo;, which has the effect of a doubly indirect splicing when
+used within a doubly nested and doubly evaluated <code>quasisyntax</code>
+expression, as with the nested <code>quasiquote</code> examples shown in
+section <a href="baselib-quasiquotation.html#baselib-quasiquotation">baselib quasiquotation</a>. 
+</blockquote>
+        </p></blockquote></div>
+
+<!-- page -->
+   </body></html>
+

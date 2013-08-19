@@ -1,0 +1,235 @@
+<html lang="en">
+<head>
+<title>baselib quasiquotation - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="baselib.html#baselib" title="baselib">
+<link rel="prev" href="baselib-iteration.html#baselib-iteration" title="baselib iteration">
+<link rel="next" href="baselib-syntax-binding.html#baselib-syntax-binding" title="baselib syntax binding">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.3d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+        `http://sourceforge.net/projects/vicare-scheme/files/'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+and at:
+
+           `http://sourceforge.net/projects/vicare-scheme/'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the ``History'' appendix for details.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="baselib-quasiquotation"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="baselib-syntax-binding.html#baselib-syntax-binding">baselib syntax binding</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="baselib-iteration.html#baselib-iteration">baselib iteration</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="baselib.html#baselib">baselib</a>
+<hr>
+</div>
+
+<h3 class="section">4.16 Quasiquotation</h3>
+
+<div class="defun">
+&mdash; Syntax: <b>quasiquote</b><var> ?qq-template<a name="index-quasiquote-336"></a></var><br>
+&mdash; Auxiliary Syntax: <b>unquote</b><var><a name="index-unquote-337"></a></var><br>
+&mdash; Auxiliary Syntax: <b>unquote-splicing</b><var><a name="index-unquote_002dsplicing-338"></a></var><br>
+<blockquote><p>&ldquo;Backquote&rdquo; or &ldquo;quasiquote&rdquo; expressions are useful for constructing
+a list or vector structure when some but not all of the desired
+structure is known in advance.
+
+        <p><var>?qq-template</var> should be as specified by the grammar at the end of
+this entry.
+
+        <p>If no <code>unquote</code> or <code>unquote-splicing</code> forms appear within the
+<var>?qq-template</var>, the result of evaluating <code>(quasiquote
+</code><var>?qq-template</var><code>)</code> is equivalent to the result of evaluating
+<code>(quote </code><var>?qq-template</var><code>)</code>.
+
+        <p>If an <code>(unquote </code><var>?expression</var><code> ...)</code> form appears inside a
+<var>?qq-template</var>, however, the <var>?expression</var>s are evaluated
+(&ldquo;unquoted&rdquo;) and their results are inserted into the structure instead
+of the <code>unquote</code> form.
+
+        <p>If an <code>(unquote-splicing </code><var>?expression</var><code> ...)</code> form appears
+inside a <var>?qq-template</var>, then the <var>?expression</var>s must evaluate
+to lists; the opening and closing parentheses of the lists are then
+&ldquo;stripped away&rdquo; and the elements of the lists are inserted in place of
+the <code>unquote-splicing</code> form.
+
+        <p>Any <code>unquote-splicing</code> or multi&ndash;operand <code>unquote</code> form must
+appear only within a list or vector <var>?qq-template</var>.
+
+        <p>The following abbreviations may be used:
+
+     <pre class="example">          (quasiquote <var>?qq-template</var>)       =  `<var>?qq-template</var>
+          (unquote <var>?expression</var>)           =  ,<var>?expression</var>
+          (unquote-splicing <var>?expression</var>)  =  ,@<var>?expression</var>
+</pre>
+        <p>Examples:
+
+     <pre class="example">          `(list ,(+ 1 2) 4)                      &rArr; (list 3 4)
+          
+          (let ((name 'a))
+            `(list ,name ',name))                 &rArr; (list a (quote a))
+          
+          `(a ,(+ 1 2) ,@(map abs '(4 -5 6)) b)   &rArr; (a 3 4 5 6 b)
+          
+          `((foo ,(- 10 3))
+            ,@(cdr '(c)) . ,(car '(cons)))        &rArr; ((foo 7) . cons)
+          
+          `#(10 5 ,(sqrt 4) ,@(map sqrt '(16 9)) 8)
+                                                  &rArr; #(10 5 2 4 3 8)
+          
+          (let ((name 'foo))
+            `((unquote name name name)))          &rArr; (foo foo foo)
+          
+          (let ((name '(foo)))
+            `((unquote-splicing name name name))) &rArr; (foo foo foo)
+          
+          (let ((q '((append x y) (sqrt 9))))
+            ``(foo ,,@q))
+          &rArr; `(foo (unquote (append x y) (sqrt 9)))
+          
+          (let ((x '(2 3))
+                (y '(4 5)))
+            `(foo (unquote (append x y) (sqrt 9))))
+          &rArr; (foo (2 3 4 5) 3)
+</pre>
+        <p>Quasiquote forms may be nested.  Substitutions are made only for
+unquoted components appearing at the same nesting level as the outermost
+<code>quasiquote</code>.  The nesting level increases by one inside each
+successive quasiquotation, and decreases by one inside each unquotation.
+
+     <pre class="example">          `(a `(b ,(+ 1 2) ,(foo ,(+ 1 3) d) e) f)
+          &rArr;  (a `(b ,(+ 1 2) ,(foo 4 d) e) f)
+          
+          (let ((name1 'x)
+                (name2 'y))
+            `(a `(b ,,name1 ,',name2 d) e))
+          &rArr;  (a `(b ,x ,'y d) e)
+</pre>
+        <p>A <code>quasiquote</code> expression may return either fresh, mutable objects
+or literal structure for any structure that is constructed at run time
+during the evaluation of the expression.  Portions that do not need to
+be rebuilt are always literal.  Thus:
+
+     <pre class="example">          (let ((a 3))
+            `((1 2) ,a ,4 ,'five 6))
+</pre>
+        <p class="noindent">may be equivalent to either of the following expressions:
+
+     <pre class="example">          '((1 2) 3 4 five 6)
+          
+          (let ((a 3))
+            (cons '(1 2)
+                  (cons a (cons 4 (cons 'five '(6))))))
+</pre>
+        <p>However, it is not equivalent to this expression:
+
+     <pre class="example">          (let ((a 3))
+            (list (list 1 2) a 4 'five 6))
+</pre>
+        <p>It is a syntax violation if any of the identifiers <code>quasiquote</code>,
+<code>unquote</code>, or <code>unquote-splicing</code> appear in positions within a
+<var>?qq-template</var> other than as described above.
+
+        <p>The following grammar for quasiquote expressions is not context&ndash;free. 
+It is presented as a recipe for generating an infinite number of
+production rules.  Imagine a copy of the following rules for D =
+1, 2, 3, <small class="dots">...</small>.  D keeps track of the nesting depth.
+
+     <pre class="example">          <var>?qq-template</var> -&gt; <var>?qq template 1</var>
+          <var>?qq-template-0</var> -&gt; <var>?expression</var>
+          <var>?quasiquotation-D</var> -&gt; (quasiquote <var>?qq-template-D</var>)
+          <var>?qq-template-D</var> -&gt; <var>?lexeme-datum</var>
+              | <var>?list-qq-template-D</var>
+              | <var>?vector-qq-template-D</var>
+              | <var>?unquotation-D</var>
+          <var>?list-qq-template-D</var> -&gt; (<var>?qq-template-or-splice-D</var>*)
+              | (<var>?qq-template-or-splice-D</var>+ . <var>?qq-template-D</var>)
+              | <var>?quasiquotation-D+1</var>
+          <var>?vector-qq-template-D</var> -&gt; #(<var>?qq-template-or-splice-D</var>*)
+          <var>?unquotation-D</var> -&gt; (unquote <var>?qq-template-D-1</var>)
+          <var>?qq-template-or-splice-D</var> -&gt; <var>?qq-template-D</var>
+              | <var>?splicing-unquotation-D</var>
+          <var>?splicing-unquotation-D</var> -&gt;
+                (unquote-splicing <var>?qq-template-D-1</var>*)
+              | (unquote <var>?qq-template-D-1</var>*)
+</pre>
+        <p>In <code>quasiquotation</code>s, a <var>?list-qq-template-D</var> can
+sometimes be confused with either an <var>?unquotation-D</var> or a
+<var>?splicing-unquotation-D</var>.  The interpretation as an
+<var>?unquotation</var> or <var>?splicing-unquotation-D</var> takes
+precedence. 
+</p></blockquote></div>
+
+<!-- page -->
+   </body></html>
+

@@ -1,0 +1,207 @@
+<html lang="en">
+<head>
+<title>scheme library examples - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="scheme-library.html#scheme-library" title="scheme library">
+<link rel="prev" href="scheme-library-import-export.html#scheme-library-import-export" title="scheme library import export">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.3d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+        `http://sourceforge.net/projects/vicare-scheme/files/'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+and at:
+
+           `http://sourceforge.net/projects/vicare-scheme/'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the ``History'' appendix for details.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="scheme-library-examples"></a>
+<p>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="scheme-library-import-export.html#scheme-library-import-export">scheme library import export</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="scheme-library.html#scheme-library">scheme library</a>
+<hr>
+</div>
+
+<h4 class="subsection">3.7.3 Examples</h4>
+
+<p>Examples for various <var>?import-spec</var>s and <var>?export-spec</var>s:
+
+<pre class="example">     (library (stack)
+       (export make push! pop! empty!)
+       (import (rnrs)
+               (rnrs mutable-pairs))
+     
+       (define (make)
+         (list '()))
+       (define (push! s v)
+         (set-car! s (cons v (car s))))
+       (define (pop! s)
+         (let ([v (caar s)])
+           (set-car! s (cdar s))
+           v))
+       (define (empty! s)
+         (set-car! s '())))
+     
+     (library (balloons)
+       (export make push pop)
+       (import (rnrs))
+     
+       (define (make w h)
+         (cons w h))
+       (define (push b amt)
+         (cons (- (car b) amt)
+               (+ (cdr b) amt)))
+       (define (pop b)
+         (display "Boom! ")
+         (display (* (car b) (cdr b)))
+         (newline)))
+     
+     (library (party)
+       ;; Total exports:
+       ;; make, push, push!, make-party, pop!
+       (export (rename (balloon:make make)
+                       (balloon:push push))
+               push!
+               make-party
+               (rename (party-pop! pop!)))
+       (import (rnrs)
+               (only (stack) make push! pop!) ; not empty!
+               (prefix (balloons) balloon:))
+     
+       ;; Creates a party as a stack of balloons,
+       ;; starting with two balloons
+       (define (make-party)
+         (let ([s (make)]) ; from stack
+           (push! s (balloon:make 10 10))
+           (push! s (balloon:make 12 9))
+           s))
+       (define (party-pop! p)
+         (balloon:pop (pop! p))))
+     
+     
+     (library (main)
+       (export)
+       (import (rnrs) (party))
+     
+       (define p (make-party))
+       (pop! p)        ; displays "Boom! 108"
+       (push! p (push (make 5 5) 1))
+       (pop! p))       ; displays "Boom! 24"
+</pre>
+   <p>Examples for macros and phases:
+
+<pre class="example">     (library (my-helpers id-stuff)
+       (export find-dup)
+       (import (rnrs))
+     
+       (define (find-dup l)
+         (and (pair? l)
+              (let loop ((rest (cdr l)))
+                (cond
+                 [(null? rest) (find-dup (cdr l))]
+                 [(bound-identifier=? (car l) (car rest))
+                  (car rest)]
+                 [else (loop (cdr rest))])))))
+     
+     (library (my-helpers values-stuff)
+       (export mvlet)
+       (import (rnrs) (for (my-helpers id-stuff) expand))
+     
+       (define-syntax mvlet
+         (lambda (stx)
+           (syntax-case stx ()
+             [(_ [(id ...) expr] body0 body ...)
+              (not (find-dup (syntax (id ...))))
+              (syntax
+                (call-with-values
+                    (lambda () expr)
+                  (lambda (id ...) body0 body ...)))]))))
+     
+     (library (let-div)
+       (export let-div)
+       (import (rnrs)
+               (my-helpers values-stuff)
+               (rnrs r5rs))
+     
+       (define (quotient+remainder n d)
+         (let ([q (quotient n d)])
+           (values q (- n (* q d)))))
+       (define-syntax let-div
+         (syntax-rules ()
+           [(_ n d (q r) body0 body ...)
+            (mvlet [(q r) (quotient+remainder n d)]
+              body0 body ...)])))
+</pre>
+   <!-- page -->
+   </body></html>
+

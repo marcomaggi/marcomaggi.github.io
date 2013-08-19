@@ -1,0 +1,647 @@
+<html lang="en">
+<head>
+<title>stdlib exceptions exceptions - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="stdlib-exceptions.html#stdlib-exceptions" title="stdlib exceptions">
+<link rel="next" href="stdlib-exceptions-conditions.html#stdlib-exceptions-conditions" title="stdlib exceptions conditions">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.3d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+        `http://sourceforge.net/projects/vicare-scheme/files/'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+and at:
+
+           `http://sourceforge.net/projects/vicare-scheme/'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the ``History'' appendix for details.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="stdlib-exceptions-exceptions"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="stdlib-exceptions-conditions.html#stdlib-exceptions-conditions">stdlib exceptions conditions</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="stdlib-exceptions.html#stdlib-exceptions">stdlib exceptions</a>
+<hr>
+</div>
+
+<h4 class="subsection">5.7.1 Exceptions</h4>
+
+<p><a name="index-Catching-exceptions-522"></a><a name="index-g_t_0040rsixlibrary_007bexceptions_007d_002c-library-523"></a><a name="index-Library_002c-_0040rsixlibrary_007bexceptions_007d-524"></a>
+
+   <p>This section describes Scheme's exception&ndash;handling and
+exception&ndash;raising constructs provided by the <code>(rnrs exceptions (6))</code>
+library.
+
+   <p>Exception handlers are one&ndash;argument procedures that determine the
+action the program takes when an exceptional situation is signalled. 
+The system implicitly maintains a current exception handler.
+
+   <p>The program raises an exception by invoking the current exception
+handler, passing it an object encapsulating information about the
+exception.  Any procedure accepting one argument may serve as an
+exception handler and any object may be used to represent an exception.
+
+   <p>The system maintains the current exception handler as part of the
+dynamic environment of the program (see <a href="scheme-basic-dynamic-extent.html#scheme-basic-dynamic-extent">scheme basic dynamic extent</a>).
+
+   <p>When a program begins its execution, the current exception handler is
+expected to handle all <code>&amp;serious</code> conditions by interrupting
+execution, reporting that an exception has been raised, and displaying
+information about the condition object that was provided.  The handler
+may then exit, or may provide a choice of other options.  Moreover, the
+exception handler is expected to return when passed any other
+non&ndash;<code>&amp;serious</code> condition.  Interpretation of these expectations
+necessarily depends upon the nature of the system in which programs are
+executed, but the intent is that users perceive the raising of an
+exception as a controlled escape from the situation that raised the
+exception, not as a crash.
+
+<div class="defun">
+&mdash; Procedure: <b>with-exception-handler</b><var> handler thunk<a name="index-with_002dexception_002dhandler-525"></a></var><br>
+<blockquote><p><var>handler</var> must be a procedure and should accept one argument. 
+<var>thunk</var> must be a procedure that accepts zero arguments.  The
+<code>with-exception-handler</code> procedure returns the results of invoking
+<var>thunk</var>.  <var>handler</var> is installed as the current exception
+handler for the dynamic extent (as determined by <code>dynamic-wind</code>) of
+the invocation of <var>thunk</var>.
+
+        <p><strong>Implementation responsibilities:</strong> The implementation must check
+the restrictions on <var>handler</var> to the extent performed by applying it
+as described when it is called as a result of a call to <code>raise</code> or
+<code>raise-continuable</code>.  An implementation may check whether
+<var>handler</var> is an appropriate argument before applying it. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>guard</b> (<var>?variable ?cond-clause1 ?cond-clause2 <small class="dots">...</small></var>)<var> ?body<a name="index-guard-526"></a></var><br>
+&mdash; Auxiliary Syntax: <b>=&gt;</b><var><a name="index-g_t_003d_003e-527"></a></var><br>
+&mdash; Auxiliary Syntax: <b>else</b><var><a name="index-else-528"></a></var><br>
+<blockquote><p>Each <var>?cond-clause</var> is as in the specification of <code>cond</code>,
+<a href="baselib-expressions-derived-cond.html#baselib-expressions-derived-cond">baselib expressions derived cond</a>.  &lsquo;<samp><span class="samp">=&gt;</span></samp>&rsquo; and &lsquo;<samp><span class="samp">else</span></samp>&rsquo; are
+the same as in the <code>(rnrs base (6))</code> library.
+
+        <p>Evaluating a <code>guard</code> form evaluates <var>?body</var> with an exception
+handler that binds the raised object to <var>?variable</var> and within the
+scope of that binding evaluates the clauses as if they were the clauses
+of a <code>cond</code> expression.  That implicit <code>cond</code> expression is
+evaluated with the continuation and dynamic environment of the
+<code>guard</code> form.  If every <var>?cond-clause</var>'s <var>?test</var> evaluates
+to <code>#f</code> and there is no <code>else</code> clause, then
+<code>raise-continuable</code> is re&ndash;invoked on the raised object within the
+dynamic environment of the original call to <code>raise</code> except that the
+current exception handler is that of the <code>guard</code> expression.
+
+        <p>The final expression in a <code>cond</code> clause is in a tail context if the
+<code>guard</code> expression itself is. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Procedure: <b>raise</b><var> obj<a name="index-raise-529"></a></var><br>
+<blockquote><p>Raise a non&ndash;continuable exception by invoking the current exception
+handler on <var>obj</var>.  The handler is called with a continuation whose
+dynamic environment is that of the call to <code>raise</code>, except that the
+current exception handler is the one that was in place when the handler
+being called was installed.  When the handler returns, a
+non&ndash;continuable exception with condition type <code>&amp;non-continuable</code>
+is raised in the same dynamic environment as the handler. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Procedure: <b>raise-continuable</b><var> obj<a name="index-raise_002dcontinuable-530"></a></var><br>
+<blockquote><p>Raise a <em>continuable exception</em> by invoking the current exception
+handler on <var>obj</var>.  The handler is called with a continuation that is
+equivalent to the continuation of the call to <code>raise-continuable</code>,
+with these two exceptions:
+
+          <ol type=1 start=1>
+<li>The current exception handler is the one that was in place when the
+handler being called was installed.
+
+          <li>If the handler being called returns, then it will again become the
+current exception handler.
+             </ol>
+
+        <p>If the handler returns, the values it returns become the values returned
+by the call to <code>raise-continuable</code>. 
+</p></blockquote></div>
+
+   <p>Miscellaneous examples:
+
+<pre class="example">     (guard (con
+              ((error? con)
+               (if (message-condition? con)
+                   (display (condition-message con))
+                   (display "an error has occurred"))
+               'error)
+              ((violation? con)
+               (if (message-condition? con)
+                   (display (condition-message con))
+                   (display "the program has a bug"))
+               'violation))
+       (raise
+         (condition
+           (make-error)
+           (make-message-condition "I am an error"))))
+     -| I am an error
+     &rArr; error
+     
+     (guard (con
+              ((error? con)
+               (if (message-condition? con)
+                   (display (condition-message con))
+                   (display "an error has occurred"))
+               'error))
+       (raise
+         (condition
+           (make-violation)
+           (make-message-condition "I am an error"))))
+     &rArr; exception &amp;violation
+     
+     (guard (con
+              ((error? con)
+               (display "error opening file")
+               #f))
+       (call-with-input-file "foo.scm" read))
+     -| error opening file
+     &rArr; #f
+     
+     (with-exception-handler
+       (lambda (con)
+         (cond
+           ((not (warning? con))
+            (raise con))
+           ((message-condition? con)
+            (display (condition-message con)))
+           (else
+            (display "a warning has been issued")))
+         42)
+       (lambda ()
+         (+ (raise-continuable
+              (condition
+                (make-warning)
+                (make-message-condition
+                  "should be a number")))
+            23)))
+     -| should be a number
+     &rArr; 65
+</pre>
+   <!--  -->
+<h5 class="subsubheading">Discussion on a possible implementation</h5>
+
+<p>Given a single&ndash;thread program, the following implementation of
+<code>with-exception-handler</code>, <code>raise</code> and <code>raise-continuable</code>
+is compliant:
+
+<pre class="example">     (import (except (rnrs)
+                     with-exception-handler
+                     raise
+                     raise-continuable
+                     guard))
+     
+     (define default-error-port (current-error-port))
+     
+     (define stack-of-handlers
+       (list
+        (lambda (raised-object)
+          (display "unhandled exception:\n" default-error-port)
+          (display raised-object default-error-port)
+          (newline default-error-port)
+          (when (serious-condition? raised-object)
+            (exit -1)))
+        (lambda args
+          (exit -1))))
+     
+     (define-syntax %with-popped-handler
+       (syntax-rules ()
+         ((_ ?handler . ?body)
+          (let ((ell      stack-of-handlers)
+                (?handler (car stack-of-handlers)))
+            (dynamic-wind
+                (lambda () (set! stack-of-handlers (cdr ell)))
+                (lambda () . ?body)
+                (lambda () (set! stack-of-handlers ell)))))))
+     
+     (define (with-exception-handler handler thunk)
+       (let ((ell stack-of-handlers))
+         (dynamic-wind
+             (lambda () (set! stack-of-handlers (cons handler ell)))
+             thunk
+             (lambda () (set! stack-of-handlers ell)))))
+     
+     (define (raise-continuable raised-object)
+       (%with-popped-handler handler
+          (handler raised-object)))
+     
+     (define (raise raised-object)
+       (%with-popped-handler handler
+          (handler raised-object)
+          (raise
+           (condition
+            (make-non-continuable-violation)
+            (make-message-condition
+             "return from handler of non-continuable exception")))))
+</pre>
+   <p class="noindent">we see that no function rewinds the stack nor invokes a continuation;
+also, in <code>raise</code>, the recursive invocation raising a
+non&ndash;continuable violation can return to the caller if the handler
+returns.
+
+   <p>The implementation of the <code>guard</code> syntax needs some reasoning to be
+understood; first, the skeleton of the transformation is a
+<code>with-exception-handler</code> syntax, the following form:
+
+<pre class="example">     (guard (E ((alpha-condition? E)
+                (do-alpha))
+               ((beta-condition? E)
+                (do-beta))
+               ((condition-gamma-value E)
+                =&gt; (lambda (value)
+                     (do-gamma value)))
+               (else
+                (do-else)))
+       (form-a)
+       (form-b))
+</pre>
+   <p class="noindent">is basically transformed to:
+
+<pre class="example">     (with-exception-handler
+         (lambda (E)
+           (cond ((alpha-condition? E)
+                  (do-alpha))
+                 ((beta-condition? E)
+                  (do-beta))
+                 ((condition-gamma-value E)
+                  =&gt; (lambda (value)
+                       (do-gamma value)))
+                 (else
+                  (do-else))))
+       (lambda ()
+         (form-a)
+         (form-b)))
+</pre>
+   <p class="noindent">to make it compliant, we need to add to this transformation the correct
+handling of continuations and of the dynamic environment.
+
+   <p>We need the mechanism explained step by step in what follows; given the
+form:
+
+<pre class="example">     (alpha ... (beta ...))
+</pre>
+   <p class="noindent">in which the form <code>beta</code> is nested at some level in the form
+<code>alpha</code>, we want to answer the question: how do we evaluate the
+form <code>beta</code> so that it has the same continuation and dynamic
+environment of <code>alpha</code>?
+
+   <p>We begin by understanding that this chunk of code:
+
+<pre class="example">     (begin
+       (form-a)
+       (form-b))
+</pre>
+   <p class="noindent">can be rewritten in the following equivalent form, in which an anonymous
+function is created and just evaluated in place:
+
+<pre class="example">     ((lambda ()
+        (begin
+          (form-a)
+          (form-b))))
+</pre>
+   <p class="noindent">or more explicitly:
+
+<pre class="example">     (apply (lambda ()
+              (begin
+                (form-a)
+                (form-b))))
+</pre>
+   <p class="noindent">we should understand that, from the point of view of the executed
+computation, the <code>apply</code> and <code>begin</code> forms have the same
+continuation.
+
+   <p>The last version can be rewritten as:
+
+<pre class="example">     (apply (call/cc
+               (lambda (kont)
+                 (lambda () ;body
+                   (begin
+                     (form-a)
+                     (form-b))))))
+</pre>
+   <p class="noindent">in which the <code>call/cc</code> form evaluates to the anonymous function
+commented as &lsquo;<samp><span class="samp">body</span></samp>&rsquo; which is then evaluated by <code>apply</code>; so we
+can say again that, from the point of view of the executed computation,
+the <code>apply</code> and <code>begin</code> forms have the same continuation.  We
+notice that the escape procedure <code>kont</code> is not used.
+
+   <p>Let's consider the following transformation of the previous example and
+understand why it is equivalent:
+
+<pre class="example">     (apply (call/cc
+               (lambda (kont)
+                 (lambda () ;shell
+                   (kont (lambda () ;body
+                           (begin
+                             (form-a)
+                             (form-b))))))))
+</pre>
+   <p class="noindent">the <code>call/cc</code> form evaluates to the anonymous function commented as
+&lsquo;<samp><span class="samp">shell</span></samp>&rsquo; which is evaluated by <code>apply</code>; the <code>kont</code> escape
+procedure jumps back to the continuation of <code>call/cc</code> which is
+again <code>apply</code> and its return value is the anonymous function
+commented as &lsquo;<samp><span class="samp">body</span></samp>&rsquo; which is evaluated by <code>apply</code>.  So once
+again we can say that, from the point of view of the executed
+computation, the <code>apply</code> and <code>begin</code> forms have the same
+continuation.
+
+   <p>As a final consideration, let's modify the form as follows:
+
+<pre class="example">     (apply (call/cc
+               (lambda (kont)
+                 (lambda () ;shell
+                   (dynamic-wind
+                       (lambda ()
+                         (in-guard))
+                       (lambda ()
+                         (kont (lambda () ;body
+                                 (begin
+                                   (form-a)
+                                   (form-b)))))
+                       (lambda ()
+                         (out-guard)))))))
+</pre>
+   <p class="noindent">when the <code>shell</code> function is evaluated, the dynamic environment may
+be modified by the <code>dynamic-wind</code> form's <code>in-guard</code> and
+<code>out-guard</code>, but the <code>begin</code> form is still evaluated with the
+same continuation and the same dynamic environment of <code>apply</code>: both
+<code>in-guard</code> and <code>out-guard</code> are evaluated before the
+<code>body</code> function is evaluated.
+
+   <p>Now we can go back to the <code>guard</code> implementation and consider a
+<code>guard</code> form with <code>else</code> clause:
+
+<pre class="example">     (guard (E ((alpha-condition? E)
+                (do-alpha))
+               (else
+                (do-else)))
+       (dynamic-wind
+         (lambda () (in-guard))
+         (lambda () (form-a))
+         (lambda () (out-guard))))
+</pre>
+   <p class="noindent">we observed that the skeleton expansion of <code>guard</code> is:
+
+<pre class="example">     (with-exception-handler
+          (lambda (E)
+            (cond ((alpha-condition? E)
+                   (do-alpha))
+                  (else
+                   (do-else))))
+       (lambda ()
+         (dynamic-wind
+           (lambda () (in-guard))
+           (lambda () (form-a))
+           (lambda () (out-guard)))))
+</pre>
+   <p class="noindent">the report establishes that:
+
+   <blockquote>
+That implicit <code>cond</code> expression is evaluated with the continuation
+and dynamic environment of the <code>guard</code> form. 
+</blockquote>
+
+<p class="noindent">using the mechanism described above, we can expand the <code>guard</code> form
+as follows:
+
+<pre class="example">     ((call/cc
+          (lambda (guard-kont)
+            (lambda ()
+              (with-exception-handler
+                  (lambda (E) ;shell
+                    (guard-kont
+                     (lambda () ;handler
+                       (cond ((alpha-condition? E)
+                              (do-alpha))
+                             (else
+                              (do-else))))))
+                (lambda () ;body
+                  (dynamic-wind
+                      (lambda () (in-guard))
+                      (lambda () (form-a))
+                      (lambda () (out-guard)))))))))
+</pre>
+   <p class="noindent">if the anonymous function commented as <code>body</code> raises an exception,
+the handler function commented as <code>shell</code> is applied to the raised
+object; the <code>guard-kont</code> escape procedure is used to jump to the
+continuation of <code>call/cc</code> and then the <code>cond</code> form is
+evaluated.  This expansion is compliant.  We notice explicitly that:
+
+     <ul>
+<li>With this mechanism the exception handler does not return to the
+continuation of <code>raise</code> or other form which raised the exception,
+rather it returns to the continuation of <code>guard</code>.
+
+     <li>When <code>guard-kont</code> is invoked: <code>out-guard</code> is evaluated and
+only after that the anonymous function commented as <code>handler</code> is
+evaluated.  This is different from the default behaviour of
+<code>with-exception-handler</code>, in which the handler is evaluated in the
+same dynamic environment of the body function with the single difference
+of the current exception handler. 
+</ul>
+
+   <p>Now let's consider a <code>guard</code> form without <code>else</code> clause:
+
+<pre class="example">     (guard (E ((alpha-condition? E)
+                (do-alpha))
+               ((beta-condition? E)
+                (do-beta)))
+       (dynamic-wind
+         (lambda () (in-guard))
+         (lambda () (form-a))
+         (lambda () (out-guard))))
+</pre>
+   <p class="noindent">applying the same expansion described above yields:
+
+<pre class="example">     (apply
+      (call/cc
+          (lambda (guard-kont)
+            (lambda ()
+              (with-exception-handler
+                  (lambda (E) ;shell
+                    (guard-kont
+                     (lambda () ;handler
+                       (cond ((alpha-condition? E)
+                              (do-alpha))
+                             ((beta-condition? E)
+                              (do-beta))))))
+                (lambda () ;body
+                  (dynamic-wind
+                      (lambda () (in-guard))
+                      (lambda () (form-a))
+                      (lambda () (out-guard)))))))))
+</pre>
+   <p class="noindent">but the report establishes that:
+
+   <blockquote>
+If every <var>?cond-clause</var>'s <var>?test</var> evaluates to <code>#f</code> and
+there is no <code>else</code> clause, then <code>raise-continuable</code> is
+re&ndash;invoked on the raised object within the dynamic environment of the
+original call to <code>raise</code> except that the current exception handler
+is that of the <code>guard</code> expression. 
+</blockquote>
+
+<p class="noindent">so we use again the same mechanism and expand as follows:
+
+<pre class="example">     (apply ;external apply
+      (call/cc
+          (lambda (guard-kont)
+            (lambda ()
+              (with-exception-handler
+                  (lambda (E) ;shell
+                    (apply ;internal apply
+                      (call/cc
+                          (lambda (reraise-kont)
+                            (guard-kont
+                              (lambda () ;handler
+                                (cond ((alpha-condition? E)
+                                       (do-alpha))
+                                      ((beta-condition? E)
+                                       (do-beta))
+                                      (else
+                                       (reraise-kont
+                                        (lambda () ;reraise
+                                          (raise-continuable E))))))
+                            )))))
+                (lambda () ;body
+                  (dynamic-wind
+                      (lambda () (in-guard))
+                      (lambda () (form-a))
+                      (lambda () (out-guard)))))))))
+</pre>
+   <p class="noindent">if the body function raises an exception and one of the non&ndash;<code>else</code>
+clauses matches, everything works as above and the <code>cond</code> form is
+evaluated with the continuation of <code>guard</code>; but if the clause which
+matches is <code>else</code>: the <code>reraise-kont</code> escape procedure is used
+to jump back to the continuation of the internal <code>call/cc</code> which
+has a dynamic environment equal to the one of the original raise
+invocation; the return value of <code>reraise-kont</code> is the anonymous
+function commented as <code>reraise</code>, which is evaluated in place by the
+internal <code>apply</code>; the return value of <code>raise-continuable</code>
+becomes the argument of <code>guard-kont</code>.
+
+   <p>We notice explicitly that:
+
+     <ul>
+<li>When the execution flow enters the body function: <code>in-guard</code> is
+evaluated; if <code>form-a</code> raises an exception: <code>guard-kont</code> is
+evaluated and so <code>out-guard</code> is evaluated.
+
+     <li>If the <code>else</code> clause is evaluated, then <code>reraise-kont</code> is
+evaluated: <code>in-guard</code> is evaluated again before
+<code>raise-continuable</code>; if <code>raise-continuable</code> returns:
+<code>guard-kont</code> is evaluated and <code>out-guard</code> is evaluated again. 
+</ul>
+
+   <p>As the last touch, let's introduce a binding for the raised object as
+follows:
+
+<pre class="example">     (apply ;external apply
+      (call/cc
+          (lambda (guard-kont)
+            (lambda ()
+              (with-exception-handler
+                  (lambda (D) ;shell
+                    (apply ;internal apply
+                      (call/cc
+                          (lambda (reraise-kont)
+                            (guard-kont
+                              (lambda () ;handler
+                                (let ((E D))
+                                  (cond ((alpha-condition? E)
+                                         (do-alpha))
+                                        ((beta-condition? E)
+                                         (do-beta))
+                                        (else
+                                         (reraise-kont
+                                          (lambda () ;reraise
+                                            (raise-continuable D)))))))
+                              )))))
+                (lambda () ;body
+                  (dynamic-wind
+                      (lambda () (in-guard))
+                      (lambda () (form-a))
+                      (lambda () (out-guard)))))))))
+</pre>
+   <p class="noindent">this way we are sure to reraise the original raised object in the
+<code>else</code> clause even though the tests in the clauses may have
+modified the biding of <code>E</code> or its value.
+
+<!-- page -->
+   </body></html>
+

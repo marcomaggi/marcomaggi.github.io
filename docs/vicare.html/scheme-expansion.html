@@ -1,0 +1,284 @@
+<html lang="en">
+<head>
+<title>scheme expansion - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="scheme.html#scheme" title="scheme">
+<link rel="prev" href="scheme-syntax.html#scheme-syntax" title="scheme syntax">
+<link rel="next" href="scheme-derived.html#scheme-derived" title="scheme derived">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.3d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+        `http://sourceforge.net/projects/vicare-scheme/files/'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+and at:
+
+           `http://sourceforge.net/projects/vicare-scheme/'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the ``History'' appendix for details.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="scheme-expansion"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="scheme-derived.html#scheme-derived">scheme derived</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="scheme-syntax.html#scheme-syntax">scheme syntax</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="scheme.html#scheme">scheme</a>
+<hr>
+</div>
+
+<h3 class="section">3.10 Expansion process</h3>
+
+<p>Macro uses are expanded into <dfn>core forms</dfn> at the start of evaluation
+(before compilation or interpretation) by a syntax <dfn>expander</dfn>.  The
+set of core forms is implementation&ndash;dependent, as is the representation
+of these forms in the expander's output.
+
+     <ul>
+<li>If the expander encounters a syntactic abstraction, it invokes the
+associated transformer to expand the syntactic abstraction, then repeats
+the expansion process for the form returned by the transformer.
+
+     <li>If the expander encounters a core form, it recursively processes its
+subforms that are in expression or definition context, if any, and
+reconstructs the form from the expanded subforms. 
+</ul>
+
+   <p>Information about identifier bindings is maintained during expansion to
+enforce lexical scoping for variables and keywords.
+
+   <p>To handle definitions, the expander processes the initial forms in a
+<var>?body</var> or <var>?library-body</var> from left to right.  How the expander
+processes each form encountered depends upon the kind of form.
+
+     <dl>
+<dt>macro use<dd>The expander invokes the associated transformer to transform the macro
+use, then recursively performs whichever of these actions are
+appropriate for the resulting form.
+
+     <br><dt><code>define-syntax</code> form<dd>The expander expands and evaluates the right&ndash;hand&ndash;side expression and
+binds the keyword to the resulting transformer.
+
+     <br><dt><code>define</code> form<dd>The expander records the fact that the defined identifier is a variable
+but defers expansion of the right&ndash;hand&ndash;side expression until after all
+of the definitions have been processed.
+
+     <br><dt><code>begin</code> form<dd>The expander splices the subforms into the list of body forms it is
+processing.
+
+     <br><dt><code>let-syntax</code> or <code>letrec-syntax</code> form<dd>The expander splices the inner body forms into the list of (outer) body
+forms it is processing, arranging for the keywords bound by the
+<code>let-syntax</code> and <code>letrec-syntax</code> to be visible only in the
+inner body forms.
+
+     <br><dt>expression, i.e., nondefinition<dd>The expander completes the expansion of the deferred right&ndash;hand&ndash;side
+expressions and the current and remaining expressions in the body, and
+then creates the equivalent of a <code>letrec*</code> form from the defined
+variables, expanded right&ndash;hand&ndash;side expressions, and expanded body
+expressions. 
+</dl>
+
+   <p>For the right&ndash;hand side of the definition of a variable, expansion is
+deferred until after all of the definitions have been seen. 
+Consequently, each keyword and variable reference within the right&ndash;hand
+side resolves to the local binding, if any.
+
+   <p>A definition in the sequence of forms must not define any identifier
+whose binding is used to determine the meaning of the undeferred
+portions of the definition or any definition that precedes it in the
+sequence of forms.  For example, the bodies of the following expressions
+violate this restriction.
+
+<pre class="example">     (let ()
+       (define define 17)
+       (list define))
+     
+     (let-syntax ((def0 (syntax-rules ()
+                          ((_ x) (define x 0)))))
+       (let ((z 3))
+         (def0 z)
+         (define def0 list)
+         (list z)))
+     
+     (let ()
+       (define-syntax foo
+         (lambda (e)
+           (+ 1 2)))
+       (define + 2)
+       (foo))
+</pre>
+   <p>The following do not violate the restriction.
+
+<pre class="example">     (let ((x 5))
+       (define lambda list)
+       (lambda x x))         &rArr;  (5 5)
+     
+     (let-syntax ((def0 (syntax-rules ()
+                          ((_ x) (define x 0)))))
+       (let ((z 3))
+         (define def0 list)
+         (def0 z)
+         (list z)))          &rArr;  (3)
+     
+     (let ()
+       (define-syntax foo
+         (lambda (e)
+           (let ((+ -)) (+ 1 2))))
+       (define + 2)
+       (foo))                &rArr;  -1
+</pre>
+   <p>The implementation should treat a violation of the restriction as a
+syntax violation.
+
+   <p>Note that this algorithm does not directly reprocess any form.  It
+requires a single left&ndash;to&ndash;right pass over the definitions followed by
+a single pass (in any order) over the body expressions and deferred
+right&ndash;hand sides.
+
+   <p>Example:
+
+<pre class="example">     (lambda (x)
+       (define-syntax defun
+         (syntax-rules ()
+           ((_ x a e) (define x (lambda a e)))))
+       (defun even? (n) (or (= n 0) (odd? (- n 1))))
+       (define-syntax odd?
+         (syntax-rules () ((_ n) (not (even? n)))))
+       (odd? (if (odd? x) (* x x) x)))
+</pre>
+   <p>In the example:
+
+     <ol type=1 start=1>
+<li>The definition of <code>defun</code> is encountered first, and the keyword
+<code>defun</code> is associated with the transformer resulting from the
+expansion and evaluation of the corresponding right&ndash;hand side.
+
+     <li>A use of <code>defun</code> is encountered next and expands into a
+<code>define</code> form.  Expansion of the right&ndash;hand side of this
+<code>define</code> form is deferred.
+
+     <li>The definition of <code>odd?</code> is next and results in the association of
+the keyword <code>odd?</code> with the transformer resulting from expanding
+and evaluating the corresponding right&ndash;hand side.
+
+     <li>A use of <code>odd?</code>  appears next and is expanded; the resulting call
+to <code>not</code> is recognized as an expression because <code>not</code> is bound
+as a variable.
+
+     <li>At this point, the expander completes the expansion of the current
+expression (the call to <code>not</code>) and the deferred right&ndash;hand side of
+the <code>even?</code>  definition; the uses of <code>odd?</code> appearing in these
+expressions are expanded using the transformer associated with the
+keyword <code>odd?</code>.
+
+     <li>The final output is the equivalent of:
+
+     <pre class="example">          (lambda (x)
+            (letrec* ((even? (lambda (n)
+                               (or (= n 0)
+                                   (not (even? (- n 1)))))))
+              (not (even? (if (not (even? x))
+                              (* x x)
+                            x)))))
+</pre>
+     <p class="noindent">although the structure of the output is implementation-dependent.
+        </ol>
+
+   <p>Because definitions and expressions can be interleaved in a
+<var>?top-level-body</var>, the expander's processing of a
+<var>?top-level-body</var> is somewhat more complicated.  It behaves as
+described above for a <var>?body</var> or <var>?library-body</var> with the
+following exceptions:
+
+     <ul>
+<li>When the expander finds a nondefinition, it defers its expansion and
+continues scanning for definitions.
+
+     <li>Once it reaches the end of the set of forms, it processes the deferred
+right&ndash;hand&ndash;side and body expressions, then generates the equivalent of
+a <code>letrec*</code> form from the defined variables, expanded
+right&ndash;hand&ndash;side expressions, and expanded body expressions.
+
+     <li>For each body expression <var>?expression</var> that appears before a
+variable definition in the body, a dummy binding is created at the
+corresponding place within the set of <code>letrec*</code> bindings, with a
+fresh temporary variable on the left&ndash;hand side and the equivalent of:
+
+     <pre class="example">          (begin <var>?expression</var> <var>?unspecified</var>)
+</pre>
+     <p class="noindent">where <var>?unspecified</var> is a side&ndash;effect&ndash;free expression returning an
+unspecified value, on the right&ndash;hand side, so that left&ndash;to&ndash;right
+evaluation order is preserved.  The <code>begin</code> wrapper allows
+<var>?expression</var> to evaluate to an arbitrary number of values. 
+</ul>
+
+<!-- page -->
+   </body></html>
+

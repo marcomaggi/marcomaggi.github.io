@@ -1,0 +1,238 @@
+<html lang="en">
+<head>
+<title>baselib syntax binding - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="baselib.html#baselib" title="baselib">
+<link rel="prev" href="baselib-quasiquotation.html#baselib-quasiquotation" title="baselib quasiquotation">
+<link rel="next" href="baselib-transformers.html#baselib-transformers" title="baselib transformers">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.3d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+        `http://sourceforge.net/projects/vicare-scheme/files/'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+and at:
+
+           `http://sourceforge.net/projects/vicare-scheme/'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the ``History'' appendix for details.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="baselib-syntax-binding"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="baselib-transformers.html#baselib-transformers">baselib transformers</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="baselib-quasiquotation.html#baselib-quasiquotation">baselib quasiquotation</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="baselib.html#baselib">baselib</a>
+<hr>
+</div>
+
+<h3 class="section">4.17 Binding constructs for syntactic keywords</h3>
+
+<p><a name="index-Binding-syntactic-keywords-339"></a><a name="index-Syntactic-keywords_002c-binding-340"></a>
+
+   <p>The <code>let-syntax</code> and <code>letrec-syntax</code> forms bind keywords. 
+Like a <code>begin</code> form, a <code>let-syntax</code> or <code>letrec-syntax</code>
+form may appear in a definition context, in which case it is treated as
+a definition, and the forms in the body must also be definitions.  A
+<code>let-syntax</code> or <code>letrec-syntax</code> form may also appear in an
+expression context, in which case the forms within their bodies must be
+expressions.
+
+<div class="defun">
+&mdash; Syntax: <b>let-syntax</b><var> ?bindings ?form <small class="dots">...</small><a name="index-let_002dsyntax-341"></a></var><br>
+<blockquote><p><var>?bindings</var> must have the form:
+
+     <pre class="example">          ((<var>?keyword</var> <var>?expression</var>) ...)
+</pre>
+        <p>Each <var>?keyword</var> is an identifier, and each <var>?expression</var> is an
+expression that evaluates, at macro&ndash;expansion time, to a
+<dfn>transformer</dfn>.  Transformers may be created by <code>syntax-rules</code>
+or <code>identifier-syntax</code> or by one of the other mechanisms described
+in <a href="stdlib-syntax_002dcase.html#stdlib-syntax_002dcase">Syntax&ndash;case</a>.  It is a syntax violation for
+<var>?keyword</var> to appear more than once in the list of keywords being
+bound.
+
+        <p>The <var>?form</var>s are expanded in the syntactic environment obtained by
+extending the syntactic environment of the <code>let-syntax</code> form with
+macros whose keywords are the <var>?keyword</var>s, bound to the specified
+transformers.  Each binding of a <var>?keyword</var> has the <var>?form</var>s as
+its region.
+
+        <p>The <var>?form</var>s of a <code>let-syntax</code> form are treated, whether in
+definition or expression context, as if wrapped in an implicit
+<code>begin</code>.  Thus definitions in the result of expanding the
+<var>?form</var>s have the same region as any definition appearing in place
+of the <code>let-syntax</code> form would have.
+
+        <p><strong>Implementation responsibilities:</strong> The implementation should
+detect if the value of <var>?expression</var> cannot possibly be a
+transformer.
+
+     <pre class="example">          (let-syntax ((when (syntax-rules ()
+                               ((when test stmt1 stmt2 ...)
+                                (if test
+                                    (begin stmt1 stmt2 ...))))))
+            (let ((if #t))
+              (when if (set! if 'now))
+              if))
+          &rArr;  now
+          
+          (let ((x 'outer))
+            (let-syntax ((m (syntax-rules () ((m) x))))
+              (let ((x 'inner))
+                (m))))
+          &rArr;  outer
+          
+          (let ()
+            (let-syntax ((def (syntax-rules ()
+                                ((def stuff ...) (define stuff ...)))))
+              (def foo 42))
+            foo)
+          &rArr; 42
+          
+          (let ()
+            (let-syntax ())
+            5)
+          &rArr; 5
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>letrec-syntax</b><var> ?bindings ?form <small class="dots">...</small><a name="index-letrec_002dsyntax-342"></a></var><br>
+<blockquote><p>Same as for <code>let-syntax</code>.
+
+        <p>The <var>?form</var>s are expanded in the syntactic environment obtained by
+extending the syntactic environment of the <code>letrec-syntax</code> form
+with macros whose keywords are the <var>?keyword</var>s, bound to the
+specified transformers.  Each binding of a <var>?keyword</var> has the
+<var>?bindings</var> as well as the <var>?form</var>s within its region, so the
+transformers can transcribe forms into uses of the macros introduced by
+the <code>letrec-syntax</code> form.
+
+        <p>The <var>?form</var>s of a <code>letrec-syntax</code> form are treated, whether in
+definition or expression context, as if wrapped in an implicit
+<code>begin</code>.  Thus definitions in the result of expanding the
+<var>?form</var>s have the same region as any definition appearing in place
+of the <code>letrec-syntax</code> form would have.
+
+        <p><strong>Implementation responsibilities:</strong> The implementation should
+detect if the value of <var>?expression</var> cannot possibly be a
+transformer.
+
+     <pre class="example">          (letrec-syntax
+              ((my-or (syntax-rules ()
+                        ((my-or)
+                         #f)
+                        ((my-or e)
+                         e)
+                        ((my-or e1 e2 ...)
+                         (let ((temp e1))
+                           (if temp
+                               temp
+                             (my-or e2 ...)))))))
+            (let ((x     #f)
+                  (y     7)
+                  (temp  8)
+                  (let   odd?)
+                  (if    even?))
+              (my-or x (let temp) (if y) y)))
+          &rArr; 7
+</pre>
+        <p>The following example highlights how <code>let-syntax</code> and
+<code>letrec-syntax</code> differ.
+
+     <pre class="example">          (let ((f (lambda (x) (+ x 1))))
+            (let-syntax ((f (syntax-rules ()
+                              ((f x) x)))
+                         (g (syntax-rules ()
+                              ((g x) (f x)))))
+              (list (f 1) (g 1))))
+          &rArr; (1 2)
+          
+          (let ((f (lambda (x) (+ x 1))))
+            (letrec-syntax ((f (syntax-rules ()
+                                 ((f x) x)))
+                            (g (syntax-rules ()
+                                 ((g x) (f x)))))
+              (list (f 1) (g 1))))
+          &rArr; (1 1)
+</pre>
+        <p>The two expressions are identical except that the <code>let-syntax</code> form
+in the first expression is a <code>letrec-syntax</code> form in the second. 
+In the first expression, the &lsquo;<samp><span class="samp">f</span></samp>&rsquo; occurring in &lsquo;<samp><span class="samp">g</span></samp>&rsquo; refers to
+the <code>let</code>&ndash;bound variable &lsquo;<samp><span class="samp">f</span></samp>&rsquo;, whereas in the second it refers
+to the keyword <code>f</code> whose binding is established by the
+<code>letrec-syntax</code> form. 
+</p></blockquote></div>
+
+<!-- page -->
+   </body></html>
+

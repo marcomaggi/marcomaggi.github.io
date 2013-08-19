@@ -1,0 +1,169 @@
+<html lang="en">
+<head>
+<title>stdlib records intro - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="stdlib-records.html#stdlib-records" title="stdlib records">
+<link rel="next" href="stdlib-records-mutability.html#stdlib-records-mutability" title="stdlib records mutability">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.3d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+        `http://sourceforge.net/projects/vicare-scheme/files/'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+and at:
+
+           `http://sourceforge.net/projects/vicare-scheme/'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the ``History'' appendix for details.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="stdlib-records-intro"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="stdlib-records-mutability.html#stdlib-records-mutability">stdlib records mutability</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="stdlib-records.html#stdlib-records">stdlib records</a>
+<hr>
+</div>
+
+<h4 class="subsection">5.6.1 Introduction</h4>
+
+<p>A record is a compound data structure with a fixed number of components,
+called <dfn>fields</dfn>.  Each record has an associated type specified by a
+<dfn>record-type descriptor</dfn>, which is an object that specifies the
+fields of the record and various other properties that all records of
+that type share.  Record objects are created by a <dfn>record
+constructor</dfn>, a procedure that creates a fresh record object and
+initializes its fields to values.  Records of different types can be
+distinguished from each other and from other types of objects by
+<dfn>record predicates</dfn>.  A record predicate returns <code>#t</code> when passed
+a record of the type specified by the record&ndash;type descriptor and
+<code>#f</code> otherwise.  An <dfn>accessor</dfn> extracts from a record the
+component associated with a field, and a <dfn>mutator</dfn> changes the
+component to a different value.
+
+   <p>Record types can be extended via single inheritance, allowing record
+types to model hierarchies that occur in applications like algebraic
+data types as well as single&ndash;inheritance class systems.  If a record
+type <var>t</var> extends another record type <var>p</var>, each record of type
+<var>t</var> is also a record of type <var>p</var>, and the predicate, accessors,
+and mutators applicable to a record of type <var>p</var> are also applicable
+to a record of type <var>t</var>.  The extension relationship is transitive
+in the sense that a type extends its parent's parent, if any, and so on. 
+A record type that does not extend another record type is called a
+<em>base record type</em>.
+
+   <p>A record type can be <em>sealed</em> to prevent it from being extended. 
+Moreover, a record type can be <em>nongenerative</em>, i.e., it is
+globally identified by a &ldquo;uid&rdquo;, and new, compatible definitions of a
+nongenerative record type with the same uid as a previous always yield
+the same record type.
+
+   <p>The record mechanism spans three libraries:
+
+     <dl>
+<dt><code>(rnrs records syntactic (6))</code><dd>Library, a syntactic layer for defining a record type and associated
+constructor, predicate, accessor, and mutators.
+
+     <br><dt><code>(rnrs records procedural (6))</code><dd>Library, a procedural layer for creating and manipulating record types
+and creating constructors, predicates, accessors, and mutators.
+
+     <br><dt><code>(rnrs records inspection (6))</code><dd>Library, a set of inspection procedures. 
+</dl>
+
+   <p>The inspection procedures allow programs to obtain from a record
+instance a descriptor for the type and from there obtain access to the
+fields of the record instance.  This facility allows the creation of
+portable printers and inspectors.  A program may prevent access to a
+record's type (and thereby protect the information stored in the record
+from the inspection mechanism) by declaring the type opaque.  Thus,
+opacity as presented here can be used to enforce abstraction barriers.
+
+   <p>Any of the standard types mentioned in this report may or may not be
+implemented as an opaque record type.  Thus, it may be possible to use
+inspection on objects of the standard types.
+
+   <p>The procedural layer is particularly useful for writing interpreters
+that construct host&ndash;compatible record types.  It may also serve as a
+target for expansion of the syntactic layers.  The record operations
+provided through the procedural layer may, however, be less efficient
+than the operations provided through the syntactic layer, which is
+designed to allow expand&ndash;time determination of record&ndash;instance sizes
+and field offsets.  Therefore, alternative implementations of syntactic
+record&ndash;type definition should, when possible, expand into the syntactic
+layer rather than the procedural layer.
+
+   <p>The syntactic layer is used more commonly and therefore described first. 
+This chapter uses the <var>rtd</var> and <var>constructor-descriptor</var>
+parameter names for arguments that must be record&ndash;type descriptors and
+constructor descriptors, respectively.
+
+<!-- page -->
+   </body></html>
+

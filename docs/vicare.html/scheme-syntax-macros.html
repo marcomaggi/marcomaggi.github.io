@@ -1,0 +1,157 @@
+<html lang="en">
+<head>
+<title>scheme syntax macros - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="scheme-syntax.html#scheme-syntax" title="scheme syntax">
+<link rel="prev" href="scheme-syntax-primitive.html#scheme-syntax-primitive" title="scheme syntax primitive">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.3d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+        `http://sourceforge.net/projects/vicare-scheme/files/'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+and at:
+
+           `http://sourceforge.net/projects/vicare-scheme/'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the ``History'' appendix for details.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="scheme-syntax-macros"></a>
+<p>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="scheme-syntax-primitive.html#scheme-syntax-primitive">scheme syntax primitive</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="scheme-syntax.html#scheme-syntax">scheme syntax</a>
+<hr>
+</div>
+
+<h4 class="subsection">3.9.2 Macros</h4>
+
+<p><a name="index-Transformer_002c-definition-of-154"></a><a name="index-Definition-of-transformer-155"></a><a name="index-Macro-transformer_002c-definition-of-156"></a><a name="index-Definition-of-macro-transformer-157"></a>
+
+   <p>Libraries and top&ndash;level programs can define and use new kinds of
+derived expressions and definitions called <dfn>syntactic abstractions</dfn>
+or <dfn>macros</dfn>.  A syntactic abstraction is created by binding a
+keyword to a <dfn>macro transformer</dfn> or, simply, <dfn>transformer</dfn>.
+
+   <p>The transformer determines how a use of the macro (called a <dfn>macro
+use</dfn>) is transcribed into a more primitive form.
+
+   <p>Most macro uses have the form:
+
+<pre class="example">     (<var>?keyword</var> <var>?datum</var> ...)
+</pre>
+   <p class="noindent">where <var>?keyword</var> is an identifier that uniquely determines the kind
+of form.  This identifier is called the <dfn>syntactic keyword</dfn>, or
+simply <dfn>keyword</dfn>.  The number of <var>?datum</var>s and the syntax of
+each depends on the syntactic abstraction.
+
+   <p>Macro uses can also take the form of improper lists, singleton
+identifiers, or <code>set!</code> forms, where the second subform of the
+<code>set!</code> is the keyword:
+
+<pre class="example">     (<var>?keyword</var> <var>?datum</var> ... . <var>?datum</var>)
+     <var>?keyword</var>
+     (set! <var>?keyword</var> <var>?datum</var>)
+</pre>
+   <p>The <code>define-syntax</code>, <code>let-syntax</code> and <code>letrec-syntax</code>
+forms create bindings for keywords, associate them with macro
+transformers, and control the scope within which they are visible.
+
+   <p>The <code>syntax-rules</code> and <code>identifier-syntax</code> forms create
+transformers via a pattern language.  Moreover, the <code>syntax-case</code>
+form allows creating transformers via arbitrary Scheme code.
+
+   <p>Keywords occupy the same name space as variables.  That is, within the
+same scope, an identifier can be bound as a variable or keyword, or
+neither, but not both, and local bindings of either kind may shadow
+other bindings of either kind.
+
+   <p>Macros defined using <code>syntax-rules</code> and <code>identifier-syntax</code>
+are &ldquo;hygienic&rdquo; and &ldquo;referentially transparent&rdquo; and thus preserve
+Scheme's lexical scoping.
+
+     <ul>
+<li>If a macro transformer inserts a binding for an identifier (variable or
+keyword) not appearing in the macro use, the identifier is in effect
+renamed throughout its scope to avoid conflicts with other identifiers.
+
+     <li>If a macro transformer inserts a free reference to an identifier, the
+reference refers to the binding that was visible where the transformer
+was specified, regardless of any local bindings that may surround the
+use of the macro. 
+</ul>
+
+   <p>Macros defined using the <code>syntax-case</code> facility are also hygienic
+unless <code>datum-&gt;syntax</code> is used.
+
+<!-- page -->
+   </body></html>
+

@@ -1,0 +1,193 @@
+<html lang="en">
+<head>
+<title>baselib math ops part - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="baselib-math-ops.html#baselib-math-ops" title="baselib math ops">
+<link rel="prev" href="baselib-math-ops-arithmetic.html#baselib-math-ops-arithmetic" title="baselib math ops arithmetic">
+<link rel="next" href="baselib-math-ops-trascend.html#baselib-math-ops-trascend" title="baselib math ops trascend">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.3d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+        `http://sourceforge.net/projects/vicare-scheme/files/'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+and at:
+
+           `http://sourceforge.net/projects/vicare-scheme/'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the ``History'' appendix for details.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="baselib-math-ops-part"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="baselib-math-ops-trascend.html#baselib-math-ops-trascend">baselib math ops trascend</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="baselib-math-ops-arithmetic.html#baselib-math-ops-arithmetic">baselib math ops arithmetic</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="baselib-math-ops.html#baselib-math-ops">baselib math ops</a>
+<hr>
+</div>
+
+<h5 class="subsubsection">4.6.4.6 Part separation</h5>
+
+<div class="defun">
+&mdash; Procedure: <b>numerator</b><var> q<a name="index-numerator-230"></a></var><br>
+&mdash; Procedure: <b>denominator</b><var> q<a name="index-denominator-231"></a></var><br>
+<blockquote><p>These procedures return the numerator or denominator of their argument;
+the result is computed as if the argument was represented as a fraction
+in lowest terms.  The denominator is always positive.  The denominator
+of <code>0</code> is defined to be <code>1</code>.
+
+     <pre class="example">          (numerator   (/ 6 4))           &rArr; 3
+          (denominator (/ 6 4))           &rArr; 2
+          (denominator (inexact (/ 6 4))) &rArr; 2.0
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Procedure: <b>floor</b><var> x<a name="index-floor-232"></a></var><br>
+&mdash; Procedure: <b>ceiling</b><var> x<a name="index-ceiling-233"></a></var><br>
+&mdash; Procedure: <b>truncate</b><var> x<a name="index-truncate-234"></a></var><br>
+&mdash; Procedure: <b>round</b><var> x<a name="index-round-235"></a></var><br>
+<blockquote><p>These procedures return inexact integer objects for inexact arguments
+that are not infinities or NaNs, and exact integer objects for exact
+rational arguments.
+
+          <dl>
+<dt><code>floor</code><dd>Returns the largest integer object not larger than <var>x</var>.
+
+          <br><dt><code>ceiling</code><dd>Returns the smallest integer object not smaller than <var>x</var>.
+
+          <br><dt><code>truncate</code><dd>Returns the integer object closest to <var>x</var> whose absolute value is
+not larger than the absolute value of <var>x</var>.
+
+          <br><dt><code>round</code><dd>Returns the closest integer object to <var>x</var>, rounding to even when
+<var>x</var> represents a number halfway between two integers (this conforms
+to <acronym>IEEE</acronym> 754 round to nearest mode). 
+</dl>
+
+        <p>If the argument to one of these procedures is inexact, then the result
+is also inexact.  If an exact value is needed, the result should be
+passed to the <code>exact</code> procedure.
+
+        <p>Although infinities and NaNs are not integer objects, these procedures
+return an infinity when given an infinity as an argument, and a NaN when
+given a NaN.
+
+     <pre class="example">          (floor -4.3)            &rArr; -5.0
+          (ceiling -4.3)          &rArr; -4.0
+          (truncate -4.3)         &rArr; -4.0
+          (round -4.3)            &rArr; -4.0
+          
+          (floor 3.5)             &rArr; 3.0
+          (ceiling 3.5)           &rArr; 4.0
+          (truncate 3.5)          &rArr; 3.0
+          (round 3.5)             &rArr; 4.0
+          
+          (round 7/2)             &rArr; 4
+          (round 7)               &rArr; 7
+          
+          (floor +inf.0)          &rArr; +inf.0
+          (ceiling -inf.0)        &rArr; -inf.0
+          (round +nan.0)          &rArr; +nan.0
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Procedure: <b>rationalize</b><var> x1 x2<a name="index-rationalize-236"></a></var><br>
+<blockquote><p>The <code>rationalize</code> procedure returns a number object representing
+the <em>simplest</em> rational number differing from <var>x1</var> by no more
+than <var>x2</var>.
+
+        <p>A rational number r_1 is <em>simpler</em> than another rational
+number r_2 if r_1 = p_1/q_1 and r_2 = p_2/q_2 (in
+lowest terms) and |p_1| &lt;= |p_2| and |q_1| &lt;= |q_2|.  Thus
+3/5 is simpler than 4/7.
+
+        <p>Although not all rationals are comparable in this ordering (consider
+2/7 and 3/5) any interval contains a rational number that
+is simpler than every other rational number in that interval (the
+simpler 2/5 lies between 2/7 and 3/5).
+
+        <p>Note that 0 = 0/1 is the simplest rational of all.
+
+     <pre class="example">          (rationalize (exact .3) 1/10)   &rArr; 1/3
+          (rationalize .3 1/10)           &rArr; #i1/3 ; approximately
+          
+          (rationalize +inf.0 3)          &rArr; +inf.0
+          (rationalize +inf.0 +inf.0)     &rArr; +nan.0
+          (rationalize 3 +inf.0)          &rArr; 0.0
+</pre>
+        <p>The first two examples hold only in implementations whose inexact real
+number objects have sufficient precision. 
+</p></blockquote></div>
+
+<!-- page -->
+   </body></html>
+

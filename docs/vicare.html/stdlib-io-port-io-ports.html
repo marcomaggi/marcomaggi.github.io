@@ -1,0 +1,225 @@
+<html lang="en">
+<head>
+<title>stdlib io port io ports - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="stdlib-io-port.html#stdlib-io-port" title="stdlib io port">
+<link rel="prev" href="stdlib-io-port-eof-object.html#stdlib-io-port-eof-object" title="stdlib io port eof object">
+<link rel="next" href="stdlib-io-port-input-ports.html#stdlib-io-port-input-ports" title="stdlib io port input ports">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.3d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+        `http://sourceforge.net/projects/vicare-scheme/files/'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+and at:
+
+           `http://sourceforge.net/projects/vicare-scheme/'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the ``History'' appendix for details.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="stdlib-io-port-io-ports"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="stdlib-io-port-input-ports.html#stdlib-io-port-input-ports">stdlib io port input ports</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="stdlib-io-port-eof-object.html#stdlib-io-port-eof-object">stdlib io port eof object</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="stdlib-io-port.html#stdlib-io-port">stdlib io port</a>
+<hr>
+</div>
+
+<h5 class="subsubsection">5.8.2.6 Input and output ports</h5>
+
+<p>The operations described in this section are common to input and output
+ports, both binary and textual.  A port may also have an associated
+<em>position</em> that specifies a particular place within its data sink
+or source, and may also provide operations for inspecting and setting
+that place.
+
+<div class="defun">
+&mdash; Procedure: <b>port?</b><var> obj<a name="index-port_003f-676"></a></var><br>
+<blockquote><p>Return <code>#t</code> if the argument is a port, <code>#f</code> otherwise. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Procedure: <b>port-transcoder</b><var> port<a name="index-port_002dtranscoder-677"></a></var><br>
+<blockquote><p>Return the transcoder associated with <var>port</var> if <var>port</var> is
+textual and has an associated transcoder, and returns <code>#f</code> if
+<var>port</var> is binary or does not have an associated transcoder. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Procedure: <b>textual-port?</b><var> port<a name="index-textual_002dport_003f-678"></a></var><br>
+&mdash; Procedure: <b>binary-port?</b><var> port<a name="index-binary_002dport_003f-679"></a></var><br>
+<blockquote><p>The <code>textual-port?</code> procedure returns <code>#t</code> if <var>port</var> is
+textual, and returns <code>#f</code> otherwise.
+
+        <p>The <code>binary-port?</code>  procedure returns <code>#t</code> if <var>port</var> is
+binary, and returns <code>#f</code> otherwise. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Procedure: <b>transcoded-port</b><var> binary-port transcoder<a name="index-transcoded_002dport-680"></a></var><br>
+<blockquote><p>The <code>transcoded-port</code> procedure returns a new textual port with the
+specified <var>transcoder</var>.  Otherwise the new textual port's state is
+largely the same as that of <var>binary-port</var>.
+
+        <p>If <var>binary-port</var> is an input port, the new textual port will be an
+input port and will transcode the bytes that have not yet been read from
+<var>binary-port</var>.  If <var>binary-port</var> is an output port, the new
+textual port will be an output port and will transcode output characters
+into bytes that are written to the byte sink represented by
+<var>binary-port</var>.
+
+        <p>As a side effect, however, <code>transcoded-port</code> closes
+<var>binary-port</var> in a special way that allows the new textual port to
+continue to use the byte source or sink represented by
+<var>binary-port</var>, even though <var>binary-port</var> itself is closed and
+cannot be used by the input and output operations described in this
+chapter. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Procedure: <b>port-has-port-position?</b><var> port<a name="index-port_002dhas_002dport_002dposition_003f-681"></a></var><br>
+&mdash; Procedure: <b>port-position</b><var> port<a name="index-port_002dposition-682"></a></var><br>
+<blockquote><p>The <code>port-has-port-position?</code> procedure returns <code>#t</code> if the port
+supports the <code>port-position</code> operation, and <code>#f</code> otherwise.
+
+        <p>For a binary port, <code>port-position</code> returns the index of the
+position at which the next byte would be read from or written to the
+port as an exact non&ndash;negative integer object.  For a textual port,
+<code>port-position</code> returns a value of some implementation&ndash;dependent
+type representing the port's position; this value may be useful only as
+the <var>pos</var> argument to <code>set-port-position!</code>, if the latter is
+supported on the port (see below).
+
+        <p>If the port does not support the operation, <code>port-position</code> raises
+an exception with condition type <code>&amp;assertion</code>.
+
+        <blockquote>
+<strong>NOTE</strong> For a textual port, the port position may or may not be an
+integer object.  If it is an integer object, the integer object does not
+necessarily correspond to a byte or character position. 
+</blockquote>
+        </p></blockquote></div>
+
+<div class="defun">
+&mdash; Procedure: <b>port-has-set-port-position!?</b><var> port<a name="index-port_002dhas_002dset_002dport_002dposition_0021_003f-683"></a></var><br>
+&mdash; Procedure: <b>set-port-position!</b><var> port pos<a name="index-set_002dport_002dposition_0021-684"></a></var><br>
+<blockquote><p>If <var>port</var> is a binary port, <var>pos</var> should be a non&ndash;negative
+exact integer object.  If <var>port</var> is a textual port, <var>pos</var> should
+be the return value of a call to <code>port-position</code> on <var>port</var>.
+
+        <p>The <code>port-has-set-port-position!?</code> procedure returns <code>#t</code> if the
+port supports the <code>set-port-position!</code> operation, and <code>#f</code>
+otherwise.
+
+        <p>The <code>set-port-position!</code> procedure raises an exception with
+condition type <code>&amp;assertion</code> if the port does not support the
+operation, and an exception with condition type
+<code>&amp;i/o-invalid-position</code> if <var>pos</var> is not in the range of valid
+positions of <var>port</var>.  Otherwise, it sets the current position of the
+port to <var>pos</var>.  If <var>port</var> is an output port,
+<code>set-port-position!</code> first flushes <var>port</var>.
+
+        <p>If <var>port</var> is a binary output port and the current position is set
+beyond the current end of the data in the underlying data sink, the
+object is not extended until new data is written at that position.  The
+contents of any intervening positions are unspecified.  Binary ports
+created by <code>open-file-output-port</code> and
+<code>open-file-input/output-port</code> can always be extended in this manner
+within the limits of the underlying operating system.  In other cases,
+attempts to set the port beyond the current end of data in the
+underlying object may result in an exception with condition type
+<code>&amp;i/o-invalid-position</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Procedure: <b>close-port</b><var> port<a name="index-close_002dport-685"></a></var><br>
+<blockquote><p>Closes the port, rendering the port incapable of delivering or accepting
+data.  If <var>port</var> is an output port, it is flushed before being
+closed.  This has no effect if the port has already been closed.  A
+closed port is still a port.  The <code>close-port</code> procedure returns
+unspecified values. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Procedure: <b>call-with-port</b><var> port proc<a name="index-call_002dwith_002dport-686"></a></var><br>
+<blockquote><p><var>proc</var> must accept one argument.  The <code>call-with-port</code>
+procedure calls <var>proc</var> with <var>port</var> as an argument.  If
+<var>proc</var> returns, <var>port</var> is closed automatically and the values
+returned by <var>proc</var> are returned.  If <var>proc</var> does not return,
+<var>port</var> is not closed automatically, except perhaps when it is
+possible to prove that <var>port</var> will never again be used for an input
+or output operation. 
+</p></blockquote></div>
+
+<!-- page -->
+   </body></html>
+

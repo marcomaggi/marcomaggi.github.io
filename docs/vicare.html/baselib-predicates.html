@@ -1,0 +1,370 @@
+<html lang="en">
+<head>
+<title>baselib predicates - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="baselib.html#baselib" title="baselib">
+<link rel="prev" href="baselib-expressions.html#baselib-expressions" title="baselib expressions">
+<link rel="next" href="baselib-math.html#baselib-math" title="baselib math">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.3d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+        `http://sourceforge.net/projects/vicare-scheme/files/'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+and at:
+
+           `http://sourceforge.net/projects/vicare-scheme/'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the ``History'' appendix for details.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="baselib-predicates"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="baselib-math.html#baselib-math">baselib math</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="baselib-expressions.html#baselib-expressions">baselib expressions</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="baselib.html#baselib">baselib</a>
+<hr>
+</div>
+
+<h3 class="section">4.5 Equivalence and procedure predicates</h3>
+
+<p>A <em>predicate</em> is a procedure that always returns a boolean value
+(<code>#t</code> or <code>#f</code>).  An <em>equivalence predicate</em> is the
+computational analogue of a mathematical equivalence relation (it is
+symmetric, reflexive, and transitive).  Of the equivalence predicates
+described in this section, <code>eq?</code> is the finest or most
+discriminating, and <code>equal?</code> is the coarsest.  The <code>eqv?</code>
+predicate is slightly less discriminating than <code>eq?</code>.
+
+<div class="defun">
+&mdash; Procedure: <b>eqv?</b><var> obj1 obj2<a name="index-eqv_003f-184"></a></var><br>
+<blockquote><p>The <code>eqv?</code> procedure defines a useful equivalence relation on
+objects.  Briefly, it returns <code>#t</code> if <var>obj1</var> and <var>obj2</var>
+should normally be regarded as the same object and <code>#f</code> otherwise. 
+This relation is left slightly open to interpretation, but the following
+partial specification of <code>eqv?</code> must hold for all implementations.
+
+        <p>The <code>eqv?</code> procedure returns <code>#t</code> if one of the following holds:
+
+          <ul>
+<li><var>obj1</var> and <var>obj2</var> are both booleans and are the same according
+to the <code>boolean=?</code> procedure.
+
+          <li><var>obj1</var> and <var>obj2</var> are both symbols and are the same according
+to the <code>symbol=?</code> procedure.
+
+          <li><var>obj1</var> and <var>obj2</var> are both exact number objects and are
+numerically equal (see <code>=</code>).
+
+          <li><var>obj1</var> and <var>obj2</var> are both inexact number objects, are
+numerically equal (see <code>=</code>), and yield the same results (in the
+sense of <code>eqv?</code>) when passed as arguments to any other procedure
+that can be defined as a finite composition of Scheme's standard
+arithmetic procedures.
+
+          <li><var>obj1</var> and <var>obj2</var> are both characters and are the same
+character according to the <code>char=?</code> procedure.
+
+          <li>Both <var>obj1</var> and <var>obj2</var> are the empty list.
+
+          <li><var>obj1</var> and <var>obj2</var> are objects such as pairs, vectors,
+bytevectors (library chapter &ldquo;Bytevectors&rdquo;), strings, records (library
+chapter &ldquo;Records&rdquo;), ports (library section &ldquo;Port I/O&rdquo;), or
+hashtables (library chapter &ldquo;Hash tables&rdquo;) that refer to the same
+locations in the store.
+
+          <li><var>obj1</var> and <var>obj2</var> are record&ndash;type descriptors that are
+specified to be <code>eqv?</code> in library section &ldquo;Procedural layer&rdquo;. 
+</ul>
+
+        <p>The <code>eqv?</code> procedure returns <code>#f</code> if one of the following
+holds:
+
+          <ul>
+<li><var>obj1</var> and <var>obj2</var> are of different types.
+
+          <li><var>obj1</var> and <var>obj2</var> are booleans for which the <code>boolean=?</code>
+procedure returns <code>#f</code>.
+
+          <li><var>Obj1</var> and <var>obj2</var> are symbols for which the <code>symbol=?</code>
+procedure returns <code>#f</code>.
+
+          <li>One of <var>obj1</var> and <var>obj2</var> is an exact number object but the
+other is an inexact number object.
+
+          <li><var>obj1</var> and <var>obj2</var> are rational number objects for which the
+<code>=</code> procedure returns <code>#f</code>.
+
+          <li><var>Obj1</var> and <var>obj2</var> yield different results (in the sense of
+<code>eqv?</code>) when passed as arguments to any other procedure that can be
+defined as a finite composition of Scheme's standard arithmetic
+procedures.
+
+          <li><var>obj1</var> and <var>obj2</var> are characters for which the <code>char=?</code>
+procedure returns <code>#f</code>.
+
+          <li>One of <var>obj1</var> and <var>obj2</var> is the empty list, but the other is
+not.
+
+          <li><var>obj1</var> and <var>obj2</var> are objects such as pairs, vectors,
+bytevectors (library chapter &ldquo;Bytevectors&rdquo;), strings, records (library
+chapter &ldquo;Records&rdquo;), ports (library section &ldquo;Port I/O&rdquo;), or
+hashtables (library chapter &ldquo;Hashtables&rdquo;) that refer to distinct
+locations.
+
+          <li><var>obj1</var> and <var>obj2</var> are pairs, vectors, strings, or records, or
+hashtables, where the applying the same accessor (i.e. <code>car</code>,
+<code>cdr</code>, <code>vector-ref</code>, <code>string-ref</code>, or record accessors)
+to both yields results for which <code>eqv?</code> returns <code>#f</code>.
+
+          <li><var>obj1</var> and <var>obj2</var> are procedures that would behave differently
+(return different values or have different side effects) for some
+arguments. 
+</ul>
+
+        <blockquote>
+<strong>NOTE</strong> The <code>eqv?</code> procedure returning <code>#t</code> when <var>obj1</var>
+and <var>obj2</var> are number objects does not imply that <code>=</code> would
+also return <code>#t</code> when called with <var>obj1</var> and <var>obj2</var> as
+arguments. 
+</blockquote>
+
+     <pre class="example">          (eqv? 'a 'a)                     &rArr; #t
+          (eqv? 'a 'b)                     &rArr; #f
+          (eqv? 2 2)                       &rArr; #t
+          (eqv? '() '())                   &rArr; #t
+          (eqv? 100000000 100000000)       &rArr; #t
+          (eqv? (cons 1 2) (cons 1 2))     &rArr; #f
+          (eqv? (lambda () 1)
+                (lambda () 2))             &rArr; #f
+          (eqv? #f 'nil)                   &rArr; #f
+</pre>
+        <p>The following examples illustrate cases in which the above rules do not
+fully specify the behavior of <code>eqv?</code>.  All that can be said about
+such cases is that the value returned by <code>eqv?</code> must be a boolean.
+
+     <pre class="example">          (let ((p (lambda (x) x)))
+            (eqv? p p))                   &rArr; unspecified
+          
+          (eqv? "" "")                    &rArr; unspecified
+          
+          (eqv? '#() '#())                &rArr; unspecified
+          
+          (eqv? (lambda (x) x)
+                (lambda (x) x))           &rArr; unspecified
+          
+          (eqv? (lambda (x) x)
+                (lambda (y) y))           &rArr; unspecified
+          
+          (eqv? +nan.0 +nan.0)            &rArr; unspecified
+</pre>
+        <p>The next set of examples shows the use of <code>eqv?</code> with procedures
+that have local state.  Calls to <code>gen-counter</code> must return a
+distinct procedure every time, since each procedure has its own internal
+counter.  Calls to <code>gen-loser</code> return procedures that behave
+equivalently when called.  However, <code>eqv?</code> may not detect this
+equivalence.
+
+     <pre class="example">          (define gen-counter
+            (lambda ()
+              (let ((n 0))
+                (lambda () (set! n (+ n 1)) n))))
+          (let ((g (gen-counter)))
+            (eqv? g g))           &rArr;  unspecified
+          (eqv? (gen-counter) (gen-counter))
+                                  &rArr;  #f
+          (define gen-loser
+            (lambda ()
+              (let ((n 0))
+                (lambda () (set! n (+ n 1)) 27))))
+          (let ((g (gen-loser)))
+            (eqv? g g))           &rArr;  unspecified
+          (eqv? (gen-loser) (gen-loser))
+                                  &rArr;  unspecified
+          
+          (letrec ((f (lambda () (if (eqv? f g) 'both 'f)))
+                   (g (lambda () (if (eqv? f g) 'both 'g))))
+            (eqv? f g)) &rArr; unspecified
+          
+          (letrec ((f (lambda () (if (eqv? f g) 'f 'both)))
+                   (g (lambda () (if (eqv? f g) 'g 'both))))
+            (eqv? f g)) &rArr; #f
+</pre>
+        <p>Implementations may share structure between constants where appropriate. 
+Furthermore, a constant may be copied at any time by the implementation
+so as to exist simultaneously in different sets of locations.  Thus the
+value of <code>eqv?</code> on constants is sometimes
+implementation&ndash;dependent.
+
+     <pre class="example">          (eqv? '(a) '(a))                 &rArr; unspecified
+          (eqv? "a" "a")                   &rArr; unspecified
+          (eqv? '(b) (cdr '(a b)))         &rArr; unspecified
+          (let ((x '(a)))
+            (eqv? x x))                    &rArr; #t
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Procedure: <b>eq?</b><var> obj1 obj2<a name="index-eq_003f-185"></a></var><br>
+<blockquote><p>The <code>eq?</code> predicate is similar to <code>eqv?</code> except that in some
+cases it is capable of discerning distinctions finer than those
+detectable by <code>eqv?</code>.
+
+        <p>The <code>eq?</code> and <code>eqv?</code> predicates are guaranteed to have the
+same behavior on symbols, booleans, the empty list, pairs, procedures,
+non&ndash;empty strings, bytevectors, vectors, and records.  The behavior of
+<code>eq?</code> on number objects and characters is
+implementation&ndash;dependent, but it always returns either <code>#t</code> or
+<code>#f</code>, and returns <code>#t</code> only when <code>eqv?</code> would also return
+<code>#t</code>.  The <code>eq?</code> predicate may also behave differently from
+<code>eqv?</code> on empty vectors, empty bytevectors, and empty strings.
+
+     <pre class="example">          (eq? 'a 'a)                     &rArr; #t
+          (eq? '(a) '(a))                 &rArr; unspecified
+          (eq? (list 'a) (list 'a))       &rArr; #f
+          (eq? "a" "a")                   &rArr; unspecified
+          (eq? "" "")                     &rArr; unspecified
+          (eq? '() '())                   &rArr; #t
+          (eq? 2 2)                       &rArr; unspecified
+          (eq? #\A #\A)                   &rArr; unspecified
+          (eq? car car)                   &rArr; #t
+          (let ((n (+ 2 3)))
+            (eq? n n))                    &rArr; unspecified
+          (let ((x '(a)))
+            (eq? x x))                    &rArr; #t
+          (let ((x '#()))
+            (eq? x x))                    &rArr; unspecified
+          (let ((p (lambda (x) x)))
+            (eq? p p))                    &rArr; unspecified
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Procedure: <b>equal?</b><var> obj1 obj2<a name="index-equal_003f-186"></a></var><br>
+<blockquote><p>The <code>equal?</code>  predicate returns <code>#t</code> if and only if the
+(possibly infinite) unfoldings of its arguments into regular trees are
+equal as ordered trees.
+
+        <p>The <code>equal?</code> predicate treats pairs and vectors as nodes with
+outgoing edges, uses <code>string=?</code> to compare strings, uses
+<code>bytevector=?</code> to compare bytevectors (<a href="stdlib-bytevector.html#stdlib-bytevector">stdlib bytevector</a>),
+and uses <code>eqv?</code> to compare other nodes.
+
+     <pre class="example">          (equal? 'a 'a)                  &rArr;  #t
+          
+          (equal? '(a) '(a))              &rArr;  #t
+          
+          (equal? '(a (b) c)
+                  '(a (b) c))             &rArr;  #t
+          
+          (equal? "abc" "abc")            &rArr;  #t
+          
+          (equal? 2 2)                    &rArr;  #t
+          
+          (equal? (make-vector 5 'a)
+                  (make-vector 5 'a))     &rArr;  #t
+          
+          (equal? '#vu8(1 2 3 4 5)
+                  (u8-list-&gt;bytevector
+                   '(1 2 3 4 5))          &rArr;  #t
+          
+          (equal? (lambda (x) x)
+                  (lambda (y) y))         &rArr;  unspecified
+          
+          (let* ((x (list 'a))
+                 (y (list 'a))
+                 (z (list x y)))
+            (list (equal? z (list y x))
+                  (equal? z (list x x)))) &rArr;  (#t #t)
+</pre>
+        <blockquote>
+<strong>NOTE</strong> The <code>equal?</code> procedure must always terminate, even if
+its arguments contain cycles. 
+</blockquote>
+        </p></blockquote></div>
+
+<!--  -->
+<h5 class="subsubheading">Procedure predicate</h5>
+
+<div class="defun">
+&mdash; Procedure: <b>procedure?</b><var> obj<a name="index-procedure_003f-187"></a></var><br>
+<blockquote><p>Return <code>#t</code> if <var>obj</var> is a procedure, otherwise return <code>#f</code>.
+
+     <pre class="example">          (procedure? car)                        &rArr; #t
+          (procedure? 'car)                       &rArr; #f
+          (procedure? (lambda (x) (* x x)))       &rArr; #t
+          (procedure? '(lambda (x) (* x x)))      &rArr; #f
+</pre>
+        </blockquote></div>
+
+<!-- page -->
+   </body></html>
+

@@ -10,7 +10,7 @@
 <link rel="next" href="machinery-continuations-escape.html#machinery-continuations-escape" title="machinery continuations escape">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
-This document describes version 0.3d0 of Vicare Scheme, an
+This document describes version 0.3d1 of Vicare Scheme, an
 R6RS compliant native compiler for the Scheme language, producing
 single threaded programs running on Intel x86 32-bit processors, with
 experimental support for 64-bit machines.  _Vicare_ is pronounced
@@ -52,6 +52,8 @@ Copyright (C) 2010-2013 by Marco Maggi.
 
 Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
 
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
 This document is derived from the original Ikarus documentation by the
 Vicare Scheme contributors, see the ``History'' appendix for details.
 
@@ -92,7 +94,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="machinery-continuations.html#machinery-
 <hr>
 </div>
 
-<h4 class="subsection">16.5.4 Subordinate function calls with non&ndash;invoked continuation</h4>
+<h4 class="subsection">19.5.4 Subordinate function calls with non&ndash;invoked continuation</h4>
 
 <p>We assume the validity of machinery simplifications to focus on some
 aspect of the runtime behaviour, <a href="machinery-simplifications.html#machinery-simplifications">Simplification assumptions</a>.  Let's consider the following program that
@@ -135,7 +137,7 @@ creates a continuation but does <strong>not</strong> call its escape function:
      |                      |
             low memory
 </pre>
-   <p><strong class="float-caption">Figure 16.17: Stack right after the call to <code>call/cc</code> but before
+   <p><strong class="float-caption">Figure 19.17: Stack right after the call to <code>call/cc</code> but before
 <code>call/cc</code> does something.</strong></p></div>
 
    <p>For convenience we give a name to the closure <code>(lambda (escape) (+
@@ -167,7 +169,7 @@ below <code>pcb-&gt;frame_base</code>, <a href="fig_003aMCN_005fcallcc_005ffreez
      |                      |
             low memory
 </pre>
-   <p><strong class="float-caption">Figure 16.18: Region of stack freezed by <code>call/cc</code>.</strong></p></div>
+   <p><strong class="float-caption">Figure 19.18: Region of stack freezed by <code>call/cc</code>.</strong></p></div>
 
    <p>The continuation object references the array of freezed words on the
 stack, keeping a reference to the value of <acronym>FPR</acronym> at the time of
@@ -189,7 +191,7 @@ following:
                                        |
                                    next -----&gt; NULL
 </pre>
-     <p><strong class="float-caption">Figure 16.19: Continuation object K_1 inserted as new &ldquo;next <acronym>PCB</acronym>
+     <p><strong class="float-caption">Figure 19.19: Continuation object K_1 inserted as new &ldquo;next <acronym>PCB</acronym>
 continuation&rdquo;.</strong></p></div>
 
         <li>Create a closure object implementing the escape function associated to
@@ -206,7 +208,7 @@ single slot for free variables references the continuation object.
              |
               --------------&gt; |------| code object
 </pre>
-        <p><strong class="float-caption">Figure 16.20: Closure object implementing the escape function for
+        <p><strong class="float-caption">Figure 19.20: Closure object implementing the escape function for
 K_1.</strong></p></div>
 
         <li>Prepare the application of the receiver closure to the escape function:
@@ -241,7 +243,7 @@ freezed frames from the stack segment;
                  low memory
           
 </pre>
-        <p><strong class="float-caption">Figure 16.21: Stack right before the call to the receiver closure.</strong></p></div>
+        <p><strong class="float-caption">Figure 19.21: Stack right before the call to the receiver closure.</strong></p></div>
 
         <li>Perform a direct jump to the entry point of the receiver closure without
 pushing a return address on the stack.  The <acronym>FPR</acronym> is left referencing
@@ -277,7 +279,7 @@ executed by the <acronym>CPU</acronym>, <a href="fig_003aMCN_005fcallcc_005fafte
      |                      |
             low memory
 </pre>
-   <p><strong class="float-caption">Figure 16.22: Stack right before the receiver closure executes the <code>ret</code>
+   <p><strong class="float-caption">Figure 19.22: Stack right before the receiver closure executes the <code>ret</code>
 Assembly instruction; the single return value is in <acronym>AAR</acronym>.</strong></p></div>
 
    <p>The <acronym>FPR</acronym> references the underflow handler, so the <code>ret</code>
@@ -313,7 +315,7 @@ continuation object K_2 referencing all the other frames,
           |                      |
                  low memory
 </pre>
-     <p><strong class="float-caption">Figure 16.23: Continuation object K_1 mutated to reference a single
+     <p><strong class="float-caption">Figure 19.23: Continuation object K_1 mutated to reference a single
 frame.</strong></p></div>
 
         <li>Insert K_2 in the linked list of continuation objects after
@@ -331,7 +333,7 @@ K_1 and register it as the new &ldquo;next <acronym>PCB</acronym> continuation&r
                                              |
                                          next -----&gt; NULL
 </pre>
-        <p><strong class="float-caption">Figure 16.24: Continuation object K_2 inserted as new &ldquo;next
+        <p><strong class="float-caption">Figure 19.24: Continuation object K_2 inserted as new &ldquo;next
 continuation&rdquo;.</strong></p></div>
 
         <li>Duplicate the stack frame referenced by K_1 below the address of
@@ -364,7 +366,7 @@ of the frame, <a href="fig_003aMCN_005fcallcc_005fK1_005fcopy.html#fig_003aMCN_0
           |                      |
                  low memory
 </pre>
-        <p><strong class="float-caption">Figure 16.25: Stack frame in K_1 duplicated below the underflow
+        <p><strong class="float-caption">Figure 19.25: Stack frame in K_1 duplicated below the underflow
 handler address.</strong></p></div>
 
         <li>There is a single return value, so: perform a <code>ret</code> Assembly
@@ -399,7 +401,7 @@ instruction.
      |                      |
             low memory
 </pre>
-   <p><strong class="float-caption">Figure 16.26: Stack right before <code>beta</code> executes the <code>ret</code> Assembly
+   <p><strong class="float-caption">Figure 19.26: Stack right before <code>beta</code> executes the <code>ret</code> Assembly
 instruction; the return value is in the <acronym>AAR</acronym>.</strong></p></div>
 
    <p>The stack underflow handler is reentered and does the following:
@@ -433,7 +435,7 @@ continuation object K_3 referencing all the other frames,
           |                      |
                  low memory
 </pre>
-     <p><strong class="float-caption">Figure 16.27: Continuation object K_2 mutated to reference a single
+     <p><strong class="float-caption">Figure 19.27: Continuation object K_2 mutated to reference a single
 frame.</strong></p></div>
 
         <li>Insert K_3 in the linked list of continuation objects after
@@ -453,7 +455,7 @@ K_2 and register it as the new &ldquo;next <acronym>PCB</acronym> continuation&r
                                                       |
                                                   next -----&gt; NULL
 </pre>
-        <p><strong class="float-caption">Figure 16.28: Continuation object K_2 inserted as new &ldquo;next
+        <p><strong class="float-caption">Figure 19.28: Continuation object K_2 inserted as new &ldquo;next
 continuation&rdquo;.</strong></p></div>
 
         <li>Duplicate the stack frame referenced by K_2 below the address of
@@ -486,7 +488,7 @@ of the frame, <a href="fig_003aMCN_005fcallcc_005fK2_005fcopy.html#fig_003aMCN_0
           |                      |
                  low memory
 </pre>
-        <p><strong class="float-caption">Figure 16.29: Stack frame in K_2 duplicated below the underflow
+        <p><strong class="float-caption">Figure 19.29: Stack frame in K_2 duplicated below the underflow
 handler address.</strong></p></div>
 
         <li>There is a single return value, so: perform a <code>ret</code> Assembly
@@ -521,7 +523,7 @@ instruction.
      |                      |
             low memory
 </pre>
-   <p><strong class="float-caption">Figure 16.30: Stack right before <code>alpha</code> executes the <code>ret</code>
+   <p><strong class="float-caption">Figure 19.30: Stack right before <code>alpha</code> executes the <code>ret</code>
 Assembly instruction; the return value is in the <acronym>AAR</acronym>.</strong></p></div>
 
    <p>The stack underflow handler is reentered and does the following:
@@ -544,7 +546,7 @@ K_3, <a href="fig_003aMCN_005fcallcc_005fnext_005fk_005fK3.html#fig_003aMCN_005f
                                                       |
                                                   next -----&gt; NULL
 </pre>
-     <p><strong class="float-caption">Figure 16.31: Continuation object K_3 removed from the <acronym>PCB</acronym>.</strong></p></div>
+     <p><strong class="float-caption">Figure 19.31: Continuation object K_3 removed from the <acronym>PCB</acronym>.</strong></p></div>
 
         <li>Duplicate the stack frame referenced by K_3 below the address of
 the underflow handler, adjust the <acronym>FPR</acronym> to reference the return address
@@ -574,7 +576,7 @@ of the frame, <a href="fig_003aMCN_005fcallcc_005fK3_005fcopy.html#fig_003aMCN_0
           |                      |
                  low memory
 </pre>
-        <p><strong class="float-caption">Figure 16.32: Stack frame in K_3 duplicated below the underflow
+        <p><strong class="float-caption">Figure 19.32: Stack frame in K_3 duplicated below the underflow
 handler address.</strong></p></div>
 
         <li>There is a single return value, so: perform a <code>ret</code> Assembly
@@ -609,7 +611,7 @@ already in the <acronym>AAR</acronym>: it executes a <code>ret</code> Assembly i
      |                      |
             low memory
 </pre>
-   <p><strong class="float-caption">Figure 16.33: Stack right before the top level expression executes the
+   <p><strong class="float-caption">Figure 19.33: Stack right before the top level expression executes the
 <code>ret</code> Assembly instruction; the return value is in the <acronym>AAR</acronym>.</strong></p></div>
 
    <p>The underflow handler is reentered again with <code>NULL</code> as &ldquo;next <acronym>PCB</acronym>

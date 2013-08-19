@@ -10,7 +10,7 @@
 <link rel="next" href="posix-socket-addresses-in6.html#posix-socket-addresses-in6" title="posix socket addresses in6">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
-This document describes version 0.3d0 of Vicare Scheme, an
+This document describes version 0.3d1 of Vicare Scheme, an
 R6RS compliant native compiler for the Scheme language, producing
 single threaded programs running on Intel x86 32-bit processors, with
 experimental support for 64-bit machines.  _Vicare_ is pronounced
@@ -52,6 +52,8 @@ Copyright (C) 2010-2013 by Marco Maggi.
 
 Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
 
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
 This document is derived from the original Ikarus documentation by the
 Vicare Scheme contributors, see the ``History'' appendix for details.
 
@@ -92,7 +94,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="posix-socket-addresses.html#posix-socke
 <hr>
 </div>
 
-<h5 class="subsubsection">5.14.1.2 <acronym>IP</acronym>v4 addresses</h5>
+<h5 class="subsubsection">8.14.1.2 <acronym>IP</acronym>v4 addresses</h5>
 
 <p>Instances of <code>struct sockaddr_in</code> can be handled at the Scheme
 level as follows:
@@ -123,7 +125,7 @@ level as follows:
    <p class="noindent">care must be taken when handling such raw values.
 
 <div class="defun">
-&mdash; Function: <b>make-sockaddr_in</b><var> host-address port<a name="index-make_002dsockaddr_005fin-1198"></a></var><br>
+&mdash; Function: <b>make-sockaddr_in</b><var> host-address port<a name="index-make_002dsockaddr_005fin-2193"></a></var><br>
 <blockquote><p>Given a bytevector <var>host-address</var> holding a <code>struct in_addr</code>
 and a fixnum <var>port</var> representing a network port number, build and
 return a bytevector holding a <code>struct sockaddr_in</code> initialised with
@@ -134,17 +136,39 @@ before storing the value in the data structure.
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>sockaddr_in.in_addr</b><var> socket-address<a name="index-sockaddr_005fin_002ein_005faddr-1199"></a></var><br>
-&mdash; Function: <b>sockaddr_in.in_port</b><var> socket-address<a name="index-sockaddr_005fin_002ein_005fport-1200"></a></var><br>
+&mdash; Function: <b>sockaddr_in.in_addr</b><var> socket-address<a name="index-sockaddr_005fin_002ein_005faddr-2194"></a></var><br>
+&mdash; Function: <b>sockaddr_in.in_addr.number</b><var> socket-address<a name="index-sockaddr_005fin_002ein_005faddr_002enumber-2195"></a></var><br>
+&mdash; Function: <b>sockaddr_in.in_port</b><var> socket-address<a name="index-sockaddr_005fin_002ein_005fport-2196"></a></var><br>
 <blockquote><p>Given a bytevector <var>socket-address</var> holding a <code>struct
 sockaddr_in</code>, extract the <code>in_addr</code> and <code>in_port</code> fields and
-return them as bytevector holding the corresponding <code>struct
-in_addr</code> and as fixnum.  If the data in <var>socket_address</var> is invalid:
-an exception is raised.
+return them.  If the data in <var>socket_address</var> is invalid: an
+exception is raised.
 
-        <p>Internally convert the port number to host byte order using
-<code>ntohs()</code> after the extraction of the value from the data structure. 
-</p></blockquote></div>
+        <p><code>sockaddr_in.in_addr</code> returns <code>in_addr</code> as bytevector holding
+the corresponding <code>struct in_addr</code>.
+
+     <pre class="example">          (let ((sockaddr (px.make-sockaddr_in '#vu8(127 0 0 1) 88)))
+            (px.sockaddr_in.in_addr sockaddr))
+          &rArr; #vu8(127 0 0 1)
+</pre>
+        <p><code>sockaddr_in.in_addr.number</code> returns <code>in_addr</code> as 32-bit
+unsigned exact integer; internally it converts the address number to
+host byte order using <code>ntohl()</code> after the extraction of the value
+from the data structure.
+
+     <pre class="example">          (let ((sockaddr (px.make-sockaddr_in '#vu8(127 0 0 1) 88)))
+            (px.sockaddr_in.in_addr.number sockaddr))
+          &rArr; #x7f000001
+</pre>
+        <p><code>sockaddr_in.in_port</code> returns <code>in_port</code> as exact integer;
+internally it converts the port number to host byte order using
+<code>ntohs()</code> after the extraction of the value from the data structure.
+
+     <pre class="example">          (let ((sockaddr (px.make-sockaddr_in '#vu8(127 0 0 1) 88)))
+            (px.sockaddr_in.in_port sockaddr))
+          &rArr; 88
+</pre>
+        </blockquote></div>
 
 <!-- page -->
    </body></html>

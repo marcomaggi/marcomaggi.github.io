@@ -1,0 +1,162 @@
+<html lang="en">
+<head>
+<title>scheme library form body - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="scheme-library-form.html#scheme-library-form" title="scheme library form">
+<link rel="prev" href="scheme-library-form-conflicts.html#scheme-library-form-conflicts" title="scheme library form conflicts">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.3d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+        `http://sourceforge.net/projects/vicare-scheme/files/'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+and at:
+
+           `http://sourceforge.net/projects/vicare-scheme/'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the ``History'' appendix for details.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="scheme-library-form-body"></a>
+<p>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="scheme-library-form-conflicts.html#scheme-library-form-conflicts">scheme library form conflicts</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="scheme-library-form.html#scheme-library-form">scheme library form</a>
+<hr>
+</div>
+
+<h5 class="subsubsection">3.7.1.7 Library bodies</h5>
+
+<p>The <var>?library-body</var> of a <code>library</code> form consists of forms that
+are classified as <em>definitions</em> or <em>expressions</em>.  Which forms
+belong to which class depends on the imported libraries and the result
+of expansion.  Generally, forms that are not definitions are
+expressions.
+
+   <p>A <var>?library-body</var> is like a <var>?body</var> except that a
+<var>?library-body</var>s need not include any expressions.  It must have the
+following form:
+
+<pre class="example">     <var>?definition</var> ... <var>?expression</var> ...
+</pre>
+   <p>When <code>begin</code>, <code>let-syntax</code>, or <code>letrec-syntax</code> forms
+occur in a top&ndash;level body prior to the first expression, they are
+spliced into the body.  Some or all of the body, including portions
+wrapped in <code>begin</code>, <code>let-syntax</code>, or <code>letrec-syntax</code>
+forms, may be specified by a syntactic abstraction.
+
+   <p>The transformer expressions and bindings are evaluated and created from
+left to right, as described in <a href="scheme-expansion.html#scheme-expansion">Expansion process</a>
+The expressions of variable definitions are evaluated from left to
+right, as if in an implicit <code>letrec*</code>, and the body expressions are
+also evaluated from left to right after the expressions of the variable
+definitions.  A fresh location is created for each exported variable and
+initialized to the value of its local counterpart.  The effect of
+returning twice to the continuation of the last body expression is
+unspecified.
+
+   <blockquote>
+<strong>NOTE</strong> The names <code>library</code>, <code>export</code>, <code>import</code>,
+<code>for</code>, <code>run</code>, <code>expand</code>, <code>meta</code>, <code>import</code>,
+<code>export</code>, <code>only</code>, <code>except</code>, <code>prefix</code>, <code>rename</code>,
+<code>and</code>, <code>or</code>, <code>not</code>, <code>&gt;=</code>, and <code>&lt;=</code> appearing in
+the library syntax are part of the syntax and are not reserved, i.e.,
+the same names can be used for other purposes within the library or even
+exported from or imported into a library with different meanings,
+without affecting their use in the <code>library</code> form. 
+</blockquote>
+
+   <p>Bindings defined with a library are not visible in code outside of the
+library, unless the bindings are explicitly exported from the library. 
+An exported macro may, however, <em>implicitly export</em> an otherwise
+unexported identifier defined within or imported into the library.  That
+is, it may insert a reference to that identifier into the output code it
+produces.
+
+   <p>All explicitly exported variables are immutable in both the exporting
+and importing libraries.  It is thus a syntax violation if an explicitly
+exported variable appears on the left&ndash;hand side of a <code>set!</code>
+expression, either in the exporting or importing libraries.
+
+   <p>All implicitly exported variables are also immutable in both the
+exporting and importing libraries.  It is thus a syntax violation if a
+variable appears on the left&ndash;hand side of a <code>set!</code>  expression in
+any code produced by an exported macro outside of the library in which
+the variable is defined.  It is also a syntax violation if a reference
+to an assigned variable appears in any code produced by an exported
+macro outside of the library in which the variable is defined, where an
+assigned variable is one that appears on the left&ndash;hand side of a
+<code>set!</code> expression in the exporting library.
+
+   <p>All other variables defined within a library are mutable.
+
+<!-- page -->
+   </body></html>
+

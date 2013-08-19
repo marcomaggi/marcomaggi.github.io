@@ -1,0 +1,313 @@
+<html lang="en">
+<head>
+<title>stdlib control - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="stdlib.html#stdlib" title="stdlib">
+<link rel="prev" href="stdlib-sorting.html#stdlib-sorting" title="stdlib sorting">
+<link rel="next" href="stdlib-records.html#stdlib-records" title="stdlib records">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.3d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+        `http://sourceforge.net/projects/vicare-scheme/files/'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+and at:
+
+           `http://sourceforge.net/projects/vicare-scheme/'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the ``History'' appendix for details.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="stdlib-control"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="stdlib-records.html#stdlib-records">stdlib records</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="stdlib-sorting.html#stdlib-sorting">stdlib sorting</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="stdlib.html#stdlib">stdlib</a>
+<hr>
+</div>
+
+<h3 class="section">5.5 Control structures</h3>
+
+<p><a name="index-g_t_0040rsixlibrary_007bcontrol_007d_002c-library-480"></a><a name="index-Library_002c-_0040rsixlibrary_007bcontrol_007d-481"></a>
+
+   <p>This chapter describes the <code>(rnrs control (6))</code> library, which provides
+useful control structures.
+
+<div class="defun">
+&mdash; Syntax: <b>when</b><var> ?test ?expression1 ?expression2 <small class="dots">...</small><a name="index-when-482"></a></var><br>
+&mdash; Syntax: <b>unless</b><var> ?test ?expression1 ?expression2 <small class="dots">...</small><a name="index-unless-483"></a></var><br>
+<blockquote><p><var>?test</var> must be an expression.
+
+        <p>A <code>when</code> expression is evaluated by evaluating the <var>?test</var>
+expression.  If <var>?test</var> evaluates to a true value, the remaining
+<var>?expression</var>s are evaluated in order, and the results of the last
+<var>?expression</var> are returned as the results of the entire <code>when</code>
+expression.  Otherwise, the <code>when</code> expression returns unspecified
+values.
+
+        <p>An <code>unless</code> expression is evaluated by evaluating the <var>?test</var>
+expression.  If <var>?test</var> evaluates to <code>#f</code>, the remaining
+<var>?expression</var>s are evaluated in order, and the results of the last
+<var>?expression</var> are returned as the results of the entire
+<code>unless</code> expression.  Otherwise, the <code>unless</code> expression
+returns unspecified values.
+
+        <p>The final <var>?expression</var> is in tail context if the <code>when</code> or
+<code>unless</code> form is itself in tail context.
+
+     <pre class="example">          (when (&gt; 3 2) 'greater)         &rArr; greater
+          (when (&lt; 3 2) 'greater)         &rArr; #&lt;unspecified&gt;
+          (unless (&gt; 3 2) 'less)          &rArr; #&lt;unspecified&gt;
+          (unless (&lt; 3 2) 'less)          &rArr; less
+</pre>
+        <p>The <code>when</code> and <code>unless</code> expressions are derived forms.  They
+could be defined by the following macros:
+
+     <pre class="example">          (define-syntax when
+            (syntax-rules ()
+              ((when test result1 result2 ...)
+               (if test
+                   (begin result1 result2 ...)))))
+          
+          (define-syntax unless
+            (syntax-rules ()
+              ((unless test result1 result2 ...)
+               (if (not test)
+                   (begin result1 result2 ...)))))
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>do</b> ((<var>?variable1 ?init1 ?step1</var>)<var> <small class="dots">...</small></var>) (<var>?test ?expression <small class="dots">...</small></var>)<var> ?command <small class="dots">...</small><a name="index-do-484"></a></var><br>
+<blockquote><p>The <var>?init</var>s, <var>?step</var>s, <var>?test</var>s, and <var>?command</var>s
+must be expressions.  The <var>?variable</var>s must be pairwise distinct
+variables.
+
+        <p>The <code>do</code> expression is an iteration construct.  It specifies a set
+of variables to be bound, how they are to be initialized at the start,
+and how they are to be updated on each iteration.
+
+        <p>A <code>do</code> expression is evaluated as follows: The <var>?init</var>
+expressions are evaluated (in some unspecified order), the
+<var>?variable</var>s are bound to fresh locations, the results of the
+<var>?init</var> expressions are stored in the bindings of the
+<var>?variable</var>s, and then the iteration phase begins.
+
+        <p>Each iteration begins by evaluating <var>?test</var>; if the result is
+<code>#f</code>, then the <var>?command</var>s are evaluated in order for effect,
+the <var>?step</var> expressions are evaluated in some unspecified order, the
+<var>?variable</var>s are bound to fresh locations holding the results, and
+the next iteration begins.
+
+        <p>If <var>?test</var> evaluates to a true value, the <var>?expression</var>s are
+evaluated from left to right and the values of the last
+<var>?expression</var> are returned.  If no <var>?expression</var>s are present,
+then the <code>do</code> expression returns unspecified values.
+
+        <p>The region consists of the entire <code>do</code> expression except for the
+<var>?init</var>s.
+
+        <p>A <var>?step</var> may be omitted, in which case the effect is the same as if
+<code>(</code><var>?variable</var> <var>?init</var> <var>?variable</var><code>)</code> had been written
+instead of <code>(</code><var>?variable</var> <var>?init</var><code>)</code>.
+
+        <p>If a <code>do</code> expression appears in a tail context, the
+<var>?expression</var>s are a <var>?tail sequence</var> in the sense of report
+section <a href="baselib-tail-call.html#baselib-tail-call">baselib tail call</a>, i.e., the last <var>?expression</var> is
+also in a tail context.
+
+     <pre class="example">          (do ((vec (make-vector 5))
+               (i 0 (+ i 1)))
+              ((= i 5) vec)
+            (vector-set! vec i i))
+          &rArr; #(0 1 2 3 4)
+          
+          (let ((x '(1 3 5 7 9)))
+            (do ((x x (cdr x))
+                 (sum 0 (+ sum (car x))))
+                ((null? x) sum)))
+          &rArr; 25
+</pre>
+        <p>The following definition of <code>do</code> uses a trick to expand the
+variable clauses.
+
+     <pre class="example">          (define-syntax do
+            (syntax-rules ()
+              ((do ((var init step ...) ...)
+                   (test expr ...)
+                   command ...)
+               (letrec
+                 ((loop
+                   (lambda (var ...)
+                     (if test
+                         (begin
+                           #f ; avoid empty begin
+                           expr ...)
+                         (begin
+                           command
+                           ...
+                           (loop (do "step" var step ...)
+                                 ...))))))
+                 (loop init ...)))
+              ((do "step" x)
+               x)
+              ((do "step" x y)
+               y)))
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>case-lambda</b><var> ?case-lambda-clause <small class="dots">...</small><a name="index-case_002dlambda-485"></a></var><br>
+<blockquote><p>Each <var>?case-lambda-clause</var> must be of the form:
+
+     <pre class="example">          (<var>?formals</var> <var>?body</var>)
+</pre>
+        <p><var>?formals</var> must be as in a <code>lambda</code> form (<a href="baselib-expressions-procedures.html#baselib-expressions-procedures">baselib expressions procedures</a>), and <var>?body</var> is as described in report
+section <a href="baselib-bodies.html#baselib-bodies">baselib bodies</a>.
+
+        <p>A <code>case-lambda</code> expression evaluates to a procedure.  This
+procedure, when applied, tries to match its arguments to the
+<var>?case-lambda-clause</var>s in order.  The arguments match a clause if
+one of the following conditions is fulfilled:
+
+          <ul>
+<li><var>?formals</var> has the form <code>(</code><var>?variable</var><code> ...)</code> and the
+number of arguments is the same as the number of formal parameters in
+<var>?formals</var>.
+
+          <li><var>?formals</var> has the form:
+
+          <pre class="example">               (<var>?variable1</var> ... <var>?variableN</var> . <var>?variableN+1</var>)
+</pre>
+          <p class="noindent">and the number of arguments is at least n.
+
+          <li><var>?formals</var> has the form <var>?variable</var>. 
+</ul>
+
+        <p>For the first clause matched by the arguments, the variables of the
+<var>?formals</var> are bound to fresh locations containing the argument
+values in the same arrangement as with <code>lambda</code>.
+
+        <p>The last expression of a <var>?body</var> in a <code>case-lambda</code> expression
+is in tail context.
+
+        <p>If the arguments match none of the clauses, an exception with condition
+type <code>&amp;assertion</code> is raised.
+
+     <pre class="example">          (define foo
+            (case-lambda
+             (() 'zero)
+             ((x) (list 'one x))
+             ((x y) (list 'two x y))
+             ((a b c d . e) (list 'four a b c d e))
+             (rest (list 'rest rest))))
+          
+          (foo)                   &rArr; zero
+          (foo 1)                 &rArr; (one 1)
+          (foo 1 2)               &rArr; (two 1 2)
+          (foo 1 2 3)             &rArr; (rest (1 2 3))
+          (foo 1 2 3 4)           &rArr; (four 1 2 3 4 ())
+</pre>
+        <p>The <code>case-lambda</code> keyword can be defined in terms of <code>lambda</code>
+by the following macros:
+
+     <pre class="example">          (define-syntax case-lambda
+            (syntax-rules ()
+              ((_ (fmls b1 b2 ...))
+               (lambda fmls b1 b2 ...))
+              ((_ (fmls b1 b2 ...) ...)
+               (lambda args
+                 (let ((n (length args)))
+                   (case-lambda-help args n
+                     (fmls b1 b2 ...) ...))))))
+          
+          (define-syntax case-lambda-help
+            (syntax-rules ()
+              ((_ args n)
+               (assertion-violation #f
+                 "unexpected number of arguments"))
+              ((_ args n ((x ...) b1 b2 ...) more ...)
+               (if (= n (length '(x ...)))
+                   (apply (lambda (x ...) b1 b2 ...) args)
+                   (case-lambda-help args n more ...)))
+              ((_ args n ((x1 x2 ... . r) b1 b2 ...) more ...)
+               (if (&gt;= n (length '(x1 x2 ...)))
+                   (apply (lambda (x1 x2 ... . r) b1 b2 ...)
+                             args)
+                   (case-lambda-help args n more ...)))
+              ((_ args n (r b1 b2 ...) more ...)
+               (apply (lambda r b1 b2 ...) args))))
+</pre>
+        </blockquote></div>
+
+<!-- page -->
+   </body></html>
+

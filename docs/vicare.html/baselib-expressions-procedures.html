@@ -1,0 +1,163 @@
+<html lang="en">
+<head>
+<title>baselib expressions procedures - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="baselib-expressions.html#baselib-expressions" title="baselib expressions">
+<link rel="prev" href="baselib-expressions-quotation.html#baselib-expressions-quotation" title="baselib expressions quotation">
+<link rel="next" href="baselib-expressions-conditionals.html#baselib-expressions-conditionals" title="baselib expressions conditionals">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.3d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+        `http://sourceforge.net/projects/vicare-scheme/files/'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+and at:
+
+           `http://sourceforge.net/projects/vicare-scheme/'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the ``History'' appendix for details.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="baselib-expressions-procedures"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="baselib-expressions-conditionals.html#baselib-expressions-conditionals">baselib expressions conditionals</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="baselib-expressions-quotation.html#baselib-expressions-quotation">baselib expressions quotation</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="baselib-expressions.html#baselib-expressions">baselib expressions</a>
+<hr>
+</div>
+
+<h4 class="subsection">4.4.2 Procedures</h4>
+
+<div class="defun">
+&mdash; Syntax: <b>lambda</b><var> ?formals ?body<a name="index-lambda-166"></a></var><br>
+<blockquote><p><var>?formals</var> must be a formal parameter list as described below, and
+<var>?body</var> must be as described in <a href="baselib-bodies.html#baselib-bodies">baselib bodies</a>.
+
+        <p>A <code>lambda</code> evaluates to a procedure.  The environment in effect
+when the <code>lambda</code> is evaluated is remembered as part of the
+procedure.  When the procedure is later called with some arguments, the
+environment in which the <code>lambda</code> was evaluated is extended by
+binding the variables in the parameter list to fresh locations, and the
+resulting argument values are stored in those locations.  Then, the
+expressions in the body of the <code>lambda</code> (which may contain
+definitions and thus represent a <code>letrec*</code> form) are evaluated
+sequentially in the extended environment.  The results of the last
+expression in the body are returned as the results of the procedure
+call.
+
+     <pre class="example">          (lambda (x) (+ x x))      &rArr; a procedure
+          ((lambda (x) (+ x x)) 4)  &rArr; 8
+          
+          ((lambda (x)
+             (define (p y)
+               (+ y 1))
+             (+ (p x) x))
+           5) &rArr; 11
+          
+          (define reverse-subtract
+            (lambda (x y) (- y x)))
+          (reverse-subtract 7 10)         &rArr; 3
+          
+          (define add4
+            (let ((x 4))
+              (lambda (y) (+ x y))))
+          (add4 6)                        &rArr; 10
+</pre>
+        <p><var>?formals</var> must have one of the following forms:
+
+          <dl>
+<dt><code>(</code><var>?variable1</var><code> ...)</code><dd>The procedure takes a fixed number of arguments; when the procedure is
+called, the arguments are stored in the bindings of the corresponding
+variables.
+
+          <br><dt><var>?variable</var><dd>The procedure takes any number of arguments; when the procedure is
+called, the sequence of arguments is converted into a newly allocated
+list, and the list is stored in the binding of the <var>?variable</var>.
+
+          <br><dt><code>(</code><var>?variable1</var><code> ... </code><var>?variableN</var><code> . </code><var>?variableN+1</var><code>)</code><dd>If a period <code>.</code> precedes the last variable, then the procedure
+takes <var>n</var> or more arguments, where <var>n</var> is the number of
+parameters before the period (there must be at least one).  The value
+stored in the binding of the last variable is a newly allocated list of
+the arguments left over after all the other arguments have been matched
+up against the other parameters.
+
+          <pre class="example">               ((lambda x x) 3 4 5 6)          &rArr; (3 4 5 6)
+               ((lambda (x y . z) z)
+                3 4 5 6)                       &rArr; (5 6)
+</pre>
+          </dl>
+
+        <p>Any <var>?variable</var> must not appear more than once in <var>?formals</var>. 
+</p></blockquote></div>
+
+<!-- page -->
+   </body></html>
+

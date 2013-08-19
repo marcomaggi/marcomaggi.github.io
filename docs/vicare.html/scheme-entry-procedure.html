@@ -1,0 +1,211 @@
+<html lang="en">
+<head>
+<title>scheme entry procedure - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="scheme-entry.html#scheme-entry" title="scheme entry">
+<link rel="prev" href="scheme-entry-syntax.html#scheme-entry-syntax" title="scheme entry syntax">
+<link rel="next" href="scheme-entry-implementation-resp.html#scheme-entry-implementation-resp" title="scheme entry implementation resp">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.3d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+        `http://sourceforge.net/projects/vicare-scheme/files/'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+and at:
+
+           `http://sourceforge.net/projects/vicare-scheme/'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the ``History'' appendix for details.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="scheme-entry-procedure"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="scheme-entry-implementation-resp.html#scheme-entry-implementation-resp">scheme entry implementation resp</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="scheme-entry-syntax.html#scheme-entry-syntax">scheme entry syntax</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="scheme-entry.html#scheme-entry">scheme entry</a>
+<hr>
+</div>
+
+<h4 class="subsection">3.6.2 Procedure entries</h4>
+
+<p>If <em>Category</em> is &ldquo;Procedure&rdquo;, then the entry describes a
+procedure, and the header line gives a template for a call to the
+procedure.  Parameter names in the template are shown like this:
+<var>parm</var>.  Thus the header line:
+
+<div class="defun">
+&mdash; Procedure: <b>vector-ref</b><var> vector k<a name="index-vector_002dref-134"></a></var><br>
+<blockquote><small class="dots">...</small>
+        </blockquote></div>
+
+<p class="noindent">indicates that the built&ndash;in procedure <code>vector-ref</code> takes two
+arguments, a vector <var>vector</var> and an exact non&ndash;negative integer
+object <var>k</var> (see below).  The header lines:
+
+<div class="defun">
+&mdash; Procedure: <b>procname</b><var> k<a name="index-procname-135"></a></var><br>
+<blockquote><small class="dots">...</small>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Procedure: <b>procname</b><var> k fill<a name="index-procname-136"></a></var><br>
+<blockquote><small class="dots">...</small>
+        </blockquote></div>
+
+<p class="noindent">indicate that the <code>make-vector</code> procedure takes either one or two
+arguments.  The parameter names are case&ndash;insensitive.
+
+   <p>As with syntax templates, an ellipsis <small class="dots">...</small> at the end of a header
+line, as in:
+
+<div class="defun">
+&mdash; Procedure: <b>the-proc</b><var> z1 z2 z3 ...<a name="index-the_002dproc-137"></a></var><br>
+<blockquote><small class="dots">...</small>
+        </blockquote></div>
+
+<p class="noindent">indicates that the procedure takes arbitrarily many arguments of the
+same type as specified for the last parameter name.  In this case,
+<code>=</code> accepts two or more arguments that must all be complex number
+objects.
+
+   <p>A procedure that detects an argument that it is not specified to handle
+must raise an exception with condition type <code>&amp;assertion</code>.  Also,
+the argument specifications are exhaustive: if the number of arguments
+provided in a procedure call does not match any number of arguments
+accepted by the procedure, an exception with condition type
+<code>&amp;assertion</code> must be raised.
+
+   <p>For succinctness, the report follows the convention that if a parameter
+name is also the name of a type, then the corresponding argument must be
+of the named type.  For example, the header line for <code>vector-ref</code>
+given above dictates that the first argument to <code>vector-ref</code> must
+be a vector.  The following naming conventions imply type restrictions:
+
+     <dl>
+<dt><var>obj</var><dd>any object;
+
+     <br><dt><var>z</var><dd>complex number object;
+
+     <br><dt><var>x</var><dd>real number object;
+
+     <br><dt><var>y</var><dd>real number object;
+
+     <br><dt><var>q</var><dd>rational number object;
+
+     <br><dt><var>n</var><dd>integer object;
+
+     <br><dt><var>k</var><dd>exact non&ndash;negative integer object;
+
+     <br><dt><var>bool</var><dd>boolean (<code>#f</code> or <code>#t</code>);
+
+     <br><dt><var>octet</var><dd>exact integer object in {0, <small class="dots">...</small>, 255};
+
+     <br><dt><var>byte</var><dd>exact integer object in {-128, <small class="dots">...</small>, 127};
+
+     <br><dt><var>char</var><dd>character;
+
+     <br><dt><var>pair</var><dd>pair;
+
+     <br><dt><var>vector</var><dd>vector;
+
+     <br><dt><var>string</var><dd>string;
+
+     <br><dt><var>condition</var><dd>condition;
+
+     <br><dt><var>bytevector</var><dd>bytevector;
+
+     <br><dt><var>proc</var><dd>procedure. 
+</dl>
+
+   <p>Other type restrictions are expressed through parameter&ndash;naming
+conventions that are described in specific chapters.  For example,
+library chapter &ldquo;Arithmetic&rdquo; uses a number of special parameter
+variables for the various subsets of the numbers.
+
+   <p>With the listed type restrictions, it is the programmer's responsibility
+to ensure that the corresponding argument is of the specified type.  It
+is the implementation's responsibility to check for that type.
+
+   <p>A parameter called <var>list</var> means that it is the programmer's
+responsibility to pass an argument that is a list.  It is the
+implementation's responsibility to check that the argument is
+appropriately structured for the operation to perform its function, to
+the extent that this is possible and reasonable.  The implementation
+must at least check that the argument is either an empty list or a pair.
+
+   <p>Descriptions of procedures may express other restrictions on the
+arguments of a procedure.  Typically, such a restriction is formulated
+as a phrase of the form &ldquo;<var>x</var> must be a <small class="dots">...</small>&rdquo; (or otherwise
+using the word &ldquo;must&rdquo;).
+
+<!-- page -->
+   </body></html>
+

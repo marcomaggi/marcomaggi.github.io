@@ -1,0 +1,300 @@
+<html lang="en">
+<head>
+<title>stdlib io port transcoders - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="stdlib-io-port.html#stdlib-io-port" title="stdlib io port">
+<link rel="prev" href="stdlib-io-port-buffer-modes.html#stdlib-io-port-buffer-modes" title="stdlib io port buffer modes">
+<link rel="next" href="stdlib-io-port-eof-object.html#stdlib-io-port-eof-object" title="stdlib io port eof object">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.3d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+        `http://sourceforge.net/projects/vicare-scheme/files/'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+and at:
+
+           `http://sourceforge.net/projects/vicare-scheme/'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the ``History'' appendix for details.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="stdlib-io-port-transcoders"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="stdlib-io-port-eof-object.html#stdlib-io-port-eof-object">stdlib io port eof object</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="stdlib-io-port-buffer-modes.html#stdlib-io-port-buffer-modes">stdlib io port buffer modes</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="stdlib-io-port.html#stdlib-io-port">stdlib io port</a>
+<hr>
+</div>
+
+<h5 class="subsubsection">5.8.2.4 Transcoders</h5>
+
+<p>Several different Unicode encoding schemes describe standard ways to
+encode characters and strings as byte sequences and to decode those
+sequences.  Within this document, a <dfn>codec</dfn> is an immutable Scheme
+object that represents a Unicode or similar encoding scheme.
+
+   <p>An <dfn>end&ndash;of&ndash;line style</dfn> is a symbol that, if it is not <code>none</code>,
+describes how a textual port transcodes representations of line endings.
+
+   <p>A <dfn>transcoder</dfn> is an immutable Scheme object that combines a codec
+with an end&ndash;of&ndash;line style and a method for handling decoding errors. 
+Each transcoder represents some specific bidirectional (but not
+necessarily lossless), possibly stateful translation between byte
+sequences and Unicode characters and strings.  Every transcoder can
+operate in the input direction (bytes to characters) or in the output
+direction (characters to bytes).  A <var>transcoder</var> argument name
+means that the corresponding argument must be a transcoder.
+
+   <p>A <dfn>binary port</dfn> is a port that supports binary I/O, does not have an
+associated transcoder and does not support textual I/O.  A <dfn>textual
+port</dfn> is a port that supports textual I/O, and does not support binary
+I/O.  A textual port may or may not have an associated transcoder.
+
+<div class="defun">
+&mdash; Procedure: <b>latin-1-codec</b><var><a name="index-latin_002d1_002dcodec-650"></a></var><br>
+&mdash; Procedure: <b>utf-8-codec</b><var><a name="index-utf_002d8_002dcodec-651"></a></var><br>
+&mdash; Procedure: <b>utf-16-codec</b><var><a name="index-utf_002d16_002dcodec-652"></a></var><br>
+<blockquote><p>These are predefined codecs for the <acronym>ISO</acronym> 8859-1, <acronym>UTF</acronym>-8, and
+<acronym>UTF</acronym>-16 encoding schemes.
+
+        <p>A call to any of these procedures returns a value that is equal in the
+sense of <code>eqv?</code> to the result of any other call to the same
+procedure. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>eol-style</b><var> ?eol-style-symbol<a name="index-eol_002dstyle-653"></a></var><br>
+<blockquote><p><var>?eol-style-symbol</var> should be a symbol whose name is one of
+<code>lf</code>, <code>cr</code>, <code>crlf</code>, <code>nel</code>, <code>crnel</code>, <code>ls</code>,
+and <code>none</code>.
+
+        <p>The form evaluates to the corresponding symbol.  If the name of
+<var>?eol-style-symbol</var> is not one of these symbols, the effect and
+result are implementation&ndash;dependent; in particular, the result may be
+an eol&ndash;style symbol acceptable as an <var>eol-style</var> argument to
+<code>make-transcoder</code>.  Otherwise, an exception is raised.
+
+        <p>All eol&ndash;style symbols except <code>none</code> describe a specific
+line&ndash;ending encoding:
+
+     <pre class="example">          lf              <var>?linefeed</var>
+          cr              <var>?carriage-return</var>
+          crlf            <var>?carriage-return</var> <var>?linefeed</var>
+          nel             <var>?next-line</var>
+          crnel           <var>?carriage-return</var> <var>?next-line</var>
+          ls              <var>?line-separator</var>
+</pre>
+        <p>For a textual port with a transcoder, and whose transcoder has an
+eol&ndash;style symbol <code>none</code>, no conversion occurs.  For a textual
+input port, any eol&ndash;style symbol other than <code>none</code> means that all
+of the above line-ending encodings are recognized and are translated
+into a single linefeed.  For a textual output port, <code>none</code> and
+<code>lf</code> are equivalent.  Linefeed characters are encoded according to
+the specified eol-style symbol, and all other characters that
+participate in possible line endings are encoded as is.
+
+        <blockquote>
+<strong>NOTE</strong> Only the name of <var>?eol-style-symbol</var> is significant. 
+</blockquote>
+        </p></blockquote></div>
+
+<div class="defun">
+&mdash; Procedure: <b>native-eol-style</b><var><a name="index-native_002deol_002dstyle-654"></a></var><br>
+<blockquote><p>Return the default end&ndash;of&ndash;line style of the underlying platform, e.g.,
+<code>lf</code> on Unix and <code>crlf</code> on Windows. 
+</p></blockquote></div>
+
+   <p><a name="index-g_t_0026i_002fo_002ddecoding-655"></a>
+
+<div class="defun">
+&mdash; Condition Type: <b>&amp;i/o-decoding</b><var><a name="index-g_t_0026i_002fo_002ddecoding-656"></a></var><br>
+&mdash; Procedure: <b>make-i/o-decoding-error</b><var> port<a name="index-make_002di_002fo_002ddecoding_002derror-657"></a></var><br>
+&mdash; Procedure: <b>i/o-decoding-error?</b><var> obj<a name="index-i_002fo_002ddecoding_002derror_003f-658"></a></var><br>
+<blockquote><p>This condition type could be defined by:
+
+     <pre class="example">          (define-condition-type &amp;i/o-decoding &amp;i/o-port
+            make-i/o-decoding-error i/o-decoding-error?)
+</pre>
+        <p>An exception with this type is raised when one of the operations for
+textual input from a port encounters a sequence of bytes that cannot be
+translated into a character or string by the input direction of the
+port's transcoder.
+
+        <p>When such an exception is raised, the port's position is past the
+invalid encoding. 
+</p></blockquote></div>
+
+   <p><a name="index-g_t_0026i_002fo_002dencoding-659"></a>
+
+<div class="defun">
+&mdash; Condition Type: <b>&amp;i/o-encoding</b><var><a name="index-g_t_0026i_002fo_002dencoding-660"></a></var><br>
+&mdash; Procedure: <b>make-i/o-encoding-error</b><var> pobj cobj<a name="index-make_002di_002fo_002dencoding_002derror-661"></a></var><br>
+&mdash; Procedure: <b>i/o-encoding-error?</b><var> obj<a name="index-i_002fo_002dencoding_002derror_003f-662"></a></var><br>
+&mdash; Procedure: <b>i/o-encoding-error-char</b><var> condition<a name="index-i_002fo_002dencoding_002derror_002dchar-663"></a></var><br>
+<blockquote><p>This condition type could be defined by:
+
+     <pre class="example">          (define-condition-type &amp;i/o-encoding &amp;i/o-port
+            make-i/o-encoding-error i/o-encoding-error?
+            (char i/o-encoding-error-char))
+</pre>
+        <p>An exception with this type is raised when one of the operations for
+textual output to a port encounters a character that cannot be
+translated into bytes by the output direction of the port's transcoder. 
+<var>cobj</var> is the character that could not be encoded. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>error-handling-mode</b><var> ?error-handling-mode-symbol<a name="index-error_002dhandling_002dmode-664"></a></var><br>
+<blockquote><p><var>?error-handling-mode-symbol</var> should be a symbol whose name is one
+of <code>ignore</code>, <code>raise</code>, and <code>replace</code>.
+
+        <p>The form evaluates to the corresponding symbol.  If
+<var>?error-handling-mode-symbol</var> is not one of these identifiers,
+effect and result are implementation&ndash;dependent: the result may be an
+error&ndash;handling&ndash;mode symbol acceptable as a <var>handling-mode</var>
+argument to <code>make-transcoder</code>.  If it is not acceptable as a
+<var>handling-mode</var> argument to <code>make-transcoder</code>, an exception is
+raised.
+
+        <blockquote>
+<strong>NOTE</strong> Only the name of <var>?error-handling-style-symbol</var> is
+significant. 
+</blockquote>
+
+        <p>The error&ndash;handling mode of a transcoder specifies the behavior of
+textual I/O operations in the presence of encoding or decoding errors.
+
+        <p>If a textual input operation encounters an invalid or incomplete
+character encoding, and the error&ndash;handling mode is <code>ignore</code>, an
+appropriate number of bytes of the invalid encoding are ignored and
+decoding continues with the following bytes.  If the error&ndash;handling
+mode is <code>replace</code>, the replacement character <code>U+FFFD</code> is
+injected into the data stream, an appropriate number of bytes are
+ignored, and decoding continues with the following bytes.  If the
+error&ndash;handling mode is <code>raise</code>, an exception with condition type
+<code>&amp;i/o-decoding</code> is raised.
+
+        <p>If a textual output operation encounters a character it cannot encode,
+and the error&ndash;handling mode is <code>ignore</code>, the character is ignored
+and encoding continues with the next character.  If the error&ndash;handling
+mode is <code>replace</code>, a codec&ndash;specific replacement character is
+emitted by the transcoder, and encoding continues with the next
+character.  The replacement character is <code>U+FFFD</code> for transcoders
+whose codec is one of the Unicode encodings, but is the <code>?</code>
+character for the Latin&ndash;1 encoding.  If the error&ndash;handling mode is
+<code>raise</code>, an exception with condition type <code>&amp;i/o-encoding</code> is
+raised. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Procedure: <b>make-transcoder</b><var> codec<a name="index-make_002dtranscoder-665"></a></var><br>
+&mdash; Procedure: <b>make-transcoder</b><var> codec eol-style<a name="index-make_002dtranscoder-666"></a></var><br>
+&mdash; Procedure: <b>make-transcoder</b><var> codec eol-style handling-mode<a name="index-make_002dtranscoder-667"></a></var><br>
+<blockquote><p><var>codec</var> must be a codec; <var>eol-style</var>, if present, an eol&ndash;style
+symbol; and <var>handling-mode</var>, if present, an error&ndash;handling&ndash;mode
+symbol.
+
+        <p><var>eol-style</var> may be omitted, in which case it defaults to the native
+end&ndash;of&ndash;line style of the underlying platform.  <var>handling-mode</var> may
+be omitted, in which case it defaults to <code>replace</code>.  The result is
+a transcoder with the behavior specified by its arguments. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Procedure: <b>native-transcoder</b><var><a name="index-native_002dtranscoder-668"></a></var><br>
+<blockquote><p>Return an implementation&ndash;dependent transcoder that represents a
+possibly locale-dependent &ldquo;native&rdquo; transcoding. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Procedure: <b>transcoder-codec</b><var> transcoder<a name="index-transcoder_002dcodec-669"></a></var><br>
+&mdash; Procedure: <b>transcoder-eol-style</b><var> transcoder<a name="index-transcoder_002deol_002dstyle-670"></a></var><br>
+&mdash; Procedure: <b>transcoder-error-handling-mode</b><var> transcoder<a name="index-transcoder_002derror_002dhandling_002dmode-671"></a></var><br>
+<blockquote><p>These are accessors for transcoder objects; when applied to a transcoder
+returned by <code>make-transcoder</code>, they return the <var>codec</var>,
+<var>eol-style</var>, and <var>handling-mode</var> arguments, respectively. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Procedure: <b>bytevector-&gt;string</b><var> bytevector transcoder<a name="index-bytevector_002d_003estring-672"></a></var><br>
+<blockquote><p>Return the string that results from transcoding the <var>bytevector</var>
+according to the input direction of the transcoder. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Procedure: <b>string-&gt;bytevector</b><var> string transcoder<a name="index-string_002d_003ebytevector-673"></a></var><br>
+<blockquote><p>Return the bytevector that results from transcoding the <var>string</var>
+according to the output direction of the transcoder. 
+</p></blockquote></div>
+
+<!-- page -->
+   </body></html>
+

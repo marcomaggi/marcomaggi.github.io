@@ -1,0 +1,185 @@
+<html lang="en">
+<head>
+<title>scheme syntax primitive - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="scheme-syntax.html#scheme-syntax" title="scheme syntax">
+<link rel="next" href="scheme-syntax-macros.html#scheme-syntax-macros" title="scheme syntax macros">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.3d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+        `http://sourceforge.net/projects/vicare-scheme/files/'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+and at:
+
+           `http://sourceforge.net/projects/vicare-scheme/'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the ``History'' appendix for details.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="scheme-syntax-primitive"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="scheme-syntax-macros.html#scheme-syntax-macros">scheme syntax macros</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="scheme-syntax.html#scheme-syntax">scheme syntax</a>
+<hr>
+</div>
+
+<h4 class="subsection">3.9.1 Primitive expression types</h4>
+
+<p>The entries in this section all describe expressions, which may occur in
+the place of <var>?expression</var> syntactic variables.
+
+<h5 class="subsubheading">Constant literals</h5>
+
+<div class="defun">
+&mdash; Syntax: <var>?number</var><var><a name="index-g_t_0040meta_007bnumber_007d-147"></a></var><br>
+&mdash; Syntax: <var>?boolean</var><var><a name="index-g_t_0040meta_007bboolean_007d-148"></a></var><br>
+&mdash; Syntax: <var>?character</var><var><a name="index-g_t_0040meta_007bcharacter_007d-149"></a></var><br>
+&mdash; Syntax: <var>?string</var><var><a name="index-g_t_0040meta_007bstring_007d-150"></a></var><br>
+&mdash; Syntax: <var>?bytevector</var><var><a name="index-g_t_0040meta_007bbytevector_007d-151"></a></var><br>
+<blockquote><p>An expression consisting of a representation of a number object, a
+boolean, a character, a string, or a bytevector, evaluates &ldquo;to
+itself&rdquo;.
+
+     <pre class="example">          145932          &rArr;  145932
+          #t              &rArr;  #t
+          "abc"           &rArr;  "abc"
+          #vu8(2 24 123)  &rArr; #vu8(2 24 123)
+</pre>
+        <p>The value of a literal expression is immutable, <a href="scheme-basic-storage-model.html#scheme-basic-storage-model">Storage model</a>
+</p></blockquote></div>
+
+<!--  -->
+<h5 class="subsubheading">Variable references</h5>
+
+<div class="defun">
+&mdash; Syntax: <var>?variable</var><var><a name="index-g_t_0040meta_007bvariable_007d-152"></a></var><br>
+<blockquote><p>An expression consisting of a variable is a variable reference if it is
+not a macro use (see below).  The value of the variable reference is the
+value stored in the location to which the variable is bound.  It is a
+syntax violation to reference an unbound variable.
+
+        <p>The following example examples assumes the base library has been
+imported:
+
+     <pre class="example">          (define x 28)
+          x &rArr; 28
+</pre>
+        </blockquote></div>
+
+<!--  -->
+<h5 class="subsubheading">Procedure calls</h5>
+
+<div class="defun">
+&mdash; Syntax: <var>?operator</var><var> ?operand1 <small class="dots">...</small><a name="index-g_t_0040meta_007boperator_007d-153"></a></var><br>
+<blockquote><p>A procedure call consists of expressions for the procedure to be called
+and the arguments to be passed to it, with enclosing parentheses.  A
+form in an expression context is a procedure call if <var>?operator</var> is
+not an identifier bound as a syntactic keyword.
+
+        <p>When a procedure call is evaluated, the operator and operand expressions
+are evaluated (in an unspecified order) and the resulting procedure is
+passed the resulting arguments.
+
+        <p>The following examples assume the <code>(rnrs base (6))</code> library has been
+imported:
+
+     <pre class="example">          (+ 3 4)                 &rArr; 7
+          ((if #f + *) 3 4)       &rArr; 12
+</pre>
+        <p>If the value of <var>?operator</var> is not a procedure, an exception with
+condition type <code>&amp;assertion</code> is raised.  Also, if <var>?operator</var>
+does not accept as many arguments as there are <var>?operand</var>s, an
+exception with condition type <code>&amp;assertion</code> is raised.
+
+        <blockquote>
+<strong>NOTE</strong> In contrast to other dialects of Lisp, the order of
+evaluation is unspecified, and the operator expression and the operand
+expressions are always evaluated with the same evaluation rules.
+
+        <p>Although the order of evaluation is otherwise unspecified, the effect of
+any concurrent evaluation of the operator and operand expressions is
+constrained to be consistent with some sequential order of evaluation. 
+The order of evaluation may be chosen differently for each procedure
+call. 
+</blockquote>
+
+        <blockquote>
+<strong>NOTE</strong> In many dialects of Lisp, the form <code>()</code> is a
+legitimate expression.  In Scheme, expressions written as list/pair
+forms must have at least one subexpression, so <code>()</code> is not a
+syntactically valid expression. 
+</blockquote>
+        </p></blockquote></div>
+
+<!-- page -->
+   </body></html>
+
