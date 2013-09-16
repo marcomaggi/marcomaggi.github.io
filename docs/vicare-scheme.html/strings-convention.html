@@ -1,0 +1,214 @@
+<html lang="en">
+<head>
+<title>strings convention - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="strings.html#strings" title="strings">
+<link rel="prev" href="strings-intro.html#strings-intro" title="strings intro">
+<link rel="next" href="strings-views.html#strings-views" title="strings views">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.3d4 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+        `http://sourceforge.net/projects/vicare-scheme/files/'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+and at:
+
+           `http://sourceforge.net/projects/vicare-scheme/'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the ``History'' appendix for details.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library `(vicare formations)' is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="strings-convention"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="strings-views.html#strings-views">strings views</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="strings-intro.html#strings-intro">strings intro</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="strings.html#strings">strings</a>
+<hr>
+</div>
+
+<h3 class="section">19.2 Interface conventions</h3>
+
+<p>The following conventions hold:
+
+     <ul>
+<li>Procedures whose names end in <code>-ci</code> are case&ndash;insensitive variants.
+
+     <li>Procedures whose names end in <code>!</code> are side&ndash;effecting variants. 
+What values these procedures return is usually not specified.
+
+     <li>The order of common arguments is consistent across the different
+procedures in the high level library, and consistent across the
+different procedures in the low level library.  Arguments to some
+functions in the high level library have different order from the ones
+of the homologous low level functions.
+
+     <li>Procedures that have left/right directional variants use the following
+convention:
+
+     <p><table summary=""><tr align="left"><th valign="top">Direction </th><th valign="top">Suffix
+<br></th></tr><tr align="left"><td valign="top">left-to-right </td><td valign="top"><var>?none</var>
+<br></td></tr><tr align="left"><td valign="top">right-to-left </td><td valign="top">&ndash;right
+<br></td></tr><tr align="left"><td valign="top">both </td><td valign="top">&ndash;both
+     <br></td></tr></table>
+</ul>
+
+   <p>In the procedure specifications:
+
+     <ul>
+<li>An <var>S</var> argument is a string view, which is expanded by a macro in a
+triplet of values: the string, the index of the first char in the
+selected substring, the index of the character past the last in the
+selected position.  <a href="strings-views.html#strings-views">strings views</a> for details.
+
+     <li>A <var>str</var> argument is a string.
+
+     <li>A <var>char</var> argument is a character.
+
+     <li>The <var>start</var> and <var>past</var> arguments are half&ndash;open string indices
+specifying a substring within a string argument; when unspecified, they
+default to zero and the length of the string, respectively.  When
+specified, it must be the case that:
+
+     <pre class="example">          0 &lt;= start &lt;= past &lt;= (string-length s)
+</pre>
+     <p class="noindent">for the corresponding argument <var>str</var>.  They typically restrict a
+procedure's action to the indicated substring; when <var>start</var> equals
+<var>past</var> the selected substring is the empty string.
+
+     <li>A <var>pred</var> argument is a unary character predicate procedure,
+returning a true/false value when applied to a character.
+
+     <li>A <var>char</var>/<var>char-set</var>/<var>pred</var> argument is a value used to
+select/search for a character in a string.  If it is a character, it is
+used in an equality test; if it is a character set, it is used in a
+membership test; if it is a procedure, it is applied to the characters
+as a test predicate.
+
+     <li>An <var>i</var> or <var>k</var> argument is an exact non&ndash;negative integer
+specifying an index into a string.
+
+     <li>The <var>len</var> and <var>nchars</var> arguments are exact non&ndash;negative
+integers specifying a length of a string or some number of characters.
+
+     <li>An <var>obj</var> argument can be any value. 
+</ul>
+
+   <p>An argument followed by <code>...</code> means zero&ndash;or&ndash;more elements.  So
+the procedure with the signature:
+
+<pre class="example">     sum-squares x ...
+</pre>
+   <p class="noindent">takes zero or more arguments (<var>x</var>, <small class="dots">...</small>), while the procedure
+with signature:
+
+<pre class="example">     spell-check doc dict1 dict2 ...
+</pre>
+   <p class="noindent">takes two mandatory arguments (<var>doc</var> and <var>dict1</var>) and zero or
+more optional arguments (<var>dict2</var> ...).
+
+   <p>If a procedure is said to return &ldquo;unspecified&rdquo;, this means that
+nothing at all is known about what the procedure returns.  Such a
+procedure is not even required to be consistent from call to call.  It
+is simply required to return a value (or values) that may be passed to a
+command continuation, e.g. as the value of an expression appearing as a
+non&ndash;terminal subform of a begin expression.
+
+   <p>Comparison is simply done on individual code&ndash;points of the string. 
+Unless explicitly stated, for all the functions: Case&ndash;insensitive
+comparison is done using the functions:
+
+<pre class="example">     char-ci=? char-ci&lt;? char-ci&gt;? char-ci&lt;=? char-ci&gt;=?
+</pre>
+   <p class="noindent">provided by the underlying implementation, or by case&ndash;folding
+characters with the operation:
+
+<pre class="example">     (char-downcase (char-upcase c))
+</pre>
+   <p class="noindent">where the two case&ndash;mapping operations are assumed to be one&ndash;to&ndash;one,
+locale&ndash;insensitive and context&ndash;insensitive, and compatible with the
+one&ndash;to&ndash;one case mappings specified by Unicode's <samp><span class="file">UnicodeData.txt</span></samp>
+table:
+
+<div align="center"><a href="ftp://ftp.unicode.org/Public/UNIDATA/UnicodeData.txt">ftp://ftp.unicode.org/Public/UNIDATA/UnicodeData.txt</a></div>
+
+<!-- page -->
+   </body></html>
+

@@ -1,0 +1,250 @@
+<html lang="en">
+<head>
+<title>lists intro - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="lists.html#lists" title="lists">
+<link rel="next" href="lists-conventions.html#lists-conventions" title="lists conventions">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.3d4 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+        `http://sourceforge.net/projects/vicare-scheme/files/'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+and at:
+
+           `http://sourceforge.net/projects/vicare-scheme/'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the ``History'' appendix for details.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library `(vicare formations)' is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="lists-intro"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="lists-conventions.html#lists-conventions">lists conventions</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="lists.html#lists">lists</a>
+<hr>
+</div>
+
+<h3 class="section">17.1 Introduction</h3>
+
+<p>Scheme does not properly have a list type, just as the C language does
+not have a string type.  Rather, Scheme has a binary&ndash;tuple type, from
+which one can build binary trees.  There is an interpretation of Scheme
+values that allows one to treat these trees as lists.  Further
+complications ensue from the fact that Scheme allows side&ndash;effects to
+these tuples, raising the possibility of lists of unbounded length, and
+trees of unbounded depth (that is, circular data structures).
+
+   <p>What follows is a classification of concrete values with respect to
+<dfn>list</dfn> as an abstract concept.
+
+<!--  -->
+<h5 class="subsubheading">Null value</h5>
+
+<p>It is a special value which can be identified with the predicate
+<code>null?</code>.  Null is meant to represent empty lists and to be the
+terminator for proper lists.
+
+   <p><code>length</code> applied to null returns zero.  In light of what follows,
+it makes sense to consider null as a list of length zero for all the
+list classes: proper, circular, dotted, generalised.
+
+<!--  -->
+<h5 class="subsubheading">Proper lists</h5>
+
+<p>A finite, null&ndash;terminated list; more precisely a proper list is defined
+as: A pair whose cdr is a proper list or null.  The opposite of proper
+is <dfn>improper</dfn>; everything that is not null or a proper list, is an
+improper list.
+
+<pre class="example">     (a b c)
+     (32)
+</pre>
+   <p>We can build a proper list in a single function call with <code>list</code>,
+or we can do it in steps using <code>cons</code> and <code>cons*</code>; we can
+detect if a list is proper with <code>list?</code>.
+
+<!--  -->
+<h5 class="subsubheading">Circular list</h5>
+
+<p>An infinite, unterminated list; a circular list is a value such that
+<code>cdr</code> applied any number of times always returns a pair.  The
+opposite of circular is <dfn>finite</dfn>.
+
+   <p>We can build a list having a circular tail as follows:
+
+<pre class="example">     (define end  (cons  1 '()))
+     (define tail (cons* 3 2 end))
+     (define ell  (cons* 5 4 tail))
+     (set-cdr! end tail)
+</pre>
+   <p class="noindent">the list structure bound to &lsquo;<samp><span class="samp">ell</span></samp>&rsquo; looks like this:
+
+<pre class="example">                                cdr
+                       ----------------
+                      |                |
+          cdr    cdr  v cdr    cdr     |
+        O-----&gt;O-----&gt;O-----&gt;O-----&gt;O--
+        |      |      |      |      |
+     car|   car|   car|   car|   car|
+        v      v      v      v      v
+        5      4      3      2      1
+</pre>
+   <p class="noindent">so that the following happens:
+
+<pre class="example">     (car ell)            &rArr; 5
+     (cadr ell)           &rArr; 4
+     (caddr ell)          &rArr; 3
+     (cadddr ell)         &rArr; 2
+     (cadddr (cdr ell))   &rArr; 1
+     (cdddr (cddr ell))   &rArr; tail
+     (cadddr (cddr ell))  &rArr; 3
+     (cadddr (cdddr ell)) &rArr; 2
+</pre>
+   <p class="noindent">it is impossible to build a circular list without mutating a pair. 
+Notice that the following is <strong>not</strong> a circular list:
+
+<pre class="example">                                car
+                --------------------
+               |                    |
+          cdr  v cdr    cdr    cdr  | cdr
+        O-----&gt;O-----&gt;O-----&gt;O-----&gt;O-----&gt;()
+        |      |      |      |
+     car|   car|   car|   car|
+        v      v      v      v
+        5      4      3      2
+</pre>
+   <p class="noindent">it is a proper list in which the car of the last pair references one of
+the previous pairs.
+
+   <p>We can build a circular list, a ring, with <code>circular-list</code> and we
+can detect if a list is a ring or has a circular tail with
+<code>circular-list?</code>.
+
+<!--  -->
+<h5 class="subsubheading">Dotted list</h5>
+
+<p>A finite, non&ndash;nil terminated list, such as:
+
+<pre class="example">     (a b c . d)
+     (x . y)
+</pre>
+   <p class="noindent">a dotted list is a value for which there exists an integer n &gt; 0,
+such that <code>cdr</code> applied n times yields neither a pair nor
+null.  This means that, for a dotted list, either <code>null?</code> or
+<code>pair?</code> return <code>#t</code>.
+
+   <p>Users of the <code>(vicare containers lists ---)</code> libraries should note
+that dotted lists are not commonly used, and are considered by many
+Scheme programmers to be an ugly artifact of Scheme's lack of a true
+list type.  However, dotted lists do play a noticeable role in the
+syntax of Scheme, in the &ldquo;rest&rdquo; parameters used by n&ndash;ary lambdas:
+
+<pre class="example">     (lambda (x y . rest)
+       ---)
+</pre>
+   <p>Dotted lists are not fully supported by the list libraries; most
+procedures are defined only on proper lists.  The procedures that will
+also handle circular or dotted lists are specifically marked.  While
+this design decision restricts the domain of possible arguments one can
+pass to these procedures, it has the benefit of allowing the procedures
+to catch the error cases where programmers inadvertently pass scalar
+values to a list procedure by accident (for example, by switching the
+arguments to a procedure call).
+
+<!--  -->
+<h5 class="subsubheading">Improper list</h5>
+
+<p>A finite, non&ndash;nil terminated list, such as:
+
+<pre class="example">     (a b c . d)
+     (x . y)
+     42
+     george
+</pre>
+   <p class="noindent">a improper list is a value for which there exists an integer n &gt;=
+0, such that <code>cdr</code> applied n times yields neither a pair
+nor null.  This includes non&ndash;pair, non&ndash;null values (symbols, numbers,
+etc.), which are considered to be improper lists of length 0. 
+Dotted lists are improper lists.
+
+<!-- page -->
+   </body></html>
+

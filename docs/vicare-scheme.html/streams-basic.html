@@ -1,0 +1,272 @@
+<html lang="en">
+<head>
+<title>streams basic - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="streams.html#streams" title="streams">
+<link rel="next" href="streams-cons.html#streams-cons" title="streams cons">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.3d4 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+        `http://sourceforge.net/projects/vicare-scheme/files/'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+and at:
+
+           `http://sourceforge.net/projects/vicare-scheme/'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the ``History'' appendix for details.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library `(vicare formations)' is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="streams-basic"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="streams-cons.html#streams-cons">streams cons</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="streams.html#streams">streams</a>
+<hr>
+</div>
+
+<h4 class="subsection">15.14.1 Basic interface</h4>
+
+<p>The basic <acronym>API</acronym> provides two mutually&ndash;recursive abstract data types:
+An object of the &lsquo;<samp><span class="samp">stream</span></samp>&rsquo; abstract data type is a promise that,
+when forced, is either &lsquo;<samp><span class="samp">stream-null</span></samp>&rsquo; or is an object of type
+&lsquo;<samp><span class="samp">stream-pair</span></samp>&rsquo;.  An object of the &lsquo;<samp><span class="samp">stream-pair</span></samp>&rsquo; abstract data
+type contains a <dfn>kar</dfn> and a <dfn>kdr</dfn>, which must be a
+&lsquo;<samp><span class="samp">stream</span></samp>&rsquo;.  The essential feature of streams is the systematic
+suspensions of the recursive promises between the two data types.
+
+<pre class="example">     alpha stream
+       :: (promise stream-null)
+       |  (promise (alpha stream-pair))
+     
+     alpha stream-pair
+       :: (promise alpha) x (promise (alpha stream))
+</pre>
+   <p>The object stored in the kar of a &lsquo;<samp><span class="samp">stream-pair</span></samp>&rsquo; is a promise that
+is forced the first time the kar is accessed; its value is cached in
+case it is needed again.  The object may have any type, and different
+stream elements may have different types.  If the kar is never accessed,
+the object stored there is never evaluated.  Likewise, the kdr is a
+promise to return a stream, and is only forced on demand.
+
+   <p>This <acronym>API</acronym> provides eight operators: constructors for
+&lsquo;<samp><span class="samp">stream-null</span></samp>&rsquo; and &lsquo;<samp><span class="samp">stream-pair</span></samp>&rsquo;, type recognisers for streams
+and the two kinds of streams, accessors for both fields of a
+&lsquo;<samp><span class="samp">stream-pair</span></samp>&rsquo;, a lambda that creates procedures that return
+streams.
+
+<div class="defun">
+&mdash; Constant: <b>stream-null</b><var><a name="index-stream_002dnull-5446"></a></var><br>
+<blockquote><p>Return a promise that, when forced, is a single object, distinguishable
+from all other objects, that represents the null stream. 
+<code>stream-null</code> is immutable and unique. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>stream-cons</b><var> obj stream<a name="index-stream_002dcons-5447"></a></var><br>
+<blockquote><p>Accept an object and a stream and create a newly&ndash;allocated stream
+containing a promise that, when forced, is a &lsquo;<samp><span class="samp">stream-pair</span></samp>&rsquo; with the
+object in its kar and the stream in its <code>stream-cdr</code>.
+
+        <p>Once created, a &lsquo;<samp><span class="samp">stream-pair</span></samp>&rsquo; is immutable; there is <strong>no</strong>
+<code>stream-set-kar!</code> or <code>stream-set-kdr!</code> that modifies an
+existing &lsquo;<samp><span class="samp">stream-pair</span></samp>&rsquo;.  There is no dotted&ndash;pair or improper
+stream as with lists. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>stream?</b><var> obj<a name="index-stream_003f-5448"></a></var><br>
+<blockquote><p>Return <code>#t</code> if <var>obj</var> is a &lsquo;<samp><span class="samp">stream</span></samp>&rsquo; and <code>#f</code> otherwise. 
+If <var>obj</var> is a &lsquo;<samp><span class="samp">stream</span></samp>&rsquo;, <code>stream?</code> does not force its
+promise.
+
+        <p>If <code>(stream? obj)</code> is <code>#t</code>, then one of <code>(stream-null? 
+obj)</code> and <code>(stream-pair? obj)</code> will be <code>#t</code> and the other will
+be <code>#f</code>; if <code>(stream? obj)</code> is <code>#f</code>, both
+<code>(stream-null?  obj)</code> and <code>(stream-pair?  obj)</code> will be
+<code>#f</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>stream-null?</b><var> obj<a name="index-stream_002dnull_003f-5449"></a></var><br>
+<blockquote><p>Return <code>#t</code> if the <var>obj</var> is the distinguished null stream and
+<code>#f</code> otherwise.  If <var>obj</var> is a &lsquo;<samp><span class="samp">stream</span></samp>&rsquo;,
+<code>stream-null?</code> must force its promise in order to distinguish
+&lsquo;<samp><span class="samp">stream-null</span></samp>&rsquo; from &lsquo;<samp><span class="samp">stream-pair</span></samp>&rsquo;. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>stream-pair?</b><var> obj<a name="index-stream_002dpair_003f-5450"></a></var><br>
+<blockquote><p>Take an <var>obj</var> and return <code>#t</code> if it is a &lsquo;<samp><span class="samp">stream-pair</span></samp>&rsquo;
+constructed by <code>stream-cons</code> and <code>#f</code> otherwise.  If <var>obj</var>
+is a &lsquo;<samp><span class="samp">stream</span></samp>&rsquo;, <code>stream-pair?</code> must force its promise in order
+to distinguish &lsquo;<samp><span class="samp">stream-null</span></samp>&rsquo; from &lsquo;<samp><span class="samp">stream-pair</span></samp>&rsquo;. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>stream-car</b><var> stream<a name="index-stream_002dcar-5451"></a></var><br>
+<blockquote><p>Return the object stored in the kar of <var>stream</var>.  <code>stream-car</code>
+signals an error if the object passed to it is not a &lsquo;<samp><span class="samp">stream-pair</span></samp>&rsquo;. 
+Calling <code>stream-car</code> causes the object stored there to be evaluated
+if it has not yet been; the object's value is cached in case it is
+needed again. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>stream-cdr</b><var> stream<a name="index-stream_002dcdr-5452"></a></var><br>
+<blockquote><p>Return the stream stored in the kdr of <var>stream</var>.  <code>stream-cdr</code>
+signals an error if the object passed to it is not a &lsquo;<samp><span class="samp">stream-pair</span></samp>&rsquo;. 
+Calling <code>stream-cdr</code> does not force the promise containing the
+stream stored in the kdr of the stream. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>stream-lambda</b><var> formals . body<a name="index-stream_002dlambda-5453"></a></var><br>
+<blockquote><p>Create a procedure that returns a promise to evaluate the body of the
+procedure.  The last body expression to be evaluated must yield a
+stream.
+
+        <p>As with normal <code>lambda</code>, <var>formals</var> may be a single variable
+name, in which case all the formal arguments are collected into a single
+list, or a list of variable names, which may be null if there are no
+arguments, proper if there are an exact number of arguments, or dotted
+if a fixed number of arguments is to be followed by zero or more
+arguments collected into a list.
+
+        <p><var>body</var> must contain at least one expression, and may contain
+internal definitions preceding any expressions to be evaluated. 
+</p></blockquote></div>
+
+   <p>Examples:
+
+<pre class="example">     (define strm123
+       (stream-cons 1
+         (stream-cons 2
+           (stream-cons 3
+             stream-null))))
+     
+     (stream-car strm123)
+     &rArr; 1
+     
+     (stream-car (stream-cdr strm123))
+     &rArr; 2
+     
+     (stream-pair?
+       (stream-cdr
+         (stream-cons (/ 1 0) stream-null)))
+     &rArr; #f
+     
+     (stream? (list 1 2 3))
+     &rArr; #f
+     
+     (define iter
+       (stream-lambda (f x)
+         (stream-cons x (iter f (f x)))))
+     
+     (define nats
+       (iter (lambda (x)
+               (+ x 1))
+             0))
+     
+     (stream-car (stream-cdr nats))
+     &rArr; 1
+     
+     (define stream-add
+       (stream-lambda (s1 s2)
+         (stream-cons
+           (+ (stream-car s1) (stream-car s2))
+           (stream-add (stream-cdr s1)
+                       (stream-cdr s2)))))
+     
+     (define evens
+       (stream-add nats nats))
+     
+     (stream-car evens)
+     &rArr; 0
+     
+     (stream-car (stream-cdr evens))
+     &rArr; 2
+     
+     (stream-car (stream-cdr (stream-cdr evens)))
+     &rArr; 4
+</pre>
+   <!-- page -->
+   </body></html>
+

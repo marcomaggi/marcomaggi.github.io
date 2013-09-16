@@ -1,0 +1,202 @@
+<html lang="en">
+<head>
+<title>streams cons - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="streams.html#streams" title="streams">
+<link rel="prev" href="streams-basic.html#streams-basic" title="streams basic">
+<link rel="next" href="streams-from.html#streams-from" title="streams from">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.3d4 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+        `http://sourceforge.net/projects/vicare-scheme/files/'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+and at:
+
+           `http://sourceforge.net/projects/vicare-scheme/'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the ``History'' appendix for details.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library `(vicare formations)' is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="streams-cons"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="streams-from.html#streams-from">streams from</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="streams-basic.html#streams-basic">streams basic</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="streams.html#streams">streams</a>
+<hr>
+</div>
+
+<h4 class="subsection">15.14.2 Definitions and constructors</h4>
+
+<div class="defun">
+&mdash; Syntax: <b>stream</b><var> object ...<a name="index-stream-5454"></a></var><br>
+<blockquote><p>Take zero or more objects and create a newly&ndash;allocated &lsquo;<samp><span class="samp">stream</span></samp>&rsquo;
+containing in its elements the objects, in order.  Since <code>stream</code>
+is syntactic, the objects are evaluated when they are accessed, not when
+the &lsquo;<samp><span class="samp">stream</span></samp>&rsquo; is created.  If no objects are given, as in
+<code>(stream)</code>, the null stream is returned.  See also
+<code>list-&gt;stream</code>.
+
+        <p>Example:
+
+     <pre class="example">          (define strm123 (stream 1 2 3))
+          
+          ; (/ 1 0) not evaluated when stream is created
+          (define s (stream 1 (/ 1 0) -1))
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>stream-constant</b><var> object ...<a name="index-stream_002dconstant-5455"></a></var><br>
+<blockquote><p>Take one or more objects and return a newly&ndash;allocated &lsquo;<samp><span class="samp">stream</span></samp>&rsquo;
+containing in its elements the objects, repeating the objects in
+succession forever.
+
+        <p>Example:
+
+     <pre class="example">          (stream-constant 1)
+          &rArr; 1 1 1 ...
+          
+          (stream-constant #t #f)
+          &rArr; #t #f #t #f #t #f ...
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>define-stream</b> (<var>name formals</var>)<var> . body<a name="index-define_002dstream-5456"></a></var><br>
+<blockquote><p>Create a procedure that returns a &lsquo;<samp><span class="samp">stream</span></samp>&rsquo;, and may appear anywhere
+a normal <code>define</code> may appear, including an internal definition, and
+may have internal definitions of its own, including other
+<code>define-streams</code>.  The defined procedure takes arguments in the
+same way as <code>stream-lambda</code>.
+
+        <p><code>define-stream</code> is syntactic sugar on <code>stream-lambda</code>; see
+also <code>stream-let</code>.
+
+        <p>The following example is a simple version of <code>stream-map</code> that
+takes only a single input stream and calls itself recursively:
+
+     <pre class="example">          (define-stream (stream-map proc strm)
+            (if (stream-null? strm)
+                stream-null
+              (stream-cons
+                (proc (stream-car strm))
+                (stream-map proc (stream-cdr strm)))))
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>stream-let</b><var> name </var>((<var>var expr</var>)<var> ...</var>)<var> body<a name="index-stream_002dlet-5457"></a></var><br>
+<blockquote><p>Create a local scope that binds each variable to the value of its
+corresponding expression.  Additionally bind <var>name</var> to a procedure
+which takes the bound variables as arguments and <var>body</var> as its
+defining expressions, binding the tag with <code>stream-lambda</code>. 
+<var>name</var> is in scope within <var>body</var>, and may be called recursively.
+
+        <p>When the expanded expression defined by <code>stream-let</code> is evaluated,
+<code>stream-let</code> evaluates the expressions in its body in an
+environment containing the newly&ndash;bound variables, returning the value
+of the last expression evaluated, which must yield a stream.
+
+        <p><code>stream-let</code> provides syntactic sugar on <code>stream-lambda</code>, in
+the same manner as normal <code>let</code> provides syntactic sugar on normal
+<code>lambda</code>.  However, unlike normal <code>let</code>, the <var>name</var> is
+required, not optional, because unnamed <code>stream-let</code> is
+meaningless.
+
+        <p>Example: <code>stream-member</code> returns the first &lsquo;<samp><span class="samp">stream-pair</span></samp>&rsquo; of
+the input <var>strm</var> with a kar <var>x</var> that satisfies <code>(eqv? obj
+x)</code>, or the null stream if <var>x</var> is not present in <var>strm</var>.
+
+     <pre class="example">          (define-stream (stream-member eql? obj strm)
+            (stream-let loop ((strm strm))
+              (cond ((stream-null? strm)
+                     strm)
+                    ((eqv? obj (stream-car strm))
+                     strm)
+                    (else
+                     (loop (stream-cdr strm))))))
+</pre>
+        </blockquote></div>
+
+<!-- page -->
+   </body></html>
+

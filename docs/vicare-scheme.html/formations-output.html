@@ -1,0 +1,211 @@
+<html lang="en">
+<head>
+<title>formations output - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="formations.html#formations" title="formations">
+<link rel="next" href="formations-escape-generic.html#formations-escape-generic" title="formations escape generic">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.3d4 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+        `http://sourceforge.net/projects/vicare-scheme/files/'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+and at:
+
+           `http://sourceforge.net/projects/vicare-scheme/'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the ``History'' appendix for details.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library `(vicare formations)' is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="formations-output"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="formations-escape-generic.html#formations-escape-generic">formations escape generic</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="formations.html#formations">formations</a>
+<hr>
+</div>
+
+<h3 class="section">29.1 Formatted output</h3>
+
+<p>A format string is generally more compact and easier than using just the
+standard procedures like <code>display</code>, <code>write</code> and
+<code>newline</code>.  Parameters in the output string allow various output
+styles, and parameters can be taken from the arguments for runtime
+flexibility.
+
+   <p><code>format</code> is similar to the Common Lisp procedure of the same name,
+but it's not identical and doesn't have quite all the features found in
+Common Lisp<a rel="footnote" href="#fn-1" name="fnd-1"><sup>1</sup></a>.
+
+   <p>C programmers will note the similarity between <code>format</code> and
+<code>printf()</code>, though escape sequences are marked with <code>~</code> instead
+of <code>%</code>, and are more powerful.
+
+<div class="defun">
+&mdash; Function: <b>format</b><var> template-string<a name="index-format-7996"></a></var><br>
+&mdash; Function: <b>format</b><var> template-string args <small class="dots">...</small><a name="index-format-7997"></a></var><br>
+&mdash; Function: <b>format</b><var> dest template-string<a name="index-format-7998"></a></var><br>
+&mdash; Function: <b>format</b><var> dest template-string arg <small class="dots">...</small><a name="index-format-7999"></a></var><br>
+<blockquote><p>Write output specified by the <var>template-string</var> string to
+<var>dest</var>; assume that the zero&ndash;based starting column number is the
+one specified by the parameter <code>format-output-column</code>.
+
+        <p><var>dest</var> can be:
+
+          <ul>
+<li>An output port.
+
+          <li><code>#t</code> for <code>current-output-port</code>.
+
+          <li>A number for <code>current-error-port</code>.
+
+          <li><code>#f</code> to return the output as a string. 
+</ul>
+
+        <p>If <var>dest</var> is not given (that is: the first argument is a string):
+the output is returned as if <code>#f</code> is used as <var>dest</var> argument.
+
+        <p><var>template-string</var> can contain literal text to be output, and
+<code>~</code> escapes.  Each escape has the form:
+
+     <pre class="example">          ~ [<var>param</var> [, <var>param</var> ...] [:] [@] <var>code</var>
+</pre>
+        <p><var>code</var> is a character determining the escape sequence; the
+<var>code</var> letters are <strong>not</strong> case&ndash;sensitive, upper and lower
+case are the same.  The <code>:</code> and <code>@</code> characters are optional
+modifiers, one or both of which change the way various codes operate. 
+Optional parameters are accepted by some codes too.  Parameters have the
+following forms:
+
+          <dl>
+<dt><code>[+/-]number</code><dd>An integer, with optional <code>+</code> or <code>-</code> sign in front of it.
+
+          <br><dt><code>'</code><dd>The quote.  The following character in the format string, for instance
+<code>'z</code> for <code>z</code>.
+
+          <br><dt><code>v</code><dd>The next function argument as the parameter.  <code>v</code> stands for
+&ldquo;variable&rdquo;, a parameter can be calculated at runtime and included in
+the arguments.  Upper case <code>V</code> can be used too.
+
+          <br><dt><code>#</code><dd>The number of arguments remaining. 
+</dl>
+
+        <p>Parameters are separated by commas (<code>,</code>).  A parameter can be left
+empty to keep its default value when supplying later parameters.
+
+        <p>It's an error if there are not enough arguments for the escapes in the
+format string, but any excess arguments are ignored. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Parameter: <b>format-output-column</b><var><a name="index-format_002doutput_002dcolumn-8000"></a></var><br>
+<blockquote><p>The zero&ndash;based starting column number for the next invocations of
+<code>format</code>.  The value is initialised to 0 and must be a
+non&ndash;negative fixnum. 
+</p></blockquote></div>
+
+   <p>Iterations <code>~{</code> <code>~}</code> and conditionals <code>~[</code> <code>~;</code>
+<code>~]</code> can be nested, but must be properly nested, meaning the inner
+form must be entirely within the outer form.  So it's not possible, for
+instance, to try to conditionalize the endpoint of an iteration.
+
+<pre class="example">     (format "~{ ~[ ... ~] ~}" ...)       ;; good
+     (format "~{ ~[ ... ~} ... ~]" ...)   ;; bad
+</pre>
+   <p>The same applies to case conversions <code>~(</code> <code>~)</code>, they must
+properly nest with respect to iterations and conditionals (though
+currently a case conversion cannot nest within another case conversion).
+
+   <p>When a sub&ndash;format (<code>~?</code>) is used, that sub&ndash;format string must be
+self-contained.  It cannot for instance give a <code>~{</code> to begin an
+iteration form and have the <code>~}</code> up in the originating format, or
+similar.
+
+<!-- page -->
+   <div class="footnote">
+<hr>
+<h4>Footnotes</h4><p class="footnote"><small>[<a name="fn-1" href="#fnd-1">1</a>]</small> For the original Common Lisp specification see
+(<acronym>URL</acronym> last verified Sep 16, 2013):
+<a href="http://www.cs.cmu.edu/Groups/AI/html/cltl/clm/node200.html">http://www.cs.cmu.edu/Groups/AI/html/cltl/clm/node200.html</a></p>
+
+   <hr></div>
+
+   </body></html>
+

@@ -1,0 +1,210 @@
+<html lang="en">
+<head>
+<title>comparisons sequence - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="comparisons.html#comparisons" title="comparisons">
+<link rel="prev" href="comparisons-atoms.html#comparisons-atoms" title="comparisons atoms">
+<link rel="next" href="comparisons-pair.html#comparisons-pair" title="comparisons pair">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.3d4 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+        `http://sourceforge.net/projects/vicare-scheme/files/'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+and at:
+
+           `http://sourceforge.net/projects/vicare-scheme/'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the ``History'' appendix for details.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library `(vicare formations)' is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="comparisons-sequence"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="comparisons-pair.html#comparisons-pair">comparisons pair</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="comparisons-atoms.html#comparisons-atoms">comparisons atoms</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="comparisons.html#comparisons">comparisons</a>
+<hr>
+</div>
+
+<h4 class="subsection">15.16.5 Comparing lists and vectors</h4>
+
+<p>This section describes comparison procedures for Scheme lists, vectors
+and objects that can be accessed like lists or like vectors.
+
+   <p>An object <var>x</var> can be accessed like a vector if there are procedures
+<code>size</code> and <code>ref</code> such that &lsquo;<samp><span class="samp">(size x)</span></samp>&rsquo; is a non&ndash;negative
+integer n indicating the number of elements, and <code>(ref x i)</code>
+is the i-th element of <var>x</var> for i in {0, ...,
+n-1}.
+
+   <p>The default vector access procedures are <code>vector-length</code> and
+<code>vector-ref</code>.
+
+   <p>An object <var>x</var> can be accessed like a (proper) list if there are
+procedures <code>empty?</code>, <code>head</code> and <code>tail</code> such that
+<code>(empty? x)</code> is a boolean indicating that there are no elements in
+<var>x</var>, <code>(head x)</code> is the first element of <var>x</var>, and
+<code>(tail x)</code> is an object representing the residual elements of
+<var>x</var>.
+
+   <p>The default list access procedures are <code>null?</code>, <code>car</code> and
+<code>cdr</code>.
+
+   <p>Independently of the way the elements are accessed, the natural ordering
+of vectors and lists differs.  The following comparison policies are
+defined:
+
+     <dl>
+<dt><em>As vectors</em><dd>The shorter sequence is always smaller than the longer one, no matter
+the elements in it.  Sequences of the same size are compared
+lexicographically (element by element, stopping at the first different
+one).
+
+     <br><dt><em>As lists</em><dd>The empty sequence is smallest.  Two non&ndash;empty sequences are compared
+by their first elements, and only if the first elements are equal the
+residual sequences are compared, recursively. 
+</dl>
+
+<div class="defun">
+&mdash; Function: <b>vector-compare</b><var> x y<a name="index-vector_002dcompare-5549"></a></var><br>
+&mdash; Function: <b>vector-compare</b><var> compare x y<a name="index-vector_002dcompare-5550"></a></var><br>
+&mdash; Function: <b>vector-compare</b><var> compare x y size ref<a name="index-vector_002dcompare-5551"></a></var><br>
+&mdash; Function: <b>vector-compare-as-list</b><var> x y<a name="index-vector_002dcompare_002das_002dlist-5552"></a></var><br>
+&mdash; Function: <b>vector-compare-as-list</b><var> compare x y<a name="index-vector_002dcompare_002das_002dlist-5553"></a></var><br>
+&mdash; Function: <b>vector-compare-as-list</b><var> compare x y size ref<a name="index-vector_002dcompare_002das_002dlist-5554"></a></var><br>
+&mdash; Function: <b>list-compare</b><var> x y<a name="index-list_002dcompare-5555"></a></var><br>
+&mdash; Function: <b>list-compare</b><var> compare x y<a name="index-list_002dcompare-5556"></a></var><br>
+&mdash; Function: <b>list-compare</b><var> compare x y empty? head tail<a name="index-list_002dcompare-5557"></a></var><br>
+&mdash; Function: <b>list-compare-as-vector</b><var> x y<a name="index-list_002dcompare_002das_002dvector-5558"></a></var><br>
+&mdash; Function: <b>list-compare-as-vector</b><var> compare x y<a name="index-list_002dcompare_002das_002dvector-5559"></a></var><br>
+&mdash; Function: <b>list-compare-as-vector</b><var> compare x y empty? head tail<a name="index-list_002dcompare_002das_002dvector-5560"></a></var><br>
+<blockquote><p>Compare two sequences <var>x</var> and <var>y</var>, using <var>compare</var> for
+comparing elements.  The result is an exact integer in {-1, 0,
+1}.  If <var>compare</var> is not supplied, <code>default-compare</code> is used.
+
+        <p>The procedure named <var>access</var><code>-compare-as-</code><var>order</var> accesses
+the objects like <var>access</var> and compares them with respect to the
+order given by <var>order</var>. The names <var>type</var><code>-compare</code> are
+abbreviations for <var>type</var><code>-compare-as-</code><var>type</var>.
+
+        <p>In the following examples the difference between comparison as list and
+comparison as vector does not show:
+
+     <pre class="example">          (list-compare '()  '())                    &rArr; 0
+          (list-compare '(1) '())                    &rArr; +1
+          (list-compare '()  '(1))                   &rArr; -1
+          
+          (list-compare '(1) '(1))                   &rArr; 0
+          (list-compare '(1) '(2))                   &rArr; -1
+          (list-compare '(2) '(1))                   &rArr; +1
+          
+          (list-compare '(1 1) '(1 1))               &rArr; 0
+          (list-compare '(1 1) '(1 2))               &rArr; -1
+          (list-compare '(1 2) '(1 1))               &rArr; +1
+          
+          (list-compare '(1 1 1) '(1 1))             &rArr; +1
+          (list-compare '(1 1)   '(1 1 1))           &rArr; -1
+          
+          (list-compare-as-vector '()  '())          &rArr; 0
+          (list-compare-as-vector '(1) '())          &rArr; +1
+          (list-compare-as-vector '()  '(1))         &rArr; -1
+          
+          (list-compare-as-vector '(1) '(1))         &rArr; 0
+          (list-compare-as-vector '(1) '(2))         &rArr; -1
+          (list-compare-as-vector '(2) '(1))         &rArr; +1
+          
+          (list-compare-as-vector '(1 1) '(1 1))     &rArr; 0
+          (list-compare-as-vector '(1 1) '(1 2))     &rArr; -1
+          (list-compare-as-vector '(1 2) '(1 1))     &rArr; +1
+          
+          (list-compare-as-vector '(1 1 1) '(1 1))   &rArr; +1
+          (list-compare-as-vector '(1 1)   '(1 1 1)) &rArr; -1
+</pre>
+        <p>In the following examples the difference shows:
+
+     <pre class="example">          (vector-compare         '#(1 1 1) '#(2 1)) &rArr; +1
+          (vector-compare-as-list '#(1 1 1) '#(2 1)) &rArr; -1
+</pre>
+        </blockquote></div>
+
+<!-- page -->
+   </body></html>
+

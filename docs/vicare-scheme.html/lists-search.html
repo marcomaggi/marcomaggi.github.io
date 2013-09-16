@@ -1,0 +1,366 @@
+<html lang="en">
+<head>
+<title>lists search - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="lists.html#lists" title="lists">
+<link rel="prev" href="lists-filter.html#lists-filter" title="lists filter">
+<link rel="next" href="lists-delete.html#lists-delete" title="lists delete">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.3d4 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+        `http://sourceforge.net/projects/vicare-scheme/files/'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+and at:
+
+           `http://sourceforge.net/projects/vicare-scheme/'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the ``History'' appendix for details.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library `(vicare formations)' is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="lists-search"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="lists-delete.html#lists-delete">lists delete</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="lists-filter.html#lists-filter">lists filter</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="lists.html#lists">lists</a>
+<hr>
+</div>
+
+<h3 class="section">17.10 Searching</h3>
+
+<p><a name="index-List-searching-6370"></a><a name="index-Searching-in-lists-6371"></a>
+
+   <p>The following procedures search lists for the leftmost elements
+satisfying some criteria; this means they do not always examine the
+entire list; thus, there is no efficient way for them to reliably detect
+and signal an error when passed a dotted or circular list.  Here are the
+general rules describing how these procedures work when applied to
+different kinds of lists:
+
+     <dl>
+<dt><em>Proper lists</em><dd>The standard, canonical behavior happens in this case.
+
+     <br><dt><em>Dotted lists</em><dd>It is an error to pass these procedures a dotted list that does not
+contain an element satisfying the search criteria.  That is, it is an
+error if the procedure has to search all the way to the end of the
+dotted list.  In this case the result is undefined.
+
+     <br><dt><em>Circular lists</em><dd>It is an error to pass these procedures a circular list that does not
+contain an element satisfying the search criteria.  Note that the
+procedures do not detect this case, they will simply diverge.  It is,
+however, acceptable to search a circular list if the search is
+successful; that is, if the list contains an element satisfying the
+search criteria. 
+</dl>
+
+<div class="defun">
+&mdash; Function: <b>take-while</b><var> pred circ<a name="index-take_002dwhile-6372"></a></var><br>
+&mdash; Function: <b>take-while!</b><var> pred circ<a name="index-take_002dwhile_0021-6373"></a></var><br>
+<blockquote><p>Return the longest initial prefix of <var>circ</var> whose elements all
+satisfy <var>pred</var>.  <code>take-while!</code> is allowed to alter the argument
+list to produce the result.
+
+     <pre class="example">          (take-while even? '(2 18 3 10 22 9))
+          &rArr; (2 18)
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>drop-while</b><var> pred circ<a name="index-drop_002dwhile-6374"></a></var><br>
+<blockquote><p>Drop the longest initial prefix of <var>circ</var> whose elements all satisfy
+<var>pred</var> and return the rest of the list.
+
+     <pre class="example">          (drop-while even? '(2 18 3 10 22 9))
+          &rArr; (3 10 22 9)
+</pre>
+        <p>The circular&ndash;list case may be viewed as &ldquo;rotating&rdquo; the list. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>span</b><var> pred circ<a name="index-span-6375"></a></var><br>
+&mdash; Function: <b>span!</b><var> pred ell<a name="index-span_0021-6376"></a></var><br>
+&mdash; Function: <b>break</b><var> pred circ<a name="index-break-6377"></a></var><br>
+&mdash; Function: <b>break!</b><var> pred ell<a name="index-break_0021-6378"></a></var><br>
+<blockquote><p><code>span</code> splits the list into the longest initial prefix whose
+elements all satisfy <var>pred</var> and the remaining tail.  <code>break</code>
+inverts the sense of the predicate: The tail commences with the first
+element of the input list that satisfies the predicate.
+
+        <p>In other words: <code>span</code> finds the intial span of elements satisfying
+<var>pred</var>, and <code>break</code> breaks the list at the first element
+satisfying <var>pred</var>.
+
+        <p><code>span</code> is equivalent to:
+
+     <pre class="example">          (values (take-while pred clist)
+                  (drop-while pred clist))
+</pre>
+        <p><code>span!</code> and <code>break!</code> are allowed to alter the argument list to
+produce the result.
+
+     <pre class="example">          (span even? '(2 18 3 10 22 9))
+          &rArr; (2 18) (3 10 22 9)
+          
+          (break even? '(3 1 4 1 5 9))
+          &rArr; (3 1) (4 1 5 9)
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>any</b><var> pred ell0 ell ...<a name="index-any-6379"></a></var><br>
+&mdash; Function: <b>any*</b><var> pred circ0 circ ...<a name="index-any_002a-6380"></a></var><br>
+<blockquote><p>Apply the predicate across the lists, returning true if the predicate
+returns true on any application.  If there are N list arguments,
+then <var>pred</var> must be a procedure taking N arguments and
+returning a boolean result.  If all the list arguments are empty: The
+return value is <code>#f</code>.
+
+        <p>The list arguments of <code>any</code> must have the same length; <code>any*</code>
+accepts lists of different length.
+
+        <p><code>any</code> applies <var>pred</var> to the first elements of the list
+arguments, if this application return true, <code>any</code> immediately
+returns that value; otherwise, it iterates, applying pred to the second
+elements of the lits arguments and so forth.  The iteration stops when a
+true value is produced or one of the lists runs out of values; in the
+latter case, <code>any</code> returns <code>#f</code>.  The application of <var>pred</var>
+to the last element of the lists is a tail call.
+
+        <p>Note the difference between <code>find</code> and <code>any</code>: <code>find</code>
+returns the element that satisfied the predicate; <code>any</code> returns the
+true value that the predicate produced.
+
+        <p>The identifier <code>any</code> does not end with a question mark: This is to
+indicate that it does not return a simple boolean (<code>#t</code> or <code>#f</code>),
+but a general value.
+
+     <pre class="example">          (any integer? '(a 3 b 2.7))
+          &rArr; #t
+          
+          (any integer? '(a 3.1 b 2.7))
+          &rArr; #f
+          
+          (any &lt; '(3 1 4 1 5)
+                 '(2 7 1 8 2))
+          &rArr; #t
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>every</b><var> pred ell0 ell ...<a name="index-every-6381"></a></var><br>
+&mdash; Function: <b>every*</b><var> pred circ0 circ ...<a name="index-every_002a-6382"></a></var><br>
+<blockquote><p>Apply the predicate across the lists, returning true if the predicate
+returns true on every application.  If there are N list
+arguments, then <var>pred</var> must be a procedure taking N arguments
+and returning a boolean result.  If all the list arguments are empty:
+The return value is <code>#t</code>.
+
+        <p>The list arguments of <code>every</code> must have the same length;
+<code>every*</code> accepts lists of different length.
+
+        <p><code>every</code> applies <var>pred</var> to the first elements of the list
+arguments, if this application returns <code>#f</code>, <code>every</code>
+immediately returns <code>#f</code>; otherwise, it iterates, applying
+<var>pred</var> to the second elements of the list arguments and so forth. 
+The iteration stops when a <code>#f</code> value is produced or one of the
+lists runs out of values.  In the latter case, <code>every</code> returns the
+true value produced by its final application of <var>pred</var>.  The
+application of <var>pred</var> to the last element of the lists is a tail
+call.
+
+        <p>If one of the list arguments has no elements, <code>every</code> simply
+returns <code>#t</code>.
+
+        <p>The identifier <code>every</code> does not end with a question mark: This is
+to indicate that it does not return a simple boolean (<code>#t</code> or
+<code>#f</code>), but a general value. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>list-index</b><var> pred ell0 ell ...<a name="index-list_002dindex-6383"></a></var><br>
+&mdash; Function: <b>list-index*</b><var> pred circ0 circ ...<a name="index-list_002dindex_002a-6384"></a></var><br>
+<blockquote><p>Return the index of the leftmost element that satisfies <var>pred</var>.  If
+there are N list arguments, then <var>pred</var> must be a function
+taking N arguments and returning a boolean result.
+
+        <p>The list arguments of <code>list-index</code> must have the same length;
+<code>list-index*</code> accepts lists of different length.
+
+        <p><code>list-index</code> applies <var>pred</var> to the first elements of the list
+arguments, if this application returns true, <code>list-index</code>
+immediately returns zero; otherwise, it iterates, applying <var>pred</var> to
+the second elements of the list arguments and so forth.  When it finds a
+tuple of list elements that cause <var>pred</var> to return true, it stops
+and returns the zero&ndash;based index of that position in the lists.
+
+        <p>The iteration stops when one of the lists runs out of values; in this
+case, <code>list-index</code> returns <code>#f</code>.
+
+     <pre class="example">          (list-index even? '(3 1 4 1 5 9))
+          &rArr; 2
+          
+          (list-index &lt; '(3 1 4 1 5 9 2 5 6) '(2 7 1 8 2))
+          &rArr; 1
+          
+          (list-index = '(3 1 4 1 5 9 2 5 6) '(2 7 1 8 2))
+          &rArr; #f
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>position</b><var> obj ell<a name="index-position-6385"></a></var><br>
+&mdash; Function: <b>position/stx</b><var> obj ell<a name="index-position_002fstx-6386"></a></var><br>
+<blockquote><p>Return the index of the leftmost <var>obj</var> in <var>ell</var>.  If <var>obj</var>
+is not present in <var>ell</var>, return <code>#f</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>member*</b><var> obj ell<a name="index-member_002a-6387"></a></var><br>
+&mdash; Function: <b>member*</b><var> obj ell item=<a name="index-member_002a-6388"></a></var><br>
+<blockquote><p>Return the first sublist of <var>ell</var> whose car is <var>obj</var>, where the
+sublists of <var>ell</var> are the non&ndash;empty lists returned by <code>(drop
+ell i)</code> for <var>i</var> less than the length of <var>ell</var>.  If <var>obj</var>
+does not occur in <var>ell</var>, then <code>#f</code> is returned.
+
+        <p>Examples:
+
+     <pre class="example">          (member* '(a) '(b (a) c))
+          &rArr; ((a) c)
+</pre>
+        <p><code>member*</code> extends the <acronym>R6RS</acronym> definition of <code>member</code> to allow
+the client to pass in an optional equality procedure <var>item=</var> used to
+compare keys.  <var>item=</var> defaults to <code>equal?</code>.
+
+        <p>The comparison procedure is used to compare the elements Ei of
+list to the key <var>obj</var> in this way:
+
+     <pre class="example">          (= x ei) ; list is (E1 ... En)
+</pre>
+        <p class="noindent">that is, the first argument is always <var>obj</var>, and the second argument
+is one of the list elements.  Thus one can reliably find the first
+element of list that is greater than five with:
+
+     <pre class="example">          (member* 5 ell &lt;)
+</pre>
+        <p>Note that fully general list searching may be performed with the
+<code>find-tail</code> and <code>find</code> procedures. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>find-tail</b><var> pred circ<a name="index-find_002dtail-6389"></a></var><br>
+<blockquote><p>Return the first pair of <var>circ</var> whose car satisfies <var>pred</var>.  If
+no pair does, return <code>#f</code>.  <code>find-tail</code> can be viewed as a
+general&ndash;predicate variant of the <code>member*</code> function.
+
+        <p>Examples:
+
+     <pre class="example">          (find-tail even? '(3 1 37 -8 -5 0 0))
+          &rArr; (-8 -5 0 0)
+          
+          (find-tail even? '(3 1 37 -5))
+          &rArr; #f
+</pre>
+        <p>In the circular&ndash;list case, this procedure &ldquo;rotates&rdquo; the list.
+
+        <p><code>find-tail</code> is essentially <code>drop-while</code>, where the sense of
+the predicate is inverted: <code>find-tail</code> searches until it finds an
+element satisfying the predicate; <code>drop-while</code> searches until it
+finds an element that doesn't satisfy the predicate.
+
+        <blockquote>
+<strong>NOTE</strong> The <code>find</code> function defined by <acronym>R6RS</acronym> has an
+ambiguity in its lookup semantics: if <code>find</code> returns <code>#f</code>, we
+cannot tell (in general) if it found a <code>#f</code> element that satisfied
+<var>pred</var>, or if it did not find any element at all.
+
+        <p>In many situations, this ambiguity cannot arise: either the list being
+searched is known not to contain any <code>#f</code> elements, or the list is
+guaranteed to have an element satisfying <var>pred</var>.
+
+        <p>However, in cases where this ambiguity can arise, we should use
+<code>find-tail</code> instead of <code>find</code>, <code>find-tail</code> has no such
+ambiguity. 
+</blockquote>
+        </p></blockquote></div>
+
+<!-- page -->
+   </body></html>
+

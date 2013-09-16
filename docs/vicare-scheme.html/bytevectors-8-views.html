@@ -1,0 +1,200 @@
+<html lang="en">
+<head>
+<title>bytevectors 8 views - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="bytevectors-8.html#bytevectors-8" title="bytevectors 8">
+<link rel="prev" href="bytevectors-8-convention.html#bytevectors-8-convention" title="bytevectors 8 convention">
+<link rel="next" href="bytevectors-8-cons.html#bytevectors-8-cons" title="bytevectors 8 cons">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.3d4 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+        `http://sourceforge.net/projects/vicare-scheme/files/'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+and at:
+
+           `http://sourceforge.net/projects/vicare-scheme/'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the ``History'' appendix for details.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library `(vicare formations)' is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="bytevectors-8-views"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="bytevectors-8-cons.html#bytevectors-8-cons">bytevectors 8 cons</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="bytevectors-8-convention.html#bytevectors-8-convention">bytevectors 8 convention</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="bytevectors-8.html#bytevectors-8">bytevectors 8</a>
+<hr>
+</div>
+
+<h4 class="subsection">21.2.3 Views over bytevectors</h4>
+
+<p>Bytevector views are syntactic sugar to allow subvector specification
+with minimum overhead; views make use of auxiliary syntaxes exported by
+the <code>(vicare containers auxiliary-syntaxes)</code> library and
+reexported by the <code>(vicare containers bytevectors u8)</code> library.  Many low
+level bytevector functions act on subvectors specified with triplets of
+arguments:
+
+     <ul>
+<li>The full bytevector.
+
+     <li>The <dfn>start index</dfn>: the index of the first byte included in the
+selected subvector.
+
+     <li>The <dfn>past index</dfn>: the index of the byte past the last byte included
+in the selected subvector. 
+</ul>
+
+   <p>To select the subvector <code>#vu8(6 7 8 9)</code> from the bytevector
+<code>#vu8(0 1 2 3 4 5 6 7 8 9)</code> we have to determine the half&ndash;open
+range of bytes, which is [6, 10), then apply a function to the
+arguments:
+
+<pre class="example">     (%the-function '#vu8(0 1 2 3 4 5 6 7 8 9) 6 10)
+</pre>
+   <p class="noindent">while to select the whole bytevector we can do:
+
+<pre class="example">     (%the-function '#vu8(0 1 2 3 4 5 6 7 8 9) 0 10)
+</pre>
+   <p class="noindent">or:
+
+<pre class="example">     (let ((bv '#vu8(0 1 2 3 4 5 6 7 8 9)))
+       (%the-function bv 0 (bytevector-length bv)))
+</pre>
+   <p>With the bytevector views implemented by <code>(vicare containers bytevectors
+u8)</code>, the low level function is wrapped by a high level syntax which can
+be invoked as:
+
+<pre class="example">     (the-function '#vu8(0 1 2 3 4 5 6 7 8 9))
+             ; select the whole bytevector
+     
+     (the-function (view '#vu8(0 1 2 3 4 5 6 7 8 9)))
+             ; select the whole bytevector
+     
+     (the-function (view '#vu8(0 1 2 3 4 5 6 7 8 9)
+                     (start 6)))
+             ; select the subvector [6, 10)
+     
+     (the-function (view '#vu8(0 1 2 3 4 5 6 7 8 9)
+                     (start  6)
+                     (past  11)))
+             ; select the subvector [6, 10)
+     
+     (the-function (view '#vu8(0 1 2 3 4 5 6 7 8 9)
+                     (past 10)))
+             ; select the subvector [0, 10)
+</pre>
+   <p class="noindent">instead of a triplet of arguments, the bytevector view is a single
+argument that can be:
+
+     <dl>
+<dt><var>?bytevector</var><dt><code>(view </code><var>?bytevector</var><code>)</code><dd>The bytevector itself or an unquoted list holding the bytevector itself,
+prefixed by the <code>view</code> auxiliary syntax: it selects the whole
+bytevector.
+
+     <br><dt><code>(view </code><var>?bytevector</var><code> (start </code><var>?start-index</var><code>))</code><dd>An unquoted list holding the bytevector and the start index, with
+auxiliary syntaxes <code>view</code> and <code>start</code>: it selects the
+subvector from the start index to the end.
+
+     <br><dt><code>(view </code><var>?bytevector</var><code> (past </code><var>?past-index</var><code>))</code><dd>An unquoted list holding the bytevector and the past index, with
+auxiliary syntaxes <code>view</code> and <code>past</code>: it selects the subvector
+from zero to the selected past index.
+
+     <dt><code>(view </code><var>?bytevector</var><code> (start </code><var>?start-index</var><code>) (past </code><var>?past-index</var><code>))</code><dd>An unquoted list holding the bytevector, the start index and the past
+index, with auxiliary syntaxes <code>view</code>, <code>start</code> and
+<code>past</code>: it selects the subvector between the start and past
+indexes. 
+</dl>
+
+<p class="noindent"><var>?bytevector</var>, <var>?start-index</var> and <var>?past-index</var> can be
+arbitrary Scheme expressions.  High level macros accepting two or more
+subvectors as arguments, support bytevector views for all of them.  When
+we are concerned with the overhead of bytevector views, we can use the
+low level functions directly.
+
+   <p>In the following documentation: low level functions and high level
+macros are documented together; only the meaning of arguments to the low
+level function are described, the meaning of high level arguments is
+obvious.
+
+<!-- page -->
+   </body></html>
+

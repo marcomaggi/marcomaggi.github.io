@@ -1,0 +1,207 @@
+<html lang="en">
+<head>
+<title>streams unfold - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="streams.html#streams" title="streams">
+<link rel="prev" href="streams-fold.html#streams-fold" title="streams fold">
+<link rel="next" href="streams-map.html#streams-map" title="streams map">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.3d4 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+        `http://sourceforge.net/projects/vicare-scheme/files/'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+and at:
+
+           `http://sourceforge.net/projects/vicare-scheme/'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the ``History'' appendix for details.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library `(vicare formations)' is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="streams-unfold"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="streams-map.html#streams-map">streams map</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="streams-fold.html#streams-fold">streams fold</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="streams.html#streams">streams</a>
+<hr>
+</div>
+
+<h4 class="subsection">15.14.10 Unfolding</h4>
+
+<div class="defun">
+&mdash; Function: <b>stream-unfold</b><var> map pred gen base<a name="index-stream_002dunfold-5482"></a></var><br>
+<blockquote><p><code>stream-unfold</code> is the fundamental recursive stream constructor. 
+It constructs a stream by repeatedly applying <var>gen</var> to successive
+values of <var>base</var>, in the manner of <code>stream-iterate</code>, then
+applying <var>map</var> to each of the values so generated, appending each of
+the mapped values to the output stream as long as <code>(pred base)</code> is
+non&ndash;<code>#f</code>.  See also <code>stream-iterate</code> and
+<code>stream-unfolds</code>.
+
+        <p>For example, the expression below creates the finite stream:
+
+     <pre class="example">          0 1 4 9 16 25 36 49 64 81
+</pre>
+        <p class="noindent">initially the base is <code>0</code>, which is less than <code>10</code>, so
+<var>map</var> squares the base and the mapped value becomes the first
+element of the output stream; then <var>gen</var> increments the base by
+<code>1</code>, so it becomes <code>1</code>; this is less than <code>10</code>, so
+<var>map</var> squares the new base and <code>1</code> becomes the second element
+of the output stream; and so on, until the base becomes <code>10</code>, when
+<var>pred?</var>  stops the recursion and <code>stream-null</code> ends the output
+stream.
+
+     <pre class="example">          (stream-unfold
+            (lambda (x) (expt x 2)) ; map
+            (lambda (x) (&lt; x 10))   ; pred
+            (lambda (x) (+ x 1))    ; gen
+            0)                      ; base
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>stream-unfolds</b><var> proc seed<a name="index-stream_002dunfolds-5483"></a></var><br>
+<blockquote><p>Return <var>n</var> newly&ndash;allocated streams containing those elements
+produced by successive calls to the generator <var>proc</var>, which takes
+the current <var>seed</var> as its argument and returns <code>n+1</code> values:
+
+     <pre class="example">          (proc seed) -&gt; seed R0 ...  R(n-1)
+</pre>
+        <p class="noindent">where the returned <var>seed</var> is the input <var>seed</var> to the next call
+to the generator and R(i) indicates how to produce the next
+element of the i-th result stream:
+
+          <dl>
+<dt><code>(value)</code><dd><var>value</var> is the next car of the result stream;
+
+          <br><dt><code>#f</code><dd>no value produced by this iteration of the generator <var>proc</var> for the
+result stream;
+
+          <br><dt><code>()</code><dd>the end of the result stream. 
+</dl>
+
+        <p>It may require multiple calls of <var>proc</var> to produce the next element
+of any particular result stream.  See also <code>stream-iterate</code> and
+<code>stream-unfold</code>.
+
+        <p><code>stream-unfolds</code> is especially useful when writing expressions that
+return multiple streams.  For instance, with reference to the
+definitions below:
+
+     <pre class="example">          (stream-partition pred strm)
+</pre>
+        <p class="noindent">is equivalent to:
+
+     <pre class="example">          (values
+            (stream-filter pred strm)
+            (stream-filter
+                (lambda (x)
+                  (not (pred x)))
+               strm))
+</pre>
+        <p class="noindent">but only tests <code>pred</code> once for each element of <var>strm</var>.
+
+     <pre class="example">          (define (stream-partition pred strm)
+            (stream-unfolds
+              (lambda (s)
+                (if (stream-null? s)
+                    (values s '() '())
+                  (let ((a (stream-car s))
+                        (d (stream-cdr s)))
+                    (if (pred a)
+                        (values d (list a) #f)
+                      (values d #f (list a))))))
+              strm))
+          
+          (call-with-values
+            (lambda ()
+              (stream-partition odd?
+                (stream-range 1 6)))
+            (lambda (odds evens)
+              (list (stream-&gt;list odds)
+                    (stream-&gt;list evens))))
+          &rArr; ((1 3 5) (2 4))
+</pre>
+        </blockquote></div>
+
+<!-- page -->
+   </body></html>
+

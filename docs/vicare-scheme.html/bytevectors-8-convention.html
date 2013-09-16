@@ -1,0 +1,226 @@
+<html lang="en">
+<head>
+<title>bytevectors 8 convention - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="bytevectors-8.html#bytevectors-8" title="bytevectors 8">
+<link rel="prev" href="bytevectors-8-intro.html#bytevectors-8-intro" title="bytevectors 8 intro">
+<link rel="next" href="bytevectors-8-views.html#bytevectors-8-views" title="bytevectors 8 views">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.3d4 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+        `http://sourceforge.net/projects/vicare-scheme/files/'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+and at:
+
+           `http://sourceforge.net/projects/vicare-scheme/'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the ``History'' appendix for details.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library `(vicare formations)' is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="bytevectors-8-convention"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="bytevectors-8-views.html#bytevectors-8-views">bytevectors 8 views</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="bytevectors-8-intro.html#bytevectors-8-intro">bytevectors 8 intro</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="bytevectors-8.html#bytevectors-8">bytevectors 8</a>
+<hr>
+</div>
+
+<h4 class="subsection">21.2.2 Interface conventions</h4>
+
+<p>The following conventions hold:
+
+     <ul>
+<li>Procedures whose names end in <code>-ci</code> are case&ndash;insensitive variants;
+they interpret bytevectors as strings of characters in <acronym>ASCII</acronym>
+encoding: when doing comparisons they use <code>char-ci=?</code> and
+<code>char-ci&lt;?</code> and the like.
+
+     <li>Procedures whose names end in <code>!</code> are side&ndash;effecting variants. 
+What values these procedures return is usually not specified.
+
+     <li>The order of common arguments is consistent across the different
+procedures in the high level library, and consistent across the
+different procedures in the low level library.  Arguments to some
+functions in the high level library have different order from the ones
+of the homologous low level functions.
+
+     <li>Procedures that have left/right directional variants use the following
+convention:
+
+     <p><table summary=""><tr align="left"><th valign="top">Direction </th><th valign="top">Suffix
+<br></th></tr><tr align="left"><td valign="top">left-to-right </td><td valign="top"><var>?none</var>
+<br></td></tr><tr align="left"><td valign="top">right-to-left </td><td valign="top">&ndash;right
+<br></td></tr><tr align="left"><td valign="top">both </td><td valign="top">&ndash;both
+     <br></td></tr></table>
+</ul>
+
+   <p>In the procedure specifications:
+
+     <ul>
+<li>A <var>B</var> argument is a bytevector view, which is expanded by a macro in
+a triplet of values: the bytevector, the index of the first byte in the
+selected subvector, the index of the byte past the last in the selected
+position; <a href="bytevectors-8-views.html#bytevectors-8-views">bytevectors 8 views</a> for details.
+
+     <li>A <var>bv</var> argument is a bytevector.
+
+     <li>A <var>byte</var> argument is an exact integer representing an unsigned byte,
+that is in the range [0, 256).
+
+     <li>A <var>char</var> argument is a character.
+
+     <li>The <var>start</var> and <var>past</var> arguments are half&ndash;open bytevector
+indices specifying a subvector within a bytevector argument; when
+unspecified, they default to zero and the length of the bytevector,
+respectively.  When specified, it must be the case that:
+
+     <pre class="example">          0 &lt;= start &lt;= past &lt;= (bytevector-length bv)
+</pre>
+     <p class="noindent">for the corresponding argument <var>bv</var>.  They typically restrict a
+procedure's action to the indicated subvector; when <var>start</var> equals
+<var>past</var> the selected subvector is the empty bytevector.
+
+     <li>A <var>pred</var> argument is a unary predicate procedure, returning a
+true/false value when applied to an exact integer representing a byte.
+
+     <li>A <var>criterion</var> orn <var>byte/char/char-set/pred</var> argument is a value
+used to select/search for a byte in a bytevector:
+
+          <ul>
+<li>If it is a byte, it is used in an equality test with <code>=</code>.
+
+          <li>If it is a character, it is used in an equality test with <code>=</code> after
+having been converted to an exact integer with <code>char-&gt;integer</code>.
+
+          <li>If it is a character set, it is used in a membership test after the byte
+has been converted to a character with <code>integer-&gt;char</code>.
+
+          <li>If it is a procedure, it is applied to the bytes as a test predicate. 
+</ul>
+
+     <li>An <var>i</var> or <var>k</var> argument is an exact non&ndash;negative integer
+specifying an index into a bytevector.
+
+     <li>The <var>len</var> and <var>nbytes</var> arguments are exact non&ndash;negative
+integers specifying a length of a bytevector or some number of bytes.
+
+     <li>An <var>obj</var> argument can be any value. 
+</ul>
+
+   <p>An argument followed by <code>...</code> means zero&ndash;or&ndash;more elements.  So
+the procedure with the signature:
+
+<pre class="example">     sum-squares x ...
+</pre>
+   <p class="noindent">takes zero or more arguments (<var>x</var>, <small class="dots">...</small>), while the procedure
+with signature:
+
+<pre class="example">     spell-check doc dict1 dict2 ...
+</pre>
+   <p class="noindent">takes two mandatory arguments (<var>doc</var> and <var>dict1</var>) and zero or
+more optional arguments (<var>dict2</var> ...).
+
+   <p>If a procedure is said to return &ldquo;unspecified&rdquo;, this means that
+nothing at all is known about what the procedure returns; such a
+procedure is not even required to be consistent from call to call; it is
+simply required to return a value (or values) that may be passed to a
+command continuation, e.g. as the value of an expression appearing as a
+non&ndash;terminal subform of a begin expression.
+
+   <p>Unless explicitly stated: comparison is simply done on individual bytes
+of the bytevector, case&ndash;insensitive comparison is done converting the
+bytes to characters with <code>integer-&gt;char</code> and then using the
+functions:
+
+<pre class="example">     char-ci=? char-ci&lt;? char-ci&gt;? char-ci&lt;=? char-ci&gt;=?
+</pre>
+   <p class="noindent">provided by the underlying implementation, or by case&ndash;folding
+characters with the operation:
+
+<pre class="example">     (char-downcase (char-upcase (integer-&gt;char byte)))
+</pre>
+   <p class="noindent">where the two case&ndash;mapping operations are assumed to work for
+characters in the range allowed by <acronym>ASCII</acronym> encoding.
+
+<!-- page -->
+   </body></html>
+

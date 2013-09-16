@@ -1,0 +1,239 @@
+<html lang="en">
+<head>
+<title>vectors fold map - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="vectors-fold.html#vectors-fold" title="vectors fold">
+<link rel="prev" href="vectors-fold-unfold.html#vectors-fold-unfold" title="vectors fold unfold">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.3d4 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+        `http://sourceforge.net/projects/vicare-scheme/files/'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+and at:
+
+           `http://sourceforge.net/projects/vicare-scheme/'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the ``History'' appendix for details.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library `(vicare formations)' is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="vectors-fold-map"></a>
+<p>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="vectors-fold-unfold.html#vectors-fold-unfold">vectors fold unfold</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="vectors-fold.html#vectors-fold">vectors fold</a>
+<hr>
+</div>
+
+<h4 class="subsection">18.7.4 Mapping functions</h4>
+
+<p>All the functions described here map their <var>proc</var> function argument
+over all the elements of the vector arguments, or the subvector
+argument, from zero to the end in increasing order.  In all the
+following descriptions:
+
+     <ul>
+<li>Functions and syntaxes whose main name portion ends without a <code>!</code>,
+build and return a new vector, storing into it the results of mapping
+<var>proc</var>.
+
+     <li>Functions and syntaxes whose main name portion ends with a <code>!</code>,
+mutate their <var>vec0</var> vector argument, storing into it the results of
+mapping <var>proc</var>.
+
+     <li>Functions and syntaxes whose main name portion ends without a <code>*</code>,
+accept only vector arguments of equal length.
+
+     <li>Functions and syntaxes whose main name portion ends with a <code>*</code>,
+accept vector arguments of different length, stopping the iteration at
+the end of the shortest.
+
+     <li>Functions whose name ends without the <code>/with-index</code> suffix, apply
+their <var>proc</var> function argument as:
+
+     <pre class="example">          (<var>proc</var>
+            (vector-ref <var>vec0</var> <var>idx</var>)
+            (vector-ref <var>vec</var>  <var>idx</var>)
+            ...)
+</pre>
+     <li>Functions whose name ends with the <code>/with-index</code> suffix, apply
+their <var>proc</var> function argument as:
+
+     <pre class="example">          (<var>proc</var> <var>idx</var>
+            (vector-ref <var>vec0</var> <var>idx</var>)
+            (vector-ref <var>vec</var>  <var>idx</var>)
+            ...)
+</pre>
+     <p class="noindent">where <var>idx</var> is the index of the current element. 
+</ul>
+
+<div class="defun">
+&mdash; Function: <b>vector-map*</b><var> proc vec0 vec ...<a name="index-vector_002dmap_002a-6540"></a></var><br>
+&mdash; Function: <b>vector-map/with-index</b><var> proc vec0 vec ...<a name="index-vector_002dmap_002fwith_002dindex-6541"></a></var><br>
+&mdash; Function: <b>vector-map*/with-index</b><var> proc vec0 vec ...<a name="index-vector_002dmap_002a_002fwith_002dindex-6542"></a></var><br>
+<blockquote><p>Build and return a new vector holding the return values of mapping
+<var>proc</var> over all the elements of the vector arguments. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>vector-map!</b><var> proc vec0 vec ...<a name="index-vector_002dmap_0021-6543"></a></var><br>
+&mdash; Function: <b>vector-map*!</b><var> proc vec0 vec ...<a name="index-vector_002dmap_002a_0021-6544"></a></var><br>
+&mdash; Function: <b>vector-map!/with-index</b><var> proc vec0 vec ...<a name="index-vector_002dmap_0021_002fwith_002dindex-6545"></a></var><br>
+&mdash; Function: <b>vector-map*!/with-index</b><var> proc vec0 vec ...<a name="index-vector_002dmap_002a_0021_002fwith_002dindex-6546"></a></var><br>
+<blockquote><p>Mutate <var>vec0</var> setting its elements to the return values of mapping
+<var>proc</var> over all the elements of the vector arguments. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>vector-for-each*</b><var> proc vec0 vec ...<a name="index-vector_002dfor_002deach_002a-6547"></a></var><br>
+&mdash; Function: <b>vector-for-each*/with-index</b><var> proc vec0 vec ...<a name="index-vector_002dfor_002deach_002a_002fwith_002dindex-6548"></a></var><br>
+<blockquote><p>Apply <var>proc</var> over all the elements of the vector arguments. 
+</p></blockquote></div>
+
+<!--  -->
+<h5 class="subsubheading">Mapping over subvectors</h5>
+
+<div class="defun">
+&mdash; Function: <b>%subvector-map</b><var> proc vec start past<a name="index-g_t_0025subvector_002dmap-6549"></a></var><br>
+&mdash; Function: <b>%subvector-map/with-index</b><var> proc vec start past<a name="index-g_t_0025subvector_002dmap_002fwith_002dindex-6550"></a></var><br>
+&mdash; Macro: <b>subvector-map</b><var> proc S<a name="index-subvector_002dmap-6551"></a></var><br>
+&mdash; Macro: <b>subvector-map/with-index</b><var> proc S<a name="index-subvector_002dmap_002fwith_002dindex-6552"></a></var><br>
+<blockquote><p>Build and return a new vector mapping <var>proc</var> over the items in the
+selected subvector of <var>vec</var>, from index <var>start</var> to index
+<var>past</var> in increasing order. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>%subvector-map!</b><var> proc vec start past<a name="index-g_t_0025subvector_002dmap_0021-6553"></a></var><br>
+&mdash; Function: <b>%subvector-map!/with-index</b><var> proc vec start past<a name="index-g_t_0025subvector_002dmap_0021_002fwith_002dindex-6554"></a></var><br>
+&mdash; Macro: <b>subvector-map!</b><var> proc S<a name="index-subvector_002dmap_0021-6555"></a></var><br>
+&mdash; Macro: <b>subvector-map!/with-index</b><var> proc S<a name="index-subvector_002dmap_0021_002fwith_002dindex-6556"></a></var><br>
+<blockquote><p>Mutate the selected subvector of <var>vec</var>, mapping <var>proc</var> over its
+items from index <var>start</var> to index <var>past</var> in increasing order. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>%subvector-for-each</b><var> proc vec start past<a name="index-g_t_0025subvector_002dfor_002deach-6557"></a></var><br>
+&mdash; Function: <b>%subvector-for-each/with-index</b><var> proc vec start past<a name="index-g_t_0025subvector_002dfor_002deach_002fwith_002dindex-6558"></a></var><br>
+&mdash; Macro: <b>subvector-for-each</b><var> proc V<a name="index-subvector_002dfor_002deach-6559"></a></var><br>
+&mdash; Macro: <b>subvector-for-each/with-index</b><var> proc V<a name="index-subvector_002dfor_002deach_002fwith_002dindex-6560"></a></var><br>
+<blockquote><p>Apply <var>proc</var> to each item in the selected subvector of <var>vec</var>,
+from index <var>start</var> to index <var>past</var> in increasing order. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>%subvector-for-each-index</b><var> proc vec start past<a name="index-g_t_0025subvector_002dfor_002deach_002dindex-6561"></a></var><br>
+&mdash; Macro: <b>subvector-for-each-index</b><var> proc V<a name="index-subvector_002dfor_002deach_002dindex-6562"></a></var><br>
+<blockquote><p>Apply <var>proc</var> to each index in the selected subvector of <var>vec</var>,
+from index <var>start</var> to index <var>past</var> in increasing order.  This is
+simply a method of looping over a vector that is guaranteed to be safe
+and correct. 
+</p></blockquote></div>
+
+<!--  -->
+<h5 class="subsubheading">Syntax variants</h5>
+
+<p>The following syntaxes are like the corresponding functions.  They can
+be a little faster when multiple vector arguments are present.
+
+<div class="defun">
+&mdash; Syntax: <b>vector-map/stx</b><var> proc vec0 vec ...<a name="index-vector_002dmap_002fstx-6563"></a></var><br>
+&mdash; Syntax: <b>vector-map*/stx</b><var> proc vec0 vec ...<a name="index-vector_002dmap_002a_002fstx-6564"></a></var><br>
+<blockquote><p>Like <code>vector-map</code> and <code>vector-map*</code>, but implemented as a
+syntax. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>vector-map!/stx</b><var> proc vec0 vec ...<a name="index-vector_002dmap_0021_002fstx-6565"></a></var><br>
+&mdash; Syntax: <b>vector-map*!/stx</b><var> proc vec0 vec ...<a name="index-vector_002dmap_002a_0021_002fstx-6566"></a></var><br>
+<blockquote><p>Like <code>vector-map!</code> and <code>vector-map*!</code>, but implemented as a
+syntax. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>vector-for-each/stx</b><var> proc vec0 vec ...<a name="index-vector_002dfor_002deach_002fstx-6567"></a></var><br>
+&mdash; Syntax: <b>vector-for-each*/stx</b><var> proc vec0 vec ...<a name="index-vector_002dfor_002deach_002a_002fstx-6568"></a></var><br>
+<blockquote><p>Like <code>vector-for-each</code> and <code>vector-for-each*</code>, but implemented
+as a syntax. 
+</p></blockquote></div>
+
+<!-- page -->
+   </body></html>
+

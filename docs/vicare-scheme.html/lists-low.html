@@ -1,0 +1,347 @@
+<html lang="en">
+<head>
+<title>lists low - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="lists.html#lists" title="lists">
+<link rel="prev" href="lists-set.html#lists-set" title="lists set">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.3d4 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+        `http://sourceforge.net/projects/vicare-scheme/files/'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+and at:
+
+           `http://sourceforge.net/projects/vicare-scheme/'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the ``History'' appendix for details.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library `(vicare formations)' is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="lists-low"></a>
+<p>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="lists-set.html#lists-set">lists set</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="lists.html#lists">lists</a>
+<hr>
+</div>
+
+<h3 class="section">17.16 Low level utilities</h3>
+
+<p>The following bindings are exported by <code>(vicare containers lists
+low)</code>.
+
+<div class="defun">
+&mdash; Function: <b>%and/or-null?</b><var> ell ...<a name="index-g_t_0025and_002for_002dnull_003f-6441"></a></var><br>
+<blockquote><p>This is the implementation of <code>and/or-null?</code>.  Return two values
+being the return values of <code>and-null?</code> and <code>or-null?</code> applied
+to the <var>list</var> arguments. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>%and/or-eq?</b><var> list-of-clists1 list-of-clists2<a name="index-g_t_0025and_002for_002deq_003f-6442"></a></var><br>
+<blockquote><p>Given two lists of lists (possibly circular), compare with <code>eq?</code>
+the sublists from the arguments, and return two boolean values:
+
+          <ol type=1 start=1>
+<li>True if each sublist from <var>list-of-clists1</var> is <code>eq?</code> to its
+homologous from <var>list-of-clists2</var>.
+
+          <li>True if at least one sublist from <var>list-of-clists1</var> is <code>eq?</code> to
+its homologous from <var>list-of-clists2</var>.
+             </ol>
+
+        <p><var>list-of-clists1</var> and <var>list-of-clists2</var> are meant to have the
+same length, but this is not tested.  The iteration will stop when the
+end of the shorter list is found.
+
+        <p>To understand how this function is used, consider the following:
+
+     <pre class="smallexample">          (define (circular-list= item= . list-of-clists)
+            (let-values (((and-nil or-nil)
+                         (apply %and/or-null? list-of-clists)))
+              (cond (and-nil #t)
+                    (or-nil  #f)
+                    (else
+                     (let loop ((cells list-of-clists))
+                       (let-values (((cars cdrs) (%cars/cdrs* cells)))
+                         (or
+                          (null? cars)
+                          (and
+                           (apply item= cars)
+                           (let-values (((and-eq or-eq)
+                                        (%and/or-eq? list-of-clists cdrs)))
+                             (cond (and-eq #t)
+                                   (or-eq  #f)
+                                   (else (loop cdrs))))))))))))
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>%cars</b><var> list-of-lists<a name="index-g_t_0025cars-6443"></a></var><br>
+&mdash; Function: <b>%cars</b><var> list-of-lists who<a name="index-g_t_0025cars-6444"></a></var><br>
+<blockquote><p>Return the list of cars of the sublists of <var>list-of-lists</var>, which
+must be a non&ndash;empty list of lists.
+
+        <p>If all the sublists are null: The return value is null.  If at least one
+sublist, but not all, is null: Raise an assertion violation using
+<var>who</var> as value for the <code>&amp;who</code> condition.  <var>who</var> defaults to
+<code>#f</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>%cars*</b><var> list-of-lists<a name="index-g_t_0025cars_002a-6445"></a></var><br>
+<blockquote><p>Like <var>%cars</var> but accept sublists of different length.  If at least
+one sublist is null: The return value is null. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>%cdrs</b><var> list-of-lists<a name="index-g_t_0025cdrs-6446"></a></var><br>
+&mdash; Function: <b>%cdrs</b><var> list-of-lists who<a name="index-g_t_0025cdrs-6447"></a></var><br>
+<blockquote><p>Return the list of cdrs of the sublists of <var>list-of-lists</var>, which
+must be a non&ndash;empty list of lists.
+
+        <p>If all the sublists are null: The return value is null.  If at least one
+sublist, but not all, is null: Raise an assertion violation using
+<var>who</var> as value for the <code>&amp;who</code> condition.  <var>who</var> defaults to
+<code>#f</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>%cdrs*</b><var> list-of-lists<a name="index-g_t_0025cdrs_002a-6448"></a></var><br>
+<blockquote><p>Like <var>%cdrs</var> but accept sublists of different length.  If at least
+one sublist is null: The return value is null. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>%cars/cdrs</b><var> list-of-lists<a name="index-g_t_0025cars_002fcdrs-6449"></a></var><br>
+<blockquote><p>Given a list of sublists, return two values being the list of cars and
+the list of cdrs from <var>list-of-lists</var>.  If the sublists are detected
+not to have equal length, raise an error. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>%cars/cdrs*</b><var> list-of-lists<a name="index-g_t_0025cars_002fcdrs_002a-6450"></a></var><br>
+<blockquote><p>Like <code>%cars/cdrs</code>, but accept lists of different length.  If a list
+in <var>list-of-lists</var> is null: Return 2 null values. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>%cars+cdrs*/no-test</b><var> list-of-lists<a name="index-g_t_0025cars_002bcdrs_002a_002fno_002dtest-6451"></a></var><br>
+<blockquote><p>Like <code>%cars/cdrs*</code>, but do not test if one sublist is null.  If one
+sublist is null, the behaviour is undefined. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>%cars+knil</b><var> list-of-lists knil<a name="index-g_t_0025cars_002bknil-6452"></a></var><br>
+&mdash; Function: <b>%knil+cars</b><var> list-of-lists knil<a name="index-g_t_0025knil_002bcars-6453"></a></var><br>
+&mdash; Function: <b>%cars+knil</b><var> list-of-lists knil who<a name="index-g_t_0025cars_002bknil-6454"></a></var><br>
+&mdash; Function: <b>%knil+cars</b><var> list-of-lists knil who<a name="index-g_t_0025knil_002bcars-6455"></a></var><br>
+<blockquote><p>Return the list of cars of the sublists of <var>list-of-lists</var>, which
+must be a non&ndash;empty list of lists.  <code>%cars+knil</code> adds <var>knil</var>
+as last value.  <code>%knil+cars</code> adds <var>knil</var> as first value.
+
+        <p>If all the sublists are null: The return value is null.  If at least one
+sublist, but not all, is null: Raise an assertion violation using
+<var>who</var> as value for the <code>&amp;who</code> condition.  <var>who</var> defaults to
+<code>#f</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>%cars+knil*</b><var> list-of-lists knil<a name="index-g_t_0025cars_002bknil_002a-6456"></a></var><br>
+&mdash; Function: <b>%knil+cars*</b><var> list-of-lists knil<a name="index-g_t_0025knil_002bcars_002a-6457"></a></var><br>
+<blockquote><p>Like <code>%cars+knil</code> and <code>%knil+cars</code>, but accept sublists of
+different length.  If at least one sublist is null: The return value is
+null. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>%cars+knil/cdrs</b><var> list-of-lists knil<a name="index-g_t_0025cars_002bknil_002fcdrs-6458"></a></var><br>
+&mdash; Function: <b>%knil+cars/cdrs</b><var> list-of-lists knil<a name="index-g_t_0025knil_002bcars_002fcdrs-6459"></a></var><br>
+&mdash; Function: <b>%cars+knil/cdrs</b><var> list-of-lists knil who<a name="index-g_t_0025cars_002bknil_002fcdrs-6460"></a></var><br>
+&mdash; Function: <b>%knil+cars/cdrs</b><var> list-of-lists knil who<a name="index-g_t_0025knil_002bcars_002fcdrs-6461"></a></var><br>
+<blockquote><p>Given that <var>list-of-lists</var> must be a non&ndash;empty list of lists,
+return two values: The list of cars and the lists of cdrs of the
+sublists.  <code>%cars+knil/cdrs</code> adds <var>knil</var> as last value of the
+cars.  <code>%knil+cars/cdrs</code> adds <var>knil</var> as first value of the
+cars.
+
+        <p>If all the sublists are null: The return values are both null.  If at
+least one sublist, but not all, is null: Raise an assertion violation
+using <var>who</var> as value for the <code>&amp;who</code> condition.  <var>who</var>
+defaults to <code>#f</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>%cars+knil/cdrs*</b><var> list-of-lists knil<a name="index-g_t_0025cars_002bknil_002fcdrs_002a-6462"></a></var><br>
+&mdash; Function: <b>%knil+cars/cdrs*</b><var> list-of-lists knil<a name="index-g_t_0025knil_002bcars_002fcdrs_002a-6463"></a></var><br>
+<blockquote><p>Like <code>%cars+knil/cdrs</code> and <code>%knil+cars/cdrs</code>, but accept
+sublists of different length.  If at least one sublist is null: The
+return value is null. 
+</p></blockquote></div>
+
+<!--  -->
+<h5 class="subsubheading">Queues</h5>
+
+<p>The following macros handle queue values: Pairs whose car is a list and
+whose cdr is the last pair in the list.  They allow user friendly
+insertion of elements at the end of the list.  Experiments show that
+building a list in reverse and then applying <code>reverse</code> to it, is
+almost always faster than using these queue macros.
+
+<pre class="example">               -----------
+       queue  | car | cdr |
+               -----------
+                 |     |
+             ----       ----------------
+            |                           |
+            v                           v
+           ---    ---    ---    ---    ---
+     list | | |-&gt;| | |-&gt;| | |-&gt;| | |-&gt;| | |-&gt;()
+           ---    ---    ---    ---    ---
+           |      |      |      |      |
+           o      o      o      o      o
+</pre>
+   <div class="defun">
+&mdash; Syntax: <b>%make-queue</b><var> obj<a name="index-g_t_0025make_002dqueue-6464"></a></var><br>
+<blockquote><p>Build and return a new queue having <var>obj</var> as first argument.  Takes
+care of evaluating <var>obj</var> only once. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>%list-&gt;queue</b><var> ell<a name="index-g_t_0025list_002d_003equeue-6465"></a></var><br>
+<blockquote><p>Embed <var>list</var> into a queue and return it.  Takes care of evaluating
+<var>ell</var> only once. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>enqueue!</b><var> queue obj<a name="index-enqueue_0021-6466"></a></var><br>
+<blockquote><p>Enqueue <var>obj</var> at the end of <var>queue</var> and return a new queue
+value.  Takes care of evaluating <var>obj</var> only once, but evaluates
+<var>queue</var> multiple times. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>%queue-list-ref</b><var> queue<a name="index-g_t_0025queue_002dlist_002dref-6467"></a></var><br>
+<blockquote><p>Return the list inside of <var>queue</var>.  It is a synonym of <code>car</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>%queue-last-pair-ref</b><var> queue<a name="index-g_t_0025queue_002dlast_002dpair_002dref-6468"></a></var><br>
+<blockquote><p>Return the last pair of the list inside of <var>queue</var>.  It is a synonym
+of <code>cdr</code>. 
+</p></blockquote></div>
+
+   <p>Examples of building a list using a queue:
+
+<pre class="example">     (define max-value+1 10)
+     
+     (do ((i 1 (+ 1 i))
+          (l (%make-queue 0) (%enqueue! l i)))
+         ((= i max-value+1)
+          (%queue-list-ref l)))
+     &rArr; '(0 1 2 3 4 5 6 7 8 9)
+     
+     (let loop ((l (%make-queue 0))
+                (i 1))
+       (if (= i max-value+1)
+           (%queue-list-ref l)
+         (loop (%enqueue! l i) (+ 1 i))))
+     &rArr; '(0 1 2 3 4 5 6 7 8 9)
+</pre>
+   <p class="noindent">which is the same of doing:
+
+<pre class="example">     (define max-value+1 10)
+     
+     (do ((i 1 (+ 1 i))
+          (l '(0) (cons i l)))
+         ((= i max-value+1)
+          (reverse l)))
+     &rArr; '(0 1 2 3 4 5 6 7 8 9)
+     
+     (let loop ((l '(0))
+                (i 1))
+       (if (= i max-value+1)
+           (reverse l)
+         (loop (cons i l) (+ 1 i))))
+     &rArr; '(0 1 2 3 4 5 6 7 8 9)
+</pre>
+   <!-- end of file -->
+   </body></html>
+

@@ -1,0 +1,203 @@
+<html lang="en">
+<head>
+<title>irregex sre repetition - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="irregex-sre.html#irregex-sre" title="irregex sre">
+<link rel="prev" href="irregex-sre-basic.html#irregex-sre-basic" title="irregex sre basic">
+<link rel="next" href="irregex-sre-char_002dsets.html#irregex-sre-char_002dsets" title="irregex sre char-sets">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.3d4 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+        `http://sourceforge.net/projects/vicare-scheme/files/'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+and at:
+
+           `http://sourceforge.net/projects/vicare-scheme/'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the ``History'' appendix for details.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library `(vicare formations)' is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="irregex-sre-repetition"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="irregex-sre-char_002dsets.html#irregex-sre-char_002dsets">irregex sre char-sets</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="irregex-sre-basic.html#irregex-sre-basic">irregex sre basic</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="irregex-sre.html#irregex-sre">irregex sre</a>
+<hr>
+</div>
+
+<h4 class="subsection">27.9.3 Repetition patterns</h4>
+
+<p>There are several ways to control the number of times a pattern is
+matched.  The simplest of these is <code>?</code> which just optionally
+matches the pattern:
+
+<pre class="example">     (irregex-search '(: "match" (? "es") "!") "matches!")
+     &rArr; #&lt;match&gt;
+     
+     (irregex-search '(: "match" (? "es") "!") "match!")
+     &rArr; #&lt;match&gt;
+     
+     (irregex-search '(: "match" (? "es") "!") "matche!")
+     &rArr; #f
+</pre>
+   <p>To optionally match any number of times we use <code>*</code>, the Kleene
+star:
+
+<pre class="example">     (irregex-search '(: "&lt;" (* (~ #\&gt;)) "&gt;") "&lt;html&gt;")
+     &rArr; #&lt;match&gt;
+     
+     (irregex-search '(: "&lt;" (* (~ #\&gt;)) "&gt;") "&lt;&gt;")
+     &rArr; #&lt;match&gt;
+     
+     (irregex-search '(: "&lt;" (* (~ #\&gt;)) "&gt;") "&lt;html")
+     &rArr; #f
+</pre>
+   <p>Often we want to match any number of times, but at least one time is
+required, and for that we use <code>+</code>:
+
+<pre class="example">     (irregex-search '(: "&lt;" (+ (~ #\&gt;)) "&gt;") "&lt;html&gt;")
+     &rArr; #&lt;match&gt;
+     
+     (irregex-search '(: "&lt;" (+ (~ #\&gt;)) "&gt;") "&lt;a&gt;")
+     &rArr; #&lt;match&gt;
+     
+     (irregex-search '(: "&lt;" (+ (~ #\&gt;)) "&gt;") "&lt;&gt;")
+     &rArr; #f
+</pre>
+   <p>More generally, to match at least a given number of times, we use
+<code>&gt;=</code>:
+
+<pre class="example">     (irregex-search '(: "&lt;" (&gt;= 3 (~ #\&gt;)) "&gt;") "&lt;table&gt;")
+     &rArr; #&lt;match&gt;
+     
+     (irregex-search '(: "&lt;" (&gt;= 3 (~ #\&gt;)) "&gt;") "&lt;pre&gt;")
+     &rArr; #&lt;match&gt;
+     
+     (irregex-search '(: "&lt;" (&gt;= 3 (~ #\&gt;)) "&gt;") "&lt;tr&gt;")
+     &rArr; #f
+</pre>
+   <p>To match a specific number of times exactly we use <code>=</code>:
+
+<pre class="example">     (irregex-search '(: "&lt;" (= 4 (~ #\&gt;)) "&gt;") "&lt;html&gt;")
+     &rArr; #&lt;match&gt;
+     
+     (irregex-search '(: "&lt;" (= 4 (~ #\&gt;)) "&gt;") "&lt;table&gt;")
+     &rArr; #f
+</pre>
+   <p>And finally, the most general form is <code>**</code> which specifies a range
+of times to match.  All of the earlier forms are special cases of this.
+
+<pre class="example">     (irregex-search '(: (= 3 (** 1 3 numeric) ".")
+                         (** 1 3 numeric))
+                     "192.168.1.10")
+     &rArr; #&lt;match&gt;
+     
+     (irregex-search '(: (= 3 (** 1 3 numeric) ".")
+                         (** 1 3 numeric))
+                     "192.0168.1.10")
+     &rArr; #f
+</pre>
+   <p>There are also so&ndash;called &ldquo;non-greedy&rdquo; variants of these repetition
+operators, by convention suffixed with an additional <code>?</code>.  Since
+the normal repetition patterns can match any of the allotted repetition
+range, these operators will match a string if and only if the normal
+versions matched.  However, when the endpoints of which submatch matched
+are taken into account (specifically, all matches when using
+<code>irregex-search</code> since the endpoints of the match itself matter),
+the use of a non&ndash;greedy repetition can change the result.
+
+   <p>So, whereas <code>?</code> can be thought to mean &ldquo;match or don't match&rdquo;,
+<code>??</code> means &ldquo;don't match or match&rdquo;.  <code>*</code> typically consumes
+as much as possible, but <code>*?</code>  tries first to match zero times, and
+only consumes one at a time if that fails.  If we have a greedy operator
+followed by a non&ndash;greedy operator in the same pattern, they can produce
+surprising results as they compete to make the match longer or shorter. 
+If this seems confusing, that's because it is.  Non&ndash;greedy repetitions
+are defined only in terms of the specific backtracking algorithm used to
+implement them, which for compatibility purposes always means the Perl
+algorithm.  Thus, when using these patterns we force <code>(vicare
+irregex)</code> to use a backtracking engine, and can't rely on efficient
+execution.
+
+<!-- page -->
+   </body></html>
+

@@ -1,0 +1,182 @@
+<html lang="en">
+<head>
+<title>irregex misc - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="irregex.html#irregex" title="irregex">
+<link rel="prev" href="irregex-chunk.html#irregex-chunk" title="irregex chunk">
+<link rel="next" href="irregex-pcre.html#irregex-pcre" title="irregex pcre">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.3d4 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+        `http://sourceforge.net/projects/vicare-scheme/files/'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+and at:
+
+           `http://sourceforge.net/projects/vicare-scheme/'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the ``History'' appendix for details.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library `(vicare formations)' is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="irregex-misc"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="irregex-pcre.html#irregex-pcre">irregex pcre</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="irregex-chunk.html#irregex-chunk">irregex chunk</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="irregex.html#irregex">irregex</a>
+<hr>
+</div>
+
+<h3 class="section">27.7 Miscellaneous functions</h3>
+
+<div class="defun">
+&mdash; Function: <b>irregex-split</b><var> irx str<a name="index-irregex_002dsplit-7972"></a></var><br>
+&mdash; Function: <b>irregex-split</b><var> irx str start end<a name="index-irregex_002dsplit-7973"></a></var><br>
+&mdash; Function: <b>irregex-extract</b><var> irx str<a name="index-irregex_002dextract-7974"></a></var><br>
+&mdash; Function: <b>irregex-extract</b><var> irx str start end<a name="index-irregex_002dextract-7975"></a></var><br>
+<blockquote><p><code>irregex-split</code> splits the string <var>str</var> into substrings divided
+by the pattern in <var>irx</var>.  <code>irregex-extract</code> does the opposite,
+returning a list of each instance of the pattern matched disregarding
+the substrings in between. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>irregex-fold</b><var> irx kons knil str </var>[<var>finish start past</var>]<var><a name="index-irregex_002dfold-7976"></a></var><br>
+<blockquote><p>This follows the <acronym>API</acronym> for <code>regexp-fold</code> from SCSH.  The
+<var>kons</var> procedure takes the following signature:
+
+     <pre class="example">          (<var>kons</var> &lt;from-index&gt; &lt;match&gt; &lt;seed&gt;)
+</pre>
+        <p class="noindent">where <var>?from-index</var> is the index from where we started
+searching (initially <var>start</var> and thereafter the past index of the
+last match); <var>?match</var> is the resulting match data object;
+<var>?seed</var> is the accumulated fold result starting with
+<var>knil</var>.
+
+        <p>The rationale for providing the <var>?from-index</var> is because this
+information is useful (e.g. for extracting the unmatched portion of the
+string before the current match, as needed in <code>irregex-replace</code>),
+and not otherwise directly accessible.
+
+        <p>The optional <var>finish</var> takes two arguments:
+
+     <pre class="example">          (<var>finish</var> &lt;from-index&gt; &lt;seed&gt;)
+</pre>
+        <p class="noindent">which simiarly allows us to pick up the unmatched tail of the string,
+and defaults to just returning the <var>?seed</var>.
+
+        <p><var>start</var> and <var>past</var> select a substring of <var>str</var>.
+
+        <p>To extract all instances of a match out of a string, we can use:
+
+     <pre class="example">          (map irregex-match-substring
+            (irregex-fold &lt;irx&gt;
+                          (lambda (i m s)
+                            (cons m s))
+                          '()
+                          &lt;str&gt;
+                          (lambda (i s)
+                            (reverse s))))
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>irregex-quote</b><var> str<a name="index-irregex_002dquote-7977"></a></var><br>
+<blockquote><p>Return a new string with any special regular expression characters
+escaped, to match the original string literally in <acronym>POSIX</acronym> regular
+expressions. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>irregex-opt</b><var> list-of-strings<a name="index-irregex_002dopt-7978"></a></var><br>
+<blockquote><p>Return an optimized <acronym>SRE</acronym> matching any of the literal strings in
+the list, like Emacs' <code>regexp-opt</code>.  Note this optimization does
+not help when <code>irregex</code> is able to build a <acronym>DFA</acronym>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>sre-&gt;string</b><var> sre<a name="index-sre_002d_003estring-7979"></a></var><br>
+<blockquote><p>Convert an <acronym>SRE</acronym> to a <acronym>POSIX</acronym>&ndash;style regular expression string, if
+possible. 
+</p></blockquote></div>
+
+<!-- page -->
+   </body></html>
+

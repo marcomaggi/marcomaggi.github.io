@@ -1,0 +1,206 @@
+<html lang="en">
+<head>
+<title>loops generators typed - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="loops-generators.html#loops-generators" title="loops generators">
+<link rel="prev" href="loops-generators-do.html#loops-generators-do" title="loops generators do">
+<link rel="next" href="loops-generators-ranges.html#loops-generators-ranges" title="loops generators ranges">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.3d4 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+        `http://sourceforge.net/projects/vicare-scheme/files/'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+and at:
+
+           `http://sourceforge.net/projects/vicare-scheme/'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the ``History'' appendix for details.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library `(vicare formations)' is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="loops-generators-typed"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="loops-generators-ranges.html#loops-generators-ranges">loops generators ranges</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="loops-generators-do.html#loops-generators-do">loops generators do</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="loops-generators.html#loops-generators">loops generators</a>
+<hr>
+</div>
+
+<h5 class="subsubsection">15.15.4.3 Typed generators</h5>
+
+<div class="defun">
+&mdash; Generator Syntax: <b>:list</b><var> vars arg0 arg ...<a name="index-g_t_003alist-5517"></a></var><br>
+&mdash; Generator Syntax: <b>:string</b><var> vars arg0 arg ...<a name="index-g_t_003astring-5518"></a></var><br>
+&mdash; Generator Syntax: <b>:vector</b><var> vars arg0 arg ...<a name="index-g_t_003avector-5519"></a></var><br>
+<blockquote><p>Run through one or more lists, strings, or vectors.  First all the
+<var>arg</var> expressions are evaluated and then all elements of the
+resulting values are enumerated from left to right.  One can think of it
+as first appending all arguments and then enumerating the combined
+object.
+
+     <pre class="example">          (list-ec (:string c (index i) "a" "b")
+            (cons c i))
+          &rArr; ((#\a . 0) (#\b . 1))
+          
+          (list-ec (:string c (index i) "ciao" "mamma")
+            (cons c i))
+          &rArr; ((#\c . 0) (#\i . 1) (#\a . 2) (#\o . 3)
+              (#\m . 4) (#\a . 5) (#\m . 6) (#\m . 7) (#\a . 8))
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Generator Syntax: <b>:integers</b><var> vars<a name="index-g_t_003aintegers-5520"></a></var><br>
+<blockquote><p>Runs through the sequence 0, 1, 2, <small class="dots">...</small> of non&ndash;negative
+integers.  This is most useful in combination with &lsquo;<samp><span class="samp">:parallel</span></samp>&rsquo;,
+&lsquo;<samp><span class="samp">:while</span></samp>&rsquo;, and &lsquo;<samp><span class="samp">:until</span></samp>&rsquo; or with a non&ndash;local exit in the body
+of the comprehension. 
+</p></blockquote></div>
+
+<!--  -->
+<h5 class="subsubheading">Application specific typed generator</h5>
+
+<p>To define a new typed generator a hygienic referentially transparent
+macro of the same name is defined to transform the generator pattern
+into an instance of the &lsquo;<samp><span class="samp">:do</span></samp>&rsquo; generator.  The extension is fully
+modular, meaning that no other macro has to be modified to add the new
+generator.  This is achieved by defining the new macro in Continuation
+Passing Style.
+
+   <p>Technically, this works as follows.  Assume the generator syntax:
+
+<pre class="example">     (:mygen <var>var</var> <var>arg</var>)
+</pre>
+   <p class="noindent">is to be implemented, for example running the variable <var>var</var> through
+the list <code>(reverse </code><var>arg</var><code>)</code>.  The following definition
+implements <code>:mygen</code> in terms of &lsquo;<samp><span class="samp">:list</span></samp>&rsquo; using the additional
+syntactic variable <var>cc</var> (read current continuation):
+
+<pre class="example">     (define-syntax :mygen
+       (syntax-rules ()
+         ((:mygen cc var arg)
+          (:list cc var (reverse arg)))))
+</pre>
+   <p>After this definition, any comprehension will accept the <code>:mygen</code>
+generator and produce the proper code for it.  This works as follows. 
+When a comprehension sees something of the form <code>(</code><var>g</var> <var>arg</var><code>
+...)</code> in the position of a <var>?qualifier</var> then it will transform the
+entire comprehension into:
+
+<pre class="example">     (<var>g</var> (continue ...) <var>arg</var> ...)
+</pre>
+   <p>This effectively &ldquo;transfers control&rdquo; to the macro <var>g</var>, for example
+&lsquo;<samp><span class="samp">:mygen</span></samp>&rsquo;.  The macro <var>g</var> has full control of the
+transformation, but eventually it should transform the expression into:
+
+<pre class="example">     (:do (continue ...)  etc ...)
+</pre>
+   <p>In the &lsquo;<samp><span class="samp">:mygen</span></samp>&rsquo; example this is done by the &lsquo;<samp><span class="samp">:list</span></samp>&rsquo; macro. 
+The macro &lsquo;<samp><span class="samp">:do</span></samp>&rsquo; finally transforms into:
+
+<pre class="example">     (continue ... (:do etc ...))
+</pre>
+   <p>As &lsquo;<samp><span class="samp">continue</span></samp>&rsquo; has been chosen by the macro implementing the
+comprehension, it can regain control and proceed with other qualifiers.
+
+   <p>In order to ensure consistency of new generators with the ones defined
+in <code>(vicare language-extensions loops)</code>, a few conventions are in
+order.
+
+     <ul>
+<li>The generator patterns begin with one or more variables followed by
+arguments defining the sequence.
+
+     <li>Each generator except &lsquo;<samp><span class="samp">:do</span></samp>&rsquo; can handle an optional index variable. 
+This is most easily implemented using &lsquo;<samp><span class="samp">:parallel</span></samp>&rsquo; together with
+&lsquo;<samp><span class="samp">:integers</span></samp>&rsquo;.  In case the payload generator needs an index anyhow
+(e.g. &lsquo;<samp><span class="samp">:vector</span></samp>&rsquo;) it is more efficient to add an index variable if
+none is given and to implement the indexed case.
+
+     <li>Make sure that no syntactic variable of the generator pattern ever gets
+duplicated in the code (to avoid exponential code size in nested
+application), and introduce sufficient intermediate variables to make
+sure expressions are evaluated at the correct time. 
+</ul>
+
+<!-- page -->
+   </body></html>
+

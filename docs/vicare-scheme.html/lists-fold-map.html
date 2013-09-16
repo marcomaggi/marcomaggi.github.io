@@ -1,0 +1,249 @@
+<html lang="en">
+<head>
+<title>lists fold map - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="lists-fold.html#lists-fold" title="lists fold">
+<link rel="prev" href="lists-fold-unfold.html#lists-fold-unfold" title="lists fold unfold">
+<link rel="next" href="lists-fold-foreach.html#lists-fold-foreach" title="lists fold foreach">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.3d4 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+        `http://sourceforge.net/projects/vicare-scheme/files/'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+and at:
+
+           `http://sourceforge.net/projects/vicare-scheme/'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the ``History'' appendix for details.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library `(vicare formations)' is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="lists-fold-map"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="lists-fold-foreach.html#lists-fold-foreach">lists fold foreach</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="lists-fold-unfold.html#lists-fold-unfold">lists fold unfold</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="lists-fold.html#lists-fold">lists fold</a>
+<hr>
+</div>
+
+<h4 class="subsection">17.8.8 Mapping</h4>
+
+<div class="defun">
+&mdash; Function: <b>map*</b><var> proc circ0 circ ...<a name="index-map_002a-6345"></a></var><br>
+&mdash; Syntax: <b>map*/stx</b><var> proc circ0 circ ...<a name="index-map_002a_002fstx-6346"></a></var><br>
+<blockquote><p>This procedure extends the <acronym>R6RS</acronym> specification of <code>map</code> to allow
+the arguments to be of unequal length; it terminates when the shortest
+list runs out of elements.
+
+        <p><var>proc</var> is a procedure taking as many arguments as there are list
+arguments and returning a single value.  <code>map</code> applies <var>proc</var>
+element&ndash;wise to the elements of the lists and returns a list of the
+results, in order.  The dynamic order in which <var>proc</var> is applied to
+the elements of the lists is unspecified.
+
+     <pre class="example">          (map* cadr '((a b)
+                       (d e)
+                       (g h)))
+          &rArr;  (b e h)
+          
+          (map* (lambda (n)
+                  (expt n n))
+            '(1 2 3 4 5))
+          &rArr; (1 4 27 256 3125)
+          
+          (map* + '(1 2 3)
+                  '(4 5 6))
+          &rArr; (5 7 9)
+          
+          (let ((count 0))
+            (map*
+                (lambda (ignored)
+                  (set! count (+ count 1))
+                  count)
+              '(a b)))
+          &rArr; (1 2) or (2 1)
+</pre>
+        <p>At least one of the list arguments must be a finite list:
+
+     <pre class="example">          (map* +
+                '(3 1 4 1)
+                (circular-list 1 0))
+          &rArr; (4 1 5 1)
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>map-in-order*</b><var> f circ0 circ ...<a name="index-map_002din_002dorder_002a-6347"></a></var><br>
+&mdash; Syntax: <b>map-in-order*/stx</b><var> f circ0 circ ...<a name="index-map_002din_002dorder_002a_002fstx-6348"></a></var><br>
+<blockquote><p>A variant of the <code>map</code> procedure that guarantees to apply <var>f</var>
+across the elements of the <var>circ</var> arguments in a left&ndash;to&ndash;right
+order.  This is useful for mapping procedures that both have side
+effects and return useful values.
+
+        <p>At least one of the list arguments must be finite. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>append-map</b><var> f circ0 circ ...<a name="index-append_002dmap-6349"></a></var><br>
+&mdash; Function: <b>append-map!</b><var> f circ0 circ ...<a name="index-append_002dmap_0021-6350"></a></var><br>
+<blockquote><p>Equivalent to:
+
+     <pre class="example">          (apply append (map f clist1 clist2 ...))
+</pre>
+        <p class="noindent">and:
+
+     <pre class="example">          (apply append! (map f clist1 clist2 ...))
+</pre>
+        <p class="noindent">so it makes sense to use these functions only when the list returned by
+the map process is a list of lists.
+
+        <p>Map <var>f</var> over the elements of the lists, just as in the <code>map</code>
+function.  However, the results of the applications are appended
+together to make the final result.  <code>append-map</code> uses <code>append</code>
+to append the results together; <code>append-map!</code> uses <code>append!</code>.
+
+        <p>The dynamic order in which the various applications of <var>f</var> are made
+is not specified.
+
+        <p>Example:
+
+     <pre class="example">          (append-map!
+              (lambda (x)
+                (list x (- x)))
+            '(1 3 8))
+          &rArr; (1 -1 3 -3 8 -8)
+          
+          (append-map! list
+                       '(1 2 3)
+                       '(10 20 30))
+          &rArr; (1 10 2 20 3 30)
+</pre>
+        <p>At least one of the list arguments must be a finite list. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>map!</b><var> f ell0 ell ...<a name="index-map_0021-6351"></a></var><br>
+&mdash; Syntax: <b>map!/stx</b><var> f ell0 ell ...<a name="index-map_0021_002fstx-6352"></a></var><br>
+<blockquote><p>Like <code>map</code> and <code>map/stx</code>, but they are allowed to alter the
+cons cells of <var>ell0</var> to construct the result list.
+
+        <p>The dynamic order in which the various applications of <var>f</var> are made
+is not specified.  In the n&ndash;ary case, all the list arguments must have
+the same number of elements. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>map*!</b><var> f ell circ ...<a name="index-map_002a_0021-6353"></a></var><br>
+&mdash; Syntax: <b>map*!/stx</b><var> f ell circ ...<a name="index-map_002a_0021_002fstx-6354"></a></var><br>
+<blockquote><p>Like <code>map*</code> and <code>map*!/stx</code>, but they are allowed to alter the
+cons cells of <var>ell</var> to construct the result list.
+
+        <p>The dynamic order in which the various applications of <var>f</var> are made
+is not specified.  In the n&ndash;ary case, <var>circ</var> ... must have at least
+as many elements as <var>ell</var>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>filter-map</b><var> f ell0 ell ...<a name="index-filter_002dmap-6355"></a></var><br>
+&mdash; Syntax: <b>filter-map/stx</b><var> f ell0 ell ...<a name="index-filter_002dmap_002fstx-6356"></a></var><br>
+<blockquote><p>Like <code>map</code>, but only true values are mapped:
+
+     <pre class="example">          (filter-map
+              (lambda (x)
+                (and (number? x)
+                     (* x x)))
+            '(a 1 b 3 c 7))
+          &rArr; (1 9 49)
+</pre>
+        <p>The dynamic order in which the various applications of <var>f</var> are made
+is not specified.  At least one of the list arguments must be finite. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>filter-map*</b><var> f circ0 circ ...<a name="index-filter_002dmap_002a-6357"></a></var><br>
+&mdash; Syntax: <b>filter-map*/stx</b><var> f circ0 circ ...<a name="index-filter_002dmap_002a_002fstx-6358"></a></var><br>
+<blockquote><p>Like <code>filter-map</code> and <code>filter-map/stx</code>, but accept list
+arguments of different length. 
+</p></blockquote></div>
+
+<!-- page -->
+   </body></html>
+

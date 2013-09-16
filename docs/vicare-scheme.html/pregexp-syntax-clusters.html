@@ -1,0 +1,302 @@
+<html lang="en">
+<head>
+<title>pregexp syntax clusters - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="pregexp-syntax.html#pregexp-syntax" title="pregexp syntax">
+<link rel="prev" href="pregexp-syntax-quantifiers.html#pregexp-syntax-quantifiers" title="pregexp syntax quantifiers">
+<link rel="next" href="pregexp-syntax-alternation.html#pregexp-syntax-alternation" title="pregexp syntax alternation">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.3d4 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+        `http://sourceforge.net/projects/vicare-scheme/files/'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+and at:
+
+           `http://sourceforge.net/projects/vicare-scheme/'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the ``History'' appendix for details.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library `(vicare formations)' is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="pregexp-syntax-clusters"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="pregexp-syntax-alternation.html#pregexp-syntax-alternation">pregexp syntax alternation</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="pregexp-syntax-quantifiers.html#pregexp-syntax-quantifiers">pregexp syntax quantifiers</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="pregexp-syntax.html#pregexp-syntax">pregexp syntax</a>
+<hr>
+</div>
+
+<h4 class="subsection">28.3.4 Clusters</h4>
+
+<p>Clustering, i.e., enclosure within parens <code>(...)</code>, identifies the
+enclosed subpattern as a single entity.  It causes the matcher to
+capture the submatch, or the portion of the string matching the
+subpattern, in addition to the overall match.
+
+<pre class="example">     (pregexp-match "([a-z]+) ([0-9]+), ([0-9]+)" "jan 1, 1970")
+     &rArr; ("jan 1, 1970" "jan" "1" "1970")
+</pre>
+   <p>Clustering also causes a following quantifier to treat the entire
+enclosed subpattern as an entity.
+
+<pre class="example">     (pregexp-match "(poo )*" "poo poo platter")
+     &rArr; ("poo poo " "poo ")
+</pre>
+   <p>The number of submatches returned is always equal to the number of
+subpatterns specified in the regexp, even if a particular subpattern
+happens to match more than one substring or no substring at all.
+
+<pre class="example">     (pregexp-match "([a-z ]+;)*" "lather; rinse; repeat;")
+     &rArr; ("lather; rinse; repeat;" " repeat;")
+</pre>
+   <p>Here the <code>*</code>&ndash;quantified subpattern matches three times, but it is
+the last submatch that is returned.
+
+   <p>It is also possible for a quantified subpattern to fail to match, even
+if the overall pattern matches.  In such cases, the failing submatch is
+represented by <code>#f</code>.
+
+<pre class="example">     (define date-re
+       ;match `month year' or `month day, year'.
+       ;subpattern matches day, if present
+       (pregexp "([a-z]+) +([0-9]+,)? *([0-9]+)"))
+     
+     (pregexp-match date-re "jan 1, 1970")
+     &rArr; ("jan 1, 1970" "jan" "1," "1970")
+     
+     (pregexp-match date-re "jan 1970")
+     &rArr; ("jan 1970" "jan" #f "1970")
+</pre>
+   <!--  -->
+<h5 class="subsubheading">Backreferences</h5>
+
+<p>Submatches can be used in the insert string argument of the procedures
+<code>pregexp-replace</code> and <code>pregexp-replace*</code>.  The insert string
+can use <code>\n</code> as a backreference to refer back to the n-th
+submatch, i.e., the substring that matched the n-th subpattern. 
+<code>\0</code> refers to the entire match, and it can also be specified as
+<code>\&amp;</code>.
+
+<pre class="example">     (pregexp-replace "_(.+?)_"
+       "the _nina_, the _pinta_, and the _santa maria_"
+       "*\\1*")
+     &rArr; "the *nina*, the _pinta_, and the _santa maria_"
+     
+     (pregexp-replace* "_(.+?)_"
+       "the _nina_, the _pinta_, and the _santa maria_"
+       "*\\1*")
+     &rArr; "the *nina*, the *pinta*, and the *santa maria*"
+</pre>
+   <p class="noindent">recall: <code>\S</code> stands for non&ndash;whitespace character:
+
+<pre class="example">     (pregexp-replace "(\\S+) (\\S+) (\\S+)"
+       "eat to live"
+       "\\3 \\2 \\1")
+     &rArr; "live to eat"
+</pre>
+   <p>Use <code>\\</code> in the insert string to specify a literal backslash. 
+Also, <code>\$</code> stands for an empty string, and is useful for separating
+a backreference <code>\n</code> from an immediately following number.
+
+   <p>Backreferences can also be used within the regexp pattern to refer back
+to an already matched subpattern in the pattern.  <code>\n</code> stands for
+an exact repeat of the n-th submatch.<a rel="footnote" href="#fn-1" name="fnd-1"><sup>1</sup></a>
+
+<pre class="example">     (pregexp-match "([a-z]+) and \\1"
+       "billions and billions")
+     &rArr; ("billions and billions" "billions")
+</pre>
+   <p>Note that the backreference is not simply a repeat of the previous
+subpattern.  Rather it is a repeat of the particular substring already
+matched by the subpattern.
+
+   <p>In the above example, the backreference can only match billions.  It
+will not match millions, even though the subpattern it harks back to
+<code>([a-z]+)</code> would have had no problem doing so:
+
+<pre class="example">     (pregexp-match "([a-z]+) and \\1"
+       "billions and millions")
+     &rArr; #f
+</pre>
+   <p>The following corrects doubled words:
+
+<pre class="example">     (pregexp-replace* "(\\S+) \\1"
+       "now is the the time for all good men to to come to the aid of of the party"
+       "\\1")
+     &rArr; "now is the time for all good men to come to the aid of the party"
+</pre>
+   <p>The following marks all immediately repeating patterns in a number
+string:
+
+<pre class="example">     (pregexp-replace* "(\\d+)\\1"
+       "123340983242432420980980234"
+       "{\\1,\\1}")
+     &rArr; "12{3,3}40983{24,24}3242{098,098}0234"
+</pre>
+   <!--  -->
+<h5 class="subsubheading">Non&ndash;capturing clusters</h5>
+
+<p>It is often required to specify a cluster (typically for quantification)
+but without triggering the capture of submatch information.  Such
+clusters are called non&ndash;capturing.  In such cases, use <code>(?:</code>
+instead of <code>(</code> as the cluster opener.  In the following example,
+the non&ndash;capturing cluster eliminates the &ldquo;directory&rdquo; portion of a
+given pathname, and the capturing cluster identifies the basename.
+
+<pre class="example">     (pregexp-match "^(?:[a-z]*/)*([a-z]+)$"
+       "/usr/local/bin/mzscheme")
+     &rArr; ("/usr/local/bin/mzscheme" "mzscheme")
+</pre>
+   <!--  -->
+<h5 class="subsubheading">Cloisters</h5>
+
+<p><a name="index-pregexp_002dcomment_002dchar-7993"></a>
+The location between the <code>?</code> and the <code>:</code> of a non&ndash;capturing
+cluster is called a cloister.<a rel="footnote" href="#fn-2" name="fnd-2"><sup>2</sup></a>  We can put modifiers there that will
+cause the enclustered subpattern to be treated specially.  The modifier
+<code>i</code> causes the subpattern to match case&ndash;insensitively:
+
+<pre class="example">     (pregexp-match "(?i:hearth)" "HeartH")
+     &rArr; ("HeartH")
+</pre>
+   <p>The modifier <code>x</code> causes the subpattern to match
+space&ndash;insensitively, i.e., spaces and comments within the subpattern
+are ignored.  Comments are introduced as usual with a semicolon
+(<code>;</code>) and extend till the end of the line.  If we need to include a
+literal space or semicolon in a space&ndash;insensitized subpattern, escape
+it with a backslash.
+
+<pre class="example">     (pregexp-match "(?x: a   lot)" "alot")
+     &rArr; ("alot")
+     
+     (pregexp-match "(?x: a  \\  lot)" "a lot")
+     &rArr; ("a lot")
+     
+     (pregexp-match "(?x:
+        a \\ man  \\; \\   ; ignore
+        a \\ plan \\; \\   ; me
+        a \\ canal         ; completely
+        )"
+      "a man; a plan; a canal")
+     &rArr; ("a man; a plan; a canal")
+</pre>
+   <p>The parameter <code>pregexp-comment-char</code> contains the comment character
+(#\;).  For Perl&ndash;like comments,
+
+<pre class="example">     (parameterise ((pregexp-comment-char #\#))
+        ---)
+</pre>
+   <p>We can put more than one modifier in the cloister.
+
+<pre class="example">     (pregexp-match "(?ix:
+        a \\ man  \\; \\   ; ignore
+        a \\ plan \\; \\   ; me
+        a \\ canal         ; completely
+        )"
+      "A Man; a Plan; a Canal")
+     &rArr; ("A Man; a Plan; a Canal")
+</pre>
+   <p>A minus sign before a modifier inverts its meaning.  Thus, we can use
+<code>-i</code> and <code>-x</code> in a subcluster to overturn the insensitivities
+caused by an enclosing cluster.
+
+<pre class="example">     (pregexp-match "(?i:the (?-i:TeX)book)"
+       "The TeXbook")
+     &rArr; ("The TeXbook")
+</pre>
+   <p>This regexp will allow any casing for the and book but insists that TeX
+not be differently cased.
+
+<!-- page -->
+   <div class="footnote">
+<hr>
+<h4>Footnotes</h4><p class="footnote"><small>[<a name="fn-1" href="#fnd-1">1</a>]</small> <code>0</code>, which is
+useful in an insert string, makes no sense within the regexp pattern,
+because the entire regexp has not matched yet that you could refer back
+to it.</p>
+
+   <p class="footnote"><small>[<a name="fn-2" href="#fnd-2">2</a>]</small> A useful, if terminally cute,
+coinage from the abbots of Perl.</p>
+
+   <hr></div>
+
+   </body></html>
+
