@@ -1,0 +1,228 @@
+<html lang="en">
+<head>
+<title>multimethods application - Nausicaa for Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Nausicaa for Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="multimethods.html#multimethods" title="multimethods">
+<link rel="prev" href="multimethods-examples.html#multimethods-examples" title="multimethods examples">
+<link rel="next" href="multimethods-dispatching.html#multimethods-dispatching" title="multimethods dispatching">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.3d6 of Nausicaa, a
+collection of libraries for Vicare Scheme implementing the language
+`(nausicaa)' on top of `(vicare)'.
+
+Copyright (C) 2012, 2013 by Marco Maggi <marco.maggi-ipsu@poste.it>
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with Invariant Sections being ``GNU Free Documentation
+     License'' and ``GNU General Public License'', no Front--Cover
+     Texts, and no Back--Cover Texts.  A copy of the license is
+     included in the section entitled ``GNU Free Documentation
+     License''.
+-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="multimethods-application"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="multimethods-dispatching.html#multimethods-dispatching">multimethods dispatching</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="multimethods-examples.html#multimethods-examples">multimethods examples</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="multimethods.html#multimethods">multimethods</a>
+<hr>
+</div>
+
+<h3 class="section">4.2 How generic functions and methods are invoked</h3>
+
+<p>The library <code>(nausicaa language multimethods)</code> is designed to work
+with type definitions from the library <code>(nausicaa language oopp)</code>;
+these types are identified by a unique symbol (<acronym>UID</acronym>).
+
+   <p>Ordinary generic functions allow the association of a single method to a
+tuple of arguments' types; when an ordinary generic function is applied
+to a tuple of arguments, the following happens:
+
+     <ol type=1 start=1>
+<li>For each argument in the tuple a type is determined, then the list of
+<acronym>UID</acronym>s representing the type hierarchy is acquired; the tuple of <acronym>UID</acronym>
+lists is called <dfn>signature</dfn>.  Each generic function maintains an
+internal collection in which every method's closure is associated to a
+signature.
+
+     <li>The internal collection of methods is queried for all the methods
+applicable to the tuple of arguments, using the signature as search key.
+
+     <li>The list of applicable methods is sorted from the most specific to the
+least specific for the signature.  From now on the list of sorted,
+applicable methods is handled as a stack.
+
+     <li>The next method is popped from the stack and its closure applied to the
+tuple of arguments; the return value of this application becomes the
+return value of the generic function application.  If the function calls
+its &ldquo;next method&rdquo;: recurse to step 4 (see <a href="multimethods-next.html#multimethods-next">Invoking the next method</a>).
+        </ol>
+
+   <p>Starred generic functions allow the definition of four qualified
+methods: <code>:primary</code>, <code>:around</code>, <code>:before</code> and
+<code>:after</code>; we can think of ordinary generics as starred generics
+supporting only <code>:primary</code> methods.  The short description is that
+<code>:around</code> methods are applied first, then <code>:before</code>,
+<code>:primary</code> and <code>:after</code> methods are applied in this order. 
+When a <strong>starred</strong> generic function is applied to a tuple of
+arguments, the following happens:
+
+     <ol type=1 start=1>
+<li>For each argument in the tuple a type is determined, then the list of
+<acronym>UID</acronym>s representing the type hierarchy is acquired; the tuple of <acronym>UID</acronym>
+lists is called <dfn>signature</dfn>.  For each method qualification
+(<code>:primary</code>, <code>:around</code>, <small class="dots">...</small>): each generic function
+maintains an internal collection in which every method's closure is
+associated to a signature.
+
+     <li>For each method qualification: the internal collection is queried for
+all the methods applicable to the tuple of arguments, using the
+signature as search key.
+
+     <li>For each method qualification: the list of applicable methods is sorted
+from the most specific to the least specific for the signature.  The
+list of <code>:after</code> methods is reversed: from the least specific to
+the most specific.
+        </ol>
+
+   <p>From now on the lists of sorted applicable methods are handled as
+stacks; the stacks of <code>:primary</code>, <code>:around</code> and <code>:before</code>
+methods have the most specific method on the top; the stack of
+<code>:after</code> methods has the least specific method on the top.
+
+   <p>From now on the application of the generic function enters an implicit
+loop in which more methods' closures can be applied to the same tuple of
+arguments.  The loop can terminate if a method's closure throws an
+exception or, for <code>:around</code> and <code>:primary</code> methods, if it does
+not take the special action of calling <code>call-next-method</code>.
+
+   <p>The loop is a bit articulated, so we may have to read the following
+descriptions multiple times.  We split the description in two branches:
+First a simplified invocation for generic functions having at least one
+applicable <code>:primary</code> method, no <code>:around</code> methods, and
+performing no calls to <code>call-next-method</code>; then the full
+application algorithm.
+
+   <p>Here is the simplified branch with no <code>:around</code> methods and no
+calls to <code>call-next-method</code>:
+
+     <ol type=1 start=4>
+<li>Pop all the <code>:before</code> methods from the stack and apply their
+closures to the tuple of arguments.  The return values of these
+applications are discarded.
+
+     <li>Pop the next <code>:primary</code> method from the stack and apply its closure
+to the tuple of arguments.  The return value of this application is
+saved in a temporary location.
+
+     <li>Pop all the <code>:after</code> methods from the stack and apply their
+closures to the tuple of arguments.  The return values of these
+applications are discarded.
+
+     <li>Return the saved return value of the <code>:primary</code> method.
+        </ol>
+
+<p class="noindent">here is the full application algorithm:
+
+     <ol type=1 start=4>
+<li>Test if this function application originated from a call to
+<code>call-next-method</code> from a <code>:before</code> or <code>:after</code> method;
+if it has: raise an assertion violation.
+
+     <li>Test if this function application originated from a call to
+<code>call-next-method</code> from a <code>:primary</code> method; if it has:
+
+          <ol type=a start=1>
+<li>If the stack of <code>:primary</code> methods is empty raise an assertion
+violation.
+
+          <li>Pop the next <code>:primary</code> method from the stack and apply its closure
+to the tuple of arguments.
+
+          <li>Break out returning the return value of this application: it becomes the
+return value of <code>call-next-method</code>.
+          </ol>
+
+     <li>If the stack of <code>:primary</code> methods is empty: raise an assertion
+violation.  This condition means that the generic function has no
+applicable methods for the tuple of arguments.
+
+     <li>If the stack of <code>:around</code> methods is not empty: pop the next
+<code>:around</code> method and apply its closure to the tuple of arguments. 
+Break out returning the return value of this application.
+
+     <li>Pop all the <code>:before</code> methods from the stack and apply their
+closures to the tuple of arguments.  The return values of these
+applications are discarded.
+
+     <li>Pop the next <code>:primary</code> method from the stack and apply its closure
+to the tuple of arguments.  The return value of this application is
+saved in a temporary location.
+
+     <li>Pop all the <code>:after</code> methods from the stack and apply their
+closures to the tuple of arguments.  The return values of these
+applications are discarded.
+
+     <li>Return the saved return value of the <code>:primary</code> method.
+        </ol>
+
+   <p>The <code>:primary</code> methods are meant to do the real work of the
+function.  Only the most specific is applied to the arguments, however
+it can use <code>call-next-method</code> to invoke a least specialised version
+and use its return value, and so on recursively until there are no more
+next methods.
+
+   <p><code>:before</code> and <code>:after</code> methods are meant to execute additional
+work before and after the primary methods; for example test pre and post
+conditions on the arguments.  While <code>:before</code> methods are applied
+from the most specific to the least specific, <code>:after</code> methods are
+applied from the least specific to the most specific.  Notice that the
+<code>:after</code> methods have no access to the return value of the
+<code>:primary</code> methods.
+
+   <p><code>:around</code> methods are yet another level for performing tasks before
+and after the primary methods; only the most specific is applied to the
+arguments.  It is expected, but not mandatory, that an <code>:around</code>
+method invokes <code>call-next-method</code>; when such invocations are
+performed recursively: they will consume all the applicable
+<code>:around</code> methods, from the most specific to the least specific,
+and then will start the application of <code>:before</code>, <code>:primary</code>
+and <code>:after</code> methods.
+
+   <p>The protocol of application for methods in a starred generic function is
+meant to be the same as the standard method combination for
+<acronym>CLOS</acronym> methods as defined by the Common Lisp
+standard<a rel="footnote" href="#fn-1" name="fnd-1"><sup>1</sup></a>.
+
+<!-- page -->
+   <div class="footnote">
+<hr>
+<h4>Footnotes</h4><p class="footnote"><small>[<a name="fn-1" href="#fnd-1">1</a>]</small> See for example (<acronym>URL</acronym> last verified Aug 7, 2013):
+
+<div align="center"><a href="http://www.cs.cmu.edu/Groups/AI/html/cltl/clm/node285.html">http://www.cs.cmu.edu/Groups/AI/html/cltl/clm/node285.html</a></div>
+   <p></p>
+
+   <hr></div>
+
+   </body></html>
+

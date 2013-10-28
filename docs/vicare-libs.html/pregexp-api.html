@@ -1,0 +1,217 @@
+<html lang="en">
+<head>
+<title>pregexp api - Libraries for Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Libraries for Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="pregexp.html#pregexp" title="pregexp">
+<link rel="prev" href="pregexp-intro.html#pregexp-intro" title="pregexp intro">
+<link rel="next" href="pregexp-syntax.html#pregexp-syntax" title="pregexp syntax">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes the libraries distributed along with version
+0.3d6 of Vicare Scheme, an R6RS compliant native
+compiler for the Scheme language.
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library `(vicare formations)' is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+The documentation of the libraries `(vicare parser-tools silex
+---)' are derived form the documentation of SILex.  Copyright
+(C) 2001, 2009 Danny Dube'.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="pregexp-api"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="pregexp-syntax.html#pregexp-syntax">pregexp syntax</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="pregexp-intro.html#pregexp-intro">pregexp intro</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="pregexp.html#pregexp">pregexp</a>
+<hr>
+</div>
+
+<h3 class="section">34.2 Interface procedures</h3>
+
+<div class="defun">
+&mdash; Function: <b>pregexp</b><var> urex<a name="index-pregexp-5051"></a></var><br>
+<blockquote><p>Takes a U-regexp, which is a string, and returns an S-regexp, which is a
+tree.
+
+     <pre class="example">          (pregexp "c.r")
+          &rArr; (:sub (:or (:seq #\c :any #\r)))
+</pre>
+        <p>There is rarely any need to look at the S-regexps returned by pregexp. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>pregexp-match-positions</b><var> rex str<a name="index-pregexp_002dmatch_002dpositions-5052"></a></var><br>
+&mdash; Function: <b>pregexp-match-positions</b><var> rex str start<a name="index-pregexp_002dmatch_002dpositions-5053"></a></var><br>
+&mdash; Function: <b>pregexp-match-positions</b><var> rex str start past<a name="index-pregexp_002dmatch_002dpositions-5054"></a></var><br>
+<blockquote><p>Take a regexp pattern, either a U- or an S-regexp, and a text string,
+and return a match if the regexp matches (some part of) the text string.
+
+        <p>Return <code>#f</code> if the regexp did not match the string; and a list of
+index pairs if it did match.
+
+     <pre class="example">          (pregexp-match-positions "brain" "bird")
+          &rArr; #f
+          
+          (pregexp-match-positions "needle" "hay needle stack")
+          &rArr; ((4 . 10))
+</pre>
+        <p>In the second example, the integers 4 and 10 identify the
+substring that was matched.  4 is the starting (inclusive) index
+and 10 the ending (exclusive) index of the matching substring.
+
+     <pre class="example">          (substring "hay needle stack" 4 10)
+          &rArr; "needle"
+</pre>
+        <p>Here, <code>pregexp-match-positions</code>'s return list contains only one
+index pair, and that pair represents the entire substring matched by the
+regexp.  When we discuss subpatterns later, we will see how a single
+match operation can yield a list of submatches.
+
+        <p><code>pregexp-match-positions</code> takes optional third and fourth arguments
+that specify the indices of the text string within which the matching
+should take place.
+
+     <pre class="example">          (pregexp-match-positions "needle"
+            "his hay needle stack -- my hay needle stack -- her hay needle stack"
+            24 43)
+          &rArr; ((31 . 37))
+</pre>
+        <p>Note that the returned indices are still reckoned relative to the full
+text string. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>pregexp-match</b><var> rex str<a name="index-pregexp_002dmatch-5055"></a></var><br>
+&mdash; Function: <b>pregexp-match</b><var> rex str start<a name="index-pregexp_002dmatch-5056"></a></var><br>
+&mdash; Function: <b>pregexp-match</b><var> rex str start past<a name="index-pregexp_002dmatch-5057"></a></var><br>
+<blockquote><p>Like <code>pregexp-match-positions</code> but instead of returning index pairs
+it returns the matching substrings:
+
+     <pre class="example">          (pregexp-match "brain" "bird")
+          &rArr; #f
+          
+          (pregexp-match "needle" "hay needle stack")
+          &rArr; ("needle")
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>pregexp-split</b><var> rex str<a name="index-pregexp_002dsplit-5058"></a></var><br>
+<blockquote><p>Takes a regexp pattern and a text string, and return a list of
+substrings of the text string, where the pattern identifies the
+delimiter separating the substrings.
+
+     <pre class="example">          (pregexp-split ":"
+             "/bin:/usr/bin:/usr/bin/X11:/usr/local/bin")
+          &rArr; ("/bin" "/usr/bin" "/usr/bin/X11" "/usr/local/bin")
+          
+          (pregexp-split " " "pea soup")
+          &rArr; ("pea" "soup")
+</pre>
+        <p>If the first argument can match an empty string, then the list of all
+the single&ndash;character substrings is returned.
+
+     <pre class="example">          (pregexp-split "" "smithereens")
+          &rArr; ("s" "m" "i" "t" "h" "e" "r" "e" "e" "n" "s")
+</pre>
+        <p>To identify one&ndash;or&ndash;more spaces as the delimiter, take care to use the
+regexp <code>" +"</code>, not <code>" *"</code>.
+
+     <pre class="example">          (pregexp-split " +" "split pea     soup")
+          &rArr; ("split" "pea" "soup")
+          
+          (pregexp-split " *" "split pea     soup")
+          &rArr; ("s" "p" "l" "i" "t" "p" "e" "a" "s" "o" "u" "p")
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>pregexp-replace</b><var> rex str replacement<a name="index-pregexp_002dreplace-5059"></a></var><br>
+<blockquote><p>Replace the matched portion of the text string by another string.  The
+first argument is the pattern, the second the text string, and the third
+is the insert string (string to be inserted).
+
+     <pre class="example">          (pregexp-replace "te" "liberte" "ty")
+          &rArr; "liberty"
+</pre>
+        <p>If the pattern doesn't occur in the text string, the returned string is
+identical (<code>eq?</code>) to the text string. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>pregexp-replace*</b><var> rex str replacement<a name="index-pregexp_002dreplace_002a-5060"></a></var><br>
+<blockquote><p>Replace all matches in the text string by the insert string:
+
+     <pre class="example">          (pregexp-replace* "te" "liberte egalite fraternite" "ty")
+          &rArr; "liberty egality fratyrnity"
+</pre>
+        <p>If the pattern doesn't occur in the text string, the returned string is
+identical (<code>eq?</code>) to the text string. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>pregexp-quote</b><var><a name="index-pregexp_002dquote-5061"></a></var><br>
+<blockquote><p>Take an arbitrary string and returns a U-regexp (string) that precisely
+represents it.  In particular, characters in the input string that could
+serve as regexp metacharacters are escaped with a backslash, so that
+they safely match only themselves.
+
+     <pre class="example">          (pregexp-quote "cons")
+          &rArr; "cons"
+          
+          (pregexp-quote "list?")
+          &rArr; "list\\?"
+          
+          (pregexp-quote "([a-z]+) +([0-9]+,)? *([0-9]+)")
+          &rArr; "\\(\\[a-z\\]\\+\\) \\+\\(\\[0-9\\]\\+,\\)\\? \\*\\(\\[0-9\\]\\+\\)"
+</pre>
+        <p><code>pregexp-quote</code> is useful when building a composite regexp from a
+mix of regexp strings and verbatim strings. 
+</p></blockquote></div>
+
+<!-- page -->
+   </body></html>
+

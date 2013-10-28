@@ -1,0 +1,189 @@
+<html lang="en">
+<head>
+<title>comparisons cons - Libraries for Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Libraries for Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="comparisons.html#comparisons" title="comparisons">
+<link rel="prev" href="comparisons-default.html#comparisons-default" title="comparisons default">
+<link rel="next" href="comparisons-branch.html#comparisons-branch" title="comparisons branch">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes the libraries distributed along with version
+0.3d6 of Vicare Scheme, an R6RS compliant native
+compiler for the Scheme language.
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library `(vicare formations)' is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+The documentation of the libraries `(vicare parser-tools silex
+---)' are derived form the documentation of SILex.  Copyright
+(C) 2001, 2009 Danny Dube'.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="comparisons-cons"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="comparisons-branch.html#comparisons-branch">comparisons branch</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="comparisons-default.html#comparisons-default">comparisons default</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="comparisons.html#comparisons">comparisons</a>
+<hr>
+</div>
+
+<h4 class="subsection">1.21.8 Constructing compare procedures</h4>
+
+<p>The syntactic extensions defined in this section are the primary
+utilities for defining new compare procedures as conveniently as
+possible.
+
+<div class="defun">
+&mdash; Syntax: <b>refine-compare</b><var> expr ...<a name="index-refine_002dcompare-344"></a></var><br>
+<blockquote><p>The arguments, if any, must be expressions; they are evaluated from left
+to right until a non&ndash;zero value is found (which then is the value) or
+until there are no more arguments to evaluate (in which case the value
+is &lsquo;<samp><span class="samp">0</span></samp>&rsquo;).  If no arguments are supplied, the return value is
+&lsquo;<samp><span class="samp">0</span></samp>&rsquo;. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>select-compare</b><var> expr1 expr2 clause ...<a name="index-select_002dcompare-345"></a></var><br>
+<blockquote><p>Each <var>clause</var>, with the possible exception of the last, is of the
+form:
+
+     <pre class="example">          (<var>?type?</var> <var>?c1</var> ...)
+</pre>
+        <p class="noindent">where <var>?type?</var> is an expression evaluating to a predicate procedure,
+and <var>?ci</var> are expressions evaluating to an exact integer in
+{-1, 0, 1}.  The last <var>clause</var> may be an &ldquo;else clause&rdquo;,
+which has the form:
+
+     <pre class="example">          (else <var>?c1</var> ...)
+</pre>
+        <p><code>select-compare</code> is a conditional for defining hierarchical
+extensions and refinements of compare procedures.  It compares the
+values of <var>expr1</var> and <var>expr2</var> by trying the type tests in order,
+and applies an implict <code>refine-compare</code> on the consequences upon a
+match.
+
+        <p>In more detail, evaluation proceeds as follows: First <var>expr1</var> and
+<var>expr2</var> are evaluated in unspecified order, resulting in values
+<var>x1</var> and <var>x2</var>, respectively.  Then the clauses are evaluated one
+by one, from left to right.
+
+        <p>For clause:
+
+     <pre class="example">          (<var>?type?</var> <var>?c1</var> ...)
+</pre>
+        <p class="noindent">first <var>?type?</var> is evaluated resulting in a predicate procedure
+<var>type?</var>  and then the expressions <code>(</code><var>type?</var> <var>x1</var><code>)</code> and
+<code>(</code><var>type?</var>  <var>x2</var><code>)</code> are evaluated and interpreted as
+booleans:
+
+          <ol type=1 start=1>
+<li>If both booleans are true then the overall value is:
+
+          <pre class="example">               (refine-compare <var>?c1</var> ...)
+</pre>
+          <li>If only the first is true the result is &lsquo;<samp><span class="samp">-1</span></samp>&rsquo;.
+
+          <li>If only the second is true the result is &lsquo;<samp><span class="samp">+1</span></samp>&rsquo;.
+
+          <li>If neither is true the next clause is considered.
+             </ol>
+
+        <p>An else clause is treated as if both tests where true.  If there are no
+clauses left, the result is &lsquo;<samp><span class="samp">0</span></samp>&rsquo;.
+
+        <p><code>select-compare</code> evaluates <var>expr1</var> and <var>expr2</var> exactly
+once, even in the absence of any clauses.  Moreover, each <var>?type?</var>
+is evaluated at most once and the resulting procedure <var>type?</var> is
+called at most twice. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>cond-compare</b><var> ?clause ...<a name="index-cond_002dcompare-346"></a></var><br>
+<blockquote><p>Each <var>?clause</var>, with the possible exception of the last, is of the
+form:
+
+     <pre class="example">          ((<var>?t1</var> <var>?t2</var>) <var>?c1</var> ...)
+</pre>
+        <p class="noindent">where <var>?t1</var> and <var>?t2</var> are expressions evaluating to booleans,
+and <var>?ci</var> are expressions evaluating to an exact integer in
+{-1, 0, 1}.
+
+        <p>The last <var>clause</var> may be an &ldquo;else clause&rdquo;, which has the form:
+
+     <pre class="example">          (else <var>?c1</var> ...)
+</pre>
+        <p><code>cond-compare</code> is another conditional for defining hierarchical
+extensions and refinements of compare procedures.
+
+        <p>Evaluation proceeds as follows: The clauses are evaluated one by one,
+from left to right.  For clause:
+
+     <pre class="example">          ((<var>?t1</var> <var>?t2</var>) <var>?c1</var> ...)
+</pre>
+        <p class="noindent">first <var>?t1</var> and <var>?t2</var> are evaluated and the results are
+interpreted as boolean values:
+
+          <ol type=1 start=1>
+<li>If both booleans are true then the overall value is:
+
+          <pre class="example">               (refine-compare <var>?c1</var> ...)
+</pre>
+          <li>If only the first is true the result is &lsquo;<samp><span class="samp">-1</span></samp>&rsquo;.
+
+          <li>If only the second is true the result is &lsquo;<samp><span class="samp">+1</span></samp>&rsquo;.
+
+          <li>If neither is true the next clause is considered.
+             </ol>
+
+        <p>An else clause is treated as if both booleans where true.  If there are
+no clauses left (or there are no clauses to begin with), the result is
+&lsquo;<samp><span class="samp">0</span></samp>&rsquo;.
+
+        <p><code>cond-compare</code> evaluates each expression at most once. 
+</p></blockquote></div>
+
+<!-- page -->
+   </body></html>
+

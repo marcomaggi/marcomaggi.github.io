@@ -1,0 +1,290 @@
+<html lang="en">
+<head>
+<title>formations escape args - Libraries for Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Libraries for Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="formations.html#formations" title="formations">
+<link rel="prev" href="formations-escape-complex.html#formations-escape-complex" title="formations escape complex">
+<link rel="next" href="formations-escape-lines.html#formations-escape-lines" title="formations escape lines">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes the libraries distributed along with version
+0.3d6 of Vicare Scheme, an R6RS compliant native
+compiler for the Scheme language.
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library `(vicare formations)' is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+The documentation of the libraries `(vicare parser-tools silex
+---)' are derived form the documentation of SILex.  Copyright
+(C) 2001, 2009 Danny Dube'.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="formations-escape-args"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="formations-escape-lines.html#formations-escape-lines">formations escape lines</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="formations-escape-complex.html#formations-escape-complex">formations escape complex</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="formations.html#formations">formations</a>
+<hr>
+</div>
+
+<h3 class="section">35.8 Escape sequences for special arguments handling</h3>
+
+<div class="defun">
+&mdash; Format Escape Sequence: <b>~?</b><var><a name="index-g_t_007e_003f-5082"></a></var><br>
+&mdash; Format Escape Sequence: <b>~k</b><var><a name="index-g_t_007ek-5083"></a></var><br>
+<blockquote><p>Sub&ndash;format.  No parameters.
+
+        <p>Take a format string argument and a second argument which is a list of
+arguments for that string, and output the result.
+
+     <pre class="example">          (format #t "~?" "~d ~d" '(1 2))    -| 1 2
+</pre>
+        <p><code>~@?</code> takes arguments for the sub-format directly rather than
+in a list.
+
+     <pre class="example">          (format #t "~@? ~s" "~d ~d" 1 2 "foo") -| 1 2 "foo"
+</pre>
+        <p><code>~?</code> and <code>~k</code> are the same, <code>~k</code> is provided for
+T-Scheme compatibility. 
+</p></blockquote></div>
+
+<!--  -->
+<div class="defun">
+&mdash; Format Escape Sequence: <b>~*</b><var><a name="index-g_t_007e_002a-5084"></a></var><br>
+<blockquote><p>Argument jumping.  Parameter: <var>N</var>.
+
+        <p>Move forward <var>N</var> arguments (default 1) in the argument list. 
+<code>~:*</code> moves backwards.  (<var>N</var> cannot be negative.)
+
+     <pre class="example">          (format #f "~d ~2*~d" 1 2 3 4) &rArr; "1 4"
+          (format #f "~d ~:*~d" 6)       &rArr; "6 6"
+</pre>
+        <p><code>~@*</code> moves to argument number <var>N</var>.  The first argument is
+number 0 (and that's the default for <var>N</var>).
+
+     <pre class="example">          (format #f "~d~d again ~@*~d~d" 1 2) &rArr; "12 again 12"
+          (format #f "~d~d~d ~1@*~d~d" 1 2 3)  &rArr; "123 23"
+</pre>
+        <p>A <code>#</code> moves to the end; when followed by a <code>:</code> modifier it can
+be used to select an absolute position relative to the end of the
+argument list, a reverse of what the <code>@</code> modifier does.
+
+     <pre class="example">          (format #t "~#*~2:*~a" 'a 'b 'c 'd)   -| c
+</pre>
+        <p>At the end of the format string the current argument postion does not
+matter, any further arguments are ignored. 
+</p></blockquote></div>
+
+<!--  -->
+<div class="defun">
+&mdash; Format Escape Sequence: <b>~</b><var>{ ~}<a name="index-g_t_007e-5085"></a></var><br>
+<blockquote><p>Iteration.  Parameter: <var>maxreps</var> (for <code>~{</code>).
+
+        <p>The format between <code>~{</code> and <code>~}</code> is iterated.  The modifiers
+to <code>~{</code> determine how arguments are taken.  The default is a list
+argument with each iteration successively consuming elements from it. 
+This is a convenient way to output a whole list.
+
+     <pre class="example">          (format "~{~d~}" '(1 2 3))
+          &rArr; "123"
+          
+          (format "~{~s=~d ~}" '("x" 1 "y" 2))
+          &rArr; "\"x\"=1 \"y\"=2 "
+</pre>
+        <p><code>~:{</code> takes a single argument which is a list of lists, each of
+those contained lists gives the arguments for the iterated format.
+
+     <pre class="example">          (format "~:{~dx~d ~}" '((1 2) (3 4) (5 6)))
+          &rArr; "1x2 3x4 5x6 "
+</pre>
+        <p><code>~@{</code> takes arguments directly, with each iteration successively
+consuming arguments.
+
+     <pre class="example">          (format "~@{~d~}" 1 2 3)
+          &rArr; "123"
+          
+          (format "~@{~s=~d ~}" "x" 1 "y" 2)
+          &rArr; "\"x\"=1 \"y\"=2 "
+</pre>
+        <p><code>~:@{</code> takes list arguments, one argument for each iteration,
+using that list for the format.
+
+     <pre class="example">          (format "~:@{~dx~d ~}" '(1 2) '(3 4) '(5 6))
+          &rArr; "1x2 3x4 5x6 "
+</pre>
+        <p>Iterating stops when there are no more arguments or when the
+<var>maxreps</var> parameter to <code>~{</code> is reached (default no
+maximum).
+
+     <pre class="example">          (format "~2{~d~}" '(1 2 3 4))
+          &rArr; 12
+</pre>
+        <p>If the format between <code>~{</code> and <code>~}</code> is empty, then a format
+string argument is taken (before iteration argument(s)) and used
+instead.  This allows a sub&ndash;format (like <code>~?</code> above) to be
+iterated.
+
+     <pre class="example">          (format "~{~}" "~d" '(1 2 3))
+          &rArr; 123
+</pre>
+        <p>Iterations can be nested, an inner iteration operates in the same way as
+described, but of course on the arguments the outer iteration provides
+it; this can be used to work into nested list structures.  For example
+in the following the inner <code>~{~d~}x</code> is applied to <code>(1 2)</code>
+then <code>(3 4 5)</code> etc.
+
+     <pre class="example">          (format "~{~{~d~}x~}" '((1 2) (3 4 5)))
+          &rArr; "12x345x"
+</pre>
+        <p>See also <code>~^</code> below for escaping from iteration. 
+</p></blockquote></div>
+
+<!--  -->
+<div class="defun">
+&mdash; Format Escape Sequence: <b>~[ ~; ~]</b><var><a name="index-g_t_007e_005b-_007e_003b-_007e_005d-5086"></a></var><br>
+<blockquote><p>Conditional.  Parameter: <var>selector</var>.
+
+        <p>A conditional block is delimited by <code>~[</code> and <code>~]</code>, and
+<code>~;</code> separates clauses within the block.  <code>~[</code> takes an
+integer argument and that number clause is used.  The first clause is
+number &lsquo;<samp><span class="samp">0</span></samp>&rsquo;.
+
+     <pre class="example">          (format "~[peach~;banana~;mango~]" 0)   &rArr; "peach"
+          (format "~[peach~;banana~;mango~]" 1)   &rArr; "banana"
+          (format "~[peach~;banana~;mango~]" 2)   &rArr; "mango"
+</pre>
+        <p>The <var>selector</var> parameter can be used for the clause number, instead
+of taking an argument.
+
+     <pre class="example">          (format "~0[peach~;banana~;mango~]")    &rArr; "peach"
+          (format "~1[peach~;banana~;mango~]")    &rArr; "banana"
+          (format "~2[peach~;banana~;mango~]")    &rArr; "mango"
+</pre>
+        <p>If the clause number is out of range then nothing is output.  Or the
+last clause can be <code>~:;</code> to use that for a number out of range.
+
+     <pre class="example">          (format "~[banana~;mango~]"         99) &rArr; ""
+          (format "~[banana~;mango~:;fruit~]" 99) &rArr; "fruit"
+</pre>
+        <p><code>~:[</code> treats the argument as a flag, and expects two clauses.  The
+first is used if the argument is <code>#f</code> or the second otherwise.
+
+     <pre class="example">          (format "~:[false~;not false~]" #f)   &rArr; "false"
+          (format "~:[false~;not false~]" 'abc) &rArr; "not false"
+          
+          (let ((n 3))
+            (format "~d gnu~:[s are~; is~] here" n (= 1 n)))
+          &rArr; "3 gnus are here"
+</pre>
+        <p><code>~@[</code> also treats the argument as a flag, and expects one clause. 
+If the argument is <code>#f</code> then no output is produced and the argument
+is consumed, otherwise the clause is used and the argument is not
+consumed, it's left for the clause.  This can be used for instance to
+suppress output if <code>#f</code> means something not available.
+
+     <pre class="example">          (format "~@[temperature=~d~]" 27) &rArr; "temperature=27"
+          (format "~@[temperature=~d~]" #f) &rArr; ""
+</pre>
+        </blockquote></div>
+
+<!--  -->
+<div class="defun">
+&mdash; Format Escape Sequence: <b>~^</b><var><a name="index-g_t_007e_005e-5087"></a></var><br>
+<blockquote><p>Escape.  Parameters: <var>val1</var>, <var>val2</var>, <var>val3</var>.
+
+        <p>Stop formatting if there are no more arguments.  This can be used for
+instance to have a format string adapt to a variable number of
+arguments.
+
+     <pre class="example">          (format "~d~^ ~d" 1)            &rArr; "1"
+          (format "~d~^ ~d" 1 2)          &rArr; "1 2"
+</pre>
+        <p>Within a <code>~{</code> <code>~}</code> iteration, <code>~^</code> stops the current
+iteration step if there are no more arguments to that step, but
+continuing with possible further steps and the rest of the format.  This
+can be used for instance to avoid a separator on the last iteration, or
+to adapt to variable length argument lists.
+
+     <pre class="example">          (format "~{~d~^/~} go"    '(1 2 3))
+          &rArr; "1/2/3 go"
+          
+          (format "~:{ ~d~^~d~} go" '((1) (2 3)))
+          &rArr; " 1 23 go"
+</pre>
+        <!-- For reference, format.scm doesn't implement that Common Lisp ~:^ -->
+     <!-- modifier which stops the entire iterating of ~:{ or ~@:{. -->
+     <!-- FIXME: Believe the Common Lisp spec is for ~^ within ~[ ~] -->
+     <!-- conditional to terminate the whole format (or iteration step if in -->
+     <!-- an iteration).  But format.scm seems to terminate just the -->
+     <!-- conditional form. -->
+     <!-- (format #f "~[abc~^def~;ghi~] blah" 0) -->
+     <!-- @result{} "abc blah"                    ;; looks wrong -->
+     <!-- FIXME: Believe the Common Lisp spec is for ~^ within ~( ~) to end -->
+     <!-- that case conversion and then also terminate the whole format (or -->
+     <!-- iteration step if in an iteration).  But format.scm doesn't seem -->
+     <!-- to do that quite right. -->
+     <!-- (format #f "~d ~^ ~d" 1)      @result{} "1 " -->
+     <!-- (format #f "~(~d ~^ ~d~)" 1)  @result{} ERROR -->
+        <p>Within a <code>~?</code> sub&ndash;format, <code>~^</code> operates just on that
+sub-format.  If it terminates the sub&ndash;format then the originating
+format will still continue.
+
+     <pre class="example">          (format "~? items" "~d~^ ~d" '(1))
+          &rArr; "1 items"
+          
+          (format "~? items" "~d~^ ~d" '(1 2))
+          &rArr; "1 2 items"
+</pre>
+        <p>The parameters to <code>~^</code> (which are numbers) change the condition
+used to terminate.  For a single parameter, termination is when that
+value is zero (notice this makes plain <code>~^</code> equivalent to
+<code>~#^</code>).  For two parameters, termination is when those two are
+equal.  For three parameters, termination is when <var>val1</var> &lt;=
+<var>val2</var> and <var>val2</var> &lt;= <var>val3</var>. 
+</p></blockquote></div>
+
+<!-- page -->
+   </body></html>
+

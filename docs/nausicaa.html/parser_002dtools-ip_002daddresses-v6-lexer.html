@@ -1,0 +1,133 @@
+<html lang="en">
+<head>
+<title>parser-tools ip-addresses v6 lexer - Nausicaa for Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Nausicaa for Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="parser_002dtools-ip_002daddresses-v6.html#parser_002dtools-ip_002daddresses-v6" title="parser-tools ip-addresses v6">
+<link rel="next" href="parser_002dtools-ip_002daddresses-v6-parser.html#parser_002dtools-ip_002daddresses-v6-parser" title="parser-tools ip-addresses v6 parser">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.3d6 of Nausicaa, a
+collection of libraries for Vicare Scheme implementing the language
+`(nausicaa)' on top of `(vicare)'.
+
+Copyright (C) 2012, 2013 by Marco Maggi <marco.maggi-ipsu@poste.it>
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with Invariant Sections being ``GNU Free Documentation
+     License'' and ``GNU General Public License'', no Front--Cover
+     Texts, and no Back--Cover Texts.  A copy of the license is
+     included in the section entitled ``GNU Free Documentation
+     License''.
+-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="parser-tools-ip-addresses-v6-lexer"></a>
+<a name="parser_002dtools-ip_002daddresses-v6-lexer"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="parser_002dtools-ip_002daddresses-v6-parser.html#parser_002dtools-ip_002daddresses-v6-parser">parser-tools ip-addresses v6 parser</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="parser_002dtools-ip_002daddresses-v6.html#parser_002dtools-ip_002daddresses-v6">parser-tools ip-addresses v6</a>
+<hr>
+</div>
+
+<h5 class="subsubsection">11.4.2.1 Tokenising an IPv6 address string</h5>
+
+<p>The following bindings are exported by the <code>(nausicaa
+parser-tools ipv6-addresses)</code> library.
+
+<div class="defun">
+&mdash; Constant: <b>ipv6-address-lexer-table</b><var><a name="index-ipv6_002daddress_002dlexer_002dtable-1495"></a></var><br>
+<blockquote><p>A lexer table to be used by the library <code>(nausicaa parser-tools
+silex lexer)</code> to tokenise IPv6 address or address prefix textual
+representations; the table is prepared to make use of all the counters. 
+The token categories are:
+
+          <dl>
+<dt><code>COLON</code><dd>Hold as semantic value the character <code>#\:</code>.
+
+          <br><dt><code>DOT</code><dd>Hold as semantic value the character <code>#\.</code>.
+
+          <br><dt><code>SLASH</code><dd>Hold as semantic value the character <code>#\/</code>.
+
+          <br><dt><code>NUMBER</code><dd>Hold as semantic value the string representing a value in the input IPv6
+address, in base 10 or base 16.  The interpretation of
+numbers, especially their base, cannot be determined by the lexer: any
+string representing a number in base 10 is also valid as number
+in base 16. 
+</dl>
+
+        <p>The longest IPv6 address string has: 8 numbers as address
+components, 7 separators between address components, a final
+slash and number to specify the address prefix length; the total is
+8 + 7 + 2 = 17 tokens.  We may want to use
+<code>make-max-count-lexer</code> from <code>(vicare parser-tools silex
+utilities)</code> to limit the number of returned tokens.
+
+        <p>To tokenise an IPv6 address string we can do:
+
+     <pre class="example">          (import (nausicaa)
+            (prefix (vicare parser-tools silex lexer)        lex.)
+            (prefix (nausicaa parser-tools ipv6-addresses)   ip.)
+            (prefix (nausicaa parser-tools lexical-tokens)   lt.)
+            (prefix (nausicaa parser-tools source-locations) sl.))
+          
+          (define (make-address-lexer address-string)
+            (let ((IS (lex.make-IS (lex.string: address-string))))
+              (lex.make-lexer ip.ipv6-address-lexer-table IS)))
+</pre>
+        <p class="noindent">every time the lexer thunk is evaluated, it returns an object of type
+<code>&lt;lexical-token&gt;</code> as defined by the library <code>(nausicaa
+parser-tools lexical-tokens)</code>, <a href="parser_002dtools-lexical_002dtokens.html#parser_002dtools-lexical_002dtokens">Describing lexical tokens</a>.  Here are some examples of tokenisation:
+
+     <pre class="example">          "1:2:3:4:5:6:7:8"
+          &rArr; [NUMBER "1"] [COLON  #\:] [NUMBER "2"] [COLON  #\:]
+             [NUMBER "3"] [COLON  #\:] [NUMBER "4"] [COLON  #\:]
+             [NUMBER "5"] [COLON  #\:] [NUMBER "6"] [COLON  #\:]
+             [NUMBER "7"] [COLON  #\:] [NUMBER "8"] [*eoi* #&lt;eof&gt;]
+          
+          "F:Zciao"
+          &rArr; [NUMBER "F"] [COLON  #\:] [*lexer-error* "Zciao"]
+          
+          "1:2:3:4:5.6.7.8"
+          &rArr; [NUMBER "1"] [COLON  #\:] [NUMBER "2"] [COLON  #\:]
+             [NUMBER "3"] [COLON  #\:] [NUMBER "4"] [COLON  #\:]
+             [NUMBER "5"] [DOT    #\.] [NUMBER "6"] [DOT    #\.]
+             [NUMBER "7"] [DOT    #\.] [NUMBER "8"] [*eoi* #&lt;eof&gt;]
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>make-ipv6-address-lexer</b><var> ?clause <small class="dots">...</small><a name="index-make_002dipv6_002daddress_002dlexer-1496"></a></var><br>
+&mdash; Auxiliary Syntax: <b>string:</b><var> ?string<a name="index-string_003a-1497"></a></var><br>
+&mdash; Auxiliary Syntax: <b>port:</b><var> ?port<a name="index-port_003a-1498"></a></var><br>
+&mdash; Auxiliary Syntax: <b>procedure:</b><var> ?proc<a name="index-procedure_003a-1499"></a></var><br>
+<blockquote><p>Build and return a SILex lexer function making use of the table
+<code>ipv6-address-lexer-table</code>; the input system is created as
+described by the given clauses; the table and the input system are
+prepared to make use of all the counters.
+
+        <p>The auxiliary syntaxes are the ones exported by <code>(vicare
+parser-tools silex lexer)</code>; their arguments are the same as the ones
+described for <code>make-IS</code>, <a href="../vicare-libs/silex-input.html#silex-input">Input systems</a>. 
+</p></blockquote></div>
+
+<!-- page -->
+   </body></html>
+

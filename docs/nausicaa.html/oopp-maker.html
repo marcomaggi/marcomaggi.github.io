@@ -1,0 +1,108 @@
+<html lang="en">
+<head>
+<title>oopp maker - Nausicaa for Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Nausicaa for Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="oopp.html#oopp" title="oopp">
+<link rel="prev" href="oopp-protocol.html#oopp-protocol" title="oopp protocol">
+<link rel="next" href="oopp-finaliser.html#oopp-finaliser" title="oopp finaliser">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.3d6 of Nausicaa, a
+collection of libraries for Vicare Scheme implementing the language
+`(nausicaa)' on top of `(vicare)'.
+
+Copyright (C) 2012, 2013 by Marco Maggi <marco.maggi-ipsu@poste.it>
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with Invariant Sections being ``GNU Free Documentation
+     License'' and ``GNU General Public License'', no Front--Cover
+     Texts, and no Back--Cover Texts.  A copy of the license is
+     included in the section entitled ``GNU Free Documentation
+     License''.
+-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="oopp-maker"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="oopp-finaliser.html#oopp-finaliser">oopp finaliser</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="oopp-protocol.html#oopp-protocol">oopp protocol</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="oopp.html#oopp">oopp</a>
+<hr>
+</div>
+
+<h3 class="section">3.7 Defining custom makers</h3>
+
+<div class="defun">
+&mdash; Syntax: <b>make-from-fields</b><var> ?class ?expression ...<a name="index-make_002dfrom_002dfields-36"></a></var><br>
+<blockquote><p>Build and return an instance of <var>?class</var> from raw field values; each
+<var>?expression</var> is evaluated once and it must return a raw field
+value.  The order of the <var>?expression</var> arguments must match the
+order of the arguments to the from&ndash;fields constructor.  <a href="oopp-protocol-classes.html#oopp-protocol-classes">From&ndash;fields constructor</a>.
+
+        <p>This macro <strong>cannot</strong> be used to build labeled values. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Auxiliary Syntax: <b>maker</b><var> ?expression<a name="index-maker-37"></a></var><br>
+<blockquote><p>Define the transformer function used by the maker syntax of classes and
+labels.  <var>?expression</var> is evaluated once at expand time and it must
+return a macro transformer function.
+
+        <p>When the maker syntax of <var>?type</var>:
+
+     <pre class="example">          (<var>?type</var> (<var>?arg</var> ...))
+</pre>
+        <p class="noindent">is expanded, the transformer is applied to a syntax object:
+
+     <pre class="example">          #'(<var>?type</var> (<var>?arg</var> ...))
+</pre>
+        <p class="noindent">and it must return a syntax object representing an expression that,
+evaluated at run time, must return an instance of <var>?type</var> or raise
+an exception.
+
+        <p>Example:
+
+     <pre class="example">          (define-class &lt;rect-coords&gt;
+            (fields x y)
+            (maker (lambda (stx)
+                     (syntax-case stx (rec pol)
+                       ((_ (pol ?rho ?theta))
+                        #'(let ((rho   ?rho)
+                                (theta ?theta))
+                            (make-&lt;rect-coords&gt; (* rho (cos theta))
+                                                (* rho (sin theta)))))
+                       ((_ (rec ?x ?y))
+                        #'(make-&lt;rect-coords&gt; ?x ?y))))))
+          
+          (&lt;rect-coords&gt; R (&lt;&gt; (rec 1.0 2.0)))
+          (R x)                   &rArr; 1.0
+          (R y)                   &rArr; 2.0
+          
+          
+          (&lt;rect-coords&gt; Q (&lt;&gt; (pol 1.0 2.0)))
+          (R x)                   &rArr; -0.4161468365471424
+          (R y)                   &rArr; +0.9092974268256817
+</pre>
+        </blockquote></div>
+
+<!-- page -->
+   </body></html>
+

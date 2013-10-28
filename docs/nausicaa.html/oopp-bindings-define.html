@@ -1,0 +1,177 @@
+<html lang="en">
+<head>
+<title>oopp bindings define - Nausicaa for Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Nausicaa for Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="oopp-bindings.html#oopp-bindings" title="oopp bindings">
+<link rel="prev" href="oopp-bindings-lambda.html#oopp-bindings-lambda" title="oopp bindings lambda">
+<link rel="next" href="oopp-bindings-do.html#oopp-bindings-do" title="oopp bindings do">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.3d6 of Nausicaa, a
+collection of libraries for Vicare Scheme implementing the language
+`(nausicaa)' on top of `(vicare)'.
+
+Copyright (C) 2012, 2013 by Marco Maggi <marco.maggi-ipsu@poste.it>
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with Invariant Sections being ``GNU Free Documentation
+     License'' and ``GNU General Public License'', no Front--Cover
+     Texts, and no Back--Cover Texts.  A copy of the license is
+     included in the section entitled ``GNU Free Documentation
+     License''.
+-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="oopp-bindings-define"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="oopp-bindings-do.html#oopp-bindings-do">oopp bindings do</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="oopp-bindings-lambda.html#oopp-bindings-lambda">oopp bindings lambda</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="oopp-bindings.html#oopp-bindings">oopp bindings</a>
+<hr>
+</div>
+
+<h4 class="subsection">3.19.5 <acronym>OOPP</acronym> bindings: <code>define</code>&ndash;like syntaxes</h4>
+
+<div class="defun">
+&mdash; Syntax: <b>define/tags</b><var> ?variable<a name="index-define_002ftags-87"></a></var><br>
+&mdash; Syntax: <b>define/tags</b><var> ?variable ?expression<a name="index-define_002ftags-88"></a></var><br>
+&mdash; Syntax: <b>define/tags</b><var> #</var>(<var>?variable ?tag</var>)<var><a name="index-define_002ftags-89"></a></var><br>
+&mdash; Syntax: <b>define/tags</b><var> #</var>(<var>?variable ?tag</var>)<var> ?expression<a name="index-define_002ftags-90"></a></var><br>
+&mdash; Syntax: <b>define/tags</b> (<var>?variable . ?tagged-formals</var>)<var> ?body0 ?body <small class="dots">...</small><a name="index-define_002ftags-91"></a></var><br>
+&mdash; Syntax: <b>define/tags</b> (<var>?variable . ?tagged-formals</var>) (<var>&lt;- ?tag <small class="dots">...</small></var>)<var> ?body0 ?body <small class="dots">...</small><a name="index-define_002ftags-92"></a></var><br>
+&mdash; Syntax: <b>define/tags</b> ((<var>?variable ?tag0 ?tag <small class="dots">...</small></var>)<var> . ?tagged-formals</var>)<var> ?body0 ?body <small class="dots">...</small><a name="index-define_002ftags-93"></a></var><br>
+&mdash; Auxiliary Syntax: <b>&lt;-</b><var><a name="index-g_t_003c_002d-94"></a></var><br>
+<blockquote><p>Like <code>define</code> and defines the <acronym>OOPP</acronym> bindings for function
+arguments.  When all the bindings have no tags: this syntax is
+equivalent to <code>define</code> as defined by <acronym>R6RS</acronym>; an untagged binding
+is equivalent to a binding tagged with <code>&lt;top&gt;</code>.
+
+        <p>When the syntax is used for function definition and procedure arguments
+validation, as defined by <code>(vicare arguments validation)</code>, is
+enabled:
+
+          <ul>
+<li>The function will validate its tagged arguments using the tag predicates
+and raise a <code>&amp;procedure-argument-violation</code> exception in case
+of failure.
+
+          <li>If the auxiliary <code>&lt;-</code> clause is present: the <var>?body</var> forms will
+be enclosed in a <code>begin/tags</code> syntax, and the returned values
+validated as specified by the <var>?tag</var> identifiers.
+
+          <li>If the <var>?variable</var> argument comes with <var>?tag</var> arguments: the
+<var>?body</var> forms will be enclosed in a <code>begin/tags</code> syntax, and
+the returned values validated as specified by the <var>?tag</var>
+identifiers. 
+</ul>
+
+        <p>Usage examples:
+
+          <ul>
+<li>Function with two tagged arguments:
+
+          <pre class="example">               #!r6rs
+               (import (rnrs)
+                 (nausicaa language oopp))
+               
+               (define/tags (f (a &lt;number&gt;) (b &lt;number&gt;))
+                 (list (a string) (b string)))
+               
+               (f 1 2)                 &rArr; ("1" "2")
+</pre>
+          <li>Function with two mandatory arguments and the rest argument:
+
+          <pre class="example">               #!r6rs
+               (import (rnrs)
+                 (nausicaa language oopp))
+               
+               (define/tags (g (a &lt;number&gt;) (b &lt;number&gt;) . #(args &lt;list&gt;))
+                 (list (a string)
+                       (b string)
+                       (args length)))
+               
+               (g 1 2 3 4 5)           &rArr; ("1" "2" 3)
+</pre>
+          <p class="noindent">notice that a tagged rest argument must be specified using the vector
+syntax <code>#(args &lt;list&gt;)</code>, the list syntax <code>(args &lt;list&gt;)</code> would
+be a syntax error.
+
+          <li>Function with only the rest argument:
+
+          <pre class="example">               #!r6rs
+               (import (rnrs)
+                 (nausicaa language oopp))
+               
+               (define/tags (g . #(args &lt;list&gt;))
+                 (args length))
+               
+               (g 1 2 3)               &rArr; 3
+</pre>
+          <li>Tagged variable definition:
+
+          <pre class="example">               #!r6rs
+               (import (rnrs)
+                 (nausicaa language oopp))
+               
+               (define/tags #(a &lt;number&gt;) 123)
+               
+               (a string)              &rArr; "123"
+</pre>
+          <li>Tagged variable definition initially left uninitialised:
+
+          <pre class="example">               #!r6rs
+               (import (rnrs)
+                 (nausicaa language oopp))
+               
+               (define/tags #(a &lt;number&gt;))
+               (set! a 123)
+               (a string)              &rArr; "123"
+</pre>
+          </ul>
+        </p></blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>define-values/tags</b> (<var>?tagged-variable0 ?tagged-variable <small class="dots">...</small></var>)<var> ?form0 ?form <small class="dots">...</small><a name="index-define_002dvalues_002ftags-95"></a></var><br>
+<blockquote><p>Like <code>define-values</code> from <code>(vicare)</code> and defines the <acronym>OOPP</acronym>
+bindings for function arguments.  When all the bindings have no tags:
+this syntax is equivalent to <code>define-values</code> from <code>(vicare)</code>;
+an untagged binding is equivalent to a binding tagged with <code>&lt;top&gt;</code>.
+
+        <p>Evaluate the given forms and bind the, possibly multiple, result of the
+last one to the given <var>?tagged-variables</var>.
+
+     <pre class="example">          (define-values (a b c)
+            (values 1 2 3))
+          
+          (define-values ((A &lt;integer&gt;) (B &lt;string&gt;) (C &lt;pair&gt;))
+            (values 123 "ciao" '(1 . 2)))
+          
+          (list a b c)    &rArr; (1 2 3)
+          
+          (A odd?)        &rArr; #t
+          (B length)      &rArr; 4
+          (C cdr)         &rArr; 2
+</pre>
+        </blockquote></div>
+
+<!-- page -->
+   </body></html>
+

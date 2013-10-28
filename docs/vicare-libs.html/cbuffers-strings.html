@@ -1,0 +1,135 @@
+<html lang="en">
+<head>
+<title>cbuffers strings - Libraries for Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Libraries for Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="cbuffers.html#cbuffers" title="cbuffers">
+<link rel="prev" href="cbuffers-buffers.html#cbuffers-buffers" title="cbuffers buffers">
+<link rel="next" href="cbuffers-api.html#cbuffers-api" title="cbuffers api">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes the libraries distributed along with version
+0.3d6 of Vicare Scheme, an R6RS compliant native
+compiler for the Scheme language.
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library `(vicare formations)' is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+The documentation of the libraries `(vicare parser-tools silex
+---)' are derived form the documentation of SILex.  Copyright
+(C) 2001, 2009 Danny Dube'.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="cbuffers-strings"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="cbuffers-api.html#cbuffers-api">cbuffers api</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="cbuffers-buffers.html#cbuffers-buffers">cbuffers buffers</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="cbuffers.html#cbuffers">cbuffers</a>
+<hr>
+</div>
+
+<h3 class="section">9.2 Introduction to generalised C strings</h3>
+
+<p>Generalised C strings are meant to be used in interfaces to foreign C
+language libraries, when a pointer to C string or input buffer is
+required as argument.
+
+   <p>A <dfn>generalised C string</dfn> is an object capable of holding the
+representation of a C language string; such Scheme objects are: strings,
+bytevectors, pointer objects, instances of <code>memory-block</code>. 
+<a href="../vicare-scheme/iklib-memory-blocks.html#iklib-memory-blocks">Memory blocks</a> for details on memory
+blocks.
+
+   <p>When a Scheme string is used as generalised C string: the application
+must take care of converting the Scheme string into a C string
+representation, for example using <code>string-&gt;ascii</code>.
+
+   <p>When using generalised C strings we have to remember that:
+
+     <ul>
+<li>A run of the garbage collector may move the data area of Scheme
+bytevectors; for this reason Scheme bytevectors and Scheme strings
+converted to bytevectors are not suitable as arguments to Scheme
+functions interfacing to C functions that call back to Scheme.
+
+     <li>If a Scheme string is used as argument: the C function cannot modify it
+by using it as output buffer. 
+</ul>
+
+<p class="noindent">in these cases we should use generalised C buffers, <a href="cbuffers-buffers.html#cbuffers-buffers">Introduction to generalised C buffers</a>.
+
+   <p>Two arguments to function are usually needed to represent a generalised
+C string: the string value itself and an optional length.
+
+     <ol type=1 start=1>
+<li>The string argument is meant to be either a string, or bytevector, or
+<code>memory-block</code> instance, or pointer object.
+
+     <li>The length argument is meant to be <code>#f</code> or an exact integer in the
+range of the C language type <code>size_t</code>.  When the string argument is
+a pointer object: the length argument must represent the number of bytes
+available in the referenced memory block; otherwise the length argument
+is ignored.
+        </ol>
+
+   <p>Here is an example function accepting a generalised C string argument
+<var>str</var> and its optional length argument <var>str.len</var>, the string is
+converted to bytevector with <code>string-&gt;ascii</code>:
+
+<pre class="example">     (define fun
+       (case-lambda
+         ((str)
+          (fun str #f))
+         ((str str.len)
+          (define who 'fun)
+          (with-arguments-validation (who)
+              ((general-c-string     str)
+               (general-c-string.len str str.len))
+            (with-general-c-strings
+                ((str^         str))
+              (do-something-with str^ str.len))))))
+</pre>
+   <!-- page -->
+   </body></html>
+

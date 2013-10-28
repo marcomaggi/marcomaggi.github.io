@@ -1,0 +1,141 @@
+<html lang="en">
+<head>
+<title>identifier properties - Libraries for Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Libraries for Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="lang.html#lang" title="lang">
+<link rel="prev" href="identifier-alists.html#identifier-alists" title="identifier alists">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes the libraries distributed along with version
+0.3d6 of Vicare Scheme, an R6RS compliant native
+compiler for the Scheme language.
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library `(vicare formations)' is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+The documentation of the libraries `(vicare parser-tools silex
+---)' are derived form the documentation of SILex.  Copyright
+(C) 2001, 2009 Danny Dube'.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="identifier-properties"></a>
+<p>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="identifier-alists.html#identifier-alists">identifier alists</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="lang.html#lang">lang</a>
+<hr>
+</div>
+
+<h3 class="section">1.23 Expand&ndash;time identifier properties</h3>
+
+<p><a name="index-g_t_0040library_007bvicare-language_002dextensions-identifier_002dproperties_007d_002c-library-399"></a><a name="index-Library-_0040library_007bvicare-language_002dextensions-identifier_002dproperties_007d-400"></a>
+
+   <p>The library <code>(vicare language-extensions identifier-properties)</code>
+allows the association of objects to identifiers at expand time, using
+other identifiers as keywords; this library is meant to be imported for
+the <code>expand</code> phase.  Meaningless usage examples:
+
+<pre class="example">     (import (vicare)
+       (for (vicare language-extensions identifier-properties)
+            expand))
+     
+     (define-syntax (type-of stx)
+       (syntax-case stx ()
+         ((_ ?id)
+          (identifier-property-ref #'type-of #'?id #f))))
+     
+     (eval-for-expand
+       (register-identifier-property #'type-of))
+     
+     (let ((a "ciao"))
+       (eval-for-expand
+         (identifier-property-set! #'type-of #'a #'(quote string)))
+       (type-of a) ==&gt; (quote string)
+       (type-of a))
+     &rArr; string
+</pre>
+   <p>The following bindings are by the library <code>(vicare
+language-extensions identifier-properties)</code>.
+
+<div class="defun">
+&mdash; Function: <b>register-identifier-property</b><var> subject<a name="index-register_002didentifier_002dproperty-401"></a></var><br>
+<blockquote><p>Allocate a new identifier properties table associated to the identifier
+<var>subject</var>.  If a property associated to <var>subject</var> already
+exists: raise an exception. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>forget-identifier-property</b><var> subject<a name="index-forget_002didentifier_002dproperty-402"></a></var><br>
+<blockquote><p>Release all the resources of the properties table associated to the
+identifier <var>subject</var>.  If a property associated to <var>subject</var>
+does not exist: raise an exception. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>identifier-property-exists?</b><var> subject<a name="index-identifier_002dproperty_002dexists_003f-403"></a></var><br>
+<blockquote><p>Return <code>#t</code> if <var>subject</var> is an identifier associated to a
+properties table; otherwise return <code>#f</code>.  Raise an exception if
+<var>subject</var> is not an identifier. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>identifier-property-set!</b><var> subject key value<a name="index-identifier_002dproperty_002dset_0021-404"></a></var><br>
+<blockquote><p>Associate the identifier <var>key</var> to <var>value</var> in <var>subject</var>'s
+table.  Raise an assertion violation if <var>subject</var> is not a
+previously defined object property.  If <var>key</var> already has an
+identifier property for <var>subject</var>: silently overwrite the old value. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>identifier-property-ref</b><var> subject key default<a name="index-identifier_002dproperty_002dref-405"></a></var><br>
+<blockquote><p>Return the value associated to the identifier <var>key</var> in
+<var>subject</var>'s table.  Raise an assertion violation if <var>subject</var> is
+not a previously defined object property.  If <var>key</var> does not have an
+identifier property for <var>subject</var>: return <var>default</var>. 
+</p></blockquote></div>
+
+<!-- end of file -->
+<!-- end of file -->
+   </body></html>
+

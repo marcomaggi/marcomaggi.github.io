@@ -1,0 +1,178 @@
+<html lang="en">
+<head>
+<title>loops qualifiers - Libraries for Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Libraries for Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="loops.html#loops" title="loops">
+<link rel="prev" href="loops-comprehensions.html#loops-comprehensions" title="loops comprehensions">
+<link rel="next" href="loops-generators.html#loops-generators" title="loops generators">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes the libraries distributed along with version
+0.3d6 of Vicare Scheme, an R6RS compliant native
+compiler for the Scheme language.
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library `(vicare formations)' is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+The documentation of the libraries `(vicare parser-tools silex
+---)' are derived form the documentation of SILex.  Copyright
+(C) 2001, 2009 Danny Dube'.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="loops-qualifiers"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="loops-generators.html#loops-generators">loops generators</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="loops-comprehensions.html#loops-comprehensions">loops comprehensions</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="loops.html#loops">loops</a>
+<hr>
+</div>
+
+<h4 class="subsection">1.20.3 Qualifiers</h4>
+
+<p>This section defines the syntax <var>?qualifier</var>.  The nesting of
+qualifiers is from left (outer) to right (inner).  In other words, the
+rightmost generator &ldquo;spins faster&rdquo;.  The nesting also defines the
+region of the variables introduced by the generators.  This implies that
+inner generators may depend on the variables of outer generators.  The
+sequence of enumeration of values is strictly depth first.  These
+conventions are illustrated by the first example.
+
+   <p>The syntax <var>?qualifier</var> consists of the following alternatives.
+
+<div class="defun">
+&mdash; Qualifier Syntax: <var>?generator</var><var><a name="index-g_t_0040meta_007bgenerator_007d-285"></a></var><br>
+<blockquote><p>Enumerate a sequence of bindings of one or more variables.  The region
+of the variables starts at the generator and extends over all subsequent
+qualifiers and expressions in the comprehension (see <a href="loops-generators.html#loops-generators">loops generators</a>). 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Qualifier Syntax: <b>if</b><var> test<a name="index-if-286"></a></var><br>
+<blockquote><p>Filter the sequence of bindings by testing if <var>test</var> evaluates to
+true.  Only for those bindings for which this is the case, the
+subsequent qualifiers of the comprehension are evaluated.
+
+     <pre class="example">          (list-ec (:range i 10)
+                   (if (even? i))
+            i)
+          &rArr; (0 2 4 6 8)
+          
+          (list-ec (:range i 5)
+                   (if (even? i))
+                   (:let j (+ 1 i))
+            j)
+          &rArr; (1 3 5)
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Qualifier Syntax: <b>not</b><var> test<a name="index-not-287"></a></var><br>
+&mdash; Qualifier Syntax: <b>and</b><var> test ...<a name="index-and-288"></a></var><br>
+&mdash; Qualifier Syntax: <b>or</b><var> test ...<a name="index-or-289"></a></var><br>
+<blockquote><p>Abbreviated notations for filters of the form:
+
+     <pre class="example">          (if (not <var>test</var>))
+          (if (and <var>test</var> ...))
+          (if (or  <var>test</var> ...))
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Qualifier Syntax: <b>begin</b><var> sequence<a name="index-begin-290"></a></var><br>
+<blockquote><p>Evaluate <var>sequence</var>, consisting of &lsquo;<samp><var>command</var><span class="samp"> ... 
+</span><var>expression</var></samp>&rsquo;, once for each binding of the variables defined by the
+previous qualifiers in the comprehension.  Using this qualifier, side
+effects can be inserted into the body of a comprehension.
+
+     <pre class="example">          (let* ((ans '())
+                 (ell (list-ec (:range i 5)
+                               (begin
+                                 (set! ans (cons i ans)))
+                               i)))
+            (list ans ell))
+          &rArr; ((4 3 2 1 0)
+              (0 1 2 3 4))
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Qualifier Syntax: <b>nested</b><var> ?qualifier ...<a name="index-nested-291"></a></var><br>
+<blockquote><p>A syntactic construct to group qualifiers.  The meaning of a qualifier
+according to the &lsquo;<samp><span class="samp">nested</span></samp>&rsquo; syntax is the same as inserting the
+<var>?qualifier</var> syntaxes into the enclosing comprehension.
+
+        <p>This construct can be used to reduce comprehensions with several
+qualifiers into a form with exactly one qualifier.
+
+     <pre class="example">          (list-ec (nested (:range i 5)
+                           (if (even? i))
+                           (:let j (+ 1 i)))
+            j)
+          &rArr; (1 3 5)
+          
+          (list-ec (:range i 5)
+                   (nested (if (even? i))
+                           (:let j (+ 1 i)))
+            j)
+          &rArr; (1 3 5)
+          
+          (list-ec (:range i 5)
+                   (if (even? i))
+                   (nested (:let j (+ 1 i)))
+            j)
+          &rArr; (1 3 5)
+          
+          (list-ec (:range i 5)
+                   (if (even? i))
+                   (:let j (+ 1 i))
+                   (nested)
+            j)
+          &rArr; (1 3 5)
+</pre>
+        </blockquote></div>
+
+<!-- page -->
+   </body></html>
+

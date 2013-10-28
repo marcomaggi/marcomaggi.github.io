@@ -1,0 +1,171 @@
+<html lang="en">
+<head>
+<title>pregexp example - Libraries for Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Libraries for Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="pregexp.html#pregexp" title="pregexp">
+<link rel="prev" href="pregexp-syntax.html#pregexp-syntax" title="pregexp syntax">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes the libraries distributed along with version
+0.3d6 of Vicare Scheme, an R6RS compliant native
+compiler for the Scheme language.
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library `(vicare formations)' is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+The documentation of the libraries `(vicare parser-tools silex
+---)' are derived form the documentation of SILex.  Copyright
+(C) 2001, 2009 Danny Dube'.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="pregexp-example"></a>
+<p>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="pregexp-syntax.html#pregexp-syntax">pregexp syntax</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="pregexp.html#pregexp">pregexp</a>
+<hr>
+</div>
+
+<h3 class="section">34.4 An extended example</h3>
+
+<p>Here's an extended example<a rel="footnote" href="#fn-1" name="fnd-1"><sup>1</sup></a>  that covers many
+of the features in <code>(vicare pregexp)</code>.  The problem is to
+fashion a regexp that will match any and only <acronym>IP</acronym> addresses or dotted
+quads, i.e., four numbers separated by three dots, with each number
+between 0 and 255.  We will use the commenting mechanism
+to build the final regexp with clarity.  First, a subregexp
+<code>n0-255</code> that matches <code>0</code> through <code>255</code>.
+
+<pre class="example">     (define n0-255
+       "(?x:
+       \\d          ;  0 through   9
+       | \\d\\d     ; 00 through  99
+       | [01]\\d\\d ;000 through 199
+       | 2[0-4]\\d  ;200 through 249
+       | 25[0-5]    ;250 through 255
+       )")
+</pre>
+   <p>The first two alternates simply get all single- and double&ndash;digit
+numbers.  Since zero&ndash;padding is allowed, we need to match both <code>1</code>
+and <code>01</code>.  We need to be careful when getting 3&ndash;digit
+numbers, since numbers above 255 must be excluded.  So we fashion
+alternates to get <code>000</code> through <code>199</code>, then <code>200</code> through
+<code>249</code>, and finally <code>250</code> through <code>255</code>.<a rel="footnote" href="#fn-2" name="fnd-2"><sup>2</sup></a>
+
+   <p>An <acronym>IP</acronym>&ndash;address is a string that consists of four <code>n0-255</code>s with
+three dots separating them.
+
+<pre class="example">     (define ip-re1
+       (string-append
+         "^"        ;nothing before
+         n0-255     ;the first n0-255,
+         "(?x:"     ;then the subpattern of
+         "\\."      ;a dot followed by
+         n0-255     ;an n0-255,
+         ")"        ;which is
+         "{3}"      ;repeated exactly 3 times
+         "$"        ;with nothing following
+         ))
+</pre>
+   <p>Let's try it out.
+
+<pre class="example">     (pregexp-match ip-re1
+       "1.2.3.4")
+     &rArr; ("1.2.3.4")
+     
+     (pregexp-match ip-re1
+       "55.155.255.265")
+     &rArr; #f
+</pre>
+   <p class="noindent">which is fine, except that we also have:
+
+<pre class="example">     (pregexp-match ip-re1
+       "0.00.000.00")
+     &rArr; ("0.00.000.00")
+</pre>
+   <p>All&ndash;zero sequences are not valid <acronym>IP</acronym> addresses!  Lookahead to the
+rescue.  Before starting to match <code>ip-re1</code>, we look ahead to ensure
+we don't have all zeros.  We could use positive lookahead to ensure
+there is a digit other than zero.
+
+<pre class="example">     (define ip-re
+       (string-append
+         "(?=.*[1-9])" ;ensure there's a non-0 digit
+         ip-re1))
+</pre>
+   <p>Or we could use negative lookahead to ensure that what's ahead isn't
+composed of only zeros and dots.
+
+<pre class="example">     (define ip-re
+       (string-append
+         "(?![0.]*$)" ;not just zeros and dots
+                      ;(note: dot is not metachar inside [])
+         ip-re1))
+</pre>
+   <p>The regexp <code>ip-re</code> will match all and only valid <acronym>IP</acronym> addresses.
+
+<pre class="example">     (pregexp-match ip-re
+       "1.2.3.4")
+     &rArr; ("1.2.3.4")
+     
+     (pregexp-match ip-re
+       "0.0.0.0")
+     &rArr; #f
+</pre>
+   <!-- end of file -->
+   <div class="footnote">
+<hr>
+<h4>Footnotes</h4><p class="footnote"><small>[<a name="fn-1" href="#fnd-1">1</a>]</small> From: Jeffrey E. F. Friedl,
+Mastering Regular Expressions, 2/e, O'Reilly, 2002.</p>
+
+   <p class="footnote"><small>[<a name="fn-2" href="#fnd-2">2</a>]</small> Note
+that <code>n0-255</code> lists prefixes as preferred alternates, something we
+cautioned against.  However, since we intend to anchor this subregexp
+explicitly to force an overall match, the order of the alternates does
+not matter.</p>
+
+   <hr></div>
+
+   </body></html>
+

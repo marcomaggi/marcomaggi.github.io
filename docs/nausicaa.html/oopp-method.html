@@ -1,0 +1,241 @@
+<html lang="en">
+<head>
+<title>oopp method - Nausicaa for Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Nausicaa for Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="oopp.html#oopp" title="oopp">
+<link rel="prev" href="oopp-fields.html#oopp-fields" title="oopp fields">
+<link rel="next" href="oopp-setter.html#oopp-setter" title="oopp setter">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.3d6 of Nausicaa, a
+collection of libraries for Vicare Scheme implementing the language
+`(nausicaa)' on top of `(vicare)'.
+
+Copyright (C) 2012, 2013 by Marco Maggi <marco.maggi-ipsu@poste.it>
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with Invariant Sections being ``GNU Free Documentation
+     License'' and ``GNU General Public License'', no Front--Cover
+     Texts, and no Back--Cover Texts.  A copy of the license is
+     included in the section entitled ``GNU Free Documentation
+     License''.
+-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="oopp-method"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="oopp-setter.html#oopp-setter">oopp setter</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="oopp-fields.html#oopp-fields">oopp fields</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="oopp.html#oopp">oopp</a>
+<hr>
+</div>
+
+<h3 class="section">3.11 Defining classes having methods</h3>
+
+<div class="defun">
+&mdash; Auxiliary Syntax: <b>method</b> (<var>?method-name . ?formals</var>)<var> . ?body<a name="index-method-42"></a></var><br>
+&mdash; Auxiliary Syntax: <b>method</b><var> ?method-name ?expression<a name="index-method-43"></a></var><br>
+<blockquote><p>Add a method to the enclosing class, label or mixin definition; the
+method is applicable only through a syntax use in <acronym>OOPP</acronym> notation. 
+This clause can be used multiple times.
+
+          <ul>
+<li>When the first form is used, the method definition is added to the
+methods list as if the following clause had been used:
+
+          <pre class="example">               (methods (<var>?method-name</var> function-name))
+</pre>
+          <p class="noindent">the function definition is expanded to:
+
+          <pre class="example">               (define/tags (function-name . <var>?formals</var>) . <var>?body</var>)
+</pre>
+          <p class="noindent">where <code>function-name</code> is an automatically generated identifier
+built by appending a dash and <var>?method-name</var> to the type name.  The
+first argument in <var>?formals</var> must be the type instance.
+
+          <li>When the second form is used, the method definition is added to the
+methods list as if the following clause had been used:
+
+          <pre class="example">               (methods (<var>?method-name</var> function-name))
+</pre>
+          <p class="noindent">the function definition is expanded to:
+
+          <pre class="example">               (define function-name <var>?expression</var>)
+</pre>
+          <p class="noindent">where <code>function-name</code> is an automatically generated identifier
+built by appending a dash and <var>?method-name</var> to the type name; the
+<var>?expression</var> must evaluate to a function accepting at least one
+argument: the type instance. 
+</ul>
+
+        <p>Here is an example of the first form:
+
+     <pre class="example">          (define-class &lt;stuff&gt;
+            (fields a b)
+            (method (sum (S &lt;stuff&gt;))
+              (+ (S a) (S b))))
+          
+          (&lt;stuff&gt; S (&lt;&gt; (1 2)))
+          (S sum)                 &rArr; 3
+</pre>
+        <p class="noindent">and an example of the second form:
+
+     <pre class="example">          (define-class &lt;stuff&gt;
+            (fields a b)
+            (method sum
+              (lambda/tags ((S &lt;stuff&gt;))
+                (+ (S a) (S b)))))
+          
+          (&lt;stuff&gt; S (&lt;&gt; (1 2)))
+          (S sum)                 &rArr; 3
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Auxiliary Syntax: <b>method-syntax</b><var> ?method-name ?transformer<a name="index-method_002dsyntax-44"></a></var><br>
+<blockquote><p>Add a method to the enclosing class, label or mixin definition; the
+method is applicable only through a syntax use in <acronym>OOPP</acronym> notation. 
+This clause can be used multiple times.
+
+        <p>The method definition is added to the methods list as if the following
+clause had been used:
+
+     <pre class="example">          (methods (<var>?method-name</var> transformer-name))
+</pre>
+        <p class="noindent">the macro definition is expanded to:
+
+     <pre class="example">          (define-syntax transformer-name <var>?transformer</var>)
+</pre>
+        <p class="noindent">where <code>transformer-name</code> is an automatically generated identifier
+built by appending a dash and <var>?method-name</var> to the type name. 
+<var>?transformer</var> must evaluate to a macro transformer: a function
+accepting a sintax object as single argument and returning a syntax
+object as single value.  The first argument to the macro will be the
+type instance.
+
+        <p>Here is an example of method syntax:
+
+     <pre class="example">          (define-class &lt;stuff&gt;
+            (fields a b)
+            (method-syntax sum
+              (lambda (stx)
+                (syntax-case stx ()
+                  ((_ ?instance)
+                   #'(let (((S &lt;stuff&gt;) ?instance))
+                       (+ (S a) (S b))))))))
+          
+          (&lt;stuff&gt; S (&lt;&gt; (1 2)))
+          (S sum)                 &rArr; 3
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Auxiliary Syntax: <b>methods</b><var> ?method-spec <small class="dots">...</small><a name="index-methods-45"></a></var><br>
+<blockquote><p>Add methods to the enclosing class, label or mixin definition; the
+methods are applicable only through a syntax use in <acronym>OOPP</acronym> notation. 
+This clause can be used multiple times.
+
+        <p>The <var>?method-spec</var> arguments can be of the form:
+
+     <pre class="example">          <var>?method-name</var>
+          (<var>?method-name</var>)
+          (<var>?method-name</var> <var>?invokable-name</var>)
+</pre>
+        <p class="noindent">where <var>?method-name</var> and <var>?invokable-name</var> must be identifiers;
+in the first two forms the invokable name is built in the same way the
+field accessor names are built: appending a dash and <var>?method-name</var>
+to the type name.  This clause can be used multiple times.
+
+        <p><var>?invokable-name</var> must be an identifier bound to a Scheme function
+or syntax which will be invoked as method; it must accept as first
+argument the type instance which is the subject of the application.
+
+        <p>Here is a usage example of the first form:
+
+     <pre class="example">          (define-class &lt;stuff&gt;
+            (fields a b)
+            (methods sum))
+          
+          (define/tags (&lt;stuff&gt;-sum (S &lt;stuff&gt;))
+            (+ (S a) (S b)))
+          
+          (&lt;stuff&gt; S (&lt;&gt; (1 2)))
+          (S sum)                 &rArr; 3
+</pre>
+        <p class="noindent">here is a usage example of the third form with a method function:
+
+     <pre class="example">          (define-class &lt;stuff&gt;
+            (fields a b)
+            (methods (sum &lt;stuff&gt;-sum)))
+          
+          (define/tags (&lt;stuff&gt;-sum (S &lt;stuff&gt;))
+            (+ (S a) (S b)))
+          
+          (&lt;stuff&gt; S (&lt;&gt; (1 2)))
+          (S sum)                 &rArr; 3
+</pre>
+        <p class="noindent">and here is a usage example of the third form with a method syntax:
+
+     <pre class="example">          (define-class &lt;stuff&gt;
+            (fields a b)
+            (methods (sum &lt;stuff&gt;-sum)))
+          
+          (define-syntax &lt;stuff&gt;-sum
+            (lambda (stx)
+              (syntax-case stx ()
+                ((_ ?instance)
+                 #'(let (((S &lt;stuff&gt;) ?instance))
+                     (+ (S a) (S b)))))))
+          
+          (&lt;stuff&gt; S (&lt;&gt; (1 2)))
+          (S sum)                 &rArr; 3
+</pre>
+        </blockquote></div>
+
+<!--  -->
+<h5 class="subsubheading">Method overloading</h5>
+
+<p>There is no support for methods overloading in the <code>(nausicaa
+language oopp)</code> library, but we can do it using the facilities of the
+<code>(nausicaa language generics)</code> library.  Example:
+
+<pre class="example">     #!r6rs
+     (import (nausicaa))
+     
+     (define-class &lt;alpha&gt;
+       (fields a)
+       (methods doit))
+     
+     (define-generic &lt;alpha&gt;-doit (o v))
+     
+     (define-method (&lt;alpha&gt;-doit (o &lt;alpha&gt;) (v &lt;char&gt;))
+       (cons 'char v))
+     
+     (define-method (&lt;alpha&gt;-doit (o &lt;alpha&gt;) (v &lt;integer&gt;))
+       (cons 'int  v))
+     
+     (&lt;alpha&gt; o (&lt;&gt; (1)))
+     (o doit #\a)                    &rArr; (char . #\a)
+     (o doit 2)                      &rArr; (int . 2)
+</pre>
+   <!-- page -->
+   </body></html>
+

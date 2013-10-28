@@ -1,0 +1,188 @@
+<html lang="en">
+<head>
+<title>irregex chunk - Libraries for Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Libraries for Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="irregex.html#irregex" title="irregex">
+<link rel="prev" href="irregex-replace.html#irregex-replace" title="irregex replace">
+<link rel="next" href="irregex-misc.html#irregex-misc" title="irregex misc">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes the libraries distributed along with version
+0.3d6 of Vicare Scheme, an R6RS compliant native
+compiler for the Scheme language.
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library `(vicare formations)' is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+The documentation of the libraries `(vicare parser-tools silex
+---)' are derived form the documentation of SILex.  Copyright
+(C) 2001, 2009 Danny Dube'.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="irregex-chunk"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="irregex-misc.html#irregex-misc">irregex misc</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="irregex-replace.html#irregex-replace">irregex replace</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="irregex.html#irregex">irregex</a>
+<hr>
+</div>
+
+<h3 class="section">33.6 Chunked string matching</h3>
+
+<p>It's often desirable to perform regular expression matching over
+sequences of characters not represented as a single string.  The most
+obvious example is a text&ndash;buffer data structure, but we may also want
+to match over lists or trees of strings (i.e. ropes), over only certain
+ranges within a string, over an input port, etc.
+
+   <p>With existing regular expression libraries, the only way to accomplish
+this is by converting the abstract sequence into a freshly allocated
+string.  This can be expensive, or even impossible if the object is a
+text&ndash;buffer opened onto a 500MB file.
+
+   <p><code>(vicare irregex)</code> provides a chunked string <acronym>API</acronym> specifically
+for this purpose.
+
+<div class="defun">
+&mdash; Function: <b>make-irregex-chunker</b><var> get-next get-string<a name="index-make_002dirregex_002dchunker-5026"></a></var><br>
+&mdash; Function: <b>make-irregex-chunker</b><var> get-next get-string get-start<a name="index-make_002dirregex_002dchunker-5027"></a></var><br>
+&mdash; Function: <b>make-irregex-chunker</b><var> get-next get-string get-start get-end<a name="index-make_002dirregex_002dchunker-5028"></a></var><br>
+&mdash; Function: <b>make-irregex-chunker</b><var> get-next get-string get-start get-end<a name="index-make_002dirregex_002dchunker-5029"></a></var><br>
+&mdash; Function: <b>make-irregex-chunker</b><var> get-next get-string get-start get-end get-substring<a name="index-make_002dirregex_002dchunker-5030"></a></var><br>
+&mdash; Function: <b>make-irregex-chunker</b><var> get-next get-string get-start get-end get-substring get-subchunk<a name="index-make_002dirregex_002dchunker-5031"></a></var><br>
+<blockquote><p>Define a chunking <acronym>API</acronym>.
+
+          <dl>
+<dt><code>(</code><var>get-next</var><code> chunk)</code><dd>Return the next chunk, or <code>#f</code> if there are no more chunks.
+
+          <br><dt><code>(</code><var>get-string</var><code> chunk)</code><dd>A string source for the chunk.
+
+          <br><dt><code>(</code><var>get-start</var><code> chunk)</code><dd>The start index of the result of <var>get-string</var> (defaults to always 0).
+
+          <br><dt><code>(</code><var>get-end</var><code> chunk)</code><dd>The end (exclusive) of the string (defaults to <code>string-length</code> of
+the source string).
+
+          <br><dt><code>(</code><var>get-substring</var> <var>cnk1</var> <var>i</var> <var>cnk2</var> <var>j</var><code>)</code><dd>A substring for the range between the chunk <var>cnk1</var> starting at index
+<var>i</var> and ending at <var>cnk2</var> at index <var>j</var>.
+
+          <br><dt><code>(</code><var>get-subchunk</var> <var>cnk1</var> <var>i</var> <var>cnk2</var> <var>j</var><code>)</code><dd>As above but returns a new chunked data type instead of a string
+(optional). 
+</dl>
+
+        <p>There are two important constraints on the <var>get-next</var> procedure.  It
+must return an <code>eq?</code> identical object when called multiple times on
+the same chunk, and it must not return a chunk with an empty string
+(start == past).  This second constraint is for performance reasons, we
+push the work of possibly filtering empty chunks to the chunker since
+there are many chunk types for which empty strings aren't possible, and
+this work is thus not needed.  Note that the initial chunk passed to
+match on is allowed to be empty.
+
+        <p><var>get-substring</var> is provided for possible performance improvements,
+without it a default is used.
+
+        <p><var>get-subchunk</var> is optional, but without it we cannot use
+<code>irregex-match-subchunk</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>irregex-match-subchunk</b><var> match-obj<a name="index-irregex_002dmatch_002dsubchunk-5032"></a></var><br>
+&mdash; Function: <b>irregex-match-subchunk</b><var> match-obj index-or-name<a name="index-irregex_002dmatch_002dsubchunk-5033"></a></var><br>
+<blockquote><p>Generate a chunked data&ndash;type for the given match item, of the same type
+as the underlying chunk type.  This is only available if the chunk type
+specifies the <code>get-subchunk</code> <acronym>API</acronym>, otherwise an error is raised. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>irregex-search/chunked</b><var> irx chunker chunk<a name="index-irregex_002dsearch_002fchunked-5034"></a></var><br>
+&mdash; Function: <b>irregex-search/chunked</b><var> irx chunker chunk start<a name="index-irregex_002dsearch_002fchunked-5035"></a></var><br>
+&mdash; Function: <b>irregex-match/chunked</b><var> irx chunker chunk<a name="index-irregex_002dmatch_002fchunked-5036"></a></var><br>
+&mdash; Function: <b>irregex-match/chunked</b><var> irx chunker chunk start<a name="index-irregex_002dmatch_002fchunked-5037"></a></var><br>
+<blockquote><p>These return normal match&ndash;data objects.
+
+        <p>Example: To match against a simple, flat list of strings use:
+
+     <pre class="example">          (define (rope-&gt;string rope1 start rope2 end)
+            (if (eq? rope1 rope2)
+                (substring (car rope1) start end)
+                (let loop ((rope (cdr rope1))
+                           (res (list (substring (car rope1) start))))
+                   (if (eq? rope rope2)
+                       (string-concatenate-reverse      ; from SRFI-13
+                        (cons (substring (car rope) 0 end) res))
+                       (loop (cdr rope) (cons (car rope) res))))))
+          
+          (define rope-chunker
+            (make-irregex-chunker (lambda (x)
+                                    (and (pair? (cdr x)) (cdr x)))
+                                  car
+                                  (lambda (x)
+                                    0)
+                                  (lambda (x)
+                                    (string-length (car x)))
+                                  rope-&gt;string))
+          
+          (irregex-search/chunked &lt;pat&gt; rope-chunker &lt;list-of-strings&gt;)
+</pre>
+        <p>Here we are just using the default start, end and substring behaviors,
+so the above chunker could simply be defined as:
+
+     <pre class="example">          (define rope-chunker
+            (make-irregex-chunker (lambda (x)
+                                    (and (pair? (cdr x)) (cdr x)))
+                                  car))
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>irregex-fold/chunked</b><var> irx kons knil chunker chunk<a name="index-irregex_002dfold_002fchunked-5038"></a></var><br>
+&mdash; Function: <b>irregex-fold/chunked</b><var> irx kons knil chunker chunk finish<a name="index-irregex_002dfold_002fchunked-5039"></a></var><br>
+&mdash; Function: <b>irregex-fold/chunked</b><var> irx kons knil chunker chunk finish start-index<a name="index-irregex_002dfold_002fchunked-5040"></a></var><br>
+<blockquote><p>Chunked version of <code>irregex-fold</code>. 
+</p></blockquote></div>
+
+<!-- page -->
+   </body></html>
+

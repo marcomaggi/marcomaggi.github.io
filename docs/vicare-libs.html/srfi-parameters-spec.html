@@ -1,0 +1,207 @@
+<html lang="en">
+<head>
+<title>srfi parameters spec - Libraries for Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Libraries for Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="srfi-parameters.html#srfi-parameters" title="srfi parameters">
+<link rel="prev" href="srfi-parameters-rationale.html#srfi-parameters-rationale" title="srfi parameters rationale">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes the libraries distributed along with version
+0.3d6 of Vicare Scheme, an R6RS compliant native
+compiler for the Scheme language.
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library `(vicare formations)' is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+The documentation of the libraries `(vicare parser-tools silex
+---)' are derived form the documentation of SILex.  Copyright
+(C) 2001, 2009 Danny Dube'.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="srfi-parameters-spec"></a>
+<p>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="srfi-parameters-rationale.html#srfi-parameters-rationale">srfi parameters rationale</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="srfi-parameters.html#srfi-parameters">srfi parameters</a>
+<hr>
+</div>
+
+<h4 class="subsection">2.19.4 Specification</h4>
+
+<p>The <em>dynamic environment</em> is composed of two parts: the <em>local
+dynamic environment</em> and the <em>global dynamic environment</em>.  The
+global dynamic environment is used to lookup parameter objects that
+can't be found in the local dynamic environment.  When parameter objects
+are created, their initial binding is put in the global dynamic
+environment (by mutation).  The local dynamic environment is only
+extended by the <code>parameterize</code> form.
+
+   <p><em>Parameter objects</em> are created with the <code>make-parameter</code>
+procedure which takes one or two arguments.  The second argument is a
+one argument conversion procedure.  If only one argument is passed to
+<code>make-parameter</code> the identity function is used as a conversion
+procedure.  The global dynamic environment is updated to associate the
+parameter object to a new cell.  The initial content of the cell is the
+result of applying the conversion procedure to the first argument of
+<code>make-parameter</code>.
+
+   <p>A <em>parameter object</em> is a procedure which accepts zero or one
+argument.  The cell bound to a particular parameter object in the
+dynamic environment is accessed by calling the parameter object.  When
+no argument is passed, the content of the cell is returned.  When one
+argument is passed the content of the cell is updated with the result of
+applying the parameter object's conversion procedure to the argument.
+
+   <p>The <code>parameterize</code> special form, when given a parameter object and
+a value, binds for the dynamic extent of its body the parameter object
+to a new cell.  The initial content of the cell is the result of
+applying the parameter object's conversion procedure to the value.  The
+parameterize special form behaves analogously to let when binding more
+than one parameter object (that is the order of evaluation is
+unspecified and the new bindings are only visible in the body of the
+parameterize special form).
+
+   <p>Note that the conversion procedure can be used for guaranteeing the type
+of the parameter object's binding and/or to perform some conversion of
+the value.
+
+   <p>Because it is possible to implement the <acronym>R5RS</acronym> procedures
+<code>current-input-port</code> and <code>current-output-port</code> as parameter
+objects and this offers added functionnality, it is required by this
+<acronym>SRFI</acronym> that they be implemented as parameter objects created with
+<code>make-parameter</code>.
+
+<div class="defun">
+&mdash; Function: <b>make-parameter</b><var> init </var>[<var>converter</var>]<var><a name="index-make_002dparameter-1127"></a></var><br>
+<blockquote><p>Returns a new parameter object which is bound in the global dynamic
+environment to a cell containing the value returned by the call
+<code>(converter init)</code>.  If the conversion procedure converter is not
+specified the identity function is used instead.
+
+        <p>The parameter object is a procedure which accepts zero or one argument. 
+When it is called with no argument, the content of the cell bound to
+this parameter object in the current dynamic environment is returned. 
+When it is called with one argument, the content of the cell bound to
+this parameter object in the current dynamic environment is set to the
+result of the call <code>(converter arg)</code>, where <var>arg</var> is the
+argument passed to the parameter object, and an unspecified value is
+returned.
+
+     <pre class="example">          (define radix
+            (make-parameter 10))
+          
+          (define write-shared
+            (make-parameter #f
+              (lambda (x)
+                (if (boolean? x)
+                    x
+                  (error "only booleans are accepted by write-shared")))))
+          
+          (radix)           =&gt;  10
+          (radix 2)
+          (radix)           =&gt;  2
+          (write-shared 0)  gives an error
+          
+          (define prompt
+            (make-parameter 123
+              (lambda (x)
+                (if (string? x)
+                    x
+                  (with-output-to-string (lambda () (write x)))))))
+          
+          (prompt)       =&gt;  "123"
+          (prompt "&gt;")
+          (prompt)       =&gt;  "&gt;"
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>parameterize</b> ((<var>expr1 expr2</var>)<var> ...</var>)<var> body</var>)<var><a name="index-parameterize-1128"></a></var><br>
+<blockquote><p>The expressions <var>expr1</var> and <var>expr2</var> are evaluated in an
+unspecified order.  The value of the <var>expr1</var> expressions must be
+parameter objects.  For each <var>expr1</var> expression and in an
+unspecified order, the local dynamic environment is extended with a
+binding of the parameter object <var>expr1</var> to a new cell whose content
+is the result of the call <code>(converter val)</code>, where <var>val</var> is the
+value of <var>expr2</var> and <var>converter</var> is the conversion procedure of
+the parameter object.
+
+        <p>The resulting dynamic environment is then used for the evaluation of
+<var>body</var> (which refers to the <acronym>R5RS</acronym> grammar nonterminal of that
+name).  The result(s) of the parameterize form are the result(s) of the
+<var>body</var>.
+
+        <p>With reference to thte example above:
+
+     <pre class="example">          (radix)
+          =&gt;  2
+          
+          (parameterize ([radix 16])
+            (radix))
+          =&gt;  16
+          
+          (radix)
+          =&gt;  2
+          
+          (define (f n)
+            (number-&gt;string n (radix)))
+          
+          (f 10)
+          =&gt;  "1010"
+          
+          (parameterize ([radix 8])
+            (f 10))
+          =&gt;  "12"
+          
+          (parameterize ([radix 8]
+                         [prompt (f 10)])
+            (prompt))
+          =&gt;  "1010"
+</pre>
+        </blockquote></div>
+
+<!-- end of file -->
+<!-- page -->
+   </body></html>
+

@@ -1,0 +1,207 @@
+<html lang="en">
+<head>
+<title>oopp bindings let - Nausicaa for Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Nausicaa for Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="oopp-bindings.html#oopp-bindings" title="oopp bindings">
+<link rel="prev" href="oopp-bindings-overview.html#oopp-bindings-overview" title="oopp bindings overview">
+<link rel="next" href="oopp-bindings-begin.html#oopp-bindings-begin" title="oopp bindings begin">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.3d6 of Nausicaa, a
+collection of libraries for Vicare Scheme implementing the language
+`(nausicaa)' on top of `(vicare)'.
+
+Copyright (C) 2012, 2013 by Marco Maggi <marco.maggi-ipsu@poste.it>
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with Invariant Sections being ``GNU Free Documentation
+     License'' and ``GNU General Public License'', no Front--Cover
+     Texts, and no Back--Cover Texts.  A copy of the license is
+     included in the section entitled ``GNU Free Documentation
+     License''.
+-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="oopp-bindings-let"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="oopp-bindings-begin.html#oopp-bindings-begin">oopp bindings begin</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="oopp-bindings-overview.html#oopp-bindings-overview">oopp bindings overview</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="oopp-bindings.html#oopp-bindings">oopp bindings</a>
+<hr>
+</div>
+
+<h4 class="subsection">3.19.2 <acronym>OOPP</acronym> bindings: <code>let</code>&ndash;like syntaxes</h4>
+
+<div class="defun">
+&mdash; Syntax: <b>with-tags</b> (<var>?tagged-variable <small class="dots">...</small></var>)<var> ?body0 ?body <small class="dots">...</small><a name="index-with_002dtags-69"></a></var><br>
+<blockquote><p>The <code>with-tags</code> syntax is the basic tool to provide <acronym>OOPP</acronym>
+notation for objects use.  Expand into a <code>let-syntax</code> form which
+defines <acronym>OOPP</acronym> notation syntaxes for already existent bindings; the
+names of the new bindings are equal to the names of the already existent
+bindings.
+
+        <p>Each <var>?tagged-variable</var> must have one of the formats:
+
+     <pre class="example">          (<var>?variable</var> <var>?tag</var>)
+          #(<var>?variable</var> <var>?tag</var>)
+</pre>
+        <p class="noindent">where: <var>?variable</var> is an identifier representing the binding name,
+<var>?tag</var> is an identifier representing a class or label type.
+
+        <p>Usage example:
+
+     <pre class="example">          #!r6rs
+          (import (rnrs)
+            (nausicaa language oopp))
+          
+          (define-class &lt;alpha&gt;
+            (fields a b))
+          
+          (define A (&lt;alpha&gt; (1 2)))
+          
+          (with-tags ((A &lt;alpha&gt;))
+            (A a))
+          &rArr; 1
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>let/tags</b><var> ?tagged-bindings ?body0 ?body <small class="dots">...</small><a name="index-let_002ftags-70"></a></var><br>
+&mdash; Syntax: <b>let/tags</b><var> ?name ?tagged-bindings ?body0 ?body <small class="dots">...</small><a name="index-let_002ftags-71"></a></var><br>
+<blockquote><p>Like <code>let</code> (both named and unnamed) and defines the <acronym>OOPP</acronym>
+bindings.  When all the bindings have no tags: this syntax is equivalent
+to <code>let</code> as defined by <acronym>R6RS</acronym>; an untagged binding is equivalent
+to a binding tagged with <code>&lt;top&gt;</code>.
+
+        <p>Usage example:
+
+     <pre class="example">          #!r6rs
+          (import (rnrs)
+            (nausicaa language oopp))
+          
+          (let/tags (((a &lt;list&gt;) '(1 2 3))
+                     ((b &lt;pair&gt;) '(a . b)))
+            (a car)               &rArr; 1
+            (b car))              &rArr; a
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>let*/tags</b><var> ?tagged-bindings ?body0 ?body <small class="dots">...</small><a name="index-let_002a_002ftags-72"></a></var><br>
+<blockquote><p>Like <code>let*</code> and defines the <acronym>OOPP</acronym> bindings.  When all the
+bindings have no tags: this syntax is equivalent to <code>let*</code> as
+defined by <acronym>R6RS</acronym>; an untagged binding is equivalent to a binding
+tagged with <code>&lt;top&gt;</code>.
+
+        <p>Usage example:
+
+     <pre class="example">          #!r6rs
+          (import (rnrs)
+            (nausicaa language oopp))
+          
+          (let*/tags (((a &lt;number&gt;) 123)
+                      ((b &lt;string&gt;) (a string)))
+            b)                    &rArr; "123"
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>letrec/tags</b><var> ?tagged-bindings ?body0 ?body <small class="dots">...</small><a name="index-letrec_002ftags-73"></a></var><br>
+<blockquote><p>Like <code>letrec</code> and defines the <acronym>OOPP</acronym> bindings.  When all the
+bindings have no tags: this syntax is equivalent to <code>letrec</code> as
+defined by <acronym>R6RS</acronym>; an untagged binding is equivalent to a binding
+tagged with <code>&lt;top&gt;</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>letrec*/tags</b><var> ?tagged-bindings ?body0 ?body <small class="dots">...</small><a name="index-letrec_002a_002ftags-74"></a></var><br>
+<blockquote><p>Like <code>letrec*</code> and defines the <acronym>OOPP</acronym> bindings.  When all the
+bindings have no tags: this syntax is equivalent to <code>letrec*</code> as
+defined by <acronym>R6RS</acronym>; an untagged binding is equivalent to a binding
+tagged with <code>&lt;top&gt;</code>.
+
+        <p>The only difference between <code>letrec/tags</code> and <code>letrec*/tags</code>
+is that the latter enforces the order of evaluation of the <var>?init</var>
+expressions. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>let-values/tags</b><var> ?tagged-mv-bindings ?body0 ?body <small class="dots">...</small><a name="index-let_002dvalues_002ftags-75"></a></var><br>
+<blockquote><p>Like <code>let-values</code> and defines the <acronym>OOPP</acronym> bindings.  When all the
+bindings have no tags: this syntax is equivalent to <code>let-values</code> as
+defined by <acronym>R6RS</acronym>; an untagged binding is equivalent to a binding
+tagged with <code>&lt;top&gt;</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>let*-values/tags</b><var> ?tagged-mv-bindings ?body0 ?body <small class="dots">...</small><a name="index-let_002a_002dvalues_002ftags-76"></a></var><br>
+<blockquote><p>Like <code>let*-values</code> and defines the <acronym>OOPP</acronym> bindings.  When all the
+bindings have no tags: this syntax is equivalent to <code>let*-values</code>
+as defined by <acronym>R6RS</acronym>; an untagged binding is equivalent to a binding
+tagged with <code>&lt;top&gt;</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>receive/tags</b><var> ?tagged-formals ?init ?body0 ?body <small class="dots">...</small><a name="index-receive_002ftags-77"></a></var><br>
+<blockquote><p>Like <code>receive</code>, as defined by <code>(vicare)</code>, and defines the
+<acronym>OOPP</acronym> bindings.  When all the bindings have no tags: this syntax is
+equivalent to <code>receive</code> as defined by <code>(vicare)</code>; an untagged
+binding is equivalent to a binding tagged with <code>&lt;top&gt;</code>.
+
+        <p>Usage example:
+
+     <pre class="example">          #!r6rs
+          (import (rnrs)
+            (nausicaa language oopp))
+          
+          (receive/tags ((a &lt;number&gt;) (b &lt;number&gt;))
+              (values 1 2)
+            (a string)            &rArr; "1"
+            (b string))           &rArr; "2"
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>receive-and-return/tags</b><var> ?tagged-formals ?init ?body0 ?body <small class="dots">...</small><a name="index-receive_002dand_002dreturn_002ftags-78"></a></var><br>
+<blockquote><p>Like <code>receive-and-return</code>, as defined by <code>(vicare)</code>, and
+defines the <acronym>OOPP</acronym> bindings.  When all the bindings have no tags: this
+syntax is equivalent to <code>receive-and-return</code> as defined by
+<code>(vicare)</code>; an untagged binding is equivalent to a binding tagged
+with <code>&lt;top&gt;</code>.
+
+        <p>Usage example:
+
+     <pre class="example">          #!r6rs
+          (import (rnrs)
+            (nausicaa language oopp))
+          
+          (receive-and-return/tags ((a &lt;number&gt;) (b &lt;number&gt;))
+              (values 1 2)
+            (a string)            &rArr; "1"
+            (b string)            &rArr; "2"
+            )
+          &rArr; 1, 2 ;;two values
+</pre>
+        </blockquote></div>
+
+<!-- page -->
+   </body></html>
+

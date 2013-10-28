@@ -1,0 +1,133 @@
+<html lang="en">
+<head>
+<title>srfi cond-expand spec - Libraries for Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Libraries for Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="srfi-cond_002dexpand.html#srfi-cond_002dexpand" title="srfi cond-expand">
+<link rel="prev" href="srfi-cond_002dexpand-rationale.html#srfi-cond_002dexpand-rationale" title="srfi cond-expand rationale">
+<link rel="next" href="srfi-cond_002dexpand-vicare.html#srfi-cond_002dexpand-vicare" title="srfi cond-expand vicare">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes the libraries distributed along with version
+0.3d6 of Vicare Scheme, an R6RS compliant native
+compiler for the Scheme language.
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library `(vicare formations)' is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+The documentation of the libraries `(vicare parser-tools silex
+---)' are derived form the documentation of SILex.  Copyright
+(C) 2001, 2009 Danny Dube'.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="srfi-cond-expand-spec"></a>
+<a name="srfi-cond_002dexpand-spec"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="srfi-cond_002dexpand-vicare.html#srfi-cond_002dexpand-vicare">srfi cond-expand vicare</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="srfi-cond_002dexpand-rationale.html#srfi-cond_002dexpand-rationale">srfi cond-expand rationale</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="srfi-cond_002dexpand.html#srfi-cond_002dexpand">srfi cond-expand</a>
+<hr>
+</div>
+
+<h4 class="subsection">2.1.4 Specifications</h4>
+
+<p><a name="index-cond_002dexpand-411"></a>
+
+   <p>Syntax:
+
+<pre class="example">     &lt;command or definition&gt;
+         --&gt; &lt;command&gt;
+           | &lt;definition&gt;
+           | &lt;syntax definition&gt;
+           | (begin &lt;command or definition&gt;+)
+           | &lt;conditional expansion form&gt;
+     &lt;conditional expansion form&gt;
+         --&gt; (cond-expand &lt;cond-expand clause&gt;+)
+           | (cond-expand &lt;cond-expand clause&gt;*
+                          (else &lt;command or definition&gt;*))
+     &lt;cond-expand clause&gt;
+         --&gt; (&lt;feature requirement&gt; &lt;command or definition&gt;*)
+     &lt;feature requirement&gt;
+         --&gt; &lt;feature identifier&gt;
+           | (and &lt;feature requirement&gt;*)
+           | (or &lt;feature requirement&gt;*)
+           | (not &lt;feature requirement&gt;)
+     &lt;feature identifier&gt;
+         --&gt; a symbol which is the name or alias of a SRFI
+</pre>
+   <p>The <code>cond-expand</code> form tests for the existence of features at
+macro&ndash;expansion time.  It either expands into the body of one of its
+clauses or signals an error during syntactic processing. 
+<code>cond-expand</code> expands into the body of the first clause whose
+feature requirement is currently satisfied (the else clause, if present,
+is selected if none of the previous clauses is selected).
+
+   <p>A feature requirement has an obvious interpretation as a logical
+formula, where the <code>&lt;feature identifier&gt;</code> variables have meaning
+TRUE if the feature corresponding to the feature identifier, as
+specified in the <acronym>SRFI</acronym> registry, is in effect at the location of the
+<code>cond-expand</code> form, and FALSE otherwise.  A feature requirement is
+satisfied if its formula is true under this interpretation.
+
+   <p>Examples:
+
+<pre class="example">     (cond-expand
+       ((and srfi-1 srfi-10)
+        (write 1))
+       ((or srfi-1 srfi-10)
+        (write 2))
+       (else))
+     
+     (cond-expand
+       (command-line
+        (define (program-name) (car (argv)))))
+</pre>
+   <p>The second example assumes that <code>command-line</code> is an alias for some
+feature which gives access to command line arguments.  Note that an
+error will be signaled at macro&ndash;expansion time if this feature is not
+present.
+
+<!-- page -->
+   </body></html>
+

@@ -1,0 +1,160 @@
+<html lang="en">
+<head>
+<title>lists fold pair - Libraries for Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Libraries for Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="lists-fold.html#lists-fold" title="lists fold">
+<link rel="prev" href="lists-fold-derived.html#lists-fold-derived" title="lists fold derived">
+<link rel="next" href="lists-fold-reduce.html#lists-fold-reduce" title="lists fold reduce">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes the libraries distributed along with version
+0.3d6 of Vicare Scheme, an R6RS compliant native
+compiler for the Scheme language.
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library `(vicare formations)' is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+The documentation of the libraries `(vicare parser-tools silex
+---)' are derived form the documentation of SILex.  Copyright
+(C) 2001, 2009 Danny Dube'.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="lists-fold-pair"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="lists-fold-reduce.html#lists-fold-reduce">lists fold reduce</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="lists-fold-derived.html#lists-fold-derived">lists fold derived</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="lists-fold.html#lists-fold">lists fold</a>
+<hr>
+</div>
+
+<h4 class="subsection">18.8.5 Folding pairs</h4>
+
+<div class="defun">
+&mdash; Function: <b>pair-fold</b><var> kons knil circ1 circ2 ...<a name="index-pair_002dfold-3261"></a></var><br>
+<blockquote><p>Analogous to <code>fold</code>, but <var>kons</var> is applied to successive
+sublists of the lists, rather than successive elements; that is,
+<var>kons</var> is applied to the pairs making up the lists, giving this
+(tail) recursion:
+
+     <pre class="example">          (pair-fold kons knil ell) == (let ((tail (cdr ell)))
+                                         (pair-fold kons
+                                                    (kons ell knil)
+                                                    tail))
+          (pair-fold kons knil '()) == knil
+</pre>
+        <p>For finite lists, the <var>kons</var> function may reliably apply
+<code>set-cdr!</code> to the pairs it is given without altering the sequence
+of execution.
+
+        <p>Examples:
+
+     <pre class="example">          (pair-fold (lambda (elm knil)
+                       (cons (car elm) knil))
+                     '(999)
+                     '(1 2 3))
+          &rArr; (3 2 1 999)
+          
+          ;;; destructively reverse a list
+          (pair-fold (lambda (pair tail)
+                       (set-cdr! pair tail)
+                       pair)
+                     '()
+                     '(0 1 2 3 4 5))
+          &rArr; (5 4 3 2 1 0)
+</pre>
+        <p>At least one of the list arguments must be finite. 
+</p></blockquote></div>
+
+<!--  -->
+<div class="defun">
+&mdash; Function: <b>pair-fold*</b><var> kons knil circ1 circ2 ...<a name="index-pair_002dfold_002a-3262"></a></var><br>
+<blockquote><p>Hold the same relationship with <code>fold*</code> that <code>pair-fold</code> holds
+with <code>fold</code>; obey the recursion:
+
+     <pre class="example">          (pair-fold* kons knil lis) ==
+              (kons lis (pair-fold* kons knil (cdr lis)))
+          (pair-fold* kons knil '()) == knil
+</pre>
+        <p class="noindent">example:
+
+     <pre class="example">          (pair-fold* cons '() '(a b c))
+          &rArr; ((a b c) (b c) (c))
+</pre>
+        <p>At least one of the list arguments must be finite.
+
+        <p>Examples:
+
+     <pre class="example">          (pair-fold* (lambda (elm knil)
+                        (cons (car elm) knil))
+                      '(999)
+                      '(1 2 3))
+          &rArr; (1 2 3 999)
+          
+          (pair-fold* (lambda (pair tail)
+                        (set-cdr! pair tail)
+                        pair)
+                      '()
+                      '(0 1 2 3 4 5))
+          &rArr; (0 1 2 3 4 5)
+          
+          (pair-fold* (lambda (a b c knil)
+                        (cons (list (car a)
+                                    (car b)
+                                    (car c))
+                              knil))
+                      '(999)
+                      '(1 2 3)
+                      '(10 20 30)
+                      '(100 200 300))
+          &rArr; '((1 10 100)
+               (2 20 200)
+               (3 30 300)
+               999)
+</pre>
+        </blockquote></div>
+
+<!-- page -->
+   </body></html>
+

@@ -1,0 +1,156 @@
+<html lang="en">
+<head>
+<title>conditions define - Nausicaa for Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Nausicaa for Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="conditions.html#conditions" title="conditions">
+<link rel="next" href="conditions-handle.html#conditions-handle" title="conditions handle">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.3d6 of Nausicaa, a
+collection of libraries for Vicare Scheme implementing the language
+`(nausicaa)' on top of `(vicare)'.
+
+Copyright (C) 2012, 2013 by Marco Maggi <marco.maggi-ipsu@poste.it>
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with Invariant Sections being ``GNU Free Documentation
+     License'' and ``GNU General Public License'', no Front--Cover
+     Texts, and no Back--Cover Texts.  A copy of the license is
+     included in the section entitled ``GNU Free Documentation
+     License''.
+-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="conditions-define"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="conditions-handle.html#conditions-handle">conditions handle</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="conditions.html#conditions">conditions</a>
+<hr>
+</div>
+
+<h3 class="section">6.1 Defining new condition types</h3>
+
+<p>The following bindings are exported by the library <code>(nausicaa
+language conditions)</code>.
+
+<div class="defun">
+&mdash; Syntax: <b>define-condition-type</b><var> ?condition-type ?supertype ?constructor ?predicate </var>(<var>?field ?accessor</var>)<var> <small class="dots">...</small><a name="index-define_002dcondition_002dtype-720"></a></var><br>
+&mdash; Syntax: <b>define-condition-type</b><var> ?condition-type ?clause <small class="dots">...</small><a name="index-define_002dcondition_002dtype-721"></a></var><br>
+&mdash; Auxiliary Syntax: <b>parent</b><var> ?supertype<a name="index-parent-722"></a></var><br>
+&mdash; Auxiliary Syntax: <b>fields</b><var> ?field-spec <small class="dots">...</small><a name="index-fields-723"></a></var><br>
+<blockquote><p>A transparent replacement for <code>define-condition-type</code> from
+<code>(rnrs conditions (6))</code> which defines a new condition object type with
+additional features to better merge it in to the Nausicaa language. 
+This macro also supports a &ldquo;compressed&rdquo; syntax having equivalent
+expansion.
+
+        <p>The first form can be used exactly like the original, but we
+<strong>cannot</strong> mix the hierarchy of <var>?condition-type</var> identifiers
+created by the original with the hierarchy of identifiers created by
+this replacement.
+
+        <p>The second form defines a new condition object type
+<var>?condition-type</var>; the name of the identifier <var>?condition-type</var>
+must have &lsquo;<samp><span class="samp">&amp;</span></samp>&rsquo; as first character; this form allows for <acronym>OOPP</acronym>
+field tagging.  As example, the definition:
+
+     <pre class="example">          (define-condition-type &amp;wrong-num-args
+            (parent &amp;assertion)
+            (fields procname expected given))
+</pre>
+        <p class="noindent">is equivalent to:
+
+     <pre class="example">          (define-condition-type &amp;wrong-num-args
+              &amp;assertion
+            make-wrong-num-args-condition
+            wrong-num-args-condition?
+            (procname     condition-wrong-num-args.procname)
+            (expected     condition-wrong-num-args.expected)
+            (given        condition-wrong-num-args.given))
+</pre>
+        <p class="noindent">in which we see several automatically generated identifiers. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Auxiliary Syntax: <b>parent</b><var> ?parent-type<a name="index-parent-724"></a></var><br>
+<blockquote><p>Select the parent condition type for the enclosing definition.  This
+clause can be omitted and can be used at most once.  When not used, the
+parent defaults to <code>&amp;condition</code>.
+
+        <p><var>?parent-type</var> must be an identifier defined by
+<code>define-condition-type</code> described above. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Auxiliary Syntax: <b>fields</b><var> ?field-spec <small class="dots">...</small><a name="index-fields-725"></a></var><br>
+<blockquote><p>Specify the fields of the enclosing condition type definition.  All the
+<var>?field-spec</var> arguments must have one of the forms:
+
+     <pre class="example">          <var>?field</var>
+          (<var>?field</var> <var>?accessor</var>)
+          ((<var>?field</var> <var>?tag</var>))
+          ((<var>?field</var> <var>?tag</var>) <var>?accessor</var>)
+</pre>
+        <p class="noindent">in which: the identifier <var>?field</var> is the name of the field; the
+identifier <var>?accessor</var> is the name of the accessor of the field; the
+identifier <var>?tag</var> is the name of a label or class which tags the
+field.  This clause can be omitted and can be used at most once.
+
+        <p>When the first form of <var>?field-spec</var> is used: for each field an
+accessor name is built as follows: the &lsquo;<samp><span class="samp">&amp;</span></samp>&rsquo; character is stripped
+from <var>?condition-type</var>, a dot is appended to the result, the field
+name is appended to the result, the string &lsquo;<samp><span class="samp">condition-</span></samp>&rsquo; is
+prepended to the result. 
+</p></blockquote></div>
+
+   <p>The <code>define-contition-type</code> replacement takes advantage of the fact
+that, in normal code using <code>(rnrs conditions (6))</code>, the identifier of a
+condition type is used only in <code>define-condition-type</code> forms; so
+the replacement syntax defines a condition type using the original
+<code>define-condition-type</code> from <code>(rnrs conditions (6))</code>, assigning to
+it an automatically generated (and hidden) name &lsquo;<samp><span class="samp">the-type</span></samp>&rsquo;:
+
+<pre class="example">     (rnrs.define-condition-type the-type
+         <var>?supertype</var>
+       <var>?constructor</var>
+       <var>?predicate</var>
+       (<var>?field</var> <var>?accessor</var>)
+       ...)
+</pre>
+   <p class="noindent">then it defines a label using the type name as label name and shadowing
+&lsquo;<samp><span class="samp">the-type</span></samp>&rsquo;:
+
+<pre class="example">     (define-label <var>?condition-type</var>
+       (parent <var>?supertype</var>)
+       (shadows the-type)
+       (protocol (lambda () <var>?constructor</var>))
+       (predicate <var>?predicate</var>)
+       (virtual-fields (immutable <var>?field</var> <var>?accessor</var>)
+                       ...))
+</pre>
+   <p class="noindent">the result is a condition type definition which can be used as usual
+inside a hierarchy of types created by this syntax; in addition we have
+the features of a label: <var>?condition-type</var> can be used by
+<code>is-a?</code>, <code>with-tags</code> and derived syntaxes.
+
+<!-- page -->
+   </body></html>
+

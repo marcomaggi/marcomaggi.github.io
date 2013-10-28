@@ -9,7 +9,7 @@
 <link rel="next" href="iklib-io-codecs.html#iklib-io-codecs" title="iklib io codecs">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
-This document describes version 0.3d4 of Vicare Scheme, an
+This document describes version 0.3d6 of Vicare Scheme, an
 R6RS compliant native compiler for the Scheme language, producing
 single threaded programs running on Intel x86 32-bit processors, with
 experimental support for 64-bit machines.  _Vicare_ is pronounced
@@ -102,34 +102,100 @@ Up:&nbsp;<a rel="up" accesskey="u" href="iklib-io.html#iklib-io">iklib io</a>
 <hr>
 </div>
 
-<h4 class="subsection">6.36.1 Pathnames handling</h4>
+<h4 class="subsection">6.36.1 String and bytevector pathnames handling</h4>
 
 <p>All the file&ndash;related functions defined by <acronym>R6RS</acronym> accept a Scheme
 string as representing a file pathname; internally such string is
 converted to a bytevector to be handed to the underlying operating
-system.  The following bindings are exported by the <code>(ikarus)</code>
-library.
+system.
+
+   <p>The following bindings are exported by the library <code>(vicare)</code>.
 
 <div class="defun">
-&mdash; Parameter: <b>string-&gt;filename-func</b><var><a name="index-string_002d_003efilename_002dfunc-1589"></a></var><br>
-&mdash; Parameter: <b>string-&gt;pathname-func</b><var><a name="index-string_002d_003epathname_002dfunc-1590"></a></var><br>
+&mdash; Parameter: <b>string-&gt;filename-func</b><var><a name="index-string_002d_003efilename_002dfunc-1624"></a></var><br>
+&mdash; Parameter: <b>string-&gt;pathname-func</b><var><a name="index-string_002d_003epathname_002dfunc-1625"></a></var><br>
 <blockquote><p>In Vicare the string&ndash;to&ndash;filename conversion is performed by
 the function returned by <code>string-&gt;filename-func</code>, which defaults to
 <code>string-&gt;utf8</code>. 
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Parameter: <b>filename-&gt;string-func</b><var><a name="index-filename_002d_003estring_002dfunc-1591"></a></var><br>
-&mdash; Parameter: <b>pathname-&gt;string-func</b><var><a name="index-pathname_002d_003estring_002dfunc-1592"></a></var><br>
+&mdash; Parameter: <b>filename-&gt;string-func</b><var><a name="index-filename_002d_003estring_002dfunc-1626"></a></var><br>
+&mdash; Parameter: <b>pathname-&gt;string-func</b><var><a name="index-pathname_002d_003estring_002dfunc-1627"></a></var><br>
 <blockquote><p>In Vicare the filename&ndash;to&ndash;string conversion is performed by
 the function returned by <code>filename-&gt;string-func</code>, which defaults to
 <code>utf8-&gt;string</code>. 
 </p></blockquote></div>
 
+   <p>The following bindings are exported by the library <code>(vicare
+$posix)</code>.
+
 <div class="defun">
-&mdash; Function: <b>split-search-path</b><var> path<a name="index-split_002dsearch_002dpath-1593"></a></var><br>
-&mdash; Function: <b>split-search-path-bytevector</b><var> bytevector-path<a name="index-split_002dsearch_002dpath_002dbytevector-1594"></a></var><br>
-&mdash; Function: <b>split-search-path-string</b><var> string-path<a name="index-split_002dsearch_002dpath_002dstring-1595"></a></var><br>
+&mdash; Function: <b>file-pathname?</b><var> obj<a name="index-file_002dpathname_003f-1628"></a></var><br>
+&mdash; Function: <b>file-string-pathname?</b><var> obj<a name="index-file_002dstring_002dpathname_003f-1629"></a></var><br>
+&mdash; Function: <b>file-bytevector-pathname?</b><var> obj<a name="index-file_002dbytevector_002dpathname_003f-1630"></a></var><br>
+<blockquote><p>Return <code>#t</code> if <var>obj</var> is a string or bytevector, not empty, not
+including a character whose <acronym>ASCII</acronym> representation is the null byte. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>file-absolute-pathname?</b><var> pathname<a name="index-file_002dabsolute_002dpathname_003f-1631"></a></var><br>
+<blockquote><p>The argument <var>pathname</var> must be a string or bytevector.  Return
+<code>#t</code> if <var>pathname</var> starts with a <code>/</code> character, which means
+it is valid as Unix&ndash;style absolute pathname; otherwise return <code>#f</code>.
+
+        <p>This function only acts upon its argument, never accessing the file
+system. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>file-relative-pathname?</b><var> pathname<a name="index-file_002drelative_002dpathname_003f-1632"></a></var><br>
+<blockquote><p>The argument <var>pathname</var> must be a string or bytevector.  Return
+<code>#t</code> if <var>pathname</var> doest <strong>not</strong> start with a <code>/</code>
+character, which means it is valid as Unix&ndash;style relative pathname;
+otherwise return <code>#f</code>.
+
+        <p>This function only acts upon its argument, never accessing the file
+system. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>split-pathname-root-and-tail</b><var> pathname<a name="index-split_002dpathname_002droot_002dand_002dtail-1633"></a></var><br>
+<blockquote><p>Given a string representing a pathname: split it into the directory part
+and the tail part.  Return 2 values: a string representing the directory
+part and a string representing the tail name part.  If <var>pathname</var> is
+just the name of a file or directory relative to the current directory:
+the directory part is empty and the first returned value is the empty
+string.
+
+        <p>Assume the pathname components separator is <code>/</code>, which is
+Unix&ndash;specific.
+
+     <pre class="example">          (receive (root tail)
+              (split-pathname-root-and-tail "a/b")
+            (list root tail))
+          &rArr; ("a" "b")
+          
+          (receive (root tail)
+              (split-pathname-root-and-tail "ciao")
+            (list root tail))
+          &rArr; ("" "ciao")
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>file-colon-search-path?</b><var> obj<a name="index-file_002dcolon_002dsearch_002dpath_003f-1634"></a></var><br>
+&mdash; Function: <b>file-string-colon-search-path?</b><var> obj<a name="index-file_002dstring_002dcolon_002dsearch_002dpath_003f-1635"></a></var><br>
+&mdash; Function: <b>file-bytevector-colon-search-path?</b><var> obj<a name="index-file_002dbytevector_002dcolon_002dsearch_002dpath_003f-1636"></a></var><br>
+<blockquote><p>Return <code>#t</code> if <var>obj</var> is a string or bytevector, possibly empty,
+not including a character whose <acronym>ASCII</acronym> representation is the null
+byte. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>split-search-path</b><var> path<a name="index-split_002dsearch_002dpath-1637"></a></var><br>
+&mdash; Function: <b>split-search-path-bytevector</b><var> bytevector-path<a name="index-split_002dsearch_002dpath_002dbytevector-1638"></a></var><br>
+&mdash; Function: <b>split-search-path-string</b><var> string-path<a name="index-split_002dsearch_002dpath_002dstring-1639"></a></var><br>
 <blockquote><p>Split a file search path into its components and return a list of
 pathnames.  A search path is meant to be a list of directory pathnames
 separated by a colon character; <var>bytevector-path</var> must be a
@@ -166,9 +232,9 @@ be a Scheme string or bytevector.  Empty pathnames are discarded.
         </blockquote></div>
 
 <div class="defun">
-&mdash; Function: <b>split-pathname</b><var> pathname<a name="index-split_002dpathname-1596"></a></var><br>
-&mdash; Function: <b>split-pathname-bytevector</b><var> bytevector-pathname<a name="index-split_002dpathname_002dbytevector-1597"></a></var><br>
-&mdash; Function: <b>split-pathname-string</b><var> string-pathname<a name="index-split_002dpathname_002dstring-1598"></a></var><br>
+&mdash; Function: <b>split-pathname</b><var> pathname<a name="index-split_002dpathname-1640"></a></var><br>
+&mdash; Function: <b>split-pathname-bytevector</b><var> bytevector-pathname<a name="index-split_002dpathname_002dbytevector-1641"></a></var><br>
+&mdash; Function: <b>split-pathname-string</b><var> string-pathname<a name="index-split_002dpathname_002dstring-1642"></a></var><br>
 <blockquote><p>Split a file pathname into its components and return two values: a
 boolean, true if the pathname starts with a slash characters; the list
 of components which can be empty.
@@ -184,7 +250,7 @@ must be a Scheme string or bytevector.
           (import (vicare))
           
           (split-pathname-bytevector '#vu8())
-          &rArr; #f ()
+          error--&gt; "invalid pathname"
           
           (split-pathname-bytevector '#ve(ascii "ciao/hello"))
           &rArr; #f (#ve(ascii "ciao") #ve(ascii "hello"))
@@ -193,7 +259,7 @@ must be a Scheme string or bytevector.
           &rArr; #t ()
           
           (split-pathname-string "")
-          &rArr; #f ()
+          error--&gt; "invalid pathname"
           
           (split-pathname-string "ciao/hello/salut")
           &rArr; #f ("ciao" "hello" "salut")
@@ -208,6 +274,63 @@ must be a Scheme string or bytevector.
           &rArr; #t (#ve(ascii "ciao") #ve(ascii "hello") #ve(ascii "salut"))
 </pre>
         </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>search-file-in-environment-path</b><var> pathname environment-variable<a name="index-search_002dfile_002din_002denvironment_002dpath-1643"></a></var><br>
+<blockquote><p>Search a file pathname (regular file or directory) in the given search
+path.
+
+        <p><var>pathname</var> must be a string representing a file pathname;
+<var>environment-variable</var> must be a string representing a system
+environment variable.
+
+          <ul>
+<li>If <var>pathname</var> is absolute, test its existence: when found, return a
+string representing the real absolute file pathname; otherwise return
+<code>#f</code>.
+
+          <li>If <var>pathname</var> is relative and it has a directory part, test its
+existence: when found, return a string representing the real absolute
+file pathname; otherwise return <code>#f</code>.
+
+          <li>If <var>pathname</var> is relative and it has no directory part, read the
+environment variable as colon&ndash;separated list of directories and search
+the file in them, from the first to the last: when found, return a
+string representing the real absolute file pathname; otherwise return
+<code>#f</code>.
+
+          <p>Notice that the file is searched in the process' current working
+directory only if such directory is listed in the given path. 
+</ul>
+        </p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>search-file-in-list-path</b><var> pathname list-of-directories<a name="index-search_002dfile_002din_002dlist_002dpath-1644"></a></var><br>
+<blockquote><p>Search a file pathname (regular file or directory) in the given search
+path.
+
+        <p><var>pathname</var> must be a string representing a file pathname;
+<var>list-of-directories</var> must be a list of strings representing
+directory pathnames.
+
+          <ul>
+<li>If <var>pathname</var> is absolute, test its existence: when found, return a
+string representing the real absolute file pathname; otherwise return
+<code>#f</code>.
+
+          <li>If <var>pathname</var> is relative and it has a directory part, test its
+existence: when found, return a string representing the real absolute
+file pathname; otherwise return <code>#f</code>.
+
+          <li>If <var>pathname</var> is relative and it has no directory part, search the
+file in the given directories, from the first to the last: when found,
+return a string representing the real absolute file pathname; otherwise
+return <code>#f</code>.
+
+          <p>Notice that the file is searched in the process' current working
+directory only if such directory is listed in the given path. 
+</ul>
+        </p></blockquote></div>
 
 <!-- page -->
    </body></html>

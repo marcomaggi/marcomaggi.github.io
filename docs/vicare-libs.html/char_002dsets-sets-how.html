@@ -1,0 +1,200 @@
+<html lang="en">
+<head>
+<title>char-sets sets how - Libraries for Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Libraries for Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="char_002dsets-sets.html#char_002dsets-sets" title="char-sets sets">
+<link rel="prev" href="char_002dsets-sets-intro.html#char_002dsets-sets-intro" title="char-sets sets intro">
+<link rel="next" href="char_002dsets-sets-basic.html#char_002dsets-sets-basic" title="char-sets sets basic">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes the libraries distributed along with version
+0.3d6 of Vicare Scheme, an R6RS compliant native
+compiler for the Scheme language.
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library `(vicare formations)' is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+The documentation of the libraries `(vicare parser-tools silex
+---)' are derived form the documentation of SILex.  Copyright
+(C) 2001, 2009 Danny Dube'.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="char-sets-sets-how"></a>
+<a name="char_002dsets-sets-how"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="char_002dsets-sets-basic.html#char_002dsets-sets-basic">char-sets sets basic</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="char_002dsets-sets-intro.html#char_002dsets-sets-intro">char-sets sets intro</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="char_002dsets-sets.html#char_002dsets-sets">char-sets sets</a>
+<hr>
+</div>
+
+<h4 class="subsection">21.6.2 How predefined sets were defined</h4>
+
+<p>The following methods were employed to define the character sets.
+
+     <ul>
+<li>The <acronym>ASCII</acronym>&ndash;related sets were composed by hand reading the <acronym>ASCII</acronym>
+description; they are exported by the <code>(vicare containers
+char-sets)</code> library itself.
+
+     <li>All the ranges defined by the <samp><span class="file">Blocks.txt</span></samp> database file have been
+converted to a set by hand; they are exported by the <code>(vicare
+containers char-sets blocks)</code> library (there are a lot of them).
+
+     <li>Each general category (<code>Ll</code>, <code>Lu</code>, etc.) has been converted to
+a set; they are exported by the <code>(vicare containers char-sets
+categories)</code> library (there are a lot of them).  Notice that not all the
+code points accepted by <code>char=?</code> are part of a general category, so
+the union of the category sets is different from the full character set. 
+</ul>
+
+<!--  -->
+<h5 class="subsubheading">Inspecting the database</h5>
+
+<p>On a Unix&ndash;like system, the following commands can be used to inspect
+the <samp><span class="file">UnicodeData.txt</span></samp> database:
+
+     <dl>
+<dt><samp><span class="command">wc -l &lt;UnicodeData.txt</span></samp><dd>Count the lines in the database: One line for each code point.  Notice
+that not all the code points have a line in this file; the file format
+allows ranges, so some pairs of lines represent ranges of characters.
+
+     <br><dt><samp><span class="command">cut -d';' -f3 &lt;UnicodeData.txt | sort | uniq</span></samp><dd>Print the category codes in the database (use <samp><span class="command">sort</span></samp> first,
+because <samp><span class="command">uniq</span></samp> removes repeated lines only if they are
+adjacent).  Notice that the <code>Cs</code> category (surrogate characters) is
+present in the database, but excluded from the Vicare libraries,
+because it describes the range <code>[#xD800, #xDFFF]</code> forbidden by
+<acronym>R6RS</acronym>.
+
+     <br><dt><samp><span class="command">grep ';Cs;' &lt;UnicodeData.txt</span></samp><dd>Print only the lines describing the surrogate characters.  They are six
+lines representing the three ranges:
+
+          <dl>
+<dt><code>[#xD800, #xDB7F]</code><dd>Non private use high surrogate.
+
+          <br><dt><code>[#xDB80, #xDBFF]</code><dd>Private use high surrogate.
+
+          <br><dt><code>[#xDC00, #xDFFF]</code><dd>Low surrogate. 
+</dl>
+
+     <p class="noindent">Notice that these ranges are adjacent and their union is the range
+<code>[#xD800, #xDFFF]</code>.
+
+     <br><dt><samp><span class="command">grep -v ';Cs;' &lt;UnicodeData.txt | wc -l</span></samp><dd>Count the lines excluding the surrogate characters.  The count should be
+19330 (last verified with the database downloaded Wed Jun 23,
+2009).
+
+     <br><dt><samp><span class="command">grep ';Ll;' &lt;UnicodeData.txt</span></samp><dd>Extract all the lines describing the <code>Ll</code> category.
+
+     <br><dt><samp><span class="command">grep ', *\(First\|Last\)&gt;' &lt;UnicodeData.txt</span></samp><dd>Extract all the lines describing the inclusive limit of a range of
+characters.
+
+     <br><dt><samp><span class="command">grep -v ', *\(First\|Last\)&gt;' &lt;UnicodeData.txt</span></samp><dd>Extract all the lines describing a single code point, excluding the
+lines describing the limit of a range of characters. 
+</dl>
+
+   <p>The following Bourne shell script processes the <samp><span class="file">UnicodeData.txt</span></samp>
+database and prints a Scheme program that, when evaluated, prints the
+definitions of category character sets.  The output script program makes
+use of the <code>(vicare containers char-sets)</code> library itself.
+
+<pre class="smallexample">     # unicode-database-extract-category-code-points.sh --
+     #
+     
+     DATABASE=${1:?'missing UnicodeData.txt pathname'}
+     
+     CATEGORY_CODES=$(cut -d';' -f3 &lt;"$DATABASE" | sort | uniq | grep -v Cs)
+     
+     echo '(import (rnrs) (vicare containers char-sets))'
+     
+     for CATEGORY in $CATEGORY_CODES
+     do
+         echo processing category $CATEGORY &gt;&amp;2
+         echo -n "(define category-$CATEGORY (quote ("
+         {
+             grep ";$CATEGORY;" &lt;"$DATABASE"   | \
+                 grep -v ', *\(First\|Last\)&gt;' | \
+                 cut -d';' -f1                 | \
+                 while read
+             do echo -n "#\x$REPLY "
+             done
+     
+             grep ";$CATEGORY;" &lt;"$DATABASE"   | \
+                 grep ', *\(First\|Last\)&gt;'    | \
+                 cut -d';' -f1                 | \
+                 while read
+             do
+                 FIRST=$REPLY
+                 read
+                 LAST=$REPLY
+                 echo -n "(#\x$FIRST . #\x$LAST) "
+             done
+         }
+         echo ')))'
+         echo "(display \"(define char-set:category/$CATEGORY\")(newline)"
+         echo "(char-set-write (apply char-set category-$CATEGORY))(newline)"
+         echo '(display ")")(newline)'
+         echo
+     done
+     
+     ### end of file
+</pre>
+   <p class="noindent">For example, the output for the <code>Co</code> category, which has only
+ranges, is (reformatted to look human readable):
+
+<pre class="example">     (define category-Co (quote ((#\xE000 . #\xF8FF)
+                                 (#\xF0000 . #\xFFFFD)
+                                 (#\x100000 . #\x10FFFD))))
+     
+     (display "(define char-set:category/Co")
+     (newline)
+     (char-set-write (apply char-set category-Co))
+     (newline)
+     (display ")")
+     (newline)
+</pre>
+   <!-- page -->
+   </body></html>
+

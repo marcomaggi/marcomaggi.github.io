@@ -1,0 +1,200 @@
+<html lang="en">
+<head>
+<title>srfi streams primitive - Libraries for Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Libraries for Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="srfi-streams.html#srfi-streams" title="srfi streams">
+<link rel="prev" href="srfi-streams-rationale.html#srfi-streams-rationale" title="srfi streams rationale">
+<link rel="next" href="srfi-streams-primitive-example.html#srfi-streams-primitive-example" title="srfi streams primitive example">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes the libraries distributed along with version
+0.3d6 of Vicare Scheme, an R6RS compliant native
+compiler for the Scheme language.
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library `(vicare formations)' is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+The documentation of the libraries `(vicare parser-tools silex
+---)' are derived form the documentation of SILex.  Copyright
+(C) 2001, 2009 Danny Dube'.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="srfi-streams-primitive"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="srfi-streams-primitive-example.html#srfi-streams-primitive-example">srfi streams primitive example</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="srfi-streams-rationale.html#srfi-streams-rationale">srfi streams rationale</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="srfi-streams.html#srfi-streams">srfi streams</a>
+<hr>
+</div>
+
+<h4 class="subsection">2.21.4 The <code>(streams primitive)</code> library</h4>
+
+<p><a name="index-g_t_0040srfi_007b_007d-streams-primitive-library-1150"></a>
+The <code>(streams primitive)</code> library provides two mutually&ndash;recursive
+abstract data types: An object of the <code>stream</code> abstract data type
+is a promise that, when forced, is either <code>stream-null</code> or is an
+object of type <code>stream-pair</code>.  An object of the <code>stream-pair</code>
+abstract data type contains a <code>stream-car</code> and a <code>stream-cdr</code>,
+which must be a <code>stream</code>.  The essential feature of streams is the
+systematic suspensions of the recursive promises between the two data
+types.
+
+<pre class="example">     alpha stream
+       :: (promise stream-null)
+       |  (promise (alpha stream-pair))
+     
+     alpha stream-pair
+       :: (promise alpha) x (promise (alpha stream))
+</pre>
+   <p>The object stored in the <code>stream-car</code> of a <code>stream-pair</code> is a
+promise that is forced the first time the <code>stream-car</code> is accessed;
+its value is cached in case it is needed again.  The object may have any
+type, and different stream elements may have different types.  If the
+<code>stream-car</code> is never accessed, the object stored there is never
+evaluated.  Likewise, the <code>stream-cdr</code> is a promise to return a
+stream, and is only forced on demand.
+
+   <p>This library provides eight operators: constructors for
+<code>stream-null</code> and <code>stream-pairs</code>, type recognizers for streams
+and the two kinds of streams, accessors for both fields of a
+<code>stream-pair</code>, and a lambda that creates procedures that return
+streams.
+
+<div class="defun">
+&mdash; Function: <b>stream-null</b><var><a name="index-stream_002dnull-1151"></a></var><br>
+<blockquote><p>Return a promise that, when forced, is a single object, distinguishable
+from all other objects, that represents the null stream. 
+<code>stream-null</code> is immutable and unique. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>stream-cons</b><var> object stream<a name="index-stream_002dcons-1152"></a></var><br>
+<blockquote><p>A macro that accepts an object and a stream and creates a
+newly&ndash;allocated stream containing a promise that, when forced, is a
+<code>stream-pair</code> with the object in its <code>stream-car</code> and the
+stream in its <code>stream-cdr</code>.
+
+        <p><code>stream-cons</code> must be syntactic, not procedural, because neither
+<var>object</var> nor <var>stream</var> is evaluated when <code>stream-cons</code> is
+called.  Since <var>stream</var> is not evaluated, when the
+<code>stream-pair</code> is created, it is not an error to call
+<code>stream-cons</code> with a <var>stream</var> argument that is not of type
+<code>stream</code>; however, doing so will cause an error later when the
+<code>stream-cdr</code> of the <code>stream-pair</code> is accessed.
+
+        <p>Once created, a <code>stream-pair</code> is immutable; there is <strong>no</strong>
+<code>stream-set-car!</code> or <code>stream-set-cdr!</code> that modifies an
+existing <code>stream-pair</code>.  There is no dotted&ndash;pair or improper
+stream as with lists. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>stream?</b><var> object<a name="index-stream_003f-1153"></a></var><br>
+<blockquote><p>Return <code>#t</code> if the <var>object</var> is a <code>stream</code> and <code>#f</code>
+otherwise.  If <var>object</var> is a <code>stream</code>, <code>stream?</code> does not
+force its promise.
+
+        <p>If <code>(stream? obj)</code> is <code>#t</code>, then one of <code>(stream-null? 
+obj)</code> and <code>(stream-pair? obj)</code> will be <code>#t</code> and the other will
+be <code>#f</code>; if <code>(stream? obj)</code> is <code>#f</code>, both
+<code>(stream-null?  obj)</code> and <code>(stream-pair?  obj)</code> will be
+<code>#f</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>stream-null?</b><var> object<a name="index-stream_002dnull_003f-1154"></a></var><br>
+<blockquote><p>Return <code>#t</code> if the <var>object</var> is the distinguished null stream and
+<code>#f</code> otherwise.  If <var>object</var> is a <code>stream</code>,
+<code>stream-null?</code> must force its promise in order to distinguish
+<code>stream-null</code> from <code>stream-pair</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>stream-pair?</b><var> object<a name="index-stream_002dpair_003f-1155"></a></var><br>
+<blockquote><p>Take an <var>object</var> and return <code>#t</code> if it is a <code>stream-pair</code>
+constructed by <code>stream-cons</code> and <code>#f</code> otherwise.  If
+<var>object</var> is a <code>stream</code>, <code>stream-pair?</code> must force its
+promise in order to distinguish <code>stream-null</code> from
+<code>stream-pair</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>stream-car</b><var> stream<a name="index-stream_002dcar-1156"></a></var><br>
+<blockquote><p>Return the object stored in the <code>stream-car</code> of <var>stream</var>. 
+<code>stream-car</code> signals an error if the object passed to it is not a
+<code>stream-pair</code>.  Calling <code>stream-car</code> causes the object stored
+there to be evaluated if it has not yet been; the object's value is
+cached in case it is needed again. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>stream-cdr</b><var> stream<a name="index-stream_002dcdr-1157"></a></var><br>
+<blockquote><p>Return the stream stored in the <code>stream-cdr</code> of <var>stream</var>. 
+<code>stream-cdr</code> signals an error if the object passed to it is not a
+<code>stream-pair</code>.  Calling <code>stream-cdr</code> does not force the
+promise containing the stream stored in the <code>stream-cdr</code> of the
+stream. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>stream-lambda</b><var> args . body<a name="index-stream_002dlambda-1158"></a></var><br>
+<blockquote><p>Create a procedure that returns a promise to evaluate the body of the
+procedure.  The last body expression to be evaluated must yield a
+stream.
+
+        <p>As with normal lambda, <var>args</var> may be a single variable name, in
+which case all the formal arguments are collected into a single list, or
+a list of variable names, which may be null if there are no arguments,
+proper if there are an exact number of arguments, or dotted if a fixed
+number of arguments is to be followed by zero or more arguments
+collected into a list.
+
+        <p><var>body</var> must contain at least one expression, and may contain
+internal definitions preceding any expressions to be evaluated. 
+</p></blockquote></div>
+
+<!-- page -->
+   </body></html>
+

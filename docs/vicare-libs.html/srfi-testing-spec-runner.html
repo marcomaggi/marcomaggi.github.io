@@ -1,0 +1,160 @@
+<html lang="en">
+<head>
+<title>srfi testing spec runner - Libraries for Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Libraries for Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="srfi-testing-spec.html#srfi-testing-spec" title="srfi testing spec">
+<link rel="prev" href="srfi-testing-spec-advanced.html#srfi-testing-spec-advanced" title="srfi testing spec advanced">
+<link rel="next" href="srfi-testing-spec-results.html#srfi-testing-spec-results" title="srfi testing spec results">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes the libraries distributed along with version
+0.3d6 of Vicare Scheme, an R6RS compliant native
+compiler for the Scheme language.
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library `(vicare formations)' is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+The documentation of the libraries `(vicare parser-tools silex
+---)' are derived form the documentation of SILex.  Copyright
+(C) 2001, 2009 Danny Dube'.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="srfi-testing-spec-runner"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="srfi-testing-spec-results.html#srfi-testing-spec-results">srfi testing spec results</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="srfi-testing-spec-advanced.html#srfi-testing-spec-advanced">srfi testing spec advanced</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="srfi-testing-spec.html#srfi-testing-spec">srfi testing spec</a>
+<hr>
+</div>
+
+<h5 class="subsubsection">2.27.3.3 Test runner</h5>
+
+<p>A <em>test-runner</em> is an object that runs a test-suite, and manages
+the state.  The test group path, and the sets skip and expected&ndash;fail
+specifiers are part of the <em>test-runner</em>.  A <em>test-runner</em>
+will also typically accumulate statistics about executed tests,
+
+<div class="defun">
+&mdash; Function: <b>test-runner?</b><var> value<a name="index-test_002drunner_003f-1330"></a></var><br>
+<blockquote><p>True iff value is a test-runner object. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>test-runner-current</b><var><a name="index-test_002drunner_002dcurrent-1331"></a></var><br>
+&mdash; Function: <b>test-runner-current</b><var> runner<a name="index-test_002drunner_002dcurrent-1332"></a></var><br>
+<blockquote><p>Get or set the current test-runner.  If an implementation supports
+parameter objects (as in <acronym>SRFI</acronym>-39), then <code>test-runner-current</code>
+can be a parameter object.  Alternatively, <code>test-runner-current</code>
+may be implemented as a macro or function that uses a fluid or
+thread&ndash;local variable, or a plain global variable. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>test-runner-get</b><var><a name="index-test_002drunner_002dget-1333"></a></var><br>
+<blockquote><p>Same as <code>(test-runner-current)</code>, buth throws an exception if there
+is no current test-runner. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>test-runner-simple</b><var><a name="index-test_002drunner_002dsimple-1334"></a></var><br>
+<blockquote><p>Create a new simple test-runner, that prints errors and a summary on the
+standard output port. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>test-runner-null</b><var><a name="index-test_002drunner_002dnull-1335"></a></var><br>
+<blockquote><p>Create a new test-runner, that does nothing with the test results.  This
+is mainly meant for extending when writing a custom runner. 
+</p></blockquote></div>
+
+   <p>Implementations may provide other test-runners, perhaps a
+<code>(test-runner-gui)</code>.
+
+<div class="defun">
+&mdash; Function: <b>test-runner-create</b><var><a name="index-test_002drunner_002dcreate-1336"></a></var><br>
+<blockquote><p>Create a new test-runner.  Equivalent to:
+
+     <pre class="example">          ((test-runner-factory))
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>test-runner-factory</b><var><a name="index-test_002drunner_002dfactory-1337"></a></var><br>
+&mdash; Function: <b>test-runner-factory</b><var> factory<a name="index-test_002drunner_002dfactory-1338"></a></var><br>
+<blockquote><p>Get or set the current test-runner factory.  A factory is a
+zero&ndash;argument function that creates a new test-runner.  The default
+value is <code>test-runner-simple</code>, but implementations may provide a
+way to override the default.  As with <code>test-runner-current</code>, this
+may be a parameter object, or use a per&ndash;thread, fluid, or global
+variable. 
+</p></blockquote></div>
+
+<!--  -->
+<h5 class="subsubheading">Running specific tests with a specified runner</h5>
+
+<div class="defun">
+&mdash; Function: <b>test-apply</b><var> specifier ... procedure<a name="index-test_002dapply-1339"></a></var><br>
+&mdash; Function: <b>test-apply</b><var> runner specifier ... procedure<a name="index-test_002dapply-1340"></a></var><br>
+<blockquote><p>Call <var>procedure</var> with no arguments using the specified <var>runner</var>
+as the current test-runner.  If <var>runner</var> is omitted, then
+<code>(test-runner-current)</code> is used.  (If there is no current runner,
+one is created as in <code>test-begin</code>.)
+
+        <p>If one or more specifiers are listed then only tests matching the
+specifiers are executed.  A specifier has the same form as one used for
+<code>test-skip</code>.  A test is executed if it matches any of the
+specifiers in the <code>test-apply</code> and does not match any active
+<code>test-skip</code> specifiers. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>test-with-runner</b><var> runner decl-or-expr ...<a name="index-test_002dwith_002drunner-1341"></a></var><br>
+<blockquote><p>Execute each <var>decl-or-expr</var> in order in a context where the current
+test-runner is runner. 
+</p></blockquote></div>
+
+<!-- page -->
+   </body></html>
+

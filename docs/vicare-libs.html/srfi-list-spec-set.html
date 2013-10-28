@@ -1,0 +1,344 @@
+<html lang="en">
+<head>
+<title>srfi list spec set - Libraries for Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Libraries for Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="srfi-list-spec.html#srfi-list-spec" title="srfi list spec">
+<link rel="prev" href="srfi-list-spec-alist.html#srfi-list-spec-alist" title="srfi list spec alist">
+<link rel="next" href="srfi-list-spec-side.html#srfi-list-spec-side" title="srfi list spec side">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes the libraries distributed along with version
+0.3d6 of Vicare Scheme, an R6RS compliant native
+compiler for the Scheme language.
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library `(vicare formations)' is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+The documentation of the libraries `(vicare parser-tools silex
+---)' are derived form the documentation of SILex.  Copyright
+(C) 2001, 2009 Danny Dube'.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="srfi-list-spec-set"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="srfi-list-spec-side.html#srfi-list-spec-side">srfi list spec side</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="srfi-list-spec-alist.html#srfi-list-spec-alist">srfi list spec alist</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="srfi-list-spec.html#srfi-list-spec">srfi list spec</a>
+<hr>
+</div>
+
+<h5 class="subsubsection">2.2.5.11 Set operations on lists</h5>
+
+<p><a name="index-List-set-operations-552"></a><a name="index-Set-operations-on-lists-553"></a>
+
+   <p>These procedures implement operations on sets represented as lists of
+elements.  They all take an <var>=</var> argument used to compare elements of
+lists.  This equality procedure is required to be consistent with
+<code>eq?</code>.  That is, it must be the case that:
+
+<pre class="example">     (eq? x y) =&gt; (= x y)
+</pre>
+   <p>Note that this implies, in turn, that two lists that are <code>eq?</code> are
+also set&ndash;equal by any legal comparison procedure.  This allows for
+constant&ndash;time determination of set operations on <code>eq?</code> lists.
+
+   <p>Be aware that these procedures typically run in time O(n * m) for n&ndash;
+and m&ndash;element list arguments.  Performance&ndash;critical applications
+operating upon large sets will probably wish to use other data
+structures and algorithms.
+
+<div class="defun">
+&mdash; Function: <b>lset&lt;=</b><var> = list1 ...<a name="index-lset_003c_003d-554"></a></var><br>
+<blockquote><p>Return true if, and only if, every <var>listi</var> is a subset of
+<var>listi+1</var>, using <var>=</var> for the element&ndash;equality procedure.  List
+<var>AL</var> is a subset of list <var>BL</var> if every element in <var>AL</var> is
+equal to some element of <var>BL</var>.  When performing an element
+comparison, the <var>=</var> procedure's first argument is an element of
+<var>AL</var>, its second argument an element of <var>BL</var>.
+
+        <p>Examples:
+
+     <pre class="example">          (lset&lt;= eq? '(a) '(a b a) '(a b c c)) =&gt; #t
+          
+          (lset&lt;= eq?) =&gt; #t             ; Trivial cases
+          (lset&lt;= eq? '(a)) =&gt; #t
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>lset=</b><var> = list1 list2 ...<a name="index-lset_003d-555"></a></var><br>
+<blockquote><p>Return true if, and only if, every <var>listi</var> is set&ndash;equal to
+<var>listi+1</var>, using <var>=</var> for the element&ndash;equality procedure. 
+&ldquo;Set&ndash;equal&rdquo; simply means that <var>listi</var> is a subset of
+<var>listi+1</var>, and <var>listi+1</var> is a subset of <var>listi</var>.  The
+<var>=</var> procedure's first argument is an element of <var>listi</var>, its
+second argument is an element of <var>listi+1</var>.
+
+        <p>Examples:
+
+     <pre class="example">          (lset= eq? '(b e a) '(a e b) '(e e b a)) =&gt; #t
+          
+          (lset= eq?) =&gt; #t               ; Trivial cases
+          (lset= eq? '(a)) =&gt; #t
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>lset-adjoin</b><var> = list elt1 ...<a name="index-lset_002dadjoin-556"></a></var><br>
+<blockquote><p>Add the <var>elti</var> elements not already in the <var>list</var> parameter to
+the result list.  The result shares a common tail with the <var>list</var>
+parameter.  The new elements are added to the front of the list, but no
+guarantees are made about their order.  The <var>=</var> parameter is an
+equality procedure used to determine if an elti is already a member of
+list.  Its first argument is an element of <var>list</var>, its second is one
+of the <var>elti</var>.
+
+        <p>The <var>list</var> parameter is always a suffix of the result; even if the
+list parameter contains repeated elements, these are not reduced.
+
+        <p>Example:
+
+     <pre class="example">          (lset-adjoin eq? '(a b c d c e) 'a 'e 'i 'o 'u)
+            =&gt; (u o i a b c d c e)
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>lset-union</b><var> = list1 ...<a name="index-lset_002dunion-557"></a></var><br>
+&mdash; Function: <b>lset-union!</b><var> = list1 ...<a name="index-lset_002dunion_0021-558"></a></var><br>
+<blockquote><p>Return the union of the lists, using <var>=</var> for the element&ndash;equality
+procedure.
+
+        <p>The union of lists <var>AL</var> and <var>BL</var> is constructed as follows:
+
+          <ol type=1 start=1>
+<li>If <var>AL</var> is the empty list, the answer is <var>BL</var> (or a copy of
+<var>BL</var>).
+
+          <li>Otherwise, the result is initialised to be list <var>AL</var> (or a copy of
+<var>AL</var>).
+
+          <li>Proceed through the elements of list <var>BL</var> in a left&ndash;to&ndash;right
+order.  If <var>b</var> is such an element of <var>BL</var>, compare every element
+<var>r</var> of the current result list to <var>b</var>: <code>(= r b)</code>.  If all
+comparisons fail, <var>b</var> is consed onto the front of the result.
+             </ol>
+
+        <p>However, there is no guarantee that <var>=</var> will be applied to every
+pair of arguments from <var>AL</var> and <var>BL</var>.  In particular, if
+<var>AL</var> is <code>eq?</code> to <var>BL</var>, the operation may immediately
+terminate.
+
+        <p>In the n&ndash;ary case, the two&ndash;argument <code>list-union</code> operation is
+simply folded across the argument lists.
+
+        <p>Examples:
+
+     <pre class="example">          (lset-union eq? '(a b c d e) '(a e i o u))
+            =&gt; (u o i a b c d e)
+          
+          ;; Repeated elements in LIST1 are preserved.
+          (lset-union eq? '(a a c) '(x a x)) =&gt; (x a a c)
+          
+          ;; Trivial cases
+          (lset-union eq?) =&gt; ()
+          (lset-union eq? '(a b c)) =&gt; (a b c)
+</pre>
+        <p><code>lset-union!</code> is the linear&ndash;update variant of <code>lset-union</code>. 
+It is allowed, but not required, to use the cons cells in the first list
+parameter to construct its answer.  <code>lset-union!</code> is permitted to
+recycle cons cells from any of its list arguments. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>lset-intersection</b><var> = list1 list2 ...<a name="index-lset_002dintersection-559"></a></var><br>
+&mdash; Function: <b>lset-intersection!</b><var> = list1 ...<a name="index-lset_002dintersection_0021-560"></a></var><br>
+<blockquote><p>Return the intersection of the lists, using <var>=</var> for the
+element&ndash;equality procedure.
+
+        <p>The intersection of lists <var>AL</var> and <var>BL</var> is comprised of every
+element of <var>AL</var> that is <var>=</var> to some element of <var>BL</var>:
+<code>(= a b)</code>, for <var>a</var> in <var>AL</var>, and <var>b</var> in <var>BL</var>.  Note
+this implies that an element which appears in <var>BL</var> and multiple
+times in list <var>AL</var> will also appear multiple times in the result.
+
+        <p>The order in which elements appear in the result is the same as they
+appear in <var>list1</var>; that is, <code>lset-intersection</code> essentially
+filters <var>list1</var>, without disarranging element order.  The result may
+share a common tail with <var>list1</var>.
+
+        <p>In the n&ndash;ary case, the two&ndash;argument <code>list-intersection</code> operation
+is simply folded across the argument lists.  However, the dynamic order
+in which the applications of <var>=</var> are made is not specified.  The
+procedure may check an element of <var>list1</var> for membership in every
+other list before proceeding to consider the next element of
+<var>list1</var>, or it may completely intersect <var>list1</var> and <var>list2</var>
+before proceeding to <var>list3</var>, or it may go about its work in some
+third order.
+
+        <p>Examples:
+
+     <pre class="example">          (lset-intersection eq? '(a b c d e) '(a e i o u))
+            =&gt; (a e)
+          
+          ;; Repeated elements in LIST1 are preserved.
+          (lset-intersection eq? '(a x y a) '(x a x z))
+            =&gt; '(a x a)
+          
+          (lset-intersection eq? '(a b c))        ; Trivial case
+            =&gt; (a b c)
+</pre>
+        <p><code>lset-intersection!</code> is the linear&ndash;update variant of
+<code>lset-intersection</code>.  It is allowed, but not required, to use the
+cons cells in the first list parameter to construct its answer. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>lset-difference</b><var> = list1 list2 ...<a name="index-lset_002ddifference-561"></a></var><br>
+&mdash; Function: <b>lset-difference!</b><var> = list1 ...<a name="index-lset_002ddifference_0021-562"></a></var><br>
+<blockquote><p>Return the difference of the lists, using <var>=</var> for the
+element&ndash;equality procedure: all the elements of <var>list1</var> that are
+not <var>=</var> to any element from one of the other <var>listi</var> parameters.
+
+        <p>The <var>=</var> procedure's first argument is always an element of
+<var>list1</var>; its second is an element of one of the other <var>listi</var>. 
+Elements that are repeated multiple times in the <var>list1</var> parameter
+will occur multiple times in the result.
+
+        <p>The order in which elements appear in the result is the same as they
+appear in <var>list1</var>; that is, <code>lset-difference</code> essentially
+filters <var>list1</var>, without disarranging element order.  The result may
+share a common tail with <var>list1</var>.
+
+        <p>The dynamic order in which the applications of <var>=</var> are made is not
+specified.  The procedure may check an element of <var>list1</var> for
+membership in every other list before proceeding to consider the next
+element of <var>list1</var>, or it may completely compute the difference of
+<var>list1</var> and <var>list2</var> before proceeding to <var>list3</var>, or it may
+go about its work in some third order.
+
+     <pre class="example">          (lset-difference eq? '(a b c d e) '(a e i o u))
+            =&gt; (b c d)
+          
+          (lset-difference eq? '(a b c))   ; Trivial case
+            =&gt; (a b c)
+</pre>
+        <p><code>lset-difference!</code> is the linear&ndash;update variant of
+<code>lset-difference</code>.  It is allowed, but not required, to use the
+cons cells in the first list parameter to construct its answer. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>lset-xor</b><var> = list1 ...<a name="index-lset_002dxor-563"></a></var><br>
+&mdash; Function: <b>lset-xor!</b><var> = list1 ...<a name="index-lset_002dxor_0021-564"></a></var><br>
+<blockquote><p>Return the exclusive&ndash;or of the sets, using <var>=</var> for the
+element&ndash;equality procedure.  If there are exactly two lists, this is
+all the elements that appear in exactly one of the two lists.  The
+operation is associative, and thus extends to the n&ndash;ary case, in which
+the result is a list of the elements that appear in an odd number of the
+lists.  The result may share a common tail with any of the <var>listi</var>
+parameters.
+
+        <p>More precisely, for two lists <var>AL</var> and <var>BL</var>, <var>AL</var> xor
+<var>BL</var> is a list of:
+
+          <ul>
+<li>every element <var>a</var> of <var>AL</var> such that there is no element <var>b</var>
+of <var>BL</var> such that <code>(= a b)</code>, and
+
+          <li>every element <var>b</var> of <var>BL</var> such that there is no element <var>a</var>
+of <var>AL</var> such that <code>(= b a)</code>. 
+</ul>
+
+        <p>However, an implementation is allowed to assume that <var>=</var> is
+symmetric; that is, that <code>(= a b) =&gt; (= b a)</code>.
+
+        <p>This means, for example, that if a comparison <code>(= a b)</code> produces
+true for some <var>a</var> in <var>AL</var> and <var>b</var> in <var>BL</var>, both <var>a</var>
+and <var>b</var> may be removed from inclusion in the result.
+
+        <p>In the n&ndash;ary case, the binary&ndash;xor operation is simply folded across
+the lists.
+
+        <p>Examples:
+
+     <pre class="example">          (lset-xor eq? '(a b c d e) '(a e i o u))
+            =&gt; (d c b i o u)
+          
+          ;; Trivial cases.
+          (lset-xor eq?) =&gt; ()
+          (lset-xor eq? '(a b c d e)) =&gt; (a b c d e)
+</pre>
+        <p><code>lset-xor!</code> is the linear&ndash;update variant of <code>lset-xor</code>.  It
+is allowed, but not required, to use the cons cells in the first list
+parameter to construct its answer. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>lset-diff+intersection</b><var> = list1 list2 ...<a name="index-lset_002ddiff_002bintersection-565"></a></var><br>
+&mdash; Function: <b>lset-diff+intersection!</b><var> = list1 list2 ...<a name="index-lset_002ddiff_002bintersection_0021-566"></a></var><br>
+<blockquote><p>Return two values: the difference and the intersection of the lists.  It
+is equivalent to:
+
+     <pre class="example">          (values (lset-difference = list1 list2 ...)
+                  (lset-intersection = list1
+                                       (lset-union = list2 ...)))
+</pre>
+        <p class="noindent">but can be implemented more efficiently.
+
+        <p>The <var>=</var> procedure's first argument is an element of <var>list1</var>; its
+second is an element of one of the other <var>listi</var>.
+
+        <p>Either of the answer lists may share a common tail with <var>list1</var>. 
+This operation essentially partitions <var>list1</var>.
+
+        <p><code>lset-diff+intersection!</code> is the linear&ndash;update variant of
+<code>lset-diff+intersection</code>.  It is allowed, but not required, to use
+the cons cells in the first list parameter to construct its answer. 
+</p></blockquote></div>
+
+<!-- page -->
+   </body></html>
+

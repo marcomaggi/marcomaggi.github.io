@@ -1,0 +1,211 @@
+<html lang="en">
+<head>
+<title>containers iterators base - Nausicaa for Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Nausicaa for Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="containers-iterators.html#containers-iterators" title="containers iterators">
+<link rel="next" href="containers-iterators-conditions.html#containers-iterators-conditions" title="containers iterators conditions">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.3d6 of Nausicaa, a
+collection of libraries for Vicare Scheme implementing the language
+`(nausicaa)' on top of `(vicare)'.
+
+Copyright (C) 2012, 2013 by Marco Maggi <marco.maggi-ipsu@poste.it>
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with Invariant Sections being ``GNU Free Documentation
+     License'' and ``GNU General Public License'', no Front--Cover
+     Texts, and no Back--Cover Texts.  A copy of the license is
+     included in the section entitled ``GNU Free Documentation
+     License''.
+-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="containers-iterators-base"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="containers-iterators-conditions.html#containers-iterators-conditions">containers iterators conditions</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="containers-iterators.html#containers-iterators">containers iterators</a>
+<hr>
+</div>
+
+<h4 class="subsection">10.8.1 Basic iterators <acronym>API</acronym></h4>
+
+<p>The following bindings are exported by the library <code>(nausicaa
+containers iterators)</code>.
+
+<div class="defun">
+&mdash; Abstract Class: <b>&lt;iterator&gt;</b><var><a name="index-g_t_0040aclass_007biterator_007d-1361"></a></var><br>
+<blockquote><p>Base type for all the iterators. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Superclass constructor on &lt;iterator&gt;: <b>constructor</b><var> subject<a name="index-constructor-on-_0040aclass_007biterator_007d-1362"></a></var><br>
+<blockquote><p>Build a new instance of <code>&lt;iterator&gt;</code>; return the constructor
+function for the subclass which invoked this protocol.
+
+        <p>Initialise the field <code>subject</code> with <var>subject</var> and the field
+<code>current</code> with a sentinel value, <a href="../vicare-libs/sentinels.html#sentinels">Sentinel values</a>. 
+</p></blockquote></div>
+
+<!--  -->
+<h5 class="subsubheading">Fields</h5>
+
+<div class="defun">
+&mdash; Immutable field of &lt;iterator&gt;: <b>subject</b><var><a name="index-subject-1363"></a></var><br>
+<blockquote><p>The container being the subject of the iteration.  This field is
+untagged; classes derived from <code>&lt;iterator&gt;</code> can shadow it with a
+tagged virtual field. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Mutable protected field of &lt;iterator&gt;: <b>%current</b><var><a name="index-g_t_0025current-1364"></a></var><br>
+<blockquote><p>The last value extracted from the subject of the iteration.  Concrete
+implementations of the method <code>next</code> must update this field every
+time they extract a new value from the subject. 
+</p></blockquote></div>
+
+<!--  -->
+<h5 class="subsubheading">Methods</h5>
+
+<div class="defun">
+&mdash; Multimethod on &lt;iterator&gt;: <b>next</b><var><a name="index-next-on-_0040aclass_007biterator_007d-1365"></a></var><br>
+<blockquote><p>Advance the iteration, return the value extracted from the subject;
+memoize the extracted value in the <code>%current</code> field. 
+<code>&lt;iterator&gt;</code> does <strong>not</strong> provide an implementation of this
+method; this method is implemented by the generic function
+<code>iterator-next</code>.
+
+        <p>If the iteration is over: raise a non&ndash;continuable exception with
+condition object of type <code>&amp;stop-iteration</code>, <a href="containers-iterators-conditions.html#containers-iterators-conditions">Condition object types</a>.  Once the iteration is
+over, calling this method multiple times always causes
+<code>&amp;stop-iteration</code> to be raised. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Multimethod on &lt;iterator&gt;: <b>more?</b><var><a name="index-more_003f-on-_0040aclass_007biterator_007d-1366"></a></var><br>
+<blockquote><p>Return <code>#t</code> if more values can be extracted from the container,
+otherwise return <code>#f</code>.  <code>&lt;iterator&gt;</code> does <strong>not</strong> provide
+an implementation of this method; this method is implemented by the
+generic function <code>iterator-more?</code>.
+
+        <p>Whenever possible, concrete implementations of this method must only
+test the availability of more values, they must <strong>not</strong> actually
+perform the operation. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Method on &lt;iterator&gt;: <b>current</b><var><a name="index-current-on-_0040aclass_007biterator_007d-1367"></a></var><br>
+<blockquote><p>The last value extracted from the subject of the iteration.  This method
+can be called any number of times and will always return the same value
+after each invocation of the method <code>next</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Generic Function: <b>iterator-next</b><var> iterator<a name="index-iterator_002dnext-1368"></a></var><br>
+<blockquote><p>Advance the iteration, return the value extracted from the subject;
+memoize the extracted value in the <code>%current</code> field of <var>iterator</var>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Generic Function: <b>iterator-more?</b><var> iterator<a name="index-iterator_002dmore_003f-1369"></a></var><br>
+<blockquote><p>Return <code>#t</code> if more values can be extracted from the container,
+otherwise return <code>#f</code>. 
+</p></blockquote></div>
+
+<!--  -->
+<h5 class="subsubheading">Examples</h5>
+
+<p>The following is an example definition for a simple left&ndash;to&ndash;right
+Scheme string iterator:
+
+<pre class="example">     #!r6rs
+     (import (nausicaa)
+       (nausicaa containers iterators))
+     
+     (define-class &lt;simple-string-iterator&gt;
+       (parent &lt;iterator&gt;)
+       (fields (mutable (index &lt;nonnegative-fixnum&gt;)))
+       (virtual-fields (immutable (subject &lt;string&gt;)
+                                  (lambda ((I &lt;iterator&gt;))
+                                    (I $subject))))
+       (protocol (lambda (make-iterator)
+                   (lambda ((subject &lt;string&gt;))
+                     ((make-iterator subject) 0)))))
+     
+     (define-method (iterator-more? (I &lt;simple-string-iterator&gt;))
+       (fx&lt; (I index) (string-length (I subject))))
+     
+     (define-method (iterator-next (I &lt;simple-string-iterator&gt;))
+       (if (I more?)
+           (receive-and-return (retval)
+               (string-ref (I subject) (I index))
+             (set! (I %current) retval)
+             (set! (I index) (+ 1 (I index))))
+         (raise (&amp;stop-iteration (I)))))
+     
+     (&lt;string&gt; S "ciao")
+     (&lt;simple-string-iterator&gt; J (&lt;&gt; (S)))
+     (&lt;iterator&gt; I J)
+     
+     (is-a? I &lt;iterator&gt;)                    &rArr; #t
+     (is-a? J &lt;iterator&gt;)                    &rArr; #t
+     (is-a? J &lt;simple-string-iterator&gt;)      &rArr; #t
+     (sentinel? (I current))                 &rArr; #t
+     
+     (I subject)                             &rArr; "ciao"
+     (J subject length)                      &rArr; 4
+     
+     (I more?)                               &rArr; #t
+     (I next)                                &rArr; #\c
+     
+     (I more?)                               &rArr; #t
+     (I next)                                &rArr; #\i
+     
+     (I more?)                               &rArr; #t
+     (I next)                                &rArr; #\a
+     
+     (I more?)                               &rArr; #t
+     (I next)                                &rArr; #\o
+     
+     (I more?)                               &rArr; #f
+     
+     (try
+         (I next)
+       (catch E
+         (&amp;stop-iteration     #t)
+         (else                E)))
+     &rArr; #t
+     
+     ;;once it is over, it is over forever
+     (try
+         (I next)
+       (catch E
+         (&amp;stop-iteration    #t)
+         (else               E)))
+     &rArr; #t
+</pre>
+   <p class="noindent">notice the virtual field called <code>subject</code>: it references the
+untagged concrete field in <code>&lt;iterator&gt;</code>; its only purpose is to
+provide tagged access to the subject.
+
+<!-- page -->
+   </body></html>
+

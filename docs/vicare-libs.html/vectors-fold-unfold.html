@@ -1,0 +1,233 @@
+<html lang="en">
+<head>
+<title>vectors fold unfold - Libraries for Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Libraries for Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="vectors-fold.html#vectors-fold" title="vectors fold">
+<link rel="prev" href="vectors-fold-sub.html#vectors-fold-sub" title="vectors fold sub">
+<link rel="next" href="vectors-fold-map.html#vectors-fold-map" title="vectors fold map">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes the libraries distributed along with version
+0.3d6 of Vicare Scheme, an R6RS compliant native
+compiler for the Scheme language.
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library `(vicare formations)' is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+The documentation of the libraries `(vicare parser-tools silex
+---)' are derived form the documentation of SILex.  Copyright
+(C) 2001, 2009 Danny Dube'.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="vectors-fold-unfold"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="vectors-fold-map.html#vectors-fold-map">vectors fold map</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="vectors-fold-sub.html#vectors-fold-sub">vectors fold sub</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="vectors-fold.html#vectors-fold">vectors fold</a>
+<hr>
+</div>
+
+<h4 class="subsection">19.7.3 Unfolding vectors</h4>
+
+<div class="defun">
+&mdash; Function: <b>vector-unfold</b><var> stop? seed-&gt;item make-seed first-seed<a name="index-vector_002dunfold-3464"></a></var><br>
+&mdash; Function: <b>vector-unfold</b><var> stop? seed-&gt;item make-seed first-seed base-vector<a name="index-vector_002dunfold-3465"></a></var><br>
+&mdash; Function: <b>vector-unfold</b><var> stop? seed-&gt;item make-seed first-seed base-vector make-final<a name="index-vector_002dunfold-3466"></a></var><br>
+<blockquote><p>This is a fundamental constructor for vectors.  Arguments description
+follows.
+
+          <dl>
+<dt><var>make-seed</var><dd>A map function used to generate a series of &ldquo;seed&rdquo; values from the
+initial seed:
+
+          <pre class="example">               <var>first-seed</var>
+               (<var>make-seed</var> <var>first-seed</var>)            &rArr; seed2
+               (<var>make-seed</var> seed2)                 &rArr; seed3
+               (<var>make-seed</var> seed3)                 &rArr; seed4
+               ...
+</pre>
+          <br><dt><var>stop?</var><dd>A predicate function telling when to stop generating items: When it
+returns true when applied to one of the seed values.
+
+          <br><dt><var>seed-&gt;item</var><dd>Map function mapping each seed value to the corresponding item in
+the result vector.  These items are assembled into the vector in a
+left&ndash;to&ndash;right order.
+
+          <br><dt><var>base</var><dd>An optional vector which is used as initial/leftmost portion of the
+constructed vector.  Defaults to the empty vector.
+
+          <br><dt><var>make-final</var><dd>Optional function applied to the terminal seed value (on which
+<var>stop?</var>  returns true) to produce the final/rightmost portion of the
+constructed vector.  Defaults to <code>(lambda (x) '#())</code>. 
+</dl>
+
+        <p>More precisely, the following (simple, inefficient) definitions hold:
+
+     <pre class="example">          ;; iterative
+          (define (vector-unfold stop? seed-&gt;item make-seed
+                                 first-seed base-vector make-final)
+            (let loop ((seed    first-seed)
+                       (result  base-vector))
+              (if (stop? seed)
+                  (vector-append result (make-final seed))
+                (loop (make-seed seed)
+                      (vector-append result
+                                     (vector (seed-&gt;item seed)))))))
+          
+          ;; recursive
+          (define (vector-unfold stop? seed-&gt;item make-seed
+                                 first-seed base-vector make-final)
+            (vector-append
+               base-vector
+               (let loop ((seed first-seed))
+                 (if (stop? seed)
+                     (make-final seed)
+                   (vector-append (vector (seed-&gt;item seed))
+                                  (loop (make-seed seed)))))))
+</pre>
+        <p>This function is a fairly powerful vector constructor; we can use it to
+convert a list to a vector, read a port into a vector, reverse a vector,
+copy a vector, and so forth.  Examples:
+
+     <pre class="example">          (port-&gt;vector p) = (vector-unfold eof-object? values
+                                            (lambda (x) (read-item p))
+                                            (read-item p))
+          
+          (list-&gt;vector lis) = (vector-unfold null? car cdr lis)
+          
+          (vector-tabulate f size) = (vector-unfold (lambda (i)
+                                                      (= i size))
+                                                    f add1 0)
+</pre>
+        <p class="noindent">to map <code>proc</code> over a list <var>lis</var>, producing a vector:
+
+     <pre class="example">          (vector-unfold null? (compose proc car) cdr lis)
+</pre>
+        <p>Interested functional programmers may enjoy noting that
+<code>vector-fold-right</code> and <code>vector-unfold</code> are in some sense
+inverses.  That is, given operations <var>knull?</var>, <var>kar</var>, <var>kdr</var>,
+<var>combine</var>, and <var>knil</var> satisfying:
+
+     <pre class="example">          (combine (kar x) (kdr x)) &rArr; x
+          (knull? knil) &rArr; #t
+</pre>
+        <p class="noindent">then:
+
+     <pre class="example">          (vector-fold-right combine knil
+                             (vector-unfold knull? kar kdr x))
+          &rArr; x
+</pre>
+        <p class="noindent">and:
+
+     <pre class="example">          (vector-unfold knull? kar kdr
+                         (vector-fold-right combine knil s))
+          &rArr; s
+</pre>
+        <p>The final vector constructed does not share storage with either
+<var>base-vector</var> or the value produced by <var>make-final</var>. 
+</p></blockquote></div>
+
+<!--  -->
+<div class="defun">
+&mdash; Function: <b>vector-unfold-right</b><var> stop? seed-&gt;item make-seed first-seed<a name="index-vector_002dunfold_002dright-3467"></a></var><br>
+&mdash; Function: <b>vector-unfold-right</b><var> stop? seed-&gt;item make-seed first-seed base-vector<a name="index-vector_002dunfold_002dright-3468"></a></var><br>
+&mdash; Function: <b>vector-unfold-right</b><var> stop? seed-&gt;item make-seed first-seed base-vector make-final<a name="index-vector_002dunfold_002dright-3469"></a></var><br>
+<blockquote><p>This is a fundamental constructor for vectors.  The arguments are like
+the ones of <code>vector-unfold</code>.  The difference from
+<code>vector-unfold</code> is that this function builds the vector from right
+to left; more precisely, the following (simple, inefficient) definitions
+hold:
+
+     <pre class="example">          ;; iterative
+          (define (vector-unfold-right
+                     stop? seed-&gt;item make-seed
+                     first-seed base-vector make-final)
+            (let lp ((seed    first-seed)
+                     (result  base))
+              (if (stop? seed)
+                  (vector-append (make-final seed) result)
+                (loop (make-seed seed)
+                      (vector-append (vector (seed-&gt;item seed))
+                                     result)))))
+          
+          ;; recursive
+          (define (vector-unfold-right
+                     stop? seed-&gt;item make-seed
+                     first-seed base-vector make-final)
+            (vector-append
+               (let loop ((seed first-seed))
+                 (if (stop? seed)
+                     (make-final seed)
+                   (vector-append (loop (make-seed seed))
+                                  (vector (seed-&gt;item seed)))))
+               base))
+</pre>
+        <p>Interested functional programmers may enjoy noting that
+<code>vector-fold</code> and <code>vector-unfold-right</code> are in some sense
+inverses.  That is, given operations <var>knull?</var>, <var>kar</var>, <var>kdr</var>,
+<var>kons</var>, and <var>knil</var> satisfying:
+
+     <pre class="example">          (kons (kar x) (kdr x)) &rArr; x
+          (knull? knil) &rArr; #t
+</pre>
+        <p class="noindent">then:
+
+     <pre class="example">          (vector-fold kons knil
+                       (vector-unfold-right knull? kar kdr x))
+          &rArr; x
+</pre>
+        <p class="noindent">and:
+
+     <pre class="example">          (vector-unfold-right knull? kar kdr
+                               (vector-fold kons knil s))
+          &rArr; s
+</pre>
+        <p>The final vector constructed does not share storage with either
+<var>base-vector</var> or the value produced by <code>make-final</code>. 
+</p></blockquote></div>
+
+<!-- page -->
+   </body></html>
+

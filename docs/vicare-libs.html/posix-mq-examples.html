@@ -1,0 +1,170 @@
+<html lang="en">
+<head>
+<title>posix mq examples - Libraries for Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Libraries for Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="posix-mq.html#posix-mq" title="posix mq">
+<link rel="prev" href="posix-mq-api.html#posix-mq-api" title="posix mq api">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes the libraries distributed along with version
+0.3d6 of Vicare Scheme, an R6RS compliant native
+compiler for the Scheme language.
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library `(vicare formations)' is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+The documentation of the libraries `(vicare parser-tools silex
+---)' are derived form the documentation of SILex.  Copyright
+(C) 2001, 2009 Danny Dube'.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="posix-mq-examples"></a>
+<p>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="posix-mq-api.html#posix-mq-api">posix mq api</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="posix-mq.html#posix-mq">posix mq</a>
+<hr>
+</div>
+
+<h4 class="subsection">4.21.3 Simple examples of message queues usage</h4>
+
+<p>The following example shows how to create and close a message queue and
+how to send and receive a message:
+
+<pre class="example">     #!vicare
+     (import (vicare)
+       (prefix (vicare posix) px.)
+       (vicare platform constants)
+       (vicare language-extensions syntaxes))
+     
+     (define name "/vicare-test")
+     
+     (define (parent child-pid)
+       ;; Create a message queue and block until a message
+       ;; is received from the child.
+       ;;
+       (let ((mqd (px.mq-open name
+                              (bitwise-ior O_CREAT O_EXCL O_RDWR)
+                              (bitwise-ior S_IRUSR S_IWUSR)
+                              (px.make-struct-mq-attr 0 3 16 0)))
+             (buf (make-bytevector 16)))
+         (unwind-protect
+             (let-values (((len priority)
+                           (px.mq-receive mqd buf)))
+               (px.waitpid child-pid 0)
+               (list (subbytevector-u8 buf 0 len)
+                     priority))
+           (px.mq-close mqd)
+           (px.mq-unlink name))))
+     
+     (define (child)
+       ;; Wait for the parent to create the queue, then
+       ;; send a message and exit.
+       ;;
+       (px.nanosleep 0 900000)
+       (let ((mqd (px.mq-open name O_RDWR
+                              (bitwise-ior S_IRUSR S_IWUSR)
+                              (px.make-struct-mq-attr 0 3 16 0))))
+         (unwind-protect
+             (px.mq-send mqd '#ve(ascii "ciao") 1)
+           (px.mq-close mqd)))
+       (exit 0))
+     
+     (px.fork parent child)
+</pre>
+   <p>The following example shows how to create and close a message queue and
+how to send and receive a message with timeout:
+
+<pre class="example">     #!vicare
+     (import (vicare)
+       (prefix (vicare posix) px.)
+       (vicare platform constants)
+       (vicare language-extensions syntaxes))
+     
+     (define name "/vicare-test")
+     
+     (define timeout
+       (let ((T (px.clock-gettime CLOCK_REALTIME
+                   (px.make-struct-timespec 0 0))))
+         (px.set-struct-timespec-tv_sec! T
+            (+ 5 (px.struct-timespec-tv_sec T)))
+         T))
+     
+     (define (parent child-pid)
+       ;; Create a message queue and block with timeout
+       ;; until a message is received from the child.
+       ;;
+       (let ((mqd (px.mq-open name
+                              (bitwise-ior O_CREAT O_EXCL O_RDWR)
+                              (bitwise-ior S_IRUSR S_IWUSR)
+                              (px.make-struct-mq-attr 0 3 16 0)))
+             (buf (make-bytevector 16)))
+         (unwind-protect
+             (let-values (((len priority)
+                           (px.mq-timedreceive mqd buf timeout)))
+               (px.waitpid child-pid 0)
+               (list (subbytevector-u8 buf 0 len)
+                     priority))
+           (px.mq-close mqd)
+           (px.mq-unlink name))))
+     
+     (define (child)
+       ;; Wait for the parent to create the queue, then
+       ;; send a message with timeout and exit.
+       ;;
+       (px.nanosleep 0 900000)
+       (let ((mqd (px.mq-open name
+                              O_RDWR
+                              (bitwise-ior S_IRUSR S_IWUSR)
+                              (px.make-struct-mq-attr 0 3 16 0))))
+         (unwind-protect
+             (px.mq-timedsend mqd '#ve(ascii "ciao") 1 timeout)
+           (px.mq-close mqd)))
+       (exit 0))
+     
+     (px.fork parent child)
+</pre>
+   <!-- page -->
+   </body></html>
+

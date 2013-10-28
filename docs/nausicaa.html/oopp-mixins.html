@@ -1,0 +1,220 @@
+<html lang="en">
+<head>
+<title>oopp mixins - Nausicaa for Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Nausicaa for Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="oopp.html#oopp" title="oopp">
+<link rel="prev" href="oopp-setter.html#oopp-setter" title="oopp setter">
+<link rel="next" href="oopp-satisfy.html#oopp-satisfy" title="oopp satisfy">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.3d6 of Nausicaa, a
+collection of libraries for Vicare Scheme implementing the language
+`(nausicaa)' on top of `(vicare)'.
+
+Copyright (C) 2012, 2013 by Marco Maggi <marco.maggi-ipsu@poste.it>
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with Invariant Sections being ``GNU Free Documentation
+     License'' and ``GNU General Public License'', no Front--Cover
+     Texts, and no Back--Cover Texts.  A copy of the license is
+     included in the section entitled ``GNU Free Documentation
+     License''.
+-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="oopp-mixins"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="oopp-satisfy.html#oopp-satisfy">oopp satisfy</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="oopp-setter.html#oopp-setter">oopp setter</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="oopp.html#oopp">oopp</a>
+<hr>
+</div>
+
+<h3 class="section">3.13 Composing with mixins</h3>
+
+<p><dfn>Mixins</dfn> are a way to add definition clauses to classes and labels. 
+Let's consider this situation:
+
+<pre class="example">     #!r6rs
+     (import (nausicaa))
+     
+     (define-class &lt;alpha&gt;
+       (fields a))
+     
+     (define-class &lt;beta&gt;
+       (fields b))
+     
+     (define-class &lt;delta&gt;
+       (parent &lt;alpha&gt;)
+       (fields v)
+       (method (doit (o &lt;delta&gt;))
+         (+ 1 (o v))))
+     
+     (define-class &lt;gamma&gt;
+       (parent &lt;beta&gt;)
+       (fields v)
+       (method (doit (o &lt;gamma&gt;))
+         (+ 1 (o v))))
+</pre>
+   <p class="noindent">the definitions of <code>&lt;delta&gt;</code> and <code>&lt;gamma&gt;</code> share some clauses;
+both of them already have a parent class and multiple inheritance is not
+supported by <code>(nausicaa language oopp)</code>.  Is it possible to
+write the shared clauses only once and attach them to the class
+definitions?  Yes, with mixins.  The example above is equivalent to the
+following:
+
+<pre class="example">     #!r6rs
+     (import (nausicaa))
+     
+     (define-class &lt;alpha&gt;
+       (field a))
+     
+     (define-class &lt;beta&gt;
+       (field b))
+     
+     (define-mixin &lt;stuff&gt;
+       (field v)
+       (method (doit (o &lt;stuff&gt;))
+         (+ 1 (o v))))
+     
+     (define-class &lt;delta&gt;
+       (parent &lt;alpha&gt;)
+       (mixins &lt;stuff&gt;))
+     
+     (define-class &lt;gamma&gt;
+       (parent &lt;beta&gt;)
+       (mixins &lt;stuff&gt;))
+</pre>
+   <p class="noindent"><code>define-mixin</code> associates a set of clauses to the identifier
+<code>&lt;stuff&gt;</code>; when the <code>mixins</code> clause is used in the body of a
+class definition:
+
+     <ol type=1 start=1>
+<li>The clauses associated to the selected identifier are retrieved as
+syntax object.
+
+     <li>All the instances of the identifier <code>&lt;stuff&gt;</code> are substituted with
+the identifier of the enclosing class or label, <code>&lt;delta&gt;</code> and
+<code>&lt;gamma&gt;</code> in the example.
+
+     <li>The resulting clauses are added to the enclosing definition.
+        </ol>
+
+<div class="defun">
+&mdash; Auxiliary Syntax: <b>mixins</b><var> ?spec <small class="dots">...</small><a name="index-mixins-52"></a></var><br>
+<blockquote><p>Compose the enclosing class, label or mixin definition with the given
+list of mixins.  This clause can be used multiple times.
+
+        <p>Each <var>?spec</var> element must have one of the forms:
+
+     <pre class="example">          <var>?mixin-name</var>
+          (<var>?mixin-name</var> (<var>?from</var> <var>?to</var>) ...)
+</pre>
+        <p class="noindent">in which <var>?mixin-name</var> is the identifier referencing the mixin,
+<var>?from</var> and <var>?to</var> are identifiers specifying the specialisation
+for this mixin.  To specialise a mixin's clauses for the receiving
+definition means the following:
+
+          <ol type=1 start=1>
+<li>All the occurrences of <var>?mixin-name</var> are replaced with the receiving
+definition's class, label or mixin name.
+
+          <li>All the occurrences of the <var>?from</var> identifiers are replaced with the
+<var>?to</var> identifiers.
+             </ol>
+
+        <p>It is a syntax violation if a mixin identifier name is not already
+associated to a set of clauses at the time the receiving definition is
+expanded; it is a syntax violation if the same <var>?mixin-name</var> is used
+multiple times in the <code>mixins</code> clauses of a definition. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>define-mixin</b><var> ?name ?clause0 ?clause ...<a name="index-define_002dmixin-53"></a></var><br>
+<blockquote><p>Associate a set of mixin clauses to the identifier <var>?name</var>, which
+can be later referenced by a <code>mixins</code> clause in the body of a
+class or label definition.
+
+        <p>Right or wrong, <code>define-mixin</code> imposes no constraints on the given
+clauses; it is our responsibility to select the ones which are
+convenient for the application model.
+
+        <p>The <code>mixins</code> clause can be used in the body of a mixin
+definition; the result is that the clauses of the selected mixins are
+added to the definition of the current mixin. 
+</p></blockquote></div>
+
+   <p>The <code>mixins</code> clause can be used any number of times, each of them
+can list any number of mixin identifiers; the following clauses:
+
+<pre class="example">     (mixins &lt;a&gt; &lt;b&gt;)
+     (mixins &lt;c&gt; &lt;d&gt;)
+     (mixins &lt;e&gt; &lt;f&gt;)
+</pre>
+   <p class="noindent">are equivalent to the single clause:
+
+<pre class="example">     (mixins &lt;a&gt; &lt;b&gt; &lt;c&gt; &lt;d&gt; &lt;e&gt; &lt;f&gt;)
+</pre>
+   <p class="noindent">notice how the order is preserved from left to right and top to bottom.
+
+   <p>Mixin clauses are added to the receiving definition in a deterministic
+order: first the original clauses, then the mixin clauses in the same
+order in which the mixin identifiers appear in the <code>mixins</code>
+clauses.  For example the following definitions:
+
+<pre class="example">     #!r6rs
+     (import (nausicaa))
+     
+     (define-mixin &lt;alpha&gt;
+       (fields second))
+     
+     (define-mixin &lt;beta&gt;
+       (fields third))
+     
+     (define-mixin &lt;gamma&gt;
+       (fields fourth))
+     
+     (define-class &lt;red&gt;
+       (fields first)
+       (mixins &lt;alpha&gt; &lt;beta&gt; &lt;gamma&gt;)
+       (protocol
+         (lambda (make-top)
+           (lambda (first second third fourth)
+             ((make-top) first second third fourth)))))
+</pre>
+   <p class="noindent">are equivalent to the following single definition:
+
+<pre class="example">     #!r6rs
+     (import (nausicaa))
+     
+     (define-class &lt;red&gt;
+       (fields first second third fourth)
+       (protocol
+         (lambda (make-top)
+           (lambda (first second third fourth)
+             ((make-top) first second third fourth)))))
+</pre>
+   <p class="noindent">notice how the order of the <code>fields</code> clauses matches the order of
+the arguments to the constructor function.
+
+<!-- page -->
+   </body></html>
+

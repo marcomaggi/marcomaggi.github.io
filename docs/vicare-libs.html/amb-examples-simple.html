@@ -1,0 +1,147 @@
+<html lang="en">
+<head>
+<title>amb examples simple - Libraries for Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Libraries for Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="amb-examples.html#amb-examples" title="amb examples">
+<link rel="next" href="amb-examples-ssc.html#amb-examples-ssc" title="amb examples ssc">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes the libraries distributed along with version
+0.3d6 of Vicare Scheme, an R6RS compliant native
+compiler for the Scheme language.
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library `(vicare formations)' is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+The documentation of the libraries `(vicare parser-tools silex
+---)' are derived form the documentation of SILex.  Copyright
+(C) 2001, 2009 Danny Dube'.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="amb-examples-simple"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="amb-examples-ssc.html#amb-examples-ssc">amb examples ssc</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="amb-examples.html#amb-examples">amb examples</a>
+<hr>
+</div>
+
+<h5 class="subsubsection">1.5.2.1 Introductory examples</h5>
+
+<p>In all the examples of this section we will assume that the following
+prelude opens the program:
+
+<pre class="example">     #!r6rs
+     (import (vicare)
+       (vicare language-extensions amb))
+</pre>
+   <p>The <code>amb</code> operator requires appropriate initialisation of the
+dynamic environment, so if we just evaluate the following form we will
+get an error:
+
+<pre class="example">     (amb)
+     error--&gt; &amp;amb-not-initialised
+</pre>
+   <p>If we initialise the environment and then just call <code>amb</code>, we get
+an &ldquo;exhausted search tree&rdquo; error:
+
+<pre class="example">     (with-ambiguous-choices
+      (amb))
+     error--&gt; &amp;amb-exhaustion
+</pre>
+   <p class="noindent">because there are no choices, so the search terminates immediately.
+
+   <p>If we apply <code>amb</code> to some choices, it will return the first one:
+
+<pre class="example">     (with-ambiguous-choices
+      (amb 1 2 3))
+     &rArr; 1
+</pre>
+   <p>If we want to see an actual use of <code>amb</code>, we have to reject some
+choices.  Let's look at this program:
+
+<pre class="example">     (with-ambiguous-choices
+      (let ((X (amb 1 2 3)))
+        (amb-assert (even? X))
+        X))
+     &rArr; 2
+</pre>
+   <p class="noindent">this is what happens:
+
+     <ol type=1 start=1>
+<li><code>amb</code> returns the result of the first expression: <code>1</code>.
+
+     <li><code>amb-assert</code> rejects <code>1</code> because it is odd; the execution flow
+jumps back to the form <code>(amb 1 2 3)</code>.
+
+     <li><code>amb</code> returns the result of the next expression: <code>2</code>.
+
+     <li><code>amb-assert</code> accepts <code>2</code> because it is even.
+
+     <li>The result is <code>2</code>.
+        </ol>
+
+<!--  -->
+<h5 class="subsubheading">The custom failure handler</h5>
+
+<p>The syntax <code>with-amb-exhaustion-handler</code> allows us to install a
+custom handler for the event &ldquo;exhausted search tree&rdquo;; the installed
+handler is called by <code>amb</code> whenever no more choices are available. 
+As example, if we want a non&ndash;local exit at the end of a failed search,
+we can do:
+
+<pre class="example">     (call/cc
+         (lambda (escape)
+           (with-ambiguous-choices
+            (with-amb-exhaustion-handler
+                (lambda ()
+                  (escape #t))
+              (lambda ()
+                (amb)
+                #f)))))
+     &rArr; #t
+</pre>
+   <!-- page -->
+   </body></html>
+

@@ -1,0 +1,558 @@
+<html lang="en">
+<head>
+<title>oopp notation - Nausicaa for Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Nausicaa for Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="oopp.html#oopp" title="oopp">
+<link rel="prev" href="oopp-overview.html#oopp-overview" title="oopp overview">
+<link rel="next" href="oopp-define.html#oopp-define" title="oopp define">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.3d6 of Nausicaa, a
+collection of libraries for Vicare Scheme implementing the language
+`(nausicaa)' on top of `(vicare)'.
+
+Copyright (C) 2012, 2013 by Marco Maggi <marco.maggi-ipsu@poste.it>
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with Invariant Sections being ``GNU Free Documentation
+     License'' and ``GNU General Public License'', no Front--Cover
+     Texts, and no Back--Cover Texts.  A copy of the license is
+     included in the section entitled ``GNU Free Documentation
+     License''.
+-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="oopp-notation"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="oopp-define.html#oopp-define">oopp define</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="oopp-overview.html#oopp-overview">oopp overview</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="oopp.html#oopp">oopp</a>
+<hr>
+</div>
+
+<h3 class="section">3.2 Special syntax for labels and classes</h3>
+
+<p><a name="index-g_t_0040oopp_007b_007d-notation-3"></a><a name="index-Syntax-of-_0040oopp_007b_007d-identifiers-4"></a><a name="index-Tagged-variable-syntax-5"></a><a name="index-Identifer-syntax_002c-_0040oopp_007b_007d-6"></a><a name="index-g_t_0040oopp_007b_007d_002c-identifer-syntax-7"></a><a name="index-g_t_0040oopp_007b_007d_002c-tagged-variable-syntax-8"></a>
+
+   <p>After defining a class or label type with <code>(nausicaa language
+oopp)</code> we can &ldquo;tag&rdquo; variables to be of such type: the variable is an
+identifier syntax implementing <acronym>OOPP</acronym> notation.  To describe such
+syntax we assume the following definitions:
+
+     <dl>
+<dt><var>?type</var><dd>It is the identifier of the class or label.
+
+     <br><dt><var>?var</var><dd>It is the identifier syntax we use to handle a type instance.
+
+     <br><dt><var>?expr</var><dd>It is a generic expression.
+
+     <br><dt><code>&lt;&gt;</code><dd>It is the auxiliary syntax exported by both <code>(nausicaa language
+oopp)</code> and <code>(nausicaa language auxiliary-syntaxes)</code>.
+
+     <br><dt><var>?id</var><dd>It is an identifier used to select a type's method or field name.  When
+the syntax transformer attempts to match it against method and field
+names: the identifier is first converted to symbol, with
+<code>syntax-&gt;datum</code>, and then compared to method and field names with
+<code>eq?</code>.  Notice that methods and fields cannot have the same name in
+a type definition.
+
+     <br><dt><var>?form</var><dd>It is a generic form: an expression, an auxiliary syntax, <small class="dots">...</small>. 
+</dl>
+
+<!--  -->
+   <p>The <var>?type</var> syntax can be used as follows:
+
+     <dl>
+<dt><code>(</code><var>?type</var><code> (</code><var>?form</var><code> ...))</code><dd>If <var>?type</var> implements a maker: apply the maker transformer function
+to the whole form.  If <var>?type</var> has no maker: this syntax expands to
+the public constructor function of <var>?type</var> applied to the results of
+evaluating the <var>?form</var> forms.  Examples with the public constructor:
+
+     <pre class="example">          (define-label &lt;pair&gt;
+            (protocol (lambda () cons)))
+          
+          (define-label &lt;list&gt;
+            (protocol (lambda () list)))
+          
+          (&lt;pair&gt; (1 2))          &rArr; (1 . 2)
+          (&lt;list&gt; (1 2 3))        &rArr; (1 2 3)
+</pre>
+     <p class="noindent">we can think of this syntax as implementing the following expansion:
+
+     <pre class="example">          (&lt;pair&gt; (1 2)) ==&gt; (make-&lt;pair&gt; 1 2) == (cons 1 2)
+</pre>
+     <p>If the constructor takes no arguments: we just use null as second form
+in the syntax; example:
+
+     <pre class="example">          (define-class &lt;alpha&gt;
+            (parent &lt;top&gt;)
+            (fields a b)
+            (protocol (lambda (make-top)
+                        (lambda ()
+                          ((make-top) 1 2)))))
+          
+          (define O (&lt;alpha&gt; ()))
+          (&lt;alpha&gt;-a O)           &rArr; 1
+          (&lt;alpha&gt;-b O)           &rArr; 2
+</pre>
+     <p>Example using the maker transformer:
+
+     <pre class="example">          (define-syntax pair
+            (syntax-rules ()))
+          
+          (define-label &lt;pair&gt;
+            (maker (lambda (stx)
+                     (syntax-case stx (pair car cdr)
+                       ((?type (pair (car ?a) (cdr ?d)))
+                        #'(?type (?a ?d)))
+                       ((?type (?a ?d))
+                        #'(cons ?a ?d)))))
+            (virtual-fields (immutable car car)
+                            (immutable cdr cdr)))
+          
+          (&lt;pair&gt; (pair
+                    (car 1)
+                    (cdr 2)))
+          &rArr; (1 . 2)
+          
+          (&lt;pair&gt; (1 2))
+          &rArr; (1 . 2)
+</pre>
+     <br><dt><code>(</code><var>?type</var><code>)</code><dt><code>((</code><var>?type</var><code>) </code><var>?expr</var><code>)</code><dd>Expands to a reference to the type predicate, if any; when the type has
+no predicate: the result is a function taking one argument and always
+returning <code>#t</code>.  Examples:
+
+     <pre class="example">          (define-label &lt;pair&gt;
+            (predicate pair?))
+          
+          (define-label &lt;any&gt;)  ;no predicate
+          
+          ((&lt;pair&gt;) '(1 . 2))     &rArr; #t
+          ((&lt;pair&gt;) "ciao")       &rArr; #f
+          
+          ((&lt;any&gt;) "ciao")        &rArr; #t
+          
+          (for-all (&lt;pair&gt;)
+            '((1 . 2) (3 . 4)))   &rArr; #t
+</pre>
+     <br><dt><code>(</code><var>?type</var> <var>?var</var><code>)</code><dt><code>(</code><var>?type</var> <var>?var</var> <var>?expr</var><code>)</code><dt><code>(</code><var>?type</var> <var>?var</var><code> (&lt;&gt; (</code><var>?form</var><code> ...)))</code><dd>These syntaxes expand to internal definitions that bind <var>?var</var> to
+intances of <var>?type</var>.  Notice that if values validation is turned on:
+the value of the binding must be an instance of <var>?type</var> according to
+its predicate (if any).
+
+          <ul>
+<li>The first syntax defines an identifier syntax for an uninitialised
+variable; example:
+
+          <pre class="example">               (define-label &lt;pair&gt;
+                 (predicate pair?))
+               
+               (&lt;pair&gt; O)
+</pre>
+          <p class="noindent">we can think of the last form as expanding to:
+
+          <pre class="example">               (define G0)
+               (define-syntax O
+                 (make-variable-transformer
+                   (lambda (stx)
+                     --- #'G0 ---)))
+</pre>
+          <p class="noindent">where <code>G0</code> is an automatically generated identifier.
+
+          <li>The second syntax defines an identifier syntax for a variable
+initialised to the result of evaluating <var>?expr</var>; example:
+
+          <pre class="example">               (define-label &lt;pair&gt;
+                 (predicate pair?))
+               
+               (&lt;pair&gt; O '(1 . 2))
+</pre>
+          <p class="noindent">we can think of the last form as expanding to:
+
+          <pre class="example">               (define G0 '(1 . 2))
+               (define-syntax O
+                 (make-variable-transformer
+                   (lambda (stx)
+                     --- #'G0 ---)))
+</pre>
+          <p class="noindent">where <code>G0</code> is an automatically generated identifier.
+
+          <li>The third syntax defines an identifier syntax for a variable initialised
+to the result of applying the maker transformer of <var>?type</var> to the
+syntax object:
+
+          <pre class="example">               #'(<var>?type</var> (<var>?form</var> ...))
+</pre>
+          <p class="noindent">if <var>?type</var> has no maker transformer: the variable is initialised to
+the result of applying the public constructor of <var>?type</var> to the
+results of evaluating the <var>?form</var> forms.  Example with the public
+constructor:
+
+          <pre class="example">               (define-label &lt;pair&gt;
+                 (protocol (lambda () cons))
+                 (predicate pair?))
+               
+               (&lt;pair&gt; O (&lt;&gt; (1 2)))
+</pre>
+          <p class="noindent">we can think of the last form as expanding to:
+
+          <pre class="example">               (&lt;pair&gt; O (&lt;pair&gt; (1 2)))
+</pre>
+          <p class="noindent">and so to:
+
+          <pre class="example">               (define G0 (make-&lt;pair&gt; 1 2))
+               (define-syntax O
+                 (make-variable-transformer
+                   (lambda (stx)
+                     --- #'G0 ---)))
+</pre>
+          <p class="noindent">where <code>G0</code> is an automatically generated identifier. 
+</ul>
+     </dl>
+
+<!--  -->
+   <p>The <var>?var</var> identifier syntax can be used as follows:
+
+     <dl>
+<dt><var>?var</var><dd>This syntax expands to a reference to the value.  Example:
+
+     <pre class="example">          (define-label &lt;pair&gt;
+            (predicate pair?))
+          
+          (&lt;pair&gt; O '(1 . 2))
+          
+          O   &rArr; '(1 . 2)
+</pre>
+     <br><dt><code>(set!/tags </code><var>?var</var> <var>?expr</var><code>)</code><dd>This syntax expands to the use of <code>set!</code> as defined by <acronym>R6RS</acronym>:
+<var>?expr</var> becomes the new value of <var>?var</var>.  Notice that if values
+validation is turned on: the new value must be an instance of the type
+according to its predicate (if any).  Example:
+
+     <pre class="example">          (define-label &lt;pair&gt;
+            (predicate pair?))
+          
+          (&lt;pair&gt; O '(1 . 2))
+          (set!/tags O '(3 . 4))
+          O                       &rArr; '(3 . 4)
+          
+          (set!/tags O "ciao")    error--&gt; assertion violation
+</pre>
+     <br><dt><code>(</code><var>?var</var> <var>?id</var><code>)</code><dd>Expands according to the following rules, in the given order:
+
+          <ol type=1 start=1>
+<li>If the type has a method named <var>?id</var>: this syntax expands to a call
+to such method with no arguments.
+
+          <li>If the type has a field named <var>?id</var>: this syntax expands to a call
+to the field accessor.
+
+          <li>If <var>?id</var> has a string name prefixed with &lsquo;<samp><span class="samp">$</span></samp>&rsquo; and the type has a
+<strong>concrete</strong> field named <var>?id</var> with the &lsquo;<samp><span class="samp">$</span></samp>&rsquo; stripped: this
+syntax expands to a call to the unsafe field accessor.
+          </ol>
+
+     <p>Examples:
+
+     <pre class="example">          (define-label &lt;pair&gt;
+            (virtual-fields (immutable car car))
+            (method (cdr O)
+              (cdr O)))
+          
+          (&lt;pair&gt; O '(1 . 2))
+          (O car)         &rArr; 1     ;field accessor application
+          (O cdr)         &rArr; 2     ;method application
+          
+          (define-class &lt;alpha&gt;
+            (fields a))
+          
+          (&lt;alpha&gt; A (1))
+          (A a)           &rArr; 1     ;field accessor application
+          (A $a)          &rArr; 1     ;unsafe field accessor application
+</pre>
+     <br><dt><code>(set!/tags (</code><var>?var</var> <var>?id</var><code>) </code><var>?expr</var><code>)</code><dd>Expands according to the following rules, in the given order:
+
+          <ol type=1 start=1>
+<li>If the type has a field named <var>?id</var>: this syntax expands to a call
+to the field mutator.
+
+          <li>If <var>?id</var> has a string name prefixed with &lsquo;<samp><span class="samp">$</span></samp>&rsquo; and the type has a
+<strong>concrete</strong> field named <var>?id</var> with the &lsquo;<samp><span class="samp">$</span></samp>&rsquo; stripped: this
+syntax expands to a call to the unsafe field mutator.
+
+          <li>If <var>?id</var> is not the name of a field or it is the name of an
+immutable field: this syntax causes a syntax violation to be raised and
+expand time.
+          </ol>
+
+     <p>Example:
+
+     <pre class="example">          (define-label &lt;pair&gt;
+            (virtual-fields (mutable car car set-car!)
+                            (mutable cdr cdr set-cdr!)))
+          
+          (&lt;alpha&gt; O (cons 1 2))
+          (O car)         &rArr; 1
+          (O cdr)         &rArr; 2
+          
+          (set!/tags (o car) 77)
+          (set!/tags (o cdr) 99)
+          O               &rArr; (77 . 99)
+          
+          (define-class &lt;alpha&gt;
+            (fields (mutable a)))
+          
+          (&lt;alpha&gt; A (1))
+          (set!/tags (A a)  2)    ;field mutator application
+          (set!/tags (A $a) 3)    ;unsafe field mutator application
+</pre>
+     <br><dt><code>(</code><var>?var</var><code> (</code><var>?form0</var><code> ...) (</code><var>?form</var><code> ...) ...)</code><dd>Expands to the result of applying the type's getter transformer to the
+syntax object (lookout for the parentheses):
+
+     <pre class="example">          #'(<var>?var</var> ((<var>?form0</var> ...) (<var>?form</var> ...) ...))
+</pre>
+     <p class="noindent">if the type has no getter: this syntax causes a syntax violation
+exception to be raised at expand time.  Examples:
+
+     <pre class="example">          (define-label &lt;vector&gt;
+            (getter (lambda (stx)
+                      (syntax-case stx ()
+                        ((?var ((?idx)))
+                         #'(vector-ref ?var ?idx))))))
+          
+          (define-label &lt;matrix&gt;
+            (getter (lambda (stx)
+                      (syntax-case stx ()
+                        ((?var ((?row) (?col)))
+                         #'(vector-ref
+                              (vector-ref ?var ?row)
+                              ?col))))))
+          
+          (&lt;vector&gt; V '#(1 2 3))
+          (&lt;matrix&gt; M '#(#(1 2 3)
+                         #(4 5 6)))
+          
+          (V[0])                  &rArr; 1
+          (V[1])                  &rArr; 2
+          (V[2])                  &rArr; 3
+          
+          (M[0][2])               &rArr; 3
+          (M[1][1])               &rArr; 5
+</pre>
+     <br><dt><code>(set!/tags (</code><var>?var</var><code> (</code><var>?form0</var><code> ...) (</code><var>?form</var><code> ...) ...) </code><var>?expr</var><code>)</code><dt><code>(set!/tags </code><var>?var</var><code> (</code><var>?form0</var><code> ...) (</code><var>?form</var><code> ...) ... </code><var>?expr</var><code>)</code><dd>Expands to the result of applying the type's setter transformer to the
+syntax object (lookout for the parentheses):
+
+     <pre class="example">          #'(<var>?var</var> ((<var>?form0</var> ...) (<var>?form</var> ...) ...) <var>?expr</var>)
+</pre>
+     <p class="noindent">if the type has no setter transformer: this syntax causes a syntax
+violation exception to be raised at expand time.  Examples:
+
+     <pre class="example">          (define-label &lt;vector&gt;
+            (setter (lambda (stx)
+                      (syntax-case stx ()
+                        ((?var ((?idx)) ?expr)
+                         #'(vector-set! ?var ?idx ?expr))))))
+          
+          (define-label &lt;matrix&gt;
+            (setter (lambda (stx)
+                      (syntax-case stx ()
+                        ((?var ((?row) (?col)) ?expr)
+                         #'(vector-set!
+                              (vector-ref ?var ?row)
+                              ?col ?expr))))))
+          
+          (&lt;vector&gt; V (vector 1 2 3))
+          (&lt;matrix&gt; M (vector (vector 1 2 3)
+                              (vector 4 5 6)))
+          
+          (set!/tags V[1] 77)
+          (set!/tags (V[2]) 99)
+          V               &rArr; #(1 77 99)
+          
+          (set!/tags M[0][2] 77)
+          (set!/tags (M[1][1]) 99)
+          M               &rArr; #(#(1 2 77) #(4 99 6))
+</pre>
+     <br><dt><code>(</code><var>?var</var> <var>?id</var> <var>?form0</var> <var>?form</var><code> ...)</code><dd>This syntax allows the use of nested syntaxes for typed fields.  It is
+expanded according to the following rules, in the given order:
+
+          <ol type=1 start=1>
+<li>If the type has a method named <var>?id</var>: this syntax expands to a call
+to such method with arguments <var>?form0</var>, <var>?form</var>, <small class="dots">...</small>. 
+Example:
+
+          <pre class="example">               (define-label &lt;list&gt;
+                 (method (append3 a b c)
+                   (append a b c)))
+               
+               (&lt;list&gt; A '(1 2))
+               (define B '(3 4))
+               (A append3 B '(5 6))    &rArr; (1 2 3 4 5 6)
+</pre>
+          <li>If the type has a <strong>tagged</strong> field named <var>?id</var>: this syntax
+expands to a recursive reference to the members <var>?form0</var>,
+<var>?form</var>, <small class="dots">...</small> of the field's value.  Example:
+
+          <pre class="example">               (define-label &lt;list&gt;
+                 (virtual-fields (immutable (car &lt;list&gt;) car)
+                                 (immutable (cdr &lt;list&gt;) cdr))
+                 (method (length O)
+                   (length O)))
+               
+               (&lt;list&gt; O '((1 . 2) . (3 . 4)))
+               (&lt;list&gt; L '(1 2 3))
+               
+               (O car)                 &rArr; (1 . 2)
+               (O car car)             &rArr; 1
+               (O car cdr)             &rArr; 2
+               (O cdr)                 &rArr; (3 . 4)
+               (O cdr car)             &rArr; 3
+               (O cdr cdr)             &rArr; 4
+               
+               (L car)                 &rArr; 1
+               (L cdr)                 &rArr; (2 3)
+               (L cdr cdr)             &rArr; (3)
+               (L length)              &rArr; 3
+               (L cdr length)          &rArr; 2
+               (L cdr cdr length)      &rArr; 1
+</pre>
+          <p>In other words, if <var>?id</var> is the name of a field with type
+<var>?type1</var>, as in:
+
+          <pre class="example">               (define-label <var>?type</var>
+                 (virtual-fields (immutable (<var>?id</var> <var>?type1</var>) <var>?accessor</var>)))
+</pre>
+          <p class="noindent">we can think of the form:
+
+          <pre class="example">               (<var>?var</var> <var>?id</var> <var>?form0</var> <var>?form</var> ...)
+</pre>
+          <p class="noindent">as expanding to:
+
+          <pre class="example">               (let ()
+                 (<var>?type1</var> G0 (<var>?accessor</var> <var>?var</var>))
+                 (G0 <var>?form0</var> <var>?form</var> ...))
+</pre>
+          <p class="noindent">where <code>G0</code> is an automatically generated identifier; the syntax use
+<code>(G0 </code><var>?form0</var> <var>?form</var><code> ...)</code> can be any of the syntaxes
+supported by <var>?type1</var>.
+
+          <li>If <var>?id</var> has a string name prefixed with &lsquo;<samp><span class="samp">$</span></samp>&rsquo; and the type has a
+<strong>concrete</strong> and <strong>tagged</strong> field named <var>?id</var> with the
+&lsquo;<samp><span class="samp">$</span></samp>&rsquo; stripped: this syntax expands to a recursive reference to the
+members <var>?form0</var>, <var>?form</var>, <small class="dots">...</small> of the field's value which is
+extracted using the unsafe accessor.
+
+          <li>If the type has an <strong>untyped</strong> field named <var>?id</var>: this syntax
+causes a syntax violation exception to be raised at expand time. 
+Example:
+
+          <pre class="example">               (define-label &lt;pair&gt;
+                 (virtual-fields (immutable car car)
+                                 (immutable cdr cdr)))
+               
+               (&lt;pair&gt; O '(1 . 2))
+               (O car)         &rArr; 1
+               (O cdr)         &rArr; 2
+               
+               (O car car)     error--&gt; syntax violation
+</pre>
+          </ol>
+
+     <br><dt><code>(set!/tags (</code><var>?var</var> <var>?id</var> <var>?form0</var> <var>?form</var><code> ...) </code><var>?expr</var><code>)</code><dd>This syntax allows the use of nested field mutator and setter syntaxes
+for typed fields.  It expands according to the following rules, in the
+given order:
+
+          <ol type=1 start=1>
+<li>If the type has a <strong>tagged</strong> field named <var>?id</var>: this syntax
+expands to a recursive <code>set!/tags</code> syntax for the field's value.
+
+          <li>If <var>?id</var> has a string name prefixed with &lsquo;<samp><span class="samp">$</span></samp>&rsquo; and the type has a
+<strong>concrete</strong> and <strong>tagged</strong> field named <var>?id</var> with the
+&lsquo;<samp><span class="samp">$</span></samp>&rsquo; stripped: this syntax expands to a recursive <code>set!/tags</code>
+syntax for the field's value, which is extracted using the unsafe
+accessor.
+          </ol>
+
+     <p>Example of nested field mutation:
+
+     <pre class="example">          (define-class &lt;alpha&gt;
+            (fields (mutable v)))
+          
+          (define-class &lt;beta&gt;
+            (fields (immutable (a &lt;alpha&gt;))))
+          
+          (define-class &lt;gamma&gt;
+            (fields (immutable (b &lt;beta&gt;))))
+          
+          (&lt;alpha&gt; A (&lt;&gt; (1)))
+          (&lt;beta&gt;  B (&lt;&gt; (A)))
+          (&lt;gamma&gt; O (&lt;&gt; (B)))
+          
+          ((&lt;gamma&gt;) O)           &rArr; #t
+          (O b)                   &rArr; #&lt;record &lt;beta&gt;&gt;
+          (O b a)                 &rArr; #&lt;record &lt;alpha&gt;&gt;
+          (O b a v)               &rArr; 1
+          
+          (set!/tags (O b a v) 2)
+          (O b a v)               &rArr; 2
+</pre>
+     <p>Example of nested field setter transformer invocation:
+
+     <pre class="example">          (define-label &lt;vector&gt;
+            (getter (lambda (stx)
+                      (syntax-case stx ()
+                        ((?var ((?idx)))
+                         #'(vector-ref ?var ?idx)))))
+            (setter (lambda (stx)
+                      (syntax-case stx ()
+                        ((?var ((?idx)) ?expr)
+                         #'(vector-set! ?var ?idx ?expr))))))
+          
+          (define-class &lt;alpha&gt;
+            (fields (immutable (v &lt;vector&gt;))))
+          
+          (define-class &lt;beta&gt;
+            (fields (immutable (a &lt;alpha&gt;))))
+          
+          (define-class &lt;gamma&gt;
+            (fields (immutable (b &lt;beta&gt;))))
+          
+          (&lt;alpha&gt; A (&lt;&gt; ((vector 1 2 3))))
+          (&lt;beta&gt;  B (&lt;&gt; (A)))
+          (&lt;gamma&gt; O (&lt;&gt; (B)))
+          
+          ((&lt;gamma&gt;) O)           &rArr; #t
+          (O b)                   &rArr; #&lt;record &lt;beta&gt;&gt;
+          (O b a)                 &rArr; #&lt;record &lt;alpha&gt;&gt;
+          (O b a v)               &rArr; #(1 2 3)
+          (O b a v[0])            &rArr; 1
+          (O b a v[1])            &rArr; 2
+          (O b a v[2])            &rArr; 3
+          
+          (set!/tags (O b a v[0]) 10)
+          (set!/tags (O b a v[1]) 20)
+          (set!/tags (O b a v[2]) 30)
+          (O b a v)               &rArr; #(10 20 30)
+</pre>
+     </dl>
+
+<!-- page -->
+   </body></html>
+

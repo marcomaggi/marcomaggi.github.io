@@ -1,0 +1,277 @@
+<html lang="en">
+<head>
+<title>glibc match - Libraries for Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Libraries for Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="glibc.html#glibc" title="glibc">
+<link rel="prev" href="glibc-random.html#glibc-random" title="glibc random">
+<link rel="next" href="glibc-word.html#glibc-word" title="glibc word">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes the libraries distributed along with version
+0.3d6 of Vicare Scheme, an R6RS compliant native
+compiler for the Scheme language.
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library `(vicare formations)' is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+The documentation of the libraries `(vicare parser-tools silex
+---)' are derived form the documentation of SILex.  Copyright
+(C) 2001, 2009 Danny Dube'.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="glibc-match"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="glibc-word.html#glibc-word">glibc word</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="glibc-random.html#glibc-random">glibc random</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="glibc.html#glibc">glibc</a>
+<hr>
+</div>
+
+<h3 class="section">5.9 Pattern matching, globbing and regular expressions</h3>
+
+<p>The following bindings are exported by the <code>(vicare glibc)</code>
+library.
+
+<div class="defun">
+&mdash; Function: <b>fnmatch</b><var> pattern string flags<a name="index-fnmatch-2661"></a></var><br>
+<blockquote><p>Interface to the C function <code>fnmatch()</code>, <a href="../libc/Wildcard-Matching.html#Wildcard-Matching">fnmatch</a>.  Tests whether <var>string</var> matches <var>pattern</var>
+according to <var>flags</var>; if it matches return <code>#t</code>, else return
+<code>#f</code>.
+
+        <p><var>pattern</var> and <var>string</var> must be Scheme strings or bytevectors;
+<var>flags</var> must be a fixnum resulting from the bitwise combination
+(<code>fxior</code>) of the <code>FNM_</code> constants exported by <code>(vicare
+platform constants)</code>.
+
+     <pre class="example">          #!r6rs
+          (import (vicare)
+            (prefix (vicare glibc) glibc.)
+            (vicare platform constants))
+          
+          (glibc.fnmatch "ciao" "ciao"  0)        &rArr; #t
+          (glibc.fnmatch "ciao" "salut" 0)        &rArr; #f
+          
+          (glibc.fnmatch "ciao*" "ciao a tutti" 0)
+          &rArr; #t
+          
+          (glibc.fnmatch "*(Ciao)" "CiaoCiao" FNM_EXTMATCH)
+          &rArr; #t
+          
+          (glibc.fnmatch "?(Ciao|Hello)" "Hello" FNM_EXTMATCH)
+          &rArr; #t
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>glob</b><var> pattern flags error-handler<a name="index-glob-2662"></a></var><br>
+&mdash; Function: <b>glob/string</b><var> pattern flags error-handler<a name="index-glob_002fstring-2663"></a></var><br>
+<blockquote><p>Interface to the C function <code>glob()</code>, <a href="../libc/Calling-Glob.html#Calling-Glob">glob</a>. 
+Perform file globbing <strong>in the current directory</strong> using
+<var>pattern</var> to select entries according to <var>flags</var>.  If successful
+<code>glob</code> returns a list of bytevectors representing the result,
+<code>glob/string</code> returns a list of strings representing the result;
+else both return a fixnum representing one of the error codes:
+<code>GLOB_ABORTED</code>, <code>GLOB_NOMATCH</code>, <code>GLOB_NOSPACE</code>.
+
+        <p><var>pattern</var> must be a string or bytevector.  <var>flags</var> must be a
+fixnum built as bitwise composition (<code>fxior</code>) of the flags:
+<code>GLOB_ERR</code>, <code>GLOB_MARK</code>, <code>GLOB_NOCHECK</code>,
+<code>GLOB_NOSORT</code>, <code>GLOB_NOESCAPE</code>, <code>GLOB_PERIOD</code>,
+<code>GLOB_BRACE</code>, <code>GLOB_NOMAGIC</code>, <code>GLOB_TILDE</code>,
+<code>GLOB_TILDE_CHECK</code>, <code>GLOB_ONLYDIR</code>.
+
+        <p><var>error-handler</var> must be <code>#f</code> or a callback pointer with the
+signature:
+
+     <pre class="example">          int <var>error-handler</var> (const char * filename, int error-code)
+</pre>
+        <p class="noindent">called by <code>glob</code> whenever it cannot open a directory; see the
+documentation for <code>glob()</code> and the flag <code>GLOB_ERR</code> for details.
+
+     <pre class="example">          #!r6rs
+          (import (vicare)
+            (prefix (vicare glibc) glibc.)
+            (vicare platform constants))
+          
+          (glibc.glob/string "*" 0 #f)
+          &rArr; ("bin" "boot" "dev" "etc" "home" "lib"
+              "libexec" "lost+found" "media" "mnt" "opt"
+              "proc" "root" "sbin" "share" "srv" "sys"
+              "tmp" "usr" "var")
+          
+          (glibc.glob/string "~marco" GLOB_TILDE #f)
+          &rArr; ("/home/marco")
+</pre>
+        </blockquote></div>
+
+<!--  -->
+<h5 class="subsubheading"><acronym>POSIX</acronym> regular expressions</h5>
+
+<p>The following are usage examples of <acronym>POSIX</acronym> regular expressions
+matching:
+
+<pre class="example">     #!r6rs
+     (import (vicare)
+       (prefix (vicare glibc) glibc.)
+       (vicare platform constants))
+     
+     (let ((rex (glibc.regcomp "abc" 0)))
+       (glibc.regexec rex "abc" 0))
+     &rArr; #((0 . 3)))   ;the regex matched the whole string
+     
+     (let ((rex (glibc.regcomp "abc" 0)))
+       (glibc.regexec rex "abcdef" 0))
+     &rArr; #((0 . 3))    ;substring [0, 3) matched
+     
+     (let ((rex (glibc.regcomp "ciao" 0)))
+       (glibc.regexec rex "abc" 0))
+     &rArr; #f            ;no match
+     
+     (let ((rex (glibc.regcomp "\\(a\\)" 0)))
+       (glibc.regexec rex "abc" 0))
+     &rArr; #((0 . 1)     ;the regexp matched the whole string
+          (0 . 1))    ;substring [0, 1) matched the 1st paren
+     
+     (let ((rex (glibc.regcomp "\\(a\\)\\(b\\)\\(c\\)" 0)))
+       (glibc.regexec rex "abc" 0))
+     &rArr; #((0 . 3)     ;the regexp matched the whole string
+          (0 . 1)     ;substring [0, 1) matched the 1st paren
+          (1 . 2)     ;substring [1, 2) matched the 2nd paren
+          (2 . 3))    ;substring [2, 3) matched the 3rd paren
+     
+     (let ((rex (glibc.regcomp "\\(a\\(b\\(c\\)\\)\\)" 0)))
+       (glibc.regexec rex "abc" 0))
+     &rArr; #((0 . 3)     ;the regexp matched the whole string
+          (0 . 3)     ;substring [0, 3) matched the 1st paren
+          (1 . 3)     ;substring [1, 3) matched the 2nd paren
+          (2 . 3))    ;substring [2, 3) matched the 3rd paren
+     
+     (let* ((rex (glibc.regcomp/disown "[a-z]+" REG_EXTENDED))
+            (rv  (glibc.regexec rex "abc" 0)))
+       (glibc.regfree rex)
+       rv)
+     &rArr; #((0 . 3))
+</pre>
+   <p class="noindent">we have to remember that this <acronym>API</acronym> can be used only with bytevectors
+representing <acronym>ASCII</acronym> coded strings and with Scheme strings containing
+only characters whose Unicode code points are in the range [0,
+255].
+
+   <p><acronym>POSIX</acronym> regular expression patterns are described in the &ldquo;Base
+Definitions&rdquo; volume of <acronym>IEEE</acronym> Std 1003.1-2001, Chapter 9, Regular
+Expressions:
+
+<div align="center"><a href="http://pubs.opengroup.org/onlinepubs/009695399/nframe.html">http://pubs.opengroup.org/onlinepubs/009695399/nframe.html</a></div>
+
+<p class="noindent"><acronym>URL</acronym> last verified Dec  9, 2011.
+
+<div class="defun">
+&mdash; Function: <b>regcomp</b><var> pattern flags<a name="index-regcomp-2664"></a></var><br>
+<blockquote><p>Interface to the C function <code>regcomp()</code>, <a href="../libc/POSIX-Regexp-Compilation.html#POSIX-Regexp-Compilation">regcomp</a>.  Compile the regular expression in <var>pattern</var>
+accoding to <var>flags</var>.  If successful return a pointer referencing the
+compiled regexp, else raise an exception with condition components
+<code>&amp;error</code>, <code>&amp;who</code>, <code>&amp;message</code>,
+<code>&amp;irritants</code>.
+
+        <p><var>pattern</var> must be a string or bytevector representing the regular
+expression.  <var>flags</var> must be a fixnum resulting from the bitwise
+combination (<code>fxior</code>) of <code>REG_</code> constants.
+
+        <p>The pointer returned in case of success references a <code>regex_t</code> data
+structure whose fields must be released explicitly by <code>regfree</code>, or
+they are automatically released by the garbage collector whenever the
+pointer itself is collected. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>regcomp/disown</b><var> pattern flags<a name="index-regcomp_002fdisown-2665"></a></var><br>
+<blockquote><p>Like <code>regcomp</code>, but when the returned pointer object is garbage
+collected nothing happens; we have to explicitly apply <code>regfree</code> to
+the returned pointer object to release the allocated resources. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>regexec</b><var> regex string flags<a name="index-regexec-2666"></a></var><br>
+<blockquote><p>Interface to the C function <code>regexec()</code>, <a href="../libc/Matching-POSIX-Regexps.html#Matching-POSIX-Regexps">regexec</a>.  Attempt to match <var>string</var> against the
+precompiled regular expression <var>regex</var> according to <var>flags</var>.
+
+        <p><var>regex</var> must be a pointer returned by a previous call to
+<code>regcomp</code>; <var>string</var> must be a string or bytevector in <acronym>ASCII</acronym>
+encoding; <var>flags</var> must be a fixnum representing matching flags, we
+can use zero for no flags.
+
+        <p>If one or more matches occur return a vector holding pairs describing
+the portions of <var>string</var> that did match; if no match occurs return
+<code>#f</code>; if an error occurs raise an exception with condition
+components: <code>&amp;error</code>, <code>&amp;who</code>, <code>&amp;message</code>,
+<code>&amp;irritants</code>.
+
+        <p>The vector returned in case of success contains pairs: the car being a
+fixnum representing the starting offset of a match substring, the cdr
+being a fixnum representing the ending offset of a match substring.
+
+        <p>The vector element at index 0 represents the portion of
+<var>string</var> which matched the whole regular expression; the vector
+element at index 1 represents the portion of <var>string</var> which
+matched the first parenthetical subexpression, the vector element at
+index 2 represents the portion of <var>string</var> which matched the
+second parenthetical subexpression, and so on.  If <var>string</var> matches:
+the returned vector has at least one element. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>regfree</b><var> regex<a name="index-regfree-2667"></a></var><br>
+<blockquote><p>Interface to the C function <code>regfree()</code>, <a href="../libc/Regexp-Cleanup.html#Regexp-Cleanup">regfree</a>.  Release the resources associated to the compiled regular
+expression <var>regex</var>, which must be a pointer.
+
+        <p>It is safe to apply this function multiple times to the same <var>regex</var>
+pointer object: releasing occurs only if the first time, subsequent
+applications do nothing.  After the resources have been released:
+<var>regex</var> is reset to <code>NULL</code>. 
+</p></blockquote></div>
+
+<!-- page -->
+   </body></html>
+

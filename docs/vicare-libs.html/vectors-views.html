@@ -1,0 +1,173 @@
+<html lang="en">
+<head>
+<title>vectors views - Libraries for Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Libraries for Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="vectors.html#vectors" title="vectors">
+<link rel="prev" href="vectors-convention.html#vectors-convention" title="vectors convention">
+<link rel="next" href="vectors-cons.html#vectors-cons" title="vectors cons">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes the libraries distributed along with version
+0.3d6 of Vicare Scheme, an R6RS compliant native
+compiler for the Scheme language.
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library `(vicare formations)' is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+The documentation of the libraries `(vicare parser-tools silex
+---)' are derived form the documentation of SILex.  Copyright
+(C) 2001, 2009 Danny Dube'.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="vectors-views"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="vectors-cons.html#vectors-cons">vectors cons</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="vectors-convention.html#vectors-convention">vectors convention</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="vectors.html#vectors">vectors</a>
+<hr>
+</div>
+
+<h3 class="section">19.3 Views over vectors</h3>
+
+<p>Vector views are syntactic sugar to allow subvector specification with
+minimum overhead; views make use of auxiliary syntaxes exported by the
+library <code>(vicare containers auxiliary-syntaxes)</code> and reexported by
+<code>(vicare containers vectors)</code>.  Many low level vector functions
+act on subvectors specified with triplets of arguments:
+
+     <ul>
+<li>The full vector.
+
+     <li>The <dfn>start index</dfn>: The index of the first item in the selected
+subvector.
+
+     <li>The <dfn>past index</dfn>: The index of the item past the last item in the
+selected subvector. 
+</ul>
+
+   <p>To select the subvector <code>#(2 3 4)</code> from the vector <code>#(0 1 2 3
+4 5 6)</code> we have to determine the half&ndash;open range of items, which is
+[2, 5), then apply a function to the arguments:
+
+<pre class="example">     (%the-function '#(0 1 2 3 4 5 6) 2 5)
+</pre>
+   <p class="noindent">while to select the whole vector we can do:
+
+<pre class="example">     (%the-function '#(0 1 2 3 4 5 6) 0 7)
+</pre>
+   <p class="noindent">or:
+
+<pre class="example">     (let ((vec '#(0 1 2 3 4 5 6)))
+       (%the-function vec 0 (vector-length vec)))
+</pre>
+   <p>With the vector views implemented by <code>(vicare containers
+vectors)</code>, the low level function is wrapped by a high level syntax which
+can be invoked as:
+
+<pre class="example">     (the-function '#(0 1 2 3 4 5 6 7))
+             ; select the whole vector
+     
+     (the-function (view '#(0 1 2 3 4 5 6 7)))
+             ; select the whole vector
+     
+     (the-function (view '#(0 1 2 3 4 5 6 7)
+                     (start 3)))
+             ; select the subvector [3, 8)
+     
+     (the-function (view '#(0 1 2 3 4 5 6 7)
+                     (start 3)
+                     (past 6)))
+             ; select the subvector [3, 6)
+     
+     (the-function (view '#(0 1 2 3 4 5 6 7)
+                     (past 5)))
+             ; select the subvector [0, 5)
+</pre>
+   <p class="noindent">instead of a triplet of arguments, the vector view is a single argument
+that can be:
+
+     <dl>
+<dt><var>?vector</var><dt><code>(view </code><var>?vector</var><code>)</code><dd>The vector itself or an unquoted list holding the vector itself,
+prefixed by the <code>view</code> auxiliary syntax: it selects the whole
+vector.
+
+     <br><dt><code>(view </code><var>?vector</var><code> (start </code><var>?start-index</var><code>))</code><dd>An unquoted list holding the vector and the start index, with auxiliary
+syntaxes <code>view</code> and <code>start</code>: it selects the subvector from the
+start index to the end.
+
+     <br><dt><code>(view </code><var>?vector</var><code> (past </code><var>?past-index</var><code>))</code><dd>An unquoted list holding the vector and the past index, with auxiliary
+syntaxes <code>view</code> and <code>past</code>: it selects the subvector from zero
+to the selected past index.
+
+     <br><dt><code>(view </code><var>?vector</var><code> (start </code><var>?start-index</var><code>) (past </code><var>?past-index</var><code>))</code><dd>An unquoted list holding the vector, the start index and the past index,
+with auxiliary syntaxes <code>view</code>, <code>start</code> and <code>past</code>: it
+selects the subvector between the start and past indexes. 
+</dl>
+
+<p class="noindent"><var>?vector</var>, <var>?start-index</var> and
+<var>?past-index</var> can be arbitrary Scheme expressions.  High
+level macros accepting two or more subvectors as arguments, support
+vector views for all of them.  When we are concerned with the overhead
+of vector views, we can use the low level functions directly.
+
+   <p>When the start and past index are negative, the <code>view</code> syntax
+normalises them as:
+
+<pre class="example">     (if (negative? <var>idx</var>)
+         (+ <var>idx</var> (vector-length <var>string</var>))
+        <var>idx</var>)
+</pre>
+   <p class="noindent">so that negative indices are counted from the end of the vector:
+-1 selects the ultimate character, -2 selected the
+penultimate character and so on.
+
+   <p>In the following documentation: low level functions and high level
+macros are documented together; only the meaning of arguments to the low
+level function are described, the meaning of high level arguments is
+obvious.
+
+<!-- page -->
+   </body></html>
+

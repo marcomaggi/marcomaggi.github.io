@@ -1,0 +1,902 @@
+<html lang="en">
+<head>
+<title>srfi streams derived - Libraries for Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Libraries for Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="srfi-streams.html#srfi-streams" title="srfi streams">
+<link rel="prev" href="srfi-streams-primitive-example.html#srfi-streams-primitive-example" title="srfi streams primitive example">
+<link rel="next" href="srfi-streams-utilities.html#srfi-streams-utilities" title="srfi streams utilities">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes the libraries distributed along with version
+0.3d6 of Vicare Scheme, an R6RS compliant native
+compiler for the Scheme language.
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library `(vicare formations)' is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+The documentation of the libraries `(vicare parser-tools silex
+---)' are derived form the documentation of SILex.  Copyright
+(C) 2001, 2009 Danny Dube'.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="srfi-streams-derived"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="srfi-streams-utilities.html#srfi-streams-utilities">srfi streams utilities</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="srfi-streams-primitive-example.html#srfi-streams-primitive-example">srfi streams primitive example</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="srfi-streams.html#srfi-streams">srfi streams</a>
+<hr>
+</div>
+
+<h4 class="subsection">2.21.6 The <code>(streams derived)</code> library</h4>
+
+<p><a name="index-g_t_0040srfi_007b_007d-streams-derived-library-1159"></a>
+
+   <p>The <code>(streams derived)</code> library provides useful procedures and
+syntax that depend on the primitives defined in <a href="srfi-streams-primitive.html#srfi-streams-primitive">srfi streams primitive</a>.
+
+<div class="defun">
+&mdash; Syntax: <b>define-stream</b> (<var>name args</var>)<var> . body<a name="index-define_002dstream-1160"></a></var><br>
+<blockquote><p>Create a procedure that returns a <code>stream</code>, and may appear anywhere
+a normal <code>define</code> may appear, including as an internal definition,
+and may have internal definitions of its own, including other
+<code>define-streams</code>.  The defined procedure takes arguments in the
+same way as <code>stream-lambda</code>.
+
+        <p><code>define-stream</code> is syntactic sugar on <code>stream-lambda</code>; see
+also <code>stream-let</code>, which is also a sugaring of
+<code>stream-lambda</code>.
+
+        <p>The following example is a simple version of <code>stream-map</code> that
+takes only a single input stream calls itself recursively:
+
+     <pre class="example">          (define-stream (stream-map proc strm)
+            (if (stream-null? strm)
+                stream-null
+                (stream-cons
+                  (proc (stream-car strm))
+                  (stream-map proc (stream-cdr strm))))))
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>list-&gt;stream</b><var> list-of-objects<a name="index-list_002d_003estream-1161"></a></var><br>
+<blockquote><p>Return a newly&ndash;allocated <code>stream</code> containing in its elements the
+objects in the list.  Since the objects are given in a list, they are
+evaluated when <code>list-&gt;stream</code> is called, before the <code>stream</code>
+is created.  If the list of objects is null, as in <code>(list-&gt;stream
+'())</code>, the null <code>stream</code> is returned.  See also <code>stream</code>.
+
+        <p>Example:
+
+     <pre class="example">          (define strm123 (list-&gt;stream '(1 2 3)))
+          
+          ; fails with divide-by-zero error
+          (define s (list-&gt;stream (list 1 (/ 1 0) -1)))
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>port-&gt;stream</b> [<var>port</var>]<var><a name="index-port_002d_003estream-1162"></a></var><br>
+<blockquote><p>Return a newly&ndash;allocated <code>stream</code> containing in its elements the
+characters on the <var>port</var>.  If <var>port</var> is not given it defaults to
+the current input port.  The returned <code>stream</code> has finite length
+and is terminated by <code>stream-null</code>.
+
+        <p>It looks like one use of <code>port-&gt;stream</code> would be this:
+
+     <pre class="example">          (define s ;wrong!
+            (with-input-from-file filename
+              (lambda () (port-&gt;stream))))
+</pre>
+        <p class="noindent">but that fails, because <code>with-input-from-file</code> is eager, and closes
+the input port prematurely, before the first character is read.  To read
+a file into a stream, use:
+
+     <pre class="example">          (define-stream (file-&gt;stream filename)
+            (let ((p (open-input-file filename)))
+              (stream-let loop ((c (read-char p)))
+                (if (eof-object? c)
+                    (begin (close-input-port p)
+                           stream-null)
+                    (stream-cons c
+                      (loop (read-char p)))))))
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>stream</b><var> object ...<a name="index-stream-1163"></a></var><br>
+<blockquote><p>Take zero or more objects and create a newly&ndash;allocated <code>stream</code>
+containing in its elements the objects, in order.  Since <code>stream</code>
+is syntactic, the objects are evaluated when they are accessed, not when
+the <code>stream</code> is created.  If no objects are given, as in
+<code>(stream)</code>, the null stream is returned.  See also
+<code>list-&gt;stream</code>.
+
+        <p>Example:
+
+     <pre class="example">          (define strm123 (stream 1 2 3))
+          
+          ; (/ 1 0) not evaluated when stream is created
+          (define s (stream 1 (/ 1 0) -1))
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>stream-&gt;list</b> [<var>n</var>]<var> stream<a name="index-stream_002d_003elist-1164"></a></var><br>
+<blockquote><p>Take a natural number <var>n</var> and a <var>stream</var> and return a
+newly&ndash;allocated list containing in its elements the first  items
+in the <var>stream</var>.  If the <var>stream</var> has less than <var>n</var> items
+all the items in the <var>stream</var> will be included in the returned list. 
+If <var>n</var> is not given it defaults to infinity, which means that unless
+<var>stream</var> is finite <code>stream-&gt;list</code> will never return.
+
+        <p>Example:
+
+     <pre class="example">          (stream-&gt;list 10
+            (stream-map (lambda (x) (* x x))
+              (stream-from 0)))
+            =&gt; (0 1 4 9 16 25 36 49 64 81)
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>stream-append</b><var> stream ...<a name="index-stream_002dappend-1165"></a></var><br>
+<blockquote><p>Return a newly&ndash;allocated <code>stream</code> containing in its elements those
+elements contained in its input streams, in order of input.  If any of
+the input streams is infinite, no elements of any of the succeeding
+input streams will appear in the output stream; thus, if <var>x</var> is
+infinite, <code>(stream-append x y)</code> is identical to <var>x</var>.  See also
+<code>stream-concat</code>.
+
+        <p>Example: quicksort can be used to sort a <code>stream</code>, using
+<code>stream-append</code> to build the output; the sort is lazy; so if only
+the beginning of the output stream is needed, the end of the stream is
+never sorted.
+
+     <pre class="example">          (define-stream (qsort lt? strm)
+            (if (stream-null? strm)
+                stream-null
+                (let ((x (stream-car strm))
+                      (xs (stream-cdr strm)))
+                  (stream-append
+                    (qsort lt?
+                      (stream-filter
+                        (lambda (u) (lt? u x))
+                        xs))
+                    (stream x)
+                    (qsort lt?
+                      (stream-filter
+                        (lambda (u) (not (lt? u x)))
+                        xs))))))
+</pre>
+        <p>Note also that, when used in tail position as in <code>qsort</code>,
+<code>stream-append</code> does not suffer the poor performance of
+<code>append</code> on lists.  The list version of <code>append</code> requires
+re&ndash;traversal of all its list arguments except the last each time it is
+called.  But <code>stream-append</code> is different.  Each recursive call to
+<code>stream-append</code> is suspended; when it is later forced, the
+preceding elements of the result have already been traversed, so
+tail&ndash;recursive loops that produce streams are efficient even when each
+element is appended to the end of the result stream.  This also implies
+that during traversal of the result only one promise needs to be kept in
+memory at a time. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>stream-concat</b><var> stream<a name="index-stream_002dconcat-1166"></a></var><br>
+<blockquote><p>Take a <var>stream</var> consisting of one or more streams and return a
+newly&ndash;allocated stream containing all the elements of the input
+streams.  If any of the streams in the input stream is infinite, any
+remaining streams in the input stream will never appear in the output
+stream.  See also <code>stream-append</code>.
+
+        <p>Example:
+
+     <pre class="example">          (stream-&gt;list
+            (stream-concat
+              (stream
+                (stream 1 2) (stream) (stream 3 2 1))))
+            =&gt; (1 2 3 2 1)
+</pre>
+        <p>Example: the permutations of a finite stream can be determined by
+interleaving each element of the stream in all possible positions within
+each permutation of the other elements of the stream; <code>interleave</code>
+returns a stream of streams with <var>x</var> inserted in each possible
+position of <var>yy</var>:
+
+     <pre class="example">          (define-stream (interleave x yy)
+            (stream-match yy
+              [() (stream (stream x))]
+              [(y .  ys)
+                (stream-append
+                  (stream (stream-cons x yy))
+                  (stream-map
+                    (lambda (z) (stream-cons y z))
+                    (interleave x ys)))]))
+          
+          (define-stream (perms xs)
+            (if (stream-null? xs)
+                (stream (stream))
+                (stream-concat
+                  (stream-map
+                    (lambda (ys)
+                      (interleave (stream-car xs) ys))
+                    (perms (stream-cdr xs))))))
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>stream-constant</b><var> object ...<a name="index-stream_002dconstant-1167"></a></var><br>
+<blockquote><p>Take one or more objects and return a newly&ndash;allocated <code>stream</code>
+containing in its elements the objects, repeating the objects in
+succession forever.
+
+        <p>Example:
+
+     <pre class="example">          (stream-constant 1) =&gt; 1 1 1 ...
+          
+          (stream-constant #t #f) =&gt; #t #f #t #f #t #f ...
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>stream-drop</b><var> n stream<a name="index-stream_002ddrop-1168"></a></var><br>
+<blockquote><p>Return the suffix of the input stream that starts at the next element
+after the first <var>n</var> elements.  The output stream shares structure
+with the input stream; thus, promises forced in one instance of the
+stream are also forced in the other instance of the stream.  If the
+input stream has less than <var>n</var> elements, <code>stream-drop</code> returns
+the null stream.  See also <code>stream-take</code>.
+
+        <p>Example:
+
+     <pre class="example">          (define (stream-split n strm)
+            (values (stream-take n strm)
+                    (stream-drop n strm)))
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>stream-drop-while</b><var> pred? stream<a name="index-stream_002ddrop_002dwhile-1169"></a></var><br>
+<blockquote><p>Return the suffix of the input stream that starts at the first element
+<var>x</var> for which <code>(pred? x)</code> is <code>#f</code>.  The output stream
+shares structure with the input stream.  See also
+<code>stream-take-while</code>.
+
+        <p>Example: <code>stream-unique</code> creates a new stream that retains only the
+first of any sub&ndash;sequences of repeated elements.
+
+     <pre class="example">          (define-stream (stream-unique eql? strm)
+            (if (stream-null? strm)
+                stream-null
+                (stream-cons (stream-car strm)
+                  (stream-unique eql?
+                    (stream-drop-while
+                      (lambda (x)
+                        (eql? (stream-car strm) x))
+                      strm)))))
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>stream-filter</b><var> pred? stream<a name="index-stream_002dfilter-1170"></a></var><br>
+<blockquote><p>Return a newly&ndash;allocated stream that contains only those elements
+<var>x</var> of the input stream for which <code>(pred? x)</code> is non&ndash;<code>#f</code>.
+
+        <p>Example:
+
+     <pre class="example">          (stream-filter odd? (stream-from 0))
+             =&gt; 1 3 5 7 9 ...
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>stream-fold</b><var> proc base stream<a name="index-stream_002dfold-1171"></a></var><br>
+<blockquote><p>Apply a binary procedure to <var>base</var> and the first element of
+<var>stream</var> to compute a new base, then apply the procedure to the new
+base and the next element of <var>stream</var> to compute a succeeding base,
+and so on, accumulating a value that is finally returned as the value of
+<code>stream-fold</code> when the end of the <var>stream</var> is reached.
+
+        <p><var>stream</var> must be finite, or <code>stream-fold</code> will enter an
+infinite loop.  See also <code>stream-scan</code>, which is similar to
+<code>stream-fold</code>, but useful for infinite streams.
+
+        <p>For readers familiar with other functional languages, this is a
+left&ndash;fold; there is no corresponding right&ndash;fold, since right&ndash;fold
+relies on finite streams that are fully&ndash;evaluated, at which time they
+may as well be converted to a list.
+
+        <p>Example: <code>stream-fold</code> is often used to summarize a stream in a
+single value, for instance, to compute the maximum element of a stream.
+
+     <pre class="example">          (define (stream-maximum lt? strm)
+            (stream-fold
+              (lambda (x y) (if (lt? x y) y x))
+              (stream-car strm)
+              (stream-cdr strm)))
+</pre>
+        <p>Example: sometimes, it is useful to have <code>stream-fold</code> defined only
+on non&ndash;null streams:
+
+     <pre class="example">          (define (stream-fold-one proc strm)
+            (stream-fold proc
+              (stream-car strm)
+              (stream-cdr strm)))
+</pre>
+        <p class="noindent"><code>stream-minimum</code> can then be defined as:
+
+     <pre class="example">          (define (stream-minimum lt? strm)
+            (stream-fold-one
+              (lambda (x y) (if (lt? x y) x y))
+              strm))
+</pre>
+        <p>Example: <code>stream-fold</code> can also be used to build a stream:
+
+     <pre class="example">          (define-stream (isort lt? strm)
+              (define-stream (insert strm x)
+                (stream-match strm
+                  [() (stream x)]
+                  [(y .  ys)
+                    (if (lt? y x)
+                        (stream-cons y (insert ys x))
+                        (stream-cons x strm))]))
+              (stream-fold insert stream-null strm))
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>stream-for-each</b><var> proc stream ...<a name="index-stream_002dfor_002deach-1172"></a></var><br>
+<blockquote><p>Apply a procedure element&ndash;wise to corresponding elements of the input
+streams for its side&ndash;effects; return nothing.  <code>stream-for-each</code>
+stops as soon as any of its input streams is exhausted.
+
+        <p>Example: the following procedure displays the contents of a file:
+
+     <pre class="example">          (define (display-file filename)
+            (stream-for-each display
+              (file-&gt;stream filename)))
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>stream-from</b><var> first </var>[<var>step</var>]<var><a name="index-stream_002dfrom-1173"></a></var><br>
+<blockquote><p>Create a newly&ndash;allocated stream that contains <var>first</var> as its first
+element and increments each succeeding element by <var>step</var>.  If
+<var>step</var> is not given it defaults to <code>1</code>.  <var>first</var> and
+<var>step</var> may be of any numeric type.  <code>stream-from</code> is frequently
+useful as a generator in <code>stream-of</code> expressions.  See also
+<code>stream-range</code> for a similar procedure that creates finite streams.
+
+        <p><code>stream-from</code> could be implemented as:
+
+     <pre class="example">          (stream-iterate (lambda (x) (+ x step)) first)
+</pre>
+        <p>Example:
+
+     <pre class="example">          (define nats (stream-from 0)) =&gt; 0 1 2 ...
+          (define odds (stream-from 1 2)) =&gt; 1 3 5 ...
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>stream-iterate</b><var> proc base<a name="index-stream_002diterate-1174"></a></var><br>
+<blockquote><p>Create a newly&ndash;allocated stream containing <var>base</var> in its first
+element and apply <var>proc</var> to each element in turn to determine the
+succeeding element.  See also <code>stream-unfold</code> and
+<code>stream-unfolds</code>.
+
+        <p>Examples:
+
+     <pre class="example">          (stream-iterate (lambda (x) (+ x 1)) 0)
+            =&gt; 0 1 2 3 4 ...
+          
+          (stream-iterate (lambda (x) (* x 2)) 1)
+            =&gt; 1 2 4 8 16 ...
+</pre>
+        <p>Given a seed between 0 and 232, exclusive, the following expression
+creates a stream of pseudo&ndash;random integers between 0 and 232,
+exclusive, beginning with seed, using the method described by Stephen
+Park and Keith Miller:
+
+     <pre class="example">          (stream-iterate
+            (lambda (x) (modulo (* x 16807) 2147483647))
+            seed)
+</pre>
+        <p>Example: successive of the following stream approach the value of the
+&ldquo;golden ratio&rdquo; 1.618...:
+
+     <pre class="example">          (stream-iterate (lambda (x) (+ 1 (/ x))) 1)
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>stream-length</b><var> stream<a name="index-stream_002dlength-1175"></a></var><br>
+<blockquote><p>Take an input stream and return the number of elements in the stream; it
+does not evaluate its elements.  <code>stream-length</code> may only be used
+on finite streams; it enters an infinite loop with infinite streams.
+
+        <p>Example:
+
+     <pre class="example">          (stream-length strm123) =&gt; 3
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>stream-let</b><var> tag </var>((<var>var expr</var>)<var> ...</var>)<var> body<a name="index-stream_002dlet-1176"></a></var><br>
+<blockquote><p>Create a local scope that binds each variable to the value of its
+corresponding expression.  Additionally bind <var>tag</var> to a procedure
+which takes the bound variables as arguments and <var>body</var> as its
+defining expressions, binding the tag with <code>stream-lambda</code>. 
+<var>tag</var> is in scope within <var>body</var>, and may be called recursively.
+
+        <p>When the expanded expression defined by <code>stream-let</code> is evaluated,
+<code>stream-let</code> evaluates the expressions in its body in an
+environment containing the newly&ndash;bound variables, returning the value
+of the last expression evaluated, which must yield a stream.
+
+        <p><code>stream-let</code> provides syntactic sugar on <code>stream-lambda</code>, in
+the same manner as normal <code>let</code> provides syntactic sugar on normal
+<code>lambda</code>.  However, unlike normal <code>let</code>, the <var>tag</var> is
+required, not optional, because unnamed <code>stream-let</code> is
+meaningless.
+
+        <p>Example: <code>stream-member</code> returns the first <code>stream-pair</code> of
+the input <var>strm</var> with a <code>stream-car</code> <var>x</var> that satisfies
+<code>(eql? obj x)</code>, or the null stream if <var>x</var> is not present in
+<var>strm</var>.
+
+     <pre class="example">          (define-stream (stream-member eql? obj strm)
+            (stream-let loop ((strm strm))
+              (cond [(stream-null? strm) strm]
+                    [(eql? obj (stream-car strm)) strm]
+                    [else (loop (stream-cdr strm))])))
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>stream-map</b><var> proc stream ...<a name="index-stream_002dmap-1177"></a></var><br>
+<blockquote><p>Apply a procedure element&ndash;wise to corresponding elements of the input
+streams, returning a newly&ndash;allocated stream containing elements that
+are the results of those procedure applications.  The output stream has
+as many elements as the minimum&ndash;length input stream, and may be
+infinite.
+
+        <p>Example:
+
+     <pre class="example">          (define (square x) (* x x))
+          
+          (stream-map square (stream 9 3)) =&gt; 81 9
+          
+          (define (sigma f m n)
+            (stream-fold + 0
+              (stream-map f (stream-range m (+ n 1)))))
+          
+          (sigma square 1 100) =&gt; 338350
+</pre>
+        <p>In some functional languages, <code>stream-map</code> takes only a single
+input stream, and <code>stream-zipwith</code> provides a companion function
+that takes multiple input streams. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>stream-match</b><var> stream clause ...<a name="index-stream_002dmatch-1178"></a></var><br>
+<blockquote><p>Provide the syntax of pattern&ndash;matching for streams.  The input
+<var>stream</var> is an expression that evaluates to a stream.  <var>clause</var>
+arguments are of the form <code>(pattern [fender] expr)</code>, consisting of
+a pattern that matches a stream of a particular shape, an optional
+fender that must succeed if the pattern is to match, and an expression
+that is evaluated if the pattern matches.  There are four types of
+patterns:
+
+          <dl>
+<dt><code>()</code><dd>matches the null stream;
+
+          <br><dt><code>(pat0 pat1 ...)</code><dd>matches a finite stream with length exactly equal to the number of
+pattern elements;
+
+          <br><dt><code>(pat0 pat1 ...  . patrest)</code><dd>matches an infinite stream, or a finite stream with length at least as
+great as the number of pattern elements before the literal dot;
+
+          <br><dt><code>pat</code><dd>matches an entire stream; should always appear last in the list of
+nclauses; it's not an error to appear elsewhere, but subsequent clauses
+could never match. 
+</dl>
+
+        <p>Each pattern element <var>pati</var> may be either:
+
+          <dl>
+<dt><em>an identifier</em><dd>matches any stream element; additionally, the value of the stream
+element is bound to the variable named by the identifier, which is in
+scope in the fender and expression of the corresponding clause; each
+identifier in a single pattern must be unique;
+
+          <br><dt><em>a literal underscore</em><dd>matches any stream element, but creates no bindings. 
+</dl>
+
+        <p>The patterns are tested in order, left&ndash;to&ndash;right, until a matching
+pattern is found; if <var>fender</var> is present, it must evaluate as
+non&ndash;<code>#f</code> for the match to be successful.  Pattern variables are
+bound in the corresponding fender and expression.  Once the matching
+pattern is found, the corresponding expression is evaluated and returned
+as the result of the match.  An error is signaled if no pattern matches
+the input stream.
+
+        <p><code>stream-match</code> is often used to distinguish null streams from
+non&ndash;null streams, binding head and tail:
+
+     <pre class="example">          (define (len strm)
+            (stream-match strm
+              [() 0]
+              [(head .  tail) (+ 1 (len tail))]))
+</pre>
+        <p>Fenders can test the common case where two stream elements must be
+identical; the else pattern is an identifier bound to the entire stream,
+not a keyword as in <code>cond</code>.
+
+     <pre class="example">          (stream-match strm
+            [(x y .  _) (equal? x y) 'ok]
+            [else 'error])
+</pre>
+        <p>A more complex example uses two nested matchers to match two different
+stream arguments; <code>(stream-merge lt? .  strms)</code> stably merges two
+or more streams ordered by the <var>lt?</var> predicate:
+
+     <pre class="example">          (define-stream (stream-merge lt? .  strms)
+            (define-stream (merge xx yy)
+              (stream-match xx (() yy) ((x .  xs)
+                (stream-match yy (() xx) ((y .  ys)
+                  (if (lt? y x)
+                      (stream-cons y (merge xx ys))
+                    (stream-cons x (merge xs yy))))))))
+            (stream-let loop ((strms strms))
+              (cond [(null? strms) stream-null]
+                    [(null? (cdr strms)) (car strms)]
+                    [else (merge (car strms)
+                                 (apply stream-merge lt?
+                                   (cdr strms)))])))
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>stream-of</b><var> expr clause ...<a name="index-stream_002dof-1179"></a></var><br>
+<blockquote><p>Provide the syntax of stream comprehensions, which generate streams by
+means of looping expressions.  The result is a stream of objects of the
+type returned by <var>expr</var>.  There are four types of <var>clause</var>
+arguments:
+
+          <dl>
+<dt><code>(var in stream-expr)</code><dd>loop over the elements of <var>stream-expr</var>, in order from the start of
+the stream, binding each element of the stream in turn to <var>var</var>. 
+<code>stream-from</code> and <code>stream-range</code> are frequently useful as
+generators for <var>stream-expr</var>;
+
+          <br><dt><code>(var is expr)</code><dd>bind <var>var</var> to the value obtained by evaluating <var>expr</var>;
+
+          <br><dt><code>(pred? expr)</code><dd>include in the output stream only those elements <var>x</var> for which
+<code>(pred? x)</code> is non&ndash;<code>#f</code>. 
+</dl>
+
+        <p>The scope of variables bound in the stream comprehension is the clauses
+to the right of the binding clause (but not the binding clause itself)
+plus the result expression.
+
+        <p>When two or more generators are present, the loops are processed as if
+they are nested from left to right; that is, the rightmost generator
+varies fastest.  A consequence of this is that only the first generator
+may be infinite and all subsequent generators must be finite.  If no
+generators are present, the result of a stream comprehension is a stream
+containing the result expression; thus, <code>(stream-of 1)</code> produces a
+finite stream containing only the element <code>1</code>.
+
+     <pre class="example">          (stream-of (* x x)
+            (x in (stream-range 0 10))
+            (even? x))
+            =&gt; 0 4 16 36 64
+          
+          (stream-of (list a b)
+            (a in (stream-range 1 4))
+            (b in (stream-range 1 3)))
+            =&gt; (1 1) (1 2) (2 1) (2 2) (3 1) (3 2)
+          
+          (stream-of (list i j)
+            (i in (stream-range 1 5))
+            (j in (stream-range (+ i 1) 5)))
+            =&gt; (1 2) (1 3) (1 4) (2 3) (2 4) (3 4)
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>stream-range</b><var> first past </var>[<var>step</var>]<var><a name="index-stream_002drange-1180"></a></var><br>
+<blockquote><p>Create a newly&ndash;allocated stream that contains <var>first</var> as its first
+element and increments each succeeding element by <var>step</var>.  The
+stream is finite and ends before <var>past</var>, which is not an element of
+the stream.  If <var>step</var> is not given it defaults to <code>1</code> if
+<var>first</var> is less than <var>past</var> and <code>-1</code> otherwise.
+
+        <p><var>first</var>, <var>past</var> and <var>step</var> may be of any numeric type.
+
+        <p><code>stream-range</code> is frequently useful as a generator in
+<code>stream-of</code> expressions.  See also <code>stream-from</code> for a similar
+procedure that creates infinite streams.
+
+        <p>Examples:
+
+     <pre class="example">          (stream-range 0 10)     =&gt; 0 1 2 3 4 5 6 7 8 9
+          (stream-range 0 10 2)   =&gt; 0 2 4 6 8
+</pre>
+        <p>Successive elements of the stream are calculated by adding <var>step</var> to
+<var>first</var>, so if any of <var>first</var>, <var>past</var> or <var>step</var> are
+inexact, the length of the output stream may differ from:
+
+     <pre class="example">          (ceiling (- (/ (- past first) step) 1)
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>stream-ref</b><var> stream n<a name="index-stream_002dref-1181"></a></var><br>
+<blockquote><p>Return the <var>n</var>-th element of <var>stream</var>, counting from zero.  An
+error is signaled if <var>n</var> is greater than or equal to the length of
+<var>stream</var>.
+
+        <p>Example:
+
+     <pre class="example">          (define (fact n)
+            (stream-ref
+              (stream-scan * 1 (stream-from 1))
+              n))
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>stream-reverse</b><var> stream<a name="index-stream_002dreverse-1182"></a></var><br>
+<blockquote><p>Return a newly&ndash;allocated stream containing the elements of the input
+<var>stream</var> but in reverse order.  <code>stream-reverse</code> may only be
+used with finite streams; it enters an infinite loop with infinite
+streams.  <code>stream-reverse</code> does not force evaluation of the
+elements of the stream.
+
+     <pre class="example">          (define s (stream 1 (/ 1 0) -1))
+          (define r (stream-reverse s))
+          (stream-ref r 0)
+          (stream-ref r 2)        =&gt; 1
+          (stream-ref r 1)        =&gt; error: division by zero
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>stream-scan</b><var> proc base stream<a name="index-stream_002dscan-1183"></a></var><br>
+<blockquote><p>Accumulate the partial folds of an input <var>stream</var> into a
+newly&ndash;allocated output stream.  The output stream is the <var>base</var>
+followed by:
+
+     <pre class="example">          (stream-fold proc base (stream-take i stream))
+</pre>
+        <p class="noindent">for each of the first i elements of <var>stream</var>.
+
+        <p>Examples:
+
+     <pre class="example">          (stream-scan + 0 (stream-from 1))
+            =&gt; (stream 0 1 3 6 10 15 ...)
+          
+          (stream-scan * 1 (stream-from 1))
+            =&gt; (stream 1 1 2 6 24 120 ...)
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>stream-take</b><var> n stream<a name="index-stream_002dtake-1184"></a></var><br>
+<blockquote><p>Take a non&ndash;negative integer <var>n</var> and a <var>stream</var> and return a
+newly&ndash;allocated stream containing the first <var>f</var>n elements of the
+input stream.  If the input stream has less than <var>n</var> elements, so
+does the output stream.  See also <code>stream-drop</code>.
+
+        <p>Example: <code>merge-sort</code> splits a stream into two equal&ndash;length
+pieces, sorts them recursively and merges the results:
+
+     <pre class="example">          (define-stream (merge-sort lt? strm)
+            (let* ([n     (quotient (stream-length strm) 2)]
+                   [ts    (stream-take n strm)]
+                   [ds    (stream-drop n strm)])
+              (if (zero? n)
+                  strm
+                (stream-merge lt? (msort &lt; ts) (msort &lt; ds)))))
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>stream-take-while</b><var> pred? stream<a name="index-stream_002dtake_002dwhile-1185"></a></var><br>
+<blockquote><p>Take a predicate and a stream and return a newly&ndash;allocated stream
+containing those elements <var>x</var> that form the maximal prefix of the
+input stream for which <code>(pred? x)</code> is non&ndash;<code>#f</code>.  See also
+<code>stream-drop-while</code>.
+
+     <pre class="example">          (stream-car
+            (stream-reverse
+              (stream-take-while
+                (lambda (x) (&lt; x 1000))
+                primes)))
+            =&gt; 997
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>stream-unfold</b><var> map pred? gen base<a name="index-stream_002dunfold-1186"></a></var><br>
+<blockquote><p><code>stream-unfold</code> is the fundamental recursive stream constructor. 
+It constructs a stream by repeatedly applying <var>gen</var> to successive
+values of <var>base</var>, in the manner of <code>stream-iterate</code>, then
+applying <var>map</var> to each of the values so generated, appending each of
+the mapped values to the output stream as long as <code>(pred? base)</code> is
+non&ndash;<code>#f</code>.  See also <code>stream-iterate</code> and
+<code>stream-unfolds</code>.
+
+        <p>Example: the expression below creates the finite stream:
+
+     <pre class="example">          0 1 4 9 16 25 36 49 64 81
+</pre>
+        <p class="noindent">initially the base is <code>0</code>, which is less than <code>10</code>, so
+<var>map</var> squares the base and the mapped value becomes the first
+element of the output stream; then <var>gen</var> increments the base by
+<code>1</code>, so it becomes <code>1</code>; this is less than <code>10</code>, so
+<var>map</var> squares the new base and <code>1</code> becomes the second element
+of the output stream; and so on, until the base becomes <code>10</code>, when
+<var>pred?</var>  stops the recursion and <code>stream-null</code> ends the output
+stream.
+
+     <pre class="example">          (stream-unfold
+            (lambda (x) (expt x 2)) ; map
+            (lambda (x) (&lt; x 10))   ; pred?
+            (lambda (x) (+ x 1))    ; gen
+            0)                      ; base
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>stream-unfolds</b><var> proc seed<a name="index-stream_002dunfolds-1187"></a></var><br>
+<blockquote><p>Return <var>n</var> newly&ndash;allocated streams containing those elements
+produced by successive calls to the generator <var>proc</var>, which takes
+the current <var>seed</var> as its argument and returns <code>n+1</code> values:
+
+     <pre class="example">          (proc seed) -&gt; seed result0 ...  resultn-1
+</pre>
+        <p class="noindent">where the returned <var>seed</var> is the input <var>seed</var> to the next call
+to the generator and <var>resulti</var> indicates how to produce the next
+element of the ith result stream:
+
+          <dl>
+<dt><code>(value)</code><dd><var>value</var> is the next car of the result stream;
+
+          <br><dt><code>#f</code><dd>no value produced by this iteration of the generator <var>proc</var> for the
+result stream;
+
+          <br><dt><code>()</code><dd>the end of the result stream. 
+</dl>
+
+        <p>It may require multiple calls of <var>proc</var> to produce the next element
+of any particular result stream.  See also <code>stream-iterate</code> and
+<code>stream-unfold</code>.
+
+        <p><code>stream-unfolds</code> is especially useful when writing expressions that
+return multiple streams.  For instance, <code>(stream-partition pred? 
+strm)</code> is equivalent to:
+
+     <pre class="example">          (values
+            (stream-filter pred? strm)
+            (stream-filter
+              (lambda (x) (not (pred? x))) strm))
+</pre>
+        <p class="noindent">but only tests <code>pred?</code> once for each element of <var>strm</var>.
+
+        <p>Example:
+
+     <pre class="example">          (define (stream-partition pred? strm)
+            (stream-unfolds
+              (lambda (s)
+                (if (stream-null? s)
+                    (values s '() '())
+                  (let ([a (stream-car s)]
+                        [d (stream-cdr s)])
+                    (if (pred? a)
+                        (values d (list a) #f)
+                      (values d #f (list a))))))
+              strm))
+          
+          (call-with-values
+            (lambda ()
+              (stream-partition odd?
+                (stream-range 1 6)))
+            (lambda (odds evens)
+              (list (stream-&gt;list odds)
+                    (stream-&gt;list evens))))
+            =&gt; ((1 3 5) (2 4))
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>stream-zip</b><var> stream ...<a name="index-stream_002dzip-1188"></a></var><br>
+<blockquote><p>Take one or more input streams and return a newly&ndash;allocated stream in
+which each element is a list (not a stream) of the corresponding
+elements of the input streams.  The output stream is as long as the
+shortest input stream, if any of the input streams is finite, or is
+infinite if all the input streams are infinite.
+
+        <p>A common use of <code>stream-zip</code> is to add an index to a stream, as in:
+
+     <pre class="example">          (stream-finds eql? obj strm)
+</pre>
+        <p class="noindent">which returns all the zero&ndash;based indices in <var>strm</var> at which
+<var>obj</var> appears; <code>(stream-find eql? obj strm)</code> returns the first
+such index, or <code>#f</code> if <var>obj</var> is not in <var>strm</var>.
+
+     <pre class="example">          (define-stream (stream-finds eql? obj strm)
+            (stream-of (car x)
+              (x in (stream-zip (stream-from 0) strm))
+              (eql? obj (cadr x))))
+          
+          (define (stream-find eql? obj strm)
+            (stream-car
+              (stream-append
+                (stream-finds eql? obj strm)
+                (stream #f))))
+          
+          (stream-find char=? #\l
+            (list-&gt;stream
+              (string-&gt;list "hello")))
+            =&gt; 2
+          
+          (stream-find char=? #\l
+            (list-&gt;stream
+              (string-&gt;list "goodbye")))
+            =&gt; #f
+</pre>
+        <p><code>stream-find</code> is not as inefficient as it looks; although it calls
+<code>stream-finds</code>, which finds all matching indices, the matches are
+computed lazily, and only the first match is needed for
+<code>stream-find</code>. 
+</p></blockquote></div>
+
+<!-- page -->
+   </body></html>
+

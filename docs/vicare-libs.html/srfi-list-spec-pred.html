@@ -1,0 +1,204 @@
+<html lang="en">
+<head>
+<title>srfi list spec pred - Libraries for Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Libraries for Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="srfi-list-spec.html#srfi-list-spec" title="srfi list spec">
+<link rel="prev" href="srfi-list-spec-cons.html#srfi-list-spec-cons" title="srfi list spec cons">
+<link rel="next" href="srfi-list-spec-select.html#srfi-list-spec-select" title="srfi list spec select">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes the libraries distributed along with version
+0.3d6 of Vicare Scheme, an R6RS compliant native
+compiler for the Scheme language.
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library `(vicare formations)' is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+The documentation of the libraries `(vicare parser-tools silex
+---)' are derived form the documentation of SILex.  Copyright
+(C) 2001, 2009 Danny Dube'.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="srfi-list-spec-pred"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="srfi-list-spec-select.html#srfi-list-spec-select">srfi list spec select</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="srfi-list-spec-cons.html#srfi-list-spec-cons">srfi list spec cons</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="srfi-list-spec.html#srfi-list-spec">srfi list spec</a>
+<hr>
+</div>
+
+<h5 class="subsubsection">2.2.5.3 Predicates</h5>
+
+<p><a name="index-List-predicates-434"></a>
+
+   <p>Note: the predicates <code>proper-list?</code>, <code>circular-list?</code>, and
+<code>dotted-list?</code> partition the entire universe of Scheme values.
+
+<div class="defun">
+&mdash; Function: <b>proper-list?</b><var> x<a name="index-proper_002dlist_003f-435"></a></var><br>
+<blockquote><p>Return true if, and only if, <var>x</var> is a proper list: a finite,
+nil&ndash;terminated list.  More carefully: The empty list is a proper list. 
+A pair whose cdr is a proper list is also a proper list:
+
+     <pre class="example">          &lt;proper-list&gt; ::= ()                            (Empty proper list)
+                        |   (cons &lt;x&gt; &lt;proper-list&gt;)      (Proper-list pair)
+</pre>
+        <p>Note that this definition rules out circular lists.  This function is
+required to detect this case and return false.
+
+        <p>Nil&ndash;terminated lists are called &ldquo;proper&rdquo; lists by <acronym>R5RS</acronym> and Common
+Lisp.  The opposite of proper is improper.
+
+        <p><acronym>R5RS</acronym> binds this function to the variable <code>list?</code>.
+
+     <pre class="example">          (not (proper-list? x)) = (or (dotted-list? x) (circular-list? x))
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>circular-list?</b><var> x<a name="index-circular_002dlist_003f-436"></a></var><br>
+<blockquote><p>True if <var>x</var> is a circular list.  A circular list is a value such
+that for every <code>n &gt;= 0</code>, <code>cdrn(x)</code> is a pair.
+
+        <p>Terminology: The opposite of circular is finite.
+
+     <pre class="example">          (not (circular-list? x)) = (or (proper-list? x) (dotted-list? x))
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>dotted-list?</b><var> x<a name="index-dotted_002dlist_003f-437"></a></var><br>
+<blockquote><p>True if <var>x</var> is a finite, non&ndash;nil&ndash;terminated list.  That is, there
+exists an <code>n &gt;= 0</code> such that <code>cdrn(x)</code> is neither a pair nor
+<code>()</code>.  This includes non&ndash;pair, non&ndash;<code>()</code> values
+(e.g. symbols, numbers), which are considered to be dotted lists of
+length 0.
+
+     <pre class="example">          (not (dotted-list? x)) = (or (proper-list? x) (circular-list? x))
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>pair?</b><var> object<a name="index-pair_003f-438"></a></var><br>
+<blockquote><p><acronym>R5RS</acronym> Return <code>#t</code> if object is a pair; otherwise <code>#f</code>.
+
+     <pre class="example">          (pair? '(a . b)) =&gt;  #t
+          (pair? '(a b c)) =&gt;  #t
+          (pair? '())      =&gt;  #f
+          (pair? '#(a b))  =&gt;  #f
+          (pair? 7)        =&gt;  #f
+          (pair? 'a)       =&gt;  #f
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>null?</b><var> object<a name="index-null_003f-439"></a></var><br>
+<blockquote><p><acronym>R5RS</acronym> Return <code>#t</code>t if object is the empty list; otherwise
+<code>#f</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>null-list?</b><var> list<a name="index-null_002dlist_003f-440"></a></var><br>
+<blockquote><p><var>list</var> is a proper or circular list.  This procedure returns true if
+the argument is the empty list <code>()</code>, and <code>#f</code> otherwise.  It is
+an error to pass this procedure a value which is not a proper or
+circular list.  This procedure is recommended as the termination
+condition for list&ndash;processing procedures that are not defined on dotted
+lists. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>not-pair?</b><var> x<a name="index-not_002dpair_003f-441"></a></var><br>
+<blockquote><p>Defined as: <code>(lambda (x) (not (pair? x)))</code>.  Provided as a
+procedure as it can be useful as the termination condition for
+list&ndash;processing procedures that wish to handle all finite lists, both
+proper and dotted. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>list=</b><var> elt= list1 ...<a name="index-list_003d-442"></a></var><br>
+<blockquote><p>Determines list equality, given an element&ndash;equality procedure
+<var>elt=</var>.  Proper list <var>AL</var> equals proper list <var>BL</var> if they
+are of the same length, and their corresponding elements are equal, as
+determined by <var>elt=</var>.  If the element&ndash;comparison procedure's first
+argument is from <var>listi</var>, then its second argument is from
+<var>listi+1</var>, i.e. it is always called as <code>(elt= a b)</code> for <var>a</var>
+an element of list <var>AL</var>, and <var>b</var> an element of list <var>BL</var>.
+
+        <p>In the n&ndash;ary case, every <var>listi</var> is compared to <var>listi+1</var> (as
+opposed, for example, to comparing <var>list1</var> to every <var>listi</var>, for
+<code>i&gt;1</code>).  If there are no list arguments at all, <code>list=</code> simply
+returns true.
+
+        <p>It is an error to apply <code>list=</code> to anything except proper lists. 
+While implementations may choose to extend it to circular lists, note
+that it cannot reasonably be extended to dotted lists, as it provides no
+way to specify an equality procedure for comparing the list terminators.
+
+        <p>Note that the dynamic order in which the <var>elt=</var> procedure is applied
+to pairs of elements is not specified.  For example, if <code>list=</code> is
+applied to three lists, <var>AL</var>, <var>BL</var>, and <var>CL</var>, it may first
+completely compare <var>AL</var> to <var>BL</var>, then compare <var>BL</var> to
+<var>CL</var>, or it may compare the first elements of <var>AL</var> and <var>BL</var>,
+then the first elements of <var>BL</var> and <var>CL</var>, then the second
+elements of <var>AL</var> and <var>BL</var>, and so forth.
+
+        <p>The equality procedure must be consistent with <code>eq?</code>.  That is, it
+must be the case that:
+
+     <pre class="example">          (eq? x y) =&gt; (elt= x y)
+</pre>
+        <p>Note that this implies that two lists which are <code>eq?</code> are always
+<code>list=</code>, as well; implementations may exploit this fact to
+&ldquo;short&ndash;cut&rdquo; the element&ndash;by&ndash;element comparisons.
+
+     <pre class="example">          (list= eq?) =&gt; #t       ; Trivial cases
+          (list= eq? '(a)) =&gt; #t
+</pre>
+        </blockquote></div>
+
+<!-- page -->
+   </body></html>
+

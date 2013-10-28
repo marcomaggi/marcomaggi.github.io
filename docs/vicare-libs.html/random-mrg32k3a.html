@@ -1,0 +1,146 @@
+<html lang="en">
+<head>
+<title>random mrg32k3a - Libraries for Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Libraries for Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="random.html#random" title="random">
+<link rel="prev" href="random-source.html#random-source" title="random source">
+<link rel="next" href="random-device.html#random-device" title="random device">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes the libraries distributed along with version
+0.3d6 of Vicare Scheme, an R6RS compliant native
+compiler for the Scheme language.
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library `(vicare formations)' is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+The documentation of the libraries `(vicare parser-tools silex
+---)' are derived form the documentation of SILex.  Copyright
+(C) 2001, 2009 Danny Dube'.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="random-mrg32k3a"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="random-device.html#random-device">random device</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="random-source.html#random-source">random source</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="random.html#random">random</a>
+<hr>
+</div>
+
+<h3 class="section">32.5 L'Ecuyer's MRG32k3a generator</h3>
+
+<p>The default randomness source of <code>(vicare crypto randomisations)</code>
+is Pierre L'Ecuyer's MRG32k3a generator:
+
+   <blockquote>
+P. L'Ecuyer.  &ldquo;Good Parameter Sets for Combined Multiple Recursive
+Random Number Generators&rdquo;, Shorter version in Operations Research, 47,
+1 (1999), 159&ndash;164.
+
+   <p>P. L'Ecuyer, R. Simard, E. J. Chen, W. D. Kelton. &ldquo;An Object&ndash;Oriented
+Random&ndash;Number Package With Many Long Streams and Substreams&rdquo;.  2001. 
+To appear in Operations Research. 
+</blockquote>
+
+<div class="defun">
+&mdash; Function: <b>make-random-source/mrg32k3a</b><var><a name="index-make_002drandom_002dsource_002fmrg32k3a-4939"></a></var><br>
+<blockquote><p>Create and return a new randomness source using MRG32k3a, representing a
+deterministic stream of random bits.  Each returned randomness source
+generates the same stream of values, unless the state is modified with
+<code>random-source-seed!</code>.
+
+        <p>The state returned by <code>random-source-state-ref</code> is a Scheme vector
+of length 7, whose first value is the symbol
+<code>random-source-state/mrg32k3a</code>.  All the other values in the vector
+are positive integers. 
+</p></blockquote></div>
+
+<!--  -->
+<h5 class="subsubheading">The algorithm</h5>
+
+<p>The MRG32k3a generator produces values N in the range 0 &lt;=
+N &lt; 2^32 - 209.  A new pseudo&ndash;random number N is generated
+with the following computation starting from the state vectors
+[A1, A2, A3] and [B1, B2, B3]:
+
+<pre class="example">     M1 = 4294967087 = 2^32 - 209
+     M2 = 4294944443 = 2^32 - 22853
+     
+     c2 =  1403580
+     c3 =  -810728
+     d1 =   527612
+     d3 = -1370589
+     
+     A0 = (          c2 * A2 + c3 * A3) mod M1
+     B0 = (d1 * B1 +           d3 * B3) mod M2
+     
+     ; right-shift A, purging the old A3
+     A3 = A2
+     A2 = A1
+     A1 = A0
+     
+     ; right-shift B, purging the old B3
+     B3 = B2
+     B2 = B1
+     B1 = B0
+     
+     N = (A0 - B0) mod M1
+</pre>
+   <p class="noindent">notice that M1 and M2 are two prime numbers just below
+2^32; c2, c3, d1 and d3 are called
+<dfn>recursion coefficients</dfn>.  The <code>(vicare crypto
+randomisations)</code> library defines the initial state vectors as:
+
+<pre class="example">     A1 = 1062452522
+     A2 = 2961816100
+     A3 =  342112271
+     
+     B1 = 2854655037
+     B2 = 3321940838
+     B3 = 3542344109
+</pre>
+   <!-- page -->
+   </body></html>
+

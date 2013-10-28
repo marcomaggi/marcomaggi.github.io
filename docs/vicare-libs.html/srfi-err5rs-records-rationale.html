@@ -1,0 +1,415 @@
+<html lang="en">
+<head>
+<title>srfi err5rs records rationale - Libraries for Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Libraries for Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="srfi-err5rs-records.html#srfi-err5rs-records" title="srfi err5rs records">
+<link rel="prev" href="srfi-err5rs-records-abstract.html#srfi-err5rs-records-abstract" title="srfi err5rs records abstract">
+<link rel="next" href="srfi-err5rs-records-spec.html#srfi-err5rs-records-spec" title="srfi err5rs records spec">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes the libraries distributed along with version
+0.3d6 of Vicare Scheme, an R6RS compliant native
+compiler for the Scheme language.
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library `(vicare formations)' is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+The documentation of the libraries `(vicare parser-tools silex
+---)' are derived form the documentation of SILex.  Copyright
+(C) 2001, 2009 Danny Dube'.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="srfi-err5rs-records-rationale"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="srfi-err5rs-records-spec.html#srfi-err5rs-records-spec">srfi err5rs records spec</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="srfi-err5rs-records-abstract.html#srfi-err5rs-records-abstract">srfi err5rs records abstract</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="srfi-err5rs-records.html#srfi-err5rs-records">srfi err5rs records</a>
+<hr>
+</div>
+
+<h4 class="subsection">2.32.2 Rationale</h4>
+
+<p>In most programming languages, records (aka structures or classes) are
+important because they can package component values of different types
+into a single object.
+
+   <p>Scheme's vectors and procedures provided that capability already, but
+records remained important for two reasons:
+
+     <ul>
+<li>Records make it easier to index components by their names.
+
+     <li>Records can introduce new types in the sense that all previous type
+predicates return false for instances of the new record type, while the
+new predicate associated with the new record type returns true only for
+instances of the new record type. 
+</ul>
+
+   <p>For many programmers, records were the most important new feature of the
+<acronym>R6RS</acronym>, but the specific record systems that were proposed by the
+<acronym>R6RS</acronym> have been widely criticized.  Over 30% of those who voted
+against ratification mentioned the record systems as one of their
+reasons.
+
+   <p>The <acronym>ERR5RS</acronym> record system described by this <acronym>SRFI</acronym> provides a
+simpler and fully portable alternative to the <acronym>R6RS</acronym> record system. 
+The <acronym>ERR5RS</acronym> record system consists of:
+
+     <ul>
+<li>a syntactic layer, which is fully compatible with <acronym>SRFI</acronym>-9 but extends
+<acronym>SRFI</acronym>-9 with inheritance and with more succinct syntax for common use
+cases;
+
+     <li>a procedural layer, which is simpler and easier to use than the
+procedural layer of <acronym>R6RS</acronym> records but remains fully compatible with
+the <acronym>R6RS</acronym> procedural layer;
+
+     <li>an inspection layer, which is simpler and easier to use than the
+inspection layer of <acronym>R6RS</acronym> records but remains fully compatible with
+the <acronym>R6RS</acronym> inspection layer. 
+</ul>
+
+   <p>The <acronym>ERR5RS</acronym> record system does not mandate support for the
+non&ndash;generative, sealed, and/or opaque features of the <acronym>R6RS</acronym> record
+system.  Implementations of this <acronym>SRFI</acronym> may extend the <acronym>ERR5RS</acronym>
+record system to support those features, however, and this <acronym>SRFI</acronym>
+recommends an <acronym>API</acronym> to implementations that support those features. 
+With those extensions, the <acronym>ERR5RS</acronym> record system has the same
+expressive power as the <acronym>R6RS</acronym> record system.  Hence the record system
+described by this <acronym>SRFI</acronym> can serve as either or both of the following:
+
+     <ul>
+<li>an efficient and relatively simple foundation for implementing the
+<acronym>R6RS</acronym> record system;
+
+     <li>a simpler and fully portable alternative to the <acronym>R6RS</acronym> record system. 
+</ul>
+
+   <p>The following subsections develop the rationale for this <acronym>SRFI</acronym> by
+considering:
+
+     <ul>
+<li>the history of records in Scheme before the <acronym>R6RS</acronym>;
+
+     <li><acronym>R6RS</acronym> records;
+
+     <li>the design rationale for <acronym>ERR5RS</acronym> records. 
+</ul>
+
+<!--  -->
+<h5 class="subsubsection">2.32.2.1 Records before <acronym>R6RS</acronym></h5>
+
+<p>The importance of adding records to Scheme has been recognized for more
+than twenty years. The basic idea behind the <acronym>SRFI</acronym>-9 and <acronym>R6RS</acronym>
+record systems was outlined by Norman Adams on 8 July 1987, following
+similar ideas that had been implemented in T and MIT CScheme.  Jonathan
+Rees posted a revision of Adams's proposal on 26 May 1988.  Pavel Curtis
+proposed an extension of Rees's proposal on 18 August 1989, noting that
+it had been approved by consensus at the first meeting of BASH (Bay Area
+Scheme Hackers?).  The <code>rrrs-authors</code> archive includes several
+responses to these proposals that are worth reading.
+
+   <p>The Rees/Curtis proposal was revived in 1992.  When the <acronym>RnRS</acronym> authors
+met on 25 June 1992 in Palo Alto, they felt that this proposal needed
+more discussion.  Kent Dybvig objected to the proposal on several
+grounds, including the provision of inspection facilities, the inability
+to define immutable records, and the use of procedures instead of
+special forms.  Although 9 authors favored adoption of the records
+proposal, 11 opposed it.
+
+   <p>The topic of records was revived again on 23 April 1996 by Bruce Duba,
+Matthew Flatt, and Shriram Krishnamurthi.  Alan Bawden and Richard
+Kelsey observed that the Duba/Flatt/Krishnamurthi proposal was
+essentially the same as Pavel Curtis's, which Kelsey reposted.  Kent
+Dybvig objected once again, on the same three grounds.  He also argued
+that procedural interfaces are difficult to compile efficiently, and
+that this inefficiency would create portability problems.
+
+   <p>In reality, however, procedural interfaces add no inefficiency.  It is
+now agreed that syntactic interfaces offer no advantages for generative
+records.  Even for non&ndash;generative records, the claimed inefficiency
+consists of a single load instruction, which optimizing compilers can
+eliminate &mdash; along with the entire runtime check that includes the load
+instruction &mdash; for all but the first of a sequence of operations that
+access the same record.  (That optimization is a straightforward
+extension of the optimization that eliminates the pair check when
+computing the cdr of a list whose car has already been computed.) 
+Furthermore, it turns out that even the occasional load instruction is
+no harder to remove using a procedural interface than when using a
+syntactic interface.  In <acronym>R6RS</acronym> library chapter 6, therefore, both of
+the statements that claim an advantage in efficiency for the syntactic
+layer have no basis in fact.  (These two statements appear in the
+next&ndash;to&ndash;last paragraph before section 6.1, and in the note that
+follows the specification of <code>parent-rtd</code>.)
+
+   <p>On 24 April 1996, Bill Rozas suggested the idea of having two separate
+<acronym>API</acronym>s, one procedural and one syntactic, for the same record facility. 
+Two days later, Dybvig proposed a compromise along those lines that
+incorporated several artificial restrictions, which were apparently
+motivated by concerns about the alleged extra load instruction.  Dybvig
+and Rozas continued to develop this proposal, and presented a summary of
+it following the 1998 Scheme Workshop.  I have been unable to locate a
+written or online copy of this proposal.
+
+   <p><acronym>SRFI</acronym>-9, submitted by Richard Kelsey in July 1999, is a syntactic
+<acronym>API</acronym> in the tradition of the Rees, Curtis, and
+Duba/Flatt/Krishnamurthi proposals.
+
+   <p>Single inheritance was added by Larceny in 1998, and by Chez Scheme in
+1999.
+
+   <p><acronym>SRFI</acronym> 57, submitted by Andre van Tonder in September 2004, features
+label polymorphism, which can be considered a form of structural
+subtyping and multiple inheritance.
+
+<!--  -->
+<h5 class="subsubsection">2.32.2.2 <acronym>R6RS</acronym> Records</h5>
+
+<p>The <acronym>R6RS</acronym> proposes a three&ndash;layer single inheritance system, with
+syntactic, procedural, and inspection layers.
+
+<!--  -->
+<h5 class="subsubheading"><acronym>R6RS</acronym> Records: procedural layer</h5>
+
+<p>The <acronym>R6RS</acronym> procedural layer generally requires at least three separate
+definitions for each level of inheritance: the record&ndash;type descriptor,
+at least one record&ndash;constructor descriptor, and an actual constructor
+(if instances of the record&ndash;type are to be created).
+
+   <p>The (unratified) <acronym>R6RS</acronym> rationale describes the
+constructor&ndash;descriptor mechanism as &ldquo;an infrastructure for creating
+specialized constructors, rather than just creating default constructors
+that accept the initial values of all the fields as arguments. This
+infrastructure achieves full generality while leaving each level of an
+inheritance hierarchy in control over its own fields and allowing child
+record definitions to be abstracted away from the actual number and
+contents of parent fields.&rdquo;  Neither the (ratified) <acronym>R6RS</acronym> library
+document nor the (unratified) <acronym>R6RS</acronym> rationale consider the fact that
+the constructor&ndash;descriptor mechanism adds unnecessary complexity to
+what is by far the most common case: record definitions that do not
+require specialized constructors.  Neither document considers the fact
+that the benefits of the constructor&ndash;descriptor mechanism are small
+even when specialized constructors are needed, as in the first example
+below.
+
+   <p>The <acronym>R6RS</acronym> library specification of records says that a record type is
+&ldquo;specified by a record&ndash;type descriptor, which is an object that
+specifies the fields of the record and various other properties that all
+records of that type share.&rdquo;  Since the record&ndash;type descriptor is an
+object, it can be the value of a variable that is exported by a library. 
+As discussed below, however, the <acronym>R6RS</acronym> syntactic layer uses a
+different notion of record type that may be neither object nor syntax.
+
+<!--  -->
+<h5 class="subsubheading"><acronym>R6RS</acronym> records: syntactic layer</h5>
+
+<p>The <acronym>R6RS</acronym> syntactic layer consists of a <code>define-record-type</code>
+syntax that is incompatible with the syntaxes of the same name defined
+by <acronym>SRFI</acronym>-9 and <acronym>SRFI</acronym>-99 (this <acronym>SRFI</acronym>).
+
+   <p>According to <acronym>R6RS</acronym> library section 6.2, an <acronym>R6RS</acronym>
+<code>define-record-type</code> form binds the record name &ldquo;to an
+expand&ndash;time or run&ndash;time representation of the record type [that] can
+be used as parent name in syntactic record&ndash;type definitions that extend
+this definition.  It can also be used as a handle to gain access to the
+underlying record&ndash;type descriptor and constructor descriptor&rdquo;.
+
+   <p>Note that portable code cannot assume the record name is bound to a
+record&ndash;type descriptor.  Portable code can only assume that the record
+name is bound to &ldquo;an expand&ndash;time or run&ndash;time representation&rdquo;, whose
+semantics is not otherwise explained by the <acronym>R6RS</acronym> and <acronym>R6RS</acronym>
+library documents.  In particular, it is far from obvious that portable
+code can export the record name from a library; libraries can export
+names that are bound to objects or to syntax, but the <acronym>R6RS</acronym> does not
+require the denotation of a record name to be either of those things.
+
+   <p>The mysterious entity to which a record name is bound can be used as a
+handle to recover a record&ndash;type descriptor or constructor descriptor by
+using the <code>record-type-descriptor</code> or
+<code>record-constructor-descriptor</code> syntaxes, respectively.  The
+recovered record&ndash;type descriptor and constructor descriptor may be
+exported from a library, and that is apparently the only portable way
+for a library to export an <acronym>R6RS</acronym> record type that was defined using
+the <acronym>R6RS</acronym> syntactic layer.
+
+   <p>The recovered record&ndash;type descriptor and constructor descriptor also
+provide a way for the procedural layer to define new record types that
+inherit from record types defined by the syntactic layer.  Similarly, it
+is possible for the syntactic layer to use a <code>parent-rtd</code> clause to
+define new record types that inherit from record types defined by the
+procedural layer.
+
+   <p>The two notions of record type that are used by the procedural and
+syntactic layers are not interchangeable, however.  In either direction,
+defining a new record type that inherits from some previously defined
+record type requires the programmer to know whether the previously
+defined record type was defined using the procedural or the syntactic
+layer.  If the procedural and syntactic layers of the <acronym>R6RS</acronym> were
+fully compatible, then changing a record type definition from procedural
+to syntactic (or vice versa) would be transparent to clients.  As the
+<acronym>R6RS</acronym> record facility is defined, however, that minor change will
+break all code that inherits from the record type.
+
+   <p><acronym>R6RS</acronym> library chapter 6 attempts to excuse that incompatibility, and
+the interoperability and maintenance problems that result from it, on
+the basis of efficiency.  Recall, however, that the claimed efficiency
+of the <acronym>R6RS</acronym> syntactic layer is illusory.  In reality, the <acronym>R6RS</acronym>
+design offers no advantages over a simpler and more orthogonal design
+(such as the one specified by this <acronym>SRFI</acronym>) in which the syntactic and
+procedural layers both use the same notion of record type.
+
+   <p>The problems described above were known and had been documented before
+the <acronym>R6RS</acronym> documents were put to a vote, but the <acronym>R6RS</acronym> documents
+were ratified anyway.  At this point, the best that can be done is to
+use the <acronym>SRFI</acronym> process to specify a better record facility, and to warn
+programmers of the problems they will encounter if they use the record
+facilities described within the <acronym>R6RS</acronym> library document.
+
+<!--  -->
+<h5 class="subsubsection">2.32.2.3 Design Rationale for <acronym>ERR5RS</acronym> Records</h5>
+
+<p>The <acronym>ERR5RS</acronym> syntactic layer described by this <acronym>SRFI</acronym> is based
+upon the Rees/Curtis/Duba/Flatt/Krishnamurthi/Kelsey/<acronym>SRFI</acronym>-9
+tradition, changing only a few details to improve interoperability with
+records defined by the <acronym>ERR5RS</acronym> and <acronym>R6RS</acronym> procedural layers.
+
+   <p>The <code>define-record-type</code> syntax specified by this <acronym>SRFI</acronym> is
+compatible with and extends <acronym>SRFI</acronym>-9, which is one of the more widely
+accepted <acronym>SRFI</acronym>s.  The extensions include single inheritance and
+(optional) implicit naming, along with succinct abbreviations for
+specifying whether a field is immutable or mutable.
+
+   <p>The procedural layer specified by this <acronym>SRFI</acronym> is fully compatible with
+its <code>define-record-type</code> syntax.  Both the procedural and syntactic
+layers can define new record types that inherit from previously defined
+record types without requiring programmers to know which layer was used
+to define the parent type.
+
+   <p>In implementations of the <acronym>R6RS</acronym>, a <acronym>SRFI</acronym>-99 record type coincides
+with the <acronym>R6RS</acronym> notion of a record&ndash;type descriptor.  Portable
+libraries can safely export <acronym>SRFI</acronym>-99 record types even if they were
+defined using the syntactic layer of <acronym>SRFI</acronym>-99.
+
+   <p>In procedure names, <acronym>SRFI</acronym>-99 uses <code>rtd</code> as an abbreviation for
+record&ndash;type descriptor.  This naming convention prevents name clashes
+between <acronym>SRFI</acronym>-99 and the <acronym>R6RS</acronym> procedural and inspection layers,
+which makes it easier for <acronym>R6RS</acronym> programs to import <acronym>SRFI</acronym>-99
+libraries.  <acronym>R6RS</acronym> programs must take care when importing the <acronym>R6RS</acronym>
+syntactic layer, however, because that library's exports conflict with
+both <acronym>SRFI</acronym>-9 and with <acronym>SRFI</acronym>-99.
+
+   <p>When implemented properly, <acronym>SRFI</acronym>-99 records will be just as efficient
+as <acronym>R6RS</acronym> records.  <acronym>SRFI</acronym>-99 is simpler than <acronym>R6RS</acronym> records, both
+in specification and in implementation.  <acronym>SRFI</acronym>-99 is strictly less
+powerful than the <acronym>R6RS</acronym> records facility because <acronym>SRFI</acronym>-99 does not
+require implementations to provide sealed, opaque, or non&ndash;generative
+records.  On the other hand, <acronym>SRFI</acronym>-99 describes three optional
+extensions (the <var>sealed</var>, <var>opaque</var>, and <var>uid</var> arguments to
+<code>make-rtd</code>) that would give <acronym>SRFI</acronym>-99 the same power as <acronym>R6RS</acronym>
+records.  With those three extensions, <acronym>SRFI</acronym>-99 would become a simple
+and efficient foundation for implementing <acronym>R6RS</acronym> records.
+
+   <p>The record system described by this <acronym>SRFI</acronym> has been implemented in
+Larceny.  It is the primary record system used by Larceny's
+implementation of the <acronym>R6RS</acronym>, including the <code>(rnrs records
+syntactic (6))</code> library.  Larceny demonstrates both the efficiency of
+<acronym>ERR5RS</acronym> records and the ease of interoperability between
+<acronym>SRFI</acronym>-9, <acronym>ERR5RS</acronym>, and the procedural and inspection layers of
+<acronym>R6RS</acronym> records.
+
+<!--  -->
+<h5 class="subsubsection">2.32.2.4 Issues</h5>
+
+     <ul>
+<li><acronym>ERR5RS</acronym> records support single inheritance.
+
+     <li><acronym>ERR5RS</acronym> records do not support the non&ndash;generative feature of
+<acronym>R6RS</acronym> records.  (To show how <acronym>SRFI</acronym>-99 could be extended to provide
+all useful features of <acronym>R6RS</acronym> records, <acronym>SRFI</acronym>-99 describes an
+optional extension for non&ndash;generativity, and the reference
+implementation shows how that extension is implemented in Larceny, but
+that extension is not part of <acronym>SRFI</acronym>-99's <acronym>API</acronym>.)
+
+     <li><acronym>ERR5RS</acronym> records do not support the optional &ldquo;sealed&rdquo; feature
+of <acronym>R6RS</acronym> records.  (To show how <acronym>SRFI</acronym>-99 could be extended to
+provide all useful features of <acronym>R6RS</acronym> records, <acronym>SRFI</acronym>-99 describes an
+optional extension for sealed records, and the reference implementation
+shows how that extension is implemented in Larceny, but that extension
+is not part of <acronym>SRFI</acronym>-99's <acronym>API</acronym>.)
+
+     <li><acronym>ERR5RS</acronym> records do not support the optional &ldquo;opaque&rdquo; feature
+of <acronym>R6RS</acronym> records.  (To show how <acronym>SRFI</acronym>-99 could be extended to
+provide all useful features of <acronym>R6RS</acronym> records, <acronym>SRFI</acronym>-99 describes an
+optional extension for opaque records, and the reference implementation
+shows how that extension is implemented in Larceny, but that extension
+is not part of <acronym>SRFI</acronym>-99's <acronym>API</acronym>.)
+
+     <li><acronym>ERR5RS</acronym> records do not support the record&ndash;constructor
+descriptors of <acronym>R6RS</acronym> records.  (Even so, <acronym>ERR5RS</acronym> records are
+compatible with the <code>make-record-constructor-descriptor</code> procedure
+of the <acronym>R6RS</acronym>.  Larceny, for example, allows that procedure to be used
+with <acronym>ERR5RS</acronym> record type descriptors.)
+
+     <li><acronym>ERR5RS</acronym> records support the per&ndash;field mutable/immutable
+feature of <acronym>R6RS</acronym> records.
+
+     <li>The <code>define-record-type</code> syntax provides succinct defaults for both
+immutable and mutable fields.  An identifier&ndash;only field spec implies
+immutability.  When enclosed within parentheses, a single identifier
+implies mutability.
+
+     <li><acronym>ERR5RS</acronym> records are partitioned into a procedural layer, an
+inspection layer, and a syntactic layer.  (The primary reason for
+separating the procedural layer from the inspection layer is to simplify
+comparisons with <acronym>R6RS</acronym> records.)
+
+     <li>The <code>make-rtd</code> procedure accepts a vector of field specifiers
+instead of a list of field specifiers.  (This is carried over from the
+corresponding procedure of the <acronym>R6RS</acronym> procedural layer.) 
+</ul>
+
+<!-- page -->
+   </body></html>
+

@@ -1,0 +1,156 @@
+<html lang="en">
+<head>
+<title>loops comprehensions fold - Libraries for Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Libraries for Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="loops-comprehensions.html#loops-comprehensions" title="loops comprehensions">
+<link rel="prev" href="loops-comprehensions-search.html#loops-comprehensions-search" title="loops comprehensions search">
+<link rel="next" href="loops-comprehensions-define.html#loops-comprehensions-define" title="loops comprehensions define">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes the libraries distributed along with version
+0.3d6 of Vicare Scheme, an R6RS compliant native
+compiler for the Scheme language.
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library `(vicare formations)' is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+The documentation of the libraries `(vicare parser-tools silex
+---)' are derived form the documentation of SILex.  Copyright
+(C) 2001, 2009 Danny Dube'.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="loops-comprehensions-fold"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="loops-comprehensions-define.html#loops-comprehensions-define">loops comprehensions define</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="loops-comprehensions-search.html#loops-comprehensions-search">loops comprehensions search</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="loops-comprehensions.html#loops-comprehensions">loops comprehensions</a>
+<hr>
+</div>
+
+<h5 class="subsubsection">1.20.2.7 Folding loops</h5>
+
+<div class="defun">
+&mdash; Syntax: <b>fold-ec</b><var> x0 ?qualifier ... expression f2<a name="index-fold_002dec-283"></a></var><br>
+&mdash; Syntax: <b>fold3-ec</b><var> x0 ?qualifier ... expression f1 f2<a name="index-fold3_002dec-284"></a></var><br>
+<blockquote><p>Reduce the sequence x[1], x[2], <small class="dots">...</small>, x[n-1] of values
+obtained by evaluating <var>expression</var> once for each binding as
+specified by the <var>?qualifier</var> syntaxes.  The arguments <var>x0</var>,
+<var>f2</var> and <var>f1</var>, all syntactically equivalent to <var>expression</var>,
+specify the reduction process.
+
+     <pre class="example">          (define (f2 expr knil)
+            (+ knil (* expr expr)))
+          
+          (fold-ec 0              ;knil
+                   (:range k 1 5) ;qualifier, k from 1 to 4
+            k                     ;expression
+            f2)
+          &rArr; 30 ;(+ 0 (* 1 1) (* 2 2) (* 3 3) (* 4 4))
+</pre>
+        <p>The reduction process for <code>fold-ec</code> is defined as follows.  A
+reduction variable <var>x</var> is initialized to the value of <var>x0</var>, and
+for each k \in {1, ..., n-1} the command:
+
+     <pre class="example">          (set! x[k+1] (f2 x[k] x[k-1]))
+</pre>
+        <p class="noindent">is evaluated.  Finally, x[n] is returned as the value of the
+comprehension.
+
+        <p>The reduction process for <code>fold3-ec</code> is different:
+
+          <ol type=1 start=1>
+<li>If and only if the sequence is empty: <var>x0</var> is evaluated and returned
+as the value of the comprehension.
+
+          <li>If the sequence in non&ndash;empty: A reduction variable <var>x</var> is
+initialized to the value of <code>(f1 x[1])</code>, and for each k \in
+{2, ..., n-1} the command:
+
+          <pre class="example">               (set! x[k+1] (f2 x[k] x[k-1]))
+</pre>
+          <p class="noindent">is evaluated; finally, x[n] is returned as the value of the
+comprehension.
+             </ol>
+
+        <p>Example:
+
+     <pre class="example">          (define (f2 expr knil)
+            (+ knil (* expr expr)))
+          
+          (define (f1 x)
+            x)
+          
+          (fold3-ec 1234                  ;never used
+                    (:range k 2 5)        ;k from 2 to 4
+            k                             ;expression
+            f1
+            f2)
+          &rArr; 27 ;(+ (f1 2) (* 3 3) (* 4 4))
+          
+          (fold3-ec 1234
+                    (:range k 2 2)        ;loop zero times
+            k
+            f1
+            f2)
+          &rArr; 1234
+</pre>
+        <p>As the order of the arguments suggests, <var>x0</var> is evaluated outside
+the scope of the qualifiers, whereas the reduction expressions involving
+<var>f1</var> and <var>f2</var> are inside the scope of the qualifiers (so they
+may depend on any variable introduced by the qualifiers).  Note that
+<var>f2</var> is evaluated repeatedly, with any side&ndash;effect or overhead this
+might have.
+
+        <p>The main purpose of these comprehensions is implementing other
+comprehensions as special cases.  They are generalizations of the
+procedures <code>fold-left</code> and <code>reduce</code>.  Note that
+<code>fold3-ec</code> is defined such that <var>x0</var> is only evaluated in case
+the sequence is empty.  This allows raising an error for the empty
+sequence. 
+</p></blockquote></div>
+
+<!-- page -->
+   </body></html>
+

@@ -1,0 +1,130 @@
+<html lang="en">
+<head>
+<title>parser-tools lalr intro look - Nausicaa for Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Nausicaa for Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="parser_002dtools-lalr-intro.html#parser_002dtools-lalr-intro" title="parser-tools lalr intro">
+<link rel="prev" href="parser_002dtools-lalr-intro-simple.html#parser_002dtools-lalr-intro-simple" title="parser-tools lalr intro simple">
+<link rel="next" href="parser_002dtools-lalr-intro-states.html#parser_002dtools-lalr-intro-states" title="parser-tools lalr intro states">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.3d6 of Nausicaa, a
+collection of libraries for Vicare Scheme implementing the language
+`(nausicaa)' on top of `(vicare)'.
+
+Copyright (C) 2012, 2013 by Marco Maggi <marco.maggi-ipsu@poste.it>
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with Invariant Sections being ``GNU Free Documentation
+     License'' and ``GNU General Public License'', no Front--Cover
+     Texts, and no Back--Cover Texts.  A copy of the license is
+     included in the section entitled ``GNU Free Documentation
+     License''.
+-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="parser-tools-lalr-intro-look"></a>
+<a name="parser_002dtools-lalr-intro-look"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="parser_002dtools-lalr-intro-states.html#parser_002dtools-lalr-intro-states">parser-tools lalr intro states</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="parser_002dtools-lalr-intro-simple.html#parser_002dtools-lalr-intro-simple">parser-tools lalr intro simple</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="parser_002dtools-lalr-intro.html#parser_002dtools-lalr-intro">parser-tools lalr intro</a>
+<hr>
+</div>
+
+<h5 class="subsubsection">11.3.1.4 Why the lookahead</h5>
+
+<p>Why do we need to look ahead at the next token's category?  When the
+stacks are:
+
+<pre class="example">     #(#f  1  +  2  #&lt;eof&gt;)
+     #( S  N  A  N   *eoi*)
+                 |
+                 p
+</pre>
+   <p class="noindent">we can recognise the subvector &lsquo;<samp><span class="samp">N A N</span></samp>&rsquo; to be a reducible one
+without looking a the next token's category; the same goes with:
+
+<pre class="example">     #(#f  1  +  2  -  3  #&lt;eof&gt;)
+     #( S  N  A  N  A  N   *eoi*)
+                 |
+                 p
+</pre>
+   <p>But let's look at:
+
+<pre class="example">     #(#f  1  +  2  *  3  #&lt;eof&gt;)
+     #( S  N  A  N  M  N   *eoi*)
+                 |
+                 p
+</pre>
+   <p class="noindent">it is an error to reduce &lsquo;<samp><span class="samp">N A N</span></samp>&rsquo;, because the following
+multiplication takes precedence over addition; we can detect the need to
+give precedence to what follows only by looking at the next token's
+category.
+
+   <p>This is not always the case.  Let's make a change to our parser, let's
+say we want to parse scripts in which every line is an arithmetic
+expression.  We add a new token with category &lsquo;<samp><span class="samp">T</span></samp>&rsquo;, as in
+terminator, and value &lsquo;<samp><span class="samp">#\newline</span></samp>&rsquo;.
+
+   <p>Let's look at this example:
+
+<pre class="example">     #(#f  1  +  2  *  3  #\newline  4  /  5  #\newline  #&lt;eof&gt;)
+     #( S  N  A  N  M  N  T          N  M  N  T           *eoi*)
+                       |
+                       p
+</pre>
+   <p class="noindent">once the parser has performed the lookahead and detected the &lsquo;<samp><span class="samp">T</span></samp>&rsquo;
+category, the grammar can tell it to reduce twice the stack, without
+doing another lookahead:
+
+<pre class="example">     #(#f  1  +  6  #\newline  4  /  5  #\newline  #&lt;eof&gt;  #f #f)
+     #( S  N  A  N  T          N  M  N  T           *eoi*  #f #f)
+                 |
+                 p
+     
+     #(#f  7  #\newline  4  /  5  #\newline  #&lt;eof&gt;  #f #f #f #f)
+     #( S  N  T          N  M  N  T           *eoi*  #f #f #f #f)
+           |
+           p
+</pre>
+   <p>Notice that, with a well written grammar, the parser generator can
+understand that the result of the first line is no more needed and
+remove it with a reduce action.  Starting from the above stacks, the
+lookahead returns &lsquo;<samp><span class="samp">T</span></samp>&rsquo; and the action is shift:
+
+<pre class="example">     #(#f  7  #\newline  4  /  5  #\newline  #&lt;eof&gt;  #f #f #f #f)
+     #( S  N  T          N  M  N  T           *eoi*  #f #f #f #f)
+              |
+              p
+</pre>
+   <p class="noindent">now the lookahead returns &lsquo;<samp><span class="samp">N</span></samp>&rsquo; and the action can be a reduction
+which puts the stacks in the following state:
+
+<pre class="example">     #(#f  4  /  5  #\newline  #&lt;eof&gt;  #f #f #f #f #f #f)
+     #( S  N  M  N  T           *eoi*  #f #f #f #f #f #f)
+        |
+        p
+</pre>
+   <p class="noindent">parser is ready to start a new line.
+
+<!-- page -->
+   </body></html>
+

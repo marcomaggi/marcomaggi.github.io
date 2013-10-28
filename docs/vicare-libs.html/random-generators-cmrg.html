@@ -1,0 +1,148 @@
+<html lang="en">
+<head>
+<title>random generators cmrg - Libraries for Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Libraries for Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="random-generators.html#random-generators" title="random generators">
+<link rel="prev" href="random-generators-borosh.html#random-generators-borosh" title="random generators borosh">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes the libraries distributed along with version
+0.3d6 of Vicare Scheme, an R6RS compliant native
+compiler for the Scheme language.
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library `(vicare formations)' is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+The documentation of the libraries `(vicare parser-tools silex
+---)' are derived form the documentation of SILex.  Copyright
+(C) 2001, 2009 Danny Dube'.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="random-generators-cmrg"></a>
+<p>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="random-generators-borosh.html#random-generators-borosh">random generators borosh</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="random-generators.html#random-generators">random generators</a>
+<hr>
+</div>
+
+<h4 class="subsection">32.8.5 Combined multiple recursive generator</h4>
+
+<p><a name="index-g_t_0040library_007bvicare-crypto-randomisations-cmrg_007d_002c-library-5002"></a><a name="index-Library-_0040library_007bvicare-crypto-randomisations-cmrg_007d-5003"></a>
+
+   <p>This is a combined multiple recursive generator.  The algorithm was
+derived from:<a rel="footnote" href="#fn-1" name="fnd-1"><sup>1</sup></a>
+
+   <blockquote>
+P.  L'Ecuyer.  &ldquo;Combined Multiple Recursive Random Number Generators&rdquo;. 
+Operations Research, 44, 5 (1996), 816&ndash;822. 
+</blockquote>
+
+<p class="noindent">the following bindings are exported by the <code>(vicare crypto
+randomisations cmrg)</code> library.
+
+<div class="defun">
+&mdash; Function: <b>make-random-source/cmrg</b><var><a name="index-make_002drandom_002dsource_002fcmrg-5004"></a></var><br>
+<blockquote><p>Build and return a new randomness source using a <acronym>CMRG</acronym>
+generator.
+
+        <p>The state returned by <code>random-source-state-ref</code> is a Scheme vector
+of length 7, whose first value is the symbol
+<code>random-source-state/cmrg</code>.  The other values are integers
+representable with 32 bits.
+
+        <p>The <code>random-source-seed!</code> function for this generator, must be
+applied to a numbers maker returning integers representable with
+32 bits. 
+</p></blockquote></div>
+
+<!--  -->
+<h5 class="subsubheading">The algorithm</h5>
+
+<p>The sequence is:
+
+<pre class="example">     N = (X0 - Y0) mod m1
+</pre>
+   <p class="noindent">where the two underlying generators X and Y are:
+
+<pre class="example">     X0 = (A1 X1 + A2 X2 + A3 X3) mod M1
+     Y0 = (B1 Y1 + B2 X2 + B3 Y3) mod M2
+</pre>
+   <p class="noindent">with coefficients:
+
+<pre class="example">     A1 = 0       A2 = 63308   A3 = -183326
+     B1 = 86098   B2 = 0       B3 = -539608
+</pre>
+   <p class="noindent">and moduli:
+
+<pre class="example">     M1 = 2^31 - 1       = 2147483647
+     M2 = 2^31 - 2000169 = 2145483479
+</pre>
+   <p>According to the paper the initial values for X must lie in the
+range 0 &lt;= X &lt; M1 and the initial values for Y must lie in
+the range 0 &lt;= Y &lt; M2, with at least one non&ndash;zero value. 
+<code>(vicare crypto randomisations cmrg)</code> initialises the generator
+with:
+
+<pre class="example">     X1 = 7   X2 = 17   X3 = 47
+     Y1 = 3   Y2 = 13   Y3 = 43
+</pre>
+   <p class="noindent">and the seeding procedure implemented by the randomness source (through
+<code>random-source-seed!</code>) will extract random numbers from the given
+generator until it is 0 &lt; X &lt; M1 and 0 &lt; Y &lt; M2.
+
+<!-- page -->
+   <div class="footnote">
+<hr>
+<h4>Footnotes</h4><p class="footnote"><small>[<a name="fn-1" href="#fnd-1">1</a>]</small> It is available from L'Ecuyer's home page
+(<acronym>URL</acronym> last verified Tue Jul 14, 2009):
+
+<div align="center"><a href="http://www.iro.umontreal.ca/~lecuyer/myftp/papers/combmrg.ps">http://www.iro.umontreal.ca/~lecuyer/myftp/papers/combmrg.ps</a></div>
+<div align="center"><a href="ftp://ftp.iro.umontreal.ca/pub/simulation/lecuyer/papers/combmrg.ps">ftp://ftp.iro.umontreal.ca/pub/simulation/lecuyer/papers/combmrg.ps</a></div>
+   <p></p>
+
+   <hr></div>
+
+   </body></html>
+

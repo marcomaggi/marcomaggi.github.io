@@ -1,0 +1,170 @@
+<html lang="en">
+<head>
+<title>streams match - Libraries for Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Libraries for Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="streams.html#streams" title="streams">
+<link rel="prev" href="streams-map.html#streams-map" title="streams map">
+<link rel="next" href="streams-utilities.html#streams-utilities" title="streams utilities">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes the libraries distributed along with version
+0.3d6 of Vicare Scheme, an R6RS compliant native
+compiler for the Scheme language.
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library `(vicare formations)' is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+The documentation of the libraries `(vicare parser-tools silex
+---)' are derived form the documentation of SILex.  Copyright
+(C) 2001, 2009 Danny Dube'.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="streams-match"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="streams-utilities.html#streams-utilities">streams utilities</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="streams-map.html#streams-map">streams map</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="streams.html#streams">streams</a>
+<hr>
+</div>
+
+<h4 class="subsection">1.19.12 Matching</h4>
+
+<div class="defun">
+&mdash; Syntax: <b>stream-match</b><var> stream clause ...<a name="index-stream_002dmatch-263"></a></var><br>
+<blockquote><p>Provide the syntax of pattern&ndash;matching for streams.  The input
+<var>stream</var> is an expression that evaluates to a stream.  <var>clause</var>
+arguments are of the form:
+
+     <pre class="example">          (<var>?pattern</var> <var>?expr</var>)
+          (<var>?pattern</var> <var>?fender</var> <var>?expr</var>)
+</pre>
+        <p class="noindent">consisting of a <var>?pattern</var> that matches a stream of a particular
+shape, an optional <var>?fender</var> that must succeed if the <var>?pattern</var>
+is to match, and an <var>?expr</var> that is evaluated if the <var>?pattern</var>
+matches.  There are four types of patterns:
+
+          <dl>
+<dt><code>()</code><dd>Matches the null stream.
+
+          <br><dt><code>(pat0 pat1 ...)</code><dd>Matches a finite stream with length exactly equal to the number of
+pattern elements.
+
+          <br><dt><code>(pat0 pat1 ...  . patrest)</code><dd>Matches an infinite stream, or a finite stream with length at least as
+great as the number of pattern elements before the literal dot.
+
+          <br><dt><code>pat</code><dd>Matches an entire stream; should always appear last in the list of
+clauses; it's not an error to appear elsewhere, but subsequent clauses
+could never match. 
+</dl>
+
+        <p>Each <var>?pattern</var> element may be either:
+
+          <dl>
+<dt><em>An identifier</em><dd>Matches any stream element; additionally, the value of the stream
+element is bound to the variable named by the identifier, which is in
+scope in the fender and expression of the corresponding clause; each
+identifier in a single pattern must be unique.
+
+          <br><dt><em>A literal underscore</em><dd>Matches any stream element, but creates no bindings. 
+</dl>
+
+        <p>The patterns are tested in order, left&ndash;to&ndash;right, until a matching
+pattern is found; if <var>?fender</var> is present, it must evaluate as true
+for the match to be successful.  Pattern variables are bound in the
+corresponding fender and expression.  Once the matching pattern is
+found, the corresponding expression is evaluated and returned as the
+result of the match.  An error is signaled if no pattern matches the
+input stream.
+
+        <p><code>stream-match</code> is often used to distinguish null streams from
+non&ndash;null streams, binding head and tail:
+
+     <pre class="example">          (define (len strm)
+            (stream-match strm
+              (()                 0)
+              ((head . tail)      (+ 1 (len tail)))))
+</pre>
+        <p>Fenders can test the common case where two stream elements must be
+identical; the else pattern is an identifier bound to the entire stream,
+not a keyword as in <code>cond</code>.
+
+     <pre class="example">          (stream-match strm
+            ((x y . _) (equal? x y)
+             'ok)
+            (else
+             'error))
+</pre>
+        <p>A more complex example uses two nested matchers to match two different
+stream arguments; <code>(stream-merge lt? .  strms)</code> stably merges two
+or more streams ordered by the <var>lt?</var> predicate:
+
+     <pre class="example">          (define-stream (stream-merge lt? . strms)
+          
+            (define-stream (merge xx yy)
+              (stream-match xx
+                (() yy)
+                ((x . xs)
+                 (stream-match yy
+                   (() xx)
+                   ((y . ys)
+                    (if (lt? y x)
+                        (stream-cons y (merge xx ys))
+                      (stream-cons x (merge xs yy))))))))
+          
+            (stream-let loop ((strms strms))
+              (cond ((null? strms)
+                     stream-null)
+                    ((null? (cdr strms))
+                     (car strms))
+                    (else
+                     (merge (car strms)
+                            (apply stream-merge lt?
+                            (cdr strms)))))))
+</pre>
+        </blockquote></div>
+
+<!-- page -->
+   </body></html>
+

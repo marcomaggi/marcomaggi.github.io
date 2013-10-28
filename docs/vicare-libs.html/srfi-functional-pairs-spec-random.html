@@ -1,0 +1,520 @@
+<html lang="en">
+<head>
+<title>srfi functional pairs spec random - Libraries for Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Libraries for Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="srfi-functional-pairs-spec.html#srfi-functional-pairs-spec" title="srfi functional pairs spec">
+<link rel="next" href="srfi-functional-pairs-spec-repre.html#srfi-functional-pairs-spec-repre" title="srfi functional pairs spec repre">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes the libraries distributed along with version
+0.3d6 of Vicare Scheme, an R6RS compliant native
+compiler for the Scheme language.
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library `(vicare formations)' is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+The documentation of the libraries `(vicare parser-tools silex
+---)' are derived form the documentation of SILex.  Copyright
+(C) 2001, 2009 Danny Dube'.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="srfi-functional-pairs-spec-random"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="srfi-functional-pairs-spec-repre.html#srfi-functional-pairs-spec-repre">srfi functional pairs spec repre</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="srfi-functional-pairs-spec.html#srfi-functional-pairs-spec">srfi functional pairs spec</a>
+<hr>
+</div>
+
+<h5 class="subsubsection">2.33.4.1 Random&ndash;access pairs and lists</h5>
+
+<p>A random&ndash;access pair (or just pair) is a compound structure with two
+fields called the car and the cdr fields (consistent with the historical
+naming of pair fields in Scheme).  Pairs are created by the procedure
+<code>cons</code>.  The car and cdr fields are accessed by the procedures
+<code>car</code> and <code>cdr</code>.
+
+   <p>Pairs are used primarily to represents lists.  A list can be defined
+recursively as either the empty list or a pair whose cdr is a
+list.  More precisely, the set of lists is defined as the smallest set
+X such that
+
+     <ul>
+<li>The empty list is in X.
+
+     <li>If <var>list</var> is in X, then any pair whose cdr field contains
+<var>list</var> is also in X. 
+</ul>
+
+   <p>The objects in the car fields of successive pairs of a list are the
+elements of the list.  For example, a two&ndash;element list is a pair whose
+car is the first element and whose cdr is a pair whose car is the second
+element and whose cdr is the empty list.  The length of a list is the
+number of elements, which is the same as the number of pairs.
+
+   <p>The empty list is a special object of its own type.  It is not a pair. 
+It has no elements and its length is zero.
+
+   <blockquote>
+<strong>NOTE</strong> The above definitions imply that all lists have finite
+length and are terminated by the empty list. 
+</blockquote>
+
+   <p>A chain of pairs is defined recursively as either a non&ndash;pair object or
+a pair whose cdr is a chain of pairs (Note: <em>every value</em> is a
+chain of pairs).  A chain of pairs ending in the empty list is a list. 
+A chain of pairs not ending in the empty list is called an improper
+list.  Note that an improper list is not a list.  Whether a given pair
+is a list depends upon what is stored in the cdr field.
+
+   <p>The external representation of pairs is not specified by this <acronym>SRFI</acronym>,
+however the examples below do use the typical notation for writing pair
+and list values.
+
+   <p>Random&ndash;access pairs and lists are specified to be fully functional, or,
+to use the term from the academic literature, fully persistent [1]. 
+Full persistence means that all operations on random&ndash;access lists,
+notably including <code>cons</code>, <code>list-ref</code>, <code>list-set</code>, and
+<code>list-ref/update</code>, are specified
+
+     <ol type=1 start=1>
+<li>not to mutate any of their arguments; perforce
+
+     <li>to be safe to execute concurrently on shared arguments; and
+
+     <li>to suffer no degradation of performance as a consequence of the history
+of operations carried out to produce their arguments (except as it is
+reflected in the lengths of those arguments); but permitted
+
+     <li>to produce results that share structure with their arguments.
+        </ol>
+
+   <p>It is usually taken for granted that standard Scheme lists have these
+properties.  This <acronym>SRFI</acronym> explicitly specifies that random&ndash;access lists
+share them.
+
+<div class="defun">
+&mdash; Syntax: <b>quote</b><var> ?datum<a name="index-quote-1612"></a></var><br>
+<blockquote><p>Syntax: <var>?datum</var> should be a syntactic datum.
+
+        <p>Semantics: <code>(quote </code><var>?datum</var><code>)</code> evaluates to the datum value
+represented by <var>?datum</var> (see section 4.3 of <acronym>R6RS</acronym>).  This
+notation is used to include constants.
+
+        <p>When the datum value represented by <var>?datum</var> contains pair
+structure, quote produces random&ndash;access pairs.
+
+     <pre class="example">          (quote a)               &rArr; a
+          (quote #(a b c))        &rArr; #(a b c)
+          (quote (+ 1 2))         &rArr; (+ 1 2)
+</pre>
+        <p>As noted in section 4.3.5 of <acronym>R6RS</acronym>, <code>(quote </code><var>?datum</var><code>)</code> may
+be abbreviated as <code>'</code><var>?datum</var>:
+
+     <pre class="example">          '"abc"                  &rArr; "abc"
+          '145932                 &rArr; 145932
+          'a                      &rArr; a
+          '#(a b c)               &rArr; #(a b c)
+          '()                     &rArr; ()
+          '(+ 1 2)                &rArr; (+ 1 2)
+          '(quote a)              &rArr; (quote a)
+          ''a                     &rArr; (quote a)
+</pre>
+        <p>As noted in section 5.10 of <acronym>R6RS</acronym>, constants are immutable.
+
+        <blockquote>
+<strong>NOTE</strong> Different constants that are the value of quote expression
+may share the same locations. 
+</blockquote>
+        </p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>equal?</b><var> obj1 obj2<a name="index-equal_003f-1613"></a></var><br>
+<blockquote><p>The <code>equal?</code> predicate returns <code>#t</code> if and only if the (possibly
+infinite) unfoldings of its arguments into regular trees are equal as
+ordered trees.
+
+        <p>The <code>equal?</code> predicate treats pairs and vectors as nodes with
+outgoing edges, uses <code>string=?</code> to compare strings, uses
+<code>bytevector=?</code> to compare bytevectors, and uses <code>eqv?</code> to
+compare other nodes.
+
+     <pre class="example">          (equal? 'a 'a)                  &rArr; #t
+          
+          (equal? '(a) '(a))              &rArr; #t
+          
+          (equal? '(a (b) c)
+                  '(a (b) c))             &rArr; #t
+          
+          (equal? "abc" "abc")            &rArr; #t
+          
+          (equal? 2 2)                    &rArr; #t
+          
+          (equal? (make-vector 5 'a)
+                  (make-vector 5 'a))     &rArr; #t
+          
+          (equal? '#vu8(1 2 3 4 5)
+                  (u8-list-&gt;bytevector
+                   '(1 2 3 4 5))          &rArr; #t
+          
+          (equal? (lambda (x) x)
+                  (lambda (y) y))         &rArr; unspecified
+          
+          (let* ((x (list 'a))
+                 (y (list 'a))
+                 (z (list x y)))
+            (list (equal? z (list y x))
+                  (equal? z (list x x)))) &rArr; (#t #t)
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>pair?</b><var> obj<a name="index-pair_003f-1614"></a></var><br>
+<blockquote><p>Return <code>#t</code> if <var>obj</var> is a pair, and otherwise returns <code>#f</code>. 
+This operation must take O(1) time.
+
+     <pre class="example">          (pair? '(a . b))                &rArr; #t
+          (pair? '(a b c))                &rArr; #t
+          (pair? '())                     &rArr; #f
+          (pair? '#(a b))                 &rArr; #f
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>cons</b><var> obj1 obj2<a name="index-cons-1615"></a></var><br>
+<blockquote><p>Return a newly allocated pair whose car is <var>obj1</var> and whose cdr is
+<var>obj2</var>.  The pair is guaranteed to be different (in the sense of
+<code>eqv?</code>) from every existing object.  This operation must take
+O(1) time.
+
+     <pre class="example">          (cons 'a '())                   &rArr;  (a)
+          (cons '(a) '(b c d))            &rArr;  ((a) b c d)
+          (cons "a" '(b c))               &rArr;  ("a" b c)
+          (cons 'a 3)                     &rArr;  (a . 3)
+          (cons '(a b) 'c)                &rArr;  ((a b) . c)
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>car</b><var> pair<a name="index-car-1616"></a></var><br>
+<blockquote><p>Return the contents of the car field of <var>pair</var>.  This operation must
+take O(1) time.
+
+     <pre class="example">          (car '(a b c))                  &rArr;  a
+          (car '((a) b c d))              &rArr;  (a)
+          (car '(1 . 2))                  &rArr;  1
+          (car '())                       error--&gt; &amp;assertion exception
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>cdr</b><var> pair<a name="index-cdr-1617"></a></var><br>
+<blockquote><p>Return the contents of the cdr field of pair.  This operation must take
+O(1) time.
+
+     <pre class="example">          (cdr '((a) b c d))              &rArr;  (b c d)
+          (cdr '(1 . 2))                  &rArr;  2
+          (cdr '())                       error--&gt; &amp;assertion exception
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>caar</b><var> pair<a name="index-caar-1618"></a></var><br>
+&mdash; Function: <b>cadr</b><var> pair<a name="index-cadr-1619"></a></var><br>
+&mdash; Function: <b><small class="dots">...</small></b><var><a name="index-g_t_0040dots_007b_007d-1620"></a></var><br>
+&mdash; Function: <b>cdddar</b><var> pair<a name="index-cdddar-1621"></a></var><br>
+&mdash; Function: <b>cddddr</b><var> pair<a name="index-cddddr-1622"></a></var><br>
+<blockquote><p>These procedures are compositions of car and cdr, where for example
+<code>caddr</code> could be defined by:
+
+     <pre class="example">          (define caddr
+            (lambda (x)
+              (car (cdr (cdr x)))))
+</pre>
+        <p>Arbitrary compositions, up to four deep, are provided.  There are
+twenty&ndash;eight of these procedures in all.  These operations must take
+O(1) time. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>null?</b><var> obj<a name="index-null_003f-1623"></a></var><br>
+<blockquote><p>Return <code>#t</code> if <var>obj</var> is the empty list, <code>#f</code> otherwise.  This
+procedure is equivalent to the <code>null?</code> procedure of the <acronym>R6RS</acronym>
+base library. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>list?</b><var> obj<a name="index-list_003f-1624"></a></var><br>
+<blockquote><p>Return <code>#t</code> if <var>obj</var> is a list, <code>#f</code> otherwise.  By
+definition, all lists are chains of pairs that have finite length and
+are terminated by the empty list.  This operation must take time bounded
+by O(\log(n)), where n is the number of pairs in the chain
+forming the potential list.
+
+     <pre class="example">          (list? '(a b c))                &rArr;  #t
+          (list? '())                     &rArr;  #t
+          (list? '(a . b))                &rArr;  #f
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>list</b><var> obj <small class="dots">...</small><a name="index-list-1625"></a></var><br>
+<blockquote><p>Return a newly allocated list of its arguments.  This operation must
+take time bounded by O(n), where n is the number of
+arguments to list.
+
+     <pre class="example">          (list 'a (+ 3 4) 'c)            &rArr;  (a 7 c)
+          (list)                          &rArr;  ()
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>make-list</b><var> k<a name="index-make_002dlist-1626"></a></var><br>
+&mdash; Function: <b>make-list</b><var> k obj<a name="index-make_002dlist-1627"></a></var><br>
+<blockquote><p>Return a newly allocated list of <var>k</var> elements.  If a second argument
+is given, then each element is initialized to <var>obj</var>.  Otherwise the
+initial contents of each element is unspecified.  This operation must
+take time and space bounded by O(\log(k)).
+
+     <pre class="example">          (make-list 5 0)                 &rArr;  (0 0 0 0 0)
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>length</b><var> list<a name="index-length-1628"></a></var><br>
+<blockquote><p>Return the length of <var>list</var>.  This operation must take time bounded
+by O(\log(n)), where n is the length of the list.
+
+     <pre class="example">          (length '(a b c))               &rArr;  3
+          (length '(a (b) (c)))           &rArr;  3
+          (length '())                    &rArr;  0
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>length&lt;=?</b><var> obj k<a name="index-length_003c_003d_003f-1629"></a></var><br>
+<blockquote><p>Return true if <var>obj</var> is a chain of at least <var>k</var> pairs and
+<code>#f</code> otherwise.  This operation must take time bounded by
+O(\log(\min(k,n))), where n is the length of the chain of
+pairs.
+
+     <pre class="example">          (length&lt;=? 'not-a-list 0)       &rArr;  #t
+          (length&lt;=? '(a . b) 0)          &rArr;  #t
+          (length&lt;=? '(a . b) 1)          &rArr;  #t
+          (length&lt;=? '(a . b) 2)          &rArr;  #f
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>append</b><var> list <small class="dots">...</small> obj<a name="index-append-1630"></a></var><br>
+<blockquote><p>Return a chain of pairs consisting of the elements of the first
+<var>list</var> followed by the elements of the other lists, with <var>obj</var>
+as the cdr of the final pair.  An improper list results if <var>obj</var> is
+not a list.  This operation must take time bounded by O(\log(n)),
+where n is the total number of elements in the given lists.
+
+     <pre class="example">          (append '(x) '(y))              &rArr;  (x y)
+          (append '(a) '(b c d))          &rArr;  (a b c d)
+          (append '(a (b)) '((c)))        &rArr;  (a (b) (c))
+          (append '(a b) '(c . d))        &rArr;  (a b c . d)
+          (append '() 'a)                 &rArr;  a
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>reverse</b><var> list<a name="index-reverse-1631"></a></var><br>
+<blockquote><p>Return a newly allocated list consisting of the element of <var>list</var> in
+reverse order.  This operation must take time bounded by O(n)
+where n is the length of the list.
+
+     <pre class="example">          (reverse '(a b c))               &rArr;  (c b a)
+          (reverse '(a (b c) 'd '(e (f)))) &rArr;  ((e (f)) d (b c) a)
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>list-tail</b><var> obj k<a name="index-list_002dtail-1632"></a></var><br>
+<blockquote><p><var>obj</var> should be a chain of pairs with a count of at least <var>k</var>. 
+The <code>list-tail</code> procedure returns the object obtained by omitting
+the first <var>k</var> elements in <var>obj</var>.  This operation must take time
+bounded by O(\log(\min(k,n))), where n is the length of
+the chain of pairs.
+
+     <pre class="example">          (list-tail '(a b c d) 0)        &rArr;  (a b c d)
+          (list-tail '(a b c d) 2)        &rArr;  (c d)
+          (list-tail 'not-a-list 0)       &rArr;  not-a-list
+</pre>
+        <blockquote>
+<strong>Implementation responsibilities:</strong> The implementation must check
+that <var>obj</var> is a chain of pairs whose count is at least <var>k</var>. 
+</blockquote>
+        </p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>list-ref</b><var> pair k<a name="index-list_002dref-1633"></a></var><br>
+<blockquote><p><var>pair</var> must be a chain of pairs whose count is at least k +
+1.  The <code>list-ref</code> procedure returns the <var>k</var>-th element of
+<var>pair</var>.  This operation must take time bounded by
+O(\min(k,\log(n))), where n is the length of the chain of
+pairs.
+
+     <pre class="example">          (list-ref '(a b c d) 2)         &rArr;  c
+</pre>
+        <blockquote>
+<strong>Implementation responsibilities:</strong> The implementation must check
+that <var>pair</var> is a chain of pairs whose count is at least k +
+1. 
+</blockquote>
+        </p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>list-set</b><var> pair k obj<a name="index-list_002dset-1634"></a></var><br>
+<blockquote><p><var>pair</var> must be a chain of pairs whose count is at least k +
+1.  The <code>list-set</code> procedure returns the chain of pairs obtained
+by replacing the <var>k</var>-th element with <var>obj</var>.  This operation must
+take time bounded by O(\min(k,\log(n))), where n is the
+length of the chain of pairs.
+
+     <pre class="example">          (list-set '(a b c d) 2 'x)      &rArr;  (a b x d)
+</pre>
+        <blockquote>
+<strong>Implementation responsibilities:</strong> The implementation must check
+that <var>pair</var> is a chain of pairs whose count is at least k +
+1. 
+</blockquote>
+        </p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>list-ref/update</b><var> pair k proc<a name="index-list_002dref_002fupdate-1635"></a></var><br>
+<blockquote><p>Return the same results as:
+
+     <pre class="example">          (values (list-ref <var>pair</var> <var>k</var>)
+                  (list-set <var>pair</var> <var>k</var> (<var>proc</var> (list-ref <var>pair</var> <var>k</var>))))
+</pre>
+        <p class="noindent">but it may be implemented more efficiently.
+
+     <pre class="example">          (list-ref/update '(7 8 9 10) 2 -)
+          &rArr;  9 (7 8 -9 10)
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>map</b><var> proc list1 list2 <small class="dots">...</small><a name="index-map-1636"></a></var><br>
+<blockquote><p>The lists should all have the same length.  <var>proc</var> should accept as
+many arguments as there are lists and return a single value.
+
+        <p>The <code>map</code> procedure applies <var>proc</var> element&ndash;wise to the
+elements of the lists and returns a list of the results, in order. 
+<var>proc</var> is always called in the same dynamic environment as
+<code>map</code> itself.  The order in which <var>proc</var> is applied to the
+elements of the lists is unspecified.
+
+     <pre class="example">          (map cadr '((a b) (d e) (g h)))
+          &rArr;  (b e h)
+          
+          (map (lambda (n)
+                 (expt n n))
+            '(1 2 3 4 5))
+          &rArr;  (1 4 27 256 3125)
+          
+          (map + '(1 2 3) (4 5 6))
+          &rArr;  (5 7 9)
+          
+          (let ((count 0))
+            (map (lambda (ignored)
+                   (set! count (+ count 1))
+                   count)
+              '(a b)))
+          &rArr;  (1 2) or (2 1)
+</pre>
+        <blockquote>
+<strong>Implementation responsibilities:</strong> The implementation should
+check that the lists all have the same length.  The implementation must
+check the restrictions on <var>proc</var> to the extent performed by applying
+it as described.  An implementation may check whether <var>proc</var> is an
+appropriate argument before applying it. 
+</blockquote>
+        </p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>for-each</b><var> proc list1 list2 <small class="dots">...</small><a name="index-for_002deach-1637"></a></var><br>
+<blockquote><p>The lists should all have the same length.  <var>proc</var> should accept as
+many arguments as there are lists.
+
+        <p>The <code>for-each</code> procedure applies <var>proc</var> element&ndash;wise to the
+elements of the lists for its side effects, in order from the first
+element to the last.  <var>proc</var> is always called in the same dynamic
+environment as <code>for-each</code> itself.  The return values of
+<code>for-each</code> are unspecified.
+
+     <pre class="example">          (let ((v (make-vector 5)))
+            (for-each (lambda (i)
+                        (vector-set! v i (* i i)))
+              '(0 1 2 3 4))
+            v)
+          &rArr;  #(0 1 4 9 16)
+          
+          (for-each (lambda (x) x) '(1 2 3 4))
+          &rArr;  unspecified
+          
+          (for-each even? '())
+          &rArr;  unspecified
+</pre>
+        <blockquote>
+<strong>Implementation responsibilities:</strong> The implementation should
+check that the lists all have the same length.  The implementation must
+check the restrictions on <var>proc</var> to the extent performed by applying
+it as described.  An implementation may check whether <var>proc</var> is an
+appropriate argument before applying it. 
+</blockquote>
+
+        <blockquote>
+<strong>NOTE</strong> Implementations of <code>for-each</code> may or may not
+tail&ndash;call <var>proc</var> on the last element. 
+</blockquote>
+        </p></blockquote></div>
+
+<!-- page -->
+   </body></html>
+

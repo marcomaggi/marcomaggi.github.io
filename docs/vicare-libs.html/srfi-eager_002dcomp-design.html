@@ -1,0 +1,433 @@
+<html lang="en">
+<head>
+<title>srfi eager-comp design - Libraries for Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Libraries for Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="srfi-eager_002dcomp.html#srfi-eager_002dcomp" title="srfi eager-comp">
+<link rel="prev" href="srfi-eager_002dcomp-spec.html#srfi-eager_002dcomp-spec" title="srfi eager-comp spec">
+<link rel="next" href="srfi-eager_002dcomp-ack.html#srfi-eager_002dcomp-ack" title="srfi eager-comp ack">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes the libraries distributed along with version
+0.3d6 of Vicare Scheme, an R6RS compliant native
+compiler for the Scheme language.
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library `(vicare formations)' is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+The documentation of the libraries `(vicare parser-tools silex
+---)' are derived form the documentation of SILex.  Copyright
+(C) 2001, 2009 Danny Dube'.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="srfi-eager-comp-design"></a>
+<a name="srfi-eager_002dcomp-design"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="srfi-eager_002dcomp-ack.html#srfi-eager_002dcomp-ack">srfi eager-comp ack</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="srfi-eager_002dcomp-spec.html#srfi-eager_002dcomp-spec">srfi eager-comp spec</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="srfi-eager_002dcomp.html#srfi-eager_002dcomp">srfi eager-comp</a>
+<hr>
+</div>
+
+<h4 class="subsection">2.22.5 Design rationale</h4>
+
+<h5 class="subsubheading">What is the difference between eager and lazy comprehensions?</h5>
+
+<p>A lazy comprehension, for example <code>stream-of</code> in the sense of
+<acronym>SRFI</acronym>-41, constructs an object representing a sequence of values.  They
+are actually produced only at the time they are needed.  An eager
+comprehension, on the other hand, is an instruction to run through a
+certain sequence of values and do something with it, for example as in
+<code>do-ec</code>.  In other words, it is nothing more sophisticated than a
+loop, potentially with a more convenient notation.  This also explains
+why <code>stream-of</code> is the most fundamental lazy comprehension, and all
+others can be formulated in terms of it, whereas the most fundamental
+eager comprehension is <code>do-ec</code>.
+
+<!--  -->
+<h5 class="subsubheading">Why the <code>[</code><var>outer</var><code> .. </code><var>inner</var><code> | </code><var>expr</var><code>]</code> order of qualifiers?</h5>
+
+<p>In principle, there are six possible orders in which the qualifiers and
+the expression of a comprehension can be written.  We denote the
+different conventions with a pattern in which <var>expr</var> denotes the
+expression over which the comprehension ranges, <var>inner</var> denotes the
+generator spinning fastest, and <var>outer</var> denotes the generator
+spinning slowest.  For example, Haskell and Python use:
+
+<pre class="example">     [<var>expr</var> | <var>outer</var> .. <var>inner</var>]
+</pre>
+   <p>Probably with sufficient persistence, instances for any of the
+conventions can be found on the Internet.  In addition, there is the
+common mathematical notation <code>{f(x) | x in X}</code>.
+
+   <p>It is important to understand that the notational convention does not
+only determine the order of enumeration but also the scope of the
+variables introduced by the generators.  The scope of <var>inner</var>
+includes <var>expr</var>, and the scope of <var>outer</var> should include
+<var>inner</var> to allow <var>inner</var> generators to depend on <var>outer</var>
+generators.  Eventually, the choice for a particular syntactic
+convention is largely a matter of personal preferences.  However, there
+are a few considerations that went into the choice made for this
+<acronym>SRFI</acronym>:
+
+     <ol type=1 start=1>
+<li>The mathematical notation is universally known and widely used. 
+However, the mathematical notation denotes a set of comprehensions in
+which the order of the qualifiers is either irrelevant or must be
+deduced from the context.  For the purpose of eager comprehensions as a
+programming language construct, the order does matter and a simple
+convention is a plus.  For these reasons, the mathematical notation as
+such is undesirable, but its widespread use is in favor of:
+
+     <pre class="example">          [<var>expr</var> | <var>inner</var> .. <var>outer</var>]
+</pre>
+     <p class="noindent">and:
+
+     <pre class="example">          [<var>expr</var> | <var>outer</var> .. <var>inner</var>]
+</pre>
+     <li>It is desirable to have the scope of the variables increase into one
+direction, as in:
+
+     <pre class="example">          [<var>expr</var> | <var>inner</var> .. <var>outer</var>]
+</pre>
+     <p class="noindent">and:
+
+     <pre class="example">          [<var>outer</var> .. <var>inner</var> | <var>expr</var>]
+</pre>
+     <p class="noindent">and not change direction, as in:
+
+     <pre class="example">          [<var>expr</var> | <var>outer</var> .. <var>inner</var>]
+</pre>
+     <p class="noindent">where <var>expr</var> is in the scope of <var>inner</var> but <var>outer</var> is not. 
+This is even more important if the syntax in Scheme does not explicitly
+contain the <code>|</code> separator.
+
+     <li>More complicated comprehensions with several nested generators
+eventually look like nested loops and Scheme always introduces them
+<var>outer</var> <small class="dots">...</small> <var>inner</var> as in <code>do</code> and named <code>let</code>. 
+This is in favor of:
+
+     <pre class="example">          [<var>expr</var> | <var>outer</var> .. <var>inner</var>]
+</pre>
+     <p class="noindent">and:
+
+     <pre class="example">          [<var>outer</var> .. <var>inner</var> | <var>expr</var>]
+</pre>
+     <p>Shorter comprehensions may look more naturally the other way around.
+        </ol>
+
+   <p>Regarding these contradicting preferences, I regard linearity in scoping
+(point 2) most important, followed by readability for more complicated
+comprehensions (point 3).  This leads to:
+
+<pre class="example">     [<var>outer</var> .. <var>inner</var> | <var>expr</var>]
+</pre>
+   <p>An example in Scheme syntax is:
+
+<pre class="example">     (list-ec (: x 10) (: y x) (f x y))
+</pre>
+   <p class="noindent">which looks acceptable to me even without similarity to the mathematical
+notation.  As a downside, the convention clashes with other the
+convention used in other languages (e.g. Haskell and Python).
+
+<!--  -->
+<h5 class="subsubheading">You forgot <em>choose your favorite here</em>&ndash;<code>ec!</code></h5>
+
+<p>I tried to construct a reasonably useful set of tools according to what
+<acronym>R5RS</acronym> specifies.  Nevertheless, the choice about what to include and
+what to leave out is a matter of personal preference.
+
+   <p>When &ldquo;packing the toolbox&rdquo; I went for travelling light; this <acronym>SRFI</acronym>
+does not include everything imaginable or even everything useful.  I
+oriented myself at the standard procedures of <acronym>R5RS</acronym>, with a few
+omissions and additions.  A notable omission are <code>gcd-ec</code> and
+<code>lcm-ec</code> because they are one&ndash;liners, and more severely, of
+questionable value in practice.  Notable additions are <code>fold-ec</code>
+and <code>fold3-ec</code>, providing a mechanism to define lots of useful
+one&ndash;liners.  The other notable addition is <code>first-ec</code>, which is
+the fundamental &ldquo;early stopping&rdquo; comprehension.  It is used to define
+<code>any?-ec</code> and <code>every?-ec</code> which are among the most frequent
+comprehensions.
+
+   <p>Concerning the generators, the same principle has been used.  Additions
+include <code>:range</code> and friends because they are universally needed,
+and <code>:dispatched</code> which is primarily intended for implementing
+<code>:</code>.
+
+<!--  -->
+<h5 class="subsubheading">Why is the order of enumeration specified?</h5>
+
+<p>For the purpose of this <acronym>SRFI</acronym>, every generator runs through its
+sequence of bindings in a well specified order, and nested generators
+run through the Cartesian product in the order of nested loops.  The
+purpose of this definition is making the sequence as easily predictable
+as possible.  On the other hand, many mechanisms for lazy comprehensions
+do not specify the order in which the elements are enumerated.  When it
+comes to infinite streams, this has the great advantage that a
+comprehension may interleave an inner and an outer enumeration, a method
+also known as &ldquo;dove&ndash;tailing&rdquo; or &ldquo;diagonalizing&rdquo;.  Interleaving
+ensures that any value of the resulting stream is produced after a
+finite amount of time, even if one or more inner streams are infinite.
+
+<!--  -->
+<h5 class="subsubheading">Why both typed and dispatching generators?</h5>
+
+<p>The reason for typed generators is runtime efficiency.  In fact, the
+code produced by <code>:range</code> and others will run as fast as a
+hand&ndash;coded <code>do</code> loop.  The primary purpose of the dispatching
+generator is convenience.  It comes at the price of reduced runtime
+performance, both for loop iteration and startup.
+
+<!--  -->
+<h5 class="subsubheading">Why the <code>something-ec</code> and <code>:type</code> naming?</h5>
+
+<p>The purpose of the <code>:type</code> convention is to keep many common
+comprehensions down to one&ndash;liners.  In my opinion, the fundamental
+nature of eager comprehensions justifies a single character naming
+convention.  The <code>something-ec</code> convention is primarily intended to
+stay away from the widely used <code>something-of</code>.  It reduces
+confusion and conflict with related mechanisms.
+
+<!--  -->
+<h5 class="subsubheading">Why combine variable binding and sequence definition?</h5>
+
+<p>The generators of this <acronym>SRFI</acronym> do two different things with a single
+syntactic construct: They define a sequence of values to enumerate and
+they specify a variable (within a certain scope) to run through that
+sequence.  An alternative is to separate the two, for example as it has
+been done in <acronym>SRFI</acronym>-41.
+
+   <p>The reason for combining sequence definition and enumeration for the
+purpose of this <acronym>SRFI</acronym> is threefold.  Firstly, sequences of values are
+not explicitly represented as objects in the typed generators; the
+generators merely manipulate an internal state.  Secondly, this <acronym>SRFI</acronym>
+aims at a most concise notation for common comprehensions and reduces
+syntax to the naked minimum.  Thirdly, this <acronym>SRFI</acronym> aims at the highest
+possible performance for typed generators, which is achieved if the
+state being manipulated is represented by the loop variable itself.
+
+<!--  -->
+<h5 class="subsubheading">Why is <code>(: </code><var>vars</var><code>)</code> illegal?</h5>
+
+<p>It is reasonable and easy to define:
+
+<pre class="example">     (: <var>vars</var>)
+</pre>
+   <p class="noindent">as:
+
+<pre class="example">     (:integers <var>vars</var>)
+</pre>
+   <p class="noindent">enumerating the non&ndash;negative integers.  However, it turned out that a
+frequent mistake in using the eager comprehensions is to forget either
+the variable or an argument for the enumeration.  As this would lead to
+an infinite loop (not always equally pleasant in interactive sessions),
+it is not allowed.
+
+<!--  -->
+<h5 class="subsubheading">Why is there no <code>:sequential</code>?</h5>
+
+<p>Just like <code>:parallel</code> enumerates generators in parallel, a
+<code>:sequential</code> generator could enumerate a concatenation of several
+generator, starting the next one when the previous has finished.  The
+reason for not having such a qualifier is that the generators should use
+all the same variable name and there is no hygienic and referentially
+transparent way of enforcing this (or even knowing the variable).
+
+<!--  -->
+<h5 class="subsubheading">Why is there no general <code>let</code> qualifier?</h5>
+
+<p>It is easy to add <code>let</code>, <code>let*</code>, and <code>letrec</code> as cases to
+<var>qualifier</var>.  This would allow more sophisticated local variables
+and expressions than possible with:
+
+<pre class="example">     (:let <var>vars</var> <var>expression</var>)
+</pre>
+   <p class="noindent">and:
+
+<pre class="example">     (begin <var>sequence</var>*)
+</pre>
+   <p>In particular, a local <var>definition</var> in the sense of <acronym>R5RS</acronym> Section
+7.1.5 would be possible.
+
+   <p>There are two reasons for not including <code>let</code> and friends as
+qualifiers.  The first reason concerns readability.  A qualifier of the
+form:
+
+<pre class="example">     (let (<var>binding-spec</var>*) <var>body</var>)
+</pre>
+   <p class="noindent">only makes sense if the scope of the new variables ends at the end of
+the comprehension, and not already after <var>body</var>.  The similarity
+with ordinary <code>let</code> expressions would be very confusing.  The
+second reason concerns the design rationale.  If sophisticated
+<code>let</code> qualifiers involving recursion or local definitions are
+needed, it is likely that eager comprehensions are being overused.  In
+that case it might be better to define a procedure for the task.  So
+including an invitation to overuse the mechanism would be a serious
+violation of the Keep It Simple and Stupid principle.
+
+<!--  -->
+<h5 class="subsubheading">Why is there no <code>:nested</code> generator?</h5>
+
+<p>The specification above defines nested as a qualifier but
+<code>:parallel</code> as a generator.  In particular, this makes it
+impossible to make parallel generators from nested ones.
+
+   <p>This design simply reflects an implementability limitation.  All
+component generators of <code>:parallel</code> are transformed into
+<code>:do-generators</code> and these can be merged into a parallel generator. 
+However, nested generators cannot be merged easily without losing the
+type of the generator, which would seriously hurt modularity and
+performance.
+
+<!--  -->
+<h5 class="subsubheading">Is <code>any?-ec</code> eager?</h5>
+
+<p>Yes, it is still eager because it immediately starts to run through the
+sequence.
+
+   <p>In fact, the reference implementation makes sure <code>first-ec</code>,
+<code>any?-ec</code>, and <code>every?-ec</code> execute efficiently so they can be
+used conveniently as in:
+
+<pre class="example">     (every?-ec (:list x my-list) (pred? x))
+</pre>
+   <!--  -->
+<h5 class="subsubheading">Why this whole <code>:dispatched</code> business?</h5>
+
+<p>It is specified above that the dispatching generator, called <code>:</code>,
+is just a special case of <code>:dispatched</code> using a global dispatching
+procedure.  Alternatively, a simple fixed global mechanism to extend
+<code>:</code> could have been used.  This is much simpler but does not
+support the definition of new dispatched generators.
+
+   <p>The purpose of <code>:dispatched</code> and its utilities
+(<code>:generator-proc</code> and <code>dispatch-union</code>) is the following. 
+Assume <code>:</code> is to be used inside a module but it is essential that
+no other module can spoil it, e.g. by installing a very slow dispatcher. 
+The recommended way to proceed in this case is to define a local copy of
+the original dispatching generator <code>:</code>, for example with the
+following code:
+
+<pre class="example">     (define :my-dispatch
+       (make-initial-:-dispatch))
+     
+     (define-syntax :my
+       (syntax-rules (index)
+         [(:my cc var (index i) arg1 arg ...)
+          (:dispatched cc var (index i) :my-dispatch arg1 arg ...)]
+         [(:my cc var arg1 arg ...)
+          (:dispatched cc var :my-dispatch arg1 arg ...)]))
+</pre>
+   <p class="noindent">and to use the new generator <code>:my</code> instead of <code>:</code>.
+
+   <p>An alternative for the dispatching mechanism as defined in this <acronym>SRFI</acronym>
+is the use of parameter objects in the sense of <acronym>SRFI</acronym>-39.  The
+dispatching generator would then access a dynamically scoped variable to
+find the dispatcher, allowing full control over dispatching.  However,
+this approach does not solve the dilemma that it is sometimes useful
+that <code>:</code> is global and sometimes undesired.  The approach specified
+for this <acronym>SRFI</acronym> addresses this dilemma by offering options.
+
+   <p>Another alternative for dealing with the dispatching problem is adding
+an optional argument to the syntax of <code>:</code> through which the
+dispatcher can be passed explicitly.  However, as <code>:</code> has variable
+arity and the identifier for the variable cannot be distinguished from
+any value for a dispatcher, this is syntactically problematic.
+
+<!--  -->
+<h5 class="subsubheading">Why is there no local mechanism for adding to <code>:</code>?</h5>
+
+<p>According to <acronym>R5RS</acronym> Section 7.1.6 macros can only be defined at the
+level of the <code>&lt;program&gt;</code> syntax.  This implies that the scope of
+typed generators cannot easily be limited to local scopes.  As typed and
+dispatched generators go together, there is also no strong need for a
+limited scope of dispatched generators either.  Furthermore, locally
+extendable dispatchers are another major headache to those trying to
+understand other people's code.
+
+<!--  -->
+<h5 class="subsubheading">Why are dispatchers unary?</h5>
+
+<p>As defined in <code>:dispatched</code>, a dispatching procedure is called with
+a single argument being the list of values to dispatch on.  An
+alternative is to apply the dispatcher to the list of values to dispatch
+on, which would be more natural in Scheme.
+
+   <p>The reason for not using apply is a minor improvement in efficiency. 
+Every time <var>apply</var> is used on a procedure of variable arity, an
+object containing the argument list is allocated on the heap.  As a
+dispatcher may call many other dispatchers, this will add to the
+overhead of dispatching, which is relevant in inner loops.
+
+<!--  -->
+<h5 class="subsubheading">Why are there two fold comprehensions?</h5>
+
+<p>The reason for having two fold comprehensions (<code>fold-ec</code> and
+<code>fold3-ec</code>) is efficiency.
+
+   <p>Clearly, the more general construction is <code>fold3-ec</code> as it allows
+individual treatment of the empty sequence case and the singleton
+sequence case.  However, this comes at the price of more book&ndash;keeping
+as can be seen from the implementation example.  As the overhead is
+located within inner loops, it makes sense to define another fold
+comprehension for the case where the added flexibility is not needed. 
+This is <code>fold-ec</code>.
+
+   <p>The names <code>fold-ec</code> and <code>fold3-ec</code> have been chosen for the
+comprehensions in order to stay clear any other 'fold' that may be
+around.
+
+<!--  -->
+<h5 class="subsubheading">Why is <code>:char-range</code> not defined by <code>integer-&gt;char</code>?</h5>
+
+<p>The definition of <code>:char-range</code> specifies a sequence of adjacent
+characters ordered by <code>char&lt;=?</code>.  The reason for not using
+<code>char-&gt;integer</code> and <code>integer-&gt;char</code> is the fact that <acronym>R5RS</acronym>
+Section 6.3.4 leaves it to the implementation whether the integers
+representing characters are consecutive or not.  In effect, this
+underspecification is inherited by <code>:char-range</code>.
+
+<!-- page -->
+   </body></html>
+

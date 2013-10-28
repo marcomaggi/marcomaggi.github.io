@@ -1,0 +1,182 @@
+<html lang="en">
+<head>
+<title>streams utilities - Libraries for Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Libraries for Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="streams.html#streams" title="streams">
+<link rel="prev" href="streams-match.html#streams-match" title="streams match">
+<link rel="next" href="streams-examples.html#streams-examples" title="streams examples">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes the libraries distributed along with version
+0.3d6 of Vicare Scheme, an R6RS compliant native
+compiler for the Scheme language.
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library `(vicare formations)' is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+The documentation of the libraries `(vicare parser-tools silex
+---)' are derived form the documentation of SILex.  Copyright
+(C) 2001, 2009 Danny Dube'.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="streams-utilities"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="streams-examples.html#streams-examples">streams examples</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="streams-match.html#streams-match">streams match</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="streams.html#streams">streams</a>
+<hr>
+</div>
+
+<h4 class="subsection">1.19.13 Utilities</h4>
+
+<p><a name="index-g_t_0040srfi_007b_007d-streams-utilities-264"></a>
+
+   <p>Streams, being the signature structured data type of functional
+programming languages, find useful expression in conjunction with
+higher&ndash;order functions.  Some of these higher&ndash;order functions, and
+their relationship to streams, are described below.
+
+   <p>The identity and constant procedures are frequently useful as the
+recursive base for maps and folds; <code>(identity obj)</code> always returns
+<var>obj</var>, and <code>(const obj)</code> creates a procedure that takes any
+number of arguments and always returns the same <var>obj</var>, no matter its
+arguments:
+
+<pre class="example">     (define (identity obj)
+       obj)
+     
+     (define (const obj)
+       (lambda x obj))
+</pre>
+   <p>Many of the stream procedures take a unary predicate that accepts an
+element of a stream and returns a boolean.  Procedure <code>(negate
+pred)</code> takes a unary predicate and returns a new unary predicate that,
+when called, returns the opposite boolean value as the original
+predicate.
+
+<pre class="example">     (define (negate pred)
+       (lambda (x) (not (pred x))))
+</pre>
+   <p><code>negate</code> is useful for procedures like <code>stream-take-while</code>
+that take a predicate, allowing them to be used in the opposite
+direction from which they were written; for instance, with the predicate
+reversed, <code>stream-take-while</code> becomes <code>stream-take-until</code>. 
+<code>stream-remove</code> is the opposite of <code>stream-filter</code>:
+
+<pre class="example">     (define-stream (stream-remove pred strm)
+       (stream-filter (negate pred) strm))
+</pre>
+   <p>A section is a procedure which has been partially applied to some of its
+arguments; for instance, <code>(double x)</code>, which returns twice its
+argument, is a partial application of the multiply operator to the
+number 2.  Sections come in two kinds:
+
+     <ul>
+<li>Left sections partially apply arguments starting from the left.
+
+     <li>Right sections partially apply arguments starting from the right. 
+</ul>
+
+   <p>The procedure <code>lsec</code> takes a procedure and some prefix of its
+arguments and returns a new procedure in which those arguments are
+partially applied; the procedure <code>rsec</code> takes a procedure and some
+reversed suffix of its arguments and returns a new procedure in which
+those arguments are partially applied:
+
+<pre class="example">     (define (lsec proc . args)
+       (lambda x
+         (apply proc (append args x))))
+     
+     (define (rsec proc . args)
+       (lambda x
+         (apply proc (reverse (append (reverse args)
+                                      (reverse x))))))
+</pre>
+   <p>Since most of the stream procedures take a stream as their last
+(rightmost) argument, left sections are particularly useful in
+conjunction with streams.
+
+<pre class="example">     (define stream-sum (lsec stream-fold + 0))
+</pre>
+   <p>Function composition creates a new function by partially applying
+multiple functions, one after the other.  In the simplest case there are
+only two functions, <var>f</var> and <var>g</var>, composed as <code>(compose f
+g)</code>; the composition can be bound to create a new function, as in:
+
+<pre class="example">     (define fg (compose f g))
+</pre>
+   <p class="noindent">the procedure <code>compose</code> takes one or more procedures and returns a
+new procedure that performs the same action as the individual procedures
+would if called in succession:
+
+<pre class="example">     (define (compose . fns)
+       (let comp ((fns fns))
+         (cond
+           ((null? fns) 'error)
+           ((null? (cdr fns)) (car fns))
+           (else
+             (lambda args
+               (call-with-values
+                 (lambda ()
+                   (apply
+                     (comp (cdr fns))
+                     args))
+                 (car fns)))))))
+</pre>
+   <p><code>compose</code> works with sections to create succinct but highly
+expressive procedure definitions.  The expression to compute the squares
+of the integers from 1 to 10 given above at <code>stream-unfold</code> could
+be written by composing <code>stream-map</code>, <code>stream-take-while</code>, and
+<code>stream-iterate</code>:
+
+<pre class="example">     ((compose
+       (lsec stream-map (rsec expt 2))
+       (lsec stream-take-while (negate (rsec &gt; 10)))
+       (lsec stream-iterate (rsec + 1)))
+      1)
+</pre>
+   <!-- page -->
+   </body></html>
+

@@ -1,0 +1,131 @@
+<html lang="en">
+<head>
+<title>flonum parser - Libraries for Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Libraries for Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="prev" href="flonum-format.html#flonum-format" title="flonum format">
+<link rel="next" href="debugging.html#debugging" title="debugging">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes the libraries distributed along with version
+0.3d6 of Vicare Scheme, an R6RS compliant native
+compiler for the Scheme language.
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library `(vicare formations)' is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+The documentation of the libraries `(vicare parser-tools silex
+---)' are derived form the documentation of SILex.  Copyright
+(C) 2001, 2009 Danny Dube'.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="flonum-parser"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="debugging.html#debugging">debugging</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="flonum-format.html#flonum-format">flonum format</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="index.html#Top">Top</a>
+<hr>
+</div>
+
+<h2 class="chapter">14 Parsing flonums</h2>
+
+<p><a name="index-Library-_0040library_007bvicare-numerics-flonum_002dparser_007d-3014"></a><a name="index-g_t_0040library_007bvicare-numerics-flonum_002dparser_007d_002c-library-3015"></a>
+
+   <p>The following bindings are exported by the library <code>(vicare
+numerics flonum-parser)</code>.
+
+<div class="defun">
+&mdash; Function: <b>parse-flonum</b><var> flonum real-func unreal-func<a name="index-parse_002dflonum-3016"></a></var><br>
+<blockquote><p>Parse the <var>flonum</var> its components for string formatting.
+
+        <p>If <var>flonum</var> is representable as real number, apply the function
+<var>real-func</var> to 3 arguments: a boolean, true if <var>flonum</var>
+is positive; a list of characters representing the digits of
+<var>flonum</var>; a fixnum representing the exponent of <var>flonum</var>. 
+Return the result of the application.
+
+        <p>If <var>flonum</var> is not representable as real number, apply the function
+<var>unreal-func</var> to a single argument being the string representation
+of <var>flonum</var>.  Return the result of the application.
+
+        <p>Notice how the arguments handed to <var>real-func</var> match the argument of
+<code>format-flonum</code> from <code>(vicare flonum-formatter)</code>.
+
+     <pre class="example">          #!r6rs
+          (import (vicare)
+            (vicare numerics flonum-parser))
+          
+          (parse-flonum 1.23456789
+                        (lambda args (cons 'real args))
+                        (lambda args (cons 'unreal args)))
+          &rArr; (real #t
+              (#\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9
+               #\0 #\0 #\0 #\0 #\0 #\0 #\0 #\1)
+              1)
+          
+          (parse-flonum 12.34e5
+                        (lambda args (cons 'real args))
+                        (lambda args (cons 'unreal args)))
+          &rArr; (real #t (#\1 #\2 #\3 #\4) 7)
+          
+          (parse-flonum -12.34e5
+                        (lambda args (cons 'real args))
+                        (lambda args (cons 'unreal args)))
+          &rArr; (real #f (#\1 #\2 #\3 #\4) 7)
+          
+          (parse-flonum +inf.0
+                        (lambda args (cons 'real args))
+                        (lambda args (cons 'unreal args)))
+          &rArr; (unreal "+inf.0")
+          
+          (parse-flonum +nan.0
+                        (lambda args (cons 'real args))
+                        (lambda args (cons 'unreal args)))
+          &rArr; (unreal "+nan.0")
+</pre>
+        </blockquote></div>
+
+<!-- end of file -->
+   </body></html>
+

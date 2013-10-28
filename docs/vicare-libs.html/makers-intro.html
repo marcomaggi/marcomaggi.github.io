@@ -1,0 +1,333 @@
+<html lang="en">
+<head>
+<title>makers intro - Libraries for Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Libraries for Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="makers.html#makers" title="makers">
+<link rel="next" href="makers-api.html#makers-api" title="makers api">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes the libraries distributed along with version
+0.3d6 of Vicare Scheme, an R6RS compliant native
+compiler for the Scheme language.
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library `(vicare formations)' is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+The documentation of the libraries `(vicare parser-tools silex
+---)' are derived form the documentation of SILex.  Copyright
+(C) 2001, 2009 Danny Dube'.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="makers-intro"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="makers-api.html#makers-api">makers api</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="makers.html#makers">makers</a>
+<hr>
+</div>
+
+<h4 class="subsection">1.13.1 Introduction to maker macros</h4>
+
+<p>It happens to define a function or macro accepting a number of arguments
+greater than 3:
+
+<pre class="example">     (define (the-func a b c d e f g h i)
+       ...)
+</pre>
+   <p class="noindent">in these cases it can be difficult to remember the order of the
+arguments; it can also be desirable to define default values for some or
+all of the arguments, so that at the call site some arguments can be
+omitted in the source code.  The syntax <code>define-maker</code> implements a
+solution to this problem.
+
+   <p>The following examples show the expansion of a simple maker with neither
+fixed nor variable arguments, only optional clauses arguments:
+
+<pre class="example">     (import (vicare)
+       (prefix (vicare language-extensions makers) mk.))
+     
+     (define-auxiliary-syntaxes alpha: beta: gamma:)
+     
+     (define-maker doit
+       list ((alpha:     1)
+             (beta:      2)
+             (gamma:     3)))
+     
+     (doit)                  ==&gt; (list 1 2 3)
+     
+     (doit (alpha:   10))    ==&gt; (list 10 2 3)
+     (doit (beta:    20))    ==&gt; (list 1 20 3)
+     (doit (gamma:   30))    ==&gt; (list 1 2 30)
+     
+     (doit (alpha:   10)
+           (beta:    20))    ==&gt; (list 10 20 3)
+     
+     (doit (alpha:   10)
+           (gamma:   30))    ==&gt; (list 10 2 30)
+     
+     (doit (gamma:   30)
+           (beta:    20))    ==&gt; (list 1 20 30)
+     
+     (doit (alpha:   10)
+           (beta:    20)
+           (gamma:   30))    ==&gt; (list 10 20 30)
+     
+     (let ((b 7))
+       (doit (beta:  (+ 6 (* 2 b)))
+             (alpha: (+ 2 8)))
+       ==&gt; (list (+ 2 8)
+                 (+ 6 (* 2 b))
+                 3)
+       #f)
+     
+     (doit (alpha: 10 20 30))
+     ==&gt; (list 1 (list 10 20 30) 3)
+</pre>
+   <p class="noindent">notice the last example: when multiple values are used in an argument's
+clause, they are enclosed in a <code>list</code> form; the following examples
+show the expansion of a maker with both fixed and variable arguments,
+plus optional clauses arguments:
+
+<pre class="example">     (import (vicare)
+       (prefix (vicare language-extensions makers) mk.))
+     
+     (define-auxiliary-syntaxes alpha: beta: gamma:)
+     
+     (define-maker (doit a b)
+         (list #\a #\b)
+       ((alpha:  1)
+        (beta:   2)
+        (gamma:  3)))
+     
+     
+     (doit #\p #\q)          ==&gt; (list #\a #\b #\p #\q 1 2 3)
+     
+     (doit #\p #\q
+           (alpha: 10))      ==&gt; (list #\a #\b #\p #\q 10 2 3)
+     
+     (doit #\p #\q
+           (beta: 20))       ==&gt; (list #\a #\b #\p #\q 1 20 3)
+     
+     (doit #\p #\q
+           (gamma: 30))      ==&gt; (list #\a #\b #\p #\q 1 2 30)
+     
+     (doit #\p #\q
+           (alpha: 10)
+           (beta:  20))      ==&gt; (list #\a #\b #\p #\q 10 20 3)
+     
+     (doit #\p #\q
+           (alpha: 10)
+           (gamma: 30))      ==&gt; (list #\a #\b #\p #\q 10 2 30)
+     
+     (doit #\p #\q
+           (gamma: 30)
+           (beta:  20))      ==&gt; (list #\a #\b #\p #\q 1 20 30)
+</pre>
+   <p>Each default value can be any expression and it is evaluated every time
+the maker is used:
+
+<pre class="example">     (import (vicare)
+       (prefix (vicare language-extensions makers) mk.))
+     
+     (define-auxiliary-syntaxes alpha: beta: gamma:)
+     
+     (define g
+       (let ((counter 0))
+         (lambda ()
+           (set! counter (+ 1 counter))
+           counter)))
+     
+     (define default2 (- (/ 9 3) 1))
+     
+     (define-maker doit
+       list ((alpha:     1)
+             (beta:      default2)
+             (gamma:     (g))))
+     
+     (doit)                  &rArr; ( 1  2  1)
+     (doit (alpha: 10))      &rArr; (10  2  2)
+     (doit (beta:  20))      &rArr; ( 1 20  3)
+     (doit (gamma: 30))      &rArr; ( 1  2 30)
+</pre>
+   <p>A maker invocation can expand itself into another macro use; this allows
+us to detect whether an optional argument was used or not:
+
+<pre class="example">     (import (vicare)
+       (prefix (vicare language-extensions makers) mk.)
+       (vicare language-extensions sentinels))
+     
+     (define-auxiliary-syntaxes alpha: beta: gamma:)
+     
+     (define-maker doit
+         subdoit
+       ((alpha:  1)
+        (beta:   2)
+        (gamma:  sentinel)))
+     
+     (define-syntax subdoit
+       (lambda (stx)
+         (syntax-case stx ()
+           ((_ ?alpha ?beta ?gamma)
+            (and (identifier? #'?gamma)
+                 (free-identifier=? #'?gamma #'sentinel))
+            #'(list ?alpha ?beta 3))
+           ((_ ?alpha ?beta ?gamma)
+            #'(list ?alpha ?beta ?gamma))
+           )))
+     
+     (doit)                  &rArr; ( 1  2  3)
+     (doit (alpha: 10))      &rArr; (10  2  3)
+     (doit (beta:  20))      &rArr; ( 1 20  3)
+     (doit (gamma: 30))      &rArr; ( 1  2 30)
+</pre>
+   <p class="noindent">and also to &ldquo;unpack&rdquo; multiple values used in the same argument clause:
+
+<pre class="example">     (import (vicare)
+       (prefix (vicare language-extensions makers) mk.)
+       (vicare language-extensions sentinels))
+     
+     (define-auxiliary-syntaxes alpha: beta: gamma:)
+     
+     (define-maker doit
+       subdoit ((alpha:  1)
+                (beta:   2)
+                (gamma:  3)))
+     
+     (define-syntax subdoit
+       (lambda (stx)
+         (syntax-case stx (list)
+           ((_ ?alpha (list ?beta0 ...) ?gamma)
+            #'(list ?alpha ?beta0 ... ?gamma))
+           ((_ ?alpha ?beta ?gamma)
+            #'(list ?alpha ?beta ?gamma))
+           )))
+     
+     (doit (alpha: 10)
+            (beta: #\a #\b #\c)
+            (gamma: 30))
+     &rArr; (10 #\a #\b #\c 30)
+</pre>
+   <p>We can define a maker in the body of a library and export it; we just
+have to remember to export the auxiliary syntaxes, too:
+
+<pre class="example">     (library (the-lib)
+       (export doit alpha beta gamma)
+       (import (vicare)
+         (prefix (vicare language-extensions makers) mk.))
+       (define-auxiliary-syntaxes alpha beta gamma)
+       (define-maker doit
+         list ((alpha     1)
+               (beta      2)
+               (gamma     3))))
+     
+     (library (exec)
+       (export)
+       (import (rnrs)
+         (prefix (the-lib) lib.))
+       (lib.doit)                  ==&gt; (list 1 2 3)
+       (lib.doit (lib.alpha   10)) ==&gt; (list 10 2 3)
+       (lib.doit (lib.beta    20)) ==&gt; (list 1 20 3)
+       (lib.doit (lib.gamma   30)) ==&gt; (list 1 2 30)
+       )
+</pre>
+   <p>A number of options can be specified to customise the parsing of
+clauses.  We can specify if a clause is mandatory or optional:
+
+<pre class="example">     (import (vicare)
+       (prefix (vicare language-extensions makers) mk.))
+     
+     (define-auxiliary-syntaxes alpha: beta: gamma:)
+     
+     (define-maker doit
+       list ((alpha:     1 (mk.mandatory))
+             (beta:      2 (mk.optional))
+             (gamma:     3)))
+     
+     (doit (alpha: 10))              ==&gt; (list 10 2 3)
+     (doit (beta:  20))              error--&gt; missing clause "alpha:"
+</pre>
+   <p class="noindent">the default is for all the clauses to be optional.  We can specify that
+a clause must be used along one or more other clauses:
+
+<pre class="example">     (import (vicare)
+       (prefix (vicare language-extensions makers) mk.))
+     
+     (define-auxiliary-syntaxes alpha: beta: gamma:)
+     
+     (define-maker doit
+       list ((alpha:     1 (mk.with beta: gamma:))
+             (beta:      2)
+             (gamma:     3)))
+     
+     (doit (alpha: 10)
+           (beta:  20)
+           (gamma: 30))              ==&gt; (list 10 20 30)
+     
+     (doit (beta: 20))               ==&gt; (list 1 20 3)
+     
+     (doit (alpha: 10)
+           (gamma: 30))              error--&gt; missing clause "beta:"
+</pre>
+   <p class="noindent">or we can specify that a clause must not be used along one or more other
+clauses:
+
+<pre class="example">     (import (vicare)
+       (prefix (vicare language-extensions makers) mk.))
+     
+     (define-auxiliary-syntax alpha: beta: gamma:)
+     
+     (define-maker doit
+       list ((alpha:     1 (mk.without beta: gamma:))
+             (beta:      2)
+             (gamma:     3)))
+     
+     (doit (alpha: 10)
+           (beta:  20)
+           (gamma: 30))              error--&gt; invalid clauses mix
+     
+     (doit (beta: 20))               ==&gt; (list 1 20 3)
+</pre>
+   <!-- page -->
+   </body></html>
+

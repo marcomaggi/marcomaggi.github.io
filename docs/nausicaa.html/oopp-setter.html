@@ -1,0 +1,181 @@
+<html lang="en">
+<head>
+<title>oopp setter - Nausicaa for Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Nausicaa for Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="oopp.html#oopp" title="oopp">
+<link rel="prev" href="oopp-method.html#oopp-method" title="oopp method">
+<link rel="next" href="oopp-mixins.html#oopp-mixins" title="oopp mixins">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.3d6 of Nausicaa, a
+collection of libraries for Vicare Scheme implementing the language
+`(nausicaa)' on top of `(vicare)'.
+
+Copyright (C) 2012, 2013 by Marco Maggi <marco.maggi-ipsu@poste.it>
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with Invariant Sections being ``GNU Free Documentation
+     License'' and ``GNU General Public License'', no Front--Cover
+     Texts, and no Back--Cover Texts.  A copy of the license is
+     included in the section entitled ``GNU Free Documentation
+     License''.
+-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="oopp-setter"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="oopp-mixins.html#oopp-mixins">oopp mixins</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="oopp-method.html#oopp-method">oopp method</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="oopp.html#oopp">oopp</a>
+<hr>
+</div>
+
+<h3 class="section">3.12 Getter and setter syntaxes</h3>
+
+<div class="defun">
+&mdash; Auxiliary Syntax: <b>getter</b><var> ?transformer<a name="index-getter-46"></a></var><br>
+<blockquote><p>Add a getter syntax to instances of the enclosing class, label or mixin
+definition; this clause can be used only once.
+
+        <p><var>?transformer</var> must be an expression evaluating to a syntax
+transformer: a function accepting a sintax object as single argument and
+returning a syntax object as single value.
+
+        <p>Whenever a tagged variable <var>?var</var> is used as follows (lookout for
+the parentheses):
+
+     <pre class="example">          (<var>?var</var> (<var>?form0</var> ...) (<var>?form</var> ...) ...)
+</pre>
+        <p class="noindent">the getter transformer is applied to the syntax object (lookout for the
+parentheses):
+
+     <pre class="example">          #'(<var>?var</var> ((<var>?form0</var> ...) (<var>?form</var> ...) ...))
+</pre>
+        <p class="noindent">and the return value of the transformer is the result of the expansion.
+
+        <p>Getter definition examples:
+
+     <pre class="example">          (define-label &lt;vector&gt;
+            (getter (lambda (stx)
+                      (syntax-case stx ()
+                        ((?var ((?idx)))
+                         #'(vector-ref ?var ?idx))))))
+          
+          (define-label &lt;matrix&gt;
+            (getter (lambda (stx)
+                      (syntax-case stx ()
+                        ((?var ((?row) (?col)))
+                         #'(vector-ref
+                              (vector-ref ?var ?row)
+                              ?col))))))
+          
+          (&lt;vector&gt; V '#(1 2 3))
+          (&lt;matrix&gt; M '#(#(1 2 3)
+                         #(4 5 6)))
+          
+          (V[0])                  &rArr; 1
+          (V[1])                  &rArr; 2
+          (V[2])                  &rArr; 3
+          
+          (M[0][2])               &rArr; 3
+          (M[1][1])               &rArr; 5
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Auxiliary Syntax: <b>setter</b><var> ?transformer<a name="index-setter-47"></a></var><br>
+<blockquote><p>Add a setter syntax to instances of the enclosing class, label or mixin
+definition; this clause can be used only once.
+
+        <p><var>?transformer</var> must be an expression evaluating to a syntax
+transformer: a function accepting a sintax object as single argument and
+returning a syntax object as single value.
+
+        <p>Whenever a tagged variable <var>?var</var> is used as follows (lookout for
+the parentheses):
+
+     <pre class="example">          (set!/tags (<var>?var</var> (<var>?form0</var> ...) (<var>?form</var> ...) ...) <var>?expr</var>)
+          (set!/tags <var>?var</var> (<var>?form0</var> ...) (<var>?form</var> ...) ... <var>?expr</var>)
+</pre>
+        <p class="noindent">the setter transformer is applied to the syntax object (lookout for the
+parentheses):
+
+     <pre class="example">          #'(<var>?var</var> ((<var>?form0</var> ...) (<var>?form</var> ...) ...) <var>?expr</var>)
+</pre>
+        <p class="noindent">and the return value of the transformer is the result of the expansion.
+
+        <p>Setter definition examples:
+
+     <pre class="example">          (define-label &lt;vector&gt;
+            (setter (lambda (stx)
+                      (syntax-case stx ()
+                        ((?var ((?idx)) ?expr)
+                         #'(vector-set! ?var ?idx ?expr))))))
+          
+          (define-label &lt;matrix&gt;
+            (setter (lambda (stx)
+                      (syntax-case stx ()
+                        ((?var ((?row) (?col)) ?expr)
+                         #'(vector-set!
+                              (vector-ref ?var ?row)
+                              ?col ?expr))))))
+          
+          ;;We can mutate only dynamically built objects.
+          (&lt;vector&gt; V (vector 1 2 3))
+          (&lt;matrix&gt; M (vector (vector 1 2 3)
+                              (vector 4 5 6)))
+          
+          (set!/tags V[1] 77)
+          (set!/tags (V[2]) 99)
+          V               &rArr; #(1 77 99)
+          
+          (set!/tags M[0][2] 77)
+          (set!/tags (M[1][1]) 99)
+          M               &rArr; #(#(1 2 77) #(4 99 6))
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Syntax: <b>set!/tags</b><var> ?id ?val<a name="index-set_0021_002ftags-48"></a></var><br>
+&mdash; Syntax: <b>set!/tags</b> (<var>?var ?field-name ?arg ...</var>)<var> ?val<a name="index-set_0021_002ftags-49"></a></var><br>
+&mdash; Syntax: <b>set!/tags</b> (<var>?var </var>(<var>?form0 ...</var>) (<var>?form ...</var>)<var> ...</var>)<var> ?expr<a name="index-set_0021_002ftags-50"></a></var><br>
+&mdash; Syntax: <b>set!/tags</b><var> ?var </var>(<var>?form0 ...</var>) (<var>?form ...</var>)<var> ... ?expr<a name="index-set_0021_002ftags-51"></a></var><br>
+<blockquote><p>A syntax that generalises <code>set!</code> as defined by <acronym>R6RS</acronym> to support
+<acronym>OOPP</acronym> notation.
+
+          <ul>
+<li>In the first form, in which <var>?id</var> is an identifier and <var>?val</var>
+and expression, it is equivalent to <code>set!</code> as defined by <acronym>R6RS</acronym>.
+
+          <li>In the second form, in which <var>?var</var> is a tagged variable, the
+mutator of the field <var>?field-name</var> is applied to the given arguments
+as documented in the <acronym>OOPP</acronym> syntax definition, <a href="oopp-notation.html#oopp-notation">oopp notation</a>.
+
+          <li>In the third and fourth forms, in which <var>?var</var> is a tagged variable,
+the setter transformer for <var>?var</var> is applied to the form as
+documented in the <acronym>OOPP</acronym> syntax definition, <a href="oopp-notation.html#oopp-notation">oopp notation</a>, and the
+setter clause. 
+</ul>
+        </p></blockquote></div>
+
+<!-- page -->
+   </body></html>
+

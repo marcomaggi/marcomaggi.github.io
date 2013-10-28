@@ -1,0 +1,230 @@
+<html lang="en">
+<head>
+<title>posix socket examples - Libraries for Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Libraries for Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="posix-socket.html#posix-socket" title="posix socket">
+<link rel="prev" href="posix-socket-misc.html#posix-socket-misc" title="posix socket misc">
+<link rel="next" href="posix-socket-oob.html#posix-socket-oob" title="posix socket oob">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes the libraries distributed along with version
+0.3d6 of Vicare Scheme, an R6RS compliant native
+compiler for the Scheme language.
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library `(vicare formations)' is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+The documentation of the libraries `(vicare parser-tools silex
+---)' are derived form the documentation of SILex.  Copyright
+(C) 2001, 2009 Danny Dube'.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="posix-socket-examples"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="posix-socket-oob.html#posix-socket-oob">posix socket oob</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="posix-socket-misc.html#posix-socket-misc">posix socket misc</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="posix-socket.html#posix-socket">posix socket</a>
+<hr>
+</div>
+
+<h4 class="subsection">4.14.8 Examples of clients and servers</h4>
+
+<p>Basically a <acronym>TCP</acronym>/<acronym>IP</acronym> server should do:
+
+<pre class="example">     #!r6rs
+     (import (rnrs)
+       (prefix (vicare posix) px.)
+       (vicare platform constants))
+     
+     (let ((sockaddr    (px.make-sockaddr_in '#vu8(127 0 0 1) 8080))
+           (server-sock (px.socket PF_INET SOCK_STREAM 0)))
+       (px.bind   server-sock sockaddr)
+       (px.listen server-sock 2)
+       (let-values (((sock client-address)
+                     (px.accept server-sock)))
+         ;; ... talk with the client through SOCK ...
+         (px.close sock))
+       (px.close server-sock))
+</pre>
+   <p class="noindent">while a <acronym>TCP</acronym>/<acronym>IP</acronym> client should to:
+
+<pre class="example">     #!r6rs
+     (import (rnrs)
+       (prefix (vicare posix) px.)
+       (vicare platform constants))
+     
+     (let ((sockaddr (px.make-sockaddr_in '#vu8(127 0 0 1) 8080))
+           (sock     (px.socket PF_INET SOCK_STREAM 0)))
+       (px.connect sock sockaddr)
+       ;; ... talk to the server through SOCK ...
+       (px.close sock))
+</pre>
+   <p>A <acronym>UDP</acronym>/<acronym>IP</acronym> &ldquo;server&rdquo; should do:
+
+<pre class="example">     #!r6rs
+     (import (rnrs)
+       (prefix (vicare posix) px.)
+       (vicare platform constants))
+     
+     (let ((sockaddr   (px.make-sockaddr_in '#vu8(127 0 0 1) 8080))
+           (sock       (px.socket PF_INET SOCK_DGRAM 0))
+           (in-buffer  (make-bytevector 1024))
+           (out-buffer (make-bytevector 1024)))
+       (px.bind sock sockaddr)
+       (let-values (((len sockaddr)
+                     (px.recvfrom sock in-buffer #f 0)))
+         ;; ... process the received packet ...
+         ;; ... prepare the answer ...
+         (px.sendto sock out-buffer #f 0 sockaddr))
+       (px.close sock))
+</pre>
+   <p class="noindent">while a <acronym>UDP</acronym>/<acronym>IP</acronym> &ldquo;client&rdquo; should do:
+
+<pre class="example">     #!r6rs
+     (import (rnrs)
+       (prefix (vicare posix) px.)
+       (vicare platform constants))
+     
+     (let ((sockaddr   (px.make-sockaddr_in '#vu8(127 0 0 1) 8081))
+           (sock       (px.socket PF_INET SOCK_DGRAM 0))
+           (out-buffer (make-bytevector 1024))
+           (in-buffer  (make-bytevector 1024)))
+       (px.bind sock sockaddr)
+       ;; ... prepare the request ...
+       (px.sendto sock out-buffer #f 0 sockaddr)
+       (let-values (((len sockaddr)
+                     (px.recvfrom sock in-buffer #f 0)))
+         ;; ... process the received packet ...
+         )
+       (px.close sock))
+</pre>
+   <p>A Unix&ndash;domain socket server should do:
+
+<pre class="example">     #!r6rs
+     (import (rnrs)
+       (prefix (vicare posix) px.)
+       (vicare platform constants))
+     
+     (let* ((tmpdir       (px.getenv "TMPDIR"))
+            (pathname     (string-append tmpdir "/use-me"))
+            (sockaddr     (px.make-sockaddr_un pathname))
+            (server-sock  (px.socket PF_LOCAL SOCK_STREAM 0)))
+       (px.bind   server-sock sockaddr)
+       (px.listen server-sock 2)
+       (let-values (((sock client-address)
+                     (px.accept server-sock)))
+         ;; ... talk to the client through SOCK ...
+         (px.close sock))
+       (px.close server-sock))
+</pre>
+   <p class="noindent">while a Unix&ndash;domain socket client should do:
+
+<pre class="example">     #!r6rs
+     (import (rnrs)
+       (prefix (vicare posix) px.)
+       (vicare platform constants))
+     
+     (let* ((tmpdir    (px.getenv "TMPDIR"))
+            (pathname  (string-append tmpdir "/use-me"))
+            (sockaddr  (px.make-sockaddr_un pathname))
+            (sock      (px.socket PF_LOCAL SOCK_STREAM 0)))
+       (px.connect sock sockaddr)
+       ;; ... talk to the server through SOCK ...
+       (px.close sock))
+</pre>
+   <p>To receive incoming data and Out Of Band data, a <acronym>TCP</acronym>/<acronym>IP</acronym> server
+should do:
+
+<pre class="example">     #!r6rs
+     (import (rnrs)
+       (prefix (vicare posix) px.)
+       (vicare platform constants))
+     
+     (let ((sockaddr    (px.make-sockaddr_in '#vu8(127 0 0 1) 8080))
+           (server-sock (px.socket PF_INET SOCK_STREAM 0)))
+       (px.bind   server-sock sockaddr)
+       (px.listen server-sock 2)
+       (let*-values
+           (((sock client-address) (px.accept server-sock))
+            ((bv)                  (make-bytevector 10)))
+         (let loop ()
+           (let-values (((rd wr ex) (px.select-fd sock 2 0)))
+             (cond (ex ;process exceptional conditions first!!!
+                    ;; block until OOB data arrives
+                    (let ((len (px.recv sock bv #f MSG_OOB)))
+                      ;; process data in BV between 0 and LEN,
+                      ;; which should be 1
+                      (loop)))
+                   (rd
+                    (let ((len (px.recv sock bv #f 0)))
+                      (when (positive? len)
+                        ;; process data in BV between 0
+                        ;; and LEN
+                        (loop))))
+                   (else (loop)))))
+         (px.close sock))
+       (px.close server-sock))
+</pre>
+   <p class="noindent">to send outgoing data and Out Of Band data, a <acronym>TCP</acronym>/<acronym>IP</acronym> client should
+do:
+
+<pre class="example">     #!r6rs
+     (import (rnrs)
+       (prefix (vicare posix) px.)
+       (vicare platform constants))
+     
+     (let ((sockaddr  (px.make-sockaddr_in '#vu8(127 0 0 1) 8080))
+           (sock      (px.socket PF_INET SOCK_STREAM 0)))
+       (px.connect sock sockaddr)
+       (px.send sock '#vu8(1 2 3) #f 0)
+       ;; only the single byte 6 (the last) is sent as
+       ;; OOB data, 4 and 5 are sent as ordinary data
+       (px.send sock '#vu8(4 5 6) #f MSG_OOB)
+       (px.send sock '#vu8(7 8 9) #f 0)
+       (px.close sock))
+</pre>
+   <!-- page -->
+   </body></html>
+
