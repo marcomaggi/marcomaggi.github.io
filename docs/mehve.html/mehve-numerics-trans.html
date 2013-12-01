@@ -1,0 +1,346 @@
+<html lang="en">
+<head>
+<title>mehve numerics trans - Mehve for Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Mehve for Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="mehve-numerics.html#mehve-numerics" title="mehve numerics">
+<link rel="prev" href="mehve-numerics-parts.html#mehve-numerics-parts" title="mehve numerics parts">
+<link rel="next" href="mehve-numerics-infix.html#mehve-numerics-infix" title="mehve numerics infix">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes Mehve, a collection of libraries for
+Vicare Scheme version 0.3d7, implementing the language
+`(nausicaa mehve)' on top of `(nausicaa)'.
+
+Copyright (C) 2011-2013 by Marco Maggi <marco.maggi-ipsu@poste.it>
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with Invariant Sections being ``GNU Free Documentation
+     License'' and ``GNU General Public License'', no Front--Cover
+     Texts, and no Back--Cover Texts.  A copy of the license is
+     included in the section entitled ``GNU Free Documentation
+     License''.
+-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="mehve-numerics-trans"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="mehve-numerics-infix.html#mehve-numerics-infix">mehve numerics infix</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="mehve-numerics-parts.html#mehve-numerics-parts">mehve numerics parts</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="mehve-numerics.html#mehve-numerics">mehve numerics</a>
+<hr>
+</div>
+
+<h4 class="subsection">2.4.4 Transcendental generic functions</h4>
+
+<p><a name="index-g_t_0040library_007bnausicaa-mehve-language-numerics-transcendental_007d_002c-library-241"></a><a name="index-Library-_0040library_007bnausicaa-mehve-language-numerics-transcendental_007d-242"></a>
+
+   <p>The auxiliary library <code>(nausicaa mehve language
+numerics transcendental)</code> defines the generic functions behind the
+transcendental operations; we need to import it only if we desire to add
+specialised methods to transcendental functions.  The transcendental
+functions and the other functions exported by the library are the
+following:
+
+<pre class="example">     expt sqrt cbrt square cube exp log
+     sin cos tan asin acos atan
+     sinh cosh tanh asinh acosh atanh
+</pre>
+   <p>As example we look at how to specialise the transcendental functions
+<code>sin</code>, <code>cos</code> and <code>tan</code> to operate on lists of items:
+
+<pre class="example">     #!r6rs
+     (import (nausicaa mehve)
+       (prefix (nausicaa mehve language numerics transcendental)
+               mehve.))
+     
+     (define-method (mehve.sin (o &lt;spine&gt;))
+       (o map sin))
+     
+     (define-method (mehve.cos (o &lt;spine&gt;))
+       (o map cos))
+     
+     (define-method (mehve.tan (o &lt;spine&gt;))
+       (o map tan))
+     
+     (sin '(1.1 2.2 3.3))
+     &rArr; (0.8912073600614354 0.8084964038195901 -0.1577456941432482)
+     
+     (cos '(1.1 2.2 3.3))
+     &rArr; (0.4535961214255773 -0.5885011172553458 -0.9874797699088649)
+     
+     (tan '(1.1 2.2 3.3))
+     &rArr; (1.9647596572486523 -1.3738230567687946 0.15974574766003222)
+</pre>
+   <p class="noindent">notice how the methods recursively call the generic functions in their
+body, this way the lists can hold any of the value types for which there
+are methods.
+
+<!--  -->
+<h5 class="subsubheading">Exponentiation and logarithm generic functions</h5>
+
+<div class="defun">
+&mdash; Generic Function: <b>expt</b><var> A B<a name="index-expt-243"></a></var><br>
+&mdash; Method: <b>expt</b> (<var>A &lt;flonum&gt;</var>) (<var>B &lt;flonum&gt;</var>)<var><a name="index-expt-244"></a></var><br>
+&mdash; Method: <b>expt</b> (<var>A &lt;complex&gt;</var>) (<var>B &lt;complex&gt;</var>)<var><a name="index-expt-245"></a></var><br>
+<blockquote><p>Compute <var>A</var> raised to the power of <var>B</var>.  Use <code>expt</code> or one
+of its type&ndash;specific variants as appropriate for the argument. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Generic Function: <b>sqrt</b><var> A<a name="index-sqrt-246"></a></var><br>
+&mdash; Method: <b>sqrt</b> (<var>A &lt;flonum&gt;</var>)<var><a name="index-sqrt-247"></a></var><br>
+&mdash; Method: <b>sqrt</b> (<var>A &lt;complex&gt;</var>)<var><a name="index-sqrt-248"></a></var><br>
+<blockquote><p>Compute square root of <var>A</var>.  Use <code>sqrt</code> or one of its
+type&ndash;specific variants as appropriate for the argument. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Generic Function: <b>cbrt</b><var> A<a name="index-cbrt-249"></a></var><br>
+&mdash; Method: <b>cbrt</b> (<var>A &lt;flonum&gt;</var>)<var><a name="index-cbrt-250"></a></var><br>
+&mdash; Method: <b>cbrt</b> (<var>A &lt;complex&gt;</var>)<var><a name="index-cbrt-251"></a></var><br>
+<blockquote><p>Compute cubic root of <var>A</var>.  Use <code>cbrt</code> or one of its
+type&ndash;specific variants as appropriate for the argument. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Generic Function: <b>square</b><var> A<a name="index-square-252"></a></var><br>
+&mdash; Method: <b>square</b> (<var>A &lt;fixnum&gt;</var>)<var><a name="index-square-253"></a></var><br>
+&mdash; Method: <b>square</b> (<var>A &lt;bignum&gt;</var>)<var><a name="index-square-254"></a></var><br>
+&mdash; Method: <b>square</b> (<var>A &lt;ratnum&gt;</var>)<var><a name="index-square-255"></a></var><br>
+&mdash; Method: <b>square</b> (<var>A &lt;flonum&gt;</var>)<var><a name="index-square-256"></a></var><br>
+&mdash; Method: <b>square</b> (<var>A &lt;cflonum&gt;</var>)<var><a name="index-square-257"></a></var><br>
+&mdash; Method: <b>square</b> (<var>A &lt;compnum&gt;</var>)<var><a name="index-square-258"></a></var><br>
+&mdash; Method: <b>square</b> (<var>A &lt;complex&gt;</var>)<var><a name="index-square-259"></a></var><br>
+<blockquote><p>Compute square of <var>A</var>.  Use <code>square</code> or one of its
+type&ndash;specific variants as appropriate for the argument. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Generic Function: <b>cube</b><var> A<a name="index-cube-260"></a></var><br>
+&mdash; Method: <b>cube</b> (<var>A &lt;fixnum&gt;</var>)<var><a name="index-cube-261"></a></var><br>
+&mdash; Method: <b>cube</b> (<var>A &lt;bignum&gt;</var>)<var><a name="index-cube-262"></a></var><br>
+&mdash; Method: <b>cube</b> (<var>A &lt;ratnum&gt;</var>)<var><a name="index-cube-263"></a></var><br>
+&mdash; Method: <b>cube</b> (<var>A &lt;flonum&gt;</var>)<var><a name="index-cube-264"></a></var><br>
+&mdash; Method: <b>cube</b> (<var>A &lt;cflonum&gt;</var>)<var><a name="index-cube-265"></a></var><br>
+&mdash; Method: <b>cube</b> (<var>A &lt;compnum&gt;</var>)<var><a name="index-cube-266"></a></var><br>
+&mdash; Method: <b>cube</b> (<var>A &lt;complex&gt;</var>)<var><a name="index-cube-267"></a></var><br>
+<blockquote><p>Compute cube of <var>A</var>.  Use <code>cube</code> or one of its type&ndash;specific
+variants as appropriate for the argument. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Generic Function: <b>exp</b><var> A<a name="index-exp-268"></a></var><br>
+&mdash; Method: <b>exp</b> (<var>A &lt;flonum&gt;</var>)<var><a name="index-exp-269"></a></var><br>
+&mdash; Method: <b>exp</b> (<var>A &lt;complex&gt;</var>)<var><a name="index-exp-270"></a></var><br>
+<blockquote><p>Compute the base e exponential.  Use <code>exp</code> or one of its
+type&ndash;specific variants as appropriate for the argument. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Generic Function: <b>log-1</b><var> A<a name="index-log_002d1-271"></a></var><br>
+&mdash; Method: <b>log-1</b> (<var>A &lt;flonum&gt;</var>)<var><a name="index-log_002d1-272"></a></var><br>
+&mdash; Method: <b>log-1</b> (<var>A &lt;complex&gt;</var>)<var><a name="index-log_002d1-273"></a></var><br>
+<blockquote><p>Compute the base e logarithm.  Use <code>log</code> or one of its
+type&ndash;specific variants as appropriate for the argument. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Generic Function: <b>log-2</b><var> A B<a name="index-log_002d2-274"></a></var><br>
+&mdash; Method: <b>log-2</b> (<var>A &lt;flonum&gt;</var>) (<var>B &lt;flonum&gt;</var>)<var><a name="index-log_002d2-275"></a></var><br>
+&mdash; Method: <b>log-2</b> (<var>A &lt;complex&gt;</var>) (<var>B &lt;complex&gt;</var>)<var><a name="index-log_002d2-276"></a></var><br>
+<blockquote><p>Compute the base <var>B</var> logarithm of <var>A</var>.  Use <code>log</code> or one of
+its type&ndash;specific variants as appropriate for the argument. 
+</p></blockquote></div>
+
+<!--  -->
+<h5 class="subsubheading">Trigonometric generic functions</h5>
+
+<div class="defun">
+&mdash; Generic Function: <b>sin</b><var> A<a name="index-sin-277"></a></var><br>
+&mdash; Method: <b>sin</b> (<var>A &lt;fixnum&gt;</var>)<var><a name="index-sin-278"></a></var><br>
+&mdash; Method: <b>sin</b> (<var>A &lt;bignum&gt;</var>)<var><a name="index-sin-279"></a></var><br>
+&mdash; Method: <b>sin</b> (<var>A &lt;ratnum&gt;</var>)<var><a name="index-sin-280"></a></var><br>
+&mdash; Method: <b>sin</b> (<var>A &lt;flonum&gt;</var>)<var><a name="index-sin-281"></a></var><br>
+&mdash; Method: <b>sin</b> (<var>A &lt;cflonum&gt;</var>)<var><a name="index-sin-282"></a></var><br>
+&mdash; Method: <b>sin</b> (<var>A &lt;compnum&gt;</var>)<var><a name="index-sin-283"></a></var><br>
+&mdash; Method: <b>sin</b> (<var>A &lt;complex&gt;</var>)<var><a name="index-sin-284"></a></var><br>
+<blockquote><p>Compute the trigonometric sine function.  Use <code>sin</code> or one of its
+type&ndash;specific variants as appropriate for the argument. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Generic Function: <b>cos</b><var> A<a name="index-cos-285"></a></var><br>
+&mdash; Method: <b>cos</b> (<var>A &lt;fixnum&gt;</var>)<var><a name="index-cos-286"></a></var><br>
+&mdash; Method: <b>cos</b> (<var>A &lt;bignum&gt;</var>)<var><a name="index-cos-287"></a></var><br>
+&mdash; Method: <b>cos</b> (<var>A &lt;ratnum&gt;</var>)<var><a name="index-cos-288"></a></var><br>
+&mdash; Method: <b>cos</b> (<var>A &lt;flonum&gt;</var>)<var><a name="index-cos-289"></a></var><br>
+&mdash; Method: <b>cos</b> (<var>A &lt;cflonum&gt;</var>)<var><a name="index-cos-290"></a></var><br>
+&mdash; Method: <b>cos</b> (<var>A &lt;compnum&gt;</var>)<var><a name="index-cos-291"></a></var><br>
+&mdash; Method: <b>cos</b> (<var>A &lt;complex&gt;</var>)<var><a name="index-cos-292"></a></var><br>
+<blockquote><p>Compute the trigonometric cosine function.  Use <code>cos</code> or one of its
+type&ndash;specific variants as appropriate for the argument. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Generic Function: <b>tan</b><var> A<a name="index-tan-293"></a></var><br>
+&mdash; Method: <b>tan</b> (<var>A &lt;fixnum&gt;</var>)<var><a name="index-tan-294"></a></var><br>
+&mdash; Method: <b>tan</b> (<var>A &lt;bignum&gt;</var>)<var><a name="index-tan-295"></a></var><br>
+&mdash; Method: <b>tan</b> (<var>A &lt;ratnum&gt;</var>)<var><a name="index-tan-296"></a></var><br>
+&mdash; Method: <b>tan</b> (<var>A &lt;flonum&gt;</var>)<var><a name="index-tan-297"></a></var><br>
+&mdash; Method: <b>tan</b> (<var>A &lt;cflonum&gt;</var>)<var><a name="index-tan-298"></a></var><br>
+&mdash; Method: <b>tan</b> (<var>A &lt;compnum&gt;</var>)<var><a name="index-tan-299"></a></var><br>
+&mdash; Method: <b>tan</b> (<var>A &lt;complex&gt;</var>)<var><a name="index-tan-300"></a></var><br>
+<blockquote><p>Compute the trigonometric tangent function.  Use <code>tan</code> or one of
+its type&ndash;specific variants as appropriate for the argument. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Generic Function: <b>asin</b><var> A<a name="index-asin-301"></a></var><br>
+&mdash; Method: <b>asin</b> (<var>A &lt;fixnum&gt;</var>)<var><a name="index-asin-302"></a></var><br>
+&mdash; Method: <b>asin</b> (<var>A &lt;bignum&gt;</var>)<var><a name="index-asin-303"></a></var><br>
+&mdash; Method: <b>asin</b> (<var>A &lt;ratnum&gt;</var>)<var><a name="index-asin-304"></a></var><br>
+&mdash; Method: <b>asin</b> (<var>A &lt;flonum&gt;</var>)<var><a name="index-asin-305"></a></var><br>
+&mdash; Method: <b>asin</b> (<var>A &lt;cflonum&gt;</var>)<var><a name="index-asin-306"></a></var><br>
+&mdash; Method: <b>asin</b> (<var>A &lt;compnum&gt;</var>)<var><a name="index-asin-307"></a></var><br>
+&mdash; Method: <b>asin</b> (<var>A &lt;complex&gt;</var>)<var><a name="index-asin-308"></a></var><br>
+<blockquote><p>Compute the trigonometric arc sine function.  Use <code>asin</code> or one of
+its type&ndash;specific variants as appropriate for the argument. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Generic Function: <b>acos</b><var> A<a name="index-acos-309"></a></var><br>
+&mdash; Method: <b>acos</b> (<var>A &lt;fixnum&gt;</var>)<var><a name="index-acos-310"></a></var><br>
+&mdash; Method: <b>acos</b> (<var>A &lt;bignum&gt;</var>)<var><a name="index-acos-311"></a></var><br>
+&mdash; Method: <b>acos</b> (<var>A &lt;ratnum&gt;</var>)<var><a name="index-acos-312"></a></var><br>
+&mdash; Method: <b>acos</b> (<var>A &lt;flonum&gt;</var>)<var><a name="index-acos-313"></a></var><br>
+&mdash; Method: <b>acos</b> (<var>A &lt;cflonum&gt;</var>)<var><a name="index-acos-314"></a></var><br>
+&mdash; Method: <b>acos</b> (<var>A &lt;compnum&gt;</var>)<var><a name="index-acos-315"></a></var><br>
+&mdash; Method: <b>acos</b> (<var>A &lt;complex&gt;</var>)<var><a name="index-acos-316"></a></var><br>
+<blockquote><p>Compute the trigonometric arc cosine function.  Use <code>acos</code> or one
+of its type&ndash;specific variants as appropriate for the argument. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Generic Function: <b>atan-1</b><var> A<a name="index-atan_002d1-317"></a></var><br>
+&mdash; Method: <b>atan-1</b> (<var>A &lt;fixnum&gt;</var>)<var><a name="index-atan_002d1-318"></a></var><br>
+&mdash; Method: <b>atan-1</b> (<var>A &lt;bignum&gt;</var>)<var><a name="index-atan_002d1-319"></a></var><br>
+&mdash; Method: <b>atan-1</b> (<var>A &lt;ratnum&gt;</var>)<var><a name="index-atan_002d1-320"></a></var><br>
+&mdash; Method: <b>atan-1</b> (<var>A &lt;flonum&gt;</var>)<var><a name="index-atan_002d1-321"></a></var><br>
+&mdash; Method: <b>atan-1</b> (<var>A &lt;cflonum&gt;</var>)<var><a name="index-atan_002d1-322"></a></var><br>
+&mdash; Method: <b>atan-1</b> (<var>A &lt;compnum&gt;</var>)<var><a name="index-atan_002d1-323"></a></var><br>
+&mdash; Method: <b>atan-1</b> (<var>A &lt;complex&gt;</var>)<var><a name="index-atan_002d1-324"></a></var><br>
+<blockquote><p>Compute the trigonometric arc tangent function.  Use <code>atan</code> or one
+of its type&ndash;specific variants as appropriate for the argument. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Generic Function: <b>atan-2</b><var> A B<a name="index-atan_002d2-325"></a></var><br>
+&mdash; Method: <b>atan-2</b> (<var>A &lt;flonum&gt;</var>) (<var>B &lt;flonum&gt;</var>)<var><a name="index-atan_002d2-326"></a></var><br>
+&mdash; Method: <b>atan-2</b> (<var>A &lt;real&gt;</var>) (<var>B &lt;real&gt;</var>)<var><a name="index-atan_002d2-327"></a></var><br>
+<blockquote><p>Compute the arc tangent function when <code>atan</code> is called with two
+arguments.  Use <code>atan</code> or one of its type&ndash;specific variants as
+appropriate for the argument. 
+</p></blockquote></div>
+
+<!--  -->
+<h5 class="subsubheading">Hyperbolic generic functions</h5>
+
+<div class="defun">
+&mdash; Generic Function: <b>sinh</b><var> A<a name="index-sinh-328"></a></var><br>
+&mdash; Method: <b>sinh</b> (<var>A &lt;fixnum&gt;</var>)<var><a name="index-sinh-329"></a></var><br>
+&mdash; Method: <b>sinh</b> (<var>A &lt;bignum&gt;</var>)<var><a name="index-sinh-330"></a></var><br>
+&mdash; Method: <b>sinh</b> (<var>A &lt;ratnum&gt;</var>)<var><a name="index-sinh-331"></a></var><br>
+&mdash; Method: <b>sinh</b> (<var>A &lt;flonum&gt;</var>)<var><a name="index-sinh-332"></a></var><br>
+&mdash; Method: <b>sinh</b> (<var>A &lt;cflonum&gt;</var>)<var><a name="index-sinh-333"></a></var><br>
+&mdash; Method: <b>sinh</b> (<var>A &lt;compnum&gt;</var>)<var><a name="index-sinh-334"></a></var><br>
+&mdash; Method: <b>sinh</b> (<var>A &lt;complex&gt;</var>)<var><a name="index-sinh-335"></a></var><br>
+<blockquote><p>Compute the hyperbolic sine function.  Use <code>sinh</code> or one of its
+type&ndash;specific variants as appropriate for the argument. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Generic Function: <b>cosh</b><var> A<a name="index-cosh-336"></a></var><br>
+&mdash; Method: <b>cosh</b> (<var>A &lt;fixnum&gt;</var>)<var><a name="index-cosh-337"></a></var><br>
+&mdash; Method: <b>cosh</b> (<var>A &lt;bignum&gt;</var>)<var><a name="index-cosh-338"></a></var><br>
+&mdash; Method: <b>cosh</b> (<var>A &lt;ratnum&gt;</var>)<var><a name="index-cosh-339"></a></var><br>
+&mdash; Method: <b>cosh</b> (<var>A &lt;flonum&gt;</var>)<var><a name="index-cosh-340"></a></var><br>
+&mdash; Method: <b>cosh</b> (<var>A &lt;cflonum&gt;</var>)<var><a name="index-cosh-341"></a></var><br>
+&mdash; Method: <b>cosh</b> (<var>A &lt;compnum&gt;</var>)<var><a name="index-cosh-342"></a></var><br>
+&mdash; Method: <b>cosh</b> (<var>A &lt;complex&gt;</var>)<var><a name="index-cosh-343"></a></var><br>
+<blockquote><p>Compute the hyperbolic cosine function.  Use <code>cosh</code> or one of its
+type&ndash;specific variants as appropriate for the argument. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Generic Function: <b>tanh</b><var> A<a name="index-tanh-344"></a></var><br>
+&mdash; Method: <b>tanh</b> (<var>A &lt;fixnum&gt;</var>)<var><a name="index-tanh-345"></a></var><br>
+&mdash; Method: <b>tanh</b> (<var>A &lt;bignum&gt;</var>)<var><a name="index-tanh-346"></a></var><br>
+&mdash; Method: <b>tanh</b> (<var>A &lt;ratnum&gt;</var>)<var><a name="index-tanh-347"></a></var><br>
+&mdash; Method: <b>tanh</b> (<var>A &lt;flonum&gt;</var>)<var><a name="index-tanh-348"></a></var><br>
+&mdash; Method: <b>tanh</b> (<var>A &lt;cflonum&gt;</var>)<var><a name="index-tanh-349"></a></var><br>
+&mdash; Method: <b>tanh</b> (<var>A &lt;compnum&gt;</var>)<var><a name="index-tanh-350"></a></var><br>
+&mdash; Method: <b>tanh</b> (<var>A &lt;complex&gt;</var>)<var><a name="index-tanh-351"></a></var><br>
+<blockquote><p>Compute the hyperbolic tangent function.  Use <code>tanh</code> or one of
+its type&ndash;specific variants as appropriate for the argument. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Generic Function: <b>asinh</b><var> A<a name="index-asinh-352"></a></var><br>
+&mdash; Method: <b>asinh</b> (<var>A &lt;fixnum&gt;</var>)<var><a name="index-asinh-353"></a></var><br>
+&mdash; Method: <b>asinh</b> (<var>A &lt;bignum&gt;</var>)<var><a name="index-asinh-354"></a></var><br>
+&mdash; Method: <b>asinh</b> (<var>A &lt;ratnum&gt;</var>)<var><a name="index-asinh-355"></a></var><br>
+&mdash; Method: <b>asinh</b> (<var>A &lt;flonum&gt;</var>)<var><a name="index-asinh-356"></a></var><br>
+&mdash; Method: <b>asinh</b> (<var>A &lt;cflonum&gt;</var>)<var><a name="index-asinh-357"></a></var><br>
+&mdash; Method: <b>asinh</b> (<var>A &lt;compnum&gt;</var>)<var><a name="index-asinh-358"></a></var><br>
+&mdash; Method: <b>asinh</b> (<var>A &lt;complex&gt;</var>)<var><a name="index-asinh-359"></a></var><br>
+<blockquote><p>Compute the hyperbolic arc sine function.  Use <code>asinh</code> or one of
+its type&ndash;specific variants as appropriate for the argument. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Generic Function: <b>acosh</b><var> A<a name="index-acosh-360"></a></var><br>
+&mdash; Method: <b>acosh</b> (<var>A &lt;fixnum&gt;</var>)<var><a name="index-acosh-361"></a></var><br>
+&mdash; Method: <b>acosh</b> (<var>A &lt;bignum&gt;</var>)<var><a name="index-acosh-362"></a></var><br>
+&mdash; Method: <b>acosh</b> (<var>A &lt;ratnum&gt;</var>)<var><a name="index-acosh-363"></a></var><br>
+&mdash; Method: <b>acosh</b> (<var>A &lt;flonum&gt;</var>)<var><a name="index-acosh-364"></a></var><br>
+&mdash; Method: <b>acosh</b> (<var>A &lt;cflonum&gt;</var>)<var><a name="index-acosh-365"></a></var><br>
+&mdash; Method: <b>acosh</b> (<var>A &lt;compnum&gt;</var>)<var><a name="index-acosh-366"></a></var><br>
+&mdash; Method: <b>acosh</b> (<var>A &lt;complex&gt;</var>)<var><a name="index-acosh-367"></a></var><br>
+<blockquote><p>Compute the hyperbolic arc cosine function.  Use <code>acosh</code> or one of
+its type&ndash;specific variants as appropriate for the argument. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Generic Function: <b>atanh</b><var> A<a name="index-atanh-368"></a></var><br>
+&mdash; Method: <b>atanh</b> (<var>A &lt;fixnum&gt;</var>)<var><a name="index-atanh-369"></a></var><br>
+&mdash; Method: <b>atanh</b> (<var>A &lt;bignum&gt;</var>)<var><a name="index-atanh-370"></a></var><br>
+&mdash; Method: <b>atanh</b> (<var>A &lt;ratnum&gt;</var>)<var><a name="index-atanh-371"></a></var><br>
+&mdash; Method: <b>atanh</b> (<var>A &lt;flonum&gt;</var>)<var><a name="index-atanh-372"></a></var><br>
+&mdash; Method: <b>atanh</b> (<var>A &lt;cflonum&gt;</var>)<var><a name="index-atanh-373"></a></var><br>
+&mdash; Method: <b>atanh</b> (<var>A &lt;compnum&gt;</var>)<var><a name="index-atanh-374"></a></var><br>
+&mdash; Method: <b>atanh</b> (<var>A &lt;complex&gt;</var>)<var><a name="index-atanh-375"></a></var><br>
+<blockquote><p>Compute the hyperbolic arc tangent function.  Use <code>atanh</code> or one of
+its type&ndash;specific variants as appropriate for the argument. 
+</p></blockquote></div>
+
+<!-- page -->
+   </body></html>
+

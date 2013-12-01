@@ -1,0 +1,628 @@
+<html lang="en">
+<head>
+<title>parser-tools uri parser authority - Nausicaa for Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Nausicaa for Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="parser_002dtools-uri-parser.html#parser_002dtools-uri-parser" title="parser-tools uri parser">
+<link rel="prev" href="parser_002dtools-uri-parser-basic.html#parser_002dtools-uri-parser-basic" title="parser-tools uri parser basic">
+<link rel="next" href="parser_002dtools-uri-parser-segment.html#parser_002dtools-uri-parser-segment" title="parser-tools uri parser segment">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.3d7 of Nausicaa, a
+collection of libraries for Vicare Scheme implementing the language
+`(nausicaa)' on top of `(vicare)'.
+
+Copyright (C) 2012, 2013 by Marco Maggi <marco.maggi-ipsu@poste.it>
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with Invariant Sections being ``GNU Free Documentation
+     License'' and ``GNU General Public License'', no Front--Cover
+     Texts, and no Back--Cover Texts.  A copy of the license is
+     included in the section entitled ``GNU Free Documentation
+     License''.
+-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="parser-tools-uri-parser-authority"></a>
+<a name="parser_002dtools-uri-parser-authority"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="parser_002dtools-uri-parser-segment.html#parser_002dtools-uri-parser-segment">parser-tools uri parser segment</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="parser_002dtools-uri-parser-basic.html#parser_002dtools-uri-parser-basic">parser-tools uri parser basic</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="parser_002dtools-uri-parser.html#parser_002dtools-uri-parser">parser-tools uri parser</a>
+<hr>
+</div>
+
+<h5 class="subsubsection">12.5.4.2 Authority components parser functions</h5>
+
+<p>The following functions can be used to parse the elements of a <acronym>URI</acronym>;
+all the functions accept a <var>port</var> argument: it must be a binary
+input port.  When parsing an <code>authority</code> component: we are meant to
+extract the full <code>authority</code> component from a <acronym>URI</acronym> and then parse
+it separately.
+
+   <p>The following bindings are exported by the <code>(nausicaa
+parser-tools uri)</code> library.
+
+<div class="defun">
+&mdash; Function: <b>parse-authority</b><var> port<a name="index-parse_002dauthority-1962"></a></var><br>
+<blockquote><p>Accumulate bytes from <var>port</var> while they are valid for an
+<code>authority</code> component in the <code>hier-part</code> of a <acronym>URI</acronym> or the
+<code>relative-part</code> of a <code>relative-ref</code>.  This function is meant
+to be applied to the <var>port</var> right after the sequence &lsquo;<samp><span class="samp">//</span></samp>&rsquo; has
+been read from it (two slash characters in <acronym>ASCII</acronym> encoding).
+
+        <p>After the two slashes: if <acronym>EOF</acronym> or a byte representing a slash, a
+question mark or a number&ndash;sign is read: return a bytevector holding the
+accumulated bytes, ending slash, question mark or number&ndash;sign excluded;
+else return <code>#f</code>.
+
+        <p>If successful: leave the port position to the byte after the last
+accumulated byte; if an error occurs: rewind the port position to the
+one before this function call.
+
+        <p>Notice that an empty <code>authority</code> (after the two leading slashes) is
+valid: it is the case of <code>authority</code> equal to a <code>host</code>
+component, equal to a <code>reg-name</code> component which can be empty.
+
+     <pre class="example">          (import (vicare)
+            (prefix (nausicaa parser-tools uri) uri.))
+          
+          (define (mkport S)
+            (open-bytevector-input-port (string-&gt;ascii S)))
+          
+          (define (f1 str)
+            (let* ((P (mkport str))
+                   (R (ascii-&gt;string (uri.parse-authority P)))
+                   (E (eof-object? (lookahead-u8 P))))
+              (values R E)))
+          
+          (define (f2 str)
+            (let* ((P (mkport str))
+                   (R (ascii-&gt;string (uri.parse-authority P)))
+                   (Q (ascii-&gt;string (get-bytevector-all P))))
+              (values R Q)))
+          
+          (f1 "")
+          &rArr; "" #t
+          
+          (f2 "?query")
+          &rArr; "" "?query"
+          
+          (f2 "#fragment")
+          &rArr; "" "#fragment"
+          
+          (f2 "ciao.it?query")
+          &rArr; "ciao.it" "?query"
+          
+          (f2 "ciao.it#fragment")
+          &rArr; "ciao.it" "#fragment"
+          
+          (f2 "ciao.it/?query")
+          &rArr; "ciao.it" "/?query"
+          
+          (f2 "ciao.it/#fragment")
+          &rArr; "ciao.it" "/#fragment"
+          
+          (f2 "ciao.it/salut?query")
+          &rArr; "ciao.it" "/salut?query"
+          
+          (f2 "ciao.it/salut#fragment")
+          &rArr; "ciao.it" "/salut#fragment"
+          
+          (f2 "ciao.it/salut?query#fragment")
+          &rArr; "ciao.it" "/salut?query#fragment"
+          
+          (f2 "/")
+          &rArr; "" "/"
+          
+          (f2 "ciao.it/salut")
+          &rArr; "ciao.it" "/salut"
+          
+          (f2 "ciao.it:8080/salut")
+          &rArr; "ciao.it:8080" "/salut"
+          
+          (f2 "ciao.it:8080/salut")
+          &rArr; "ciao.it:8080" "/salut"
+          
+          (f2 "marco@ciao.it:8080/salut")
+          &rArr; "marco@ciao.it:8080" "/salut"
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>parse-userinfo</b><var> port<a name="index-parse_002duserinfo-1963"></a></var><br>
+<blockquote><p>Accumulate bytes from <var>port</var> while they are valid for a
+<code>userinfo</code> component in the <code>authority</code> component.  If a byte
+representing a commercial at&ndash;sign (&lsquo;<samp><span class="samp">@</span></samp>&rsquo;), in <acronym>ASCII</acronym> encoding, is
+read: return a bytevector holding the accumulated bytes, ending at&ndash;sign
+excluded; else return <code>#f</code>.
+
+        <p>If successful: leave the port position to the byte after the ending
+at&ndash;sign; if an error occurs: rewind the port position to the one before
+this function call.
+
+        <p>Notice that an empty <code>userinfo</code> component is valid (an at&ndash;sign
+preceded by nothing).
+
+     <pre class="example">          (import (vicare)
+            (prefix (nausicaa parser-tools uri) uri.))
+          
+          (define (mkport S)
+            (open-bytevector-input-port (string-&gt;ascii S)))
+          
+          (define (f0 str)
+            (uri.parse-userinfo (mkport str)))
+          
+          (define (f00 str)
+            (let* ((P (mkport str))
+                   (R (uri.parse-userinfo P))
+                   (Q (ascii-&gt;string (get-bytevector-all P))))
+              (values R Q)))
+          
+          (define (f1 str)
+            (let* ((P (mkport str))
+                   (R (ascii-&gt;string (uri.parse-userinfo P)))
+                   (E (eof-object? (lookahead-u8 P))))
+              (values R E)))
+          
+          (define (f2 str)
+            (let* ((P (mkport str))
+                   (R (ascii-&gt;string (uri.parse-userinfo P)))
+                   (Q (ascii-&gt;string (get-bytevector-all P))))
+              (values R Q)))
+          
+          (f0 "")                 &rArr; #f
+          (f00 "ciao.it")         &rArr; #f "ciao.it"
+          (f00 ":8080")           &rArr; #f ":8080"
+          (f00 "/hello")          &rArr; #f "/hello"
+          (f00 "?hello")          &rArr; #f "?hello"
+          (f00 "#hello")          &rArr; #f "#hello"
+          
+          (f1 "@")               &rArr; "" #t
+          
+          (f2 "@host")           &rArr; "" "host"
+          (f2 "userinfo@host")   &rArr; "userinfo" "host"
+          (f2 "ciao%3dciao@host")&rArr; "ciao%3dciao" "host"
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>parse-ipv4-address</b><var> port<a name="index-parse_002dipv4_002daddress-1964"></a></var><br>
+<blockquote><p>Accumulate bytes from <var>port</var> while they are valid for an
+<code>IPv4address</code> component, then parse them as IPv4 address.  If
+successful return two values: a bytevector holding the accumulated
+bytes, a vector holding the 4 octets as exact integers; else
+return <code>#f</code> and <code>#f</code>.
+
+        <p>If successful: leave the port position to the byte after the last one
+read from the port; if an error occurs: rewind the port position to the
+one before this function call.
+
+        <p>No validation is performed on the first byte after the address, if any.
+
+     <pre class="example">          (import (vicare)
+            (prefix (nausicaa parser-tools uri) uri.))
+          
+          (define (mkport S)
+            (open-bytevector-input-port (string-&gt;ascii S)))
+          
+          (define (f0 str)
+            (uri.parse-ipv4-address (mkport str)))
+          
+          (define (f00 str)
+            (let* ((P (mkport str))
+                   (R (values-&gt;list (uri.parse-ipv4-address P)))
+                   (Q (ascii-&gt;string (get-bytevector-all P))))
+              (values R Q)))
+          
+          (define (f1 str)
+            (let* ((P (mkport str))
+                   (R (receive (addr numbers)
+                          (uri.parse-ipv4-address P)
+                        (list (ascii-&gt;string addr) numbers)))
+                   (E (eof-object? (lookahead-u8 P))))
+              (values R E)))
+          
+          (define (f2 str)
+            (let* ((P (mkport str))
+                   (R (receive (addr numbers)
+                          (uri.parse-ipv4-address P)
+                        (list (ascii-&gt;string addr) numbers)))
+                   (Q (ascii-&gt;string (get-bytevector-all P))))
+              (values R Q)))
+          
+          (f0 "")                 &rArr; #f #f
+          
+          (f00 "ciao")            &rArr; (#f #f) "ciao"
+          (f00 "1.")              &rArr; (#f #f) "1."
+          (f00 "1.2")             &rArr; (#f #f) "1.2"
+          (f00 "1.2.3")           &rArr; (#f #f) "1.2.3"
+          (f00 "1.2.3.4.5")       &rArr; (#f #f) "1.2.3.4.5"
+          (f00 "123ciao")         &rArr; (#f #f) "123ciao"
+          (f00 "1.2.3.ciao")      &rArr; (#f #f) "1.2.3.ciao"
+          (f00 "1.2.3.4.")        &rArr; (#f #f) "1.2.3.4."
+          ;;number out of range
+          (f00 "191.223.376.434") &rArr; (#f #f) "191.223.376.434"
+          
+          (f1 "1.2.3.4")          &rArr; ("1.2.3.4" #(1 2 3 4)) #t
+          (f1 "191.223.76.255")   &rArr; ("191.223.76.255" #(191 223 76 255)) #t
+          
+          (f2 "1.2.3.4/5")        &rArr; ("1.2.3.4" #(1 2 3 4)) "/5"
+          (f2 "1.2.3.4/ciao")     &rArr; ("1.2.3.4" #(1 2 3 4)) "/ciao"
+          (f2 "1.2.3.4:8080")     &rArr; ("1.2.3.4" #(1 2 3 4)) ":8080"
+          (f2 "1.2.3.4ciao")      &rArr; ("1.2.3.4" #(1 2 3 4)) "ciao"
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>parse-ipv6-address</b><var> port<a name="index-parse_002dipv6_002daddress-1965"></a></var><br>
+<blockquote><p>Accumulate bytes from <var>port</var> while they are valid for an
+<code>IPv6address</code> component, then parse them as IPv6 address.  If
+successful return two values: a bytevector holding the accumulated
+bytes, a vector holding the 8 numeric address components as 16-bit exact
+integers; else return <code>#f</code> and <code>#f</code>.
+
+        <p>If successful: leave the port position to the byte after the last one
+read from the port; if an error occurs: rewind the port position to the
+one before this function call.
+
+        <p>No validation is performed on the first byte after the address, if any.
+
+     <pre class="example">          (import (vicare)
+            (prefix (nausicaa parser-tools uri) uri.))
+          
+          (define (mkport S)
+            (open-bytevector-input-port (string-&gt;ascii S)))
+          
+          (define (f0 str)
+            (values-&gt;list (uri.parse-ipv6-address (mkport str))))
+          
+          (define (f00 str)
+            (let* ((P (mkport str))
+                   (R (values-&gt;list (uri.parse-ipv6-address P)))
+                   (Q (ascii-&gt;string (get-bytevector-all P))))
+              (list R Q)))
+          
+          (define (f1 str)
+            (let*-values
+                (((P) (mkport str))
+                 ((addr numbers)
+                  (receive (addr numbers)
+                      (uri.parse-ipv6-address P)
+                    (values (ascii-&gt;string addr) numbers)))
+                 ((E) (eof-object? (lookahead-u8 P))))
+              (list addr numbers E)))
+          
+          (define (f2 str)
+            (let*-values
+                (((P) (mkport str))
+                 ((addr numbers)
+                  (receive (addr numbers)
+                      (uri.parse-ipv6-address P)
+                    (values (ascii-&gt;string addr) numbers)))
+                 ((Q) (ascii-&gt;string (get-bytevector-all P))))
+              (list addr numbers Q)))
+          
+          (f0 "")                 &rArr; #f #f
+          (f00 "ciao")            &rArr; (#f #f) "ciao"
+          (f00 "1.2.3.ciao")      &rArr; (#f #f) "1.2.3.ciao"
+          
+          (f1 "1:2:3:4:5:6:7:8")
+          &rArr; "1:2:3:4:5:6:7:8" #(1 2 3 4 5 6 7 8) #t
+          
+          (f1 "::1")
+          &rArr; "::1" #(0 0 0 0 0 0 0 1) #t
+          
+          (f1 "1::")
+          &rArr; "1::" #(1 0 0 0 0 0 0 0) #t
+          
+          (f1 "1:2::3")
+          &rArr; "1:2::3" #(1 2 0 0 0 0 0 3) #t
+          
+          (f1 "1:2:3:4::172.30.67.254")
+          &rArr; "1:2:3:4::172.30.67.254" #(1 2 3 4 0 0 #xac1e #x43fe) #t
+          
+          (f1 "::ffff:192.168.99.1")
+          &rArr; "::ffff:192.168.99.1" #(0 0 0 0 0 #xFFFF #xC0A8 #x6301) #t
+          
+          (f2 "::1/60")
+          &rArr; "::1" #(0 0 0 0 0 0 0 1) "/60"
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>parse-ip-literal</b><var> port<a name="index-parse_002dip_002dliteral-1966"></a></var><br>
+<blockquote><p>Accumulate bytes from <var>port</var> while they are valid for an
+<code>IP-literal</code> component in a <code>host</code> component.  The first byte
+must represent an open bracket (&lsquo;<samp><span class="samp">[</span></samp>&rsquo;) character in <acronym>ASCII</acronym>
+encoding; if a byte representing a closed bracket (&lsquo;<samp><span class="samp">]</span></samp>&rsquo;) is read:
+return a bytevector holding the accumulated bytes, brackets excluded;
+else return <code>#f</code>.
+
+        <p>If successful: leave the port position to the byte after the closing
+bracket; if an error occurs: rewind the port position to the one before
+this function call.
+
+        <p>No validation is performed on the returned bytevector contents; the
+returned bytevector can be empty even though an <code>IP-literal</code>
+component cannot be of zero length inside the brackets: it is
+responsibility of the caller to check the length of the returned
+bytevector.
+
+     <pre class="example">          (import (vicare)
+            (prefix (nausicaa parser-tools uri) uri.))
+          
+          (define (mkport S)
+            (open-bytevector-input-port (string-&gt;ascii S)))
+          
+          (uri.parse-ip-literal (mkport ""))
+          &rArr; #f
+          
+          (let ((P (mkport "ciao")))
+            (uri.parse-ip-literal P)                  &rArr; #f
+            (ascii-&gt;string (get-bytevector-some P)))  &rArr; "ciao"
+          
+          (ascii-&gt;string
+           (uri.parse-ip-literal (mkport "[]")))
+          &rArr; ""
+          
+          (ascii-&gt;string
+           (uri.parse-ip-literal (mkport "[::0:1:2]")))
+          &rArr; "::0:1:2"
+          
+          (let ((P (mkport "[::0:1:2]:8080")))
+            (ascii-&gt;string (uri.parse-ip-literal P))  &rArr; "::0:1:2"
+            (ascii-&gt;string (get-bytevector-some P)))  &rArr; ":8080"
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>parse-ipvfuture</b><var> port<a name="index-parse_002dipvfuture-1967"></a></var><br>
+<blockquote><p>Accumulate bytes from <var>port</var> while they are valid for an
+<code>IPvFuture</code> component in the <code>IP-literal</code> component.  The
+first byte must represent the letter <code>v</code> in <acronym>ASCII</acronym> encoding, the
+second byte must represent a single hexadecimal digit in <acronym>ASCII</acronym>
+encoding, the third byte must represent the character <code>.</code> in
+<acronym>ASCII</acronym> encoding; after the prolog is read, bytes are accumulated until
+<acronym>EOF</acronym> is found.
+
+        <p>Return two values: an exact integer in the range [0, 15]
+representing the version flag, a bytevector holding the accumulated
+bytes; else return <code>#f</code> and <code>#f</code>.  Quoting the <acronym>RFC</acronym>:
+
+        <blockquote>
+The version flag does not indicate the <acronym>IP</acronym> version; rather, it
+indicates future versions of the literal format. 
+</blockquote>
+
+        <p>If an error occurs: rewind the port position to the one before this
+function call.
+
+        <p>No validation is performed on the returned bytevector contents; the
+returned bytevector can be empty even though an <code>IPvFuture</code>
+component cannot be of zero length inside the brackets.
+
+     <pre class="example">          (import (vicare)
+            (prefix (nausicaa parser-tools uri) uri.))
+          
+          (define (mkport S)
+            (open-bytevector-input-port (string-&gt;ascii S)))
+          
+          (define (f0 str)
+            (uri.parse-ipvfuture (mkport str)))
+          
+          (define (f1 str)
+            (uri.parse-ipvfuture (mkport str)))
+          
+          (define (f2 str)
+            (receive (version data)
+                (uri.parse-ipvfuture (mkport str))
+              (values version (ascii-&gt;string data))))
+          
+          (f0 "")                &rArr; #f #f
+          (f0 "ciao")            &rArr; #f #f
+          (f1 "v1")              &rArr; #f #f
+          
+          (f2 "v0.ciao")         &rArr;  0 "ciao"
+          (f2 "v9.ciao")         &rArr;  9 "ciao"
+          (f2 "VE.ciao")         &rArr; 14 "ciao"
+          (f2 "vF.ciao")         &rArr; 15 "ciao"
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>parse-reg-name</b><var> port<a name="index-parse_002dreg_002dname-1968"></a></var><br>
+<blockquote><p>Accumulate bytes from <var>port</var> while they are valid for a
+<code>reg-name</code> (registered name) component in a <code>host</code> component. 
+If <acronym>EOF</acronym> or a byte representing a colon, slash, question mark or
+number&ndash;sign, in <acronym>ASCII</acronym> encoding, is read: return a bytevector holding
+the accumulated bytes, ending byte excluded; else return <code>#f</code>.
+
+        <p>If successful: leave the port position to the byte after the last one
+read from the port, ending colon or slash excluded; if an error occurs:
+rewind the port position to the one before this function call.
+
+        <p>Notice that an empty <code>reg-name</code> component is valid; also, a
+<code>reg-name</code> cannot be longer than 255 bytes: if it is, this
+function returns <code>#f</code>.
+
+     <pre class="example">          (import (vicare)
+            (prefix (nausicaa parser-tools uri) uri.))
+          
+          (define (mkport S)
+            (open-bytevector-input-port (string-&gt;ascii S)))
+          
+          (define (f0 str)
+            (uri.parse-reg-name (mkport str)))
+          
+          (define (f1 str)
+            (let* ((P (mkport str))
+                   (R (ascii-&gt;string (uri.parse-reg-name P)))
+                   (E (eof-object? (lookahead-u8 P))))
+              (list R E)))
+          
+          (define (f2 str)
+            (let* ((P (mkport str))
+                   (R (ascii-&gt;string (uri.parse-reg-name P)))
+                   (Q (ascii-&gt;string (get-bytevector-all P))))
+              (list R Q)))
+          
+          ;;no more than 256 chars
+          (f0 (make-string 256 #\a))     &rArr; #f
+          
+          
+          (f1 "")                        &rArr; "" #t
+          (f1 "the-reg-name")            &rArr; "the-reg-name" #t
+          (f1 "the.reg.name")            &rArr; "the.reg.name" #t
+          (f1 "ciao%3dciao")             &rArr; "ciao%3dciao" #t
+          
+          (f2 ":80")                     &rArr; "" ":80"
+          (f2 "/ciao")                   &rArr; "" "/ciao"
+          (f2 "?query")                  &rArr; "" "?query"
+          (f2 "#fragment")               &rArr; "" "#fragment"
+          (f2 "the-reg-name:80")         &rArr; "the-reg-name" ":80"
+          (f2 "the-reg-name/ciao")       &rArr; "the-reg-name" "/ciao"
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>parse-host</b><var> port<a name="index-parse_002dhost-1969"></a></var><br>
+<blockquote><p>Accumulate bytes from <var>port</var> while they are valid for a <code>host</code>
+component; parse the accumulated bytes as <code>host</code> and return 3
+values, the first being one of the Scheme symbols: <code>ipv4-address</code>,
+<code>ipv6-address</code>, <code>ipvfuture</code>, <code>reg-name</code>.
+
+        <p>The second and third returned values depend upon the first:
+
+          <dl>
+<dt><code>ipv4-address</code><dd>The second value is a bytevector holding the accumulated bytes, the
+third value is a vector of 4 exact integers representing the
+address components.
+
+          <br><dt><code>ipv6-address</code><dd>The second value is a bytevector holding the accumulated bytes (without
+the enclosing square brackets), the third value is a vector of 8
+exact integers representing the address components.
+
+          <br><dt><code>ipvfuture</code><dd>The second value is a possibly empty bytevector holding the accumulated
+bytes (without the enclosing square brackets, the <code>v</code> and the
+version byte), the third value is the version number as exact integer in
+the range [0, 15].
+
+          <br><dt><code>reg-name</code><dd>The second value is a possibly empty bytevector holding the accumulated
+bytes, the third value is undefined. 
+</dl>
+
+        <p>If successful: leave the port position to the byte after the last one
+read from the port; if an error occurs: return <code>#f</code>, <code>#f</code> and
+<code>#f</code>, rewind the port position to the one before this function call.
+
+     <pre class="example">          (import (vicare)
+            (prefix (nausicaa parser-tools uri) uri.))
+          
+          (define (mkport S)
+            (open-bytevector-input-port (string-&gt;ascii S)))
+          
+          (define (f1 str)
+            (let ((port (mkport str)))
+              (receive (kind bv data)
+                  (uri.parse-host port)
+                (values kind (ascii-&gt;string bv) data
+                        (eof-object? (get-bytevector-some port))))))
+          
+          (define (f2 str)
+            (let ((port (mkport str)))
+              (receive (kind bv data)
+                  (uri.parse-host port)
+                (values kind (ascii-&gt;string bv) data
+                        (ascii-&gt;string
+                         (get-bytevector-some port))))))
+          
+          (f1 "")
+          &rArr; reg-name "" (void) #t
+          
+          (f2 "/")
+          &rArr; reg-name "" (void) "/"
+          
+          (f2 ":80")
+          &rArr; reg-name "" (void) ":80"
+          
+          (f2 "1.2.3.4:80")
+          &rArr; ipv4-address "1.2.3.4" #(1 2 3 4) ":80"
+          
+          (f2 "1.2.3.4/ciao")
+          &rArr; ipv4-address "1.2.3.4" #(1 2 3 4) "/ciao"
+          
+          
+          (f2 "[::ffff:192.168.99.1]:80")
+          &rArr; ipv6-address "::ffff:192.168.99.1"
+             #(0 0 0 0 0 #xFFFF #xC0A8 #x6301) ":80"
+          
+          (f2 "[::ffff:192.168.99.1]/ciao")
+          &rArr; ipv6-address "::ffff:192.168.99.1"
+             #(0 0 0 0 0 #xFFFF #xC0A8 #x6301) "/ciao"
+          
+          (f2 "[v9.,ciao,ciao]/ciao")
+          &rArr; ipvfuture ",ciao,ciao" 9 "/ciao"
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>parse-port</b><var> port<a name="index-parse_002dport-1970"></a></var><br>
+<blockquote><p>Accumulate bytes from <var>port</var> while they are valid for a <code>port</code>
+component in the <code>authority</code> component.  The first byte must
+represent a colon in <acronym>ASCII</acronym> encoding; after that: if <acronym>EOF</acronym> or a byte
+not representing a decimal digit, in <acronym>ASCII</acronym> encoding, is read: return
+a bytevector holding the accumulated bytes, starting colon excluded;
+else return <code>#f</code>.
+
+        <p>If successful: leave the port position to the byte after the last one
+read from the port; if an error occurs: rewind the port position to the
+one before this function call.
+
+        <p>Notice that an empty <code>port</code> component after the mandatory colon is
+valid: in this case an empty bytevector is returned.
+
+     <pre class="example">          (import (vicare)
+            (prefix (nausicaa parser-tools uri) uri.))
+          
+          (define (mkport S)
+            (open-bytevector-input-port (string-&gt;ascii S)))
+          
+          (define (f1 str)
+            (let* ((P (mkport str))
+                   (R (ascii-&gt;string (uri.parse-port P)))
+                   (E (eof-object? (lookahead-u8 P))))
+              (values R E)))
+          
+          (uri.parse-port (mkport ""))         &rArr; #f
+          
+          (f1 ":")                &rArr; "" #t
+          (f1 ":2")               &rArr; "2" #t
+          (f1 ":8080")            &rArr; "8080" #t
+          
+          (let ((P (mkport ":8080ciao")))
+            (ascii-&gt;string (uri.parse-port P))        &rArr; "8080"
+            (ascii-&gt;string (get-bytevector-some P)))  &rArr; "ciao"
+</pre>
+        </blockquote></div>
+
+<!-- page -->
+   </body></html>
+

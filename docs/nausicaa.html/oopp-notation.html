@@ -10,7 +10,7 @@
 <link rel="next" href="oopp-define.html#oopp-define" title="oopp define">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
-This document describes version 0.3d6 of Nausicaa, a
+This document describes version 0.3d7 of Nausicaa, a
 collection of libraries for Vicare Scheme implementing the language
 `(nausicaa)' on top of `(vicare)'.
 
@@ -74,7 +74,11 @@ names: the identifier is first converted to symbol, with
 <code>eq?</code>.  Notice that methods and fields cannot have the same name in
 a type definition.
 
-     <br><dt><var>?form</var><dd>It is a generic form: an expression, an auxiliary syntax, <small class="dots">...</small>. 
+     <br><dt><var>?form</var><dd>It is a generic form: an expression, an auxiliary syntax, <small class="dots">...</small>.
+
+     <br><dt><code>=&gt;</code><dd>It is the auxiliary syntax exported by both <code>(nausicaa language
+oopp)</code> and <code>(nausicaa language auxiliary-syntaxes)</code>, it is the same
+one exported by <code>(rnrs base (6))</code>. 
 </dl>
 
 <!--  -->
@@ -136,6 +140,7 @@ in the syntax; example:
           (&lt;pair&gt; (1 2))
           &rArr; (1 . 2)
 </pre>
+     <!--  -->
      <br><dt><code>(</code><var>?type</var><code>)</code><dt><code>((</code><var>?type</var><code>) </code><var>?expr</var><code>)</code><dd>Expands to a reference to the type predicate, if any; when the type has
 no predicate: the result is a function taking one argument and always
 returning <code>#t</code>.  Examples:
@@ -241,6 +246,7 @@ constructor:
           
           O   &rArr; '(1 . 2)
 </pre>
+     <!--  -->
      <br><dt><code>(set!/tags </code><var>?var</var> <var>?expr</var><code>)</code><dd>This syntax expands to the use of <code>set!</code> as defined by <acronym>R6RS</acronym>:
 <var>?expr</var> becomes the new value of <var>?var</var>.  Notice that if values
 validation is turned on: the new value must be an instance of the type
@@ -255,11 +261,13 @@ according to its predicate (if any).  Example:
           
           (set!/tags O "ciao")    error--&gt; assertion violation
 </pre>
+     <!--  -->
      <br><dt><code>(</code><var>?var</var> <var>?id</var><code>)</code><dd>Expands according to the following rules, in the given order:
 
           <ol type=1 start=1>
 <li>If the type has a method named <var>?id</var>: this syntax expands to a call
-to such method with no arguments.
+to such method with no arguments.  The first argument of the method call
+is <var>?var</var> itself.
 
           <li>If the type has a field named <var>?id</var>: this syntax expands to a call
 to the field accessor.
@@ -287,6 +295,7 @@ syntax expands to a call to the unsafe field accessor.
           (A a)           &rArr; 1     ;field accessor application
           (A $a)          &rArr; 1     ;unsafe field accessor application
 </pre>
+     <!--  -->
      <br><dt><code>(set!/tags (</code><var>?var</var> <var>?id</var><code>) </code><var>?expr</var><code>)</code><dd>Expands according to the following rules, in the given order:
 
           <ol type=1 start=1>
@@ -323,10 +332,13 @@ expand time.
           (set!/tags (A a)  2)    ;field mutator application
           (set!/tags (A $a) 3)    ;unsafe field mutator application
 </pre>
-     <br><dt><code>(</code><var>?var</var><code> (</code><var>?form0</var><code> ...) (</code><var>?form</var><code> ...) ...)</code><dd>Expands to the result of applying the type's getter transformer to the
-syntax object (lookout for the parentheses):
+     <!--  -->
+     <br><dt><code>(</code><var>?var</var><code> (</code><var>?key0</var><code> ...) (</code><var>?key</var><code> ...) ...)</code><dt><code>(</code><var>?var</var><code> (</code><var>?key0</var><code> ...) (</code><var>?key</var><code> ...) ... =&gt; </code><var>?form0</var> <var>?form</var><code> ...)</code><dd>Expands to the result of applying the type's getter transformer to one
+of the syntax objects (lookout for the parentheses):
 
-     <pre class="example">          #'(<var>?var</var> ((<var>?form0</var> ...) (<var>?form</var> ...) ...))
+     <pre class="example">          #'(<var>?var</var> ((<var>?key0</var> ...) (<var>?key</var> ...) ...))
+          #'(<var>?var</var> ((<var>?key0</var> ...) (<var>?key</var> ...) ...)
+               =&gt; <var>?form0</var> <var>?form</var> ...)
 </pre>
      <p class="noindent">if the type has no getter: this syntax causes a syntax violation
 exception to be raised at expand time.  Examples:
@@ -356,6 +368,33 @@ exception to be raised at expand time.  Examples:
           (M[0][2])               &rArr; 3
           (M[1][1])               &rArr; 5
 </pre>
+     <p class="noindent">other examples:
+
+     <pre class="example">          (define-label &lt;fixnum-vector&gt;
+            (parent &lt;vector&gt;)
+            (getter
+             (lambda (stx)
+               (syntax-case stx (=&gt;)
+                 ((?var ((?index)))
+                  #'(vector-ref ?var ?index))
+                 ((?var ((?index)) =&gt; ?form0 ?form ...)
+                  #'(let (((fx &lt;fixnum&gt;) (?var[?index])))
+                      (fx ?form0 ?form ...)))
+                 ))))
+          
+          (let (((O &lt;fixnum-vector&gt;) '#(0 1 2 3)))
+            (O[1] =&gt; string))
+          &rArr; "1"
+          
+          (let (((O &lt;fixnum-vector&gt;) '#(0 1 2 3)))
+            (O[1] =&gt; odd?))
+          &rArr; #t
+          
+          (let (((O &lt;fixnum-vector&gt;) '#(0 1 2 3)))
+            (O[2] =&gt; * 10))
+          &rArr; 20
+</pre>
+     <!--  -->
      <br><dt><code>(set!/tags (</code><var>?var</var><code> (</code><var>?form0</var><code> ...) (</code><var>?form</var><code> ...) ...) </code><var>?expr</var><code>)</code><dt><code>(set!/tags </code><var>?var</var><code> (</code><var>?form0</var><code> ...) (</code><var>?form</var><code> ...) ... </code><var>?expr</var><code>)</code><dd>Expands to the result of applying the type's setter transformer to the
 syntax object (lookout for the parentheses):
 
@@ -390,6 +429,7 @@ violation exception to be raised at expand time.  Examples:
           (set!/tags (M[1][1]) 99)
           M               &rArr; #(#(1 2 77) #(4 99 6))
 </pre>
+     <!--  -->
      <br><dt><code>(</code><var>?var</var> <var>?id</var> <var>?form0</var> <var>?form</var><code> ...)</code><dd>This syntax allows the use of nested syntaxes for typed fields.  It is
 expanded according to the following rules, in the given order:
 
@@ -406,6 +446,18 @@ Example:
                (define B '(3 4))
                (A append3 B '(5 6))    &rArr; (1 2 3 4 5 6)
 </pre>
+          <p>If the invoked method has a tagged, single return value: nested method
+invocation syntax is available.  If one of the <var>?form</var> arguments is
+the auxiliary syntax <code>=&gt;</code>, and the return value tag is <var>?tag</var>,
+the call is split as follows:
+
+          <pre class="example">               (<var>?var</var> <var>?id</var> <var>?form0</var> =&gt; <var>?form1</var> ...)
+               ==&gt; (let (((R <var>?tag</var>) (<var>?var</var> <var>?id</var> <var>?form0</var>)))
+                     (R <var>?form1</var> ...))
+</pre>
+          <p class="noindent">if no return value tag is available or the method has multiple return
+values: this syntax is <strong>not</strong> available.
+
           <li>If the type has a <strong>tagged</strong> field named <var>?id</var>: this syntax
 expands to a recursive reference to the members <var>?form0</var>,
 <var>?form</var>, <small class="dots">...</small> of the field's value.  Example:
@@ -475,6 +527,7 @@ Example:
 </pre>
           </ol>
 
+     <!--  -->
      <br><dt><code>(set!/tags (</code><var>?var</var> <var>?id</var> <var>?form0</var> <var>?form</var><code> ...) </code><var>?expr</var><code>)</code><dd>This syntax allows the use of nested field mutator and setter syntaxes
 for typed fields.  It expands according to the following rules, in the
 given order:

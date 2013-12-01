@@ -10,7 +10,7 @@
 <link rel="next" href="oopp-bindings-do.html#oopp-bindings-do" title="oopp bindings do">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
-This document describes version 0.3d6 of Nausicaa, a
+This document describes version 0.3d7 of Nausicaa, a
 collection of libraries for Vicare Scheme implementing the language
 `(nausicaa)' on top of `(vicare)'.
 
@@ -48,21 +48,29 @@ Up:&nbsp;<a rel="up" accesskey="u" href="oopp-bindings.html#oopp-bindings">oopp 
 <hr>
 </div>
 
-<h4 class="subsection">3.19.5 <acronym>OOPP</acronym> bindings: <code>define</code>&ndash;like syntaxes</h4>
+<h4 class="subsection">3.20.5 <acronym>OOPP</acronym> bindings: <code>define</code>&ndash;like syntaxes</h4>
 
 <div class="defun">
-&mdash; Syntax: <b>define/tags</b><var> ?variable<a name="index-define_002ftags-87"></a></var><br>
-&mdash; Syntax: <b>define/tags</b><var> ?variable ?expression<a name="index-define_002ftags-88"></a></var><br>
-&mdash; Syntax: <b>define/tags</b><var> #</var>(<var>?variable ?tag</var>)<var><a name="index-define_002ftags-89"></a></var><br>
-&mdash; Syntax: <b>define/tags</b><var> #</var>(<var>?variable ?tag</var>)<var> ?expression<a name="index-define_002ftags-90"></a></var><br>
-&mdash; Syntax: <b>define/tags</b> (<var>?variable . ?tagged-formals</var>)<var> ?body0 ?body <small class="dots">...</small><a name="index-define_002ftags-91"></a></var><br>
-&mdash; Syntax: <b>define/tags</b> (<var>?variable . ?tagged-formals</var>) (<var>&lt;- ?tag <small class="dots">...</small></var>)<var> ?body0 ?body <small class="dots">...</small><a name="index-define_002ftags-92"></a></var><br>
-&mdash; Syntax: <b>define/tags</b> ((<var>?variable ?tag0 ?tag <small class="dots">...</small></var>)<var> . ?tagged-formals</var>)<var> ?body0 ?body <small class="dots">...</small><a name="index-define_002ftags-93"></a></var><br>
-&mdash; Auxiliary Syntax: <b>&lt;-</b><var><a name="index-g_t_003c_002d-94"></a></var><br>
+&mdash; Syntax: <b>define/tags</b><var> ?variable<a name="index-define_002ftags-84"></a></var><br>
+&mdash; Syntax: <b>define/tags</b><var> ?variable ?expression<a name="index-define_002ftags-85"></a></var><br>
+&mdash; Syntax: <b>define/tags</b><var> #</var>(<var>?variable ?tag</var>)<var><a name="index-define_002ftags-86"></a></var><br>
+&mdash; Syntax: <b>define/tags</b><var> #</var>(<var>?variable ?tag</var>)<var> ?expression<a name="index-define_002ftags-87"></a></var><br>
+&mdash; Syntax: <b>define/tags</b> (<var>?variable . ?tagged-formals</var>)<var> ?body0 ?body <small class="dots">...</small><a name="index-define_002ftags-88"></a></var><br>
+&mdash; Syntax: <b>define/tags</b> ((<var>?variable ?tag0 ?tag <small class="dots">...</small></var>)<var> . ?tagged-formals</var>)<var> ?body0 ?body <small class="dots">...</small><a name="index-define_002ftags-89"></a></var><br>
 <blockquote><p>Like <code>define</code> and defines the <acronym>OOPP</acronym> bindings for function
-arguments.  When all the bindings have no tags: this syntax is
+arguments.  When all the bindings have no tags: this syntax is almost
 equivalent to <code>define</code> as defined by <acronym>R6RS</acronym>; an untagged binding
 is equivalent to a binding tagged with <code>&lt;top&gt;</code>.
+
+        <p><a name="index-g_t_0040code_007b_005f_005fwho_005f_005f_007d-90"></a>When the syntax is used for function definition, the <var>?body</var> forms
+are enclosed in a <code>let-constants</code> syntax as follows:
+
+     <pre class="example">          (let-constants ((__who__ (quote <var>?id</var>)))
+            <var>?body0</var> <var>?body</var> ...)
+</pre>
+        <p class="noindent">so the binding <code>__who__</code> is available in the body forms to
+reference a symbol representing the function's name.  This is useful
+when raising exceptions with condition type <code>&amp;who</code>.
 
         <p>When the syntax is used for function definition and procedure arguments
 validation, as defined by <code>(vicare arguments validation)</code>, is
@@ -72,10 +80,6 @@ enabled:
 <li>The function will validate its tagged arguments using the tag predicates
 and raise a <code>&amp;procedure-argument-violation</code> exception in case
 of failure.
-
-          <li>If the auxiliary <code>&lt;-</code> clause is present: the <var>?body</var> forms will
-be enclosed in a <code>begin/tags</code> syntax, and the returned values
-validated as specified by the <var>?tag</var> identifiers.
 
           <li>If the <var>?variable</var> argument comes with <var>?tag</var> arguments: the
 <var>?body</var> forms will be enclosed in a <code>begin/tags</code> syntax, and
@@ -148,8 +152,25 @@ be a syntax error.
           </ul>
         </p></blockquote></div>
 
+<!--  -->
 <div class="defun">
-&mdash; Syntax: <b>define-values/tags</b> (<var>?tagged-variable0 ?tagged-variable <small class="dots">...</small></var>)<var> ?form0 ?form <small class="dots">...</small><a name="index-define_002dvalues_002ftags-95"></a></var><br>
+&mdash; Syntax: <b>case-define/tags</b><var> ?who ?cl-clause <small class="dots">...</small><a name="index-case_002ddefine_002ftags-91"></a></var><br>
+<blockquote><p>Like <code>case-define</code> and defines the <acronym>OOPP</acronym> bindings for the
+arguments.  It expands as follows:
+
+     <pre class="example">          (case-define/tags <var>?who</var>
+            <var>?cl-clause</var> ...)
+          ==&gt; (define <var>?who</var>
+                (let-constants ((__who__ (quote <var>?who</var>)))
+                  (case-lambda/tags <var>?cl-clause</var> ...)))
+</pre>
+        <p class="noindent">so the identifier <code>__who__</code> is available as argument for
+<code>&amp;who</code> condition objects. 
+</p></blockquote></div>
+
+<!--  -->
+<div class="defun">
+&mdash; Syntax: <b>define-values/tags</b> (<var>?tagged-variable0 ?tagged-variable <small class="dots">...</small></var>)<var> ?form0 ?form <small class="dots">...</small><a name="index-define_002dvalues_002ftags-92"></a></var><br>
 <blockquote><p>Like <code>define-values</code> from <code>(vicare)</code> and defines the <acronym>OOPP</acronym>
 bindings for function arguments.  When all the bindings have no tags:
 this syntax is equivalent to <code>define-values</code> from <code>(vicare)</code>;

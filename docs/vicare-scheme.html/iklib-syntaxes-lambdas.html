@@ -1,0 +1,315 @@
+<html lang="en">
+<head>
+<title>iklib syntaxes lambdas - Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="iklib-syntaxes.html#iklib-syntaxes" title="iklib syntaxes">
+<link rel="next" href="iklib-syntaxes-defines.html#iklib-syntaxes-defines" title="iklib syntaxes defines">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes version 0.3d7 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit processors, with
+experimental support for 64-bit machines.  _Vicare_ is pronounced
+the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+        `http://sourceforge.net/projects/vicare-scheme/files/'
+
+
+the home page of the project is at:
+
+              `http://marcomaggi.github.com/vicare.html'
+
+
+development takes place at:
+
+                `http://github.com/marcomaggi/vicare/'
+
+
+and, as a backup, at:
+
+                     `http://gitorious.org/vicare'
+
+
+and at:
+
+           `http://sourceforge.net/projects/vicare-scheme/'
+
+
+this project has a mailing list:
+
+             `http://groups.google.com/group/vicare-users'
+
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the ``History'' appendix for details.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library `(vicare formations)' is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="iklib-syntaxes-lambdas"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="iklib-syntaxes-defines.html#iklib-syntaxes-defines">iklib syntaxes defines</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="iklib-syntaxes.html#iklib-syntaxes">iklib syntaxes</a>
+<hr>
+</div>
+
+<h4 class="subsection">6.4.1 <code>lambda</code>&ndash;like additional syntaxes</h4>
+
+<p>The syntaxes <code>lambda*</code> and <code>case-lambda*</code> are similar to
+<code>lambda</code> and <code>case-lambda</code> as defined by <acronym>R6RS</acronym>, but they
+allow the selection of predicate functions to validate the arguments and
+the return value; a predicate function accepts a single argument and
+returns true or <code>#f</code>.  Examples:
+
+<pre class="example">     (import (vicare)
+       (vicare system $fx))
+     
+     (define add
+       ;;Fail if called with a non-fixnum argument.
+       (lambda* ((a fixnum?) (b fixnum?))
+         ($fx+ a b)))
+     
+     (define vec
+       ;;Fail if attempting to return a non-vector.
+       (lambda* ((_ vector?) fun)
+         (fun 1 2)))
+     
+     (add 1 2)       &rArr; 3
+     (add 1 #\2)     error--&gt; &amp;procedure-argument-violation
+     
+     (vec vector)    &rArr; #(1 2)
+     (vec list)      error--&gt; &amp;expression-return-value-violation
+</pre>
+   <p class="noindent">in the definition of the function bound to <code>vec</code>: notice that
+<code>(_ vector?)</code> is not a function argument, it is a special notation
+used to select a predicate function to validate the return value.
+
+   <p>In the extended <code>lambda*</code> and <code>case-lambda*</code> syntaxes the
+<var>?pred-formals</var> can have any of the forms:
+
+<pre class="example">     (<var>?var</var> ...)
+     (<var>?var0</var> <var>?var</var> ... . <var>?rest</var>)
+     <var>?args</var>
+</pre>
+   <p>Where in the standard <code>lambda</code> and <code>case-lambda</code> syntaxes an
+identifier is used to name a formal argument, in the extended
+<code>lambda*</code> and <code>case-lambda*</code> syntaxes each formal argument
+<var>?var</var> can have any of the forms:
+
+<pre class="example">     <var>?id</var>
+     (<var>?id</var> <var>?pred</var>)
+     #(<var>?id</var> <var>?pred</var>)
+</pre>
+   <p class="noindent">where <var>?id</var> is an identifier naming the formal argument and
+<var>?pred</var> is an identifier which, at run time, must evaluate to a
+predicate function; the formal argument <var>?rest</var> can have only one of
+the following forms:
+
+<pre class="example">     <var>?rest-id</var>
+     #(<var>?rest-id</var> <var>?pred</var>)
+</pre>
+   <p class="noindent">and the formal argument <var>?args</var> can have only one of the following
+forms:
+
+<pre class="example">     <var>?args-id</var>
+     #(<var>?args-id</var> <var>?pred</var>)
+</pre>
+   <p>The first item in the <var>?pred-formals</var> can have the special syntax:
+
+<pre class="example">     (_ <var>?pred0</var> <var>?pred</var> ...)
+</pre>
+   <p class="noindent">where <code>_</code> is exactly the symbol <code>_</code> (not the auxiliary syntax
+exported by <code>(rnrs base (6))</code>); in this case such item does
+<strong>not</strong> represent a formal argument, it just selects predicates to
+validate the values returned by the last <var>?body</var> form.
+
+<!--  -->
+<div class="defun">
+&mdash; Syntax: <b>lambda*</b><var> ?pred-formals ?body0 ?body <small class="dots">...</small><a name="index-lambda_002a-1032"></a></var><br>
+<blockquote><p>Like the standard <code>lambda</code> and additionally allows the selection of
+predicate functions to validate the arguments and the return value.  The
+formal arguments are handled according to the following rules:
+
+          <ul>
+<li>When all the items in <var>?pred-formals</var> are as specified for the
+standard <code>lambda</code>: this syntax is equivalent to <code>lambda</code> as
+defined by <acronym>R6RS</acronym>.
+
+          <li>If the boot image has been compiled with procedure arguments validation
+<strong>enabled</strong>, and <var>?pred-formals</var> selects predicates to validate
+the arguments: if a predicate fails for its formal argument, an
+exception is raised using <code>&amp;procedure-argument-violation</code>.
+
+          <li>If the boot image has been compiled with procedure arguments validation
+<strong>disabled</strong>, the predicate selections in <var>?pred-formals</var> are
+ignored and <code>lambda*</code> behaves like the standard <code>lambda</code>.
+
+          <li>If the first element of <var>?pred-formals</var> has the format:
+
+          <pre class="example">               (_ <var>?pred0</var> <var>?pred</var> ...)
+</pre>
+          <p class="noindent">where <code>_</code> is exactly the symbol <code>_</code> (not the auxiliary syntax
+exported by <code>(rnrs base (6))</code>), the values returned by the last
+<var>?body</var> form are validated using the given <var>?pred</var>: if a
+predicate fails for its returned value, an exception is raised using
+<code>&amp;expression-return-value-violation</code>. 
+</ul>
+
+        <p>In addition a non&ndash;hygienic binding is created: the identifier
+<code>__who__</code> is bound to the quoted symbol <code>_</code>.
+
+        <p>Usage examples:
+
+          <ul>
+<li>Function with two predicate arguments:
+
+          <pre class="example">               (import (vicare))
+               (define f
+                 (lambda* ((a number?) (b number?))
+                   (list (number-&gt;string a) (number-&gt;string b))))
+               
+               (f 1 2)         &rArr; ("1" "2")
+</pre>
+          <li>Function with two mandatory arguments and the rest argument:
+
+          <pre class="example">               (import (vicare))
+               
+               (define (list-of-numbers? obj)
+                 (and (list? obj)
+                      (for-all number? obj)))
+               
+               (define f
+                 (lambda* ((a number?) (b number?)
+                           . #(rest list-of-numbers?))
+                   (list (number-&gt;string a)
+                         (number-&gt;string b)
+                         (length rest))))
+               
+               (f 1 2 3 4 5)           &rArr; ("1" "2" 3)
+</pre>
+          <p class="noindent">notice that a predicate rest argument must be specified using the vector
+syntax <code>#(rest list-of-numbers?)</code>, the list syntax <code>(rest
+list-of-numbers?)</code> would be interpreted as:
+
+          <pre class="example">               ((a number?) (b number?) . (rest list-of-numbers?))
+               ==&gt; ((a number?) (b number?) rest list-of-numbers?)
+</pre>
+          <li>Function with the <var>?args</var> argument:
+
+          <pre class="example">               (import (vicare))
+               
+               (define (list-of-numbers? obj)
+                 (and (list? obj)
+                      (for-all number? obj)))
+               
+               (define f
+                 (lambda* #(args list-of-numbers?)
+                   (length args)))
+               
+               (f 1 2 3)               &rArr; 3
+</pre>
+          <li>Function with a single validated return value:
+
+          <pre class="example">               (import (vicare))
+               
+               (define f
+                 (lambda* ((_ fixnum?) val)
+                   val))
+               
+               (f 1)                   &rArr; 1
+</pre>
+          <li>Function with multiple validated return values:
+
+          <pre class="example">               (import (vicare))
+               
+               (define f
+                 (lambda* ((_ fixnum? string?) a b)
+                   (values a b)))
+               
+               (f 1 "2")               &rArr; 1, "2"
+</pre>
+          </ul>
+        </p></blockquote></div>
+
+<!--  -->
+<div class="defun">
+&mdash; Syntax: <b>case-lambda*</b><var> ?pred-cl-clause <small class="dots">...</small><a name="index-case_002dlambda_002a-1033"></a></var><br>
+<blockquote><p>Like the standard <code>case-lambda</code> and additionally allows the
+selection of predicate functions to validate the arguments and the
+return value.  Clause by clause the formals are handled as explained for
+<code>lambda*</code>.
+
+        <p>In addition a non&ndash;hygienic binding is created in each clause: the
+identifier <code>__who__</code> is bound to the quoted symbol <code>_</code>.
+
+        <p>Usage examples:
+
+     <pre class="example">          (import (vicare))
+          
+          (define f
+            (case-lambda*
+             (((a number?))
+              (number-&gt;string a))))
+          
+          (define g
+            (case-lambda*
+             (#(args list?)
+              (length args))))
+          
+          (f 123)                 &rArr; "123"
+          (g 1 2 3)               &rArr; 3
+</pre>
+        </blockquote></div>
+
+<!-- page -->
+   </body></html>
+

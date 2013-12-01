@@ -7,10 +7,10 @@
 <link title="Top" rel="start" href="index.html#Top">
 <link rel="up" href="oopp.html#oopp" title="oopp">
 <link rel="prev" href="oopp-fields.html#oopp-fields" title="oopp fields">
-<link rel="next" href="oopp-setter.html#oopp-setter" title="oopp setter">
+<link rel="next" href="oopp-getter.html#oopp-getter" title="oopp getter">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
-This document describes version 0.3d6 of Nausicaa, a
+This document describes version 0.3d7 of Nausicaa, a
 collection of libraries for Vicare Scheme implementing the language
 `(nausicaa)' on top of `(vicare)'.
 
@@ -42,7 +42,7 @@ Copyright (C) 2012, 2013 by Marco Maggi <marco.maggi-ipsu@poste.it>
 <div class="node">
 <a name="oopp-method"></a>
 <p>
-Next:&nbsp;<a rel="next" accesskey="n" href="oopp-setter.html#oopp-setter">oopp setter</a>,
+Next:&nbsp;<a rel="next" accesskey="n" href="oopp-getter.html#oopp-getter">oopp getter</a>,
 Previous:&nbsp;<a rel="previous" accesskey="p" href="oopp-fields.html#oopp-fields">oopp fields</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="oopp.html#oopp">oopp</a>
 <hr>
@@ -51,11 +51,32 @@ Up:&nbsp;<a rel="up" accesskey="u" href="oopp.html#oopp">oopp</a>
 <h3 class="section">3.11 Defining classes having methods</h3>
 
 <div class="defun">
-&mdash; Auxiliary Syntax: <b>method</b> (<var>?method-name . ?formals</var>)<var> . ?body<a name="index-method-42"></a></var><br>
-&mdash; Auxiliary Syntax: <b>method</b><var> ?method-name ?expression<a name="index-method-43"></a></var><br>
+&mdash; Auxiliary Syntax: <b>method</b> (<var>?method-spec . ?formals</var>)<var> . ?body<a name="index-method-42"></a></var><br>
+&mdash; Auxiliary Syntax: <b>method</b><var> ?method-spec ?expression<a name="index-method-43"></a></var><br>
 <blockquote><p>Add a method to the enclosing class, label or mixin definition; the
 method is applicable only through a syntax use in <acronym>OOPP</acronym> notation. 
 This clause can be used multiple times.
+
+        <p>When the first form is used, the argument <var>?method-spec</var> can have
+one of the following formats:
+
+     <pre class="example">          <var>?method-name</var>
+          (<var>?method-name</var> <var>?rv-tag0</var> <var>?rv-tag</var> ...)
+          #(<var>?method-name</var> <var>?rv-tag0</var> <var>?rv-tag</var> ...)
+</pre>
+        <p class="noindent">when the second form is used, the argument <var>?method-spec</var> can have
+one of the following formats:
+
+     <pre class="example">          <var>?method-name</var>
+          #(<var>?method-name</var> <var>?rv-tag</var>)
+</pre>
+        <p class="noindent">where: <var>?method-name</var> must be an identifier representing the method
+name; <var>?rv-tag</var> must be a tag identifier representing the type of a
+return value.  When a single return value tag is specified: the method
+is available for nested method invocation according to <acronym>OOPP</acronym> syntax
+specifications.  When the first form is used: the return value tags are
+used to validate the returned arguments as described for
+<code>lambda/tags</code>.
 
           <ul>
 <li>When the first form is used, the method definition is added to the
@@ -109,11 +130,24 @@ argument: the type instance.
 </pre>
         </blockquote></div>
 
+<!--  -->
 <div class="defun">
-&mdash; Auxiliary Syntax: <b>method-syntax</b><var> ?method-name ?transformer<a name="index-method_002dsyntax-44"></a></var><br>
+&mdash; Auxiliary Syntax: <b>method-syntax</b><var> ?method-spec ?transformer<a name="index-method_002dsyntax-44"></a></var><br>
 <blockquote><p>Add a method to the enclosing class, label or mixin definition; the
 method is applicable only through a syntax use in <acronym>OOPP</acronym> notation. 
 This clause can be used multiple times.
+
+        <p>The argument <var>?method-spec</var> can have one of the following formats:
+
+     <pre class="example">          <var>?method-name</var>
+          (<var>?method-name</var> <var>?rv-tag</var>)
+          #(<var>?method-name</var> <var>?rv-tag</var>)
+</pre>
+        <p class="noindent">where: <var>?method-name</var> must be an identifier representing the method
+name; <var>?rv-tag</var> must be a tag identifier representing the type of a
+return value.  When the single return value tag is specified: the method
+is available for nested method invocation according to <acronym>OOPP</acronym> syntax
+specifications.
 
         <p>The method definition is added to the methods list as if the following
 clause had been used:
@@ -127,7 +161,7 @@ clause had been used:
         <p class="noindent">where <code>transformer-name</code> is an automatically generated identifier
 built by appending a dash and <var>?method-name</var> to the type name. 
 <var>?transformer</var> must evaluate to a macro transformer: a function
-accepting a sintax object as single argument and returning a syntax
+accepting a syntax object as single argument and returning a syntax
 object as single value.  The first argument to the macro will be the
 type instance.
 
@@ -147,6 +181,7 @@ type instance.
 </pre>
         </blockquote></div>
 
+<!--  -->
 <div class="defun">
 &mdash; Auxiliary Syntax: <b>methods</b><var> ?method-spec <small class="dots">...</small><a name="index-methods-45"></a></var><br>
 <blockquote><p>Add methods to the enclosing class, label or mixin definition; the
@@ -158,11 +193,16 @@ This clause can be used multiple times.
      <pre class="example">          <var>?method-name</var>
           (<var>?method-name</var>)
           (<var>?method-name</var> <var>?invokable-name</var>)
+          ((<var>?method-name</var> <var>?rv-tag</var>) <var>?invokable-name</var>)
+          (#(<var>?method-name</var> <var>?rv-tag</var>) <var>?invokable-name</var>)
 </pre>
         <p class="noindent">where <var>?method-name</var> and <var>?invokable-name</var> must be identifiers;
 in the first two forms the invokable name is built in the same way the
 field accessor names are built: appending a dash and <var>?method-name</var>
-to the type name.  This clause can be used multiple times.
+to the type name.  When <var>?rv-tag</var> is used: it must be the tag
+identifier representing the type of a return value, the method is then
+available for nested method invocation according to <acronym>OOPP</acronym> syntax
+specifications.
 
         <p><var>?invokable-name</var> must be an identifier bound to a Scheme function
 or syntax which will be invoked as method; it must accept as first

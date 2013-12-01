@@ -1,0 +1,170 @@
+<html lang="en">
+<head>
+<title>mehve multimethods - Mehve for Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Mehve for Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="mehve.html#mehve" title="mehve">
+<link rel="prev" href="mehve-intro.html#mehve-intro" title="mehve intro">
+<link rel="next" href="mehve-io.html#mehve-io" title="mehve io">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes Mehve, a collection of libraries for
+Vicare Scheme version 0.3d7, implementing the language
+`(nausicaa mehve)' on top of `(nausicaa)'.
+
+Copyright (C) 2011-2013 by Marco Maggi <marco.maggi-ipsu@poste.it>
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with Invariant Sections being ``GNU Free Documentation
+     License'' and ``GNU General Public License'', no Front--Cover
+     Texts, and no Back--Cover Texts.  A copy of the license is
+     included in the section entitled ``GNU Free Documentation
+     License''.
+-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="mehve-multimethods"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="mehve-io.html#mehve-io">mehve io</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="mehve-intro.html#mehve-intro">mehve intro</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="mehve.html#mehve">mehve</a>
+<hr>
+</div>
+
+<h3 class="section">2.2 Generic functions and their customisation</h3>
+
+<p>There are two variants of &ldquo;generic functions&rdquo; in <code>(nausicaa
+mehve)</code>, both of them are in truth syntaxes.  The first kind is the one
+that generalises a function with fixed arity (fixed number of
+arguments); assuming the following prelude:
+
+<pre class="example">     (import (except (nausicaa)
+                     sin)
+       (prefix (only (nausicaa)
+                     sin)
+               nau.))
+</pre>
+   <p class="noindent">the function implementing the trigonometric sine is generalised with:
+
+<pre class="example">     (define-generic sin (x))
+     
+     (add-method sin (&lt;flonum&gt;) $flsin x)
+     (add-method sin (&lt;number&gt;) nau.sin)
+</pre>
+   <p class="noindent">and allows us to specialise it for non&ndash;<code>&lt;number&gt;</code> arguments, for
+example:
+
+<pre class="example">     (define-method (sin (x &lt;spine&gt;))
+       (x map sin))
+     
+     (define-method (sin (x &lt;vector&gt;))
+       (x map sin))
+</pre>
+   <p>The other kind is a generalisation for variadic functions (which take an
+undefined number of arguments); assuming the following prelude:
+
+<pre class="example">     (import (except (nausicaa)
+                     +)
+       (prefix (only (nausicaa)
+                     +)
+               nau.))
+</pre>
+   <p class="noindent">the addition function <code>+</code> is redefined with this infrastructure:
+
+<pre class="example">     (define-syntax (+ stx)
+       (syntax-case stx ()
+         (?id
+          (identifier? #'?id)
+          #'addition)
+         ((_)
+          #'(addition-0))
+         ((_ ?a)
+          #'(addition-1 ?a))
+         ((_ ?a ?b)
+          #'(addition-2 ?a ?b))
+         ((_ ?a ?b ?c)
+          #'(addition-2 (addition-2 ?a ?b) ?c))
+         ((_ . ?operands)
+          #'(addition . ?operands))))
+     
+     (define addition
+       (case-lambda
+        (()
+         (addition-0))
+        ((A)
+         (addition-1 A))
+        ((A B)
+         (addition-2 A B))
+        ((A B C)
+         (addition-2 (addition-2 A B) C))
+        ((A B C . args)
+         (fold-left addition-2 (addition-2 (addition-2 A B) C) args))
+        ))
+     
+     (define-generic addition-0 ())
+     (define-generic addition-1 (a))
+     (define-generic addition-2 (a b))
+     
+     (define-method (addition-0)
+       0)
+     
+     (define-method (addition-1 (a &lt;number&gt;))
+       a)
+     
+     (add-method addition-2 (&lt;fixnum&gt; &lt;fixnum&gt;) fx+)
+     (add-method addition-2 (&lt;flonum&gt; &lt;flonum&gt;) fl+)
+     (add-method addition-2 (&lt;number&gt; &lt;number&gt;) nau.+)
+</pre>
+   <p class="noindent">and specialised methods can be added to the generic functions
+<code>addition-0</code>, <code>addition-1</code> and <code>addition-2</code>.  In this
+case <code>(nausicaa mehve)</code> exports the binding for <code>+</code>, but the
+bindings for <code>addition-0</code>, <code>addition-1</code> and <code>addition-2</code>
+are exported by the auxiliary library <code>(nausicaa mehve language
+numerics arithmetics)</code>.
+
+<!--  -->
+<h5 class="subsubheading">Generalising already defined ordinary functions</h5>
+
+<p>If a binding <var>F</var> exported by <code>(nausicaa mehve)</code>, but not
+generalised by it, can only be generalised by writing a custom library
+which imports <code>(nausicaa mehve)</code> and reexports all its bindings
+and also redefines the binding <var>F</var>; the faster way to do this is to
+just copy and customise the source code of the library <code>(nausicaa
+mehve)</code>.
+
+   <p>This is annoying, but it is the only way of doing it because:
+
+     <ul>
+<li><acronym>R6RS</acronym> forbids to mutate an imported binding.
+
+     <li>It makes no sense to have all the bindings to functions in
+<code>(nausicaa)</code> redefined as generics. 
+</ul>
+
+   <p>The only alternative is to import <code>(nausicaa mehve)</code> excluding the
+predefined binding, and import another library with the generalised
+version.
+
+   <p>In any case requests to generalise a binding to function can be
+submitted to the Vicare Scheme maintainer.
+
+<!-- page -->
+   </body></html>
+

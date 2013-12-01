@@ -1,0 +1,234 @@
+<html lang="en">
+<head>
+<title>mehve numerics arithmetics - Mehve for Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Mehve for Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="mehve-numerics.html#mehve-numerics" title="mehve numerics">
+<link rel="prev" href="mehve-numerics-predicates.html#mehve-numerics-predicates" title="mehve numerics predicates">
+<link rel="next" href="mehve-numerics-parts.html#mehve-numerics-parts" title="mehve numerics parts">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes Mehve, a collection of libraries for
+Vicare Scheme version 0.3d7, implementing the language
+`(nausicaa mehve)' on top of `(nausicaa)'.
+
+Copyright (C) 2011-2013 by Marco Maggi <marco.maggi-ipsu@poste.it>
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with Invariant Sections being ``GNU Free Documentation
+     License'' and ``GNU General Public License'', no Front--Cover
+     Texts, and no Back--Cover Texts.  A copy of the license is
+     included in the section entitled ``GNU Free Documentation
+     License''.
+-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="mehve-numerics-arithmetics"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="mehve-numerics-parts.html#mehve-numerics-parts">mehve numerics parts</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="mehve-numerics-predicates.html#mehve-numerics-predicates">mehve numerics predicates</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="mehve-numerics.html#mehve-numerics">mehve numerics</a>
+<hr>
+</div>
+
+<h4 class="subsection">2.4.2 Arithmetics generic functions</h4>
+
+<p><a name="index-g_t_0040library_007bnausicaa-mehve-language-numerics-arithmetics_007d_002c-library-95"></a><a name="index-Library-_0040library_007bnausicaa-mehve-language-numerics-arithmetics_007d-96"></a>
+
+   <p>The auxiliary library <code>(nausicaa mehve language
+numerics arithmetics)</code> defines the generic functions behind the
+arithmetic operations; we need to import it only if we desire to add
+specialised methods to arithmetic functions.  The arithmetic functions
+are the following:
+
+<pre class="example">     + - * / abs div div0 mod mod0 div-and-mod div0-and-mod0
+</pre>
+   <p>As example we look at how to specialise the arithmetic functions
+<code>+</code>, <code>-</code>, <code>*</code> and <code>/</code> to operate on lists of items:
+
+<pre class="example">     #!r6rs
+     (import (nausicaa mehve)
+       (prefix (nausicaa mehve language numerics arithmetics)
+               mehve.))
+     
+     (define-method (mehve.addition-1 (o &lt;spine&gt;))
+       o)
+     (define-method (mehve.addition-2 (a &lt;spine&gt;) (b &lt;spine&gt;))
+       (map + a b))
+     
+     (define-method (mehve.subtraction-1 (o &lt;spine&gt;))
+       (map - o))
+     (define-method (mehve.subtraction-2 (a &lt;spine&gt;) (b &lt;spine&gt;))
+       (map - a b))
+     
+     (define-method (mehve.multiplication-1 (o &lt;spine&gt;))
+       o)
+     (define-method (mehve.multiplication-2 (a &lt;spine&gt;) (b &lt;spine&gt;))
+       (map * a b))
+     
+     (define-method (mehve.division-1 (o &lt;spine&gt;))
+       (map / o))
+     (define-method (mehve.division-2 (a &lt;spine&gt;) (b &lt;spine&gt;))
+       (map / a b))
+     
+     (+ '(1 2 3))                       &rArr; (1 2 3)
+     (+ '(1 2 3) '(4 5 6))              &rArr; (5 7 9)
+     (+ '(1 2 3) '(4 5 6) '(-1 -1 -1))  &rArr; (4 6 8)
+     
+     (- '(1 2 3))                       &rArr; (-1 -2 -3)
+     (- '(1 2 3) '(4 5 6))              &rArr; (-3 -3 -3)
+     (- '(1 2 3) '(4 5 6) '(-1 -1 -1))  &rArr; (-2 -2 -2)
+     
+     (* '(1 2 3))                       &rArr; (1 2 3)
+     (* '(1 2 3) '(4 5 6))              &rArr; (4 10 18)
+     (* '(1 2 3) '(4 5 6) '(-1 -1 -1))  &rArr; (-4 -10 -18)
+     
+     (/ '(1 2 3))                       &rArr; (1 1/2 1/3)
+     (/ '(1 2 3) '(4 5 6))              &rArr; (1/4 2/5 1/2)
+     (/ '(1 2 3) '(4 5 6) '(-1 -1 -1))  &rArr; (-1/4 -2/5 -1/2)
+</pre>
+   <p class="noindent">notice how the methods recursively call the generic functions in their
+body, this way the lists can hold any of the value types for which there
+are methods.
+
+<div class="defun">
+&mdash; Generic Function: <b>addition-0</b><var><a name="index-addition_002d0-97"></a></var><br>
+&mdash; Generic Function: <b>addition-1</b><var> A<a name="index-addition_002d1-98"></a></var><br>
+&mdash; Generic Function: <b>addition-2</b><var> A B<a name="index-addition_002d2-99"></a></var><br>
+&mdash; Method: <b>addition-0</b><var><a name="index-addition_002d0-100"></a></var><br>
+&mdash; Method: <b>addition-2</b> (<var>A &lt;fixnum&gt;</var>) (<var>B &lt;fixnum&gt;</var>)<var><a name="index-addition_002d2-101"></a></var><br>
+&mdash; Method: <b>addition-2</b> (<var>A &lt;flonum&gt;</var>) (<var>B &lt;flonum&gt;</var>)<var><a name="index-addition_002d2-102"></a></var><br>
+&mdash; Method: <b>addition-2</b> (<var>A &lt;number&gt;</var>) (<var>B &lt;number&gt;</var>)<var><a name="index-addition_002d2-103"></a></var><br>
+<blockquote><p>Used when <code>+</code> is called with zero, one or two arguments.  When no
+arguments are given: return 0.  When one argument is given:
+return <var>A</var> itself.  Otherwise use the function <code>fx+</code>,
+<code>fl+</code> or <code>+</code> as appropriate for the arguments. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Generic Function: <b>subtraction-0</b><var><a name="index-subtraction_002d0-104"></a></var><br>
+&mdash; Generic Function: <b>subtraction-1</b><var> A<a name="index-subtraction_002d1-105"></a></var><br>
+&mdash; Generic Function: <b>subtraction-2</b><var> A B<a name="index-subtraction_002d2-106"></a></var><br>
+&mdash; Method: <b>subtraction-0</b><var><a name="index-subtraction_002d0-107"></a></var><br>
+&mdash; Method: <b>subtraction-2</b> (<var>A &lt;fixnum&gt;</var>) (<var>B &lt;fixnum&gt;</var>)<var><a name="index-subtraction_002d2-108"></a></var><br>
+&mdash; Method: <b>subtraction-2</b> (<var>A &lt;flonum&gt;</var>) (<var>B &lt;flonum&gt;</var>)<var><a name="index-subtraction_002d2-109"></a></var><br>
+&mdash; Method: <b>subtraction-2</b> (<var>A &lt;number&gt;</var>) (<var>B &lt;number&gt;</var>)<var><a name="index-subtraction_002d2-110"></a></var><br>
+<blockquote><p>Used when <code>-</code> is called with zero, one or two arguments.  When no
+arguments are given: return 0.  Otherwise use the function
+<code>fx-</code>, <code>fl-</code> or <code>-</code> as appropriate for the arguments. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Generic Function: <b>multiplication-0</b><var><a name="index-multiplication_002d0-111"></a></var><br>
+&mdash; Generic Function: <b>multiplication-1</b><var> A<a name="index-multiplication_002d1-112"></a></var><br>
+&mdash; Generic Function: <b>multiplication-2</b><var> A B<a name="index-multiplication_002d2-113"></a></var><br>
+&mdash; Method: <b>multiplication-0</b><var><a name="index-multiplication_002d0-114"></a></var><br>
+&mdash; Method: <b>multiplication-2</b> (<var>A &lt;fixnum&gt;</var>) (<var>B &lt;fixnum&gt;</var>)<var><a name="index-multiplication_002d2-115"></a></var><br>
+&mdash; Method: <b>multiplication-2</b> (<var>A &lt;flonum&gt;</var>) (<var>B &lt;flonum&gt;</var>)<var><a name="index-multiplication_002d2-116"></a></var><br>
+&mdash; Method: <b>multiplication-2</b> (<var>A &lt;number&gt;</var>) (<var>B &lt;number&gt;</var>)<var><a name="index-multiplication_002d2-117"></a></var><br>
+<blockquote><p>Used when <code>*</code> is called with zero, one or two arguments.  When no
+arguments are given: return 0.  When one argument is given:
+return <var>A</var> itself.  Otherwise use the function <code>fx*</code>,
+<code>fl*</code> or <code>*</code> as appropriate for the arguments. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Generic Function: <b>division-0</b><var><a name="index-division_002d0-118"></a></var><br>
+&mdash; Generic Function: <b>division-1</b><var> A<a name="index-division_002d1-119"></a></var><br>
+&mdash; Generic Function: <b>division-2</b><var> A B<a name="index-division_002d2-120"></a></var><br>
+&mdash; Method: <b>division-0</b><var><a name="index-division_002d0-121"></a></var><br>
+&mdash; Method: <b>division-2</b> (<var>A &lt;fixnum&gt;</var>) (<var>B &lt;fixnum&gt;</var>)<var><a name="index-division_002d2-122"></a></var><br>
+&mdash; Method: <b>division-2</b> (<var>A &lt;flonum&gt;</var>) (<var>B &lt;flonum&gt;</var>)<var><a name="index-division_002d2-123"></a></var><br>
+&mdash; Method: <b>division-2</b> (<var>A &lt;number&gt;</var>) (<var>B &lt;number&gt;</var>)<var><a name="index-division_002d2-124"></a></var><br>
+<blockquote><p>Used when <code>/</code> is called with zero, one or two arguments.  When no
+arguments are given: return <code>+nan.0</code>.  Otherwise use the function
+<code>fxdiv</code>, <code>fl/</code> or <code>/</code> as appropriate for the arguments. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Generic Function: <b>div</b><var> a b<a name="index-div-125"></a></var><br>
+&mdash; Method: <b>div</b> (<var>A &lt;fixnum&gt;</var>) (<var>B &lt;fixnum&gt;</var>)<var><a name="index-div-126"></a></var><br>
+&mdash; Method: <b>div</b> (<var>A &lt;integer&gt;</var>) (<var>B &lt;integer&gt;</var>)<var><a name="index-div-127"></a></var><br>
+&mdash; Method: <b>div</b> (<var>A &lt;real&gt;</var>) (<var>B &lt;real&gt;</var>)<var><a name="index-div-128"></a></var><br>
+<blockquote><p>Perform integer division.  Use the function <code>fxdiv</code>, <code>fldiv</code>
+or <code>div</code> as appropriate for the arguments. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Generic Function: <b>div0</b><var> a b<a name="index-div0-129"></a></var><br>
+&mdash; Method: <b>div0</b> (<var>A &lt;fixnum&gt;</var>) (<var>B &lt;fixnum&gt;</var>)<var><a name="index-div0-130"></a></var><br>
+&mdash; Method: <b>div0</b> (<var>A &lt;integer&gt;</var>) (<var>B &lt;integer&gt;</var>)<var><a name="index-div0-131"></a></var><br>
+&mdash; Method: <b>div0</b> (<var>A &lt;real&gt;</var>) (<var>B &lt;real&gt;</var>)<var><a name="index-div0-132"></a></var><br>
+<blockquote><p>Perform integer division.  Use the function <code>fxdiv0</code>, <code>fldiv0</code>
+or <code>div0</code> as appropriate for the arguments. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Generic Function: <b>mod</b><var> a b<a name="index-mod-133"></a></var><br>
+&mdash; Method: <b>mod</b> (<var>A &lt;fixnum&gt;</var>) (<var>B &lt;fixnum&gt;</var>)<var><a name="index-mod-134"></a></var><br>
+&mdash; Method: <b>mod</b> (<var>A &lt;integer&gt;</var>) (<var>B &lt;integer&gt;</var>)<var><a name="index-mod-135"></a></var><br>
+&mdash; Method: <b>mod</b> (<var>A &lt;real&gt;</var>) (<var>B &lt;real&gt;</var>)<var><a name="index-mod-136"></a></var><br>
+<blockquote><p>Compute the modulus of integer division.  Use the function <code>fxmod</code>,
+<code>flmod</code> or <code>mod</code> as appropriate for the arguments. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Generic Function: <b>mod0</b><var> a b<a name="index-mod0-137"></a></var><br>
+&mdash; Method: <b>mod0</b> (<var>A &lt;fixnum&gt;</var>) (<var>B &lt;fixnum&gt;</var>)<var><a name="index-mod0-138"></a></var><br>
+&mdash; Method: <b>mod0</b> (<var>A &lt;integer&gt;</var>) (<var>B &lt;integer&gt;</var>)<var><a name="index-mod0-139"></a></var><br>
+&mdash; Method: <b>mod0</b> (<var>A &lt;real&gt;</var>) (<var>B &lt;real&gt;</var>)<var><a name="index-mod0-140"></a></var><br>
+<blockquote><p>Compute the modulus of integer division.  Use the function
+<code>fxmod0</code>, <code>flmod0</code> or <code>mod0</code> as appropriate for the
+arguments. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Generic Function: <b>div-and-mod</b><var> a b<a name="index-div_002dand_002dmod-141"></a></var><br>
+&mdash; Method: <b>div-and-mod</b> (<var>A &lt;fixnum&gt;</var>) (<var>B &lt;fixnum&gt;</var>)<var><a name="index-div_002dand_002dmod-142"></a></var><br>
+&mdash; Method: <b>div-and-mod</b> (<var>A &lt;integer&gt;</var>) (<var>B &lt;integer&gt;</var>)<var><a name="index-div_002dand_002dmod-143"></a></var><br>
+&mdash; Method: <b>div-and-mod</b> (<var>A &lt;real&gt;</var>) (<var>B &lt;real&gt;</var>)<var><a name="index-div_002dand_002dmod-144"></a></var><br>
+<blockquote><p>Compute the integer division and its modulus.  Use the function
+<code>fxdiv-and-mod</code>, <code>fldiv-and-mod</code> or <code>div-and-mod</code> as
+appropriate for the arguments. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Generic Function: <b>div0-and-mod0</b><var> a b<a name="index-div0_002dand_002dmod0-145"></a></var><br>
+&mdash; Method: <b>div0-and-mod0</b> (<var>A &lt;fixnum&gt;</var>) (<var>B &lt;fixnum&gt;</var>)<var><a name="index-div0_002dand_002dmod0-146"></a></var><br>
+&mdash; Method: <b>div0-and-mod0</b> (<var>A &lt;integer&gt;</var>) (<var>B &lt;integer&gt;</var>)<var><a name="index-div0_002dand_002dmod0-147"></a></var><br>
+&mdash; Method: <b>div0-and-mod0</b> (<var>A &lt;real&gt;</var>) (<var>B &lt;real&gt;</var>)<var><a name="index-div0_002dand_002dmod0-148"></a></var><br>
+<blockquote><p>Compute the integer division and its modulus.  Use the function
+<code>fxdiv0-and-mod0</code>, <code>fldiv0-and-mod0</code> or <code>div0-and-mod0</code>
+as appropriate for the arguments. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Generic Function: <b>abs</b><var> A<a name="index-abs-149"></a></var><br>
+&mdash; Method: <b>abs</b> (<var>A &lt;fixnum&gt;</var>)<var><a name="index-abs-150"></a></var><br>
+&mdash; Method: <b>abs</b> (<var>A &lt;flonum&gt;</var>)<var><a name="index-abs-151"></a></var><br>
+&mdash; Method: <b>abs</b> (<var>A &lt;real&gt;</var>)<var><a name="index-abs-152"></a></var><br>
+<blockquote><p>Return the absolute value of its argument.  Use the function
+<code>fxabs</code>, <code>flabs</code> or <code>abs</code> as appropriate for the
+arguments. 
+</p></blockquote></div>
+
+<!-- page -->
+   </body></html>
+

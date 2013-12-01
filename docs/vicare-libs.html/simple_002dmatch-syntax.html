@@ -9,7 +9,7 @@
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
 This document describes the libraries distributed along with version
-0.3d6 of Vicare Scheme, an R6RS compliant native
+0.3d7 of Vicare Scheme, an R6RS compliant native
 compiler for the Scheme language.
 
 Copyright (C) 2010-2013 by Marco Maggi.
@@ -213,6 +213,16 @@ error, with the exception of the variable with ellipsis.
              X)
             (else #f))
           &rArr; 123
+          
+          (match '(1 2 3)
+            (((and (apply number?)
+                   (let N1))
+              . (and (apply (lambda (obj)
+                              (for-all number? obj)))
+                     (let N)))
+             (vector N1 N))
+            (else #f))
+          &rArr; #(1 (2 3))
 </pre>
      <br><dt>&lsquo;<samp><span class="samp">(let </span><var>?variable</var><span class="samp"> ...)</span></samp>&rsquo;<dd>This pattern can appear only as last subpattern of a list or vector
 pattern.  Bind the rest of the input expression to <var>?variable</var>,
@@ -247,6 +257,14 @@ available to be referenced in the following subpatterns.
             ((let id ...)         #\A)
              (else                #\B))
           error--&gt; &amp;syntax
+          
+          (match '(1 2 3 4)
+            (((and (apply number?) (let N1))
+              (and (apply number?) (let N))
+              ...)
+             (vector N1 N))
+            (else #f))
+          &rArr; (#(1 2) #(1 3) #(1 4))
 </pre>
      <br><dt>&lsquo;<samp><span class="samp">(quote </span><var>?datum</var><span class="samp">)</span></samp>&rsquo;<dd>A quoted datum; it matches if it is equal to the input expression
 according to <code>equal?</code>.  As special case: if <var>?datum</var> is a

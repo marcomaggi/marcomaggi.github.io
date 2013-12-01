@@ -1,0 +1,585 @@
+<html lang="en">
+<head>
+<title>parser-tools unix-pathnames comp - Libraries for Vicare Scheme</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Libraries for Vicare Scheme">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="parser_002dtools-unix_002dpathnames.html#parser_002dtools-unix_002dpathnames" title="parser-tools unix-pathnames">
+<link rel="prev" href="parser_002dtools-unix_002dpathnames-manip.html#parser_002dtools-unix_002dpathnames-manip" title="parser-tools unix-pathnames manip">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+This document describes the libraries distributed along with version
+0.3d7 of Vicare Scheme, an R6RS compliant native
+compiler for the Scheme language.
+
+Copyright (C) 2010-2013 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library `(vicare formations)' is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+The documentation of the libraries `(vicare parser-tools silex
+---)' are derived form the documentation of SILex.  Copyright
+(C) 2001, 2009 Danny Dube'.
+
+     This program is free software: you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see
+     `http://www.gnu.org/licenses/'.
+
+Trademarks used herein are the property of their respective owners.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="parser-tools-unix-pathnames-comp"></a>
+<a name="parser_002dtools-unix_002dpathnames-comp"></a>
+<p>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="parser_002dtools-unix_002dpathnames-manip.html#parser_002dtools-unix_002dpathnames-manip">parser-tools unix-pathnames manip</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="parser_002dtools-unix_002dpathnames.html#parser_002dtools-unix_002dpathnames">parser-tools unix-pathnames</a>
+<hr>
+</div>
+
+<h4 class="subsection">37.1.7 Components of Unix pathnames</h4>
+
+<p>The following functions accept as argument a string or bytevector
+representing a Unix pathname and return a string or bytevector; the
+returned value is not always a newly built object, so we must
+<strong>not</strong> mutate it.
+
+   <p>The following bindings are exported by the library <code>(vicare
+parser-tools unix-pathnames)</code>.  Identifiers whose name is prefixed with
+<code>$</code> are bound to unsafe operations which do not validate their
+arguments.
+
+<div class="defun">
+&mdash; Function: <b>extension</b><var> obj<a name="index-extension-5242"></a></var><br>
+&mdash; Function: <b>$bytevector-extension</b><var> bv<a name="index-g_t_0024bytevector_002dextension-5243"></a></var><br>
+&mdash; Function: <b>$string-extension</b><var> str<a name="index-g_t_0024string_002dextension-5244"></a></var><br>
+<blockquote><p>Return a string or bytevector representing the extension of <var>obj</var>,
+which must be a valid Unix pathname string or bytevector representation. 
+The extension of a pathname is the sequence of characters from the end
+up to the first dot character before the first slash character; the
+returned value does <strong>not</strong> include the dot character and can be
+empty.
+
+        <p>If the dot is the first character in the pathname's last segment: return
+the empty bytevector because we interpret this pathname as representing
+a Unix&ndash;style &ldquo;hidden&rdquo; filename or dirname.
+
+        <p><code>$bytevector-extension</code> assumes that <var>bv</var> satisfies the
+predicate <code>bytevector-pathname?</code>.  <code>$string-extension</code> assumes
+that <var>str</var> satisfies the predicate <code>string-pathname?</code>.
+
+     <pre class="example">          #!vicare
+          (import (vicare)
+            (prefix (vicare parser-tools unix-pathnames) uxptn.))
+          
+          (define-syntax-rule (doit ?pathname)
+            (uxptn.extension ?pathname))
+          
+          (doit "ciao.it")                &rArr; "it"
+          (doit "ciao")                   &rArr; ""
+          (doit "/path/to/file.ext")      &rArr; "ext"
+          (doit "/path/to/file.")         &rArr; ""
+          (doit "/path/to/file")          &rArr; ""
+          (doit "/path/to/file.ext/ab")   &rArr; ""
+          (doit "/path/to/some.file.ext") &rArr; "ext"
+          (doit "a/")                     &rArr; ""
+          (doit "a.")                     &rArr; ""
+          (doit ".")                      &rArr; ""
+          (doit "..")                     &rArr; ""
+          (doit "...")                    &rArr; ""
+          (doit ".a")                     &rArr; ""
+          (doit ".emacsrc")               &rArr; ""
+          (doit "..a")                    &rArr; "a"
+          (doit "...a")                   &rArr; "a"
+          (doit "..a.b")                  &rArr; "b"
+          (doit "~/.")                    &rArr; ""
+          (doit "~/..")                   &rArr; ""
+          (doit "~/...")                  &rArr; ""
+          (doit "~/.a")                   &rArr; ""
+          (doit "~/.emacsrc")             &rArr; ""
+          (doit "~/..a")                  &rArr; "a"
+          (doit "~/...a")                 &rArr; "a"
+          (doit "~/..a.b")                &rArr; "b"
+          
+          (doit '#ve(ascii "/path/to/file.ext"))
+          &rArr; #ve(ascii "ext")
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>dirname</b><var> obj<a name="index-dirname-5245"></a></var><br>
+&mdash; Function: <b>$bytevector-dirname</b><var> bv<a name="index-g_t_0024bytevector_002ddirname-5246"></a></var><br>
+&mdash; Function: <b>$string-dirname</b><var> str<a name="index-g_t_0024string_002ddirname-5247"></a></var><br>
+<blockquote><p>Return a string or bytevector representing the dirname of <var>obj</var>,
+which must be a valid Unix pathname string or bytevector representation. 
+The dirname of a pathname is the sequence of characters from the
+beginning up to the last slash character; the returned value does
+<strong>not</strong> include the slash character and is never empty: when there
+is no directory part in the pathname, the returned value represents the
+current directory as single dot.  Notice that contiguous slashses are
+&ldquo;collapsed&rdquo; into one slash.
+
+        <p><code>$bytevector-dirname</code> assumes that <var>bv</var> satisfies the predicate
+<code>bytevector-pathname?</code>.  <code>$string-dirname</code> assumes that
+<var>str</var> satisfies the predicate <code>string-pathname?</code>.
+
+     <pre class="example">          #!vicare
+          (import (vicare)
+            (prefix (vicare parser-tools unix-pathnames) uxptn.))
+          
+          (define-syntax-rule (doit ?pathname)
+            (uxptn.dirname ?pathname))
+          
+          (doit "/path/to/file.ext")      &rArr; "/path/to"
+          (doit "file.ext")               &rArr; "."
+          (doit "/file.ext")              &rArr; "/"
+          (doit "//file.ext")             &rArr; "/"
+          (doit "/path/to///file.ext")    &rArr; "/path/to"
+          (doit "//////file.ext")         &rArr; "/"
+          (doit "a/b")                    &rArr; "a"
+          (doit "a")                      &rArr; "."
+          (doit "../a")                   &rArr; ".."
+          (doit "./a")                    &rArr; "."
+          (doit "../abcd")                &rArr; ".."
+          (doit "./abcd")                 &rArr; "."
+          (doit "../abcd/efgh")           &rArr; "../abcd"
+          (doit "./abcd/efgh")            &rArr; "./abcd"
+          (doit "/ciao/")                 &rArr; "/"
+          (doit "ciao/")                  &rArr; "."
+          (doit "./ciao/")                &rArr; "."
+          (doit "hello/ciao/")            &rArr; "hello"
+          (doit "//////")                 &rArr; "/"
+          (doit "ciao//////")             &rArr; "."
+          
+          (doit '#ve(ascii "/path/to/file.ext"))
+          &rArr; #ve(ascii "/path/to")
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>tailname</b><var> obj<a name="index-tailname-5248"></a></var><br>
+&mdash; Function: <b>$bytevector-tailname</b><var> bv<a name="index-g_t_0024bytevector_002dtailname-5249"></a></var><br>
+&mdash; Function: <b>$string-tailname</b><var> str<a name="index-g_t_0024string_002dtailname-5250"></a></var><br>
+<blockquote><p>Return a string or bytevector representing the tailname of <var>obj</var>,
+which must be a valid Unix pathname string or bytevector representation. 
+The tailname of a pathname is its last segment; the returned value does
+<strong>not</strong> include the leading slash character, if any, and it cannot
+be empty; the only exception is when the argument represents the root
+directory, in which case the returned value is the dot segment.  When
+the whole <var>obj</var> is the tailname: the returned value is <var>obj</var>
+itself.
+
+        <p><code>$bytevector-tailname</code> assumes that <var>bv</var> satisfies the
+predicate <code>bytevector-pathname?</code>.  <code>$string-tailname</code> assumes
+that <var>str</var> satisfies the predicate <code>string-pathname?</code>.
+
+     <pre class="example">          #!vicare
+          (import (vicare)
+            (prefix (vicare parser-tools unix-pathnames) uxptn.))
+          
+          (define-syntax-rule (doit ?pathname)
+            (uxptn.tailname ?pathname))
+          
+          (doit "/path/to/file.ext")      &rArr; "file.ext"
+          (doit "file.ext")               &rArr; "file.ext"
+          (doit "/file.ext")              &rArr; "file.ext"
+          (doit "//file.ext")             &rArr; "file.ext"
+          (doit "/path/to///file.ext")    &rArr; "file.ext"
+          (doit "//////file.ext")         &rArr; "file.ext"
+          (doit "a/b")                    &rArr; "b"
+          (doit "a")                      &rArr; "a"
+          (doit "../a")                   &rArr; "a"
+          (doit "./a")                    &rArr; "a"
+          (doit "../abcd")                &rArr; "abcd"
+          (doit "./abcd")                 &rArr; "abcd"
+          (doit "../abcd/efgh")           &rArr; "efgh"
+          (doit "./abcd/efgh")            &rArr; "efgh"
+          (doit "/ciao/")                 &rArr; "ciao"
+          (doit "ciao/")                  &rArr; "ciao"
+          (doit "./ciao/")                &rArr; "ciao"
+          (doit "hello/ciao/")            &rArr; "ciao"
+          (doit "ciao//////")             &rArr; "ciao"
+          (doit "/")                      &rArr; "."
+          (doit "//////")                 &rArr; "."
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>rootname</b><var> obj<a name="index-rootname-5251"></a></var><br>
+&mdash; Function: <b>$bytevector-rootname</b><var> bv<a name="index-g_t_0024bytevector_002drootname-5252"></a></var><br>
+&mdash; Function: <b>$string-rootname</b><var> str<a name="index-g_t_0024string_002drootname-5253"></a></var><br>
+<blockquote><p>Return a string or bytevector representing the rootname of <var>obj</var>,
+which must be a valid Unix pathname string or bytevector representation. 
+The rootname of a pathname is the sequence of characters from the
+beginning up to the last dot character before the extension, in other
+words: everything but the extension; the returned value does
+<strong>not</strong> include the dot character and cannot be empty.
+
+        <p>If the dot is the first character in the pathname's last segment: return
+the whole bytevector because we interpret such pathname as representing
+a Unix&ndash;style &ldquo;hidden&rdquo; filename or dirname.  If the last segment
+represents the uplevel directory (it is the double&ndash;dot): return the
+full pathname.  The return value can be the argument itself.
+
+        <p><code>$bytevector-rootname</code> assumes that <var>bv</var> satisfies the
+predicate <code>bytevector-pathname?</code>.  <code>$string-rootname</code> assumes
+that <var>str</var> satisfies the predicate <code>string-pathname?</code>.
+
+     <pre class="example">          #!vicare
+          (import (vicare)
+            (prefix (vicare parser-tools unix-pathnames) uxptn.))
+          
+          (define-syntax-rule (doit ?pathname)
+            (uxptn.rootname ?pathname))
+          
+          (doit "ciao.it")                &rArr; "ciao"
+          (doit "ciao")                   &rArr; "ciao"
+          (doit "/path/to/file.ext")      &rArr; "/path/to/file"
+          (doit "/path/to/file.")         &rArr; "/path/to/file"
+          (doit "/path/to/file")          &rArr; "/path/to/file"
+          (doit "/path/to/file.ext/ab")   &rArr; "/path/to/file.ext/ab"
+          (doit "/path/to/some.file.ext") &rArr; "/path/to/some.file"
+          (doit "a/")                     &rArr; "a"
+          (doit "a.")                     &rArr; "a"
+          (doit ".")                      &rArr; "."
+          (doit "..")                     &rArr; ".."
+          (doit "...")                    &rArr; ".."
+          (doit ".a")                     &rArr; ".a"
+          (doit ".emacsrc")               &rArr; ".emacsrc"
+          (doit "..a")                    &rArr; "."
+          (doit "...a")                   &rArr; ".."
+          (doit "..a.b")                  &rArr; "..a"
+          (doit "~/.")                    &rArr; "~/."
+          (doit "~/..")                   &rArr; "~/.."
+          (doit "~/...")                  &rArr; "~/.."
+          (doit "~/.a")                   &rArr; "~/.a"
+          (doit "~/.emacsrc")             &rArr; "~/.emacsrc"
+          (doit "~/..a")                  &rArr; "~/."
+          (doit "~/...a")                 &rArr; "~/.."
+          (doit "~/..a.b")                &rArr; "~/..a"
+          (doit "///")                    &rArr; "/"
+          (doit "ciao///")                &rArr; "ciao"
+          (doit "ciao.it///")             &rArr; "ciao"
+          (doit "ciao.it.en///")          &rArr; "ciao.it"
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>strip-trailing-slashes</b><var> obj<a name="index-strip_002dtrailing_002dslashes-5254"></a></var><br>
+&mdash; Function: <b>$bytevector-strip-trailing-slashes</b><var> bv<a name="index-g_t_0024bytevector_002dstrip_002dtrailing_002dslashes-5255"></a></var><br>
+&mdash; Function: <b>$string-strip-trailing-slashes</b><var> str<a name="index-g_t_0024string_002dstrip_002dtrailing_002dslashes-5256"></a></var><br>
+<blockquote><p>Return a string or bytevector representing the argument with the
+trailing slashes stripped, if any.  If there are no trailing slashes:
+return <var>obj</var> itself.
+
+        <p><code>$bytevector-strip-trailing-slashes</code> assumes that <var>bv</var>
+satisfies the predicate <code>bytevector-pathname?</code>. 
+<code>$string-strip-trailing-slashes</code> assumes that <var>str</var> satisfies
+the predicate <code>string-pathname?</code>.
+
+     <pre class="example">          #!vicare
+          (import (vicare)
+            (prefix (vicare parser-tools unix-pathnames) uxptn.))
+          
+          (define-syntax-rule (doit ?pathname)
+            (uxptn.strip-trailing-slashes ?pathname))
+          
+          (doit "/path/to/file.ext")      &rArr; "/path/to/file.ext"
+          (doit "/path/to/file.ext///")   &rArr; "/path/to/file.ext"
+          (doit "/")                      &rArr; "/"
+          (doit "///")                    &rArr; "/"
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>split</b><var> obj<a name="index-split-5257"></a></var><br>
+&mdash; Function: <b>$bytevector-split</b><var> bv<a name="index-g_t_0024bytevector_002dsplit-5258"></a></var><br>
+&mdash; Function: <b>$string-split</b><var> str<a name="index-g_t_0024string_002dsplit-5259"></a></var><br>
+<blockquote><p>Split into segments the argument <var>obj</var>, which must be a valid Unix
+pathname string or bytevector representation.  Return 2 values: a
+boolean, true if the pathname is absolute; null or a proper list of
+bytevectors representing the segments.  The returned segments are
+normalised by removing, when possible, segments representing the current
+directory and segments representing the uplevel directory.
+
+        <p><code>$bytevector-split</code> assumes that <var>bv</var> satisfies the predicate
+<code>bytevector-pathname?</code>.  <code>$string-split</code> assumes that
+<var>str</var> satisfies the predicate <code>string-pathname?</code>.
+
+     <pre class="example">          #!vicare
+          (import (vicare)
+            (prefix (vicare parser-tools unix-pathnames) uxptn.))
+          
+          (define-syntax-rule (doit ?pathname)
+            (uxptn.split ?pathname))
+          
+          (doit "/path/to/file.ext")
+          &rArr; #t (#ve(ascii "path")
+                 #ve(ascii "to")
+                 #ve(ascii "file.ext"))
+          
+          (doit "path/to/file.ext")
+          &rArr; #f (#ve(ascii "path")
+                 #ve(ascii "to")
+                 #ve(ascii "file.ext"))
+          
+          (doit "ciao//")         &rArr; #f (#ve(ascii "ciao"))
+          (doit "/")              &rArr; #t ()
+          (doit ".")              &rArr; #f ()
+          (doit "..")             &rArr; #f (#ve(ascii ".."))
+          (doit "ciao/..")        &rArr; #f ()
+          (doit "/.")             &rArr; #t ()
+          (doit "/..")            &rArr; #t ()
+          (doit "/ciao/..")       &rArr; #t ()
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>normalise</b><var> obj<a name="index-normalise-5260"></a></var><br>
+&mdash; Function: <b>$bytevector-normalise</b><var> bv<a name="index-g_t_0024bytevector_002dnormalise-5261"></a></var><br>
+&mdash; Function: <b>$string-normalise</b><var> str<a name="index-g_t_0024string_002dnormalise-5262"></a></var><br>
+<blockquote><p>Normalise the argument <var>obj</var>, which must be a valid Unix pathname
+string or bytevector representation, by removing, when possible,
+segments representing the current directory and segments representing
+the uplevel directory.  The result of this function is <strong>not</strong> a
+full canonicalisation as can be performed by a system function like the
+<acronym>POSIX</acronym> <code>realpath()</code>.
+
+        <p><code>$bytevector-normalise</code> assumes that <var>bv</var> satisfies the
+predicate <code>bytevector-pathname?</code>.  <code>$string-normalise</code> assumes
+that <var>str</var> satisfies the predicate <code>string-pathname?</code>.
+
+     <pre class="example">          #!vicare
+          (import (vicare)
+            (normalise (vicare parser-tools unix-pathnames) uxptn.))
+          
+          (define-syntax-rule (doit ?pathname)
+            (uxptn.normalise ?pathname))
+          
+          (doit "/path/to/file.ext")      &rArr; "/path/to/file.ext"
+          (doit "path/to/file.ext")       &rArr; "path/to/file.ext"
+          (doit "ciao//")                 &rArr; "ciao"
+          (doit "/")                      &rArr; "/"
+          (doit ".")                      &rArr; "."
+          (doit "..")                     &rArr; ".."
+          (doit "ciao/..")                &rArr; "."
+          (doit "/.")                     &rArr; "/"
+          (doit "/..")                    &rArr; "/"
+          (doit "/ciao/..")               &rArr; "/"
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>prefix?</b><var> obj1 obj2<a name="index-prefix_003f-5263"></a></var><br>
+&mdash; Function: <b>$bytevector-prefix?</b><var> bv1 bv2<a name="index-g_t_0024bytevector_002dprefix_003f-5264"></a></var><br>
+&mdash; Function: <b>$string-prefix?</b><var> str1 str2<a name="index-g_t_0024string_002dprefix_003f-5265"></a></var><br>
+<blockquote><p>Given two strings or two bytevectors representing valid and
+<strong>normalised</strong> Unix pathname representations: return <code>#t</code> if the
+first is the prefix of the second, otherwise return <code>#f</code>.  The
+result of this function is fully reliable only if the arguments are
+absolute pathnames resulting from the canonicalisation performed by a
+system function like the <acronym>POSIX</acronym> <code>realpath()</code>.
+
+        <p><code>$bytevector-prefix?</code> assumes that <var>bv1</var> and <var>bv2</var> satisfy
+the predicate <code>bytevector-pathname?</code>.  <code>$string-prefix?</code>
+assumes that <var>str1</var> and <var>str2</var> satisfy the predicate
+<code>string-pathname?</code>.
+
+     <pre class="example">          #!vicare
+          (import (vicare)
+            (prefix (vicare parser-tools unix-pathnames) uxptn.))
+          
+          (define-syntax-rule (doit ?pathname)
+            (uxptn.prefix? ?pathname))
+          
+          (doit "/path/to/file.ext" "/path/to/file.ext") &rArr; #t
+          (doit "/path/to/"         "/path/to/file.ext") &rArr; #t
+          (doit "/path/from"        "/path/to/file.ext") &rArr; #f
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>suffix?</b><var> obj1 obj2<a name="index-suffix_003f-5266"></a></var><br>
+&mdash; Function: <b>$bytevector-suffix?</b><var> bv1 bv2<a name="index-g_t_0024bytevector_002dsuffix_003f-5267"></a></var><br>
+&mdash; Function: <b>$string-suffix?</b><var> str1 str2<a name="index-g_t_0024string_002dsuffix_003f-5268"></a></var><br>
+<blockquote><p>Given two strings or two bytevectors representing valid and
+<strong>normalised</strong> Unix pathname representations: return <code>#t</code> if the
+first is the suffix of the second, otherwise return <code>#f</code>.  The
+result of this function is fully reliable only if the arguments are
+absolute pathnames resulting from the canonicalisation performed by a
+system function like the <acronym>POSIX</acronym> <code>realpath()</code>.
+
+        <p><code>$bytevector-suffix?</code> assumes that <var>bv1</var> and <var>bv2</var> satisfy
+the predicate <code>bytevector-pathname?</code>.  <code>$string-suffix?</code>
+assumes that <var>str1</var> and <var>str2</var> satisfy the predicate
+<code>string-pathname?</code>.
+
+     <pre class="example">          #!vicare
+          (import (vicare)
+            (suffix (vicare parser-tools unix-pathnames) uxptn.))
+          
+          (define-syntax-rule (doit ?pathname)
+            (uxptn.suffix? ?pathname))
+          
+          (doit "/path/to/file.ext" "/path/to/file.ext") &rArr; #t
+          (doit "/to/file.ext"      "/path/to/file.ext") &rArr; #t
+          (doit "/from/file.ext"    "/path/to/file.ext") &rArr; #f
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>prepend</b><var> obj1 obj2<a name="index-prepend-5269"></a></var><br>
+&mdash; Function: <b>$bytevector-prepend</b><var> bv1 bv2<a name="index-g_t_0024bytevector_002dprepend-5270"></a></var><br>
+&mdash; Function: <b>$string-prepend</b><var> str1 str2<a name="index-g_t_0024string_002dprepend-5271"></a></var><br>
+<blockquote><p>Given two strings or two bytevectors representing valid Unix pathnames:
+prepend the first to the second and return the result.
+
+        <p><code>$bytevector-prepend</code> assumes that <var>bv1</var> and <var>bv2</var> satisfy
+the predicate <code>bytevector-pathname?</code>.  <code>$string-prepend</code>
+assumes that <var>str1</var> and <var>str2</var> satisfy the predicate
+<code>string-pathname?</code>.
+
+     <pre class="example">          #!vicare
+          (import (vicare)
+            (suffix (vicare parser-tools unix-pathnames) uxptn.))
+          
+          (define-syntax-rule (doit ?pathname)
+            (uxptn.prepend ?pathname))
+          
+          (doit "/path/to" "file.ext")    &rArr; "/path/to/file.ext"
+          (doit "/" "path/to/file.ext")   &rArr; "/path/to/file.ext"
+          (doit "." "path/to/file.ext")   &rArr; "./path/to/file.ext"
+          (doit ".." "path/to/file.ext")  &rArr; "../path/to/file.ext"
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>append</b><var> obj1 obj2<a name="index-append-5272"></a></var><br>
+&mdash; Function: <b>$bytevector-append</b><var> bv1 bv2<a name="index-g_t_0024bytevector_002dappend-5273"></a></var><br>
+&mdash; Function: <b>$string-append</b><var> str1 str2<a name="index-g_t_0024string_002dappend-5274"></a></var><br>
+<blockquote><p>Given two strings or two bytevectors representing valid Unix pathnames:
+append the first to the second and return the result.
+
+        <p><code>$bytevector-append</code> assumes that <var>bv1</var> and <var>bv2</var> satisfy
+the predicate <code>bytevector-pathname?</code>.  <code>$string-append</code>
+assumes that <var>str1</var> and <var>str2</var> satisfy the predicate
+<code>string-pathname?</code>.
+
+     <pre class="example">          #!vicare
+          (import (vicare)
+            (suffix (vicare parser-tools unix-pathnames) uxptn.))
+          
+          (define-syntax-rule (doit ?pathname)
+            (uxptn.append ?pathname))
+          
+          (doit "file.ext" "/path/to")    &rArr; "/path/to/file.ext"
+          (doit "path/to/file.ext" "/")   &rArr; "/path/to/file.ext"
+          (doit "path/to/file.ext" ".")   &rArr; "./path/to/file.ext"
+          (doit "path/to/file.ext" "..")  &rArr; "../path/to/file.ext"
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>replace-extension</b><var> ptn ext<a name="index-replace_002dextension-5275"></a></var><br>
+&mdash; Function: <b>$bytevector-replace-extension</b><var> ptn-bv ext-bv<a name="index-g_t_0024bytevector_002dreplace_002dextension-5276"></a></var><br>
+&mdash; Function: <b>$string-replace-extension</b><var> ptn-str ext-str<a name="index-g_t_0024string_002dreplace_002dextension-5277"></a></var><br>
+<blockquote><p>Given a string representing a valid Unix pathname and a string
+representing a valid Unix pathname segment, or a bytevector representing
+a valid Unix pathname and a bytevector representing a valid Unix
+pathname segment: strip the extension from the pathname and append the
+segment to the result as new extension.
+
+        <p><code>$bytevector-replace-extension</code> assumes that <var>ptn-bv</var> satisfies
+the predicate <code>bytevector-pathname?</code> and that <var>ext-bv</var>
+satisfies the predicate <code>bytevector-segment?</code>. 
+<code>$string-replace-extension</code> assumes that <var>ptn-str</var> satisfies
+the predicate <code>string-pathname?</code> and that <var>ext-str</var> satisfies
+the predicate <code>string-segment?</code>.
+
+     <pre class="example">          #!vicare
+          (import (vicare)
+            (suffix (vicare parser-tools unix-pathnames) uxptn.))
+          
+          (define-syntax-rule (doit ?pathname ?extension)
+            (uxptn.replace-extension ?pathname ?extension))
+          
+          (doit "file.one"          "two") &rArr; "file.two"
+          (doit "/path/to/file.one" "two") &rArr; "/path/to/file.two"
+          (doit ".emacs"            "elc") &rArr; ".emacs.elc"
+          (doit "/path/to/.emacs"   "elc") &rArr; "/path/to/.emacs.elc"
+          
+          (doit "/"   "ext")
+          error--&gt; &amp;unix-pathname-normalisation-error
+          
+          (doit "///" "ext")
+          error--&gt; &amp;unix-pathname-normalisation-error
+          
+          (doit "."   "ext")
+          error--&gt; &amp;unix-pathname-normalisation-error
+          
+          (doit ".."  "ext")
+          error--&gt; &amp;unix-pathname-normalisation-error
+</pre>
+        </blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>uri-representation</b><var> obj<a name="index-uri_002drepresentation-5278"></a></var><br>
+&mdash; Function: <b>$bytevector-uri-representation</b><var> bv<a name="index-g_t_0024bytevector_002duri_002drepresentation-5279"></a></var><br>
+&mdash; Function: <b>$string-uri-representation</b><var> str<a name="index-g_t_0024string_002duri_002drepresentation-5280"></a></var><br>
+<blockquote><p>Return a string or bytevector being the <acronym>URI</acronym> representation of
+<var>obj</var>, which must be a valid Unix pathname string or bytevector
+representation.
+
+        <p><code>$bytevector-uri-representation</code> assumes that <var>bv</var> satisfies
+the predicate <code>bytevector-pathname?</code>. 
+<code>$string-uri-representation</code> assumes that <var>str</var> satisfies the
+predicate <code>string-pathname?</code>.
+
+     <pre class="example">          #!vicare
+          (import (vicare)
+            (suffix (vicare parser-tools unix-pathnames) uxptn.))
+          
+          (define-syntax-rule (doit ?pathname)
+            (uxptn.uri-representation ?pathname))
+          
+          (doit "/path/to/file.ext")      &rArr; "file:///path/to/file.ext"
+          (doit "path/to/file.ext")       &rArr; "file:path/to/file.ext"
+</pre>
+        </blockquote></div>
+
+<!-- end of file -->
+<!-- page -->
+<!-- appendices -->
+   </body></html>
+
