@@ -7,7 +7,7 @@
 <link title="Top" rel="top" href="#Top">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
-This document describes version 0.1.0 of MMUX Unsafe Users Management, a
+This document describes version 0.2d0 of MMUX Unsafe Users Management, a
 distribution of GNU Bash scripts; it provides utilities to handle
 unsafe user accounts.  The package is distributed under the terms of the
 GNU General Public License (GPL).
@@ -48,7 +48,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#dir">(dir)</a>
 
 <h2 class="unnumbered">MMUX Unsafe Users Management</h2>
 
-<p>This document describes version 0.1.0 of MMUX Unsafe Users Management, a
+<p>This document describes version 0.2d0 of MMUX Unsafe Users Management, a
 distribution of <acronym>GNU</acronym> Bash scripts; it provides utilities to handle
 unsafe user accounts.  The package is distributed under the terms of the
 <acronym>GNU</acronym> General Public License (<acronym>GPL</acronym>).
@@ -101,7 +101,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 
 <h2 class="chapter">1 Overview of the package</h2>
 
-<p>This document describes version 0.1.0 of MMUX Unsafe Users Management, a
+<p>This document describes version 0.2d0 of MMUX Unsafe Users Management, a
 distribution of <acronym>GNU</acronym> Bash scripts; it proposes a model to manage
 unsafe user profiles associated to safe user accounts on Slackware
 GNU+Linux systems.  It depends upon the Marco's Bash Functions Library
@@ -115,8 +115,8 @@ applications under restricted privileges, with the purpose of partially
 protect legitimate users from remote attacks.
 
      <li>This package relies on the program <samp><span class="command">sudo</span></samp> to allow users
-creation and system mounting and unmounting to the users of the group
-&lsquo;<samp><span class="samp">mmuxunsafeusers</span></samp>&rsquo;; such policy is configured by the file:
+creation and file system mounting and unmounting to the users of the
+group &lsquo;<samp><span class="samp">mmux-safe-usrs</span></samp>&rsquo;; such policy is configured by the file:
 
      <div align="center"><samp><span class="file">/etc/sudoers.d/mmux-unsafe-users-management.conf</span></samp></div>
 
@@ -126,19 +126,27 @@ changes for your host.
 
      <p>Remember that such sudoers file must be installed on the system with
 octal access permissions &lsquo;<samp><span class="samp">0400</span></samp>&rsquo;; the installation directory
-<samp><span class="file">/etc/sudoers.d</span></samp> must also have octal access permissions
-&lsquo;<samp><span class="samp">0700</span></samp>&rsquo;.  Such permissions <strong>cannot</strong> be enforced by the
-installation infrastructure of this package.
+<samp><span class="file">/etc/sudoers.d</span></samp> must have octal access permissions &lsquo;<samp><span class="samp">0700</span></samp>&rsquo;. 
+Such permissions <strong>cannot</strong> be enforced by the installation
+infrastructure of this package.
 
      <p>To enable loading of sudoers configuration modules: we have to include
 the following line in the file <samp><span class="file">/etc/sudoers</span></samp>:
 
      <pre class="example">          #includedir /etc/sudoers.d
 </pre>
-     </ul>
+     <p>This package does <strong>not</strong> add users to the group
+&lsquo;<samp><span class="samp">mmux-safe-usrs</span></samp>&rsquo;, it is responsibility of the system administrator
+to do it.
+
+     <li>This package's distribution comes with a script
+<samp><span class="file">meta/slackware/doinst.sh</span></samp> that can be run to create the user
+groups and adjust the access permissions of the installed files.  It is
+usable, in fact, as Slackware package installation script. 
+</ul>
 
    <p>With this system configuration, users that are members of the group
-<code>mmuxunsafeusers</code> can: add and remove multiple unsafe users
+&lsquo;<samp><span class="samp">mmux-safe-usrs</span></samp>&rsquo; can: add and remove multiple unsafe users
 accounts associated to a safe user; mount an unsafe user's home
 directory under a directory of the associated safe user; enable unsafe
 users to use a X Window server running under the safe user's
@@ -199,15 +207,16 @@ shell commands in its home directory files:
 </pre>
      </dl>
 
-   <p>Let's say the user &lsquo;<samp><span class="samp">marco</span></samp>&rsquo;, which is part of the group
-<code>mmuxunsafeusers</code>, wants to create the unsafe users accounts
-&lsquo;<samp><span class="samp">marco-firefox</span></samp>&rsquo; and &lsquo;<samp><span class="samp">marco-minecraft</span></samp>&rsquo;; he has to issue the
-commands:
+   <p>Let's say the user &lsquo;<samp><span class="samp">marco</span></samp>&rsquo; wants to make use of unsafe user
+accounts to run applications; the system administrator adds it to the
+group &lsquo;<samp><span class="samp">mmux-safe-usrs</span></samp>&rsquo;.  If &lsquo;<samp><span class="samp">marco</span></samp>&rsquo; wants to create the
+unsafe users accounts &lsquo;<samp><span class="samp">marco-firefox</span></samp>&rsquo; and &lsquo;<samp><span class="samp">marco-minecraft</span></samp>&rsquo;;
+he has to issue the commands:
 
-<pre class="example">     $ /usr/sbin/mmux-unsafe-users add marco-firefox -Smarco
+<pre class="example">     $ /usr/sbin/mmux-unsafe-users add marco-firefox   -Smarco
      $ /usr/sbin/mmux-unsafe-users add marco-minecraft -Smarco
 </pre>
-   <p class="noindent">then create a file <samp><span class="file">~/.mmux-safe-users</span></samp> holding the lines:
+   <p class="noindent">then create a file <samp><span class="file">~/.mmux-unsafe-users</span></samp> holding the lines:
 
 <pre class="example">     marco-firefox
      marco-minecraft
@@ -228,7 +237,7 @@ unsafe users directories:
    <p class="noindent">and the groups:
 
 <pre class="example">     $ groups
-     marco lp wheel floppy audio video cdrom tape plugdev scanner users marco-firefox marco-minecraft
+     marco ... mmux-safe-usrs marco-firefox marco-minecraft
 </pre>
    <p>If &lsquo;<samp><span class="samp">marco</span></samp>&rsquo; wants to remove an unsafe user account,
 <strong>including the unsafe user's home directory</strong>, he can do:
@@ -241,7 +250,7 @@ unsafe users directories:
 
 <pre class="example">     $ sudo -u marco-firefox -H /opt/firefox/32.0.3/firefox
 </pre>
-   <p class="noindent">or event better prepare a shell script holding something like:
+   <p class="noindent">or, even better, prepare a shell script holding something like:
 
 <pre class="example">     (set -x
        cd ~marco-firefox
@@ -371,14 +380,36 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#model">model</a>
 
 <h3 class="section">5.1 Restricting usage of this package</h3>
 
-<p>By default, the <samp><span class="file">sudoers.d</span></samp> file requires users to belong to the
-group <code>mmuxunsafeusers</code> to be able to run the script; we must add
-to this group all the users that are meant to use this package.
+<p>The distribution comes with a script <samp><span class="file">meta/slackware/doinst.sh</span></samp>
+that can be run to create the users' group and adjust the access
+permissions of the installed files.  It is usable, in fact, as Slackware
+package installation script.
 
-   <p>The distribution comes with a script <samp><span class="file">meta/slackware/doinst.sh</span></samp>
-that can be run to create the group and adjust the access permissions of
-the installed files.  It is usable, in fact, as Slackware package
-installation script.
+   <p>This package relies on the existence of two user groups:
+
+     <dl>
+<dt>&lsquo;<samp><span class="samp">mmux-safe-usrs</span></samp>&rsquo;<dd>It is the group to which all the safe users allowed to use this package
+should belong.  This group can be added automatically by running the
+script <samp><span class="file">doinst.sh</span></samp>.  This package does <strong>not</strong> add users to
+this group: it is responsibility of the system administrator to do it.
+
+     <p>By default, the installed <samp><span class="file">sudoers.d</span></samp> file requires users to belong
+to the group &lsquo;<samp><span class="samp">mmux-safe-usrs</span></samp>&rsquo; to be able to run the script
+<samp><span class="command">mmux-unsafe-users</span></samp>.
+
+     <br><dt>&lsquo;<samp><span class="samp">mmux-unsafe-usrs</span></samp>&rsquo;<dd>It is the group to which all the unsafe users should belong.  This group
+can be added automatically by running the script <samp><span class="file">doinst.sh</span></samp>.  This
+package: automatically adds unsafe users to this group at user&ndash;creation
+time; automatically removes unsafe users from this group at
+user&ndash;deletion time.
+
+     <p>This group of unsafe users can be used to configure file systems' quota. 
+</dl>
+
+   <p>All the scripts in this package should be installed with owner
+&lsquo;<samp><span class="samp">root</span></samp>&rsquo;, group &lsquo;<samp><span class="samp">mmux-safe-usrs</span></samp>&rsquo; and permissions &lsquo;<samp><span class="samp">0750</span></samp>&rsquo;;
+after package installation, these permissions can be adjusted by running
+the <samp><span class="file">doinst.sh</span></samp> script.
 
 <!-- page -->
 <div class="node">
@@ -406,13 +437,18 @@ command:
         --home         /home/unsafe-users/marco-firefox      \
         --create-home                                        \
         --user-group                                         \
-        --groups       audio,video                           \
+        --groups       mmux-unsafe-usrs,audio,video          \
         --shell        /bin/false                            \
         marco-firefox
 </pre>
    <p class="noindent">notice that an unsafe user's account <strong>must not</strong> be part of the
 normal users' groups; rather it should be part of the smallest possible
 number of groups needed to run the desired applications.
+
+   <p>The shell could be either <samp><span class="file">/bin/false</span></samp> or <samp><span class="file">/sbin/nologin</span></samp>; we
+opt for the former because it is more descriptive of a user account
+never available for log in (<samp><span class="file">/sbin/nologin</span></samp> is more for temporarily
+disabled accounts).
 
    <p>The access permissions of the unsafe user's home directory are modified
 as follows:
@@ -444,7 +480,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#model">model</a>
 <h3 class="section">5.3 How to delete an unsafe user account</h3>
 
 <p>Let's take as example the unsafe user &lsquo;<samp><span class="samp">marco-firefox</span></samp>&rsquo; associated to
-the safe user &lsquo;<samp><span class="samp">marco</span></samp>&rsquo;.  The unsafe user account and it home
+the safe user &lsquo;<samp><span class="samp">marco</span></samp>&rsquo;.  The unsafe user account and its home
 directory are removed with:
 
 <pre class="example">     $SUDO /usr/sbin/userdel marco-firefox --remove
@@ -470,8 +506,8 @@ directory with the tilde syntax:
 
 <pre class="example">     ~marco-firefox
 </pre>
-   <p class="noindent">which is a nice and short syntax, with this package the unsafe user's
-home directory is mounted under a subdirectory of the safe user's home
+   <p class="noindent">which is nice and short, with this package the unsafe user's home
+directory is mounted under a subdirectory of the safe user's home
 directory.
 
    <p>Let's take as example the unsafe user &lsquo;<samp><span class="samp">marco-firefox</span></samp>&rsquo; associated to
@@ -1769,7 +1805,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 <div class="footnote">
 <hr>
 <a name="texinfo-footnotes-in-document"></a><h4>Footnotes</h4><p class="footnote"><small>[<a name="fn-1" href="#fnd-1">1</a>]</small> We have to remember that this group addition will
-become effecting after the safe user has logged out and logged back in.</p>
+become effective after the safe user has logged out and logged back in.</p>
 
    <hr></div>
 
