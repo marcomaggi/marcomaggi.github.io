@@ -1,0 +1,294 @@
+<html lang="en">
+<head>
+<title>2015 February 13 - Marco's Weblog</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Marco's Weblog">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="2015.html#g_t2015" title="2015">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+Copyright (C) 2015 by Marco Maggi <marco.maggi-ipsu@poste.it>
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with Invariant Sections being ``GNU Free Documentation
+     License'' and ``GNU General Public License'', no Front--Cover
+     Texts, and no Back--Cover Texts.  A copy of the license is
+     included in the section entitled ``GNU Free Documentation
+     License''.
+-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+<link rel="stylesheet" type="text/css" href="weblog.css">
+</head>
+<body>
+<div class="node">
+<a name="g_t2015-February-13"></a>
+<p>
+Up:&nbsp;<a rel="up" accesskey="u" href="2015.html#g_t2015">2015</a>
+<hr>
+</div>
+
+<h3 class="unnumberedsec">On the implementation of <code>unwind-protect</code></h3>
+
+<p>The macro <code>unwind-protect</code> has the purpose of releasing resources that must be
+allocated synchronously with respect to a chunk of code; its syntax is:
+
+<pre class="example">     (unwind-protect
+         <var>?body</var>
+       <var>?clean-up0</var>
+       <var>?clean-up</var>
+       ...)
+</pre>
+   <p class="noindent">and it can be used as:
+
+<pre class="example">     #!vicare
+     (let ((port (open-file-output-port "file.ext")))
+       (unwind-protect
+           (put-bytevector port '#ve(ascii "ciao"))
+         (close-output-port port)))
+</pre>
+   <p class="noindent">first we allocate a resource (in this case the <var>port</var>); then we use it in the
+<var>?body</var> form; finally we release it in the <var>?clean-up</var> forms.  The
+<var>?clean-up</var> forms are executed whether <var>?body</var> performs a normal return or
+raises an exception.  When <var>?body</var> returns: the return value of
+<code>unwind-protect</code> is the return value of <var>?body</var>.
+
+   <p>It is clear that <code>unwind-protect</code> is a very useful operator: in a way or the
+other, a language <strong>must</strong> provide a way to release synchronous resources.  We
+might be tempted to rely on the garbage collector finalisers (under <a href="References.html#References">Vicare</a>:
+guardians), but:
+
+     <ul>
+<li>At present, there is no guarantee that a guarded object is finalised before the end
+of the process.
+
+     <li>Some resources have a complex finalisation procedure that may fail; so we need to
+integrate this procedure in the application's operations and, when needed, have the
+application ask for user intervention.  User interaction requires sharing context
+between parts of the program: something that is more complex to set up with a
+guardian's handler. 
+</ul>
+
+   <p>There have been
+<a href="http://www.nhplace.com/kent/PFAQ/unwind-protect-vs-continuations-original.html">plenty</a> <a href="http://repository.readscheme.org/ftp/papers/sw2003/Unwind.pdf">of</a>
+<a href="http://compgroups.net/comp.lang.lisp/continuations-in-common-lisp-with-apologies/698239">discussions</a> about how to implement <code>unwind-protect</code> in Scheme and some
+<a href="http://www.ccs.neu.edu/home/will/UWESC/uwesc.sch">proposals</a>; none of them
+provided a definitive solution (where <em>definitive</em> means: problem solved and
+syntax included in the standard language).  At
+<a href="https://github.com/marcomaggi/vicare/commit/68cac65a460b8f419f724721b94a6b85a0f5eac6">present</a>, <a href="References.html#References">Vicare</a>'s <a href="References.html#References">master branch</a> branch implements an unwind&ndash;protection mechanism
+that, at its core, is available through the built&ndash;in macro
+<code>with-unwind-protection</code> exported by the library <code>(vicare)</code>; the syntax
+is:
+
+<pre class="example">     (with-unwind-protection <var>?clean-up</var> <var>?thunk</var>)
+</pre>
+   <p class="noindent">where <var>?thunk</var> performs the job and the procedure <var>?clean-up</var> releases
+resources.
+
+   <p>The above example would be implemented as:
+
+<pre class="example">     #!vicare
+     (let ((port (open-file-output-port "file.ext")))
+       (with-unwind-protection
+           (lambda (why)
+             (close-output-port port))
+         (lambda ()
+           (put-bytevector port '#ve(ascii "ciao")))))
+</pre>
+   <p>The built&ndash;in macro <code>unwind-protect</code> is still available as simple wrapper
+around <code>with-undind-protection</code>:
+
+<pre class="example">     (unwind-protect <var>?body</var> <var>?cleanup0</var> <var>?clean-up</var> ...)
+     ==&gt; (with-unwind-protection
+             (lambda (dummy) <var>?cleanup0</var> <var>?clean-up</var> ...)
+           (lambda () <var>?body</var>))
+</pre>
+   <p class="noindent">the built&ndash;in macros <code>try</code> and <code>with-compensations</code> are also
+implemented on top of <code>with-unwind-protection</code>.
+
+<!--  -->
+<h4 class="unnumberedsubsec">The mechanism</h4>
+
+<p>So, how does it work?  The idea is to define the concept of <dfn>dynamic extent
+termination</dfn> of a call to function; this concept is defined by <a href="References.html#References">Vicare</a>'s
+unwind&ndash;protection mechanism and it is not a <acronym>R6RS</acronym> concept.  To understand the
+unwind&ndash;protection mechanism we must understand the concepts &ldquo;dynamic extent of a
+function call&rdquo; and &ldquo;dynamic environment&rdquo;.
+
+   <p>The procedure <var>?clean-up</var> is called when the dynamic extent of the invocation of
+<var>?thunk</var> terminates; dynamic extent <strong>termination</strong> is different from
+dynamic extent <strong>exiting</strong> as determined by <code>dynamic-wind</code>.  When the
+execution flow exits the dynamic extent of a function call: such extent might also
+terminate, but not all the exits are also terminations.
+
+   <p>In this discussion, we consider the syntax use:
+
+<pre class="example">     (with-unwind-protection <var>?clean-up</var> <var>?thunk</var>)
+</pre>
+   <p class="noindent">the dynamic extent of a call to <var>?thunk</var> <strong>is</strong> terminated, and so
+<var>?clean-up</var> <strong>is</strong> invoked, when:
+
+     <ul>
+<li><var>?thunk</var> performs a normal return.  <var>?clean-up</var> is applied to the symbol
+&lsquo;<samp><span class="samp">return</span></samp>&rsquo;.
+
+     <li><var>?thunk</var> raises a continuable or non&ndash;continuable exception that is intercepted
+by a use of <code>guard</code>, but only when a clause of <code>guard</code> has a test
+expression returning non&ndash;false.  If we do:
+
+     <pre class="example">          (guard (E (<var>?test</var> <var>?expr</var>))
+            (with-unwind-protection
+                <var>?clean-up</var>
+              (lambda ()
+                (error #f "I know what you did"))))
+</pre>
+     <p class="noindent">this is what happens:
+
+          <ol type=1 start=1>
+<li>The clause's <var>?test</var> expression is evaluated in the dynamic environment of the
+use of <code>guard</code> and it returns non&ndash;false.
+
+          <li>The <var>?clean-up</var> is called in the dynamic environment of the use of
+<code>with-unwind-protection</code> and its return values discarded.  <var>?clean-up</var> is
+applied to the symbol &lsquo;<samp><span class="samp">exception</span></samp>&rsquo;.
+
+          <li>The clause's <var>?expr</var> is evaluated in the dynamic environment of the use of
+<code>guard</code> and its return values are returned to the continuation of
+<code>guard</code>.
+          </ol>
+
+     <li><var>?thunk</var> executes a use of the fluid syntaxes <code>break</code>, <code>continue</code>
+or <code>return</code>, as defined by the library <code>(vicare)</code>, to escape from a form
+that encloses an unwind&ndash;protection syntax.  <var>?clean-up</var> is applied to the symbol
+&lsquo;<samp><span class="samp">escape</span></samp>&rsquo;.
+
+     <p>As bound by the loop syntaxes <code>while</code>, <code>until</code>, <small class="dots">...</small> and the syntax
+<code>returnable</code>: these fluid syntaxes reinstate a continuation at the beginning
+or outside of <code>while</code>, <code>until</code>, <small class="dots">...</small> and <code>returnable</code> and
+perform special operations to terminate the dynamic extent of the call to
+<var>?thunk</var> in an unwind&ndash;protection form. 
+</ul>
+
+<!--  -->
+   <p>The dynamic extent of a call to <var>?thunk</var> is <strong>not</strong> terminated, and so
+<var>?clean-up</var> is <strong>not</strong> invoked, when:
+
+     <ul>
+<li><var>?thunk</var> raises a continuable exception by calling <code>raise-continuable</code>, and
+such call performs a normal return to <var>?thunk</var>.
+
+     <li><var>?thunk</var> raises a continuable or non&ndash;continuable exception and an exception
+handler terminates the process (for example by calling <code>exit</code>).
+
+     <li>The unwind&ndash;protection syntax is used by a coroutine and <code>yield</code> is called from
+within <var>?thunk</var> to hand control to another coroutine.
+
+     <li>An escape procedure is called from within <var>?thunk</var> to reinstate a continuation
+outside <var>?thunk</var>, and the call to the escape procedure is <strong>not</strong> interfaced
+with the unwind&ndash;protection mechanism to terminate the dynamic extent of the call to
+<var>?thunk</var>. 
+</ul>
+
+<!--  -->
+   <p>About the termination of the dynamic extent of <var>?thunk</var>, we must acknowledge
+that:
+
+     <ul>
+<li>There is <strong>no</strong> guarantee that: after exiting (without terminating) the dynamic
+extent of <var>?thunk</var> by reinstating a continuation, such extent will be reentered
+later and continue to termination.
+
+     <li>If the dynamic extent of <var>?thunk</var> is terminated and an attempt to reenter
+<var>?thunk</var> is performed: an exception is raised with compound condition object
+containing a <code>&amp;non-reinstatable</code> component.
+
+     <li>If the call to <var>?thunk</var> raises an exception and the consequent call to
+<var>?clean-up</var> raises a second exception: the clean&ndash;up operation may fail (and, for
+example, leave the resource unreleased and in an incorrect state).
+
+     <li>If the call to <var>?thunk</var> raises an exception and a use of <code>guard</code>
+intercepts it: if a test expression in a clause of <code>guard</code> raises a second
+exception, the <var>?clean-up</var> may not be called.
+
+     <li>If the call to <var>?thunk</var> raises an exception and the in&ndash;guard or out&ndash;guard
+thunks of <code>dynamic-wind</code> raise a second exception: the clean&ndash;up operation may
+fail (and, for example, leave the resource unreleased and in an incorrect state). 
+</ul>
+
+   <p>Things to notice:
+
+     <ul>
+<li>While it is possible to <code>raise</code> any object: it is better to always raise a
+condition object (possibly compound), so that the test expressions in <code>guard</code>
+uses can just be condition object type predicates; such predicates never raise
+exceptions.
+
+     <li>If a second exception is raised while handling the first exception: <strong>the
+unwind&ndash;protection mechanism misbehaves</strong>. 
+</ul>
+
+   <p>The problem of the second exception does not haunt only <a href="References.html#References">Vicare</a>; if I understand
+correctly, <code>unwind-protect</code> as
+<a href="http://www.cs.cmu.edu/Groups/AI/html/hyperspec/HyperSpec/Body/speope_unwind-protect.html">defined</a> by Common Lisp also presents cases where the clean&ndash;up forms may not be
+called.
+
+<!--  -->
+<h4 class="unnumberedsubsec">How do we manage resources then?</h4>
+
+<p>The unwind&ndash;protection mechanism has the purpose of evaluating code when the dynamic
+extent of a function call terminates; it can be used to release <em>synchronous</em>
+resources: resources whose life must terminate when the dynamic extent of a function
+call terminates.  Whenever possible, we must take care of handling exceptions with
+<code>guard</code> before they cross the unwind&ndash;protection boundary.  So, with
+compensations, we might do:
+
+<pre class="example">     (with-compensations
+       (guard (E (<var>?test</var> <var>?expr</var>)
+                 ...)
+         (define <var>?resource-reference</var>
+           (compensate
+               <var>?alloc</var>
+             (with
+               <var>?release</var>)))
+         ...
+         <var>?body0</var>
+         <var>?body</var>
+         ...))
+</pre>
+   <p class="noindent">or, if we like <code>try</code>:
+
+<pre class="example">     (with-compensations
+       (try
+           (letrec
+               ((<var>?resource-reference</var> (compensate
+                                         <var>?alloc</var>
+                                       (with
+                                         <var>?release</var>)))
+                 ...)
+             <var>?body0</var>
+             <var>?body</var>
+             ...)
+         (catch E
+           ((<var>?condition-type</var>)
+             <var>?expr</var>)
+           ...)))
+</pre>
+   <!-- page -->
+<!--  -->
+<!-- Appendices. -->
+<!--  -->
+   </body></html>
+
