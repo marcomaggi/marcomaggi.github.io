@@ -1,0 +1,262 @@
+<html lang="en">
+<head>
+<title>2015 February 14 - Marco's Weblog</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Marco's Weblog">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="2015.html#g_t2015" title="2015">
+<link rel="prev" href="2015-February-13-bis.html#g_t2015-February-13-bis" title="2015 February 13 bis">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+Copyright (C) 2015 by Marco Maggi <marco.maggi-ipsu@poste.it>
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with Invariant Sections being ``GNU Free Documentation
+     License'' and ``GNU General Public License'', no Front--Cover
+     Texts, and no Back--Cover Texts.  A copy of the license is
+     included in the section entitled ``GNU Free Documentation
+     License''.
+-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+<link rel="stylesheet" type="text/css" href="weblog.css">
+</head>
+<body>
+<div class="node">
+<a name="g_t2015-February-14"></a>
+<p>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="2015-February-13-bis.html#g_t2015-February-13-bis">2015 February 13 bis</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="2015.html#g_t2015">2015</a>
+<hr>
+</div>
+
+<h3 class="unnumberedsec">On errors and close&ndash;on&ndash;exec ports</h3>
+
+<p>Error handling is hard.  Error handling is ugly.  Somebody has to do error handling. 
+I try to have <a href="References.html#References">Vicare</a> do something about it.
+
+   <p><acronym>POSIX</acronym> specifies an interesting feature: automatically close file descriptors when
+a process calls <code>execv()</code> or similar function.  This feature is disabled by
+default and it is enabled by setting the flag <code>FD_CLOEXEC</code> for the file
+descriptor:
+
+<pre class="example">     int   fd    = ...;
+     int   flags = fcntl(fd, F_GETFD, 0);
+     assert(0 &lt;= flags);
+     flags |= FD_CLOEXEC;
+     fcntl(<var>fd</var>, F_SETFD, flags);
+</pre>
+   <p>The library <code>(vicare posix)</code> interfaces this facility with the function
+<code>fd-set-close-on-exec-mode!</code>.  Standard Scheme port objects also have this
+feature through a mechanism implemented by <code>(vicare posix)</code>: a weak hashtable
+is used to register ports for close&ndash;on&ndash;exec with
+<code>port-set-close-on-exec-mode!</code>; then we can use
+<code>flush-ports-in-close-on-exec-mode</code> and
+<code>close-ports-in-close-on-exec-mode</code>.
+
+   <p>Problem: what should happen when flushing or closing such ports fails?  This is a
+difficult problem; whatever the language and technology we use, what should happen
+when flushing or closing an input/output port fails?  Was the data written?  Was the
+file corrupted?  Should the software ignore the error and tell the user to go on the
+beach to take a sunbath?
+
+   <p>I have no answer.  <a href="References.html#References">Vicare</a> has no answer.  The best I can think is this:
+
+     <ol type=1 start=1>
+<li>It is possible to hand an error handler to <code>flush-ports-in-close-on-exec-mode</code>
+and <code>close-ports-in-close-on-exec-mode</code>.
+
+     <li>Before applying <code>flush-output-port</code> or <code>close-port</code> to a close&ndash;on&ndash;exec
+port: the error handler is installed.
+
+     <li>If applying <code>flush-output-port</code> or <code>close-port</code> to a close&ndash;on&ndash;exec port
+raises an exception: the error handler is applied to the raised object.
+
+     <li>If the error handler itself raises an exception: such second exception is blocked and
+discarded.
+        </ol>
+
+<p class="noindent">this &ldquo;solution&rdquo; is now
+<a href="https://github.com/marcomaggi/vicare/commit/d41445c7c334e443880800918a1793a22fad41ff">implemented</a> in the <a href="References.html#References">master</a> branch.  It is a pitiful solution.  Maybe custom
+&ldquo;flush handlers&rdquo; and &ldquo;close handlers&rdquo; would be better; maybe in the future I will
+add them.
+
+<!--  -->
+<h4 class="unnumberedsubsec">Some examples</h4>
+
+<p>Let's imagine the following program prelude, in which <code>make-test-port</code> is just a
+wrapper for the standard <code>open-string-output-port</code> allowing us to raise an
+exception when data is written:
+
+<pre class="example">     #!vicare
+     (import (vicare)
+       (prefix (vicare posix) px.)
+       (only (vicare checks)
+             with-result
+             add-result))
+     
+     ;;Select the output buffer size for the port created
+     ;;by MAKE-CUSTOM-TEXTUAL-OUTPUT-PORT.
+     (string-port-buffer-size 16)
+     
+     (define (trace template . args)
+       (when #t
+         (apply fprintf (current-error-port) template args)))
+     
+     (define error-on-write
+       (make-parameter #f))
+     
+     (define (make-test-port)
+       ;;Create a port that wraps the one created by OPEN-STRING-OUTPUT-PORT.
+       ;;
+       (receive (subport extract)
+           (open-string-output-port)
+     
+        (define (write! src.str src.start count)
+           (trace "writing ~a chars\n" count)
+           (when (error-on-write)
+             (error __who__ "error writing characters" count))
+           (do ((i 0 (+ 1 i)))
+               ((= i count)
+                count)
+             (put-char subport (string-ref src.str (+ i src.start)))))
+     
+         (define (get-position)
+           (port-position subport))
+     
+         (define (set-position! new-position)
+           (set-port-position! subport new-position))
+     
+         (define (close)
+           #f)
+     
+         (values (make-custom-textual-output-port
+                  "*test-port*" write! get-position set-position! close)
+                 extract)))
+     
+     (define-constant the-string-len
+       (* 4 (string-port-buffer-size)))
+     
+     (define-constant the-string
+       (make-string the-string-len #\A))
+</pre>
+   <p class="noindent">we can simulate an error when flushing with:
+
+<pre class="example">     (parametrise ((error-on-write #t))
+       (flush-output-port port))
+</pre>
+   <p class="noindent">and an error when closing with:
+
+<pre class="example">     (parametrise ((error-on-write #t))
+       (close-port port))
+</pre>
+   <p>We can test the port with the following code, no error, no close&ndash;on&ndash;exec:
+
+<pre class="example">     (let-values (((port extract) (make-test-port)))
+       (trace "writing ~a chars\n" the-string-len)
+       (display the-string port)
+       (trace "flushing output\n")
+       (flush-output-port port)
+       (trace "closing\n")
+       (close-port port)
+       (receive-and-return (rv)
+           (extract)
+         (trace "full contents: ~s\n" rv)))
+     -| writing 64 chars
+     -| writing 16 chars
+     -| writing 16 chars
+     -| writing 16 chars
+     -| flushing output
+     -| writing 16 chars
+     -| closing
+     -| full contents: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+</pre>
+   <p>We can simulate error&ndash;on&ndash;flushing with the following code:
+
+<pre class="example">     (with-result
+       (let-values (((port extract) (make-test-port)))
+         (px.port-set-close-on-exec-mode! port)
+         (trace "writing ~a chars\n" the-string-len)
+         (add-result 'writing)
+         (display the-string port)
+         (trace "flushing output\n")
+         (add-result 'flushing)
+         (parametrise ((error-on-write #t))
+           (px.flush-ports-in-close-on-exec-mode (lambda (E)
+                                                   (trace "flush exception: ~s\n" E))))
+         (trace "closing\n")
+         (add-result 'closing)
+         (px.close-ports-in-close-on-exec-mode port)
+         (receive-and-return (rv)
+             (string-length (extract))
+           (trace "full contents: ~s\n" rv))))
+     &rArr; (48 (writing flushing closing))
+     -| writing 64 chars
+     -| writing 16 chars
+     -| writing 16 chars
+     -| writing 16 chars
+     -| flushing output
+     -| writing 16 chars
+     -| flush exception: #[r6rs-record: compound-condition
+       components=(#[r6rs-record: &amp;error]
+                   #[r6rs-record: &amp;who who=write!]
+                   #[r6rs-record: &amp;message message="error writing characters"]
+                   #[r6rs-record: &amp;irritants irritants=(16)])]
+     -| closing
+     -| full contents: 48
+</pre>
+   <p class="noindent">when <code>flush-ports-in-close-on-exec-mode</code> applies <code>flush-output-port</code> on the
+port: the given error handler is called.
+
+   <p>We can simulate error&ndash;on&ndash;closing with the following code:
+
+<pre class="example">     (with-result
+       (let-values (((port extract) (make-test-port)))
+         (px.port-set-close-on-exec-mode! port)
+         (trace "writing ~a chars\n" the-string-len)
+         (add-result 'writing)
+         (display the-string port)
+         (trace "closing\n")
+         (add-result 'closing)
+         (parametrise ((error-on-write #t))
+           (px.close-ports-in-close-on-exec-mode (lambda (E)
+                                                   (trace "close exception: ~s\n" E))))
+         (receive-and-return (rv)
+             (string-length (extract))
+           (trace "full contents: ~s\n" rv))))
+     &rArr; (48 (writing closing))
+     -| writing 64 chars
+     -| writing 16 chars
+     -| writing 16 chars
+     -| writing 16 chars
+     -| closing
+     -| writing 16 chars
+     -| close exception: #[r6rs-record: compound-condition
+        components=(#[r6rs-record: &amp;error]
+                    #[r6rs-record: &amp;who who=write!]
+                    #[r6rs-record: &amp;message message="error writing characters"]
+                    #[r6rs-record: &amp;irritants irritants=(16)])]
+     -| full contents: 48
+</pre>
+   <p class="noindent">when <code>close-ports-in-close-on-exec-mode</code> applies <code>close-port</code> on the port:
+the given error handler is called.
+
+<!-- page -->
+<!--  -->
+<!-- Appendices. -->
+<!--  -->
+   </body></html>
+
