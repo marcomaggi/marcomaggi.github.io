@@ -1,0 +1,186 @@
+<html lang="en">
+<head>
+<title>2015 February 15 - Marco's Weblog</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Marco's Weblog">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="2015.html#g_t2015" title="2015">
+<link rel="prev" href="2015-February-14-bis.html#g_t2015-February-14-bis" title="2015 February 14 bis">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+Copyright (C) 2015 by Marco Maggi <marco.maggi-ipsu@poste.it>
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with Invariant Sections being ``GNU Free Documentation
+     License'' and ``GNU General Public License'', no Front--Cover
+     Texts, and no Back--Cover Texts.  A copy of the license is
+     included in the section entitled ``GNU Free Documentation
+     License''.
+-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+<link rel="stylesheet" type="text/css" href="weblog.css">
+</head>
+<body>
+<div class="node">
+<a name="g_t2015-February-15"></a>
+<p>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="2015-February-14-bis.html#g_t2015-February-14-bis">2015 February 14 bis</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="2015.html#g_t2015">2015</a>
+<hr>
+</div>
+
+<h3 class="unnumberedsec">Musings on the tagged language (part 3)</h3>
+
+<p>In a previous entry (see <a href="2015-February-14-bis.html#g_t2015-February-14-bis">2015 February 14 bis</a>) I discussed an idea to solve the
+problem of having Lispy syntax in the tagged language, without the burden of
+exporting and importing from libraries a big number of identifiers bound to class
+methods and field accessors.
+
+<!--  -->
+<h4 class="unnumberedsubsec">The possible solution</h4>
+
+<p>In the expression:
+
+<pre class="example">     (length "ciao")
+</pre>
+   <p class="noindent">the literal expression <code>"ciao"</code> is considered of type <code>&lt;string&gt;</code> and the
+symbol <code>length</code>, that comes before it, is searched in the list of multimethods
+whose first argument is of type <code>&lt;string&gt;</code>.  The class <code>&lt;string&gt;</code> contains a
+table of multimethods whose first argument is of type <code>&lt;string&gt;</code>.  There is no
+need to import a binding named <code>length</code> to access the table of multimethods: if
+it is determined at expand&ndash;time that an expression returns a value of type
+<code>&lt;string&gt;</code>, the expander has access to the table.
+
+<!--  -->
+<h4 class="unnumberedsubsec">But <small class="dots">...</small></h4>
+
+<p>What is the difference between having a table of multimethods in a class and just
+having a global namespace of multimethod names that is queried before the bindings in
+the local lexical context?  In the program:
+
+<pre class="example">     (import (vicare))
+     
+     (length "ciao")
+</pre>
+   <p class="noindent">the expander just visits the global namespace first, in search of a method named
+<code>length</code> having one argument with type <code>&lt;string&gt;</code>:
+
+     <ul>
+<li>If the method exists: it is used.
+
+     <li>If the method does not exist: normal binding resolution takes place. 
+</ul>
+
+   <p>A global namespace of multimethods is equivalent to multimethods in the class
+definition.
+
+<!--  -->
+<h4 class="unnumberedsubsec">If it is a global namespace <small class="dots">...</small></h4>
+
+<p>Is it fine to access it transparently?  Or would this transparent access make the
+code too difficult to interpret for humans?  Should a (possibly optional) namespace
+qualifier be introduced?  Possible alternatives:
+
+     <ul>
+<li>Multimethods have names starting with a dot:
+
+     <pre class="example">          (.length "ciao")
+          (.append "ciao" " mamma")
+</pre>
+     <p class="noindent">the dot is a small and one&ndash;keyboard&ndash;tap character.
+
+     <li>Prefix qualifier:
+
+     <pre class="example">          (:: length "ciao")
+          (:: append "ciao" " mamma")
+</pre>
+     <p class="noindent">Foreign example: Guile uses the <code>@</code> character to access bindings from modules
+without importing such modules in the lexical context.
+
+     <li>Infix qualifier:
+
+     <pre class="example">          (length :: "ciao")
+          (append :: "ciao" " mamma")
+</pre>
+     <li>Improper list syntax:
+
+     <pre class="example">          (length . "ciao")
+          (append . "ciao" " mamma")
+</pre>
+     <li><em>Quoting</em> syntax:
+
+     <pre class="example">          :(length "ciao")
+          :(append "ciao" " mamma")
+</pre>
+     <p class="noindent">the reader converts the input:
+
+     <pre class="example">          :(<var>?form0</var> <var>?form</var> ...)
+</pre>
+     <p class="noindent">into:
+
+     <pre class="example">          (colon <var>?form0</var> <var>?form</var> ...)
+</pre>
+     <p class="noindent">where <code>colon</code> must be an identifier bound in the lexical context of the
+expression. 
+</ul>
+
+<!--  -->
+<h4 class="unnumberedsubsec">About the improper list syntax</h4>
+
+<p>It is currently unused by <a href="References.html#References">Vicare</a>.  The Scheme reader could be instructed (in
+<code>#!vicare</code> mode) to convert the input:
+
+<pre class="example">     (append . "ciao" " mamma")
+</pre>
+   <p class="noindent">to some special form, like it already does for the apostrophe and similar operators:
+the input <code>'(1 2 3)</code> is read as <code>(quote (1 2 3))</code>.  So, in general:
+
+<pre class="example">     (<var>?form0</var> <var>?form1</var> ... . <var>?form2</var> <var>?form3</var> ...)
+</pre>
+   <p class="noindent">could be read as:
+
+<pre class="example">     (improper (<var>?form0</var> <var>?form1</var> ...) (<var>?form2</var> <var>?form3</var> ...))
+</pre>
+   <p class="noindent">where <code>improper</code> must be an identifier bound in the lexical context of the
+expression.
+
+   <p>But what about:
+
+<pre class="example">     '(1 2 . 3)
+</pre>
+   <p class="noindent">which is a perfectly valid literal expression?  The reader should distinguish between
+quoted and unquoted input: this should <strong>not</strong> be a reader's responsibility.
+
+<!--  -->
+<h4 class="unnumberedsubsec">Conclusions</h4>
+
+<p>Having a global namespace for multimethod names seems the most sensible solution.
+
+   <p>The cleanest way to query this namespace seems to be a proper syntax use like:
+
+<pre class="example">     (method-call <var>?name</var> <var>?operand</var> ...)
+</pre>
+   <p class="noindent">where <code>method-call</code> is defined in the boot image and exported by
+<code>(vicare)</code>.  Some reader syntax should be used to obtain a <code>method-call</code>
+syntax use from some easy&ndash;to&ndash;type sequence of characters.
+
+<!-- page -->
+<!--  -->
+<!-- Appendices. -->
+<!--  -->
+   </body></html>
+
