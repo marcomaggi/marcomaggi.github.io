@@ -1,0 +1,315 @@
+<html lang="en">
+<head>
+<title>2015 February 18 - Marco's Weblog</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Marco's Weblog">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="2015.html#g_t2015" title="2015">
+<link rel="next" href="2015-February-16.html#g_t2015-February-16" title="2015 February 16">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+Copyright (C) 2015 by Marco Maggi <marco.maggi-ipsu@poste.it>
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with Invariant Sections being ``GNU Free Documentation
+     License'' and ``GNU General Public License'', no Front--Cover
+     Texts, and no Back--Cover Texts.  A copy of the license is
+     included in the section entitled ``GNU Free Documentation
+     License''.
+-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+<link rel="stylesheet" type="text/css" href="weblog.css">
+</head>
+<body>
+<div class="node">
+<a name="g_t2015-February-18"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="2015-February-16.html#g_t2015-February-16">2015 February 16</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="2015.html#g_t2015">2015</a>
+<hr>
+</div>
+
+<h3 class="unnumberedsec">Musings on the tagged language (part 4)</h3>
+
+<p>In a previous entry (see <a href="2015-February-15.html#g_t2015-February-15">2015 February 15</a>) I discussed the idea of allowing
+function overloading in the tagged language as <strong>the</strong> way of defining type tag
+methods and field accessors; function overloading is <acronym>CLOS</acronym>&ndash;like multimethods with
+dispatch at expand&ndash;time.  It consists of having a global table of multimethod names
+that is queried every time we need to expand a form like:
+
+<pre class="lisp">     (<var>?identifier</var> <var>?arg</var> ...)
+</pre>
+   <p class="noindent">the expander searches for the <strong>name</strong> of <var>?identifier</var> in the table; so the
+following expansions can take place:
+
+<pre class="lisp">     (length '(1 2))         ==&gt; (list-length       '(1 2))
+     (length '#(1 2))        ==&gt; (vector-length     '#(1 2))
+     (length '#vu8(1 2))     ==&gt; (bytevector-length '#vu8(1 2))
+     (length "1 2")          ==&gt; (list-length       "1 2")
+</pre>
+   <p class="noindent">because the expander searches for the <em>string</em> <code>"length"</code> in the table
+(searching for the <em>symbol</em> <code>length</code> is more efficient but equivalent,
+because symbols are interned by using their string name as key; so what matters here,
+conceptually, is the string name).
+
+<!--  -->
+<h4 class="unnumberedsubsec">Function overloading and their namespace</h4>
+
+<p>In the previous entry (see <a href="2015-February-15.html#g_t2015-February-15">2015 February 15</a>) I concluded that the cleanest way to
+select a multimethod from the namespace of multimethods would be to introduce a
+specific built&ndash;in syntax:
+
+<pre class="lisp">     (method-call length <var>?obj</var>)
+</pre>
+   <p class="noindent">and then think of some reader syntax to save typing a lot of characters; for example,
+&ldquo;quoting&rdquo; with a colon:
+
+<pre class="lisp">     :(length <var>?obj</var>)
+</pre>
+   <p>Is this actually good?  The more I think of it, the more transparent multimethod call
+is preferable; even if it breaks normal identifier binding resolution.
+
+<!--  -->
+<h4 class="unnumberedsubsec">Function overloading vs. <acronym>CLOS</acronym> multimethods</h4>
+
+<p><acronym>CLOS</acronym>'s multimethods have a number of features; some of them can be used with
+function overloading, too; other features cannot.
+
+     <ul>
+<li>The implementation of multimethods in the <code>(nausicaa)</code> library provides not
+only <code>:primary</code> methods, but also <code>:around</code>, <code>:before</code> and
+<code>:after</code> methods.  I still have to wrap my head around this concept to
+understand its actual usefulness, but I do not see a reason overloaded functions
+could not have them, too.
+
+     <li>The implementation of multimethods in the <code>(nausicaa)</code> library provides
+<code>call-next-method</code> and <code>next-method?</code>.  <code>call-next-method</code> can be
+implemented for overloaded functions: no problem.  What about the <code>next-method?</code>
+predicate?  There are at least three possibilities:
+
+          <ol type=1 start=1>
+<li>The implementation of <code>next-method?</code> is a syntax expanding to <code>#t</code> or
+<code>#f</code>; the result of such expansion <strong>cannot</strong> be used at expand&ndash;time.  We
+could write:
+
+          <pre class="lisp">               (if (next-method?)
+                   (do-something)
+                 (do-something-else))
+</pre>
+          <p class="noindent">which would expand to one among:
+
+          <pre class="lisp">               (if #t
+                   (do-something)
+                 (do-something-else))
+               
+               (if #f
+                   (do-something)
+                 (do-something-else))
+</pre>
+          <p class="noindent">and the compiler can optimise it to:
+
+          <pre class="lisp">               (do-something)
+               
+               (do-something-else)
+</pre>
+          <p class="noindent">maybe useful, maybe not.
+
+          <li>The implementation of <code>next-method?</code> is a <code>cond-expand</code> clause, which is
+meant to be used at expand&ndash;time.  We could write:
+
+          <pre class="lisp">               (cond-expand
+                 (next-method?
+                  (do-something))
+                 (else
+                  (do-something-else)))
+</pre>
+          <p class="noindent">which would expand to one among:
+
+          <pre class="lisp">               (do-something)
+               
+               (do-something-else)
+</pre>
+          <p class="noindent">maybe useful, maybe not.
+
+          <li>The implementation of <code>next-method?</code> is a function that can be used by macro
+transformers.  We could write:
+
+          <pre class="lisp">               (define-syntax (doit stx)
+                 (if (next-method?)
+                     #'(call-next-method)
+                   (syntax-case stx ()
+                     ((_)
+                      #'(do-something-else)))))
+</pre>
+          <p class="noindent">if the macro <code>doit</code> is used in the body of an overloaded function having a
+next&ndash;method: <code>(next-method?)</code> returns <code>#t</code>, otherwise it returns <code>#f</code>;
+maybe useful, maybe not.  This would be the most flexible: this implementation allows
+us to do everything that can be done with the others.
+          </ol>
+
+     <li><acronym>CLOS</acronym> multimethods have <code>eql</code>
+<a href="http://www.cs.cmu.edu/Groups/AI/html/hyperspec/HyperSpec/Body/sec_7-6-2.html">parameter specialisers</a>; they are a run&ndash;time thing.  This feature cannot be
+implemented in overloaded functions.
+
+     <li>The meta&ndash;object protocol of <acronym>CLOS</acronym> allows deep customisation of multimethod
+dispatching.  Complexity warning!!!  Let's try to keep function overloading simple. 
+</ul>
+
+<!--  -->
+<h4 class="unnumberedsubsec">Function overloading vs. macro expansion</h4>
+
+<p>Function overloading should, really really, <strong>not</strong> interfere with macro
+expansion.  If we do:
+
+<pre class="lisp">     (import (vicare))
+     
+     (add-method length (&lt;string&gt;) string-length)
+     
+     (define (frob obj)
+       ---)
+     
+     (let-syntax ((length (syntax-rules ()
+                            ((_ ?expr)
+                             (frob ?expr))
+                            )))
+       (length "ciao"))
+</pre>
+   <p class="noindent">or:
+
+<pre class="lisp">     (import (vicare))
+     
+     (add-method length (&lt;string&gt;) string-length)
+     
+     (define (frob obj)
+       ---)
+     
+     (define-syntax length
+       (syntax-rules ()
+         ((_ ?expr)
+          (frob ?expr))
+         ))
+     
+     (length "ciao"))
+</pre>
+   <p class="noindent">the following expansion must take place:
+
+<pre class="lisp">     (length "ciao") ==&gt; (frob "ciao")
+</pre>
+   <p>When processing the form:
+
+<pre class="lisp">     (<var>?identifier</var> <var>?arg</var> ...)
+</pre>
+   <p class="noindent">the expander must (in this order):
+
+     <ol type=1 start=1>
+<li>Verify if <var>?identifier</var> is bound to a macro in the local lexical context and if
+so: apply its macro transformer.
+
+     <li>Verify if the name of <var>?identifier</var> is present in the global table of
+multimethods and if so: process the multimethod application.
+
+     <li>Verify if <var>?identifier</var> is bound to a variable in the local lexical context and
+if so: process the binding.
+
+     <li>Raise an expand&ndash;time &ldquo;unbound identifier&rdquo; exception.
+        </ol>
+
+<!--  -->
+<h4 class="unnumberedsubsec">Local overloading</h4>
+
+<p><a href="References.html#References">Vicare</a> has standard local syntax definitions and fluid syntaxes (special
+identifiers that can be rebound without breaking the result of
+<code>free-identifier=?</code>).  It goes like this:
+
+<pre class="lisp">     #!r6rs
+     (import (vicare))
+     
+     (define-fluid-syntax ciao  (identifier-syntax "ciao"))
+     (define-syntax       hello (identifier-syntax "hello"))
+     
+     (define-syntax do-ciao  (identifier-syntax ciao))
+     (define-syntax do-hello (identifier-syntax hello))
+     
+     (fluid-let-syntax ((ciao  (identifier-syntax "ohayo")))
+       (display do-ciao)
+       (newline))
+     
+     (let-syntax       ((hello (identifier-syntax "ohayo")))
+       (display do-hello)
+       (newline))
+     
+     (flush-output-port (current-output-port))
+     -| ohayo
+     -| hello
+</pre>
+   <p>Similarly, it makes sense to allow local function overloading.  It should go like
+this:
+
+<pre class="example">     (import (vicare))
+     
+     (add-method length (&lt;string&gt;) string-length)
+     
+     (length "ciao") ==&gt; (string-length "ciao")
+     
+     (let-method ((length (&lt;string&gt;) frob))
+       (length "ciao")) ==&gt; (frob "ciao")
+</pre>
+   <!--  -->
+<h4 class="unnumberedsubsec">Missing methods</h4>
+
+<p>What should happen if a name is present in the global table of multimethods, but
+no specialised method matches a given arguments signature?  Example:
+
+<pre class="example">     (import (vicare))
+     
+     (define (frob obj)
+       (display str)
+       (newline))
+     
+     (define (frob-string str)
+       (display str)
+       (newline))
+     
+     (add-method frob (&lt;string&gt;) frob-string)
+     
+     (frob '(1 2))
+</pre>
+   <p class="noindent">there is no <code>frob</code> method for <code>&lt;list&gt;</code>, so:
+
+     <ul>
+<li>Raise an expand&ndash;time exception &ldquo;missing method&rdquo;?
+
+     <li>Just move on with standard identifier binding resolution?  In the example it would
+result into applying the <em>function</em> <code>frob</code> rather than the
+<em>multimethod</em> <code>frob</code>.
+
+     <li>Apply, at expand&ndash;time, a customisable macro transformer <code>missing-method</code> to the
+syntax object <code>(syntax (frob '(1 2)))</code>?  Such function could cause the expander
+to move on with standard binding resolution, or do something else. 
+</ul>
+
+<!--  -->
+<h4 class="unnumberedsubsec">Conclusions</h4>
+
+<p>Maybe, maybe, maybe things are getting into shape.  At least in my mind.
+
+<!-- page -->
+<!--  -->
+<!-- Appendices. -->
+<!--  -->
+   </body></html>
+

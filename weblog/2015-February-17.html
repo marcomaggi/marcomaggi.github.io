@@ -1,0 +1,109 @@
+<html lang="en">
+<head>
+<title>2015 February 17 - Marco's Weblog</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Marco's Weblog">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="2015.html#g_t2015" title="2015">
+<link rel="prev" href="2015-February-16.html#g_t2015-February-16" title="2015 February 16">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+Copyright (C) 2015 by Marco Maggi <marco.maggi-ipsu@poste.it>
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with Invariant Sections being ``GNU Free Documentation
+     License'' and ``GNU General Public License'', no Front--Cover
+     Texts, and no Back--Cover Texts.  A copy of the license is
+     included in the section entitled ``GNU Free Documentation
+     License''.
+-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+<link rel="stylesheet" type="text/css" href="weblog.css">
+</head>
+<body>
+<div class="node">
+<a name="g_t2015-February-17"></a>
+<p>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="2015-February-16.html#g_t2015-February-16">2015 February 16</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="2015.html#g_t2015">2015</a>
+<hr>
+</div>
+
+<h3 class="unnumberedsec">On running parallel processes</h3>
+
+<p>At present (Feb 2015), <a href="References.html#References">Vicare</a> supports <em>concurrency</em>, which is different from
+<em>parallelism</em>.
+
+   <p>I have recently integrated the library <code>(vicare language-extensions
+coroutines)</code> in the boot image: the code is small and does something that I find
+useful.  Coroutines implemented on top of continuations provide concurrency.
+
+   <p><a href="References.html#References">Vicare</a> does <strong>not</strong> implement multithreading; meaning <em>native</em>
+multithreading, as in using the <code>pthreads</code> library.  It should be possible to
+implement it, but it is not trivial to interface threads with the garbage collector;
+some significant work must be put in.  I would love to have native multithreading in
+<a href="References.html#References">Vicare</a>.  Multithreading support would mean supporting parallelism.
+
+   <p>The only way to have some actual parallelism is to fork child processes; it is not
+for everything, because forking a <samp><span class="command">vicare</span></samp> process costs resources.
+
+<!--  -->
+<h4 class="unnumberedsubsec">Some example libraries</h4>
+
+<p><a href="References.html#References">Vicare</a> now comes with some libraries that run &ldquo;well known&rdquo; external programs:
+
+<pre class="example">     (vicare posix sendmail)
+     (vicare posix mailx)
+     (vicare posix curl)
+     (vicare posix wget)
+     (vicare posix find)
+</pre>
+   <p class="noindent">they are really minimal: they just show how to run an external program; their source
+code can be taken as starting point for more flexible interfaces.  The following demo
+program sends an email message with <samp><span class="command">sendmail</span></samp> and prints its output:
+
+<pre class="lisp">     #!r6rs
+     (import (vicare)
+       (vicare posix sendmail))
+     
+     (define (send-it message)
+       (define rv
+         (sendmail (string-&gt;ascii message)))
+       (display rv)
+       (newline)
+       (flush-output-port (current-output-port)))
+     
+     (send-it "From: &lt;marco@localhost&gt;
+     To: &lt;marco@localhost&gt;
+     Subject: demo 01
+     MIME-Version: 1.0
+     Content-Type: text/plain
+     
+     This is demo 01.
+     --\x20;
+     Marco Maggi
+     ")
+</pre>
+   <p>The <acronym>API</acronym> of these libraries is &ldquo;blocking&rdquo;: we run a process and wait for its
+termination with <code>waitpid</code> from <code>(vicare posix)</code>.
+
+<!-- page -->
+<!--  -->
+<!-- Appendices. -->
+<!--  -->
+   </body></html>
+
