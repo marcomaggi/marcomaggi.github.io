@@ -1,0 +1,616 @@
+<html lang="en">
+<head>
+<title>2015 February 19 bin - Marco's Weblog</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Marco's Weblog">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="2015.html#g_t2015" title="2015">
+<link rel="next" href="2015-February-19.html#g_t2015-February-19" title="2015 February 19">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+Copyright (C) 2015 by Marco Maggi <marco.maggi-ipsu@poste.it>
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with Invariant Sections being ``GNU Free Documentation
+     License'' and ``GNU General Public License'', no Front--Cover
+     Texts, and no Back--Cover Texts.  A copy of the license is
+     included in the section entitled ``GNU Free Documentation
+     License''.
+-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+<link rel="stylesheet" type="text/css" href="weblog.css">
+</head>
+<body>
+<div class="node">
+<a name="g_t2015-February-19-bin"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="2015-February-19.html#g_t2015-February-19">2015 February 19</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="2015.html#g_t2015">2015</a>
+<hr>
+</div>
+
+<h3 class="unnumberedsec">On the implementation of <code>unwind-protect</code> (part 2)</h3>
+
+<p>In a previous entry (see <a href="2015-February-13.html#g_t2015-February-13">2015 February 13</a>) I discussed the mechanism of unwind
+protection as implemented by <a href="References.html#References">Vicare</a>, without showing many examples.  This is to
+be remedied here.  This section is about what's currently in the <a href="References.html#References">master</a> branch,
+<strong>not</strong> the latest Vicare release.
+
+   <blockquote>
+<strong>CONFESSION</strong> Some of this weblog's entries are written by cheating: big
+portions of text and code are small reorganisations of Vicare's documentation and
+test suite programs. 
+</blockquote>
+
+   <p>When using the mechanism:
+
+     <ul>
+<li>We have to decide if we trust our code not to raise exceptions while evaluating the
+in&ndash;guard and out&ndash;guard thunks of <code>dynamic-wind</code> calls.  These would be nasty
+errors, because the dynamic environment would get corrupted and recovering correctly
+might be impossible; so we must <strong>really</strong> write and debug such in&ndash;guard and
+out&ndash;guard thunks with care.
+
+     <li>We have to decide if we trust our code not to raise a second exception while serving
+a first exception in an error handler.  Raising a continuable exception is fine only
+if we actually continue.  Exceptions while handling exceptions are a hard problem to
+solve in every language; the rough solution is to block exceptions raised by
+exception handlers:
+
+     <pre class="lisp">          (with-exception-handler
+              (lambda (E)
+                (with-blocked-exceptions
+                  (lambda ()
+                    (handle E))))
+            (lambda ()
+              (do-something-useful)))
+</pre>
+     <p class="noindent">but it is not very satisfying. 
+</ul>
+
+   <p>If the bodacious answer to both the decisions is &ldquo;We trust&rdquo;: we can nest at will
+uses of the <code>with-unwind-protection</code> syntax:
+
+<pre class="lisp">     (define (outer)
+       (with-unwind-protection
+           (lambda (why)
+             (outer-unwind-handler))
+         (lambda ()
+           (do-something-useful)
+           (inner))))
+     
+     (define (inner)
+       (with-unwind-protection
+           (lambda (why)
+             (inner-unwind-handler))
+         (lambda ()
+           (do-some-other-useful-thing))))
+     
+     (outer)
+</pre>
+   <p class="noindent"><strong>beware</strong>: unwind handlers are evaluated in the dynamic environment of the use
+of <code>with-unwind-protection</code>.
+
+   <p>Otherwise we must avoid error handlers to cause the execution flow to cross an unwind
+protection boundary; we can do it by using the standard <code>guard</code> syntax:
+
+<pre class="lisp">     (define (outer)
+       (push-compensation-thunk
+         (lambda ()
+           (outer-unwind-handler)))
+       (do-something-useful)
+       (inner))
+     
+     (define (inner)
+       (push-compensation-thunk
+         (lambda ()
+           (inner-unwind-handler)))
+       (do-some-other-useful-thing))
+     
+     (with-compensations
+       (with-blocked-exceptions
+         (lambda ()
+           (guard (E ((type-one-error? E)
+                      (handle E))
+                     (else
+                      (do-something-dammit!!!)))
+             (outer)))))
+</pre>
+   <p class="noindent">or by using the <code>try</code> syntax defined by Vicare:
+
+<pre class="lisp">     (define (outer)
+       (push-compensation-thunk
+         (lambda ()
+           (outer-unwind-handler)))
+       (do-something-useful)
+       (inner))
+     
+     (define (inner)
+       (push-compensation-thunk
+         (lambda ()
+           (inner-unwind-handler)))
+       (do-some-other-useful-thing))
+     
+     (with-compensations
+       (with-blocked-exceptions
+         (lambda ()
+           (try
+               (outer)
+             (catch E
+               ((&amp;type-one)
+                (handle E))
+               (else
+                (do-something-dammit!!!)))))))
+</pre>
+   <p class="noindent"><strong>beware</strong>: compensation handlers are evaluated in the dynamic environment of
+the use of <code>with-compensations</code><a rel="footnote" href="#fn-1" name="fnd-1"><sup>1</sup></a>.
+
+<!--  -->
+<h4 class="unnumberedsubsec">Tracking the evaluation flow</h4>
+
+<p>To follow how the unwind protection mechanism intertwines itself with the protected
+code, we need a tracking mechanism.  In this section we use the <code>with-result</code>
+<acronym>API</acronym> exported by the library <code>(vicare checks)</code>; it works like this:
+
+<pre class="lisp">     (import (vicare)
+       (only (vicare checks)
+             with-result
+             add-result))
+     
+     (with-result
+       (add-result 1)
+       (add-result 2)
+       3)
+     &rArr; (3 (1 2))
+     
+     (with-result
+       (add-result 1)
+       (add-result 2)
+       (values 3 4))
+     &rArr; (3 4 (1 2))
+</pre>
+   <p class="noindent">we wrap the forms to track in a use of <code>with-result</code>, then, inside the form,
+we call <code>add-result</code> at &ldquo;interesting points&rdquo;; <code>with-result</code> returns a
+list whose head items represent the returned values and whose last item represents
+the <acronym>FIFO</acronym> queue of values to which <code>add-result</code> was applied.  Very
+rough, but simple.
+
+<!--  -->
+<h4 class="unnumberedsubsec">Prelude</h4>
+
+<p>In all the sample code we have to assume the following prelude:
+
+<pre class="lisp">     (import (vicare)
+       (only (vicare checks)
+             with-result
+             add-result))
+</pre>
+   <p class="noindent">and we refer to <var>?thunk</var> and <var>?unwind-handler</var> as with the following roles:
+
+<pre class="example">     (with-unwind-protection <var>?unwind-handler</var>    <var>?thunk</var>)
+     (with-exception-handler <var>?exception-handler</var> <var>?thunk</var>)
+</pre>
+   <p>Let's get on with the examples.
+
+<!--  -->
+<h4 class="unnumberedsubsec">Normal evaluation</h4>
+
+<p>When no exceptions are raised and no escape procedures are called, the evaluation
+just goes; the <var>?unwind-handler</var> is evaluated after <var>?thunk</var>.
+
+<pre class="lisp">     (with-result
+       (with-unwind-protection
+           (lambda (why)
+             (add-result 'out))
+         (lambda ()
+           (add-result 'in)
+           1)))
+     &rArr; (1 (in out))
+</pre>
+   <p>If we call an escape procedure from <var>?thunk</var>, this is what happens:
+
+<pre class="lisp">     (with-result
+       (call/cc
+           (lambda (escape)
+             (with-unwind-protection
+                 (lambda (why)
+                   (add-result 'unwind-handler))
+               (lambda ()
+                 (add-result 'body)
+                 (escape 1))))))
+     &rArr; (1 (body))
+</pre>
+   <p class="noindent">we see that the unwind protection handler is <strong>not</strong> called.  This is correct! 
+We escaped from the dynamic extent of the call to <var>?thunk</var> by calling a raw
+escape procedure; not calling the unwind protection handler in this situation allows
+us to implement coroutines on top of continuations.  Obviously, there is the downside
+that a raw escape might skip releasing resources; there is nothing we can do about
+it.
+
+<!--  -->
+<h4 class="unnumberedsubsec">Reacting to non&ndash;continuable exceptions</h4>
+
+<p>Continuable exceptions are raised with the standard <code>raise</code> function.  The only
+way to react to a raised non&ndash;continuable exception is to intercept it with an
+exception handler and, from its body, to call an escape procedure to exit the dynamic
+environment that caused the exception:
+
+<pre class="lisp">     (call/cc
+         (lambda (escape)
+           (with-exception-handler
+               (lambda (E)
+                 (escape E))
+             (lambda ()
+               (raise 1)))))
+     &rArr; 1
+     
+     (call/cc
+         (lambda (escape)
+           (with-exception-handler
+               escape
+             (lambda ()
+               (raise 1)))))
+     &rArr; 1
+</pre>
+   <p class="noindent">by tracking the evaluation flow we can verify that (as mandated by <acronym>R6RS</acronym>): raising
+an exception, by itself, does <strong>not</strong> cause an exit from the dynamic extent of
+the call to <var>?thunk</var>, it is calling the escape procedure that causes the exit:
+
+<pre class="lisp">     (with-result
+       (call/cc
+           (lambda (escape)
+             (with-exception-handler
+                 (lambda (E)
+                   (add-result 'exception-handler)
+                   (escape E))
+               (lambda ()
+                 (dynamic-wind
+                     (lambda ()
+                       (add-result 'in-guard))
+                     (lambda ()
+                       (add-result 'body)
+                       (raise 1))
+                     (lambda ()
+                       (add-result 'out-guard))))))))
+     &rArr; (1 (in-guard body exception-handler out-guard))
+</pre>
+   <p class="noindent">saving a continuation and calling the escape procedure from the exception handler is
+what the standard <code>guard</code> syntax does; but <code>guard</code> does more than this.
+
+   <p>So let's add an unwind protection handler:
+
+<pre class="lisp">     (with-result
+       (call/cc
+           (lambda (escape)
+             (with-exception-handler
+                 (lambda (E)
+                   (add-result 'exception-handler)
+                   (escape E))
+               (lambda ()
+                 (dynamic-wind
+                     (lambda ()
+                       (add-result 'in-guard))
+                     (lambda ()
+                       (with-unwind-protection
+                           (lambda (why)
+                             (add-result 'unwind-handler))
+                         (lambda ()
+                           (add-result 'body)
+                           (raise 1))))
+                     (lambda ()
+                       (add-result 'out-guard))))))))
+     &rArr; (1 (in-guard body exception-handler out-guard))
+</pre>
+   <p class="noindent">we see that <var>?unwind-handler</var> is <strong>not</strong> called; this is the same as the
+previous example of escaping from <var>?thunk</var>.  How do we cause a call to the unwind
+handler?  By using the standard <code>guard</code> syntax, which is specially interfaced
+with the unwind protection mechanism:
+
+<pre class="lisp">     (with-result
+       (guard (E (else
+                  (add-result 'guard-else)
+                  E))
+         (dynamic-wind
+             (lambda ()
+               (add-result 'in-guard))
+             (lambda ()
+               (with-unwind-protection
+                   (lambda (why)
+                     (add-result 'unwind-handler))
+                 (lambda ()
+                   (add-result 'body)
+                   (raise 1))))
+             (lambda ()
+               (add-result 'out-guard)))))
+     &rArr; (1 (in-guard body out-guard
+           in-guard unwind-handler out-guard
+           guard-else))
+</pre>
+   <p class="noindent">this is what happens (brace yourself):
+
+     <ol type=1 start=1>
+<li>The dynamic extent of the call to <var>?thunk</var> is entered.
+
+     <li>The exception is raised.
+
+     <li>The exception handler installed by <code>guard</code> is applied to the raised object.
+
+     <li>The dynamic extent of the call to <var>?thunk</var> is exited.
+
+     <li>It is determined by <code>guard</code> that the <code>else</code> clause must be evaluated.
+
+     <li>The dynamic extent of the call to <var>?thunk</var> is re&ndash;entered.
+
+     <li><var>?unwind-handler</var> is called.
+
+     <li>The dynamic extent of the call to <var>?thunk</var> is re&ndash;exited and terminated.
+
+     <li>The <code>else</code> clause is evaluated.
+        </ol>
+
+   <p>The following example has <code>guard</code> evaluate a non&ndash;<code>else</code> clause, which
+makes the mechanism even more clear:
+
+<pre class="lisp">     (with-result
+       (guard (E ((begin
+                    (add-result 'guard-test-1)
+                    (string? E))
+                  (add-result 'guard-expr-1)
+                  E)
+                 ((begin
+                    (add-result 'guard-test-2)
+                    (fixnum? E))
+                  (add-result 'guard-expr-2)
+                  E)
+                 (else
+                  (add-result 'guard-else)
+                  E))
+         (dynamic-wind
+             (lambda ()
+               (add-result 'in-guard))
+             (lambda ()
+               (with-unwind-protection
+                   (lambda (why)
+                     (add-result 'unwind-handler))
+                 (lambda ()
+                   (add-result 'body)
+                   (raise 1))))
+             (lambda ()
+               (add-result 'out-guard)))))
+     &rArr; (1 (in-guard body out-guard
+           guard-test-1 guard-test-2
+           in-guard unwind-handler out-guard
+           guard-expr-2))
+</pre>
+   <p class="noindent">it is the non&ndash;false result from evaluating a <code>guard</code> test expression that
+causes the termination of the dynamic extent of the call to <var>?thunk</var>.
+
+<!--  -->
+<h4 class="unnumberedsubsec">Reacting to continuable exceptions</h4>
+
+<p>Everything we discussed for non&ndash;continuable exceptions applies unchanged to
+continuable exceptions when we do not actually continue.  A continuable exception is
+raised with <code>raise-continuable</code> and it is a way to resume the execution of a
+chunk of code after raising an exception.  This example shows the basic mechanism:
+
+<pre class="lisp">     (with-exception-handler
+         (lambda (E)
+           (+ E 2))
+       (lambda ()
+         (raise-continuable 1)))
+     &rArr; 3
+</pre>
+   <p class="noindent">if the exception handler returns to the caller, rather than calling an escape
+procedure: <code>raise-continuable</code> returns, too.
+
+   <p>If we continue after raising a continuable exception, the evaluation flow is not
+different from a normal evaluation:
+
+<pre class="lisp">     (with-result
+       (with-exception-handler
+           (lambda (E)
+             (add-result 'exception-handler)
+             (+ E 2))
+         (lambda ()
+           (with-unwind-protection
+               (lambda (why)
+                 (add-result 'unwind-handler))
+             (lambda ()
+               (add-result 'thunk-in)
+               (begin0
+                   (raise-continuable 1)
+                 (add-result 'thunk-out)))))))
+     &rArr; (3 (thunk-in exception-handler thunk-out unwind-handler))
+</pre>
+   <p>We can see a significant difference when we: raise a continuable exception in
+<var>?thunk</var>; go through a <code>guard</code> with no <code>else</code>, which re&ndash;raises the
+continuable exception; execute an exception handler; return to <var>?thunk</var>; perform
+normal a return:
+
+<pre class="lisp">     (with-result
+       (with-exception-handler
+           (lambda (E)
+             (add-result 'exception-handler)
+             (+ 2 E))
+         (lambda ()
+           (guard (E ((begin
+                        (add-result 'guard-test)
+                        (error? E))
+                      (add-result 'guard-error)
+                      E))
+             (with-unwind-protection
+                 (lambda (why)
+                   (add-result 'unwind-handler))
+               (lambda ()
+                 (dynamic-wind
+                     (lambda ()
+                       (add-result 'in-guard))
+                     (lambda ()
+                       (add-result 'thunk-in)
+                       (begin0
+                           (raise-continuable 1)
+                         (add-result 'thunk-out)))
+                     (lambda ()
+                       (add-result 'out-guard)))))))))
+     &rArr; (3 (in-guard thunk-in out-guard
+           guard-test
+           in-guard exception-handler
+           thunk-out out-guard unwind-handler))
+</pre>
+   <p class="noindent">when a <code>guard</code> with no <code>else</code> clause is used and all the
+<code>guard</code>'s test expressions evaluate to <code>#f</code>: the exception is re&ndash;raised
+with <code>raise-continue</code>.  <var>?unwind-handler</var> is called only after the
+evaluation flow has re&ndash;entered <var>?thunk</var> and performed a normal return.
+
+<!--  -->
+<h4 class="unnumberedsubsec">Use with loop syntaxes</h4>
+
+<p>The unwind protection mechanism has special integration with the loop syntaxes
+defined by <code>(vicare)</code>; if an unwind protection syntax is used in the body of a
+loop as defined by <code>do</code>, <code>while</code>, <code>until</code>, <code>for</code> and
+<code>break</code> or <code>continue</code> are used in the body forms: the unwind handlers
+are evaluated correctly.
+
+   <p>We have to remember that <code>break</code> and <code>continue</code> are implemented by
+escaping continuations, so they have to be specially interfaced with unwind
+protection, otherwise the <var>?unwind-handler</var> is not called.
+
+   <p>This example shows breaking out of a <code>while</code> syntax; the body and the unwind
+handler are evaluated only once; <code>exit</code> is never called.
+
+<pre class="lisp">     (define x 3)
+     (define y #f)
+     (while (positive? x)
+       (with-unwind-protection
+           (lambda (why)
+             (set! y #t))
+         (lambda ()
+           (-- x)
+           (break)
+           (exit))))
+     x &rArr; 2
+     y &rArr; #t
+</pre>
+   <p>This example shows using <code>continue</code> in a <code>while</code> syntax; the body and
+the unwind handler are evaluated 3 times; <code>exit</code> is never called.
+
+<pre class="lisp">     (define x 3)
+     (define y 0)
+     (while (positive? x)
+       (with-unwind-protection
+           (lambda (why)
+             (++ y))
+         (lambda ()
+           (-- x)
+           (continue)
+           (exit))))
+     x &rArr; 0
+     y &rArr; 3
+</pre>
+   <!--  -->
+<h4 class="unnumberedsubsec">Use with returnable bodies</h4>
+
+<p>The unwind protection mechanism has special integration with the <code>returnable</code>
+syntax defined by <code>(vicare)</code>; if an unwind protection syntax is used in the
+body of <code>returnable</code> and <code>return</code> is used in the <var>?thunk</var>:
+<var>?unwind-handler</var> is evaluated correctly.  We have to remember that
+<code>return</code> is implemented by an escaping continuation.
+
+<pre class="lisp">     (define y #f)
+     (returnable
+       (with-unwind-protection
+           (lambda (why)
+             (set! y #t))
+         (lambda ()
+           (return 1))))
+     &rArr; 1
+     y &rArr; #t
+</pre>
+   <!--  -->
+<h4 class="unnumberedsubsec">Use with coroutines</h4>
+
+<p>Using the unwind protection mechanism with coroutines is fine; coroutines use
+<code>yield</code> to save the current continuation, give control to the next coroutine and
+come back later; this mechanism does not cause the <var>?unwind-handler</var> evaluation.
+
+   <p>The following sample code finishes with the given return values and lines printed:
+
+<pre class="lisp">     (define (print template . args)
+       (apply fprintf (current-error-port) template args)
+       (yield))
+     
+     (define a #f)
+     (define b #f)
+     (define c #f)
+     
+     (concurrently
+       (lambda ()
+         (unwind-protect
+             (begin
+               (set! a 1.1)
+               (print "unwind-protect sub 1.1: ~a\n" a)
+               (set! a 1.2)
+               (print "unwind-protect sub 1.2: ~a\n" a)
+               (set! a 1.3)
+               (print "unwind-protect sub 1.3: ~a\n" a))
+           (set! a 1.4)))
+       (lambda ()
+         (unwind-protect
+             (begin
+               (set! b 2.1)
+               (print "unwind-protect sub 2.1: ~a\n" b)
+               (set! b 2.2)
+               (print "unwind-protect sub 2.2: ~a\n" b)
+               (set! b 2.3)
+               (print "unwind-protect sub 2.3: ~a\n" b))
+           (set! b 2.4)))
+       (lambda ()
+         (unwind-protect
+             (begin
+               (set! c 3.1)
+               (print "unwind-protect sub 3.1: ~a\n" c)
+               (set! c 3.2)
+               (print "unwind-protect sub 3.2: ~a\n" c)
+               (set! c 3.3)
+               (print "unwind-protect sub 3.3: ~a\n" c))
+           (set! c 3.4))))
+     
+     (values a b c)
+     &rArr; 1.4 2.4 3.4
+     -| unwind-protect sub 1.1: 1.1
+     -| unwind-protect sub 2.1: 2.1
+     -| unwind-protect sub 1.2: 1.2
+     -| unwind-protect sub 3.1: 3.1
+     -| unwind-protect sub 2.2: 2.2
+     -| unwind-protect sub 1.3: 1.3
+     -| unwind-protect sub 3.2: 3.2
+     -| unwind-protect sub 2.3: 2.3
+     -| unwind-protect sub 3.3: 3.3
+</pre>
+   <!-- page -->
+   <div class="footnote">
+<hr>
+<h4>Footnotes</h4><p class="footnote"><small>[<a name="fn-1" href="#fnd-1">1</a>]</small> Compensation handlers could be
+evaluated in the dynamic environment of the call to <code>push-compensation-thunk</code>,
+by using <code>with-current-dynamic-environment</code>.  The current implementation of
+compensations does not save the dynamic environment, because doing it is more
+resource consuming.</p>
+
+   <hr></div>
+
+   </body></html>
+
