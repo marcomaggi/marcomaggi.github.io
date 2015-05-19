@@ -1,0 +1,270 @@
+<html lang="en">
+<head>
+<title>2015 May 19 - Marco's Weblog</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Marco's Weblog">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="2015.html#g_t2015" title="2015">
+<link rel="next" href="2015-April-18.html#g_t2015-April-18" title="2015 April 18">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+Copyright (C) 2015 by Marco Maggi <marco.maggi-ipsu@poste.it>
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with Invariant Sections being ``GNU Free Documentation
+     License'' and ``GNU General Public License'', no Front--Cover
+     Texts, and no Back--Cover Texts.  A copy of the license is
+     included in the section entitled ``GNU Free Documentation
+     License''.
+-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+<link rel="stylesheet" type="text/css" href="weblog.css">
+</head>
+<body>
+<div class="node">
+<a name="g_t2015-May-19"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="2015-April-18.html#g_t2015-April-18">2015 April 18</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="2015.html#g_t2015">2015</a>
+<hr>
+</div>
+
+<h3 class="unnumberedsec">Random stuff</h3>
+
+<p>Officially I am still doing the review of <a href="References.html#References">Vicare</a>'s expander code (see <a href="2015-April-18.html#g_t2015-April-18">2015 April 18</a>), but I needed a break; so I have refactored the compiler in smaller
+libraries and merged the compiler review branch into <a href="References.html#References">master</a>.  In addition I did
+some random stuff.
+
+   <p>Everything discussed here is in the head of the <code>master</code> branch, which is an
+unstable, development branch.
+
+<!--  -->
+<h4 class="unnumberedsubsec">Dynamically loadable Scheme libraries</h4>
+
+<p>Let's take, as reference, the scenario in which we compile and install both libraries
+and programs.  When we import a library with <code>import</code>, the library is
+associated to the program and it is loaded whenever the program is run.  This is
+somewhat like linking a host's shared object to a C language program at
+compile&ndash;time.
+
+   <p>It is also possible to dynamically load a Scheme library, so that the program itself
+contains the logic needed to load (or not) an external library.  This is somewhat
+like loading a host's shared object with <code>dlopen()</code> from a C language program at
+run&ndash;time.  The code of this feature is really small, so it is in the boot image
+(yes, the already huge boot image, which is around 20 MiB on my 64-bit platform).
+
+   <p>This is how it works; we prepare a program:
+
+<pre class="lisp">     (import (vicare)
+       (prefix (vicare libraries) libs.))
+     
+     (define-values (pregexp-match)
+       (let ((lib (libs.library-dynamic-load-and-intern
+                      '(vicare pregexp))))
+         (values (libs.library-dynamic-retrieve lib 'pregexp-match))))
+     
+     (pretty-print (pregexp-match "[a-z]+" "ciao123"))
+     (flush-output-port (current-output-port))
+</pre>
+   <p class="noindent">compile it:
+
+<pre class="example">     $ vicare -c demo.sps -o demo
+</pre>
+   <p class="noindent">and run it (I am on <acronym>GNU</acronym>+Linux and I use the <code>binfmt_misc</code> support to run
+Vicare programs):
+
+<pre class="example">     $ ./demo
+     ("ciao")
+</pre>
+   <p class="noindent">the function <code>library-dynamic-load-and-intern</code> loads a Scheme library using the
+usual search path and the function <code>library-dynamic-retrieve</code> retrieves the
+Scheme object bound to an exported syntactic binding. 
+<code>library-dynamic-load-and-intern</code> is like <code>dlopen()</code> and
+<code>library-dynamic-retrieve</code> is like <code>dlsym()</code>.
+
+   <p>Only global variables exported by the library can be accessed this way: it makes no
+sense to access macro transformers when the program is already running; this <acronym>API</acronym>
+is not a substitute of <code>eval</code> and <code>environment</code>.
+
+<!--  -->
+<h4 class="unnumberedsubsec">New <code>program</code> form</h4>
+
+<p>The <acronym>R6RS</acronym> document specifies a compliant top&ndash;level program as:
+
+   <blockquote>
+<small class="dots">...</small> a delimited piece of text, typically a file, that has the
+following form:
+
+<pre class="example">     <var>?import-form</var> <var>?top-level-body</var>
+</pre>
+   </blockquote>
+
+<p class="noindent">so it only specifies that it is &ldquo;delimited&rdquo;; it means:
+
+     <ul>
+<li>Any form can come before <var>?import-form</var>.
+
+     <li>Any form can come after <var>?top-level-body</var>.
+
+     <li>The delimited sequence can be wrapped into an implementation&ndash;defined
+enclosing form. 
+</ul>
+
+   <p>Vicare gathers this freedom to accept two formats of top&ndash;level programs:
+
+     <ol type=1 start=1>
+<li>The standalone delimited sequence:
+
+     <pre class="lisp">          (import <var>?import-spec</var> ...) <var>?body</var> ...
+</pre>
+     <li>A <code>program</code> form with the following syntax:
+
+     <pre class="lisp">          (program <var>?program-name</var>
+            <var>?config-form</var> ...
+            (import <var>?import-spec</var> ...)
+            . <var>?program-body</var>)
+</pre>
+     </ol>
+
+<p class="noindent">where <var>?program-name</var> is meant to be a descriptive list of symbols (currently
+unused) and the <var>?config-form</var> clauses allow additional configuration and
+behaviour specification.
+
+<!--  -->
+<h4 class="unnumberedsubsec">New host's shared object loading</h4>
+
+<p>There are two ways to interface Vicare with foreign libraries: one is to use the
+<acronym>FFI</acronym> and the other is to write a C language library specifically designed to adapt
+the foreign interface to Vicare's C language <acronym>API</acronym>.  The second solution is more
+flexible and it is used by extensions like Vicare/CURL and Vicare/SQLite.
+
+   <p>Adapting foreign libraries need special handling:
+
+     <ul>
+<li>When a program or library is expanded from source code: they must be loaded with
+<code>dlopen()</code> before the expansion.
+
+     <li>When a program or library is loaded in binary form from a <acronym>FASL</acronym> file: they must be
+loaded with <code>dlopen()</code> before loading the actual compiled code. 
+</ul>
+
+   <p>Until now there was a really ugly <acronym>API</acronym> for this, I will not describe it.  Now there
+is a proper clause in <code>program</code> and <code>library</code> forms:
+
+<pre class="lisp">     (program <var>?program-name</var>
+       (foreign-library <var>?shared-object-id</var>)
+       (import  <var>?import-spec</var> ...)
+       . <var>?program-body</var>)
+     
+     (library <var>?library-name</var>
+       (foreign-library <var>?shared-object-id</var>)
+       (export  <var>?export-spec</var> ...)
+       (import  <var>?import-spec</var> ...)
+       . <var>?library-body</var>)
+</pre>
+   <p class="noindent">the <var>?shared-object-id</var> form must be a string representing the identifier of a
+host's shared object.  There can be any number of <code>foreign-library</code> clauses,
+all before <code>export</code> for libraries and before <code>import</code> for programs.
+
+   <p>The identifier is used to build the file name of a shared object; for
+example the identifier <code>vicare-curl</code> is used to build the following
+file names:
+
+     <dl>
+<dt><samp><span class="file">libvicare-curl.so</span></samp><dd>On Unix&ndash;like systems, including <acronym>GNU</acronym>+Linux.
+
+     <br><dt><samp><span class="file">libvicare-curl.dylib</span></samp><dd>On Darwin systems.
+
+     <br><dt><samp><span class="file">vicare-curl.dll</span></samp><dd>On Cygwin systems. 
+</dl>
+
+   <p>Let's take a look at the mechanism for retrieving foreign function's pointers.
+
+   <p>The core macro <code>foreign-call</code>, exported by the library <code>(vicare)</code>, is
+expanded to the core language syntax <code>foreign-call</code>, which in turn is compiled
+to code invoking a C function from the operating system's process image; the first
+argument to <code>foreign-call</code> is a string naming the C function.
+
+   <p>Whenever the code:
+
+<pre class="example">     (foreign-call "function_name" <var>?arg</var> ...)
+</pre>
+   <p class="noindent">is compiled, the C pointer referencing the entry point of the named function is
+retrieved with a C language call:
+
+<pre class="example">     dlsym(RTLD_DEFAULT, "function_name");
+</pre>
+   <p class="noindent">so all the public functions from the running Vicare executable are available; also
+available are all the functions from host's shared libraries loaded with
+<code>dlopen()</code> using the flags <code>RTLD_NOW | RTLD_GLOBAL</code>.
+
+   <p>This <acronym>API</acronym> for C language functions call is meant to be used to interface with
+functions specifically written to be called from Scheme code; this <acronym>API</acronym>
+<strong>cannot</strong> be used to directly call a generic C language function from, say,
+<samp><span class="file">libz.so</span></samp> or <samp><span class="file">libgmp.so</span></samp>.
+
+<!--  -->
+<h4 class="unnumberedsubsec">Start&ndash;up time</h4>
+
+<p>Recently there was a
+<a href="http://www.reddit.com/r/scheme/comments/35d0ks/noob_question_scheme_package_managementmodule/">thread</a> on Reddit with a subdiscussion about start&ndash;up times for different Scheme
+implementations.  Ahem<small class="dots">...</small> Vicare is not the fastest Scheme implementation
+around, and I know it.  Anyway, why shy away?
+
+   <p>The &ldquo;Hello World!&rdquo; program under Vicare is this:
+
+<pre class="lisp">     (import (vicare))
+     (display "Hello World!\n")
+     (flush-output-port (current-output-port))
+</pre>
+   <p class="noindent">I compile it:
+
+<pre class="example">     $ vicare -c demo.sps -o demo
+</pre>
+   <p class="noindent">and run it:
+
+<pre class="example">     $ ./demo
+     Hello World!
+</pre>
+   <p class="noindent">after running it (so that the Linux kernel loads the boot image from the file system
+and caches it in memory), I time it; a typical execution is this:
+
+<pre class="example">     $ /usr/bin/time -p ./demo
+     Hello World!
+     real 0.13
+     user 0.08
+     sys 0.05
+</pre>
+   <p class="noindent">on my:
+
+<pre class="example">     $ cat /proc/cpuinfo | head --lines 9
+     processor       : 0
+     vendor_id       : GenuineIntel
+     cpu family      : 6
+     model           : 58
+     model name      : Intel(R) Core(TM) i5-3337U CPU  1.80GHz
+     stepping        : 9
+     microcode       : 0x15
+     cpu MHz         : 2682.000
+     cache size      : 3072 KB
+</pre>
+   <p>There is no point in trying hard to heat up the host so that the <acronym>CPU</acronym> does its
+best, and stuff like that.
+
+<!-- page -->
+   </body></html>
+
