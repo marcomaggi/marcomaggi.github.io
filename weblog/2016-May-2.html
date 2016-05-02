@@ -1,0 +1,226 @@
+<html lang="en">
+<head>
+<title>2016 May 2 - Marco's Weblog</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Marco's Weblog">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="2016.html#g_t2016" title="2016">
+<link rel="next" href="2016-April-26.html#g_t2016-April-26" title="2016 April 26">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+Copyright (C) 2015, 2016 by Marco Maggi <marco.maggi-ipsu@poste.it>
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with Invariant Sections being ``GNU Free Documentation
+     License'' and ``GNU General Public License'', no Front--Cover
+     Texts, and no Back--Cover Texts.  A copy of the license is
+     included in the section entitled ``GNU Free Documentation
+     License''.
+-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+<link rel="stylesheet" type="text/css" href="weblog.css">
+</head>
+<body>
+<div class="node">
+<a name="g_t2016-May-2"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="2016-April-26.html#g_t2016-April-26">2016 April 26</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="2016.html#g_t2016">2016</a>
+<hr>
+</div>
+
+<h3 class="unnumberedsec">On type propagation and other stuff</h3>
+
+<div align="center">Posted on May 2, 2016</div>
+
+   <p>More work in the &lsquo;<samp><span class="samp">typed-language</span></samp>&rsquo;
+<a href="https://github.com/marcomaggi/vicare/tree/typed-language.marcomaggi-2015-11-18">branch</a> of <a href="References.html#References">Vicare</a>, for both the expander and the built&ndash;in types
+infrastructure.  (Lately I always open with the same paragraph, cut and pasted; that
+is what it is.)
+
+   <p>Everything I discuss here is relative to code in the head of the
+&lsquo;<samp><span class="samp">typed-language</span></samp>&rsquo; branch.
+
+<!--  -->
+<h4 class="unnumberedsubsec">Type propagation across built&ndash;in syntaxes</h4>
+
+<p>I anticipated in a previous post that I would reconsider <acronym>RHS</acronym> type propagation, and
+I did.  I have implemented type propagation for some syntaxes.  It works like this:
+
+<pre class="lisp">     (type-of 1)
+     &rArr; #[signature (&lt;positive-fixnum&gt;)]
+     
+     (type-of (let ((A 1))
+                (let* ((B A)
+                       (C B))
+                  (letrec ((D C))
+                    (letrec* ((E D)
+                              (F E))
+                      (define (G)
+                        F)
+                      (define H
+                        (G))
+                      ((lambda () H)))))))
+     &rArr; #[signature (&lt;positive-fixnum&gt;)]
+</pre>
+   <p class="noindent">the initial type of <code>1</code> is propagated through the syntactic bindings <code>A</code>,
+<code>B</code>, <code>C</code>, <code>D</code>, <code>E</code>, <code>F</code>, <code>G</code>, <code>H</code> and the last
+thunk application.
+
+   <p>When a lexical variable is mutated: its type must be compatible with the hard&ndash;coded
+type annotation or the inferred type annotation.  This is fine:
+
+<pre class="lisp">     (let ((A "ciao"))
+       (set! A "hello")
+       A)
+</pre>
+   <p class="noindent">but this will fail:
+
+<pre class="lisp">     (let ((A 1))
+       (set! A -1)
+       A)
+</pre>
+   <p class="noindent">because initially <code>A</code> is annotated with <code>&lt;positive-fixnum&gt;</code>, then
+<code>set!</code> attempts to mutate it with a value that is of type
+<code>&lt;negative-fixnum&gt;</code>.  In these cases we have to explicitly include the type
+annotation in the source:
+
+<pre class="lisp">     (let (({A &lt;fixnum&gt;} 1))
+       (set! A -1)
+       A)
+</pre>
+   <p class="noindent">where <code>&lt;fixnum&gt;</code> is an ancestor of both <code>&lt;positive-fixnum&gt;</code> and
+<code>&lt;negative-fixnum&gt;</code>.
+
+<!--  -->
+<h3 class="unnumberedsec"><code>type-of</code> as type annotation</h3>
+
+<p>There is a new type annotation syntax: <code>type-of</code>.  When used in expression
+context: <code>type-of</code> expands to a type signature object representing the type of
+the expression.  When used in type annotation context: it describes the type of the
+given expression.
+
+   <p>There are limitations: the expression must return a single value of known type; the
+expression is expanded and not evaluated, this means the side effects of the
+expansion are performed (use with care!).
+
+<pre class="lisp">     (type-annotation-syntax (type-of 123))
+     &rArr; &lt;positive-fixnum&gt;
+     
+     (type-annotation-syntax (type-of (void)))
+     &rArr; &lt;void&gt;
+     
+     (let ((fun (lambda () 123)))
+       (type-annotation-syntax (type-of (fun))))
+     &rArr; &lt;positive-fixnum&gt;
+     
+     (type-annotation-syntax (or (type-of 1)
+                                 (type-of "ciao")
+                                 (type-of 'hey)))
+     &rArr; (or &lt;positive-fixnum&gt; &lt;string&gt; (enumeration hey))
+</pre>
+   <p>This is actually used by Vicare to implement type propagation for a common idiom
+when using <code>case</code>.  Without special handling:
+
+<pre class="lisp">     (type-of
+       (case (read)
+         ((1 "2" 'ciao) =&gt; (lambda (x) x))
+         (else #f)))
+     &rArr; #[signature (&lt;top&gt;)]
+</pre>
+   <p class="noindent">because the expansion of <code>case</code> has no way to infer that when <code>read</code>
+returns <code>1</code> or <code>"2"</code> or <code>ciao</code> the closure object returns that value
+itself.  But with special handling, the closure object is transformed to:
+
+<pre class="lisp">     (lambda ({x (or (type-of 1)
+                     (type-of "2")
+                     (type-of 'ciao))})
+       x)
+</pre>
+   <p class="noindent">and so:
+
+<pre class="lisp">     (type-of
+       (case (read)
+         ((1 "2" 'ciao) =&gt; (lambda (x) x))
+         (else #f)))
+     &rArr; #[signature ((or &lt;positive-fixnum&gt; &lt;string&gt; (enumeration ciao) &lt;false&gt;))]
+</pre>
+   <!--  -->
+<h4 class="unnumberedsubsec">Handling of void</h4>
+
+<p>There is an experimental change that may cause troubles: expressions of type
+<code>&lt;void&gt;</code> are forbidden as operands in function applications and logic predicates. 
+For example:
+
+<pre class="lisp">     (display (vector-set! (vector 1) 0 2))
+</pre>
+   <p class="noindent">should raise an error because <code>vector-set!</code> returns the void value.  The type
+<code>&lt;void&gt;</code> has no parent (it is <strong>not</strong> a sub&ndash;type of <code>&lt;top&gt;</code>) and it
+should be like not&ndash;a&ndash;number for numeric computations.  It is not yet clear if this
+will cause problems.  Here are some consequences:
+
+     <ul>
+<li>Composing <code>&lt;void&gt;</code> with other types results in void:
+
+     <pre class="lisp">          (type-annotation-syntax (or &lt;fixnum&gt; &lt;void&gt;))
+          &rArr; &lt;void&gt;
+          
+          (type-annotation-syntax (and &lt;fixnum&gt; &lt;void&gt;))
+          &rArr; &lt;void&gt;
+          
+          (type-annotation-syntax (not &lt;void&gt;))
+          &rArr; &lt;void&gt;
+</pre>
+     <li>A void expression as operand of <code>and</code>, <code>or</code>, <code>xor</code> and test of
+<code>if</code> will cause an expand&ndash;time syntax violation.
+
+     <li>A void expression as operand of <code>not</code> will cause either an expand&ndash;time syntax
+violation or a run&ndash;time assertion violation.
+
+     <li>Remembering that <code>cond</code> and <code>case</code> return void when no <code>else</code>
+clause is present and no clause matches: when <code>cond</code> or <code>case</code> are used
+as operands, an <code>else</code> clause is mandatory.
+
+     <li>Remembering that <code>when</code> and <code>unless</code> return void when the body is not
+evaluated: <code>when</code> and <code>unless</code> cannot be used as operands.
+
+     <li>The syntax <code>set!</code> cannot be used as operand. 
+</ul>
+
+<!--  -->
+<h4 class="unnumberedsubsec">Chez Scheme has been open sourced</h4>
+
+<p>These are my <strong>opinions</strong>.  Every Scheme implementation maintainer feels the
+pressure of Racket's growth<small class="dots">...</small> so you have to do something otherwise Racket will
+eat your lunch.  They had to wait for a while before open&ndash;sourcing it, because a
+Chez Scheme license was really costly: you do not want to make your customers angry
+by selling them a costly product and then open&ndash;sourcing it after five minutes.
+
+   <p>I wonder if open&ndash;sourcing it five years ago would have made a difference for
+<acronym>R6RS</acronym>.  Ah<small class="dots">...</small> forget it!
+
+<!--  -->
+<h4 class="unnumberedsubsec">Compiling Vicare's boot image takes a lot<small class="dots">...</small> you know?</h4>
+
+<p>I started keeping a deck of cards near the laptop; I like <em>le piacentine</em>.  So,
+while compiling, I play a solitaire with true cards.  I like one called <em>the
+cross</em>: I cannot explain it here, but it is simple, things happen, and takes small
+room on the desk.  Even randomising the deck is relaxing in itself.
+
+<!-- page -->
+   </body></html>
+
