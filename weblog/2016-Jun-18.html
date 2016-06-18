@@ -1,0 +1,232 @@
+<html lang="en">
+<head>
+<title>2016 Jun 18 - Marco's Weblog</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Marco's Weblog">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="2016.html#g_t2016" title="2016">
+<link rel="next" href="2016-May-30.html#g_t2016-May-30" title="2016 May 30">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+Copyright (C) 2015, 2016 by Marco Maggi <marco.maggi-ipsu@poste.it>
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with Invariant Sections being ``GNU Free Documentation
+     License'' and ``GNU General Public License'', no Front--Cover
+     Texts, and no Back--Cover Texts.  A copy of the license is
+     included in the section entitled ``GNU Free Documentation
+     License''.
+-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+<link rel="stylesheet" type="text/css" href="weblog.css">
+</head>
+<body>
+<div class="node">
+<a name="g_t2016-Jun-18"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="2016-May-30.html#g_t2016-May-30">2016 May 30</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="2016.html#g_t2016">2016</a>
+<hr>
+</div>
+
+<h3 class="unnumberedsec">Mixins, late binding for overloaded functions, leftover problems</h3>
+
+<div align="center">Posted on Sat Jun 18, 2016</div>
+
+   <p>More work in the &lsquo;<samp><span class="samp">typed-language</span></samp>&rsquo;
+<a href="https://github.com/marcomaggi/vicare/tree/typed-language.marcomaggi-2015-11-18">branch</a> of <a href="References.html#References">Vicare</a>, for both the expander and the built&ndash;in types
+infrastructure.  The matching machinery that determines if two type specifications
+are super&ndash;type and sub&ndash;type has seen further development, but it is still
+unfinished.
+
+   <p>Everything I discuss here is relative to code in the head of the
+&lsquo;<samp><span class="samp">typed-language</span></samp>&rsquo; branch.
+
+<!--  -->
+<h4 class="unnumberedsubsec">Mixins</h4>
+
+<p>Mixins are a way to add definition clauses to record&ndash;types and labels.  Let's
+consider this situation:
+
+<pre class="example">     (define-record-type &lt;alpha&gt;
+       (fields a))
+     
+     (define-record-type &lt;beta&gt;
+       (fields b))
+     
+     (define-record-type &lt;delta&gt;
+       (parent &lt;alpha&gt;)
+       (fields v)
+       (method (doit {O &lt;delta&gt;})
+         (+ 1 (.v O))))
+     
+     (define-record-type &lt;gamma&gt;
+       (parent &lt;beta&gt;)
+       (fields v)
+       (method (doit {O &lt;gamma&gt;})
+         (+ 1 (.v O))))
+</pre>
+   <p class="noindent">the definitions of <code>&lt;delta&gt;</code> and <code>&lt;gamma&gt;</code> share some clauses; both of them
+already have a parent type and multiple inheritance is not supported by Vicare. 
+Is it possible to write the shared clauses only once and attach them to the
+record&ndash;type definitions?  Yes, with mixins.  The example above is equivalent to the
+following:
+
+<pre class="example">     (define-record-type &lt;alpha&gt;
+       (field a))
+     
+     (define-record-type &lt;beta&gt;
+       (field b))
+     
+     (define-mixin &lt;stuff&gt;
+       (field v)
+       (method (doit {O &lt;stuff&gt;})
+         (+ 1 (.v O))))
+     
+     (define-record-type &lt;delta&gt;
+       (parent &lt;alpha&gt;)
+       (mixins &lt;stuff&gt;))
+     
+     (define-record-type &lt;gamma&gt;
+       (parent &lt;beta&gt;)
+       (mixins &lt;stuff&gt;))
+</pre>
+   <p class="noindent">the syntax use of <code>define-mixin</code> associates a set of clauses to the identifier
+<code>&lt;stuff&gt;</code>; when the <code>mixins</code> clause is used in the body of a record&ndash;type
+definition:
+
+     <ol type=1 start=1>
+<li>The clauses associated to the selected mixin identifier are retrieved as syntax
+object.
+
+     <li>All the instances of the identifier <code>&lt;stuff&gt;</code> are substituted with the identifier
+of the enclosing record&ndash;type; <code>&lt;delta&gt;</code> and <code>&lt;gamma&gt;</code> in the example.
+
+     <li>The resulting clauses are added to the enclosing definition.
+        </ol>
+
+<!--  -->
+<h4 class="unnumberedsubsec">Late binding for overloaded functions</h4>
+
+<p>I have implemented late binding for overloaded functions:
+
+<pre class="lisp">     (define/overload (doit {O &lt;string&gt;})
+       (list 'string O))
+     
+     (define/overload (doit {O &lt;fixnum&gt;})
+       (list 'fixnum O))
+     
+     (doit (cast-signature (&lt;top&gt;) "ciao"))  &rArr; (string "ciao")
+     (doit (cast-signature (&lt;top&gt;) 123))     &rArr; (fixnum 123)
+</pre>
+   <p>Before this feature: whenever, at expand&ndash;time, a matching specialised function was
+not found, a syntax violation was raised.  With this feature: late binding code is
+inserted and we get an error only at run&ndash;time when the function is actually called.
+
+   <p>I do not like this very much, so I have added a new warning enabled with the command
+line option <samp><span class="option">-Woverloaded-function-late-binding</span></samp>: whenever a matching function
+is not found at expand&ndash;time, a warning condition is raised.  This warning is also
+enabled when using the new command line option <samp><span class="option">-Wextra</span></samp>.
+
+<!--  -->
+<h4 class="unnumberedsubsec">Problem: recursive types</h4>
+
+<p>At present recursive type definitions are <strong>not</strong> supported.  I want them.  It
+is not possible to say this:
+
+<pre class="lisp">     (define-type &lt;list-syntax-object&gt;
+       (list-of &lt;syntax-object&gt;))
+     
+     (define-type &lt;vector-syntax-object&gt;
+       (vector-of &lt;syntax-object&gt;))
+     
+     (define-type &lt;syntax-object&gt;
+       (or &lt;wrapped-syntax-object&gt;
+              &lt;list-syntax-object&gt;
+            &lt;vector-syntax-object&gt;))
+</pre>
+   <p class="noindent">and it is not possible to say this:
+
+<pre class="lisp">     (define-type &lt;syntax-object&gt;
+       (or &lt;wrapped-syntax-object&gt;
+           (list-of &lt;syntax-object&gt;)
+           (vector-of &lt;syntax-object&gt;)))
+</pre>
+   <p>Whenever the right&ndash;hand side of a <code>define-type</code> use is processed: the
+left&ndash;hand side syntactic identifier is bound (meaning that it is associated to a
+label in the lexical environment), but the syntactic binding is still &ldquo;displaced&rdquo;
+(meaning that the label is not yet associated to a syntactic binding descriptor).
+
+   <p>Until now, I have been unable to devise an implementation that satisfies me.  I am
+inclined towards using &ldquo;forward declarations&rdquo;, like the C language does; so the
+code above would look something like:
+
+<pre class="lisp">     (define-type &lt;syntax-object&gt;
+       (forward-definition))
+     
+     (define-type &lt;list-syntax-object&gt;
+       (list-of &lt;syntax-object&gt;))
+     
+     (define-type &lt;vector-syntax-object&gt;
+       (vector-of &lt;syntax-object&gt;))
+     
+     (define-type &lt;syntax-object&gt;
+       (or &lt;wrapped-syntax-object&gt;
+              &lt;list-syntax-object&gt;
+            &lt;vector-syntax-object&gt;))
+</pre>
+   <p class="noindent">but I do not know how it could be implemented internally: I would like an
+implementation with a small footprint.
+
+<!--  -->
+<h4 class="unnumberedsubsec">Problem: type signatures for record constructors</h4>
+
+<p>At present, the definition of a record&ndash;type with constructor protocol looks like
+this:
+
+<pre class="lisp">     (define-record-type &lt;duo&gt;
+       (fields one two)
+       (protocol
+         (lambda (make-record)
+           (lambda ({A &lt;fixnum&gt;} {B &lt;fixnum&gt;})
+             (make-record A B)))))
+</pre>
+   <p class="noindent">the type information of the constructor function's arguments is <strong>not</strong>
+propagated to the constructor syntax <code>(new &lt;duo&gt; 1 2)</code>.
+
+   <p>This is because the expression in the <code>protocol</code> clause can be anything that
+returns a protocol function and it goes through the machinery of record&ndash;constructor
+descriptors.  Now, I want to keep the <code>protocol</code> stuff because it is standard
+and very flexible; but I also want to specify the constructor's type signature in the
+record&ndash;type definition.
+
+   <p>I could set&ndash;up a <code>constructor-signature</code> clause as follows:
+
+<pre class="lisp">     (define-record-type &lt;duo&gt;
+       (fields one two)
+       (protocol
+         (lambda (make-record)
+           (lambda ({A &lt;fixnum&gt;} {B &lt;fixnum&gt;})
+             (make-record A B))))
+       (constructor-signature
+         (lambda (&lt;fixnum&gt; &lt;fixnum&gt;) =&gt; (&lt;duo&gt;))))
+</pre>
+   <p class="noindent">but it would be an ugly duplicate.  Should I accept the ugliness?
+
+<!-- page -->
+   </body></html>
+
