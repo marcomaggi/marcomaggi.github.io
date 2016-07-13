@@ -1,0 +1,654 @@
+<html lang="en">
+<head>
+<title>2016 Jul 13 - Marco's Weblog</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Marco's Weblog">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="2016.html#g_t2016" title="2016">
+<link rel="next" href="2016-Jun-28.html#g_t2016-Jun-28" title="2016 Jun 28">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+Copyright (C) 2015, 2016 by Marco Maggi <marco.maggi-ipsu@poste.it>
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with Invariant Sections being ``GNU Free Documentation
+     License'' and ``GNU General Public License'', no Front--Cover
+     Texts, and no Back--Cover Texts.  A copy of the license is
+     included in the section entitled ``GNU Free Documentation
+     License''.
+-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+<link rel="stylesheet" type="text/css" href="weblog.css">
+</head>
+<body>
+<div class="node">
+<a name="g_t2016-Jul-13"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="2016-Jun-28.html#g_t2016-Jun-28">2016 Jun 28</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="2016.html#g_t2016">2016</a>
+<hr>
+</div>
+
+<h3 class="unnumberedsec"><code>hash</code>, methods overhaul, interfaces again</h3>
+
+<div align="center">Posted on Wed Jul 13, 2016</div>
+
+   <p>More work in the &lsquo;<samp><span class="samp">typed-language</span></samp>&rsquo;
+<a href="https://github.com/marcomaggi/vicare/tree/typed-language.marcomaggi-2015-11-18">branch</a> of <a href="References.html#References">Vicare</a>, for both the expander and the built&ndash;in types
+infrastructure.
+
+   <p>Everything I discuss here is relative to code in the head of the
+&lsquo;<samp><span class="samp">typed-language</span></samp>&rsquo; branch.
+
+<!--  -->
+<h4 class="unnumberedsubsec">Syntax <code>hash</code></h4>
+
+<p>Every object&ndash;type in Vicare provides a hash function; the core object&ndash;types have
+a default hash function, while record&ndash;types have a customisable hash function.  A
+hash value can be computed with the new syntax <code>hash</code>, with the use template:
+
+<pre class="lisp">     (hash <var>?expr</var>)
+</pre>
+   <p>If the expander can determine the type of the value returned by <var>?expr</var>: the
+syntax use is expanded into an application of the appropriate hash function. 
+Otherwise, the type of the returned value is determined at run&ndash;time and the
+appropriate hash function retrieved and applied.  If <var>?expr</var> does not return a
+single value: an exception is raised.
+
+<!--  -->
+<h4 class="unnumberedsubsec">Some syntaxes renamed</h4>
+
+<p>For coherence with <code>define-record-type</code>: the syntax <code>define-label</code> has
+been renamed to <code>define-label-type</code>; the syntax <code>define-interface</code> has
+been renamed to <code>define-interface-type</code>; the syntax <code>define-mixin</code> has
+been renamed to <code>define-mixin-type</code>.  Strictly speaking: mixins are not a
+type, but still that is the syntax name.
+
+<!--  -->
+<h4 class="unnumberedsubsec">Methods overhauling</h4>
+
+<p>Up to some commits ago, all the syntaxes supporting method specifications (like
+<code>define-record-type</code>) accepted the clauses <code>method</code>,
+<code>case-method</code> and <code>method/overload</code> to define methods.  I changed this
+so that the only clause is now <code>method</code>.
+
+   <p>The clause <code>case-method</code> defined a typed function with <code>case-define</code>,
+having multiple lambda clauses; it is clear that the same result can be achieved with
+an overloaded method having a set of specialisations.  So the <code>case-method</code>
+has been removed.
+
+   <p>Whenever a method with a specific name is defined only once: the new <code>method</code>
+clause will define a normal method implementation function, using <code>define</code>.
+
+   <p>Whenever a method with a specific name is defined multiple times: the new
+<code>method</code> clause will act like the old <code>method/overload</code> clause,
+defining an overloaded function with <code>define/overload</code>.
+
+<!--  -->
+<h4 class="unnumberedsubsec">Interface types</h4>
+
+<p>The previous, experimental, implementation of interfaces has been overhauled; I dare
+to say that I am close to getting it right.  Time for some good copy and paste from
+the documentation.  Here we go<small class="dots">...</small>
+
+   <p>Let's illustrate the features and limitations of interface&ndash;types by
+examples.
+
+   <p>Whenever an interface inherits from another interface, it obviously
+becomes its sub&ndash;type:
+
+<pre class="lisp">     (define-interface-type &lt;IParent&gt;
+       (method-prototype doit
+         (lambda (&lt;number&gt;) =&gt; (&lt;string&gt;))))
+     
+     (define-interface-type &lt;IChild&gt;
+       (parent &lt;IParent&gt;))
+     
+     (type-annotation-super-and-sub? &lt;IParent&gt; &lt;IChild&gt;) &rArr; #t
+     (type-annotation-super-and-sub? &lt;IChild&gt; &lt;IParent&gt;) &rArr; #f
+</pre>
+   <p>An interface can implement another interface; the implementer must
+declare a matching method prototype for every method prototype of the
+implemented.  The method prototype of the implementer must be a
+sub&ndash;type of the method prototype of the implemented.  Given that:
+
+<pre class="lisp">     (type-annotation-super-and-sub?
+       (lambda (&lt;nestring&gt;) =&gt; (&lt;number&gt;))
+       (lambda (&lt;string&gt;)   =&gt; (&lt;fixnum&gt;)))
+     &rArr; #t
+</pre>
+   <p class="noindent">we can define:
+
+<pre class="lisp">     (define-interface-type &lt;IOne&gt;
+       (method-prototype doit
+         (lambda (&lt;nestring&gt;) =&gt; (&lt;number&gt;))))
+     
+     (define-interface-type &lt;ITwo&gt;
+       (implements &lt;IOne&gt;)
+       (method-prototype doit
+         (lambda (&lt;string&gt;) =&gt; (&lt;fixnum&gt;))))
+     
+     (type-annotation-super-and-sub? &lt;IOne&gt; &lt;ITwo&gt;) &rArr; #t
+     (type-annotation-super-and-sub? &lt;ITwo&gt; &lt;IOne&gt;) &rArr; #f
+</pre>
+   <p>An interface can inherit method prototypes from another interface and
+use those to implement another interface:
+
+<pre class="lisp">     (define-interface-type &lt;I&gt;
+       (method-prototype doit
+         (lambda (&lt;string&gt;) =&gt; (&lt;number&gt;))))
+     
+     (define-interface-type &lt;A&gt;
+       (method-prototype doit
+         (lambda (&lt;string&gt;) =&gt; (&lt;number&gt;))))
+     
+     (define-interface-type &lt;B&gt;
+       (parent &lt;A&gt;)
+       (implements &lt;I&gt;))
+     
+     (type-annotation-super-and-sub? &lt;I&gt; &lt;A&gt;) &rArr; #f
+     (type-annotation-super-and-sub? &lt;I&gt; &lt;B&gt;) &rArr; #t
+     (type-annotation-super-and-sub? &lt;A&gt; &lt;I&gt;) &rArr; #f
+     (type-annotation-super-and-sub? &lt;B&gt; &lt;I&gt;) &rArr; #f
+</pre>
+   <p>If the interface <code>&lt;ISub&gt;</code> inherits from <code>&lt;ISuper&gt;</code>, to implement
+<code>&lt;ISub&gt;</code> the interface <code>&lt;A&gt;</code> has to declare a method for every
+method in <code>&lt;ISub&gt;</code> and <code>&lt;ISuper&gt;</code>:
+
+<pre class="lisp">     (define-interface-type &lt;ISuper&gt;
+       (method-prototype super-doit
+         (lambda (&lt;string&gt;) =&gt; (&lt;number&gt;))))
+     
+     (define-interface-type &lt;ISub&gt;
+       (parent &lt;ISuper&gt;)
+       (method-prototype sub-doit
+         (lambda (&lt;string&gt;) =&gt; (&lt;fixnum&gt;))))
+     
+     (define-interface-type &lt;A&gt;
+       (implements &lt;ISub&gt;)
+       (method-prototype super-doit
+         (lambda (&lt;string&gt;) =&gt; (&lt;number&gt;)))
+       (method-prototype sub-doit
+         (lambda (&lt;string&gt;) =&gt; (&lt;fixnum&gt;))))
+     
+     (type-annotation-super-and-sub? &lt;ISuper&gt; &lt;A&gt;) &rArr; #t
+     (type-annotation-super-and-sub? &lt;ISub&gt;   &lt;A&gt;) &rArr; #t
+     (type-annotation-super-and-sub? &lt;A&gt; &lt;ISuper&gt;) &rArr; #f
+     (type-annotation-super-and-sub? &lt;A&gt; &lt;ISub&gt;)   &rArr; #f
+</pre>
+   <p>Interface <code>&lt;B&gt;</code> implements interface <code>&lt;A&gt;</code>; interface <code>&lt;C&gt;</code>
+implements interface <code>&lt;B&gt;</code>; automatically, interface <code>&lt;C&gt;</code>
+implements interface <code>&lt;A&gt;</code>:
+
+<pre class="lisp">     (define-interface-type &lt;A&gt;
+       (method-prototype red         (lambda () =&gt; (&lt;fixnum&gt;))))
+     
+     (define-interface-type &lt;B&gt;
+       (implements &lt;A&gt;)
+       (method-prototype red         (lambda () =&gt; (&lt;fixnum&gt;)))
+       (method-prototype blue        (lambda () =&gt; (&lt;symbol&gt;))))
+     
+     (define-interface-type &lt;C&gt;
+       (implements &lt;B&gt;)
+       (method-prototype red         (lambda () =&gt; (&lt;fixnum&gt;)))
+       (method-prototype blue        (lambda () =&gt; (&lt;symbol&gt;))))
+     
+     (type-annotation-super-and-sub? &lt;A&gt; &lt;B&gt;) &rArr; #t
+     (type-annotation-super-and-sub? &lt;A&gt; &lt;C&gt;) &rArr; #t
+     (type-annotation-super-and-sub? &lt;B&gt; &lt;A&gt;) &rArr; #f
+     (type-annotation-super-and-sub? &lt;B&gt; &lt;C&gt;) &rArr; #t
+     (type-annotation-super-and-sub? &lt;C&gt; &lt;A&gt;) &rArr; #f
+     (type-annotation-super-and-sub? &lt;C&gt; &lt;B&gt;) &rArr; #f
+</pre>
+   <p>An interface that inherits from another interface can &ldquo;extend&rdquo; its
+method prototypes with additional signatures.  The interface
+<code>&lt;IThree&gt;</code> implements the interfaces <code>&lt;IOne&gt;</code> and <code>&lt;ITwo&gt;</code>. 
+<code>&lt;IThree&gt;</code> implements the &ldquo;composite&rdquo; method from <code>&lt;IOne&gt;</code> and
+<code>&lt;ITwo&gt;</code> with multiple <code>method-prototype</code> clauses:
+
+<pre class="lisp">     ;;
+     ;;                 &lt;IOne&gt;
+     ;;                    ^
+     ;;                    |
+     ;;   &lt;IThree&gt; +++&gt; &lt;ITwo&gt;
+     ;;
+     (define-interface-type &lt;IOne&gt;
+       (method-prototype doit
+         (lambda (&lt;fixnum&gt;) =&gt; (&lt;string&gt;))))
+     
+     (define-interface-type &lt;ITwo&gt;
+       (parent &lt;IOne&gt;)
+       (method-prototype doit
+         (lambda (&lt;flonum&gt;) =&gt; (&lt;string&gt;))))
+     
+     (define-interface-type &lt;IThree&gt;
+       (implements &lt;ITwo&gt;)
+       (method-prototype doit (lambda (&lt;fixnum&gt;) =&gt; (&lt;string&gt;)))
+       (method-prototype doit (lambda (&lt;flonum&gt;) =&gt; (&lt;string&gt;))))
+     
+     (type-annotation-super-and-sub? &lt;IOne&gt;   &lt;IThree&gt;) &rArr; #t
+     (type-annotation-super-and-sub? &lt;IOne&gt;   &lt;ITwo&gt;)   &rArr; #t
+     (type-annotation-super-and-sub? &lt;ITwo&gt;   &lt;IThree&gt;) &rArr; #t
+     (type-annotation-super-and-sub? &lt;IThree&gt; &lt;IOne&gt;)   &rArr; #f
+     (type-annotation-super-and-sub? &lt;ITwo&gt;   &lt;IOne&gt;)   &rArr; #f
+     (type-annotation-super-and-sub? &lt;IThree&gt; &lt;ITwo&gt;)   &rArr; #f
+</pre>
+   <p class="noindent">the same as above, but with a single <code>method-prototype</code> clause:
+
+<pre class="lisp">     (define-interface-type &lt;IOne&gt;
+       (method-prototype doit
+         (lambda (&lt;fixnum&gt;) =&gt; (&lt;string&gt;))))
+     
+     (define-interface-type &lt;ITwo&gt;
+       (parent &lt;IOne&gt;)
+       (method-prototype doit
+         (lambda (&lt;flonum&gt;) =&gt; (&lt;string&gt;))))
+     
+     (define-interface-type &lt;IThree&gt;
+       (implements &lt;ITwo&gt;)
+       (method-prototype doit
+         (case-lambda
+           ((&lt;fixnum&gt;) =&gt; (&lt;string&gt;))
+           ((&lt;flonum&gt;) =&gt; (&lt;string&gt;)))))
+</pre>
+   <p>A record&ndash;type can implement an interface by defining a concrete method
+for every method prototype:
+
+<pre class="lisp">     (define-interface-type &lt;IOne&gt;
+       (method-prototype doit
+         (lambda (&lt;string&gt;) =&gt; (&lt;number&gt;))))
+     
+     (define-record-type &lt;blue&gt;
+       (implements &lt;IOne&gt;)
+       (method ({doit &lt;number&gt;} {S &lt;string&gt;})
+         1))
+     
+     (type-annotation-super-and-sub? &lt;IOne&gt; &lt;blue&gt;) &rArr; #t
+     (type-annotation-super-and-sub? &lt;blue&gt; &lt;IOne&gt;) &rArr; #f
+</pre>
+   <p>A record&ndash;type can inherit from another record&ndash;type and use its
+parent's methods to implement an interface:
+
+<pre class="lisp">     (define-interface-type &lt;I&gt;
+       (method-prototype doit
+         (lambda (&lt;string&gt;) =&gt; (&lt;number&gt;))))
+     
+     (define-record-type &lt;A&gt;
+       (method ({doit &lt;number&gt;} {S &lt;string&gt;})
+         1))
+     
+     (define-record-type &lt;B&gt;
+       (parent &lt;A&gt;)
+       (implements &lt;I&gt;))
+     
+     (type-annotation-super-and-sub? &lt;I&gt; &lt;A&gt;) &rArr; #f
+     (type-annotation-super-and-sub? &lt;I&gt; &lt;B&gt;) &rArr; #t
+     (type-annotation-super-and-sub? &lt;A&gt; &lt;I&gt;) &rArr; #f
+     (type-annotation-super-and-sub? &lt;B&gt; &lt;I&gt;) &rArr; #f
+</pre>
+   <p>A record&ndash;type must implement a method for every method prototype in the
+interface and its parents:
+
+<pre class="lisp">     (define-interface-type &lt;ISuper&gt;
+       (method-prototype super-doit
+         (lambda (&lt;string&gt;) =&gt; (&lt;number&gt;))))
+     
+     (define-interface-type &lt;ISub&gt;
+       (parent &lt;ISuper&gt;)
+       (method-prototype sub-doit
+         (lambda (&lt;string&gt;) =&gt; (&lt;fixnum&gt;))))
+     
+     (define-record-type &lt;A&gt;
+       (implements &lt;ISub&gt;)
+       (method ({super-doit &lt;number&gt;} {S &lt;string&gt;})
+         1)
+       (method ({sub-doit &lt;fixnum&gt;} {S &lt;string&gt;})
+         1))
+     
+     (type-annotation-super-and-sub? &lt;ISuper&gt; &lt;A&gt;) &rArr; #t
+     (type-annotation-super-and-sub? &lt;ISub&gt;   &lt;A&gt;) &rArr; #t
+     (type-annotation-super-and-sub? &lt;A&gt; &lt;ISuper&gt;) &rArr; #f
+     (type-annotation-super-and-sub? &lt;A&gt; &lt;ISub&gt;)   &rArr; #f
+</pre>
+   <p>The record&ndash;type <code>&lt;C&gt;</code> implements interface <code>&lt;B&gt;</code>; the interface
+<code>&lt;B&gt;</code> implements interface <code>&lt;A&gt;</code>; automatically, <code>&lt;C&gt;</code>
+implements <code>&lt;A&gt;</code>:
+
+<pre class="lisp">     (define-interface-type &lt;A&gt;
+       (method-prototype red
+         (lambda () =&gt; (&lt;fixnum&gt;))))
+     
+     (define-interface-type &lt;B&gt;
+       (implements &lt;A&gt;)
+       (method-prototype red
+         (lambda () =&gt; (&lt;fixnum&gt;)))
+       (method-prototype blue
+         (lambda () =&gt; (&lt;symbol&gt;))))
+     
+     (define-record-type &lt;C&gt;
+       (implements &lt;B&gt;)
+       (method ({red  &lt;fixnum&gt;})
+         1)
+       (method ({blue &lt;symbol&gt;})
+         'ciao))
+     
+     (type-annotation-super-and-sub? &lt;A&gt; &lt;B&gt;) &rArr; #t
+     (type-annotation-super-and-sub? &lt;A&gt; &lt;C&gt;) &rArr; #t
+     (type-annotation-super-and-sub? &lt;B&gt; &lt;A&gt;) &rArr; #f
+     (type-annotation-super-and-sub? &lt;B&gt; &lt;C&gt;) &rArr; #t
+     (type-annotation-super-and-sub? &lt;C&gt; &lt;A&gt;) &rArr; #f
+     (type-annotation-super-and-sub? &lt;C&gt; &lt;B&gt;) &rArr; #f
+</pre>
+   <p>The record&ndash;type <code>&lt;dark-blue&gt;</code> inherits from <code>&lt;blue&gt;</code> the
+implementation of the interfaces <code>&lt;IOne&gt;</code> and <code>&lt;ITwo&gt;</code>:
+
+<pre class="lisp">     ;;
+     ;;               &lt;IOne&gt;
+     ;;                  ^
+     ;;                  |
+     ;;   &lt;blue&gt; +++&gt; &lt;ITwo&gt;
+     ;;     ^
+     ;;     |
+     ;;   &lt;dark-blue&gt;
+     
+     (define-interface-type &lt;IOne&gt;
+       (method-prototype ione-doit
+         (lambda () =&gt; (&lt;number&gt;))))
+     
+     (define-interface-type &lt;ITwo&gt;
+       (parent &lt;IOne&gt;)
+       (method-prototype itwo-doit
+         (lambda () =&gt; (&lt;symbol&gt;))))
+     
+     (define-record-type &lt;blue&gt;
+       (implements &lt;ITwo&gt;)
+       (fields val)
+       (method ({ione-doit &lt;number&gt;})
+         (+ 10 (.val this)))
+       (method ({itwo-doit &lt;symbol&gt;})
+         'ciao))
+     
+     (define-record-type &lt;dark-blue&gt;
+       (parent &lt;blue&gt;))
+     
+     (define (fun-1 {O &lt;IOne&gt;})
+       (.ione-doit O))
+     
+     (define (fun-2 {O &lt;ITwo&gt;})
+       (vector (.ione-doit O)
+               (.itwo-doit O)))
+     
+     (define O
+       (new &lt;dark-blue&gt; 1))
+     
+     (fun-1 O)       &rArr; 11
+     (fun-2 O)       &rArr; #(11 ciao)
+</pre>
+   <p>The record&ndash;type <code>&lt;dark-blue&gt;</code> implements the interface <code>&lt;ITwo&gt;</code>
+and inherits from <code>&lt;blue&gt;</code> the implementation of the interface
+<code>&lt;IOne&gt;</code>:
+
+<pre class="lisp">     ;;   &lt;blue&gt; +++&gt; &lt;IOne&gt;
+     ;;     ^
+     ;;     |
+     ;;   &lt;dark-blue&gt; +++&gt; &lt;ITwo&gt;
+     
+     (define-interface-type &lt;IOne&gt;
+       (method-prototype ione-doit
+         (lambda () =&gt; (&lt;number&gt;))))
+     
+     (define-interface-type &lt;ITwo&gt;
+       (method-prototype itwo-doit
+         (lambda () =&gt; (&lt;symbol&gt;))))
+     
+     (define-record-type &lt;blue&gt;
+       (implements &lt;IOne&gt;)
+       (fields val)
+       (method ({ione-doit &lt;number&gt;})
+         (+ 10 (.val this))))
+     
+     (define-record-type &lt;dark-blue&gt;
+       (parent &lt;blue&gt;)
+       (implements &lt;ITwo&gt;)
+       (method ({itwo-doit &lt;symbol&gt;})
+         'ciao))
+     
+     (define (fun-1 {O &lt;IOne&gt;})
+       (.ione-doit O))
+     
+     (define (fun-2 {O &lt;ITwo&gt;})
+       (.itwo-doit O))
+     
+     (define O
+       (new &lt;dark-blue&gt; 1))
+     
+     (fun-1 O)       &rArr; 11
+     (fun-2 O)       &rArr; ciao
+</pre>
+   <p>The record&ndash;type <code>&lt;blue&gt;</code> implements the interface <code>&lt;ITwo&gt;</code>, its
+parent <code>&lt;IOne&gt;</code>, and automatically the interface <code>&lt;IThree&gt;</code>
+implemented by <code>&lt;IOne&gt;</code>:
+
+<pre class="lisp">     ;;               &lt;IOne&gt; +++&gt; &lt;IThree&gt;
+     ;;                  ^
+     ;;                  |
+     ;;   &lt;blue&gt; +++&gt; &lt;ITwo&gt;
+     
+     (define-interface-type &lt;IThree&gt;
+       (method-prototype ithree-doit
+         (lambda () =&gt; (&lt;string&gt;))))
+     
+     (define-interface-type &lt;IOne&gt;
+       (implements &lt;IThree&gt;)
+       (method-prototype ione-doit
+         (lambda () =&gt; (&lt;number&gt;)))
+       (method-prototype ithree-doit
+         (lambda () =&gt; (&lt;string&gt;))))
+     
+     (define-interface-type &lt;ITwo&gt;
+       (parent &lt;IOne&gt;)
+       (method-prototype itwo-doit
+         (lambda () =&gt; (&lt;symbol&gt;))))
+     
+     (define-record-type &lt;blue&gt;
+       (implements &lt;ITwo&gt;)
+       (fields val)
+       (method ({ione-doit &lt;number&gt;})
+         (+ 10 (.val this)))
+       (method ({itwo-doit &lt;symbol&gt;})
+         'ciao)
+       (method ({ithree-doit &lt;string&gt;})
+         "hello"))
+     
+     (define (fun-1 {O &lt;IOne&gt;})
+       (vector (.ione-doit O)
+               (.ithree-doit O)))
+     
+     (define (fun-2 {O &lt;ITwo&gt;})
+       (vector (.ione-doit O)
+               (.itwo-doit O)
+               (.ithree-doit O)))
+     
+     (define (fun-3 {O &lt;IThree&gt;})
+       (.ithree-doit O))
+     
+     (define O
+       (new &lt;blue&gt; 1))
+     
+     (fun-1 O)       &rArr; #(11 "hello")
+     (fun-2 O)       &rArr; #(11 ciao "hello")
+     (fun-3 O)       &rArr; "hello"
+</pre>
+   <p>Two record&ndash;types in a hierarchy both implement the same interface:
+
+<pre class="lisp">     (define-interface-type &lt;Arith&gt;
+       (method-prototype add
+         (lambda () =&gt; (&lt;number&gt;))))
+     
+     (define-record-type &lt;duo&gt;
+       (implements &lt;Arith&gt;)
+       (fields one two)
+       (method ({add &lt;number&gt;})
+         (+ (.one this) (.two this))))
+     
+     (define-record-type &lt;trio&gt;
+       (parent &lt;duo&gt;)
+       (implements &lt;Arith&gt;)
+       (fields three)
+       (method ({add &lt;number&gt;})
+         (+ (.one this) (.two this) (.three this))))
+     
+     (define (fun {O &lt;Arith&gt;})
+       (.add O))
+     
+     (fun (new &lt;duo&gt;  1 2))          &rArr; 3
+     (fun (new &lt;trio&gt; 1 2 3))        &rArr; 6
+</pre>
+   <p>The record&ndash;type <code>&lt;duo&gt;</code> implements the interface <code>&lt;Stringer&gt;</code>
+which has a default method <code>to-string</code>:
+
+<pre class="lisp">     (define-interface-type &lt;Stringer&gt;
+       (method (to-string)
+         (with-output-to-string
+           (lambda ()
+             (display this)))))
+     
+     (define-record-type &lt;duo&gt;
+       (implements &lt;Stringer&gt;)
+       (fields one two)
+       (custom-printer
+         (lambda ({this &lt;duo&gt;} port sub-printer)
+           (display "#[duo "    port)
+           (display (.one this) port)
+           (display #\space     port)
+           (display (.two this) port)
+           (display #\]         port))))
+     
+     (define (fun {O &lt;Stringer&gt;})
+       (.to-string O))
+     
+     (fun (new &lt;duo&gt; 1 2))   &rArr; "#[duo 1 2]"
+</pre>
+   <p>The record&ndash;type <code>&lt;duo&gt;</code> implements the interface <code>&lt;Stringer&gt;</code>
+which has a default method <code>to-string</code>; <code>&lt;duo&gt;</code> implements the
+method by itself:
+
+<pre class="lisp">     (define-interface-type &lt;Stringer&gt;
+       (method ({to-string &lt;string&gt;})
+         (with-output-to-string
+           (lambda ()
+             (display this)))))
+     
+     (define-record-type &lt;duo&gt;
+       (implements &lt;Stringer&gt;)
+       (fields one two)
+       (method ({to-string &lt;string&gt;})
+         (with-output-to-string
+           (lambda ()
+             (display "#[duo ")
+             (display (.one this))
+             (display #\space)
+             (display (.two this))
+             (display #\])))))
+     
+     (define (fun {O &lt;Stringer&gt;})
+       (.to-string O))
+     
+     (fun (new &lt;duo&gt; 1 2))   &rArr; "#[duo 1 2]"
+</pre>
+   <p>Default methods have a limitation: they cannot extend other methods. 
+The following definitions will raise an expand&ndash;time exception:
+
+<pre class="lisp">     (define-interface-type &lt;IOne&gt;
+       (method ({doit &lt;number&gt;})
+         1))
+     
+     (define-interface-type &lt;ITwo&gt;
+       (parent &lt;IOne&gt;)
+       (method-prototype doit
+         (lambda (&lt;string&gt;) =&gt; (&lt;number&gt;))))
+</pre>
+   <p class="noindent">because we cannot extend the default method <code>doit</code> in <code>&lt;IOne&gt;</code>
+with a method prototype in <code>&lt;ITwo&gt;</code>.  The following definitions will
+raise an expand&ndash;time exception:
+
+<pre class="lisp">     (define-interface-type &lt;IOne&gt;
+       (method-prototype doit
+         (lambda (&lt;string&gt;) =&gt; (&lt;number&gt;))))
+     
+     (define-interface-type &lt;ITwo&gt;
+       (parent &lt;IOne&gt;)
+       (method ({doit &lt;number&gt;})
+         1))
+</pre>
+   <p class="noindent">because we cannot extend the method prototype <code>doit</code> in
+<code>&lt;IOne&gt;</code> with a default method in <code>&lt;ITwo&gt;</code>.  The following
+definitions will raise an expand&ndash;time exception:
+
+<pre class="lisp">     (define-interface-type &lt;IOne&gt;
+       (method ({doit &lt;number&gt;})
+         1))
+     
+     (define-interface-type &lt;ITwo&gt;
+       (parent &lt;IOne&gt;)
+       (method ({doit &lt;number&gt;} {S &lt;string&gt;})
+         2))
+</pre>
+   <p class="noindent">because we cannot extend the default method <code>doit</code> in <code>&lt;IOne&gt;</code>
+with the default method <code>doit</code> in <code>&lt;ITwo&gt;</code>.
+
+   <p>Here we use an &ldquo;instantiable body&rdquo; to define a &ldquo;generic&rdquo; interface&ndash;type:
+
+<pre class="lisp">     (import (vicare language-extensions instantiable-bodies))
+     
+     (define-instantiable-body define-iface-arith
+       (define-interface-type &lt;Iface&gt;
+         (method-prototype add
+           (lambda () =&gt; (&lt;type-name&gt;)))))
+     
+     (begin
+       (define-iface-arith
+         ((&lt;Iface&gt;             &lt;NumberArith&gt;)
+          (&lt;type-name&gt;         &lt;number&gt;)))
+       (define (nfun {O &lt;NumberArith&gt;})
+         (.add O)))
+     
+     (begin
+       (define-iface-arith
+         ((&lt;Iface&gt;             &lt;StringArith&gt;)
+          (&lt;type-name&gt;         &lt;string&gt;)))
+       (define (sfun {O &lt;StringArith&gt;})
+         (.add O)))
+     
+     (define-record-type &lt;duo&gt;
+       (implements &lt;NumberArith&gt;)
+       (fields one two)
+       (method ({add &lt;number&gt;})
+         (+ (.one this) (.two this))))
+     
+     (define-record-type &lt;string-duo&gt;
+       (implements &lt;StringArith&gt;)
+       (fields one two)
+       (method ({add &lt;string&gt;})
+         (string-append (.one this) (.two this))))
+     
+     (nfun (new &lt;duo&gt; 1 2))                  &rArr; 3
+     (sfun (new &lt;string-duo&gt; "hel" "lo"))    &rArr; "hello"
+</pre>
+   <!-- page -->
+   </body></html>
+
