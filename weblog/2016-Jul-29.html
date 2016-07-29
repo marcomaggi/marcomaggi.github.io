@@ -1,0 +1,238 @@
+<html lang="en">
+<head>
+<title>2016 Jul 29 - Marco's Weblog</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Marco's Weblog">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="2016.html#g_t2016" title="2016">
+<link rel="next" href="2016-Jul-24.html#g_t2016-Jul-24" title="2016 Jul 24">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+Copyright (C) 2015, 2016 by Marco Maggi <marco.maggi-ipsu@poste.it>
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with Invariant Sections being ``GNU Free Documentation
+     License'' and ``GNU General Public License'', no Front--Cover
+     Texts, and no Back--Cover Texts.  A copy of the license is
+     included in the section entitled ``GNU Free Documentation
+     License''.
+-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+<link rel="stylesheet" type="text/css" href="weblog.css">
+</head>
+<body>
+<div class="node">
+<a name="g_t2016-Jul-29"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="2016-Jul-24.html#g_t2016-Jul-24">2016 Jul 24</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="2016.html#g_t2016">2016</a>
+<hr>
+</div>
+
+<h3 class="unnumberedsec">Protection levels for record types</h3>
+
+<div align="center">Posted on Fri Jul 29, 2016</div>
+
+   <p>More work in the <code>master</code> branch of <a href="References.html#References">Vicare</a>.  Record&ndash;types now support
+protection levels <code>public</code>, <code>protected</code>, <code>private</code> for fields and
+methods.  I have <strong>not</strong> implemented protection levels for the <code>parent</code>
+clause: it makes the rules for virtual methods too complex for me.
+
+   <p>Everything I discuss here is relative to code in the head of the <code>master</code> branch.
+
+<!--  -->
+<h4 class="unnumberedsubsec">Protection levels</h4>
+
+<p>Here a copy and paste from the documentation<small class="dots">...</small>
+
+   <p>When the typed language is enabled, record&ndash;type definitions support
+protection levels for fields and methods.  Protection levels limit the
+way fields and methods can be used both from other types in the
+record&ndash;type hierarchy and from outside a record&ndash;type's definition.
+
+   <p>Three protection levels are supported: <code>public</code>,
+<code>protected</code> and <code>private</code>; they are loosely modeled after
+the ones defined in the C++ language.
+
+   <p>The following syntactic bindings are exported by the library
+<code>(vicare)</code>.
+
+<div class="defun">
+&mdash; Auxiliary Syntax: <b>public</b><var><a name="index-public-1"></a></var><br>
+<blockquote><p>Select the <code>public</code> protection level for the associated fields
+and methods.  When a member of record&ndash;type <code>&lt;T&gt;</code> is given the
+<code>public</code> protection level: sub&ndash;types of <code>&lt;T&gt;</code> can access it;
+instances of <code>&lt;T&gt;</code> can access it from outside methods.
+
+        <p>When no protection level is specified for a member in a record&ndash;type
+definition: the protection level defaults to <code>public</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Auxiliary Syntax: <b>protected</b><var><a name="index-protected-2"></a></var><br>
+<blockquote><p>Select the <code>protected</code> protection level for the associated fields
+and methods.  When a member of record&ndash;type <code>&lt;T&gt;</code> is given the
+<code>protected</code> protection level: sub&ndash;types of <code>&lt;T&gt;</code> can access
+it; instances of <code>&lt;T&gt;</code> cannot access it from outside methods. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Auxiliary Syntax: <b>private</b><var><a name="index-private-3"></a></var><br>
+<blockquote><p>Select the <code>private</code> protection level for the associated fields
+and methods.  When a member of record&ndash;type <code>&lt;T&gt;</code> is given the
+<code>private</code> protection level: sub&ndash;types of <code>&lt;T&gt;</code> cannot access
+it; instances of <code>&lt;T&gt;</code> cannot access it from outside methods. 
+</p></blockquote></div>
+
+   <p>The protection level keywords can be used both as &ldquo;wrapping syntaxes&rdquo;
+as in:
+
+<pre class="lisp">     (define-record-type &lt;duo&gt;
+       (public
+         (fields one two)
+         (method (add)
+           (+ (.one this) (.two this)))))
+</pre>
+   <p class="noindent">or as &ldquo;attribute syntaxes&rdquo; as in:
+
+<pre class="lisp">     (define-record-type &lt;duo&gt;
+       (fields public one two)
+       (method public (add)
+         (+ (.one this) (.two this))))
+</pre>
+   <p>The only clauses that can be put in a wrapping syntax and that accept an
+attribute syntax are: <code>fields</code>, <code>method</code>,
+<code>virtual-method</code>, <code>seal-method</code>.
+
+<!--  -->
+<h5 class="subsubheading">Usage and limitations by examples</h5>
+
+<p>The protection levels limit the access to members from outside a
+method's body:
+
+<pre class="lisp">     (define-record-type &lt;blue&gt;
+       (method public    (pub)  1)
+       (method protected (pro)  2)
+       (method private   (pri)  3))
+     
+     (define O
+       (new &lt;blue&gt;))
+     
+     (.pub O)        &rArr; 1
+     (.pro O)        error--&gt; not a public method
+     (.pri O)        error--&gt; not a public method
+</pre>
+   <p>When super&ndash;type's members are <code>public</code>, everything works as
+usual:
+
+<pre class="lisp">     (define-record-type &lt;blue&gt;
+       (fields public light))
+     
+     (define-record-type &lt;dark-blue&gt;
+       (parent &lt;blue&gt;)
+       (method public (doit)
+         (.light this)))
+     
+     (define O
+       (new &lt;dark-blue&gt; 1))
+     
+     (define {X &lt;blue&gt;}
+       O)
+     
+     (.doit  O)      &rArr; 1
+     (.light X)      &rArr; 1
+</pre>
+   <p>When super&ndash;type's members are <code>protected</code>, we can access them
+from the super&ndash;type's methods and from the sub&ndash;type's methods:
+
+<pre class="lisp">     (define-record-type &lt;blue&gt;
+       (fields protected light)
+       (method public (doit)
+         (.light this)))
+     
+     (define-record-type &lt;dark-blue&gt;
+       (parent &lt;blue&gt;)
+       (method public (doit)
+         (.light this)))
+     
+     (define O
+       (new &lt;dark-blue&gt; 1))
+     
+     (.doit O)       &rArr; 1
+     
+     (define {X &lt;blue&gt;}
+       O)
+     
+     (.light X)      error--&gt; not a public method
+     (.doit  X)      &rArr; 1
+</pre>
+   <p>When super&ndash;type's members are <code>private</code>, we can access them from
+the super&ndash;type's methods only:
+
+<pre class="lisp">     (define-record-type &lt;blue&gt;
+       (fields private light)
+       (method public (doit)
+         (.light this)))
+     
+     (define X
+       (new &lt;blue&gt; 1))
+     
+     (.light X)      error--&gt; not a public method
+     (.doit  X)      &rArr; 1
+     
+     (define-record-type &lt;dark-blue&gt;
+       (parent &lt;blue&gt;)
+       (method public (doit)
+         (.light this)))     error--&gt; not a public or protected method
+</pre>
+   <p>It is not an error to define a private virtual method, but such method
+cannot be overridden by the sub&ndash;types:
+
+<pre class="lisp">     (define-record-type &lt;blue&gt;
+       (virtual-method private (doit) 1))
+     
+     (define-record-type &lt;dark-blue&gt;
+       (parent &lt;blue&gt;)
+       (method (doit) 2))    error--&gt; cannot override private method
+</pre>
+   <p>Virtual methods overriding and sealing is possible only among methods of
+the same protection level:
+
+<pre class="lisp">     (define-record-type &lt;blue&gt;
+       (protected
+         (virtual-method (over)
+           'over-blue))
+       (method (doit)
+         (.over this)))
+     
+     (define-record-type &lt;dark-blue&gt;
+       (parent &lt;blue&gt;)
+       (protected
+         (method (over)
+           'over-dark-blue)))
+     
+     (define O
+       (new &lt;dark-blue&gt;))
+     
+     (define (fun {X &lt;blue&gt;})
+       (.doit X))
+     
+     (fun O)         &rArr; over-dark-blue
+</pre>
+   <!-- page -->
+   </body></html>
+
