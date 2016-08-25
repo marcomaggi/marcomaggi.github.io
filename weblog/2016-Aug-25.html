@@ -1,0 +1,200 @@
+<html lang="en">
+<head>
+<title>2016 Aug 25 - Marco's Weblog</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Marco's Weblog">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="2016.html#g_t2016" title="2016">
+<link rel="next" href="2016-Jul-29.html#g_t2016-Jul-29" title="2016 Jul 29">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+Copyright (C) 2015, 2016 by Marco Maggi <marco.maggi-ipsu@poste.it>
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with Invariant Sections being ``GNU Free Documentation
+     License'' and ``GNU General Public License'', no Front--Cover
+     Texts, and no Back--Cover Texts.  A copy of the license is
+     included in the section entitled ``GNU Free Documentation
+     License''.
+-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+<link rel="stylesheet" type="text/css" href="weblog.css">
+</head>
+<body>
+<div class="node">
+<a name="g_t2016-Aug-25"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="2016-Jul-29.html#g_t2016-Jul-29">2016 Jul 29</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="2016.html#g_t2016">2016</a>
+<hr>
+</div>
+
+<h3 class="unnumberedsec">Recursive types, reader extensions, tuples</h3>
+
+<div align="center">Posted on Thu Aug 25, 2016</div>
+
+   <p>More work in the <code>master</code> branch of <a href="References.html#References">Vicare</a>.  I have bumped the version number
+of the library <code>(vicare)</code> to <code>(0 4 2016 8 25)</code>.
+
+   <p>The typed language now implements recursive types and forward type definitions; with
+this the toolbox for object&ndash;oriented programming should be complete.  Mixins exist,
+but I have a lingering desire to attempt a traits implementation; I do not know if I
+will do them.
+
+   <p>Everything I discuss here is relative to code in the head of the <code>master</code> branch.
+
+<!--  -->
+<h4 class="unnumberedsubsec">Recursive types and forward type definitions</h4>
+
+<p>The syntax <code>define-type</code> has seen development and it is now the only way to
+define new type annotations.  We can define new type annotations as follows:
+
+<pre class="lisp">     (define-type &lt;nnfx&gt;
+       &lt;non-negative-fixnum&gt;)
+     
+     (define-type &lt;compound&gt;
+       (or &lt;vector&gt; &lt;list&gt;))
+</pre>
+   <p>This syntax allows recursive type definitions:
+
+<pre class="lisp">     (define-type &lt;it&gt;
+       (or (list-of &lt;fixnum&gt;)
+           (vector-of &lt;it&gt;)))
+</pre>
+   <p>This syntax allows <dfn>forward definitions</dfn>: type annotations that are half&ndash;defined
+to allow for mutually recursive type definitions.  Here is an example of forward
+definition that does nothing useful:
+
+<pre class="lisp">     (define-type &lt;it&gt;)      ;forward definition
+     (define-type &lt;it&gt;)      ;does nothing
+     
+     ;;Complete the definition of "&lt;it&gt;".
+     (define-type &lt;it&gt; &lt;number&gt;)
+</pre>
+   <p class="noindent">Here is a possible definition for a <code>&lt;syntax-object&gt;</code> type using mutually
+recursive definitions:
+
+<pre class="lisp">     (import (rename (only (vicare expander)
+                           &lt;stx&gt; &lt;syntactic-identifier&gt;)
+                     (&lt;stx&gt; &lt;wrapped-syntax-object&gt;)))
+     
+     (define-type &lt;datum&gt;
+       (or &lt;null&gt; &lt;boolean&gt; &lt;char&gt; &lt;number&gt; &lt;string&gt; &lt;bytevector&gt;))
+     
+     (define-type &lt;syntax-object&gt;)
+     
+     (define-type &lt;pair-of-syntax-objects&gt;
+       (pair-of &lt;syntax-object&gt;))
+     
+     (define-type &lt;vector-of-syntax-objects&gt;
+       (vector-of &lt;syntax-object&gt;))
+     
+     (define-type &lt;syntax-object&gt;
+       (or &lt;datum&gt;
+           &lt;wrapped-syntax-object&gt;
+           &lt;syntactic-identifier&gt;
+           &lt;pair-of-syntax-objects&gt;
+           &lt;vector-of-syntax-objects&gt;))
+</pre>
+   <!--  -->
+<h4 class="unnumberedsubsec">Reader extensions</h4>
+
+<p>When the source&ndash;code reader is in <code>#!vicare</code> mode, it is possible to include
+&ldquo;here documents&rdquo; processed (at read&ndash;time) by custom functions.  This feature works
+only when reading source code for libraries or programs, at present it does
+<strong>not</strong> work at the <acronym>REPL</acronym>.
+
+   <p>Let's see how it works.  Assuming the following library is in the search path:
+
+<pre class="lisp">     (library (libdemo)
+       (export doit)
+       (import (rnrs))
+       (define (doit input-string)
+         (read (open-string-input-port input-string))))
+</pre>
+   <p class="noindent">let's consider this program file:
+
+<pre class="lisp">     #!vicare
+     (reader-import (libdemo))
+     (program (demo)
+       (import (rnrs))
+       (display #&lt;doit 456&gt;#)
+       (newline)
+       (flush-output-port (current-output-port)))
+</pre>
+   <p class="noindent">we see that <strong>at the beginning</strong> of a program file (before the <code>program</code>
+form) we have:
+
+<pre class="lisp">     (reader-import (libdemo))
+</pre>
+   <p class="noindent">and in the body of the program we have the block:
+
+<pre class="lisp">     #&lt;doit 456&gt;#
+</pre>
+   <p class="noindent">such block is converted by the reader to the form:
+
+<pre class="lisp">     (doit "456")
+</pre>
+   <p class="noindent">notice that whitespace characters after the symbol "doit" are discarded.  Such form
+is handed to <code>eval</code> and evaluated in the context of the lexical environment
+resulting from importing <code>(libdemo)</code>; the result of the evaluation is returned
+to the reader for inclusion in its output.  So the reader gets the symbolic
+expression &lsquo;<samp><span class="samp">456</span></samp>&rsquo;.
+
+   <p>So if we have a <acronym>JSON</acronym> parser library we can put a block <code>#&lt;json-to-sexp
+...&gt;#</code> in the code and have the <acronym>JSON</acronym> data converted to Scheme symbolic
+expressions at read&ndash;time.
+
+<!--  -->
+<h4 class="unnumberedsubsec">Tuples on top of lists and vectors</h4>
+
+<p>The new library <code>(vicare language-extensions tuples)</code> implements tuples on top
+of lists and vectors (using the typed language).  Tuple&ndash;types are just label&ndash;types
+used to provide convenient read&ndash;only access to lists and vectors.  Tuples cannot be
+sub&ndash;typed and have no methods; we have to use the full labels for that.
+
+   <p>Usage examples with lists and untyped fields:
+
+<pre class="lisp">     (define-list-tuple-type &lt;stuff&gt;
+       (fields a b c))
+     
+     (define T
+       (new &lt;stuff&gt; 1 2 3))
+     
+     (.a T)  &rArr; 1
+     (.b T)  &rArr; 2
+     (.c T)  &rArr; 3
+</pre>
+   <p class="noindent">usage examples with vectors and typed fields:
+
+<pre class="lisp">     (define-vector-tuple-type &lt;stuff&gt;
+       (fields {a &lt;fixnum&gt;}
+               {b &lt;flonum&gt;}
+               {c &lt;string&gt;}))
+     
+     (define T
+       (new &lt;stuff&gt; 1 2.3 "ciao"))
+     
+     T                       &rArr; #(1 2.3 "ciao")
+     (.a T)                  &rArr; 1
+     (.b T)                  &rArr; 2.3
+     (.c T)                  &rArr; "ciao"
+     (.length (.c T))        &rArr; 4
+</pre>
+   <!-- page -->
+   </body></html>
+
