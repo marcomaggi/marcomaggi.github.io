@@ -1,0 +1,198 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes the libraries distributed along with version
+0.4d1 of Vicare Scheme, an R6RS compliant native
+compiler for the Scheme language.
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+The documentation of the libraries (vicare parser-tools silex
+-) are derived form the documentation of SILex.  Copyright
+(C) 2001, 2009 Danny Dube'.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Libraries for Vicare Scheme: istacks common</title>
+
+<meta name="description" content="Libraries for Vicare Scheme: istacks common">
+<meta name="keywords" content="Libraries for Vicare Scheme: istacks common">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="istacks.html#istacks" rel="up" title="istacks">
+<link href="istacks-lists.html#istacks-lists" rel="next" title="istacks lists">
+<link href="istacks.html#istacks" rel="prev" title="istacks">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="istacks-common"></a>
+<div class="header">
+<p>
+Next: <a href="istacks-lists.html#istacks-lists" accesskey="n" rel="next">istacks lists</a>, Up: <a href="istacks.html#istacks" accesskey="u" rel="up">istacks</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="The-common-stacks-API"></a>
+<h3 class="section">46.1 The common stacks <acronym>API</acronym></h3>
+
+
+<p>The following syntactic bindings are exported by the library
+<code>(vicare containers istacks)</code>.
+</p>
+
+<dl>
+<dt><a name="index-_003cistack_003e"></a>Record Type: <strong>&lt;istack&gt;</strong></dt>
+<dd><a name="index-istack-argument"></a>
+<a name="index-Argument-istack"></a>
+<p>Record type representing a stack object.  The <code>&lt;istack&gt;</code> type is
+non&ndash;generative and available for subtyping.  In this documentation
+<code>&lt;istack&gt;</code> instances used as arguments to functions are
+indicated as <var>istack</var>.
+</p>
+<p><code>&lt;istack&gt;</code> is an &ldquo;abstract&rdquo; type: it must not be instantiated
+directly, rather a subtype of <code>&lt;istack&gt;</code> must be defined
+implementing the required functions.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-make_002distack-on-_003cistack_003e"></a>Constructor on &lt;istack&gt;: <strong>make-istack</strong> <em><var>empty?</var> <var>top</var> <var>push!</var> <var>pop!</var></em></dt>
+<dd><p>When we derive a type from <code>&lt;istack&gt;</code> and we specify a protocol:
+this is the closure object used as argument for the protocol function.
+</p>
+<div class="lisp">
+<pre class="lisp">(define-record-type &lt;istack-list&gt;
+  (parent &lt;istack&gt;)
+  (protocol
+    (lambda (make-istack)
+      ---))
+  ---)
+</pre></div>
+
+<p>Its arguments must be functions implementing the methods for the
+concrete stack:
+</p>
+<dl compact="compact">
+<dt><var>empty?</var></dt>
+<dd><p>A function accepting as single argument the <code>&lt;istack&gt;</code> instance
+itself.  It must return <code>#t</code> if the stack is empty; otherwise it must
+return <code>#f</code>.
+</p>
+</dd>
+<dt><var>top</var></dt>
+<dd><p>A function accepting as single argument the <code>&lt;istack&gt;</code> instance
+itself.  It must return the top object in the <code>&lt;istack&gt;</code>.
+</p>
+</dd>
+<dt><var>push!</var></dt>
+<dd><p>A function accepting two arguments: the <code>&lt;istack&gt;</code> instance
+itself and an object.  It must push the object on the
+<code>&lt;istack&gt;</code>; it can return unspecified values.
+</p>
+</dd>
+<dt><var>pop!</var></dt>
+<dd><p>A function accepting as single argument the <code>&lt;istack&gt;</code> instance
+itself.  It must remove and return the top object from the
+<code>&lt;istack&gt;</code>.
+</p></dd>
+</dl>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-istack_003f"></a>Function: <strong>istack?</strong> <em><var>obj</var></em></dt>
+<dd><p>Return <code>#t</code> if <var>obj</var> is an instance of <code>&lt;istack&gt;</code>;
+otherwise return <code>#f</code>.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-istack_002dempty_003f"></a>Function: <strong>istack-empty?</strong> <em><var>istack</var></em></dt>
+<dd><p>Return <code>#t</code> if <var>istack</var> is empty; otherwise return <code>#f</code>.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-istack_002dtop"></a>Function: <strong>istack-top</strong> <em><var>istack</var></em></dt>
+<dd><p>Return the top object in <var>istack</var>.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-istack_002dpush_0021"></a>Function: <strong>istack-push!</strong> <em><var>istack</var> <var>obj</var></em></dt>
+<dd><p>Push <var>obj</var> on <var>istack</var>.  Return unspecified values.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-istack_002dpop_0021"></a>Function: <strong>istack-pop!</strong> <em><var>istack</var></em></dt>
+<dd><p>Remove and return the top object from <var>istack</var>.
+</p></dd></dl>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="istacks-lists.html#istacks-lists" accesskey="n" rel="next">istacks lists</a>, Up: <a href="istacks.html#istacks" accesskey="u" rel="up">istacks</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

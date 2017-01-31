@@ -1,0 +1,293 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.4d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit and 64-bit
+processors.  Vicare is pronounced the etruscan way.  The focus of
+this document is over the typed language extension.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/downloads
+
+the home page of the project is at:
+
+http://marcomaggi.github.io/vicare.html
+
+development takes place at:
+
+http://github.com/marcomaggi/vicare/
+
+and, as a backup, at:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/
+
+Copyright (C) 2016-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Vicare Scheme&rsquo;s typed language: descriptors relations</title>
+
+<meta name="description" content="Vicare Scheme&rsquo;s typed language: descriptors relations">
+<meta name="keywords" content="Vicare Scheme&rsquo;s typed language: descriptors relations">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="type-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="descriptors.html#descriptors" rel="up" title="descriptors">
+<link href="syntaxes.html#syntaxes" rel="next" title="syntaxes">
+<link href="descriptors-signatures-case_002dlambda.html#descriptors-signatures-case_002dlambda" rel="prev" title="descriptors signatures case-lambda">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="descriptors-relations"></a>
+<div class="header">
+<p>
+Previous: <a href="descriptors-signatures.html#descriptors-signatures" accesskey="p" rel="prev">descriptors signatures</a>, Up: <a href="descriptors.html#descriptors" accesskey="u" rel="up">descriptors</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Relations-between-type-descriptors"></a>
+<h3 class="section">4.6 Relations between type descriptors</h3>
+
+
+<p>The following syntactic bindings are exported by the library
+<code>(vicare system type-descriptors)</code>.
+</p>
+
+<dl>
+<dt><a name="index-type_002ddescriptor_002dparent"></a>Syntax: <strong>type-descriptor-parent</strong> <em><var>?type-annotation</var></em></dt>
+<dd><p>Expand to an expression which, compiled and evaluated, returns the type
+descriptor of the parent of the specified type annotation.
+</p>
+<div class="lisp">
+<pre class="lisp">(type-descriptor-parent &lt;fixnum&gt;)
+&rArr; &lt;exact-integer&gt;-ctd
+
+(type-descriptor-parent (pair &lt;fixnum&gt; &lt;flonum&gt;))
+&rArr; &lt;pair&gt;-ctd
+
+(define-record-type alpha)
+
+(type-descriptor-parent alpha)  &rArr; &lt;record&gt;-ctd
+
+(define-record-type beta
+  (parent alpha))
+
+(type-descriptor-parent beta)
+&rarr; (record-type-descriptor alpha)
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-type_002ddescriptor_002dancestors"></a>Syntax: <strong>type-descriptor-ancestors</strong> <em><var>?type-annotation</var></em></dt>
+<dd><p>Expand to an expression which, compiled and evaluated, returns the list
+of type descriptors representing the ancestors of the specified type
+annotation.  The descriptor of the annotation itself is <strong>not</strong>
+included.
+</p>
+<div class="lisp">
+<pre class="lisp">(type-descriptor-ancestors &lt;top&gt;)
+&rArr; ()
+
+(type-descriptor-ancestors &lt;string&gt;)
+&rArr; (&lt;top&gt;-ctd)
+
+(type-descriptor-ancestors &lt;record&gt;)
+&rArr; (&lt;struct&gt;-ctd &lt;top&gt;-ctd)
+
+(type-descriptor-ancestors &lt;nelist&gt;)
+&rArr; (&lt;list&gt;-ctd &lt;top&gt;-ctd)
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-type_002ddescriptor_003d_003f"></a>Syntax: <strong>type-descriptor=?</strong> <em><var>?type-annotation1</var> <var>?type-annotation2</var></em></dt>
+<dd><p>Expand to an expression which, compiled and evaluated, returns <code>#t</code>
+if the type descriptors associated to the specified type annotations are
+equal; otherwise it returns <code>#f</code>.
+</p>
+<div class="lisp">
+<pre class="lisp">(type-descriptor=? &lt;top&gt; &lt;top&gt;)
+&rArr; #t
+
+(type-descriptor=? &lt;top&gt; &lt;number&gt;)
+&rArr; #f
+
+(type-descriptor=? (pair &lt;fixnum&gt; &lt;string&gt;)
+                   (pair &lt;fixnum&gt; &lt;string&gt;))
+&rArr; #t
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-type_002ddescriptor_002dsuper_002dand_002dsub_003f"></a>Syntax: <strong>type-descriptor-super-and-sub?</strong> <em><var>?type-annotation1</var> <var>?type-annotation2</var></em></dt>
+<dd><p>Expand to an expression which, compiled and evaluated, returns <code>#t</code>
+if the type descriptor associated to <var>?type-annotation1</var> is a
+matching super&ndash;type of the type descriptor associated to
+<var>?type-annotation2</var>; otherwise it returns <code>#f</code>.
+</p>
+<div class="lisp">
+<pre class="lisp">(type-descriptor-super-and-sub?
+   &lt;top&gt; &lt;top&gt;)
+&rArr; #t
+
+(type-descriptor-super-and-sub?
+   &lt;top&gt; &lt;number&gt;)
+&rArr; #t
+
+(type-descriptor-super-and-sub?
+   &lt;number&gt; &lt;top&gt;)
+&rArr; #f
+
+(type-descriptor-super-and-sub?
+   (pair &lt;fixnum&gt; &lt;null&gt;) (list &lt;fixnum&gt;))
+&rArr; #t
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-type_002ddescriptor_002dmatching"></a>Syntax: <strong>type-descriptor-matching</strong> <em><var>?type-annotation1</var> <var>?type-annotation2</var></em></dt>
+<dd><p>Expand to an expression which, compiled and evaluated, matches the
+arguments as if: the descriptor associated to <var>?type-annotation1</var> is
+the type of a formal argument requested by a closure object; the type
+descriptor associated to <var>?type-annotation2</var> is the type of the
+operand given to a closure object application.
+</p>
+<p>Expand to a quoted symbol:
+</p>
+<dl compact="compact">
+<dt><code>exact-match</code></dt>
+<dd><p>If there is an exact match between the argument&rsquo;s and operand&rsquo;s
+descriptors.
+</p>
+</dd>
+<dt><code>possible-match</code></dt>
+<dd><p>If there is a possible match between the argument&rsquo;s and operand&rsquo;s
+descriptors; the operand must be further validated at run&ndash;time.
+</p>
+</dd>
+<dt><code>no-match</code></dt>
+<dd><p>If there is no match between the argument&rsquo;s and operand&rsquo;s descriptors.
+</p></dd>
+</dl>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-descriptors_002dsignature_002dmatching"></a>Syntax: <strong>descriptors-signature-matching</strong> <em><var>?signature-annotation1</var> <var>?signature-annotation2</var></em></dt>
+<dd><p>The arguments <var>signature-annotation</var> must be proper or improper
+lists of type annotations.  Expand to an expression which, compiled and
+evaluated, matches the arguments as if:
+</p>
+<ul>
+<li> The <code>&lt;descriptors-signature&gt;</code> instance associated to
+<var>?signature-annotation1</var> represents the types of formal arguments
+requested by a closure object.
+
+<p>The <code>&lt;descriptors-signature&gt;</code> instance associated to
+<var>?signature-annotation2</var> represents the types of the operands given
+to a closure object application.
+</p></li></ul>
+
+<p>Expand to a quoted symbol:
+</p>
+<dl compact="compact">
+<dt><code>exact-match</code></dt>
+<dd><p>If there is an exact match between the argument&rsquo;s and operand&rsquo;s
+descriptors.
+</p>
+</dd>
+<dt><code>possible-match</code></dt>
+<dd><p>If there is a possible match between the argument&rsquo;s and operand&rsquo;s
+descriptors; the operand must be further validated at run&ndash;time.
+</p>
+</dd>
+<dt><code>no-match</code></dt>
+<dd><p>If there is no match between the argument&rsquo;s and operand&rsquo;s descriptors.
+</p></dd>
+</dl>
+
+<p>Usage examples:
+</p>
+<div class="lisp">
+<pre class="lisp">(descriptors-signature-matching
+  (&lt;number&gt; &lt;string&gt;)
+  (&lt;fixnum&gt; &lt;nestring&gt;))
+&rArr; exact-match
+
+(descriptors-signature-matching
+  (&lt;number&gt; &lt;string&gt;)
+  (&lt;fixnum&gt; &lt;top&gt;))
+&rArr; possible-match
+
+(descriptors-signature-matching
+  (&lt;number&gt; &lt;string&gt;)
+  (&lt;fixnum&gt; &lt;vector&gt;))
+&rArr; no-match
+</pre></div>
+</dd></dl>
+
+<hr>
+<div class="header">
+<p>
+Previous: <a href="descriptors-signatures.html#descriptors-signatures" accesskey="p" rel="prev">descriptors signatures</a>, Up: <a href="descriptors.html#descriptors" accesskey="u" rel="up">descriptors</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

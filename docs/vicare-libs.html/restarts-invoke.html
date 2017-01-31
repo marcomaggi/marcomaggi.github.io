@@ -1,0 +1,271 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes the libraries distributed along with version
+0.4d1 of Vicare Scheme, an R6RS compliant native
+compiler for the Scheme language.
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+The documentation of the libraries (vicare parser-tools silex
+-) are derived form the documentation of SILex.  Copyright
+(C) 2001, 2009 Danny Dube'.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Libraries for Vicare Scheme: restarts invoke</title>
+
+<meta name="description" content="Libraries for Vicare Scheme: restarts invoke">
+<meta name="keywords" content="Libraries for Vicare Scheme: restarts invoke">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="restarts.html#restarts" rel="up" title="restarts">
+<link href="restarts-func.html#restarts-func" rel="next" title="restarts func">
+<link href="restarts-assoc.html#restarts-assoc" rel="prev" title="restarts assoc">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="restarts-invoke"></a>
+<div class="header">
+<p>
+Next: <a href="restarts-func.html#restarts-func" accesskey="n" rel="next">restarts func</a>, Previous: <a href="restarts-assoc.html#restarts-assoc" accesskey="p" rel="prev">restarts assoc</a>, Up: <a href="restarts.html#restarts" accesskey="u" rel="up">restarts</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Finding-and-invoking-restarts"></a>
+<h4 class="subsection">1.18.7 Finding and invoking restarts</h4>
+
+
+<dl>
+<dt><a name="index-find_002drestart"></a>Function: <strong>find-restart</strong> <em><var>name</var></em></dt>
+<dt><a name="index-find_002drestart-1"></a>Function: <strong>find-restart</strong> <em><var>name</var> <var>cnd</var></em></dt>
+<dd><p>Search the current dynamic environment for the innermost restart handler
+associated to <var>name</var>, which must be a symbol.  If a handler is
+found: return its restart object; otherwise return <code>#f</code>.
+</p>
+<p>When the optional argument <var>cnd</var> is used and <var>cnd</var> is a
+condition object (simple or compound): among the installed restarts,
+return only the innermost that is <strong>not</strong> associated to the
+condition object <var>cnd</var>.  When the optional argument <var>cnd</var> is
+used and <var>cnd</var> is <code>#f</code>: behave as if <var>cnd</var> was not used.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-invoke_002drestart"></a>Function: <strong>invoke-restart</strong> <em><var>restart-designator</var> . <var>rest</var></em></dt>
+<dd><p>Given a restart designator: search the associated handler in the current
+dynamic environment and apply it to the given <var>rest</var> arguments.
+Return the return values of such application, if the called function
+returns.
+</p>
+<p><var>restart-designator</var> can be either a symbol representing the name of
+the restart or the restart object itself (as returned by
+<code>find-restart</code>).
+</p>
+<p>If <var>restart-designator</var> is a symbol and no matching restart is
+found: an exception is raised with condition object of type
+<code>&amp;undefined-restart-error</code>.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-compute_002drestarts"></a>Function: <strong>compute-restarts</strong></dt>
+<dd><p>Return a list of symbols representing the names of the restarts
+currently installed in the dynamic environment.  The list is ordered:
+the innermost restarts come first, the outermost restarts come last.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-restart_002dname"></a>Function: <strong>restart-name</strong> <em><var>rst</var></em></dt>
+<dd><p>Given a restart object: return a symbol representing its name.
+</p></dd></dl>
+
+
+<p>Examples about finding and invoking restarts:
+</p>
+<div class="example">
+<pre class="example">(import (vicare)
+  (only (vicare checks)
+        with-result
+        add-result))
+
+;;Search an UNdefined restart.
+;;
+(find-restart 'alpha)
+&rArr; #f
+
+;;Search an UNdefined restart.
+;;
+(restart-case
+    (find-restart 'beta)
+  (alpha (lambda ()
+           (add-result 'restart-alpha))))
+&rArr; #f
+
+;;Search an UNdefined restart.
+;;
+(restart-case
+    (find-restart 'gamma)
+  (alpha (lambda ()
+           (add-result 'restart-alpha)))
+  (beta  (lambda ()
+           (add-result 'restart-beta)))
+  (delta (lambda ()
+           (add-result 'restart-delta))))
+&rArr; #f
+
+;;Invoke an UNdefined restart.
+;;
+(try
+    (invoke-restart 'alpha)
+  (catch E
+    ((&amp;undefined-restart-error)
+     1)
+    (else E)))
+&rArr; 1
+
+;;Find then invoke a restart in two steps.
+;;Invoking a restart is a non-local exit.
+;;
+(with-result
+  (restart-case
+      (begin
+        (add-result 'body-in)
+        (let ((restart (find-restart 'alpha)))
+          (add-result 'body-invoking)
+          (begin0
+              (invoke-restart restart)
+            (add-result 'body-out)
+            1)))
+    (alpha (lambda ()
+             (add-result 'restart-alpha)
+             2))))
+&rArr; (2 (body-in body-invoking restart-alpha))
+
+;;Find and invoke a restart in a single step.
+;;Invoking a restart is a non-local exit.
+;;
+(with-result
+  (restart-case
+      (begin
+        (add-result 'body-in)
+        (begin0
+            (invoke-restart 'alpha)
+          (add-result 'body-out)
+          1))
+    (alpha (lambda ()
+             (add-result 'restart-alpha)
+             2))))
+&rArr; (2 (body-in restart-alpha))
+</pre></div>
+
+<p>Usage examples on <code>compute-restarts</code>:
+</p>
+<div class="example">
+<pre class="example">(import (vicare)
+  (only (vicare checks)
+        with-result
+        add-result))
+
+(compute-restarts)
+&rArr; ()
+
+(map restart-name
+  (restart-case
+      (compute-restarts)
+    (alpha void)
+    (beta  void)))
+&rArr; (alpha beta)
+
+(map restart-name
+  (restart-case
+      (restart-case
+          (compute-restarts)
+        (alpha void)
+        (beta  void))
+    (delta void)
+    (gamma void)))
+&rArr; (alpha beta delta gamma)
+
+(map restart-name
+  (restart-case
+      (restart-case
+          (restart-case
+              (compute-restarts)
+            (alpha void)
+            (beta  void))
+        (delta void)
+        (gamma void))
+    (chi void)
+    (xi  void)))
+&rArr; (alpha beta delta gamma chi xi)
+</pre></div>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="restarts-func.html#restarts-func" accesskey="n" rel="next">restarts func</a>, Previous: <a href="restarts-assoc.html#restarts-assoc" accesskey="p" rel="prev">restarts assoc</a>, Up: <a href="restarts.html#restarts" accesskey="u" rel="up">restarts</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

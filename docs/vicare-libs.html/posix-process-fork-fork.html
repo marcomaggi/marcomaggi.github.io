@@ -1,0 +1,163 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes the libraries distributed along with version
+0.4d1 of Vicare Scheme, an R6RS compliant native
+compiler for the Scheme language.
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+The documentation of the libraries (vicare parser-tools silex
+-) are derived form the documentation of SILex.  Copyright
+(C) 2001, 2009 Danny Dube'.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Libraries for Vicare Scheme: posix process fork fork</title>
+
+<meta name="description" content="Libraries for Vicare Scheme: posix process fork fork">
+<meta name="keywords" content="Libraries for Vicare Scheme: posix process fork fork">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="posix-process-fork.html#posix-process-fork" rel="up" title="posix process fork">
+<link href="posix-process-fork-fds.html#posix-process-fork-fds" rel="next" title="posix process fork fds">
+<link href="posix-process-fork.html#posix-process-fork" rel="prev" title="posix process fork">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="posix-process-fork-fork"></a>
+<div class="header">
+<p>
+Next: <a href="posix-process-fork-fds.html#posix-process-fork-fds" accesskey="n" rel="next">posix process fork fds</a>, Up: <a href="posix-process-fork.html#posix-process-fork" accesskey="u" rel="up">posix process fork</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Forking-a-process"></a>
+<h4 class="subsubsection">4.6.2.1 Forking a process</h4>
+
+
+<a name="index-Forking-a-process"></a>
+<a name="index-Process_002c-forking"></a>
+<a name="index-Subprocess_002c-forking"></a>
+
+
+<dl>
+<dt><a name="index-fork"></a>Function: <strong>fork</strong></dt>
+<dt><a name="index-fork-1"></a>Function: <strong>fork</strong> <em><var>parent-proc</var> <var>child-thunk</var></em></dt>
+<dd><a name="index-Forking-processes"></a>
+<a name="index-Processes_002c-forking"></a>
+<p>Interface to the C function <code>fork()</code>, <a href="http://www.gnu.org/software/libc/manual/html_node/Creating-a-Process.html#Creating-a-Process">(libc)fork</a>.  The behaviour depends upon the number of arguments:
+</p>
+<ul>
+<li> When called with no arguments: create a new process by forking the
+current one; if successful return a non&ndash;negative fixnum representing
+the return value of <code>fork()</code>, else raise an exception.  The return
+value is: <code>0</code> in the child process; the child process pid in the
+parent.
+
+</li><li> When called with two arguments: create a new process by forking the
+current one; if successful the parent process applies <var>parent-proc</var>
+to a fixnum representing the child process pid and return its return
+value; if successful: the child process evaluates the <var>child-thunk</var>
+and returns its return value; if an error occurs: an exception is
+raised.
+</li></ul>
+</dd></dl>
+
+
+<p>When forking a process we must remember about input/output ports:
+</p>
+<ol>
+<li> Before forking, in the parent process we should call
+<code>flush-ports-in-close-on-exec-mode</code>; <a href="posix-fd-device.html#posix-fd-device">flush-ports-in-close-on-exec-mode</a>, for details.
+
+</li><li> After forking, in the child process we should call
+<code>close-ports-in-close-on-exec-mode</code>; <a href="posix-fd-device.html#posix-fd-device">close-ports-in-close-on-exec-mode</a>, for details.
+</li></ol>
+
+<p>we must also remember that some file descriptors are marked to be
+&ldquo;closed on exec&rdquo;.
+</p>
+<p>Here is a simple example of forking a process:
+</p>
+<div class="example">
+<pre class="example">#!r6rs
+(import (vicare)
+  (prefix (vicare posix) px.))
+
+(px.fork
+ (lambda (child-pid)
+   (printf &quot;in parent pid = ~a, child pid = ~s\n&quot;
+	   (px.getpid) child-pid)
+   (flush-output-port (current-output-port)))
+ (lambda ()
+   (printf &quot;in child, pid = ~a\n&quot; (px.getpid))
+   (flush-output-port (current-output-port))
+   (exit)))
+
+(printf &quot;here we are in the parent\n&quot;)
+(flush-output-port (current-output-port))
+</pre></div>
+
+
+
+
+</body>
+</html>

@@ -1,0 +1,292 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.4d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit and 64-bit
+processors.  Vicare is pronounced the etruscan way.  The focus of
+this document is over the typed language extension.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/downloads
+
+the home page of the project is at:
+
+http://marcomaggi.github.io/vicare.html
+
+development takes place at:
+
+http://github.com/marcomaggi/vicare/
+
+and, as a backup, at:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/
+
+Copyright (C) 2016-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Vicare Scheme&rsquo;s typed language: syntaxes overloads</title>
+
+<meta name="description" content="Vicare Scheme&rsquo;s typed language: syntaxes overloads">
+<meta name="keywords" content="Vicare Scheme&rsquo;s typed language: syntaxes overloads">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="type-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="syntaxes.html#syntaxes" rel="up" title="syntaxes">
+<link href="syntaxes-operations.html#syntaxes-operations" rel="next" title="syntaxes operations">
+<link href="syntaxes-variables.html#syntaxes-variables" rel="prev" title="syntaxes variables">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="syntaxes-overloads"></a>
+<div class="header">
+<p>
+Next: <a href="syntaxes-operations.html#syntaxes-operations" accesskey="n" rel="next">syntaxes operations</a>, Previous: <a href="syntaxes-variables.html#syntaxes-variables" accesskey="p" rel="prev">syntaxes variables</a>, Up: <a href="syntaxes.html#syntaxes" accesskey="u" rel="up">syntaxes</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Overloaded-functions"></a>
+<h3 class="section">5.9 Overloaded functions</h3>
+
+
+<a name="index-Overloaded-functions"></a>
+<a name="index-Functions_002c-overloaded"></a>
+
+
+<p>An <em>overloaded function</em> represents an aggregation of functions
+linked to the same name and having different number and/or type of
+arguments.  For example, in the code:
+</p>
+<div class="lisp">
+<pre class="lisp">(define/overload (fun {O &lt;fixnum&gt;})
+  (list 'fixnum O))
+
+(define/overload (fun {O &lt;string&gt;})
+  (list 'string O))
+
+(define/overload (fun {A &lt;vector&gt;} {B &lt;vector&gt;})
+  (list 'vectors (vector-append A B)))
+
+(fun 123)               &rArr; (fixnum 123)
+(fun &quot;ciao&quot;)            &rArr; (string &quot;ciao&quot;)
+(fun '#(1) '#(2))       &rArr; (vectors #(1 2))
+</pre></div>
+
+<p>an overloaded function named <code>fun</code> is defined by the first use of
+<code>define/overload</code>; subsequent uses add new specialisations to the
+same function.
+</p>
+<p>In the above example: the selection of the specialised function happens
+at expand&ndash;time, because the expander can determine the type of the
+operands.  Early binding (more precisely: expand&ndash;time dispatching) is
+available only with the &ldquo;canonical&rdquo; function application syntax:
+</p>
+<div class="lisp">
+<pre class="lisp">(<var>?fun</var> <var>?operand</var> ...)
+</pre></div>
+
+<p>Here is an example of late binding (more precisely: run&ndash;time
+dispatching, or dynamic dispatching):
+</p>
+<div class="lisp">
+<pre class="lisp">(define/overload (doit {O &lt;string&gt;})
+  (list 'string O))
+
+(define/overload (doit {O &lt;fixnum&gt;})
+  (list 'fixnum O))
+
+(map doit '(&quot;ciao&quot; 123))
+&rArr; ((string &quot;ciao&quot;) (fixnum 123))
+</pre></div>
+
+<p>putting the overloaded function&rsquo;s syntactic identifier in reference
+position will reference a special function that implements dynamic
+dispatching.
+</p>
+<p>It is an error to define two specialised functions with the same formals
+type signature.  Specialised functions are allowed to have different
+type signatures for the returned values, but we should use this feature
+with care; it is suggested not to abuse overloaded functions by adding
+specialised functions that perform unrelated operations.
+</p>
+<p>We can overload functions only in the same lexical context, the
+following code will create <strong>two</strong> functions:
+</p>
+<div class="lisp">
+<pre class="lisp">(define/overload (fun {O &lt;fixnum&gt;})
+  ---)
+
+(internal-body
+  (define/overload (fun {O &lt;string&gt;})
+    ---)
+  ---)
+</pre></div>
+
+<p>We can define an overloaded function in a library and then add
+specialised functions in a second library which depends on the first
+one.
+</p>
+<p>Whenever an overloaded function is applied to a tuple of operands: first
+expand&ndash;time early binding is attempted; if it fails, run&ndash;time late
+binding is attempted.  At expand&ndash;time:
+</p>
+<ol>
+<li> The expander determines the type of the operands, if it fails a syntax
+violation is raised (for example if an operand expression returns
+multiple values).
+
+</li><li> The set of specialised functions is visited and the syntactic identifier
+bound to the better matching one is inserted in the code to be applied
+to the operands.  The return values of the specialised function will
+become the return values of the overloaded function application.
+
+</li><li> If no matching function is found: code performing late binding is
+inserted.  If the option <samp>-Woverloaded-function-late-binding</samp> was
+used: a <code>&amp;warning</code> exception is raised signalling failure in
+early binding.
+</li></ol>
+
+<p>At run&ndash;time:
+</p>
+<ol>
+<li> The type of the operands is determined using <code>type-descriptor-of</code>,
+<a href="descriptors-retrieving.html#descriptors-retrieving">type-descriptor-of</a>.
+
+</li><li> The set of specialised functions is visited and the better matching one
+is applied to the operands.  The return values of the specialised
+function become the return values of the overloaded function
+application.
+
+</li><li> If no matching function is found: an exception is raised with type
+<code>&amp;overloaded-function-late-binding-error</code>, <a href="../vicare-scheme/iklib-conditions-late_002dbind-overload.html#iklib-conditions-late_002dbind-overload">(vicare-scheme)Overloaded function late binding
+conditions</a>.
+</li></ol>
+
+<p>Specialised functions are ranked to select the better matching.  At both
+expand&ndash;time and run&ndash;time, ranking works by iterating a list of
+specialised functions:
+</p>
+<ol>
+<li> Get the next function from the list.  When there are no more functions:
+if a better matching function was selected, it becomes the one; if no
+matching function was found, perform the default action.
+
+</li><li> If the formals&rsquo; type signature of the next function is a super&ndash;type of
+the operands&rsquo; type signature: the function is the &ldquo;next matching one&rdquo;,
+otherwise it is discarded and we iterate to step 1.
+
+</li><li> If the next matching function is the first in the list: it becomes the
+&ldquo;current better matching&rdquo; and we iterate to step 1.
+
+</li><li> If the formals&rsquo; type signature of the next matching is a sub&ndash;type of
+the formals&rsquo; type signature of the better matching: the next matching
+becomes the new better matching; otherwise the old better matching
+stands.  We iterate to step 1.
+</li></ol>
+
+<p>Here is an example that shows how ranking works:
+</p>
+<div class="lisp">
+<pre class="lisp">(define/overload (fun {O &lt;number&gt;})
+  `(number ,O))
+
+(define/overload (fun {O &lt;real&gt;})
+  `(real ,O))
+
+(define/overload (fun {O &lt;fixnum&gt;})
+  `(fixnum ,O))
+
+(fun 1+2i)      &rArr; (number 1+2i)
+(fun 3.4)       &rArr; (real   3.4)
+(fun 5)         &rArr; (fixnum 5)
+</pre></div>
+
+<p>notice that, at expand&ndash;time, only the operands&rsquo; type signature seen by
+the expander is the one that matters, with the same definitions above:
+</p>
+<div class="lisp">
+<pre class="lisp">(fun (cast-signature (&lt;number&gt;) 123))   &rArr; (number 123)
+(fun (cast-signature (&lt;real&gt;)   123))   &rArr; (real   123)
+(fun (cast-signature (&lt;fixnum&gt;) 123))   &rArr; (fixnum 123)
+</pre></div>
+
+<p>The following syntactic bindings are exported by the library
+<code>(vicare)</code>.
+</p>
+
+<dl>
+<dt><a name="index-define_002foverload"></a>Syntax: <strong>define/overload</strong> <em>(<var>?who</var> . <var>?formals</var>) . <var>?body</var></em></dt>
+<dt><a name="index-define_002foverload-1"></a>Syntax: <strong>define/overload</strong> <em>((brace <var>?who</var> . <var>?rv-types</var>) . <var>?formals</var>) . <var>?body</var></em></dt>
+<dt><a name="index-brace"></a>Auxiliary Syntax: <strong>brace</strong></dt>
+<dd><p>Define a specialisation for the overloaded function <var>?who</var>.  If this
+is the first specialisation for <var>?who</var>, also define the overloaded
+function; otherwise define only the specialisation and register it in
+the already existent <var>?who</var>.
+</p>
+<p>The syntax has the same format of <code>define/typed</code>, it defines a
+function with type annotations for both the arguments and the return
+values.  The function&rsquo;s type signature is used only at expand&ndash;time to
+validate the type of the operands used in an application.
+</p></dd></dl>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="syntaxes-operations.html#syntaxes-operations" accesskey="n" rel="next">syntaxes operations</a>, Previous: <a href="syntaxes-variables.html#syntaxes-variables" accesskey="p" rel="prev">syntaxes variables</a>, Up: <a href="syntaxes.html#syntaxes" accesskey="u" rel="up">syntaxes</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

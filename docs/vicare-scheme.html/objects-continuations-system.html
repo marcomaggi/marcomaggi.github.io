@@ -1,60 +1,36 @@
-<html lang="en">
-<head>
-<title>objects continuations system - Vicare Scheme</title>
-<meta http-equiv="Content-Type" content="text/html">
-<meta name="description" content="Vicare Scheme">
-<meta name="generator" content="makeinfo 4.13">
-<link title="Top" rel="start" href="index.html#Top">
-<link rel="up" href="objects-continuations.html#objects-continuations" title="objects continuations">
-<link rel="prev" href="objects-continuations-scheme.html#objects-continuations-scheme" title="objects continuations scheme">
-<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
-<!--
-This document describes version 0.3d7 of Vicare Scheme, an
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.4d1 of Vicare Scheme, an
 R6RS compliant native compiler for the Scheme language, producing
-single threaded programs running on Intel x86 32-bit processors, with
-experimental support for 64-bit machines.  _Vicare_ is pronounced
-the etruscan way.
+single threaded programs running on Intel x86 32-bit and 64-bit
+processors.  Vicare is pronounced the etruscan way.
 
 The package, including its documentation, is distributed under the terms
 of the GNU General Public License (GPL) and can be downloaded
 from:
 
-        `http://sourceforge.net/projects/vicare-scheme/files/'
-
+https://bitbucket.org/marcomaggi/vicare-scheme/downloads
 
 the home page of the project is at:
 
-              `http://marcomaggi.github.com/vicare.html'
-
+http://marcomaggi.github.io/vicare.html
 
 development takes place at:
 
-                `http://github.com/marcomaggi/vicare/'
-
+http://github.com/marcomaggi/vicare/
 
 and, as a backup, at:
 
-                     `http://gitorious.org/vicare'
+https://bitbucket.org/marcomaggi/vicare-scheme/
 
-
-and at:
-
-           `http://sourceforge.net/projects/vicare-scheme/'
-
-
-this project has a mailing list:
-
-             `http://groups.google.com/group/vicare-users'
-
-
-Copyright (C) 2010-2013 by Marco Maggi.
+Copyright (C) 2010-2017 by Marco Maggi.
 
 Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
 
 Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
 
 This document is derived from the original Ikarus documentation by the
-Vicare Scheme contributors, see the ``History'' appendix for details.
+Vicare Scheme contributors, see the "History" appendix for details.
 
 The documentation of IrRegex is Copyright (C) 2005-2012 Alex
 Shinn.  All rights reserved.
@@ -62,156 +38,203 @@ Shinn.  All rights reserved.
 The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
 Sitaram.  All rights reserved.
 
-The documentation of the library `(vicare formations)' is derived
+The documentation of the library (vicare formations) is derived
 from the documentation of Guile.  Copyright (C) 1996-2005,
 2009-2013 Free Software Foundation.
 
-     This program is free software: you can redistribute it and/or
-     modify it under the terms of the GNU General Public License
-     version 3 as published by the Free Software Foundation.
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
 
-     This program is distributed in the hope that it will be useful, but
-     WITHOUT ANY WARRANTY; without even the implied warranty of
-     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-     General Public License for more details.
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
 
-     You should have received a copy of the GNU General Public License
-     along with this program.  If not, see
-     `http://www.gnu.org/licenses/'.
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
 
-Trademarks used herein are the property of their respective owners.-->
-<meta http-equiv="Content-Style-Type" content="text/css">
-<style type="text/css"><!--
-  pre.display { font-family:inherit }
-  pre.format  { font-family:inherit }
-  pre.smalldisplay { font-family:inherit; font-size:smaller }
-  pre.smallformat  { font-family:inherit; font-size:smaller }
-  pre.smallexample { font-size:smaller }
-  pre.smalllisp    { font-size:smaller }
-  span.sc    { font-variant:small-caps }
-  span.roman { font-family:serif; font-weight:normal; } 
-  span.sansserif { font-family:sans-serif; font-weight:normal; } 
---></style>
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Vicare Scheme: objects continuations system</title>
+
+<meta name="description" content="Vicare Scheme: objects continuations system">
+<meta name="keywords" content="Vicare Scheme: objects continuations system">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="objects-continuations.html#objects-continuations" rel="up" title="objects continuations">
+<link href="objects-misc.html#objects-misc" rel="next" title="objects misc">
+<link href="objects-continuations-scheme.html#objects-continuations-scheme" rel="prev" title="objects continuations scheme">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
 </head>
-<body>
-<div class="node">
-<a name="objects-continuations-system"></a>
-<p>
-Previous:&nbsp;<a rel="previous" accesskey="p" href="objects-continuations-scheme.html#objects-continuations-scheme">objects continuations scheme</a>,
-Up:&nbsp;<a rel="up" accesskey="u" href="objects-continuations.html#objects-continuations">objects continuations</a>
-<hr>
-</div>
 
-<h4 class="subsection">10.25.3 System continuation objects</h4>
+<body lang="en">
+<a name="objects-continuations-system"></a>
+<div class="header">
+<p>
+Previous: <a href="objects-continuations-scheme.html#objects-continuations-scheme" accesskey="p" rel="prev">objects continuations scheme</a>, Up: <a href="objects-continuations.html#objects-continuations" accesskey="u" rel="up">objects continuations</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="System-continuation-objects"></a>
+<h4 class="subsection">13.25.3 System continuation objects</h4>
+
 
 <p>Vicare is written in both the C language and the Scheme
 language; the runtime system performing heap and stack memory allocation
 and garbage collection is written in the C language.  Vicare
 starts with C code and enters Scheme code when running a Scheme program:
+</p>
+<div class="example">
+<pre class="example">C code --&gt; Scheme code
+</pre></div>
 
-<pre class="example">     C code --&gt; Scheme code
-</pre>
-   <p class="noindent">when the last Scheme function returns: Vicare knowns that it
+<p>when the last Scheme function returns: Vicare knowns that it
 has to return to C code because the Scheme stack is initialised with a
 return address to a special routine (the underflow handler) that does
 it.
-
-   <p>It is clear that, while running a Scheme program, every now and then
+</p>
+<p>It is clear that, while running a Scheme program, every now and then
 Vicare must switch between portions of code written in C and
 portions of code written in Scheme; such portions make different use of
 the <acronym>CPU</acronym>.
-
-   <p>Whenever Vicare leaves C code execution to enter Scheme code
+</p>
+<p>Whenever Vicare leaves C code execution to enter Scheme code
 execution: it saves the current state of the C stack; in practice it
-saves the pointer to the top of the stack in the <acronym>PCB</acronym> structure. 
+saves the pointer to the top of the stack in the <acronym>PCB</acronym> structure.
 Whenever Vicare leaves Scheme code execution to return to C
 code execution: it saves the current state of the Scheme stack in the
 <acronym>PCB</acronym> and restores the state of the C stack from the <acronym>PCB</acronym>.
-
-   <p>While running Scheme code we can call a C function through the
+</p>
+<p>While running Scheme code we can call a C function through the
 primitive, low&ndash;level operation <code>foreign-call</code> (when using the
 <acronym>FFI</acronym> callout mechanism we are still using <code>foreign-call</code>):
+</p>
+<div class="example">
+<pre class="example">C code --&gt; Scheme code (--&gt; foreign-call) --&gt; C code
+</pre></div>
 
-<pre class="example">     C code --&gt; Scheme code (--&gt; foreign-call) --&gt; C code
-</pre>
-   <p class="noindent">when leaving Scheme code: the status of the Scheme stack is saved in the
+<p>when leaving Scheme code: the status of the Scheme stack is saved in the
 <acronym>PCB</acronym>; the C stack creates no problems: we just retrieve the top of the
 C stack from the <acronym>PCB</acronym> and use the stack region below it,
-<a href="fig_003akont_005fcstack_005freenter.html#fig_003akont_005fcstack_005freenter">objects continuations system</a>.
+<a href="#fig_003akont_005fcstack_005freenter">objects continuations system</a>.
+</p>
+<div class="float"><a name="fig_003akont_005fcstack_005freenter"></a>
+<div class="example">
+<pre class="example">
 
-   <div class="float">
-<a name="fig_003akont_005fcstack_005freenter"></a>
-<pre class="example">     
-         --------- stack growing direction -------&gt;
-     
-      C stack   C stack  C stack   C stack    C stack
-      frame     frame    frame     frame      frame
-     |---------|--------|--------|----------|----------|
-                                 ^                     ^
-                            saved top            current top
-     
-     |...........................|.....................|
-        C stack before entering     C stack after
-        Scheme code                 reentering C code
-</pre>
-   <p><strong class="float-caption">Figure 10.5: The C stack portions used before entering Scheme code and after
-reentering C code with <code>foreign-call</code>.</strong></p></div>
+    --------- stack growing direction -------&gt;
 
-   <p>Now let's say that, after entering nested C code, we enter nested Scheme
+ C stack   C stack  C stack   C stack    C stack
+ frame     frame    frame     frame      frame
+|---------|--------|--------|----------|----------|
+                            ^                     ^
+                       saved top            current top
+
+|...........................|.....................|
+   C stack before entering     C stack after
+   Scheme code                 reentering C code
+</pre></div>
+
+<div class="float-caption"><p><strong>Figure 13.5: </strong>The C stack portions used before entering Scheme code and after
+reentering C code with <code>foreign-call</code>.</p></div></div>
+<p>Now let&rsquo;s say that, after entering nested C code, we enter nested Scheme
 code:
+</p>
+<div class="example">
+<pre class="example">C code 1 --&gt; Scheme code 1 --&gt; C code 2 --&gt; Scheme code 2
+</pre></div>
 
-<pre class="example">     C code 1 --&gt; Scheme code 1 --&gt; C code 2 --&gt; Scheme code 2
-</pre>
-   <p class="noindent">at the transition from <code>C code 2</code> to <code>Scheme code 2</code> we must
+<p>at the transition from <code>C code 2</code> to <code>Scheme code 2</code> we must
 save the state of the C stack, but the dedicated fields in the <acronym>PCB</acronym>
 are already busy with the status of <code>C code 1</code>.  Vicare
 solves this problem with continuation objects; at the transition from
 <code>C code 2</code> to <code>Scheme code 2</code>:
-
-     <ol type=1 start=1>
-<li>A Scheme continuation object is created to hold the status of
+</p>
+<ol>
+<li> A Scheme continuation object is created to hold the status of
 <code>Scheme code 1</code> previously saved in the <acronym>PCB</acronym>.
 
-     <li>A system continuation object is created to hold the status of <code>C
+</li><li> A system continuation object is created to hold the status of <code>C
 code 1</code> previously saved in the <acronym>PCB</acronym>.
 
-     <li>The status of <code>C code 2</code> is saved in the <acronym>PCB</acronym>.
+</li><li> The status of <code>C code 2</code> is saved in the <acronym>PCB</acronym>.
 
-     <li>Execution of <code>Scheme code 2</code> is entered in a clean Scheme stack
+</li><li> Execution of <code>Scheme code 2</code> is entered in a clean Scheme stack
 segment.
-        </ol>
+</li></ol>
 
-<p class="noindent">whenever <code>Scheme code 2</code> goes back to <code>C code 2</code>:
+<p>whenever <code>Scheme code 2</code> goes back to <code>C code 2</code>:
+</p>
+<ol>
+<li> The Scheme stack segment used by <code>Scheme code 2</code> is abandoned.
 
-     <ol type=1 start=1>
-<li>The Scheme stack segment used by <code>Scheme code 2</code> is abandoned.
-
-     <li>The status of <code>C code 2</code> is restored from the system continuation
+</li><li> The status of <code>C code 2</code> is restored from the system continuation
 object.
 
-     <li>The execution enters <code>C code 2</code>.
+</li><li> The execution enters <code>C code 2</code>.
 
-     <li>The status of <code>Scheme code 1</code> is restored from the Scheme
+</li><li> The status of <code>Scheme code 1</code> is restored from the Scheme
 continuation object.
 
-     <li>The execution enters <code>Scheme code 1</code>.
-        </ol>
+</li><li> The execution enters <code>Scheme code 1</code>.
+</li></ol>
 
-   <p>In a system continuation object:
-
-     <ul>
-<li>The field <code>top</code> is an untagged memory pointer referencing the C
+<p>In a system continuation object:
+</p>
+<ul>
+<li> The field <code>top</code> is an untagged memory pointer referencing the C
 language stack last saved upon exiting C code and entering Scheme code;
 it is the content of the field <code>pcb-&gt;system_stack</code> at the time this
 system continuation object was created.
 
-     <li>The field <code>size</code> of a system continuation object is unused. 
-</ul>
+</li><li> The field <code>size</code> of a system continuation object is unused.
+</li></ul>
 
-   <p>Upon creation, both Scheme and system continuation objects are prepended
+<p>Upon creation, both Scheme and system continuation objects are prepended
 to the linked list referenced by the field <code>next_k</code> of the <acronym>PCB</acronym>
 structure.
+</p>
+<hr>
+<div class="header">
+<p>
+Previous: <a href="objects-continuations-scheme.html#objects-continuations-scheme" accesskey="p" rel="prev">objects continuations scheme</a>, Up: <a href="objects-continuations.html#objects-continuations" accesskey="u" rel="up">objects continuations</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
 
-<!-- page -->
-   </body></html>
 
+
+</body>
+</html>

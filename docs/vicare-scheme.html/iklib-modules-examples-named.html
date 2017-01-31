@@ -1,0 +1,266 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.4d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit and 64-bit
+processors.  Vicare is pronounced the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/downloads
+
+the home page of the project is at:
+
+http://marcomaggi.github.io/vicare.html
+
+development takes place at:
+
+http://github.com/marcomaggi/vicare/
+
+and, as a backup, at:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the "History" appendix for details.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Vicare Scheme: iklib modules examples named</title>
+
+<meta name="description" content="Vicare Scheme: iklib modules examples named">
+<meta name="keywords" content="Vicare Scheme: iklib modules examples named">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="iklib-modules-examples.html#iklib-modules-examples" rel="up" title="iklib modules examples">
+<link href="iklib-modules-examples-import.html#iklib-modules-examples-import" rel="next" title="iklib modules examples import">
+<link href="iklib-modules-examples-anonymous.html#iklib-modules-examples-anonymous" rel="prev" title="iklib modules examples anonymous">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="iklib-modules-examples-named"></a>
+<div class="header">
+<p>
+Next: <a href="iklib-modules-examples-import.html#iklib-modules-examples-import" accesskey="n" rel="next">iklib modules examples import</a>, Previous: <a href="iklib-modules-examples-anonymous.html#iklib-modules-examples-anonymous" accesskey="p" rel="prev">iklib modules examples anonymous</a>, Up: <a href="iklib-modules-examples.html#iklib-modules-examples" accesskey="u" rel="up">iklib modules examples</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Named-modules-examples"></a>
+<h4 class="subsubsection">6.36.2.2 Named modules examples</h4>
+
+
+<p>The following example defines a module named <code>blue</code> and invokes
+functions from it in the top level region:
+</p>
+<div class="example">
+<pre class="example">(import (vicare))
+
+(module BLUE
+    (blue-one blue-two blue-three)
+  (define (blue-one)          'blue-one)
+  (define (blue-two)          'blue-two)
+  (define (blue-three)        (cons 'blue-three (hidden)))
+  (define (hidden)            'blue-hidden))
+
+(import BLUE)
+(fprintf (current-error-port)
+         &quot;calling blue: ~s ~s ~s\n&quot;
+         (blue-one) (blue-two) (blue-three))
+</pre></div>
+
+<p>notice that bindings from a named module are accessible only if imported
+in the enclosing region.
+</p>
+<p>The following example defines two modules named <code>green</code> and
+<code>red</code>, then it imports their bindings in different regions:
+</p>
+<div class="example">
+<pre class="example">(import (vicare))
+
+(internal-body
+
+  (module GREEN (one two three)
+    (define (one)       'green-one)
+    (define (two)       'green-two)
+    (define (three)     (cons 'green-three (hidden)))
+    (define (hidden)    'green-hidden))
+
+  (module RED (one two three)
+    (define (one)       'red-one)
+    (define (two)       'red-two)
+    (define (three)     (cons 'red-three (hidden)))
+    (define (hidden)    'red-hidden))
+
+  (import GREEN)
+
+  (internal-body
+    (import RED)
+    (fprintf (current-error-port)
+      &quot;calling red: ~s ~s ~s\n&quot; (one) (two) (three)))
+
+  (fprintf (current-error-port)
+    &quot;calling green: ~s ~s ~s\n&quot; (one) (two) (three)))
+</pre></div>
+
+<p>The following example shows that modules in the same enclosing region
+can import their bindings:
+</p>
+<div class="example">
+<pre class="example">(import (vicare))
+
+(internal-body
+
+  (module green (one two)
+    (define (one)       'one)
+    (define (two)       'two))
+
+  (module red (f g)
+    (import green)
+    (define (f)         (cons 'f (one)))
+    (define (g)         (cons 'g (two))))
+
+  (import red)
+  (fprintf (current-error-port)
+    &quot;calling red: ~s ~s\n&quot; (f) (g)))
+</pre></div>
+
+<p>while the following example shows that bindings from an anonymous module
+are automatically available in modules defined in the same enclosing
+region:
+</p>
+<div class="example">
+<pre class="example">(import (vicare))
+
+(internal-body
+
+  (module (one two)
+    (define (one)       'one)
+    (define (two)       'two))
+
+  (module red (f g)
+    (define (f)         (cons 'f (one)))
+    (define (g)         (cons 'g (two))))
+
+  (import red)
+  (fprintf (current-error-port)
+    &quot;calling red: ~s ~s\n&quot; (f) (g)))
+</pre></div>
+
+<p>and the following example shows that the order of module definitions
+does not matter in determining visibility of bindings from
+<strong>anonymous</strong> modules:
+</p>
+<div class="example">
+<pre class="example">(import (vicare))
+
+(internal-body
+
+  (module red (f g)
+    (define (f)         (cons 'f (one)))
+    (define (g)         (cons 'g (two))))
+
+  (module (one two)
+    (define (one)       'one)
+    (define (two)       'two))
+
+  (import red)
+  (fprintf (current-error-port)
+    &quot;calling red: ~s ~s\n&quot; (f) (g)))
+</pre></div>
+
+<p>the following is an <strong>error</strong> because it tries to import bindings
+from a <strong>named</strong> module before its definition:
+</p>
+<div class="example">
+<pre class="example">(import (vicare))
+
+(internal-body
+
+  (module red (f g)
+    (import green) ;; error here!!!
+    (define (f)         (cons 'f (one)))
+    (define (g)         (cons 'g (two))))
+
+  (module green (one two)
+    (define (one)       'one)
+    (define (two)       'two))
+
+  (import red)
+  (fprintf (current-error-port)
+    &quot;calling red: ~s ~s\n&quot; (f) (g)))
+</pre></div>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="iklib-modules-examples-import.html#iklib-modules-examples-import" accesskey="n" rel="next">iklib modules examples import</a>, Previous: <a href="iklib-modules-examples-anonymous.html#iklib-modules-examples-anonymous" accesskey="p" rel="prev">iklib modules examples anonymous</a>, Up: <a href="iklib-modules-examples.html#iklib-modules-examples" accesskey="u" rel="up">iklib modules examples</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

@@ -1,0 +1,369 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.4d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit and 64-bit
+processors.  Vicare is pronounced the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/downloads
+
+the home page of the project is at:
+
+http://marcomaggi.github.io/vicare.html
+
+development takes place at:
+
+http://github.com/marcomaggi/vicare/
+
+and, as a backup, at:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the "History" appendix for details.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Vicare Scheme: iklib syntaxes lambdas star</title>
+
+<meta name="description" content="Vicare Scheme: iklib syntaxes lambdas star">
+<meta name="keywords" content="Vicare Scheme: iklib syntaxes lambdas star">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="iklib-syntaxes-lambdas.html#iklib-syntaxes-lambdas" rel="up" title="iklib syntaxes lambdas">
+<link href="iklib-syntaxes-defines.html#iklib-syntaxes-defines" rel="next" title="iklib syntaxes defines">
+<link href="iklib-syntaxes-lambdas-named.html#iklib-syntaxes-lambdas-named" rel="prev" title="iklib syntaxes lambdas named">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="iklib-syntaxes-lambdas-star"></a>
+<div class="header">
+<p>
+Previous: <a href="iklib-syntaxes-lambdas-named.html#iklib-syntaxes-lambdas-named" accesskey="p" rel="prev">iklib syntaxes lambdas named</a>, Up: <a href="iklib-syntaxes-lambdas.html#iklib-syntaxes-lambdas" accesskey="u" rel="up">iklib syntaxes lambdas</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Validating-lambda-syntaxes"></a>
+<h4 class="subsubsection">6.8.2.2 Validating <code>lambda</code> syntaxes</h4>
+
+
+<p>The syntaxes <code>lambda*</code> and <code>case-lambda*</code> are similar to
+<code>lambda</code> and <code>case-lambda</code> as defined by <acronym>R6RS</acronym>, but
+they allow the specification of logic predicates to validate the
+arguments and the return values; a logic predicate is a composition of
+predicate expressions.  Examples:
+</p>
+<div class="example">
+<pre class="example">#!vicare
+(import (vicare)
+  (vicare system $fx))
+
+(define add
+  ;;Fail if called with a non-fixnum argument.
+  (lambda* ({a fixnum?} {b fixnum?})
+    ($fx+ a b)))
+
+(define vec
+  ;;Fail if attempting to return a non-vector.
+  (lambda* ({_ vector?} fun)
+    (fun 1 2)))
+
+(add 1 2)       &rArr; 3
+(add 1 #\2)     error&rarr; &amp;procedure-argument-violation
+
+(vec vector)    &rArr; #(1 2)
+(vec list)      error&rarr; &amp;expression-return-value-violation
+</pre></div>
+
+<p>in the definition of the function bound to <code>vec</code>: notice that
+<code>{_ vector?}</code> is not a function argument, it is a special
+notation used to select a predicate to validate the return value.
+</p>
+<p>In the extended <code>lambda*</code> and <code>case-lambda*</code> syntaxes the
+<var>?pred-formals</var> can have any of the forms:
+</p>
+<div class="example">
+<pre class="example">(<var>?var</var> ...)
+(<var>?var0</var> <var>?var</var> ... . <var>?rest</var>)
+<var>?args</var>
+</pre></div>
+
+<p>Where in the standard <code>lambda</code> and <code>case-lambda</code> syntaxes an
+identifier is used to name a formal argument, in the extended
+<code>lambda*</code> and <code>case-lambda*</code> syntaxes each formal argument
+<var>?var</var> can have any of the forms:
+</p>
+<div class="example">
+<pre class="example"><var>?id</var>
+(brace <var>?id</var> <var>?logic-pred</var>)
+</pre></div>
+
+<p>where: <code>brace</code> is the identifier exported by <code>(vicare)</code>;
+<var>?id</var> is an identifier naming the formal argument.
+<var>?logic-pred</var> must have one of the following recursive formats:
+</p>
+<div class="example">
+<pre class="example"><var>?logic-pred</var> = <var>?pred-id</var>
+            | (and <var>?logic-pred0</var> <var>?logic-pred</var> ...)
+            | (or  <var>?logic-pred0</var> <var>?logic-pred</var> ...)
+            | (xor <var>?logic-pred0</var> <var>?logic-pred</var> ...)
+            | (not <var>?logic-pred</var>)
+</pre></div>
+
+<p>where: <var>?pred-id</var> is an identifier expanding and evaluating to a
+predicate function accepting a single argument and returning true or
+<code>#f</code>; <code>and</code>, <code>or</code>, <code>xor</code>, <code>not</code> are the
+identifiers exported by <code>(vicare)</code>.
+</p>
+<p>The formal argument <var>?rest</var> can have only one of the following
+forms:
+</p>
+<div class="example">
+<pre class="example"><var>?rest-id</var>
+(brace <var>?rest-id</var> <var>?logic-pred</var>)
+</pre></div>
+
+<p>and the formal argument <var>?args</var> can have one of the following forms:
+</p>
+<div class="example">
+<pre class="example"><var>?args-id</var>
+(brace <var>?args-id</var> <var>?logic-pred</var>)
+</pre></div>
+
+<p>the <var>?logic-pred</var> for <var>?rest</var> and <var>?args</var> is applied to each
+item in the proper list bound to <var>?rest-id</var> and <var>?args-id</var>.
+</p>
+<p>The first item in the <var>?pred-formals</var> can have the special syntax:
+</p>
+<div class="example">
+<pre class="example">(brace _ <var>?logic-pred0</var> <var>?logic-pred</var> ...)
+</pre></div>
+
+<p>where <code>_</code> is the binding exported by <code>(rnrs base (6))</code>; in this
+case such item does <strong>not</strong> represent a formal argument, it just
+selects predicates to validate the values returned by the last
+<var>?body</var> form.
+</p>
+
+<dl>
+<dt><a name="index-lambda_002a"></a>Syntax: <strong>lambda*</strong> <em><var>?pred-formals</var> <var>?body0</var> <var>?body</var> &hellip;</em></dt>
+<dt><a name="index-named_002dlambda_002a"></a>Syntax: <strong>named-lambda*</strong> <em><var>?who</var> <var>?pred-formals</var> <var>?body0</var> <var>?body</var> &hellip;</em></dt>
+<dd><p>Like the standard <code>lambda</code> and additionally allow the specification
+of predicate functions to validate the arguments and the return value.
+The formal arguments are handled according to the following rules:
+</p>
+<ul>
+<li> When all the items in <var>?pred-formals</var> are as specified for the
+standard <code>lambda</code>: this syntax is equivalent to <code>lambda</code> as
+defined by <acronym>R6RS</acronym>.
+
+</li><li> If the boot image has been compiled with procedure arguments validation
+<strong>enabled</strong>, and <var>?pred-formals</var> selects predicates to validate
+the arguments: if a predicate fails for its formal argument, an
+exception is raised using <code>&amp;procedure-argument-violation</code>.
+
+</li><li> If the boot image has been compiled with procedure arguments validation
+<strong>disabled</strong>, the predicate selections in <var>?pred-formals</var> are
+ignored and <code>lambda*</code> behaves like the standard <code>lambda</code>.
+
+</li><li> If the first element of <var>?pred-formals</var> has the format:
+
+<div class="example">
+<pre class="example">(brace _ <var>?logic-pred0</var> <var>?logic-pred</var> ...)
+</pre></div>
+
+<p>the values returned by the last <var>?body</var> form are validated using the
+given <var>?logic-pred</var>: if a predicate fails for its returned value, an
+exception is raised using a compound condition object with component of
+type <code>&amp;expression-return-value-violation</code>.
+</p></li></ul>
+
+<p>When using <code>lambda*</code>, in addition the behaviour of
+<code>lambda</code>, the fluid identifier syntax <code>__who__</code> is bound to
+the quoted symbol <code>_</code>; the <code>named-lambda*</code> variant allows to
+specify an identifier <var>?who</var> to be used as value for the
+<code>__who__</code> fluid syntax.
+</p>
+<p>Usage examples:
+</p>
+<ul>
+<li> Function with two predicate arguments:
+
+<div class="example">
+<pre class="example">#!vicare
+(import (vicare))
+(define f
+  (lambda* ({a number?} {b number?})
+    (list (number-&gt;string a) (number-&gt;string b))))
+
+(f 1 2)         &rArr; (&quot;1&quot; &quot;2&quot;)
+</pre></div>
+
+</li><li> Function with two mandatory arguments and the rest argument:
+
+<div class="example">
+<pre class="example">#!vicare
+(import (vicare))
+
+(define f
+  (lambda* ({a number?} {b number?} . {rest number?})
+    (list (number-&gt;string a)
+          (number-&gt;string b)
+          (length rest))))
+
+(f 1 2 3 4 5)           &rArr; (&quot;1&quot; &quot;2&quot; 3)
+</pre></div>
+
+</li><li> Function with the <var>?args</var> argument:
+
+<div class="example">
+<pre class="example">#!vicare
+(import (vicare))
+
+(define f
+  (lambda* {args number?}
+    (length args)))
+
+(f 1 2 3)               &rArr; 3
+</pre></div>
+
+</li><li> Function with a single validated return value:
+
+<div class="example">
+<pre class="example">#!vicare
+(import (vicare))
+
+(define f
+  (lambda* ({_ fixnum?} val)
+    val))
+
+(f 1)                   &rArr; 1
+</pre></div>
+
+</li><li> Function with multiple validated return values:
+
+<div class="example">
+<pre class="example">#!vicare
+(import (vicare))
+
+(define f
+  (lambda* ({_ fixnum? string?} a b)
+    (values a b)))
+
+(f 1 &quot;2&quot;)               &rArr; 1, &quot;2&quot;
+</pre></div>
+</li></ul>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-case_002dlambda_002a"></a>Syntax: <strong>case-lambda*</strong> <em><var>?pred-cl-clause</var> &hellip;</em></dt>
+<dt><a name="index-named_002dcase_002dlambda_002a"></a>Syntax: <strong>named-case-lambda*</strong> <em><var>?who</var> <var>?pred-cl-clause</var> &hellip;</em></dt>
+<dd><p>Like the standard <code>case-lambda</code> and additionally allow the
+specification of logic predicates to validate the arguments and the
+return values.  Clause by clause the formals are handled as explained
+for <code>lambda*</code>.
+</p>
+<p>When using <code>case-lambda*</code>, in addition to the behaviour of
+<code>lambda</code>, the fluid identifier syntax <code>__who__</code> is bound to
+the quoted symbol <code>_</code>; the <code>named-case-lamba*</code> variant
+allows to specify an identifier <var>?who</var> to be used as value for the
+<code>__who__</code> fluid syntax.
+</p>
+<p>Usage examples:
+</p>
+<div class="example">
+<pre class="example">#!vicare
+(import (vicare))
+
+(define f
+  (case-lambda*
+   (({a number?})
+    (number-&gt;string a))))
+
+(define g
+  (case-lambda*
+   ({args list?}
+    (length args))))
+
+(f 123)                 &rArr; &quot;123&quot;
+(g 1 2 3)               &rArr; 3
+</pre></div>
+</dd></dl>
+
+<hr>
+<div class="header">
+<p>
+Previous: <a href="iklib-syntaxes-lambdas-named.html#iklib-syntaxes-lambdas-named" accesskey="p" rel="prev">iklib syntaxes lambdas named</a>, Up: <a href="iklib-syntaxes-lambdas.html#iklib-syntaxes-lambdas" accesskey="u" rel="up">iklib syntaxes lambdas</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

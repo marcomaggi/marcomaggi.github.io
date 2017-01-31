@@ -1,0 +1,242 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.4d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit and 64-bit
+processors.  Vicare is pronounced the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/downloads
+
+the home page of the project is at:
+
+http://marcomaggi.github.io/vicare.html
+
+development takes place at:
+
+http://github.com/marcomaggi/vicare/
+
+and, as a backup, at:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the "History" appendix for details.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Vicare Scheme: expander lexenv rib extending</title>
+
+<meta name="description" content="Vicare Scheme: expander lexenv rib extending">
+<meta name="keywords" content="Vicare Scheme: expander lexenv rib extending">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="expander-lexenv-rib.html#expander-lexenv-rib" rel="up" title="expander lexenv rib">
+<link href="expander-lexenv-rib-sealing.html#expander-lexenv-rib-sealing" rel="next" title="expander lexenv rib sealing">
+<link href="expander-lexenv-rib-type.html#expander-lexenv-rib-type" rel="prev" title="expander lexenv rib type">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="expander-lexenv-rib-extending"></a>
+<div class="header">
+<p>
+Next: <a href="expander-lexenv-rib-sealing.html#expander-lexenv-rib-sealing" accesskey="n" rel="next">expander lexenv rib sealing</a>, Previous: <a href="expander-lexenv-rib-type.html#expander-lexenv-rib-type" accesskey="p" rel="prev">expander lexenv rib type</a>, Up: <a href="expander-lexenv-rib.html#expander-lexenv-rib" accesskey="u" rel="up">expander lexenv rib</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Extending-rib-objects"></a>
+<h4 class="subsubsection">15.3.1.2 Extending <code>rib</code> objects</h4>
+
+
+<p>A non&ndash;sealed <code>rib</code> object is extensible: new syntactic bindings can be
+added to it.  This happens every time the expander processes internal
+definitions in a top&ndash;level body or internal body; examples are: the
+top&ndash;level body of a program; the top&ndash;level body of a library; the
+<code>internal-body</code> syntax; the internal body of <code>lambda</code>; the
+internal body of <code>let</code> and its variants.
+</p>
+<p>Adding an identifier&ndash;to&ndash;label mapping to an extensible <code>rib</code> is
+achieved by prepending items to the field&rsquo;s lists.
+</p>
+<p>For example, an empty extensible <code>rib</code> has fields:
+</p>
+<div class="example">
+<pre class="example">name*  = ()
+mark** = ()
+label* = ()
+</pre></div>
+
+<p>adding a syntactic binding to it with source name &lsquo;<samp>ciao</samp>&rsquo;, marks
+&lsquo;<samp>(src)</samp>&rsquo; and label &lsquo;<samp>lab.ciao</samp>&rsquo; means mutating the fields to:
+</p>
+<div class="example">
+<pre class="example">name*  = (ciao)
+mark** = ((src))
+label* = (lab.ciao)
+</pre></div>
+
+<p>we can think of this operation as &ldquo;pushing the syntactic binding&rsquo;s
+tuple&rdquo;:
+</p>
+<div class="example">
+<pre class="example">{ ciao, (src), lab.ciao }
+</pre></div>
+
+<p>on the <code>rib</code>.  Adding another binding with source name &lsquo;<samp>hello</samp>&rsquo;,
+marks &lsquo;<samp>(src)</samp>&rsquo; and label &lsquo;<samp>lab.hello</samp>&rsquo; means to push the tuple.
+</p>
+<div class="example">
+<pre class="example">{ hello, (src), lab.hello }
+</pre></div>
+
+<p>that is to mutate the fields to:
+</p>
+<div class="example">
+<pre class="example">name*  = (hello     ciao)
+mark** = ((src)     (src))
+label* = (lab.hello lab.ciao)
+</pre></div>
+
+<p>As further example, let&rsquo;s consider the syntactic form:
+</p>
+<div class="lisp">
+<pre class="lisp">(internal-body
+  (define a 1)
+  (define b 2)
+  (list a b))
+</pre></div>
+
+<p>when starting to expand the internal body: a new <code>rib</code> is created and
+added to the metadata of the syntax object representing the body itself;
+when each internal definition is encountered, a new entry for the
+identifier is added (via side effect) to the <code>rib</code>:
+</p>
+<div class="example">
+<pre class="example">name*  = (b       a)
+mark** = ((src)   (src))
+label* = (lab.b   lab.a)
+</pre></div>
+
+<p>The order in which the syntactic binding&rsquo;s tuples appear in the <code>rib</code>
+does not matter: two tuples are different when both the source name&rsquo;s
+symbol and the marks are different and it is an error to add twice a
+tuple to the same <code>rib</code>.
+</p>
+
+<a name="Redefining-or-shadowing-syntactic-bindings"></a>
+<h4 class="subsubheading">Redefining or shadowing syntactic bindings</h4>
+
+<p>While it is an error to add twice a syntactic binding&rsquo;s tuple to the
+same <code>rib</code>, when expanding syntactic forms at the top&ndash;level of an
+interaction environment: it is possible to redefine a previously defined
+syntactic binding and to shadow a previously imported syntactic binding.
+</p>
+<p>Interaction environment objects (see <a href="iklib-environment.html#iklib-environment">iklib environment</a>) hold a
+<code>rib</code> object representing their top&ndash;level lexical contour; such <code>rib</code>
+holds tuples representing both the syntactic bindings imported from
+libraries and the syntactic bindings defined when expanding expressions
+at the top&ndash;level.
+</p>
+<p>Let&rsquo;s say we are expanding syntactic forms read from the <acronym>REPL</acronym> (which
+uses an interaction environment); if we type:
+</p>
+<div class="example">
+<pre class="example">vicare&gt; (define a 1)
+vicare&gt; (define a 2)
+</pre></div>
+
+<p>after the first <code>define</code> is expanded the tuples in the <code>rib</code>
+representing the top&ndash;level lexical contour are:
+</p>
+<div class="example">
+<pre class="example">name*  = (a)
+mark** = ((src))
+label* = (lab.a.1)
+</pre></div>
+
+<p>and after the second <code>define</code> is expanded the tuples are:
+</p>
+<div class="example">
+<pre class="example">name*  = (a)
+mark** = ((src))
+label* = (lab.a.2)
+</pre></div>
+
+<p>we see that the old label gensym has been replaced with a new label
+gensym: this causes the syntactic binding to be redefined.
+</p>
+<hr>
+<div class="header">
+<p>
+Next: <a href="expander-lexenv-rib-sealing.html#expander-lexenv-rib-sealing" accesskey="n" rel="next">expander lexenv rib sealing</a>, Previous: <a href="expander-lexenv-rib-type.html#expander-lexenv-rib-type" accesskey="p" rel="prev">expander lexenv rib type</a>, Up: <a href="expander-lexenv-rib.html#expander-lexenv-rib" accesskey="u" rel="up">expander lexenv rib</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

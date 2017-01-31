@@ -1,0 +1,223 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.4d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit and 64-bit
+processors.  Vicare is pronounced the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/downloads
+
+the home page of the project is at:
+
+http://marcomaggi.github.io/vicare.html
+
+development takes place at:
+
+http://github.com/marcomaggi/vicare/
+
+and, as a backup, at:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the "History" appendix for details.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Vicare Scheme: foreign</title>
+
+<meta name="description" content="Vicare Scheme: foreign">
+<meta name="keywords" content="Vicare Scheme: foreign">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="index.html#Top" rel="up" title="Top">
+<link href="ffi.html#ffi" rel="next" title="ffi">
+<link href="includes.html#includes" rel="prev" title="includes">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="foreign"></a>
+<div class="header">
+<p>
+Next: <a href="ffi.html#ffi" accesskey="n" rel="next">ffi</a>, Previous: <a href="includes.html#includes" accesskey="p" rel="prev">includes</a>, Up: <a href="index.html#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Interfacing-with-adapting-foreign-libraries"></a>
+<h2 class="chapter">10 Interfacing with adapting foreign libraries</h2>
+
+
+<a name="index-foreign_002dlibrary_002c-library-clause-1"></a>
+<a name="index-foreign_002dlibrary_002c-program-clause-1"></a>
+<a name="index-Library-clause-foreign_002dlibrary-1"></a>
+<a name="index-Program-clause-foreign_002dlibrary-1"></a>
+<a name="index-foreign_002dcall"></a>
+
+
+<p>The core macro <code>foreign-call</code>, exported by the library
+<code>(vicare)</code>, is expanded to the core language syntax
+<code>foreign-call</code>, which in turn is compiled to code invoking a C
+function from the operating system&rsquo;s process image; the first argument
+to <code>foreign-call</code> is a string naming the C function.
+</p>
+<p>Whenever the code:
+</p>
+<div class="example">
+<pre class="example">(foreign-call &quot;function_name&quot; <var>?arg</var> &hellip;)
+</pre></div>
+
+<p>is compiled, the C pointer referencing the entry point of the named
+function is retrieved with a C language call:
+</p>
+<div class="example">
+<pre class="example">dlsym(RTLD_DEFAULT, &quot;function_name&quot;);
+</pre></div>
+
+<p>so all the public functions from the running <code>vicare</code>
+executable are available; also available are all the functions from
+host&rsquo;s shared libraries loaded with <code>dlopen()</code> using the flags
+<code>RTLD_NOW | RTLD_GLOBAL</code>.
+</p>
+<p>This <acronym>API</acronym> for C language functions call is meant to be used to
+interface with functions specifically written to be called from Scheme
+code; examples are interface libraries installed by the Vicare
+extension packages like Vicare/<acronym>CURL</acronym> and Vicare/SQLite.  This
+<acronym>API</acronym> <strong>cannot</strong> be used to directly call a generic C language
+function from, say, <samp>libz.so</samp> or <samp>libgmp.so</samp>.
+</p>
+<p>It is possible to associate one or more host&rsquo;s shared libraries to a
+<acronym>FASL</acronym> file, so that: whenever the <acronym>FASL</acronym> file is loaded, the shared
+library is loaded too and the functions required by <code>foreign-call</code>
+are available.  This is especially useful to implement bindings to
+foreign libraries without relying on the <acronym>FFI</acronym> and making full use of
+garbage collection facilities and access to Scheme values&rsquo; memory
+representations.
+</p>
+<p>A Vicare&rsquo;s library might have the format:
+</p>
+<div class="lisp">
+<pre class="lisp">(library (libname)
+  (foreign-library <var>?foreign-library-id</var>)
+  (export . <var>?export-specs</var>)
+  (import . <var>?import-specs</var>)
+  . <var>?body</var>)
+</pre></div>
+
+<p>and a Vicare&rsquo;s top&ndash;level program might have the format:
+</p>
+<div class="lisp">
+<pre class="lisp">(program (progname)
+  (foreign-library <var>?foreign-library-id</var>)
+  (import . <var>?import-specs</var>)
+  . <var>?body</var>)
+</pre></div>
+
+<p>the <var>?foreign-library-id</var> form must be a string representing the
+identifier of a host&rsquo;s shared object.  There can be any number of
+<code>foreign-library</code> clauses, all before <code>export</code> for
+libraries and before <code>import</code> for programs.
+</p>
+<p>The identifier is used to build the file name of a shared object; for
+example the identifier <code>vicare-curl</code> is used to build the following
+file names:
+</p>
+<dl compact="compact">
+<dt><samp>libvicare-curl.so</samp></dt>
+<dd><p>On Unix&ndash;like systems, including <acronym>GNU</acronym>+Linux.
+</p>
+</dd>
+<dt><samp>libvicare-curl.dylib</samp></dt>
+<dd><p>On Darwin systems.
+</p>
+</dd>
+<dt><samp>vicare-curl.dll</samp></dt>
+<dd><p>On Cygwin systems.
+</p></dd>
+</dl>
+
+<p>Whenever the library or program are expanded: the shared objects are
+immediately loaded using <code>dlopen()</code>.
+</p>
+<p>Whenever a library or program in binary form is written to a <acronym>FASL</acronym>
+file: an object field with header <code>O</code> is written to the
+<strong>beginning</strong> of the <acronym>FASL</acronym> file; such object will cause the
+shared object to be dynamically loaded whenever the <acronym>FASL</acronym> file is
+loaded.
+</p>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="ffi.html#ffi" accesskey="n" rel="next">ffi</a>, Previous: <a href="includes.html#includes" accesskey="p" rel="prev">includes</a>, Up: <a href="index.html#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

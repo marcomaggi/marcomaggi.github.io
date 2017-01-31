@@ -1,0 +1,271 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.4d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit and 64-bit
+processors.  Vicare is pronounced the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/downloads
+
+the home page of the project is at:
+
+http://marcomaggi.github.io/vicare.html
+
+development takes place at:
+
+http://github.com/marcomaggi/vicare/
+
+and, as a backup, at:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the "History" appendix for details.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Vicare Scheme: compiler letrec scc</title>
+
+<meta name="description" content="Vicare Scheme: compiler letrec scc">
+<meta name="keywords" content="Vicare Scheme: compiler letrec scc">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="compiler-letrec.html#compiler-letrec" rel="up" title="compiler letrec">
+<link href="compiler-optimisation.html#compiler-optimisation" rel="next" title="compiler optimisation">
+<link href="compiler-letrec-wsd.html#compiler-letrec-wsd" rel="prev" title="compiler letrec wsd">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="compiler-letrec-scc"></a>
+<div class="header">
+<p>
+Previous: <a href="compiler-letrec-wsd.html#compiler-letrec-wsd" accesskey="p" rel="prev">compiler letrec wsd</a>, Up: <a href="compiler-letrec.html#compiler-letrec" accesskey="u" rel="up">compiler letrec</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="The-SCC-transformation-algorithm"></a>
+<h4 class="subsection">17.10.6 The <acronym>SCC</acronym> transformation algorithm</h4>
+
+
+<p>The <acronym>SCC</acronym> algorithm builds a directed graph representation of the
+bindings in a single <code>recbind</code> or <code>rec*bind</code> structure,
+outlining the dependencies among right&ndash;hand side expressions; in the
+graph each binding is a vertex (also called node).  It then applies
+Tarjan&rsquo;s algorithm to the graph and partitions the bindings into
+clusters of Strongly Connected Components (<acronym>SCC</acronym>).
+</p>
+<p>Here is the gist of the algorithm:
+</p>
+<ol>
+<li> Given the core language <code>letrec</code> form:
+
+<div class="example">
+<pre class="example">(letrec ((D (lambda () B))
+         (C D)
+         (B C)
+         (A B))
+  <var>?body</var>)
+</pre></div>
+
+<p>we build a directed graph of dependencies between the bindings; the
+graph of dependencies for the given form is:
+</p>
+<div class="example">
+<pre class="example">A --&gt; B --&gt; C
+      ^     |
+      |     |
+      D &lt;---
+</pre></div>
+
+</li><li> We perform a depth&ndash;first visit of the directed graph; during the visit
+we step from the current vertex to a successor one, following an
+outgoing edge, if it has not already been visited; a depth&ndash;first visit
+is like entering a maze and always turn right at cross roads.  While
+visiting the vertexes: we push each visited vertex on a stack; we rank
+each vertex with a zero&ndash;based serial index.
+
+<p>The following picture shows an ongoing visit with path &lsquo;<samp>A</samp>&rsquo;,
+&lsquo;<samp>B</samp>&rsquo;, &lsquo;<samp>C</samp>&rsquo;, &lsquo;<samp>D</samp>&rsquo;; the serial index of each vertex is in
+square brackets:
+</p>
+<div class="example">
+<pre class="example">A[0] --&gt; B[1] --&gt; C[2]     STK == A, B, C, D
+           ^       |
+           .       |
+           .       |
+         D[3] &lt;----
+</pre></div>
+
+<p>let&rsquo;s say we are visiting &lsquo;<samp>D</samp>&rsquo; and considering the successor vertex
+&lsquo;<samp>B</samp>&rsquo; as next step.
+</p>
+<ol>
+<li> &lsquo;<samp>B</samp>&rsquo; has already been visited, so we do not enter it; the index of
+&lsquo;<samp>B</samp>&rsquo; is &lsquo;<samp>1</samp>&rsquo;, less than the index of &lsquo;<samp>D</samp>&rsquo; which is &lsquo;<samp>3</samp>&rsquo;,
+so we mutate the index of &lsquo;<samp>D</samp>&rsquo; to be &lsquo;<samp>1</samp>&rsquo;:
+
+<div class="example">
+<pre class="example">A[0] --&gt; B[1] --&gt; C[2]     STK == A, B, C, D
+           ^        |
+           .        |
+           .        |
+         D[1] &lt;-----
+</pre></div>
+
+<p>there are no more successor vertexes from &lsquo;<samp>D</samp>&rsquo; so we step back to
+&lsquo;<samp>C</samp>&rsquo;; notice that we leave the stack unchanged.
+</p>
+</li><li> Upon stepping back to &lsquo;<samp>C</samp>&rsquo;: we recognise that the index of &lsquo;<samp>C</samp>&rsquo;
+is &lsquo;<samp>2</samp>&rsquo;, less than the index of &lsquo;<samp>D</samp>&rsquo; which is &lsquo;<samp>1</samp>&rsquo;; so we
+mutate the index of &lsquo;<samp>C</samp>&rsquo; to be &lsquo;<samp>1</samp>&rsquo;:
+
+<div class="example">
+<pre class="example">A[0] --&gt; B[1] --&gt; C[1]     STK == A, B, C, D
+           ^        .
+           .        .
+           .        .
+         D[1] &lt;.....
+</pre></div>
+
+<p>there are no more successor vertexes from &lsquo;<samp>C</samp>&rsquo; so we step back to
+&lsquo;<samp>B</samp>&rsquo;; notice that we leave the stack unchanged.
+</p>
+</li><li> Upon stepping back to &lsquo;<samp>B</samp>&rsquo;: we recognise that the index of &lsquo;<samp>B</samp>&rsquo;
+is &lsquo;<samp>1</samp>&rsquo;, greater than or equal to the index of &lsquo;<samp>C</samp>&rsquo; which is
+&lsquo;<samp>1</samp>&rsquo;; we leave the index of &lsquo;<samp>B</samp>&rsquo; unchanged.  Now we recognise
+that: after visiting all the vertexes successors to &lsquo;<samp>B</samp>&rsquo;, the index
+of &lsquo;<samp>B</samp>&rsquo; is unchanged; we conclude that all the nodes on the stack up
+to and including &lsquo;<samp>B</samp>&rsquo; are part of a Strongly Connected Component:
+
+<div class="example">
+<pre class="example">STK == A, B, C, D
+         |-------| SCC
+</pre></div>
+
+<p>so we pop them from the stack and form a cluster with them.  The
+vertexes in a cluster are marked as &ldquo;done&rdquo; and will be skipped in
+further steps of the visit, as if they are not there.
+</p></li></ol>
+
+</li><li> Clusters of <acronym>SCC</acronym>s are formed and accumulated while stepping back from
+the depth&ndash;first visit, the accumulated clusters are in reverse order.
+This implementation of Tarjan&rsquo;s algorithm guarantees that the returned
+list of clusters is in the correct order for RHS evaluation in
+<code>recbind</code> or <code>rec*bind</code> structs:
+
+<ul>
+<li> The RHS of bindings in the first cluster from the list, must be
+evaluated before the RHS of bindings in the second cluster.
+
+</li><li> The RHS of bindings in the second cluster from the list, must be
+evaluated before the RHS of bindings in the third cluster.
+
+</li><li> And so on.
+</li></ul>
+
+<p>So we can arrange the evaluation as if each cluster comes from a nested
+binding form; if the returned list is:
+</p>
+<div class="example">
+<pre class="example">((<var>?cluster-binding-1</var> ...)
+ (<var>?cluster-binding-2</var> ...)
+ (<var>?cluster-binding-3</var> ...))
+</pre></div>
+
+<p>the equivalent nested binding forms are:
+</p>
+<div class="example">
+<pre class="example">(recbind (<var>?cluster-binding-3</var> ...)
+  (recbind (<var>?cluster-binding-2</var> ...)
+    (recbind (<var>?cluster-binding-1</var> ...)
+      <var>?body</var>)))
+</pre></div>
+
+</li><li> Each cluster of <acronym>SCC</acronym>s generates a nested hierarchy of bindings; first
+the bindings are partitioned into fixable and non&ndash;fixable, the a form
+like the following is generated:
+
+<div class="example">
+<pre class="example">(bind ((<var>?complex.lhs</var> '#!void) ...)
+  (fix ((<var>?fixable.lhs</var> <var>?fixable.rhs</var>) ...)
+    (assign <var>?complex.lhs</var> <var>?complex.rhs</var>) ...
+    <var>?body</var>))
+</pre></div>
+</li></ol>
+
+<hr>
+<div class="header">
+<p>
+Previous: <a href="compiler-letrec-wsd.html#compiler-letrec-wsd" accesskey="p" rel="prev">compiler letrec wsd</a>, Up: <a href="compiler-letrec.html#compiler-letrec" accesskey="u" rel="up">compiler letrec</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

@@ -1,0 +1,325 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.4d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit and 64-bit
+processors.  Vicare is pronounced the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/downloads
+
+the home page of the project is at:
+
+http://marcomaggi.github.io/vicare.html
+
+development takes place at:
+
+http://github.com/marcomaggi/vicare/
+
+and, as a backup, at:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the "History" appendix for details.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Vicare Scheme: expander lexenv stx</title>
+
+<meta name="description" content="Vicare Scheme: expander lexenv stx">
+<meta name="keywords" content="Vicare Scheme: expander lexenv stx">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="expander-lexenv.html#expander-lexenv" rel="up" title="expander lexenv">
+<link href="expander-lexenv-descriptors.html#expander-lexenv-descriptors" rel="next" title="expander lexenv descriptors">
+<link href="expander-lexenv-rib-sealing.html#expander-lexenv-rib-sealing" rel="prev" title="expander lexenv rib sealing">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="expander-lexenv-stx"></a>
+<div class="header">
+<p>
+Next: <a href="expander-lexenv-descriptors.html#expander-lexenv-descriptors" accesskey="n" rel="next">expander lexenv descriptors</a>, Previous: <a href="expander-lexenv-rib.html#expander-lexenv-rib" accesskey="p" rel="prev">expander lexenv rib</a>, Up: <a href="expander-lexenv.html#expander-lexenv" accesskey="u" rel="up">expander lexenv</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Wrapped-and-unwrapped-syntax-objects"></a>
+<h4 class="subsection">15.3.2 Wrapped and unwrapped syntax objects</h4>
+
+
+<p>Under Vicare, we adopt the following definitions:
+</p>
+<dl compact="compact">
+<dt><em>Wrapped syntax object</em></dt>
+<dd><p>An object of type <code>&lt;stx&gt;</code>.
+</p>
+</dd>
+<dt><em>Unwrapped syntax object</em></dt>
+<dd><p>A compound object holding: nulls, pairs, vectors, numbers, strings,
+bytevectors, chars, booleans, keywords, would&ndash;block objects, unbound
+objects, <acronym>EOF</acronym> objects, broken weak pointer objects, objects of type
+<code>&lt;stx&gt;</code>.
+</p></dd>
+</dl>
+
+<p>An unwrapped symbol object <strong>cannot</strong> be part of an unwrapped
+syntax object: an attempt to use an unwrapped syntax object holding an
+unwrapped symbol will, sooner or later, cause an exception to be raised.
+</p>
+
+<dl>
+<dt><a name="index-_003cstx_003e"></a>Object Type: <strong>&lt;stx&gt;</strong></dt>
+<dd><p>Disjoint object type representing wrapped syntax objects: source code
+expressions associated to meta data representing their lexical contour.
+</p>
+<p>Objects of type <code>&lt;stx&gt;</code> have the following fields:
+</p>
+<dl compact="compact">
+<dt><code>expr</code></dt>
+<dd><p>A symbolic expression representing source code, possibly annotated;
+these expressions are the ones produced by the Scheme source code
+reader.  They can be raw source code expressions or nested hierarchies
+of <code>annotation</code> objects returned by <code>get-annotated-datum</code>
+(see <a href="iklib-reader-annotations.html#iklib-reader-annotations">iklib reader annotations</a>).
+</p>
+</dd>
+<dt><code>mark*</code></dt>
+<dd><p>Null or a proper list of <code>eq?</code>&ndash;unique objects, including the
+symbol &lsquo;<samp>src</samp>&rsquo;, used to distinguish between identifiers introduced by
+the source code and identifiers introduced by applications of macro
+transformers.  Each of these marks can be either a generated mark or an
+anti&ndash;mark.
+</p>
+<p>Two marks must be <code>eq?</code>&ndash;comparable, so, by default, we use empty
+strings as marks and <code>#f</code> as anti&ndash;mark: their generation is fast.
+</p>
+</dd>
+<dt><code>rib*</code></dt>
+<dd><p>Null or a proper list of <code>rib</code> objects or <code>shift</code> symbols.  Every
+<code>rib</code> represents a nested lexical contour; a <code>shift</code> represents
+the return from a macro transformer application.
+</p>
+<p>While expanding source code: upon entering a syntactic form representing
+a lexical contour, a new <code>rib</code> is added to the syntax object
+representing the syntactic form itself, to allow syntactic identifiers
+in the form to be captured by the bindings introduced in that contour.
+</p>
+</dd>
+<dt><code>annotated-expr*</code></dt>
+<dd><p>Null or a proper list of annotated expressions: <code>#f</code> or input forms
+of macro transformer calls.  This field is used to trace the
+transformations a form undergoes when it is processed as macro use.  The
+<code>#f</code> items are inserted when this instance is processed as input
+form of a macro call, but is later discarded.
+</p></dd>
+</dl>
+</dd></dl>
+
+
+<p>The following bindings are exported by the library <code>(vicare
+expander)</code>.
+</p>
+
+<dl>
+<dt><a name="index-syntax_002dobject_003f"></a>Function: <strong>syntax-object?</strong> <em><var>stx</var></em></dt>
+<dd><p>Return <code>#t</code> if <var>stx</var> is a wrapped or unwrapped syntax object;
+otherwise return <code>#f</code>.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-stx_003f"></a>Function: <strong>stx?</strong> <em><var>stx</var></em></dt>
+<dd><p>Return <code>#t</code> if <var>stx</var> is a wrapped syntax object; else return
+<code>#f</code>.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-stx_002dexpr-on-_003cstx_003e"></a>Field accessor on <code>&lt;stx&gt;</code>: <strong>stx-expr</strong> <em><var>stx</var></em></dt>
+<dd><p>Return a symbolic expression, possibly annotated.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-stx_002dmark_002a-on-_003cstx_003e"></a>Field accessor on <code>&lt;stx&gt;</code>: <strong>stx-mark*</strong> <em><var>stx</var></em></dt>
+<dd><p>Return null or a proper list of <code>eq?</code>&ndash;unique objects acting as
+lexical contour marks, including the symbol &lsquo;<samp>src</samp>&rsquo;.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-stx_002drib_002a-on-_003cstx_003e"></a>Field accessor on <code>&lt;stx&gt;</code>: <strong>stx-rib*</strong> <em><var>stx</var></em></dt>
+<dd><p>Return null or a proper list of <code>rib</code> instances or <code>shift</code>
+symbols.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-stx_002dannotated_002dexpr_002a-on-_003cstx_003e"></a>Field accessor on <code>&lt;stx&gt;</code>: <strong>stx-annotated-expr*</strong> <em><var>stx</var></em></dt>
+<dd><p>Return null or a proper list of annotated expressions: <code>#f</code> or input
+forms of macro transformer calls.
+</p></dd></dl>
+
+
+<a name="What-are-syntax-objects"></a>
+<h4 class="subsubheading">What are syntax objects</h4>
+
+<p>All the syntactic identifiers are <code>&lt;stx&gt;</code> objects with a symbol in their
+<code>expr</code> field; other objects such as pairs and vectors may be
+wrapped or unwrapped.  A wrapped pair is an <code>&lt;stx&gt;</code> whose <code>expr</code>
+field is a pair:
+</p>
+<div class="example">
+<pre class="example">(syntax (a . b))
+</pre></div>
+
+<p>an unwrapped pair is a pair whose car and cdr fields are themselves
+syntax objects (wrapped or unwrapped):
+</p>
+<div class="example">
+<pre class="example">((syntax a) . (syntax b))
+</pre></div>
+
+<p>It makes sense to associate lexical contour informations to syntactic
+identifiers, while associating them to datums is useless from the point
+of view of expanding source code.  For example, in the following code
+the identifiers &lsquo;<samp>var</samp>&rsquo; belong to different lexical contours, and so
+have different meanings, while the datum &lsquo;<samp>123</samp>&rsquo; is always the same
+in all the lexical contours:
+</p>
+<div class="lisp">
+<pre class="lisp">(let ((var 123))
+  (let ((var 123))
+    var))
+</pre></div>
+
+<p>We can create a syntax object holding a raw expression as follows:
+</p>
+<div class="lisp">
+<pre class="lisp">(import (vicare))
+(define X 1)
+(begin-for-syntax
+  (datum-&gt;syntax #'X 'ciao))
+&rArr; #&lt;syntactic-identifier expr=ciao mark*=(src)&gt;
+</pre></div>
+
+<p>and we can create a syntax object holding an annotated expression as
+follows:
+</p>
+<div class="lisp">
+<pre class="lisp">(import (vicare))
+(define X 1)
+(begin-for-syntax
+  (let* ((port   (open-string-input-port &quot;(list X)&quot;))
+         (datum  (get-annotated-datum port))
+         (stx    (datum-&gt;syntax #'X datum)))
+    datum
+    &rArr; #[annotation
+             expression=#&lt;omitted&gt;
+             stripped=(list X)
+             textual-position=#[r6rs-record: &amp;source-position
+                                   port-id=&quot;*string-input-port*&quot;
+                                   byte=0
+                                   character=0
+                                   line=1
+                                   column=1]]
+    stx)
+    &rArr; #&lt;syntax
+             expr=(list X)
+             mark*=(src)
+             line=1 column=1 source=*string-input-port*&gt;
+</pre></div>
+
+<p>we can unwrap a syntax object by using <code>syntax-case</code>:
+</p>
+<div class="lisp">
+<pre class="lisp">(import (vicare))
+(define X 1)
+(begin-for-syntax
+  (let* ((port   (open-string-input-port &quot;(list X)&quot;))
+         (datum  (get-annotated-datum port))
+         (stx    (datum-&gt;syntax #'X datum))
+         (stx    (syntax-case stx ()
+                   ((?head ?tail)
+                    (list #'?head #'?tail)))))
+    stx)
+&rArr; (#&lt;syntactic-identifier expr=list mark*=(src)&gt;
+    #&lt;syntactic-identifier expr=X mark*=(src)&gt;)
+</pre></div>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="expander-lexenv-descriptors.html#expander-lexenv-descriptors" accesskey="n" rel="next">expander lexenv descriptors</a>, Previous: <a href="expander-lexenv-rib.html#expander-lexenv-rib" accesskey="p" rel="prev">expander lexenv rib</a>, Up: <a href="expander-lexenv.html#expander-lexenv" accesskey="u" rel="up">expander lexenv</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

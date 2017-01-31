@@ -1,0 +1,423 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.4d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit and 64-bit
+processors.  Vicare is pronounced the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/downloads
+
+the home page of the project is at:
+
+http://marcomaggi.github.io/vicare.html
+
+development takes place at:
+
+http://github.com/marcomaggi/vicare/
+
+and, as a backup, at:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the "History" appendix for details.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Vicare Scheme: notes nan inf</title>
+
+<meta name="description" content="Vicare Scheme: notes nan inf">
+<meta name="keywords" content="Vicare Scheme: notes nan inf">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="notes-nan.html#notes-nan" rel="up" title="notes nan">
+<link href="notes-nan-nan.html#notes-nan-nan" rel="next" title="notes nan nan">
+<link href="notes-nan.html#notes-nan" rel="prev" title="notes nan">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="notes-nan-inf"></a>
+<div class="header">
+<p>
+Next: <a href="notes-nan-nan.html#notes-nan-nan" accesskey="n" rel="next">notes nan nan</a>, Up: <a href="notes-nan.html#notes-nan" accesskey="u" rel="up">notes nan</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="How-to-deal-with-infinities"></a>
+<h4 class="appendixsubsec">K.1.1 How to deal with infinities</h4>
+
+
+<p>Infinities can appear as literals in Scheme source code as &lsquo;<samp>+inf.0</samp>&rsquo;
+or &lsquo;<samp>-inf.0</samp>&rsquo;, and they can be the result of an expression composing
+Scheme arithmetic functions.
+</p>
+<p>We have to distinguish between <em>number objects</em> as defined in
+<acronym>R6RS</acronym> Scheme, and <em>numbers</em> as defined by Mathematics.
+</p>
+
+<a name="Infinities-in-the-mathematical-realm"></a>
+<h4 class="subsubheading">Infinities in the mathematical realm</h4>
+
+<p>We can take that Algebra defines <em>groups</em> as couples <em>(S, o)</em>
+where: <em>S</em> is a set of mathematical entities, <em>o</em> is an
+operation that composes two entities in <em>S</em> and evaluates to some
+mathematical entity.  We can define the group <em>(R, +)</em>, where
+<em>R</em> is the set of real numbers and <em>+</em> is the common addition,
+because they are compliant with the following axioms:
+</p>
+<dl compact="compact">
+<dt><em>Closure</em></dt>
+<dd><p>For every couple of reals, their sum is a real.
+</p>
+</dd>
+<dt><em>Associativity</em></dt>
+<dd><p>For every triplet of reals:
+</p>
+<div class="example">
+<pre class="example">a + (b + c) = (a + b) + c
+</pre></div>
+
+</dd>
+<dt><em>Identity element</em></dt>
+<dd><p>There exists a unique real <em>0</em> for which, for every real <em>a</em>:
+</p>
+<div class="example">
+<pre class="example">0 + a = a + 0 = a
+</pre></div>
+
+</dd>
+<dt><em>Inverse element</em></dt>
+<dd><p>For every real <em>a</em> there is a unique other real <em>b</em> for which:
+</p>
+<div class="example">
+<pre class="example">a + b = 0  &rArr;  a = -b
+</pre></div>
+</dd>
+</dl>
+
+<p>the existence of the inverse element for addition allows the definition
+of subtraction.  The couple <em>(R, *)</em>, the reals with the ordinary
+product, is also a group:
+</p>
+<dl compact="compact">
+<dt><em>Closure</em></dt>
+<dd><div class="example">
+<pre class="example">\forall a, b \in R     a * b = c   c \in R
+</pre></div>
+
+</dd>
+<dt><em>Associativity</em></dt>
+<dd><div class="example">
+<pre class="example">a * (b * c) = (a * b) * c
+</pre></div>
+
+</dd>
+<dt><em>Identity element</em></dt>
+<dd><div class="example">
+<pre class="example">1 * a = a * 1 = a
+</pre></div>
+
+</dd>
+<dt><em>Inverse element</em></dt>
+<dd><div class="example">
+<pre class="example">a * b = 1  &rArr;  a = 1/b
+</pre></div>
+</dd>
+</dl>
+
+<p>the existence of the inverse element for multiplication allows the
+definition of division.
+</p>
+<p>The triplet <em>(S, +, *)</em> in which <em>S</em> is a set of mathematical
+entities, and <em>+</em> and <em>*</em> are composition operations with the
+properties for a group, is called <em>field</em> if the following
+additional axioms hold:
+</p>
+<dl compact="compact">
+<dt><em>Commutativity</em></dt>
+<dd><div class="example">
+<pre class="example">a + b = b + a    a * b = b * a
+</pre></div>
+
+</dd>
+<dt><em>Distributivity</em></dt>
+<dd><div class="example">
+<pre class="example">a * (b + c) = a * b + a * c
+</pre></div>
+</dd>
+</dl>
+
+<p>Human experience shows that it is convenient to state (simplified):
+Every mathematical entity which is not compliant with the axioms of a
+field is not a number.
+</p>
+<p>Infinities are abstract mathematical entities which we can define
+through the following disequations:
+</p>
+<div class="example">
+<pre class="example">\forall r \in R        -\infty &lt; r &lt; +\infty
+</pre></div>
+
+<p>which means:
+</p>
+<ul>
+<li> Positive infinity is comparable to numbers and it is greater than all
+the positive numbers.
+
+</li><li> Negative infinity is comparable to numbers and it is lesser than all the
+negative number.
+</li></ul>
+
+<p>we notice that the comparison operator <em>&lt;</em> does not define a group,
+because the result of <em>1 &lt; 2</em> (as defined in Mathematics) is a
+boolean value not a number.<a name="DOCF6" href="#FOOT6"><sup>6</sup></a>
+</p>
+<p>Despite the fact that we can compare them to numbers, <strong>infinities
+are not numbers in the Mathematics sense.</strong>  We can show this with the
+following simple mathematical computation; let&rsquo;s consider the following
+equation:
+</p>
+<div class="example">
+<pre class="example">4 + +\infty = x
+</pre></div>
+
+<p>what should we take as value for <em>x</em>?  <em>x</em> cannot be a number
+like, say, <em>8</em>, because:
+</p>
+<div class="example">
+<pre class="example">4 + +\infty = 8
+&rArr; +\infty = 8 - 4 = 4
+&rArr; +\infty = 4  Wrong!
+</pre></div>
+
+<p>the only answer that tries to make some sense is <em>x = +\infty</em>, but
+then:
+</p>
+<div class="example">
+<pre class="example">4 + +\infty = +\infty
+&rArr;  4 = +\infty - +\infty = 0
+&rArr;  4 = 0  Wrong!
+</pre></div>
+
+<p>if we assume that infinities are numbers, some perfectly legal algebraic
+manipulation yields a wrong result.  Human beings define mathematical
+entities based on their usefulness; human experience shows that it is
+more useful to avoid absurd equations like <em>4 = 0</em>, than to define
+infinities as numbers.
+</p>
+<p>So, infinities are <strong>not</strong> numbers and the equation <em>4 +
+\infty = x</em> is wrong in the sense that, in Mathematics, it is an error
+to write it.
+</p>
+<p>Mathematics is not &ldquo;perfect&rdquo;, in the sense that it allows us to write
+wrong equations; unfortunately we can recognise an equation as wrong
+only by trying to solve it.
+</p>
+<p>Let&rsquo;s look at this equation:
+</p>
+<div class="example">
+<pre class="example">   4 - 3       1
+------------ = - = x
+12 - (4 + 8)   0
+</pre></div>
+
+<p>what should we take as value for <em>x</em>?
+</p>
+<p>If we had the limit:
+</p>
+<div class="example">
+<pre class="example">         1
+\lim    --- = x      t &gt; 0
+t -&gt; 0   t
+</pre></div>
+
+<p>we would know that <em>x -&gt; +\infty</em> (<em>x</em> approaches
+<em>+\infty</em>, it is not equal to it).  Computing <em>1 / t</em> for
+<em>t</em> smaller and smaller, yields a result that is a bigger and
+bigger positive number, which approaches the mathematical entity greater
+than all the positive numbers; that is <em>+\infty</em>.
+</p>
+<p>But what about the straight <em>1 / 0 = x</em>?  The only mathematical
+entity that makes sense as answer is <em>x = +\infty</em>, so <em>1 / 0</em>
+is not a number.  We can demonstrate this with the following simple
+computation:
+</p>
+<div class="example">
+<pre class="example">3 * (1 / 0) = y
+&rArr;  3 / 0 = y
+&rArr;  3 = y * 0 = 0
+&rArr;  3 = 0   Wrong!
+</pre></div>
+
+<p>so, it is impossible for <em>1 / 0</em> and <em>y</em> to comply with the
+axioms.
+</p>
+
+<a name="Infinities-in-the-computer-realm"></a>
+<h4 class="subsubheading">Infinities in the computer realm</h4>
+
+<p>Number objects are all the Scheme values for which the predicate
+<code>number?</code> returns <code>#t</code>.  Both the infinities &lsquo;<samp>+inf.0</samp>&rsquo; and
+&lsquo;<samp>-inf.0</samp>&rsquo; are number objects.  This way Scheme defines a class of
+values which can be used as arguments to arithmetic procedures, and
+which can potentially be the return value of an arithmetic procedure.
+</p>
+<p>We acknowledged that, when a mathematical expression is non&ndash;compliant
+with the axioms of definition of numbers, we can verify it by doing the
+computation and checking the final or partial results.  A computer can
+do the same by detecting, for example, if a division has <em>1</em> and
+<em>0</em> as operands.
+</p>
+<p>It turns out that making a computer processor interrupt a computation
+when an expression is wrong, is inefficient.  So two special values were
+defined to allow a computation to signal that special error:
+&lsquo;<samp>+inf.0</samp>&rsquo; and &lsquo;<samp>-inf.0</samp>&rsquo;.
+</p>
+<p>When a computation returns &lsquo;<samp>+inf.0</samp>&rsquo; and &lsquo;<samp>-inf.0</samp>&rsquo; we know that
+the expression was wrong.  <acronym>R6RS</acronym> Scheme defines the following
+conventional results:
+</p>
+<div class="example">
+<pre class="example">(div 1 0) &rArr; error
+(/   1 0) &rArr; error
+
+(/   1.0 0)   &rArr; +inf.0
+(/   1   0.0) &rArr; +inf.0
+(/   1.0 0.0) &rArr; +inf.0
+</pre></div>
+
+<p>when both the operands are exact, the expression raises an error; when
+one of the operands is inexact, the expression yields infinity.
+</p>
+<p>Special rules were defined to avoid to mistake a wrong computation for a
+correct one; for example:
+</p>
+<div class="example">
+<pre class="example">(+ 44 (* 23 +inf.0)) &rArr; +inf.0
+(+ 44 (* 23 -inf.0)) &rArr; -inf.0
+</pre></div>
+
+<p>we know that both of these are wrong, but we also know that they are
+wrong in that special way for which returning an infinity makes some
+sense.  It is our responsibility to decide what to do.
+</p>
+<p>The special rules makes it impossible for an expression to return a
+finite number if one of the partial results was an infinity.  Sometimes
+the composition of two infinities can yield an infinity with no
+confusion; examples:
+</p>
+<div class="example">
+<pre class="example">(+ +inf.0 +inf.0) &rArr; +inf.0
+(+ -inf.0 -inf.0) &rArr; -inf.0
+
+(- +inf.0 -inf.0) &rArr; +inf.0  ;like (+ +inf.0 +inf.0)
+(- -inf.0 +inf.0) &rArr; -inf.0  ;like (+ -inf.0 -inf.0)
+(- +inf.0 -inf.0) &rArr; +inf.0  ;like (+ +inf.0 +inf.0)
+
+(* +inf.0 +inf.0) &rArr; -inf.0
+(* +inf.0 -inf.0) &rArr; -inf.0
+(* -inf.0 -inf.0) &rArr; +inf.0
+</pre></div>
+
+<p>but some expressions are difficult to deal with:
+</p>
+<div class="example">
+<pre class="example">(+ +inf.0 -inf.0) &rArr; ?
+(+ -inf.0 +inf.0) &rArr; ?
+
+(- -inf.0 -inf.0) &rArr; ?
+(- -inf.0 +inf.0) &rArr; ?
+
+(/ +inf.0 +inf.0) &rArr; ?
+(/ +inf.0 -inf.0) &rArr; ?
+(/ -inf.0 +inf.0) &rArr; ?
+(/ -inf.0 -inf.0) &rArr; ?
+</pre></div>
+
+<p>neither a number nor an infinity makes sense as result here; we need
+NaN.
+</p>
+<div class="footnote">
+<hr>
+<h4 class="footnotes-heading">Footnotes</h4>
+
+<h3><a name="FOOT6" href="#DOCF6">(6)</a></h3>
+<p>This holds despite the fact that
+many programming languages allow a disequation to yield a number.</p>
+</div>
+<hr>
+<div class="header">
+<p>
+Next: <a href="notes-nan-nan.html#notes-nan-nan" accesskey="n" rel="next">notes nan nan</a>, Up: <a href="notes-nan.html#notes-nan" accesskey="u" rel="up">notes nan</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

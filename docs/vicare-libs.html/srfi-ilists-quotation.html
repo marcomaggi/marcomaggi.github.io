@@ -1,0 +1,324 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes the libraries distributed along with version
+0.4d1 of Vicare Scheme, an R6RS compliant native
+compiler for the Scheme language.
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+The documentation of the libraries (vicare parser-tools silex
+-) are derived form the documentation of SILex.  Copyright
+(C) 2001, 2009 Danny Dube'.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Libraries for Vicare Scheme: srfi ilists quotation</title>
+
+<meta name="description" content="Libraries for Vicare Scheme: srfi ilists quotation">
+<meta name="keywords" content="Libraries for Vicare Scheme: srfi ilists quotation">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="srfi-ilists.html#srfi-ilists" rel="up" title="srfi ilists">
+<link href="srfi-ilists-procs.html#srfi-ilists-procs" rel="next" title="srfi ilists procs">
+<link href="srfi-ilists-discussion.html#srfi-ilists-discussion" rel="prev" title="srfi ilists discussion">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="srfi-ilists-quotation"></a>
+<div class="header">
+<p>
+Next: <a href="srfi-ilists-procs.html#srfi-ilists-procs" accesskey="n" rel="next">srfi ilists procs</a>, Previous: <a href="srfi-ilists-discussion.html#srfi-ilists-discussion" accesskey="p" rel="prev">srfi ilists discussion</a>, Up: <a href="srfi-ilists.html#srfi-ilists" accesskey="u" rel="up">srfi ilists</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Quotation"></a>
+<h4 class="subsection">2.40.5 Quotation</h4>
+
+
+<p>The various Scheme standards permit, but do not require, Scheme
+implementations to treat quoted pairs and lists as immutable.  Thus
+whereas the expression <code>(set-car! (list 1 2 3) 10)</code> evaluates to
+the list <code>(10 2 3)</code>, the expression <code>(set-car! '(1 2 3) 10)</code>
+is not portable and in fact an error.
+</p>
+<p>This <acronym>SRFI</acronym> recommends that implementations that provide both this
+<acronym>SRFI</acronym> and immutable quotations should cause quotations to return the
+same immutable pairs that this <acronym>SRFI</acronym> describes.  This means that the
+standard Scheme pair and list operations, as well as libraries like
+<acronym>SRFI</acronym>-1 which are built on them, should accept both mutable and
+immutable pairs: thus <code>(car (ilist 1 2))</code> should evaluate to
+&lsquo;<samp>1</samp>&rsquo;.
+</p>
+<p>This <acronym>SRFI</acronym> further recommends that <code>read</code> should return mutable
+pairs and lists when reading list structure.  No recommendation is made
+about the behavior of <code>write</code>, <code>display</code>, and similar output
+procedures on immutable lists.
+</p>
+
+<dl>
+<dt><a name="index-iq"></a>Syntax: <strong>iq</strong> <em><var>?datum</var> &hellip;</em></dt>
+<dd><p>To make life easier for Scheme programmers, given that many
+implementations do not provide immutable quotation, the syntax keyword
+<code>iq</code> is provided as part of this <acronym>SRFI</acronym>.
+</p>
+<p>It is analogous to <code>quote</code>, but takes an arbitrary number of
+literals and constructing an ilist from them, with any pairs in the
+literals converted to ipairs.  It is useful for providing constant
+ipair&ndash;based objects.
+</p>
+<div class="lisp">
+<pre class="lisp">(iq)            &equiv; '()
+(iq 1)          &equiv; (ilist '1)
+(iq (1))        &equiv; (ilist (ilist '1))
+(iq 1 . 2)      &equiv; (ipair '1 '2)
+(iq 1 2)        &equiv; (ilist '1 '2)
+(iq 1 2 3)      &equiv; (ilist '1 '2 '3)
+
+(iq (1) 2 3)    &equiv; (ilist (ilist '1) '2 '3)
+(iq 1 (2) 3)    &equiv; (ilist '1 (ilist '2) '3)
+(iq 1 2 (3))    &equiv; (ilist '1 '2 (ilist '3))
+
+(iq (1 2) 3)    &equiv; (ilist (ilist '1 '2) '3)
+(iq 1 (2 3))    &equiv; (ilist '1 (ilist '2 '3))
+
+(iq (x y) z)    &equiv; (ilist (ilist 'x 'y) 'z)
+(iq x (y z))    &equiv; (ilist 'x (ilist 'y 'z))
+</pre></div>
+
+<p>Note that pairs within literal vectors or other
+implementation&ndash;dependent literals will not be converted:
+</p>
+<div class="lisp">
+<pre class="lisp">(iq #(1 2))     &equiv; (ilist '#(1 2))
+(iq #(1 (2)))   &equiv; (ilist '#(1 (2)))
+</pre></div>
+
+<p>see how the second example contains an implementation&ndash;dependent list
+&lsquo;<samp>(2)</samp>&rsquo; rather than an ilist object.
+</p>
+<p>Unfortunately, there is no ilist analogue of &lsquo;<samp>'</samp>&rsquo; to abbreviate the
+notation, so we save keystrokes by using <code>iq</code> (rather than
+<code>iquote</code>) and omitting the top&ndash;level parentheses.
+</p>
+<div class="lisp">
+<pre class="lisp">(define L
+  (iq 1 2 3))
+
+(icar L)        &rArr; 1
+(icadr L)       &rArr; 2
+(icaddr L)      &rArr; 3
+
+(define P
+  (iq 1 . 2))
+
+(icar P)        &rArr; 1
+(icdr P)        &rArr; 2
+</pre></div>
+</dd></dl>
+
+
+<a name="Quotation-and-quasiquotation"></a>
+<h4 class="subsubheading">Quotation and quasiquotation</h4>
+
+<p>As Vicare extension, the library <code>(srfi :116 quotations)</code>
+exports the following keyword syntactic bindings.
+</p>
+
+<dl>
+<dt><a name="index-iquote"></a>Syntax: <strong>iquote</strong> <em><var>?datum</var></em></dt>
+<dd><p>Similar to the <acronym>R6RS</acronym> syntax <code>quote</code>: take a single datum and
+expand to an expression in which all the pairs are transformed into
+immutable pairs.
+</p>
+<div class="lisp">
+<pre class="lisp">(iquote)                error&rarr; no match
+(iquote 1 2)            error&rarr; no match
+
+(iquote 1)              &equiv; 1
+(iquote (1))            &equiv; (ilist 1)
+(iquote (1 . 2))        &equiv; (ipair 1 2)
+(iquote (1 2))          &equiv; (ilist 1 2)
+(iquote (1 2 3))        &equiv; (ilist 1 2 3)
+
+(iquote ((1) 2 3))      &equiv; (ilist (ilist 1) 2 3)
+(iquote (1 (2) 3))      &equiv; (ilist 1 (ilist 2) 3)
+(iquote (1 2 (3)))      &equiv; (ilist 1 2 (ilist 3))
+
+(iquote ((1 2) 3))      &equiv; (ilist (ilist 1 2) 3)
+(iquote (1 (2 3)))      &equiv; (ilist 1 (ilist 2 3))
+
+(iquote ((x y) z))      &equiv; (ilist (ilist 'x 'y) 'z)
+(iquote (x (y z)))      &equiv; (ilist 'x (ilist 'y 'z))
+
+;; vector templates
+(iquote #(1 2))         &equiv; '#(1 2))
+(iquote #(1 (2)))       &equiv; (vector 1 (ilist 2)))
+(iquote (#(1 2)))       &equiv; (ilist '#(1 2)))
+
+(iquote #(1 (2 #(3 4) 5)))
+&equiv; (vector 1 (ilist 2 (vector 3 4) 5)))
+
+(iquote #(x (y #(s u) z)))
+&equiv; (vector 'x (ilist 'y (vector 's 'u) 'z)))
+
+(iquote #(1 (2 #(3 (4 . 5)) 6)))
+&equiv; (vector 1 (ilist 2 (vector 3 (ipair 4 5)) 6)))
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-iquasiquote"></a>Syntax: <strong>iquasiquote</strong> <em><var>?datum</var></em></dt>
+<dt><a name="index-iunquote"></a>Auxiliary Syntax: <strong>iunquote</strong></dt>
+<dt><a name="index-iunquote_002dsplicing"></a>Auxiliary Syntax: <strong>iunquote-splicing</strong></dt>
+<dd><p>Similar to the <acronym>R6RS</acronym> syntax <code>iquasiquote</code>: take a single datum
+and expand to an expression in which outer pairs are transformed into
+immutable pairs.  The datum may contain unquoted expressions.
+</p>
+<p>The arguments of a <code>iunquote-splicing</code> form:
+</p>
+<div class="lisp">
+<pre class="lisp">(iunquote-splicing <var>?expr</var> ...)
+</pre></div>
+
+<p>must be expressions returning ilists.
+</p>
+<p>Some basic examples:
+</p>
+<div class="lisp">
+<pre class="lisp">(iquasiquote 1)                    &equiv; 1
+(iquasiquote (1))                  &equiv; (iquote (1))
+(iquasiquote (1 . 2))              &equiv; (iquote (1 . 2))
+(iquasiquote (1 2))                &equiv; (iquote (1 2))
+(iquasiquote (1 2 . 3))            &equiv; (iquote (1 2 . 3))
+(iquasiquote ((1) (2)))            &equiv; (iquote ((1) (2)))
+(iquasiquote ((1 2) (3 4)))        &equiv; (iquote ((1 2) (3 4)))
+(iquasiquote ((1 2) (3 4)))        &equiv; (iquote ((1 2) (3 4)))
+(iquasiquote ((1 . 2) (3 . 4)))    &equiv; (iquote ((1 . 2) (3 . 4)))
+(iquasiquote ((1 . 2) . (3 . 4)))  &equiv; (iquote ((1 . 2) . (3 . 4)))
+(iquasiquote ((1 2) . 3))          &equiv; (iquote ((1 2) . 3))
+(iquasiquote ((1 . 2) . 3))        &equiv; (iquote ((1 . 2) . 3))
+</pre></div>
+
+<p>some <code>iunquote</code> examples:
+</p>
+<div class="lisp">
+<pre class="lisp">(iquasiquote (iunquote 1))                 &equiv; 1
+(iquasiquote (iunquote (iquote (1 2 3))))  &equiv; (iquote (1 2 3))
+(iquasiquote ((iunquote) (+ 1 2)))         &equiv; (iquote ((+ 1 2)))
+(iquasiquote (1 (iunquote (+ 2 3))))       &equiv; (iquote (1 5))
+(iquasiquote (1 . (iunquote (+ 2 3))))     &equiv; (ipair 1 (+ 2 3))
+
+(iquasiquote ((iunquote (+ 10 1) (+ 20 2) (+ 30 3)) (+ 8 9)))
+&equiv; (iquote (11 22 33 (+ 8 9)))
+
+(iquasiquote #((iunquote (+ 1 2)) (+ 8 9)))
+&equiv; `#(3 ,(iquote (+ 8 9)))
+</pre></div>
+
+<p>some <code>iunquote-splicing</code> examples:
+</p>
+<div class="lisp">
+<pre class="lisp">(iquasiquote ((iunquote-splicing (iquote (1 2 3)))))
+&equiv; (iquote (1 2 3))
+
+(iquasiquote ((iunquote-splicing) 1))
+&equiv; (iquote (1))
+
+(iquasiquote ((iunquote-splicing '())
+              ()))
+&equiv; (ilist '())
+
+(iquasiquote ((iunquote-splicing '()) . ()))
+&equiv; '()
+
+(iquasiquote ((iunquote-splicing (ilist (+ 1 2))) . 4))
+&equiv; (ipair 3 4)
+</pre></div>
+
+<p>two examples on the difference between <code>iunquote</code> and
+<code>iunquote-splicing</code>.
+</p>
+<div class="lisp">
+<pre class="lisp">(iquasiquote ((iunquote (ilist (+ 10 1))
+                        (ilist (+ 20 2))
+                        (ilist (+ 30 3)))
+              (+ 8 9)))
+&equiv; (iquote ((11) (22) (33) (+ 8 9)))
+
+(iquasiquote ((iunquote-splicing (ilist (+ 10 1))
+                                 (ilist (+ 20 2))
+                                 (ilist (+ 30 3)))
+              (+ 8 9)))
+&equiv; (iquote (11 22 33 (+ 8 9)))
+</pre></div>
+</dd></dl>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="srfi-ilists-procs.html#srfi-ilists-procs" accesskey="n" rel="next">srfi ilists procs</a>, Previous: <a href="srfi-ilists-discussion.html#srfi-ilists-discussion" accesskey="p" rel="prev">srfi ilists discussion</a>, Up: <a href="srfi-ilists.html#srfi-ilists" accesskey="u" rel="up">srfi ilists</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

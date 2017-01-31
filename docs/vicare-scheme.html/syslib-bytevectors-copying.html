@@ -1,0 +1,197 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.4d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit and 64-bit
+processors.  Vicare is pronounced the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/downloads
+
+the home page of the project is at:
+
+http://marcomaggi.github.io/vicare.html
+
+development takes place at:
+
+http://github.com/marcomaggi/vicare/
+
+and, as a backup, at:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the "History" appendix for details.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Vicare Scheme: syslib bytevectors copying</title>
+
+<meta name="description" content="Vicare Scheme: syslib bytevectors copying">
+<meta name="keywords" content="Vicare Scheme: syslib bytevectors copying">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="syslib-bytevectors.html#syslib-bytevectors" rel="up" title="syslib bytevectors">
+<link href="syslib-bytevectors-concatenating.html#syslib-bytevectors-concatenating" rel="next" title="syslib bytevectors concatenating">
+<link href="syslib-bytevectors-accessors-double.html#syslib-bytevectors-accessors-double" rel="prev" title="syslib bytevectors accessors double">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="syslib-bytevectors-copying"></a>
+<div class="header">
+<p>
+Next: <a href="syslib-bytevectors-concatenating.html#syslib-bytevectors-concatenating" accesskey="n" rel="next">syslib bytevectors concatenating</a>, Previous: <a href="syslib-bytevectors-accessors.html#syslib-bytevectors-accessors" accesskey="p" rel="prev">syslib bytevectors accessors</a>, Up: <a href="syslib-bytevectors.html#syslib-bytevectors" accesskey="u" rel="up">syslib bytevectors</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Copying"></a>
+<h4 class="subsection">12.17.6 Copying</h4>
+
+
+<p>For these operations, the arguments have the following meaning:
+</p>
+<dl compact="compact">
+<dt><var>src.bv</var></dt>
+<dd><p>The source bytevector.
+</p>
+</dd>
+<dt><var>src.start</var></dt>
+<dd><p>A non&ndash;negative fixnum representing the inclusive start index in the
+source bytevector <var>src.bv</var>.
+</p>
+</dd>
+<dt><var>src.end</var></dt>
+<dd><p>A non&ndash;negative fixnum representing the exclusive end index in the
+source bytevector <var>src.bv</var>.
+</p>
+</dd>
+<dt><var>dst.bv</var></dt>
+<dd><p>The destination bytevector.
+</p>
+</dd>
+<dt><var>dst.start</var></dt>
+<dd><p>A non&ndash;negative fixnum representing the inclusive start index in the
+destination bytevector <var>dst.bv</var>.
+</p>
+</dd>
+<dt><var>dst.end</var></dt>
+<dd><p>A non&ndash;negative fixnum representing the exclusive end index in the
+destination bytevector <var>src.bv</var>.
+</p></dd>
+</dl>
+
+
+<dl>
+<dt><a name="index-_0024bytevector_002dcopy"></a>Function: <strong>$bytevector-copy</strong> <em><var>bv</var></em></dt>
+<dd><p>Build and return a copy of the bytevector <var>bv</var>.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-_0024bytevector_002dcopy_0021"></a>Function: <strong>$bytevector-copy!</strong> <em><var>src.bv</var> <var>src.start</var> <var>dst.bv</var> <var>dst.start</var> <var>src.end</var></em></dt>
+<dd><p>Copy the bytes of <var>src.bv</var> from <var>src.start</var> inclusive to
+<var>src.end</var> exclusive, to <var>dst.bv</var> starting at <var>dst.start</var>
+inclusive.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-_0024bytevector_002dcopy_0021_002fcount"></a>Function: <strong>$bytevector-copy!/count</strong> <em><var>src.bv</var> <var>src.start</var> <var>dst.bv</var> <var>dst.start</var> <var>count</var></em></dt>
+<dd><p>Copy <var>count</var> bytes from <var>src.bv</var> starting at <var>src.start</var>
+inclusive to <var>dst.bv</var> starting at <var>dst.start</var> inclusive.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-_0024bytevector_002dself_002dcopy_002dforwards_0021_002fcount"></a>Function: <strong>$bytevector-self-copy-forwards!/count</strong> <em><var>bv</var> <var>src.start</var> <var>dst.start</var> <var>count</var></em></dt>
+<dd><p>Copy <var>count</var> bytes of <var>bv</var> from <var>src.start</var> inclusive
+to <var>bv</var> itself starting at <var>dst.start</var> inclusive.  The copy
+happens forwards, so it is suitable for the case:
+</p>
+<div class="example">
+<pre class="example"><var>src.start</var> &gt; <var>dst.start</var>
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-_0024bytevector_002dself_002dcopy_002dbackwards_0021_002fcount"></a>Function: <strong>$bytevector-self-copy-backwards!/count</strong> <em><var>bv</var> <var>src.start</var> <var>dst.start</var> <var>count</var></em></dt>
+<dd><p>Copy <var>count</var> bytes of <var>bv</var> from <var>src.start</var> inclusive
+to <var>bv</var> itself starting at <var>dst.start</var> inclusive.  The copy
+happens backwards, so it is suitable for the case:
+</p>
+<div class="example">
+<pre class="example"><var>src.start</var> &lt; <var>dst.start</var>
+</pre></div>
+</dd></dl>
+
+
+
+
+</body>
+</html>

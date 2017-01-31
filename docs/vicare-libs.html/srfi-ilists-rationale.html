@@ -1,0 +1,165 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes the libraries distributed along with version
+0.4d1 of Vicare Scheme, an R6RS compliant native
+compiler for the Scheme language.
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+The documentation of the libraries (vicare parser-tools silex
+-) are derived form the documentation of SILex.  Copyright
+(C) 2001, 2009 Danny Dube'.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Libraries for Vicare Scheme: srfi ilists rationale</title>
+
+<meta name="description" content="Libraries for Vicare Scheme: srfi ilists rationale">
+<meta name="keywords" content="Libraries for Vicare Scheme: srfi ilists rationale">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="srfi-ilists.html#srfi-ilists" rel="up" title="srfi ilists">
+<link href="srfi-ilists-discussion.html#srfi-ilists-discussion" rel="next" title="srfi ilists discussion">
+<link href="srfi-ilists-abstract.html#srfi-ilists-abstract" rel="prev" title="srfi ilists abstract">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="srfi-ilists-rationale"></a>
+<div class="header">
+<p>
+Next: <a href="srfi-ilists-discussion.html#srfi-ilists-discussion" accesskey="n" rel="next">srfi ilists discussion</a>, Previous: <a href="srfi-ilists-abstract.html#srfi-ilists-abstract" accesskey="p" rel="prev">srfi ilists abstract</a>, Up: <a href="srfi-ilists.html#srfi-ilists" accesskey="u" rel="up">srfi ilists</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Rationale-36"></a>
+<h4 class="subsection">2.40.3 Rationale</h4>
+
+
+<p>The first question about this library is why it should exist at all.
+Why not simply eliminate mutability from Scheme&rsquo;s ordinary pairs and use
+a version of <acronym>SRFI</acronym>-1 that treats the linear&ndash;update procedures (with
+&lsquo;<samp>!</samp>&rsquo;) as identical to their functional counterparts, as Racket does?
+The main answer is that this approach breaks <acronym>R5RS</acronym> and
+<acronym>R6RS</acronym>&ndash;small.  All the data structures in these versions of Scheme
+are inherently mutable, and portable code is allowed to depend on that
+property.
+</p>
+<p><acronym>R6RS</acronym> segregates <code>set-car!</code> and <code>set-cdr!</code> into a separate
+library, thus allowing implementations to provide immutable Scheme pairs
+if this library is not (transitively) imported into a program, and
+mutable ones if it is.  However, it is not possible to write portable
+<acronym>R6RS</acronym> programs that differentiate between mutable and immutable
+pairs, for example by using immutable pairs most of the time and mutable
+pairs where necessary.
+</p>
+<p>Because of the Liskov Substitution Principle, it is not possible to
+treat mutable pairs as either a subtype or a supertype of mutable ones;
+they must be distinct, and if operations are to apply to both, they can
+do so only by ad hoc polymorphism of the kind that Scheme traditionally
+avoids for several reasons, including clarity, efficiency, and
+flexibility.  This proposal, therefore, treats mutable and immutable
+pairs separately, while allowing easy conversion from one to the other.
+</p>
+<p>Rather than attempting to design this library from scratch, I have
+chosen the conservative option of modifying <acronym>SRFI</acronym>-1.  Consequently,
+most of the rationale given in that document applies to this one as
+well.  I have made the following changes:
+</p>
+<ul>
+<li> Removed all linear&ndash;update procedures ending in &lsquo;<samp>!</samp>&rsquo;.
+
+</li><li> Removed all references to circular lists (there will be a future <acronym>SRFI</acronym>
+for immutable bidirectional cycles).
+
+</li><li> Removed the <em>O(n^2)</em> lists&ndash;as&ndash;sets procedures (there will be a
+future <acronym>SRFI</acronym> supporting <em>O(log n)</em> immutable sets).
+
+</li><li> Inserted an &lsquo;<samp>i</samp>&rsquo; at a judicious place in each identifier, usually at
+the beginning.  However, because &ldquo;icons&rdquo; means something else in both
+ordinary English and computer jargon, the basic constructor and its
+immediate relatives are named <code>ipair</code>, <code>xipair</code> and
+<code>ipair*</code> instead.
+
+</li><li> Added procedures for conversion between ordinary and immutable pairs,
+lists, and trees.
+
+</li><li> Added an analogue of <code>apply</code> for applying a procedure to an
+immutable list of arguments.
+
+</li><li> Added <acronym>SRFI</acronym>-114 comparators for immutable pairs, lists, and dotted
+lists.
+</li></ul>
+
+<blockquote>
+<p><strong>NOTE</strong> In the prose, immutable pairs and lists are known as
+<em>ipairs</em> and <em>ilists</em> throughout.
+</p></blockquote>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="srfi-ilists-discussion.html#srfi-ilists-discussion" accesskey="n" rel="next">srfi ilists discussion</a>, Previous: <a href="srfi-ilists-abstract.html#srfi-ilists-abstract" accesskey="p" rel="prev">srfi ilists abstract</a>, Up: <a href="srfi-ilists.html#srfi-ilists" accesskey="u" rel="up">srfi ilists</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

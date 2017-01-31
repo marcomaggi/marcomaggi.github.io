@@ -1,0 +1,199 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes the libraries distributed along with version
+0.4d1 of Vicare Scheme, an R6RS compliant native
+compiler for the Scheme language.
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+The documentation of the libraries (vicare parser-tools silex
+-) are derived form the documentation of SILex.  Copyright
+(C) 2001, 2009 Danny Dube'.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Libraries for Vicare Scheme: iqueues common</title>
+
+<meta name="description" content="Libraries for Vicare Scheme: iqueues common">
+<meta name="keywords" content="Libraries for Vicare Scheme: iqueues common">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="iqueues.html#iqueues" rel="up" title="iqueues">
+<link href="iqueues-queues.html#iqueues-queues" rel="next" title="iqueues queues">
+<link href="iqueues.html#iqueues" rel="prev" title="iqueues">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="iqueues-common"></a>
+<div class="header">
+<p>
+Next: <a href="iqueues-queues.html#iqueues-queues" accesskey="n" rel="next">iqueues queues</a>, Up: <a href="iqueues.html#iqueues" accesskey="u" rel="up">iqueues</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="The-common-queues-API"></a>
+<h3 class="section">47.1 The common queues <acronym>API</acronym></h3>
+
+
+<p>The following syntactic bindings are exported by the library
+<code>(vicare containers iqueues)</code>.
+</p>
+
+<dl>
+<dt><a name="index-_003ciqueue_003e"></a>Record Type: <strong>&lt;iqueue&gt;</strong></dt>
+<dd><a name="index-iqueue-argument"></a>
+<a name="index-Argument-iqueue"></a>
+<p>Record type representing a queue object.  The <code>&lt;iqueue&gt;</code> type is
+non&ndash;generative and available for subtyping.  In this documentation
+<code>&lt;iqueue&gt;</code> instances used as arguments to functions are indicated as
+<var>iqueue</var>.
+</p>
+<p><code>&lt;iqueue&gt;</code> is an &ldquo;abstract&rdquo; type: it must not be instantiated
+directly, rather a subtype of <code>&lt;iqueue&gt;</code> must be defined
+implementing the required functions.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-make_002diqueue-on-_003ciqueue_003e"></a>Constructor on &lt;iqueue&gt;: <strong>make-iqueue</strong> <em><var>empty?</var> <var>top</var> <var>push!</var> <var>pop!</var></em></dt>
+<dd><p>When we derive a type from <code>&lt;iqueue&gt;</code> and we specify a protocol:
+this is the closure object used as argument for the protocol function.
+</p>
+<div class="lisp">
+<pre class="lisp">(define-record-type &lt;iqueue-list&gt;
+  (parent &lt;iqueue&gt;)
+  (protocol
+    (lambda (make-iqueue)
+      ---))
+  ---)
+</pre></div>
+
+<p>Its arguments must be functions implementing the methods for the
+concrete queue:
+</p>
+<dl compact="compact">
+<dt><var>empty?</var></dt>
+<dd><p>A function accepting as single argument the <code>&lt;iqueue&gt;</code> instance
+itself.  It must return <code>#t</code> if the queue is empty; otherwise it must
+return <code>#f</code>.
+</p>
+</dd>
+<dt><var>top</var></dt>
+<dd><p>A function accepting as single argument the <code>&lt;iqueue&gt;</code> instance
+itself.  It must return the top object at the front of the
+<code>&lt;iqueue&gt;</code>.
+</p>
+</dd>
+<dt><var>push!</var></dt>
+<dd><p>A function accepting two arguments: the <code>&lt;iqueue&gt;</code> instance itself
+and an object.  It must push the object on the rear of the
+<code>&lt;iqueue&gt;</code>; it can return unspecified values.
+</p>
+</dd>
+<dt><var>pop!</var></dt>
+<dd><p>A function accepting as single argument the <code>&lt;iqueue&gt;</code> instance
+itself.  It must remove and return the top object on the front of the
+<code>&lt;iqueue&gt;</code>.
+</p></dd>
+</dl>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-iqueue_003f"></a>Function: <strong>iqueue?</strong> <em><var>obj</var></em></dt>
+<dd><p>Return <code>#t</code> if <var>obj</var> is an instance of <code>&lt;iqueue&gt;</code>; otherwise
+return <code>#f</code>.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-iqueue_002dempty_003f"></a>Function: <strong>iqueue-empty?</strong> <em><var>iqueue</var></em></dt>
+<dd><p>Return <code>#t</code> if <var>iqueue</var> is empty; otherwise return <code>#f</code>.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-iqueue_002dtop"></a>Function: <strong>iqueue-top</strong> <em><var>iqueue</var></em></dt>
+<dd><p>Return the top object on the front of <var>iqueue</var>.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-iqueue_002dpush_0021"></a>Function: <strong>iqueue-push!</strong> <em><var>iqueue</var> <var>obj</var></em></dt>
+<dd><p>Push <var>obj</var> on the rear of <var>iqueue</var>.  Return unspecified values.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-iqueue_002dpop_0021"></a>Function: <strong>iqueue-pop!</strong> <em><var>iqueue</var></em></dt>
+<dd><p>Remove and return the top object on the front of <var>iqueue</var>.
+</p></dd></dl>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="iqueues-queues.html#iqueues-queues" accesskey="n" rel="next">iqueues queues</a>, Up: <a href="iqueues.html#iqueues" accesskey="u" rel="up">iqueues</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

@@ -1,0 +1,348 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.4d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit and 64-bit
+processors.  Vicare is pronounced the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/downloads
+
+the home page of the project is at:
+
+http://marcomaggi.github.io/vicare.html
+
+development takes place at:
+
+http://github.com/marcomaggi/vicare/
+
+and, as a backup, at:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the "History" appendix for details.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Vicare Scheme: compiler topics topbind</title>
+
+<meta name="description" content="Vicare Scheme: compiler topics topbind">
+<meta name="keywords" content="Vicare Scheme: compiler topics topbind">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="compiler-topics.html#compiler-topics" rel="up" title="compiler topics">
+<link href="compiler-topics-locbind.html#compiler-topics-locbind" rel="next" title="compiler topics locbind">
+<link href="compiler-topics.html#compiler-topics" rel="prev" title="compiler topics">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="compiler-topics-topbind"></a>
+<div class="header">
+<p>
+Next: <a href="compiler-topics-locbind.html#compiler-topics-locbind" accesskey="n" rel="next">compiler topics locbind</a>, Up: <a href="compiler-topics.html#compiler-topics" accesskey="u" rel="up">compiler topics</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Handling-of-lexical-top-level-bindings"></a>
+<h4 class="subsection">17.3.1 Handling of lexical top level bindings</h4>
+
+
+<a name="Core-language-representation"></a>
+<h4 class="subsubheading">Core language representation</h4>
+
+<p>Bindings defined by the core language form <code>library-letrec*</code> are
+named <em>top level bindings</em>; they are akin to the C language &ldquo;global
+variables&rdquo;.  The form <code>library-letrec*</code> has the format:
+</p>
+<div class="example">
+<pre class="example">(library-letrec* ((<var>?lex</var> <var>?loc</var> <var>?init</var>) ...) <var>?body</var>)
+</pre></div>
+
+<p>in which: <var>?lex</var> is a lexical gensym that uniquely identifies the
+binding in the core language form; <var>?loc</var> is a location gensym which
+will be used at run&ndash;time to hold the current value of the binding in
+its <code>value</code> slot; <var>?init</var> is the initialisation expression.
+</p>
+<p>References to top level bindings are represented by standalone
+<var>?lex</var> gensyms; assignments to top level bindings are represented by
+<code>set!</code> forms:
+</p>
+<div class="example">
+<pre class="example">(set! <var>?lex</var> <var>?rhs</var>)
+</pre></div>
+
+<p>where the right&ndash;hand side expression <var>?rhs</var> will, at run&ndash;time,
+evaluate to the new binding&rsquo;s value.
+</p>
+
+<a name="Recordised-language-representation"></a>
+<h4 class="subsubheading">Recordised language representation</h4>
+
+<p>The <code>library-letrec*</code> form is recordised into a <code>rec*bind</code>
+form:
+</p>
+<div class="example">
+<pre class="example">(rec*bind ((<var>?prel</var> <var>?init</var>) ...) <var>?body</var>)
+</pre></div>
+
+<p>in which <var>?prel</var> is a <code>prelex</code> struct holding both the
+<var>?lex</var> and <var>?loc</var> gensyms.  References to top level bindings are
+represented by standalone <code>prelex</code> structs; assignments to top
+level bindings are represented by <code>assign</code> structs:
+</p>
+<div class="example">
+<pre class="example">(assign <var>?prel</var> <var>?rhs</var>)
+</pre></div>
+
+
+<a name="Implementation-of-references-and-assignments"></a>
+<h4 class="subsubheading">Implementation of references and assignments</h4>
+
+<p>Since the actual value of a top level binding is stored in the
+<code>value</code> field of a loc gensym:
+</p>
+<ul>
+<li> References to top level bindings must be transformed into:
+
+<div class="example">
+<pre class="example">(funcall (primref $symbol-value) (constant <var>?loc</var>))
+</pre></div>
+
+<p>which extracts the value from slot <code>value</code> of <var>?loc</var>.
+</p>
+</li><li> Common assignments to top level bindings must be transformed into:
+
+<div class="example">
+<pre class="example">(funcall (primref $set-symbol-value!)
+         (constant <var>?loc</var>)
+         <var>?rhs</var>)
+</pre></div>
+
+<p>which stores a new value in the slot <code>value</code> of <var>?loc</var>.
+</p>
+</li><li> Single assignments to top level bindings which also serve as binding
+initialisations must be transformed into:
+
+<div class="example">
+<pre class="example">(funcall (primref $init-symbol-value!)
+         (constant <var>?loc</var>)
+         <var>?rhs</var>)
+</pre></div>
+
+<p>which stores a new value in the slot <code>value</code> of <var>?loc</var> and,
+only if the value is recognised at run&ndash;time as being closure object,
+also stores value in the slot <code>proc</code>.
+</p></li></ul>
+
+
+<a name="Results-of-optimising-rec_002abind-forms"></a>
+<h4 class="subsubheading">Results of optimising <code>rec*bind</code> forms</h4>
+
+<p>A compiler pass takes care of performing &ldquo;<code>letrec</code> optimisation&rdquo;:
+structs of type <code>rec*bind</code> are transformed into a nested
+hierarchy of <code>bind</code>, <code>fix</code> and <code>assign</code> forms.
+Different cases must be handled in different ways.
+</p>
+<ul>
+<li> Some non&ndash;recursive &ldquo;simple&rdquo; and unassigned bindings end up defined as
+follows:
+
+<div class="example">
+<pre class="example">(bind ((<var>?prel</var> <var>?init</var>))
+  <var>?body</var>)
+</pre></div>
+
+<p>the transformation of references is straightforward.  As example, let&rsquo;s
+consider:
+</p>
+<div class="example">
+<pre class="example">(library-letrec*
+    ((a.lex a.loc '1)
+     (b.lex b.loc '2))
+  ((primitive display) a.lex b.lex))
+</pre></div>
+
+<p>which is recordised and transformed into:
+</p>
+<div class="example">
+<pre class="example">(bind ((a.lex_0 (constant 1)))
+  (bind ((b.lex_0 (constant 2)))
+    (funcall (primref display) (constant 1) (constant 2))))
+</pre></div>
+
+<p>in which the references to bindings are integrated by the source
+optimiser.
+</p>
+</li><li> Some non&ndash;recursive &ldquo;simple&rdquo; and assigned bindings end up defined as
+follows:
+
+<div class="example">
+<pre class="example">(bind ((<var>?prel</var> <var>?init</var>))
+  <var>?body</var>)
+</pre></div>
+
+<p>the transformation of references and assignments is straightforward.  As
+example, let&rsquo;s consider:
+</p>
+<div class="example">
+<pre class="example">(library-letrec*
+    ((a.lex a.loc '1)
+     (b.lex b.loc '2))
+  (begin
+    (set! a.lex '11)
+    (set! b.lex '22)
+    ((primitive display) a.lex b.lex)))
+</pre></div>
+
+<p>which is recordised and transformed into:
+</p>
+<div class="example">
+<pre class="example">(bind ((a.lex_0 (constant 1)))
+  (bind ((b.lex_0 (constant 2)))
+    (seq
+      (funcall (primref $set-symbol-value!)
+               (constant a.loc)
+               (constant 11))
+      (funcall (primref $set-symbol-value!)
+               (constant b.loc)
+               (constant 22))
+      (funcall (primref display)
+               (funcall (primref $symbol-value)
+                        (constant a.loc))
+               (funcall (primref $symbol-value)
+                        (constant b.loc))))))
+</pre></div>
+
+</li><li> Some <strong>unassigned</strong> top level bindings end up defined (roughly) as
+follows:
+
+<div class="example">
+<pre class="example">(bind ((<var>?prel</var> (constant #&lt;void&gt;)))
+  (assign <var>?prel</var> <var>?init</var>)
+  <var>?body</var>)
+</pre></div>
+
+<p>this might happen when the initialisation expressions in the original
+<code>rec*bind</code> need to access the machine words in which the
+bindings&rsquo; values are stored; so, at run&ndash;time, first we need to allocate
+the loc gensyms and then we can evaluate the initialisation expressions
+and store the resulting value in the gensym itself.
+</p>
+<p>In this special case, since the binding is unassigned in the original
+code, the <code>assign</code> struct is introduced by the compiler and it
+is the only assignment for the binding.  The compiler recognises this
+case and transforms:
+</p>
+<div class="example">
+<pre class="example">(assign <var>?prel</var> <var>?init</var>)
+</pre></div>
+
+<p>into:
+</p>
+<div class="example">
+<pre class="example">(funcall (primref $init-symbol-value!)
+         (constant <var>?loc</var>)
+         <var>?init</var>)
+</pre></div>
+
+<p>in which <var>?loc</var> is the loc gensym of the binding.
+</p>
+</li><li> When top level bindings are unassigned and have initialisation
+expression being a <code>clambda</code> form: they end up being defined by
+a <code>fix</code> struct; the <code>letrec</code> optimiser takes care of
+recognising and handling such case.  As example:
+
+<div class="example">
+<pre class="example">(library-letrec*
+    ((a.lex a.loc (lambda () '1))
+     (b.lex a.loc (lambda () '2)))
+  ((primitive display) (a.lex)))
+</pre></div>
+
+<p>is transformed into:
+</p>
+<div class="example">
+<pre class="example">(fix ((a.lex_0 (lambda () (constant 1)))
+      (b.lex_0 (lambda () (constant 2))))
+  (funcall (primref display) (constant 1)))
+</pre></div>
+
+<p>in which the call to <code>a.lex</code> is integrated by the source optimiser.
+</p></li></ul>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="compiler-topics-locbind.html#compiler-topics-locbind" accesskey="n" rel="next">compiler topics locbind</a>, Up: <a href="compiler-topics.html#compiler-topics" accesskey="u" rel="up">compiler topics</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

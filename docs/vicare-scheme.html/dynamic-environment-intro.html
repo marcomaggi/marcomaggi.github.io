@@ -1,0 +1,279 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.4d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit and 64-bit
+processors.  Vicare is pronounced the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/downloads
+
+the home page of the project is at:
+
+http://marcomaggi.github.io/vicare.html
+
+development takes place at:
+
+http://github.com/marcomaggi/vicare/
+
+and, as a backup, at:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the "History" appendix for details.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Vicare Scheme: dynamic environment intro</title>
+
+<meta name="description" content="Vicare Scheme: dynamic environment intro">
+<meta name="keywords" content="Vicare Scheme: dynamic environment intro">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="dynamic-environment.html#dynamic-environment" rel="up" title="dynamic environment">
+<link href="dynamic-environment-parms.html#dynamic-environment-parms" rel="next" title="dynamic environment parms">
+<link href="dynamic-environment.html#dynamic-environment" rel="prev" title="dynamic environment">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="dynamic-environment-intro"></a>
+<div class="header">
+<p>
+Next: <a href="dynamic-environment-parms.html#dynamic-environment-parms" accesskey="n" rel="next">dynamic environment parms</a>, Up: <a href="dynamic-environment.html#dynamic-environment" accesskey="u" rel="up">dynamic environment</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Introduction-to-the-concept-of-dynamic-environment"></a>
+<h3 class="appendixsec">D.1 Introduction to the concept of dynamic environment</h3>
+
+
+<p>The dynamic environment is a subset of the state of a <code>vicare</code>
+process that is maintained with the in&ndash;guard and out&ndash;guard thunks of
+<code>dynamic-wind</code>.
+</p>
+<p>Let&rsquo;s consider the following program prelude:
+</p>
+<div class="example">
+<pre class="example">#!vicare
+(import (vicare)
+  (only (vicare checks)
+        with-result
+        add-result))
+
+(define var)
+
+(define (step id)
+  (add-result (list id var))
+  (++ var))
+
+(define-syntax dotimes
+  (syntax-rules ()
+    ((_ ?count . ?body)
+     (do ((i 0 (+ 1 i)))
+         ((= i ?count))
+       . ?body))
+    ))
+</pre></div>
+
+<p>we can call the function <code>step</code> to access and mutate the current
+value of the variable <code>var</code>; <code>dotimes</code> is a simple macro
+that evaluates a body a number of times.  For example we can do:
+</p>
+<div class="example">
+<pre class="example">(define (doit id init)
+  (set! var init)
+  (dotimes 5
+    (step id)))
+
+(with-result
+  (doit 'single 0)
+  1)
+&rArr; (1 ((single 0)
+       (single 1)
+       (single 2)
+       (single 3)
+       (single 4)))
+</pre></div>
+
+<p>this program does not define a dynamic environment.
+</p>
+<p>Now, with the same prelude, let&rsquo;s consider the following code making use
+of coroutines:
+</p>
+<div class="example">
+<pre class="example">(define (doit id init)
+  (define local-var)
+  (coroutine
+      (lambda ()
+        (dynamic-wind
+            (lambda ()
+              (set! var local-var))
+            (lambda ()
+              (set! var init)
+              (dotimes 5
+                (step id)
+                (yield)))
+            (lambda ()
+              (set! local-var var))))))
+
+(with-result
+  (doit 'one  0)
+  (doit 'two 10)
+  (finish-coroutines)
+  1)
+&rArr; (1 ((one 0) (two 10)
+       (one 1) (two 11)
+       (one 2) (two 12)
+       (one 3) (two 13)
+       (one 4) (two 14)))
+</pre></div>
+
+<p>this program defines a dynamic environment:
+</p>
+<ul>
+<li> The in&ndash;guard thunk stores in <code>var</code> the local value
+<code>local-var</code>:
+
+<div class="example">
+<pre class="example">(lambda ()
+  (set! var local-var))
+</pre></div>
+
+</li><li> The out&ndash;guard thunk saves in <code>local-var</code> the global value
+<code>var</code>:
+
+<div class="example">
+<pre class="example">(lambda ()
+  (set! local-var var))
+</pre></div>
+</li></ul>
+
+<p>this way the function <code>step</code> called by the body thunk of
+<code>dynamic-wind</code> accesses and mutates a variable <code>var</code> that
+holds a value &ldquo;private&rdquo; to the coroutine.
+</p>
+
+<a name="The-current-exception-handler"></a>
+<h4 class="unnumberedsubsec">The current exception handler</h4>
+
+<p>The standard <code>with-exception-handler</code> uses the same mechanism to
+install in the dynamic environment the current exception handler.  The
+following program shows how <code>with-exception-handler</code> transparently
+installs as handler a closure for each coroutine:
+</p>
+<div class="example">
+<pre class="example">#!vicare
+(import (vicare)
+  (only (vicare checks)
+        with-result
+        add-result))
+
+(define-syntax dotimes
+  (syntax-rules ()
+    ((_ ?count . ?body)
+     (do ((i 0 (+ 1 i)))
+         ((= i ?count))
+       . ?body))
+    ))
+
+(define (doit name init)
+  (define X init)
+  (coroutine
+      (lambda ()
+        (with-exception-handler
+            (lambda (E)
+              (++ X))
+          (lambda ()
+            (dotimes 5
+              (add-result (list name
+                                (raise-continuable (void))))
+              (yield)))))))
+
+(with-result
+  (doit 'one 0)
+  (doit 'two 10)
+  (finish-coroutines)
+  1)
+&rArr; (1 ((one 1) (two 11)
+       (one 2) (two 12)
+       (one 3) (two 13)
+       (one 4) (two 14)
+       (one 5) (two 15)))
+</pre></div>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="dynamic-environment-parms.html#dynamic-environment-parms" accesskey="n" rel="next">dynamic environment parms</a>, Up: <a href="dynamic-environment.html#dynamic-environment" accesskey="u" rel="up">dynamic environment</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

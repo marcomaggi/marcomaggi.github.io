@@ -1,0 +1,174 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.4d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit and 64-bit
+processors.  Vicare is pronounced the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/downloads
+
+the home page of the project is at:
+
+http://marcomaggi.github.io/vicare.html
+
+development takes place at:
+
+http://github.com/marcomaggi/vicare/
+
+and, as a backup, at:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the "History" appendix for details.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Vicare Scheme: expander intro</title>
+
+<meta name="description" content="Vicare Scheme: expander intro">
+<meta name="keywords" content="Vicare Scheme: expander intro">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="expander.html#expander" rel="up" title="expander">
+<link href="expander-intro-macros.html#expander-intro-macros" rel="next" title="expander intro macros">
+<link href="expander.html#expander" rel="prev" title="expander">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="expander-intro"></a>
+<div class="header">
+<p>
+Next: <a href="expander-options.html#expander-options" accesskey="n" rel="next">expander options</a>, Up: <a href="expander.html#expander" accesskey="u" rel="up">expander</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Introduction-to-the-expansion-process"></a>
+<h3 class="section">15.1 Introduction to the expansion process</h3>
+
+
+<p>First some notes on &ldquo;languages&rdquo; in Vicare&rsquo;s jargon:
+</p>
+<ul>
+<li> The <em>expanded language</em> is a low level Scheme&ndash;like language which
+is the result of the expansion process: expanding a Scheme library or
+program means to transform the input language into a symbolic expression
+in the expanded language.
+
+</li><li> The &ldquo;core language&rdquo; is a low level Scheme&ndash;like language which is the
+input recognised by the compiler.
+</li></ul>
+
+<p>at present the expanded language and the core language are equal, but
+this might change in the future.
+</p>
+<p>While discussing the expander operations, we will always refer to source
+code in the form of libraries.  <acronym>R6RS</acronym> also defines top level
+programs; however, under Vicare:
+</p>
+<ul>
+<li> The process of expanding programs is almost equal to the process of
+expanding libraries.  The differences are: a program does not export
+syntactic bindings; the top level body of a program intermixes
+definitions and expressions, while the top level body of a library
+separates definitions and expressions.
+
+</li><li> The result of expanding a library is equal to the result of expanding a
+program.
+
+</li><li> The output of the expander is the input of the compiler, and such input
+is equal when compiling a library and when compiling a program.
+</li></ul>
+
+<p>so if we understand how libraries are expanded, we also understand how
+programs are expanded.
+</p>
+<table class="menu" border="0" cellspacing="0">
+<tr><td align="left" valign="top">&bull; <a href="expander-intro-macros.html#expander-intro-macros" accesskey="1">expander intro macros</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Core macros, non-core macros,
+                                user-defined macros.
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="expander-intro-times.html#expander-intro-times" accesskey="2">expander intro times</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Evaluation times.
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="expander-intro-bindings.html#expander-intro-bindings" accesskey="3">expander intro bindings</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Syntactic bindings.
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="expander-intro-lex.html#expander-intro-lex" accesskey="4">expander intro lex</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Lexical variables, labels,
+                                location gensyms.
+</td></tr>
+</table>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="expander-options.html#expander-options" accesskey="n" rel="next">expander options</a>, Up: <a href="expander.html#expander" accesskey="u" rel="up">expander</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

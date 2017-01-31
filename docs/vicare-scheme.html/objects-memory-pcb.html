@@ -1,0 +1,360 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.4d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit and 64-bit
+processors.  Vicare is pronounced the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/downloads
+
+the home page of the project is at:
+
+http://marcomaggi.github.io/vicare.html
+
+development takes place at:
+
+http://github.com/marcomaggi/vicare/
+
+and, as a backup, at:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the "History" appendix for details.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Vicare Scheme: objects memory pcb</title>
+
+<meta name="description" content="Vicare Scheme: objects memory pcb">
+<meta name="keywords" content="Vicare Scheme: objects memory pcb">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="objects-memory.html#objects-memory" rel="up" title="objects memory">
+<link href="objects-memory-alloc.html#objects-memory-alloc" rel="next" title="objects memory alloc">
+<link href="objects-memory-segments.html#objects-memory-segments" rel="prev" title="objects memory segments">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="objects-memory-pcb"></a>
+<div class="header">
+<p>
+Next: <a href="objects-memory-alloc.html#objects-memory-alloc" accesskey="n" rel="next">objects memory alloc</a>, Previous: <a href="objects-memory-segments.html#objects-memory-segments" accesskey="p" rel="prev">objects memory segments</a>, Up: <a href="objects-memory.html#objects-memory" accesskey="u" rel="up">objects memory</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Interesting-PCB-fields"></a>
+<h4 class="subsection">13.3.3 Interesting <acronym>PCB</acronym> fields</h4>
+
+
+<p>In this section we discuss some private fields of the C data structure
+<code>ikpcb_t</code>, the <em>Process Control Block</em>, related to memory allocation
+and garbage collection.
+</p>
+<dl compact="compact">
+<dt><code>ikptr_t memory_base</code></dt>
+<dt><code>ikptr_t memory_end</code></dt>
+<dd><p>Untagged pointers updated (if needed) after every memory mapped
+allocation to be lower and greater than all the memory used by Scheme
+programs.
+</p>
+<div class="example">
+<pre class="example">         Scheme used memory
+     |.......................|
+|--------------------------------------| system memory
+     ^                        ^
+  memory_base             memory_end
+</pre></div>
+
+<p>They are used for garbage collection purposes: every Vicare page between
+this range of pointers is described by a slot in the segments vector and
+the dirty vector.
+</p>
+<p>The pointers <code>memory_base</code> and <code>memory_end</code> always reference
+the first machine word in a logic memory segment (see <a href="objects-memory-segments.html#objects-memory-segments">objects memory segments</a>).
+</p>
+</dd>
+<dt><code>uint32_t * segment_vector_base</code></dt>
+<dt><code>uint32_t * segment_vector</code></dt>
+<dd><p>The segments vector contains a slot for every Vicare page in the region
+of memory delimited by the fields <code>memory_base</code> and
+<code>memory_end</code>; it is used to register the destination use of every
+page (heap, stack, unused, etc.), along with the garbage collection
+generation the page belongs to.
+</p>
+<p><code>segment_vector_base</code> references the first allocated slot; access
+to the vector with zero&ndash;based indexes is performed through
+<code>segment_vector</code>.
+</p>
+<div class="example">
+<pre class="example">                     segment vector
+|.................|--------------------|.......| system memory
+     ^             ^
+  segment_vector  segment_vector_base
+</pre></div>
+
+<p>The first slot referenced by <code>segment_vector_base</code> has index
+different from zero; its index is computed with <code>IK_PAGE_INDEX()</code>:
+</p>
+<div class="example">
+<pre class="example">pcb-&gt;segment_vector[IK_PAGE_INDEX(memory_pointer)]
+</pre></div>
+
+<p>to loop over all the slots we can do:
+</p>
+<div class="example">
+<pre class="example">ikuword_t  lo_idx = IK_PAGE_INDEX(pcb-&gt;memory_base);
+ikuword_t  hi_idx = IK_PAGE_INDEX(pcb-&gt;memory_end);
+ikuword_t  page_idx;
+
+for (page_idx = lo_idx; page_idx &lt; hi_idx; ++page_idx) {
+  pcb-&gt;segment_vector[page_idx];
+}
+</pre></div>
+
+<p>Notice that the segments vector is <strong>not</strong> itself registered in the
+segments vector and dirty vector: if the segments vector falls inside
+the region delimited by <code>memory_base</code> and <code>memory_end</code>, it is
+marked as unused and pure.
+</p>
+</dd>
+<dt><code>uint32_t * dirty_vector_base</code></dt>
+<dt><code>ikptr_t dirty_vector</code></dt>
+<dd><p>The dirty vector contains a slot for every Vicare page in the region of
+memory delimited by the fields <code>memory_base</code> and <code>memory_end</code>;
+it is used to keep track of pages that were mutated at runtime; it
+allows the garbage collector to do the right thing when a Scheme object
+in an old generation is mutated to reference a Scheme object in a new
+generation.
+</p>
+<p>When a Scheme object in a memory page is mutated at run&ndash;time: such page
+is said to be &ldquo;dirty&rdquo;; otherwise it is &ldquo;pure&rdquo;.
+</p>
+<p><code>dirty_vector_base</code> references the first allocated slot; access to
+the vector with zero&ndash;based indexes is performed through the field
+<code>dirty_vector</code> (which is also accessible from Scheme code).
+</p>
+<div class="example">
+<pre class="example">                       dirty vector
+|.................|--------------------|.......| system memory
+     ^             ^
+  dirty_vector    dirty_vector_base
+</pre></div>
+
+<p>The first slot referenced by <code>dirty_vector_base</code> has index
+different from zero; its index is computed with <code>IK_PAGE_INDEX()</code>:
+</p>
+<div class="example">
+<pre class="example">((uint32_t *)(pcb-&gt;dirty_vector))[IK_PAGE_INDEX(memory_pointer)]
+</pre></div>
+
+<p>to loop over all the slots we can do:
+</p>
+<div class="example">
+<pre class="example">ikuword_t  lo_idx = IK_PAGE_INDEX(pcb-&gt;memory_base);
+ikuword_t  hi_idx = IK_PAGE_INDEX(pcb-&gt;memory_end);
+ikuword_t  page_idx;
+
+for (page_idx = lo_idx; page_idx &lt; hi_idx; ++page_idx) {
+  ((uint32_t *)(pcb-&gt;dirty_vector))[page_idx];
+}
+</pre></div>
+
+<p>Notice that the dirty vector is <strong>not</strong> itself registered in the
+segments vector and dirty vector: if the dirty vector falls inside the
+region delimited by <code>memory_base</code> and <code>memory_end</code>, the pages
+it uses are marked as unused and pure.
+</p></dd>
+</dl>
+
+<p>Scheme objects created by a Scheme program are allocated on the heap.
+We can think of the Scheme heap as the union of the <em>nursery</em> and a
+set of <em>generational pages</em>.
+</p>
+<p>The nursery is a set of memory blocks in which new Scheme objects are
+allocated; it is the generation <code>0</code>.  The nursery starts with a
+single &ldquo;hot&rdquo; memory block in which new Scheme objects are allocated;
+whenever the hot block is full:
+</p>
+<ul>
+<li> If an &ldquo;unsafe&rdquo; allocation is requested and there is free room in the
+nursery&rsquo;s hot block: the Scheme object is allocated in the nursery&rsquo;s hot
+block.
+
+<p>This is the case of: Scheme object allocation from C language code,
+through the C function <code>ik_unsafe_alloc()</code>.
+</p>
+</li><li> If an &ldquo;unsafe&rdquo; allocation is requested and there is no free room in
+the nursery&rsquo;s hot block:
+
+<ol>
+<li> The current hot block is stored away in a linked list of &ldquo;full&rdquo;
+nursery segments.
+
+</li><li> A new nursery segment is allocated and registered as empty hot block.
+
+</li><li> The Scheme object is allocated in the nursery&rsquo;s hot block.
+</li></ol>
+
+<p>This is the case of: Scheme object allocation from C language code,
+through the C function <code>ik_unsafe_alloc()</code>.
+</p>
+</li><li> If a &ldquo;safe&rdquo; allocation is requested and there is free room in the
+nursery&rsquo;s hot block: the Scheme object is allocated in the nursery&rsquo;s hot
+block.
+
+<p>This is the case of: common Scheme object allocation from Scheme code;
+common Scheme object allocation from C language code, through the C
+function <code>ik_safe_alloc()</code>.
+</p>
+</li><li> If a &ldquo;safe&rdquo; allocation is requested and there is no free room in the
+nursery&rsquo;s hot block:
+
+<ol>
+<li> A garbage collection is performed; all the objects are moved from the
+nursery (including all the old full segments) into the generational
+pages of generation 1.
+
+</li><li> The current nursery&rsquo;s hot block is reused as empty hot block.
+
+</li><li> The old full segments are released or cached for future page
+allocations.
+
+</li><li> The Scheme object is allocated in the nursery&rsquo;s hot block.
+</li></ol>
+
+<p>This is the case of: common Scheme object allocation from Scheme code;
+common Scheme object allocation from C language code, through the C
+function <code>ik_safe_alloc()</code>.
+</p></li></ul>
+
+<p>The generational pages are a set of Vicare pages, described by the
+segments vector and dirty vector, in which objects are moved after they
+survive a garbage collection; every generational page is tagged in the
+segments vector with the index of the generation it belongs to.
+</p>
+<p>While nursery segments hold Scheme objects of any type, each
+generational page holds objects of a single &ldquo;category&rdquo;: pairs;
+symbols; vectors, structs, records, ratnums, compnums, cflonums; code
+objects; bytevectors, strings, flonums, bignums.
+</p>
+<dl compact="compact">
+<dt><code>ikptr_t heap_nursery_hot_block_base</code></dt>
+<dt><code>ikuword_t heap_nursery_hot_block_size</code></dt>
+<dd><p>Pointer and size in bytes of the current nursery&rsquo;s hot memory block; new
+Scheme objects are allocated here.  About the size of the hot block:
+</p>
+<ul>
+<li> The hot block is initialised to a memory mapped block of size
+<code>IK_HEAPSIZE</code> bytes; this size is customisable (see <a href="iklib-runtime.html#iklib-runtime">iklib runtime</a>).
+
+</li><li> When the current hot block is full and a call to <code>ik_unsafe_alloc()</code>
+is performed:
+
+<ul class="no-bullet">
+<li>- If the requested size, aligned, is less than <code>IK_HEAPSIZE</code> bytes:
+the hot block is set to a memory mapped block of size <code>IK_HEAPSIZE</code>
+bytes.
+
+</li><li>- If the requested size, aligned, is greater than <code>IK_HEAPSIZE</code>
+bytes: the hot block is set to a memory mapped block of size wide enough
+to hold the requested, aligned, size (with a couple of
+<code>IK_PAGESIZE</code> more, rounded to the next page size).
+</li></ul>
+</li></ul>
+
+</dd>
+<dt><code>ikptr_t allocation_pointer</code></dt>
+<dd><p>Pointer to the first word of available data in the nursery&rsquo;s hot memory
+block; the next Scheme object to be allocated will start there.
+</p>
+</dd>
+<dt><code>ikptr_t allocation_redline</code></dt>
+<dd><p>Pointer to a word towards the end of the heap hot memory block; when the
+allocation of a Scheme object crosses this pointer, the hot block is
+considered full.
+</p>
+</dd>
+<dt><code>ikmemblock_t full_heap_nursery_segments</code></dt>
+<dd><p>Pointer to the first node in a linked list of memory blocks that once
+were nursery&rsquo;s hot memory, and are now fully used; initialised to
+<code>NULL</code> when building the <acronym>PCB</acronym>.
+</p></dd>
+</dl>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="objects-memory-alloc.html#objects-memory-alloc" accesskey="n" rel="next">objects memory alloc</a>, Previous: <a href="objects-memory-segments.html#objects-memory-segments" accesskey="p" rel="prev">objects memory segments</a>, Up: <a href="objects-memory.html#objects-memory" accesskey="u" rel="up">objects memory</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

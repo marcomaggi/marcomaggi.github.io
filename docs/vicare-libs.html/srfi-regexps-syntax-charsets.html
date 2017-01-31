@@ -1,0 +1,227 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes the libraries distributed along with version
+0.4d1 of Vicare Scheme, an R6RS compliant native
+compiler for the Scheme language.
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+The documentation of the libraries (vicare parser-tools silex
+-) are derived form the documentation of SILex.  Copyright
+(C) 2001, 2009 Danny Dube'.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Libraries for Vicare Scheme: srfi regexps syntax charsets</title>
+
+<meta name="description" content="Libraries for Vicare Scheme: srfi regexps syntax charsets">
+<meta name="keywords" content="Libraries for Vicare Scheme: srfi regexps syntax charsets">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="srfi-regexps-syntax.html#srfi-regexps-syntax" rel="up" title="srfi regexps syntax">
+<link href="srfi-regexps-syntax-named.html#srfi-regexps-syntax-named" rel="next" title="srfi regexps syntax named">
+<link href="srfi-regexps-syntax-submatch.html#srfi-regexps-syntax-submatch" rel="prev" title="srfi regexps syntax submatch">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="srfi-regexps-syntax-charsets"></a>
+<div class="header">
+<p>
+Next: <a href="srfi-regexps-syntax-named.html#srfi-regexps-syntax-named" accesskey="n" rel="next">srfi regexps syntax named</a>, Previous: <a href="srfi-regexps-syntax-submatch.html#srfi-regexps-syntax-submatch" accesskey="p" rel="prev">srfi regexps syntax submatch</a>, Up: <a href="srfi-regexps-syntax.html#srfi-regexps-syntax" accesskey="u" rel="up">srfi regexps syntax</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Character-sets"></a>
+<h4 class="subsubsection">2.39.7.5 Character sets</h4>
+
+
+<p>A character set pattern matches a single character.
+</p>
+<dl compact="compact">
+<dt><code>&lt;char&gt;</code></dt>
+<dd><p>A singleton char set.
+</p>
+<div class="lisp">
+<pre class="lisp">(regexp-matches '(* #\-) &quot;---&quot;)  &rArr; #&lt;regexp-match&gt;
+(regexp-matches '(* #\-) &quot;-_-&quot;)  &rArr; #f
+</pre></div>
+
+</dd>
+<dt><code>&quot;&lt;char&gt;&quot;</code></dt>
+<dd><p>A singleton char set written as a string of length one rather than a
+character.  Equivalent to its interpretation as a literal string match,
+but included to clarify it can be composed in <var>cset-sre</var>s.
+</p>
+</dd>
+<dt><code>&lt;char-set&gt;</code></dt>
+<dd><p>A <acronym>SRFI</acronym>-14 character set, which matches any character in the set.
+Note that currently there is no portable written representation of
+<acronym>SRFI</acronym>-14 character sets, which means that this pattern is typically
+generated programmatically, such as with a quasiquoted expression.
+</p>
+<div class="lisp">
+<pre class="lisp">(regexp-partition `(+ ,char-set:vowels) &quot;vowels&quot;)
+&rArr; (&quot;v&quot; &quot;o&quot; &quot;w&quot; &quot;e&quot; &quot;ls&quot;)
+</pre></div>
+
+<blockquote>
+<p><strong>RATIONALE</strong> Many useful character sets are likely to be available
+as <acronym>SRFI</acronym>-14 <code>char-set</code>s, so it is desirable to reuse them in
+regular expressions.  Since many Unicode character sets are extremely
+large, converting back and forth between an internal and external
+representation can be expensive, so the option of direct embedding is
+necessary.  When a readable external representation is needed,
+<code>char-set-&gt;sre</code> can be used.
+</p></blockquote>
+
+</dd>
+<dt><code>(char-set &lt;string&gt;)</code></dt>
+<dt><code>(&lt;string&gt;)</code></dt>
+<dd><p>The set of chars as formed by <acronym>SRFI</acronym>-14:
+</p>
+<div class="lisp">
+<pre class="lisp">(string-&gt;char-set &lt;string&gt;)
+</pre></div>
+
+<p>Note that <code>char-set</code>s contain code points, not grapheme
+clusters, so any combining characters in &lsquo;<samp>&lt;string&gt;</samp>&rsquo; will be
+inserted separately from any preceding base characters by
+<code>string-&gt;char-set</code>.
+</p>
+<div class="lisp">
+<pre class="lisp">(regexp-matches '(* (&quot;aeiou&quot;)) &quot;oui&quot;)       &rArr; #&lt;regexp-match&gt;
+(regexp-matches '(* (&quot;aeiou&quot;)) &quot;ouais&quot;)     &rArr; #f
+(regexp-matches '(* (&quot;e\x0301&quot;)) &quot;e\x0301&quot;) &rArr; #&lt;regexp-match&gt;
+(regexp-matches '(&quot;e\x0301&quot;) &quot;e\x0301&quot;)     &rArr; #f
+(regexp-matches '(&quot;e\x0301&quot;) &quot;e&quot;)           &rArr; #&lt;regexp-match&gt;
+(regexp-matches '(&quot;e\x0301&quot;) &quot;\x0301&quot;)      &rArr; #&lt;regexp-match&gt;
+(regexp-matches '(&quot;e\x0301&quot;) &quot;\x00E9&quot;)      &rArr; #f
+</pre></div>
+
+</dd>
+<dt><code>(char-range &lt;range-spec&gt; ...)</code></dt>
+<dt><code>(/ &lt;range-spec&gt; ...)</code></dt>
+<dd><p>Ranged char set.  The &lsquo;<samp>&lt;range-spec&gt;</samp>&rsquo; is a list of strings and
+characters.  These are flattened and grouped into pairs of characters,
+and all ranges formed by the pairs are included in the char set.
+</p>
+<div class="lisp">
+<pre class="lisp">(regexp-matches '(* (/ &quot;AZ09&quot;)) &quot;R2D2&quot;)  &rArr; #&lt;regexp-match&gt;
+(regexp-matches '(* (/ &quot;AZ09&quot;)) &quot;C-3PO&quot;) &rArr; #f
+</pre></div>
+
+</dd>
+<dt><code>(or &lt;cset-sre&gt; ...)</code></dt>
+<dt><code>(|\|| &lt;cset-sre&gt; ...)</code></dt>
+<dd><p>Char set union.  The single vertical bar form is provided for
+consistency and compatibility with SCSH, although it needs to be escaped
+in <acronym>R7RS</acronym>.
+</p>
+<blockquote>
+<p><strong>NOTE</strong> The syntax &lsquo;<samp>|\||</samp>&rsquo; is <strong>not</strong> supported by
+Vicare.
+</p></blockquote>
+
+</dd>
+<dt><code>(complement &lt;cset-sre&gt; ...)</code></dt>
+<dt><code>(~ &lt;cset-sre&gt; ...)</code></dt>
+<dd><p>Char set complement (i.e. &lsquo;<samp>[^...]</samp>&rsquo; in PCRE notation).  &lsquo;<samp>(~ x)</samp>&rsquo;
+is equivalent to &lsquo;<samp>(- any x)</samp>&rsquo;, thus in an <acronym>ASCII</acronym> context the
+complement is always <acronym>ASCII</acronym>.
+</p>
+</dd>
+<dt><code>(difference &lt;cset-sre&gt; ...)</code></dt>
+<dt><code>(- &lt;cset-sre&gt; ...)</code></dt>
+<dd><p>Char set difference.
+</p>
+<div class="lisp">
+<pre class="lisp">(regexp-matches '(* (- (/ &quot;az&quot;) (&quot;aeiou&quot;))) &quot;xyzzy&quot;)
+&rArr; #&lt;regexp-match&gt;
+
+(regexp-matches '(* (- (/ &quot;az&quot;) (&quot;aeiou&quot;))) &quot;vowels&quot;)
+&rArr; #f
+</pre></div>
+
+</dd>
+<dt><code>(and &lt;cset-sre&gt; ...)</code></dt>
+<dt><code>(&amp; &lt;cset-sre&gt; ...)</code></dt>
+<dd><p>Char set intersection.
+</p>
+<div class="lisp">
+<pre class="lisp">(regexp-matches '(* (&amp; (/ &quot;az&quot;) (~ (&quot;aeiou&quot;)))) &quot;xyzzy&quot;)
+&rArr; #&lt;regexp-match&gt;
+
+(regexp-matches '(* (&amp; (/ &quot;az&quot;) (~ (&quot;aeiou&quot;)))) &quot;vowels&quot;)
+ &rArr; #f
+</pre></div>
+</dd>
+</dl>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="srfi-regexps-syntax-named.html#srfi-regexps-syntax-named" accesskey="n" rel="next">srfi regexps syntax named</a>, Previous: <a href="srfi-regexps-syntax-submatch.html#srfi-regexps-syntax-submatch" accesskey="p" rel="prev">srfi regexps syntax submatch</a>, Up: <a href="srfi-regexps-syntax.html#srfi-regexps-syntax" accesskey="u" rel="up">srfi regexps syntax</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

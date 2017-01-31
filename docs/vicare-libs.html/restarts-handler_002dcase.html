@@ -1,0 +1,327 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes the libraries distributed along with version
+0.4d1 of Vicare Scheme, an R6RS compliant native
+compiler for the Scheme language.
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+The documentation of the libraries (vicare parser-tools silex
+-) are derived form the documentation of SILex.  Copyright
+(C) 2001, 2009 Danny Dube'.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Libraries for Vicare Scheme: restarts handler-case</title>
+
+<meta name="description" content="Libraries for Vicare Scheme: restarts handler-case">
+<meta name="keywords" content="Libraries for Vicare Scheme: restarts handler-case">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="restarts.html#restarts" rel="up" title="restarts">
+<link href="restarts-ignore_002derrors.html#restarts-ignore_002derrors" rel="next" title="restarts ignore-errors">
+<link href="restarts-signal.html#restarts-signal" rel="prev" title="restarts signal">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="restarts-handler_002dcase"></a>
+<div class="header">
+<p>
+Next: <a href="restarts-ignore_002derrors.html#restarts-ignore_002derrors" accesskey="n" rel="next">restarts ignore-errors</a>, Previous: <a href="restarts-signal.html#restarts-signal" accesskey="p" rel="prev">restarts signal</a>, Up: <a href="restarts.html#restarts" accesskey="u" rel="up">restarts</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Catching-signalled-conditions"></a>
+<h4 class="subsection">1.18.2 Catching signalled conditions</h4>
+
+
+<dl>
+<dt><a name="index-handler_002dcase"></a>Syntax: <strong>handler-case</strong> <em>(<var>?clause</var> &hellip;) <var>?body0</var> <var>?body</var> &hellip;</em></dt>
+<dd><p>Evaluate body forms in a dynamic environment in which new exception
+handlers are installed; it is capable of handling exceptions raised with
+<code>raise</code>, <code>raise-continuable</code> and <code>signal</code>.  Basically
+behave like <acronym>R6RS</acronym>&rsquo;s <code>guard</code> syntax.
+</p>
+<p>The arguments <var>?clause</var> must have one of the following syntaxes:
+</p>
+<div class="example">
+<pre class="example">(<var>?typespec</var> <var>?condition-handler</var>)
+(:no-error <var>?no-error-handler</var>)
+</pre></div>
+
+<p>Every <var>?typespec</var> is meant to be a logic predicate with the format:
+</p>
+<div class="example">
+<pre class="example"><var>?typespec</var> = (<var>?tag</var>)
+          | (and <var>?inner-pred0</var> <var>?inner-pred</var> ...)
+          | (or  <var>?inner-pred0</var> <var>?inner-pred</var> ...)
+          | (xor <var>?inner-pred0</var> <var>?inner-pred</var> ...)
+          | (not <var>?inner-pred</var>)
+
+<var>?inner-pred</var> = ?tag
+            | (and <var>?inner-pred0</var> <var>?inner-pred</var> ...)
+            | (or  <var>?inner-pred0</var> <var>?inner-pred</var> ...)
+            | (xor <var>?inner-pred0</var> <var>?inner-pred</var> ...)
+            | (not <var>?inner-pred</var>)
+</pre></div>
+
+<p>where: each <var>?tag</var> is an identifier usable as second argument to
+<code>is-a?</code>; <code>and</code>, <code>or</code>, <code>xor</code>, <code>not</code>
+are the identifiers exported by <code>(vicare)</code>.
+</p>
+<p>Every <var>?condition-handler</var> must be an expression evaluating to a
+procedure accepting a condition object as single argument; the condition
+object can be simple or compound.
+</p>
+<p>In the no&ndash;error clause: <code>:no-error</code> must be the actual symbol;
+<var>?no-error-handler</var> must be an expression evaluating to a procedure.
+The optional <code>:no-error</code> clause can be present only if it is the
+last one.
+</p>
+<p>If the body performs a normal return:
+</p>
+<ul>
+<li> If the <code>:no-error</code> clause is missing: the values returned by the
+body become the values returned by <code>handler-case</code>.
+
+</li><li> If the <code>:no-error</code> clause is present: the procedure
+<var>?no-error-handler</var> is applied to the returned values; the return
+values of such application become the return values of
+<code>handler-case</code>.
+</li></ul>
+
+<p>If an exception is raised (in Common Lisp jargon: a condition is
+signalled): a condition handler matching the raised object is searched in
+the sequence of clauses, left&ndash;to&ndash;right:
+</p>
+<ul>
+<li> If a clause matches: the dynamic extent of the body is terminated, the
+<var>?condition-handler</var> is applied to the raised object and the return
+values of such application become the return values of
+<code>handler-case</code>.
+
+</li><li> If no clause matches: the raised object is re&ndash;raised with
+<code>raise-continuable</code>.
+</li></ul>
+</dd></dl>
+
+
+<p>Usage examples:
+</p>
+<div class="example">
+<pre class="example">(import (vicare)
+  (only (vicare checks)
+        with-result
+        add-result))
+
+;;no condition
+(with-result
+  (handler-case
+      ((&amp;error   (lambda (E)
+                   (add-result 'error-handler)
+                   1))
+       (&amp;warning (lambda (E)
+                   (add-result 'warning-handler)
+                   2)))
+    (add-result 'body)
+    1))
+&rArr; (1 (body))
+
+;;no condition, :no-error clause
+(with-result
+  (handler-case
+      ((&amp;error    (lambda (E)
+                    (add-result 'error-handler)
+                    1))
+       (&amp;warning  (lambda (E)
+                    (add-result 'warning-handler)
+                    2))
+       (:no-error (lambda (X)
+                    (add-result 'no-error)
+                    (* 10 X))))
+    (add-result 'body)
+    1))
+&rArr; (10 (body no-error))
+
+;;;
+
+(internal-body        ;signalled condition
+
+  (define (doit C)
+    (with-result
+      (handler-case
+          ((&amp;error   (lambda (E)
+                       (add-result 'error-handler)
+                       1))
+           (&amp;warning (lambda (E)
+                       (add-result 'warning-handler)
+                       2)))
+        (add-result 'body-begin)
+        (signal C)
+        (add-result 'body-normal-return))))
+
+  (doit (make-error))
+  &rArr; (1 (body-begin error-handler))
+
+  (doit (make-warning))
+  &rArr; (2 (body-begin warning-handler))
+
+  #| end of body |# )
+
+;;Signalled condition, multiple types in single clause.
+;;
+(internal-body
+
+  (define (doit C)
+    (with-result
+      (handler-case
+          (((&amp;error &amp;warning) (lambda (E)
+                                (add-result 'handler)
+                                1)))
+        (add-result 'body-begin)
+        (signal C)
+        (add-result 'body-normal-return))))
+
+  (doit (make-error))
+  &rArr; (1 (body-begin handler))
+
+  (doit (make-warning))
+  &rArr; (1 (body-begin handler))
+
+  #| end of body |# )
+
+;;Signalled condition, nested HANDLER-CASE uses.
+;;
+(internal-body
+
+  (define (doit C)
+    (with-result
+      (handler-case
+          ((&amp;error   (lambda (E)
+                       (add-result 'error-handler)
+                       1)))
+        (handler-case
+            ((&amp;warning (lambda (E)
+                         (add-result 'warning-handler)
+                         2)))
+          (add-result 'body-begin)
+          (signal C)
+          (add-result 'body-normal-return)))))
+
+  (doit (make-error))
+  &rArr; (1 (body-begin error-handler))
+
+  (doit (make-warning))
+  &rArr; (2 (body-begin warning-handler))
+
+  #| end of body |# )
+
+(internal-body        ; unwind-protect
+
+  (define (doit C)
+    (with-result
+      (handler-case
+          ((&amp;error   (lambda (E)
+                       (add-result 'error-handler)
+                       1)))
+        (with-unwind-handler
+            (lambda (why)
+              (add-result 'outer-unwind-handler))
+          (lambda ()
+            (handler-case
+                ((&amp;warning (lambda (E)
+                             (add-result 'warning-handler)
+                             2)))
+              (with-unwind-handler
+                  (lambda (why)
+                    (add-result 'inner-unwind-handler))
+                (lambda ()
+                  (add-result 'body-begin)
+                  (signal C)
+                  (add-result 'body-normal-return)))))))))
+
+  (doit (make-error))
+  &rArr; (1
+        (body-begin
+         inner-unwind-handler
+         outer-unwind-handler
+         error-handler))
+
+  (doit (make-warning))
+  &rArr; (2
+        (body-begin
+         inner-unwind-handler
+         warning-handler
+         outer-unwind-handler))
+
+  #| end of body |# )
+</pre></div>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="restarts-ignore_002derrors.html#restarts-ignore_002derrors" accesskey="n" rel="next">restarts ignore-errors</a>, Previous: <a href="restarts-signal.html#restarts-signal" accesskey="p" rel="prev">restarts signal</a>, Up: <a href="restarts.html#restarts" accesskey="u" rel="up">restarts</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

@@ -1,0 +1,225 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.4d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit and 64-bit
+processors.  Vicare is pronounced the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/downloads
+
+the home page of the project is at:
+
+http://marcomaggi.github.io/vicare.html
+
+development takes place at:
+
+http://github.com/marcomaggi/vicare/
+
+and, as a backup, at:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the "History" appendix for details.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Vicare Scheme: iklib reader extensions</title>
+
+<meta name="description" content="Vicare Scheme: iklib reader extensions">
+<meta name="keywords" content="Vicare Scheme: iklib reader extensions">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="iklib-reader.html#iklib-reader" rel="up" title="iklib reader">
+<link href="iklib-expander.html#iklib-expander" rel="next" title="iklib expander">
+<link href="iklib-reader-misc.html#iklib-reader-misc" rel="prev" title="iklib reader misc">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="iklib-reader-extensions"></a>
+<div class="header">
+<p>
+Previous: <a href="iklib-reader-misc.html#iklib-reader-misc" accesskey="p" rel="prev">iklib reader misc</a>, Up: <a href="iklib-reader.html#iklib-reader" accesskey="u" rel="up">iklib reader</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Extending-the-reader-with-custom-syntaxes"></a>
+<h4 class="subsection">6.13.6 Extending the reader with custom syntaxes</h4>
+
+
+<a name="index-reader_002dimport_002c-reader-lexical-environment"></a>
+<a name="index-Reader-lexical-environment_002c-reader_002dimport"></a>
+<a name="index-Importing-libraries-at-read_002d_002dtime"></a>
+<a name="index-Read_002d_002dtime_002c-importing-libraries"></a>
+<a name="index-Reader-extensions"></a>
+<a name="index-Writing-reader-extensions"></a>
+
+
+<p>When the source code reader is in <code>#!vicare</code> mode, it is possible
+to include &ldquo;here documents&rdquo; processed (at read&ndash;time) by custom
+functions.  This feature works only when reading source code for
+libraries or programs, at present it does <strong>not</strong> work at the
+<acronym>REPL</acronym>.
+</p>
+<p>Let&rsquo;s see how it works.  Assuming the following library is in the search
+path:
+</p>
+<div class="lisp">
+<pre class="lisp">(library (libdemo)
+  (export doit)
+  (import (rnrs))
+  (define (doit input-string)
+    (read (open-string-input-port input-string))))
+</pre></div>
+
+<p>let&rsquo;s consider this program file:
+</p>
+<div class="lisp">
+<pre class="lisp">#!vicare
+(reader-import (libdemo))
+(program (demo)
+  (import (rnrs))
+  (display #&lt;doit 456&gt;#)
+  (newline)
+  (flush-output-port (current-output-port)))
+</pre></div>
+
+<p>we see that <strong>at the beginning</strong> of a program file (before the
+<code>program</code> form) we have:
+</p>
+<div class="lisp">
+<pre class="lisp">(reader-import (libdemo))
+</pre></div>
+
+<p>and in the body of the program we have the block:
+</p>
+<div class="lisp">
+<pre class="lisp">#&lt;doit 456&gt;#
+</pre></div>
+
+<p>such block is converted by the reader to the form:
+</p>
+<div class="lisp">
+<pre class="lisp">(doit &quot;456&quot;)
+</pre></div>
+
+<p>notice that whitespace characters after the symbol &quot;doit&quot; are discarded.
+Such form is handed to <code>eval</code> and evaluated in the context of the
+lexical environment resulting from importing <code>(libdemo)</code>; the
+result of the evaluation is returned to the reader for inclusion in its
+output.  So the reader gets the symbolic expression &lsquo;<samp>456</samp>&rsquo;.
+</p>
+
+<dl>
+<dt><a name="index-reader_002dimport"></a>Reader Syntax: <strong>reader-import</strong> <em><var>?import-set0</var> <var>?import-set</var> &hellip;</em></dt>
+<dd><p>This symbolic expression supports the same format of <code>import</code>; it
+is not a syntactic binding, rather it is a symbolic expression processed
+by the source code reader.  This expression can be present only at the
+beginning of a program or library file, before the <code>program</code> or
+<code>library</code> form; it is recognised only when the input port is in
+<code>#!vicare</code> mode.
+</p>
+<p>The import sets are used to initialise an interaction environment for
+subsequent code evaluation.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-_0023_003c_003fsymbol"></a>Reader Syntax: <strong>#&lt;<var>?symbol</var></strong> <em><var>?characters</var>&gt;#</em></dt>
+<dd><p>A reader syntax recognised only when the input port is in
+<code>#!vicare</code> mode.  The argument <var>?symbol</var> must be a symbol.  The
+argument <var>?characters</var>, up to and excluding &lsquo;<samp>&gt;#</samp>&rsquo;, are read to
+compose an input string.
+</p>
+<p>The argument <var>?symbol</var> must be:
+</p>
+<ul>
+<li> The symbol <code>begin</code>.  In this case the: the input string is
+interpreted as a list of Scheme forms representing definitions and
+expressions to be evaluated in the interaction environment established
+by the <code>reader-import</code> syntax.
+
+</li><li> The name of a function or syntax defined in the interaction environment
+generated by the <code>reader-import</code> syntax.  In this case: the input
+string is handed to the <var>?symbol</var> function or syntax as single
+operand; the result of such application must be a single return value
+which becomes a datum for the reader.
+</li></ul>
+</dd></dl>
+
+<hr>
+<div class="header">
+<p>
+Previous: <a href="iklib-reader-misc.html#iklib-reader-misc" accesskey="p" rel="prev">iklib reader misc</a>, Up: <a href="iklib-reader.html#iklib-reader" accesskey="u" rel="up">iklib reader</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

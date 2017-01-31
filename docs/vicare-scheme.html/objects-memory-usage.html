@@ -1,0 +1,365 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.4d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit and 64-bit
+processors.  Vicare is pronounced the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/downloads
+
+the home page of the project is at:
+
+http://marcomaggi.github.io/vicare.html
+
+development takes place at:
+
+http://github.com/marcomaggi/vicare/
+
+and, as a backup, at:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the "History" appendix for details.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Vicare Scheme: objects memory usage</title>
+
+<meta name="description" content="Vicare Scheme: objects memory usage">
+<meta name="keywords" content="Vicare Scheme: objects memory usage">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="objects-memory.html#objects-memory" rel="up" title="objects memory">
+<link href="objects-booleans.html#objects-booleans" rel="next" title="objects booleans">
+<link href="objects-memory-alloc.html#objects-memory-alloc" rel="prev" title="objects memory alloc">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="objects-memory-usage"></a>
+<div class="header">
+<p>
+Previous: <a href="objects-memory-alloc.html#objects-memory-alloc" accesskey="p" rel="prev">objects memory alloc</a>, Up: <a href="objects-memory.html#objects-memory" accesskey="u" rel="up">objects memory</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Writing-correct-C-language-code"></a>
+<h4 class="subsection">13.3.5 Writing correct C language code</h4>
+
+
+<p>The garbage collector considers an object &ldquo;in use&rdquo; if at least one
+reference to it is reachable from the roots of the garbage collection;
+the roots of the garbage collection are:
+</p>
+<ul>
+<li> Heap&rsquo;s dirty generational pages not collected in the current garbage
+collection run.
+
+</li><li> The Scheme stack.
+
+</li><li> The next continuation Scheme object.
+
+</li><li> The symbol table collecting interned symbols.
+
+</li><li> The <code>root</code> fields of the <acronym>PCB</acronym> structure.
+</li></ul>
+
+<p>Notice that the heap&rsquo;s nursery is <strong>not</strong> a garbage collector root;
+so if we leave some machine words uninitialised on the nursery, outside
+of Scheme objects: nothing bad happens, because the garbage collector
+never sees them.  Upon allocation, there is no need to initialise the
+memory segment used as nursery.
+</p>
+<p>If an <code>ikptr_t</code> reference exists only in a <acronym>CPU</acronym> register or on the C
+language stack, or on the C language heap out of segments allocated for
+Scheme: the garbage collector will not see it.  This allows to avoid
+scanning the full process&rsquo; stack for references to values, but imposes
+care when writing C language code.
+</p>
+<p>Whenever we call <code>ik_safe_alloc()</code> or a function relying on it for
+memory allocation: a garbage collection may run and Scheme objects may
+be moved from their location in memory to another memory generational
+page; this makes invalid all the pointers in the <acronym>CPU</acronym> registers, on
+the C stack and the C heap.  Notice that this includes the arguments to
+C functions called from Scheme through the macro <code>foreign-call</code>.
+</p>
+<p>If an old Scheme object contains a reference to a new Scheme object: we
+have to inform the garbage collector about this.  Whenever we allocate a
+new Scheme object and store in one of its fields a reference to a
+previously allocated Scheme object: we have to register this event in
+the dirty vector.
+</p>
+<p>We must write C code with the following constraints:
+</p>
+<ul>
+<li> Before a call to <code>ik_safe_alloc()</code>: we must make sure that all the
+Scheme objects we are using in C code are reachable by the garbage
+collector.  This is done by registering an object as garbage collector
+root through the <code>root</code> fields of the <acronym>PCB</acronym>.
+
+</li><li> After a call to <code>ik_safe_alloc()</code>: we must reobtain all the pointers
+to the internals of the objects we are using.
+</li></ul>
+
+<p>To help identification of C functions and macros allocating memory: the
+ones calling <code>ik_safe_alloc()</code> are prefixed with <code>ika_</code> and
+<code>IKA_</code>; the ones calling <code>ik_unsafe_alloc()</code> are prefixed with
+<code>iku_</code> and <code>IKU_</code>.
+</p>
+<ul>
+<li> Example of <strong>correct</strong> code: <code>s_one</code> is protected while
+allocating <code>s_two</code>:
+
+<div class="example">
+<pre class="example">ikpcb_t * pcb = ik_the_pcb();
+ikptr_t   s_one, s_two;
+
+s_one = ika_bytevector_alloc(pcb, 10);
+pcb-&gt;root0 = &amp;s_one;
+{
+  s_two = ika_bytevector_alloc(pcb, 10); /* GOOD */
+}
+pcb-&gt;root0 = NULL;
+</pre></div>
+
+<p>example of <strong>wrong</strong> code: after the second call to the allocation
+function the value in <code>s_one</code> may be invalid:
+</p>
+<div class="example">
+<pre class="example">ikpcb_t * pcb = ik_the_pcb();
+ikptr_t   s_one, s_two;
+
+s_one = ika_bytevector_alloc(pcb, 10);
+s_two = ika_bytevector_alloc(pcb, 10);
+/* do something with &quot;s_one&quot; and &quot;s_two&quot; */ /* WRONG */
+</pre></div>
+
+</li><li> Example of <strong>correct</strong> code: <code>s_one</code> is protected while
+allocating <code>s_two</code> and after the second allocation the pointer to
+the data area of <code>s_one</code> is retrieved again:
+
+<div class="example">
+<pre class="example">ikpcb_t * pcb = ik_the_pcb();
+ikptr_t   s_one;
+ikptr_t   s_two;
+char *    one;
+char *    two;
+
+s_one = ika_bytevector_alloc(pcb, 10);
+one   = IK_BYTEVECTOR_DATA_CHARP(s_one);
+/* do something with &quot;one&quot; */
+pcb-&gt;root0 = &amp;s_one;
+{
+  s_two = ika_bytevector_alloc(pcb, 10);
+}
+pcb-&gt;root0 = NULL;
+one   = IK_BYTEVECTOR_DATA_CHARP(s_one); /* GOOD */
+two   = IK_BYTEVECTOR_DATA_CHARP(s_two);
+/* do something with &quot;one&quot; and &quot;two&quot; */
+</pre></div>
+
+<p>example of <strong>wrong</strong> code: after the second call to the allocation
+function the pointer <code>one</code> to the data area of <code>s_one</code> may be
+invalid:
+</p>
+<div class="example">
+<pre class="example">ikpcb_t * pcb = ik_the_pcb();
+ikptr_t   s_one;
+ikptr_t   s_two;
+char *    one;
+char *    two;
+
+s_one = ika_bytevector_alloc(pcb, 10);
+one   = IK_BYTEVECTOR_DATA_CHARP(s_one);
+/* do something with &quot;one&quot; */
+pcb-&gt;root0 = &amp;s_one;
+{
+  s_two = ika_bytevector_alloc(pcb, 10);
+}
+pcb-&gt;root0 = NULL;
+two   = IK_BYTEVECTOR_DATA_CHARP(s_two);
+/* do something with &quot;one&quot; and &quot;two&quot; */ /* WRONG */
+</pre></div>
+</li></ul>
+
+<p>Notice that, according to the C standard Section 6.5.16 &ldquo;Assignment
+operators&rdquo;: the order of evaluation of the operands is
+unspecified<a name="DOCF3" href="#FOOT3"><sup>3</sup></a>.  In the following code:
+</p>
+<div class="example">
+<pre class="example">IK_CAR(s_pair) = ika_bytevector_alloc(pcb, 8); /* WRONG */
+</pre></div>
+
+<p>the left&ndash;side expression may be evaluated before the right&ndash;side one,
+resulting in the value referenced by <code>s_pair</code> to be invalid when
+the memory assigment actually takes place; so we have to code:
+</p>
+<div class="example">
+<pre class="example">ikpcb_t * pcb    = ...;
+ikptr_t   s_pair = ...;
+ikptr_t   s_tmp;
+
+pcb-&gt;root0 = &amp;s_pair;
+{
+  s_tmp          = ika_bytevector_alloc(pcb, 8); /* GOOD */
+  IK_CAR(s_pair) = s_tmp;
+  IK_SIGNAL_DIRT(pcb, IK_CAR_PTR(s_pair));
+}
+pcb-&gt;root0 = NULL;
+</pre></div>
+
+<p>or:
+</p>
+<div class="example">
+<pre class="example">ikpcb_t * pcb    = ...;
+ikptr_t   s_pair = ...;
+ikptr_t   s_tmp;
+
+pcb-&gt;root0 = &amp;s_pair;
+{
+  IK_ASS(IK_CAR(s_pair), ika_bytevector_alloc(pcb, 8)); /* GOOD */
+  IK_SIGNAL_DIRT(pcb, IK_CAR_PTR(s_pair));
+}
+pcb-&gt;root0 = NULL;
+</pre></div>
+
+<p>yes, it is a hard life.
+</p>
+<p>Let&rsquo;s consider the following snippet, which is <strong>wrong</strong>:
+</p>
+<div class="example">
+<pre class="example">ikpcb_t * pcb = ik_the_pcb();
+ikptr_t   s_one, s_two;
+
+s_one = IKA_PAIR_ALLOC(pcb); /* WRONG */
+pcb-&gt;root0 = &amp;s_one;
+{
+  s_two = IKA_PAIR_ALLOC(pcb);
+}
+pcb-&gt;root0 = NULL;
+</pre></div>
+
+<p>when the second pair is allocated, the first pair has car and cdr still
+uninitialised (the macro <code>IKA_PAIR_ALLOC()</code> does not initialise the
+pair object): the content of these words is undefined; this may cause
+undefined behaviour while the second allocation takes place and the
+garbage collection tries to scan the first pair.  The <strong>correct</strong>
+code is:
+</p>
+<div class="example">
+<pre class="example">ikpcb_t * pcb = ik_the_pcb();
+ikptr_t   s_one, s_two;
+
+s_one = IKA_PAIR_ALLOC(pcb);
+IK_CAR(s_one) = IK_FALSE; /* GOOD */
+IK_CDR(s_one) = IK_FALSE; /* GOOD */
+pcb-&gt;root0 = &amp;s_one;
+{
+  s_two = IKA_PAIR_ALLOC(pcb);
+}
+pcb-&gt;root0 = NULL;
+</pre></div>
+
+<p>or:
+</p>
+<div class="example">
+<pre class="example">ikpcb_t * pcb = ik_the_pcb();
+ikptr_t   s_one, s_two;
+
+s_one = ika_pair_alloc(pcb); /* GOOD */
+pcb-&gt;root0 = &amp;s_one;
+{
+  s_two = IKA_PAIR_ALLOC(pcb);
+}
+pcb-&gt;root0 = NULL;
+</pre></div>
+
+<p>because <code>ika_pair_alloc()</code> initialises the car and the cdr.
+</p>
+<div class="footnote">
+<hr>
+<h4 class="footnotes-heading">Footnotes</h4>
+
+<h3><a name="FOOT3" href="#DOCF3">(3)</a></h3>
+<p>For an introduction to such problems see
+(<acronym>URL</acronym> last verified Jan 12, 2012):
+</p>
+<div align="center"><a href="http://en.wikipedia.org/wiki/Sequence_point">http://en.wikipedia.org/wiki/Sequence_point</a>
+</div>
+</div>
+<hr>
+<div class="header">
+<p>
+Previous: <a href="objects-memory-alloc.html#objects-memory-alloc" accesskey="p" rel="prev">objects memory alloc</a>, Up: <a href="objects-memory.html#objects-memory" accesskey="u" rel="up">objects memory</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

@@ -1,0 +1,297 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes the libraries distributed along with version
+0.4d1 of Vicare Scheme, an R6RS compliant native
+compiler for the Scheme language.
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+The documentation of the libraries (vicare parser-tools silex
+-) are derived form the documentation of SILex.  Copyright
+(C) 2001, 2009 Danny Dube'.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Libraries for Vicare Scheme: restarts restart-case</title>
+
+<meta name="description" content="Libraries for Vicare Scheme: restarts restart-case">
+<meta name="keywords" content="Libraries for Vicare Scheme: restarts restart-case">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="restarts.html#restarts" rel="up" title="restarts">
+<link href="restarts-assoc.html#restarts-assoc" rel="next" title="restarts assoc">
+<link href="restarts-handler_002dbind.html#restarts-handler_002dbind" rel="prev" title="restarts handler-bind">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="restarts-restart_002dcase"></a>
+<div class="header">
+<p>
+Next: <a href="restarts-assoc.html#restarts-assoc" accesskey="n" rel="next">restarts assoc</a>, Previous: <a href="restarts-handler_002dbind.html#restarts-handler_002dbind" accesskey="p" rel="prev">restarts handler-bind</a>, Up: <a href="restarts.html#restarts" accesskey="u" rel="up">restarts</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Installing-restart-handlers"></a>
+<h4 class="subsection">1.18.5 Installing restart handlers</h4>
+
+
+<dl>
+<dt><a name="index-restart_002dcase"></a>Syntax: <strong>restart-case</strong> <em><var>?body</var> (<var>?clause</var> &hellip;)</em></dt>
+<dd><p>Install restart handlers in the current dynamic environment, then
+evaluate the body form.
+</p>
+<p>The arguments <var>?clause</var> must have the following syntax:
+</p>
+<div class="example">
+<pre class="example">(<var>?restart-name</var> <var>?restart-handler</var>)
+</pre></div>
+
+<p>Every <var>?restart-name</var> must be a symbol representing the name of a
+restart; the same <var>?restart-name</var> can be used in nested uses of
+<code>restart-case</code>.
+</p>
+<p>Every <var>?restart-handler</var> must be an expression evaluating to a
+procedure accepting a non&ndash;constrained number of arguments.  The return
+values of <var>?restart-handler</var> become the return values of
+<code>restart-case</code>.  The <var>?restart-handler</var> is evaluated in the
+dynamic environment of the call to <code>invoke-restart</code> that invoked
+the restart.
+</p>
+<p>As special case, if <var>?body</var> is:
+</p>
+<div class="example">
+<pre class="example">(signal <var>?expr</var>)
+</pre></div>
+
+<p>the installed restarts are associated to the condition object returned
+by the evaluation of <var>?expr</var>.
+</p></dd></dl>
+
+
+<p>Usage examples on restarts and declining handlers:
+</p>
+<div class="example">
+<pre class="example">(import (vicare)
+  (only (vicare checks)
+        with-result
+        add-result))
+
+;;No handlers installed.  Signal a condition and
+;;cause SIGNAL to return.
+;;
+(with-result
+  (with-return-to-signal-on-unhandled-exception
+    (add-result 'body-in)
+    (signal (make-error))
+    (add-result 'body-out)
+    1))
+&rArr; (1 (body-in body-out))
+
+;;No handlers installed.  Raise an exception with the
+;;standard RAISE and show that it goes through the
+;;&quot;return to signal&quot; syntax.
+;;
+(with-result
+  (try
+      (with-return-to-signal-on-unhandled-exception
+        (add-result 'body-in)
+        (raise (make-error))
+        (add-result 'body-out)
+        1)
+    (catch E
+      ((&amp;error)
+       (add-result 'catch-error)
+       2))))
+&rArr; (2 (body-in catch-error))
+
+;;No handlers installed.  Raise an exception with the
+;;standard RAISE-CONTINUABLE and show that it goes
+;;through the &quot;return to signal&quot; syntax.
+;;
+(with-result
+  (try
+      (with-return-to-signal-on-unhandled-exception
+        (add-result 'body-in)
+        (raise-continuable (make-error))
+        (add-result 'body-out)
+        1)
+    (catch E
+      ((&amp;error)
+       (add-result 'catch-error)
+       2))))
+&rArr; (2 (body-in catch-error))
+
+;;No handlers installed.  Raise an exception with the
+;;standard RAISE-CONTINUABLE and show that it goes
+;;through the &quot;return to signal&quot; syntax.
+;;
+(with-result
+  (with-exception-handler
+      (lambda (E)
+        (add-result 'exception-handler))
+    (lambda ()
+      (with-return-to-signal-on-unhandled-exception
+        (add-result 'body-in)
+        (raise-continuable (make-error))
+        (add-result 'body-out)
+        1))))
+&rArr; (1 (body-in exception-handler body-out))
+
+;;;
+
+;;Nested RESTART-CASE and HANDLER-BIND.  Signal a condition,
+;;call the first handler, the first handler declines, call
+;;the second handler, the second handler declines, SIGNAL
+;;returns.
+;;
+(with-result
+  (with-return-to-signal-on-unhandled-exception
+    (handler-bind
+        ((&amp;error (lambda (E)
+                   (add-result 'outer-error-handler))))
+      (handler-bind
+          ((&amp;error (lambda (E)
+                     (add-result 'inner-error-handler))))
+        (add-result 'body-in)
+        (signal (make-error))
+        (add-result 'body-out)
+        1))))
+&rArr; (1
+      (body-in
+       inner-error-handler
+       outer-error-handler
+       body-out))
+</pre></div>
+
+<p>Usage examples on the unwind&ndash;protection mechanism:
+</p>
+<div class="example">
+<pre class="example">(import (vicare)
+  (only (vicare checks)
+        with-result
+        add-result))
+
+(with-result
+  (restart-case
+      (with-unwind-handler
+          (lambda (why)
+            (add-result 'unwind-handler))
+        (lambda ()
+          (add-result 'body-enter)
+          (invoke-restart 'alpha)
+          (add-result 'body-return)))
+    (alpha (lambda ()
+             (add-result 'restart-alpha)
+             1))))
+&rArr; (1 (body-enter restart-alpha unwind-handler))
+
+(internal-body
+
+  (define (doit C)
+    (with-result
+      (returnable
+        (handler-bind
+            ((&amp;error   (lambda (E)
+                         (add-result 'error-handler)
+                         (return 1))))
+          (with-unwind-handler
+              (lambda (why)
+                (add-result 'outer-unwind-handler))
+            (lambda ()
+              (handler-bind
+                  ((&amp;warning (lambda (E)
+                               (add-result 'warning-handler)
+                               (return 2))))
+                (with-unwind-handler
+                    (lambda (why)
+                      (add-result 'inner-unwind-handler))
+                  (lambda ()
+                    (add-result 'body-begin)
+                    (signal C)
+                    (add-result 'body-normal-return))))))))))
+
+  (doit (make-error))
+  &rArr; (1
+        (body-begin
+         error-handler
+         inner-unwind-handler
+         outer-unwind-handler))
+
+  (doit (make-warning))
+  &rArr; (2
+        (body-begin
+         warning-handler
+         inner-unwind-handler
+         outer-unwind-handler))
+
+  #| end of body |# )
+</pre></div>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="restarts-assoc.html#restarts-assoc" accesskey="n" rel="next">restarts assoc</a>, Previous: <a href="restarts-handler_002dbind.html#restarts-handler_002dbind" accesskey="p" rel="prev">restarts handler-bind</a>, Up: <a href="restarts.html#restarts" accesskey="u" rel="up">restarts</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

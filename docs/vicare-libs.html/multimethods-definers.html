@@ -1,0 +1,190 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes the libraries distributed along with version
+0.4d1 of Vicare Scheme, an R6RS compliant native
+compiler for the Scheme language.
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+The documentation of the libraries (vicare parser-tools silex
+-) are derived form the documentation of SILex.  Copyright
+(C) 2001, 2009 Danny Dube'.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Libraries for Vicare Scheme: multimethods definers</title>
+
+<meta name="description" content="Libraries for Vicare Scheme: multimethods definers">
+<meta name="keywords" content="Libraries for Vicare Scheme: multimethods definers">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="multimethods.html#multimethods" rel="up" title="multimethods">
+<link href="multimethods-defining.html#multimethods-defining" rel="next" title="multimethods defining">
+<link href="multimethods-dispatching.html#multimethods-dispatching" rel="prev" title="multimethods dispatching">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="multimethods-definers"></a>
+<div class="header">
+<p>
+Next: <a href="multimethods-defining.html#multimethods-defining" accesskey="n" rel="next">multimethods defining</a>, Previous: <a href="multimethods-dispatching.html#multimethods-dispatching" accesskey="p" rel="prev">multimethods dispatching</a>, Up: <a href="multimethods.html#multimethods" accesskey="u" rel="up">multimethods</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Declaring-multimethod-definers"></a>
+<h3 class="section">19.4 Declaring multimethod definers</h3>
+
+
+<p>The following syntaxes allow the definition and merging of generic
+functions; merging multimethods can be useful when two libraries export
+generic functions bound to identifiers having the same name.
+</p>
+
+<dl>
+<dt><a name="index-define_002dgeneric_002ddefiner"></a>Syntax: <strong>define-generic-definer</strong> <em><var>?definer</var> <var>?clause</var> &hellip;</em></dt>
+<dt><a name="index-operand_002dtype_002dinspector"></a>Auxiliary Syntax: <strong>operand-type-inspector</strong> <em><var>?func</var></em></dt>
+<dd><p>Define a new syntax, bound to the identifier <var>?definer</var>, to be used
+to define ordinary generic functions.
+</p>
+<p>The argument of the clause <code>operand-type-inspector</code> must be an
+expression which, evaluated at run&ndash;time, returns a function; such
+function, applied to a multimethod operand, must return the list of type
+<acronym>UID</acronym>s.  This clause is mandatory.  See below for details.
+</p>
+<p>The library <code>(vicare language-extensions multimethods)</code> defines
+the macro <code>define-generic</code> as follows:
+</p>
+<div class="example">
+<pre class="example">(define-generic-definer define-generic
+  (operand-type-inspector type-unique-identifiers-of))
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-define_002dgeneric_002a_002ddefiner"></a>Syntax: <strong>define-generic*-definer</strong> <em><var>?definer</var> <var>?clause</var> &hellip;</em></dt>
+<dt><a name="index-operand_002dtype_002dinspector-1"></a>Auxiliary Syntax: <strong>operand-type-inspector</strong> <em><var>?func</var></em></dt>
+<dt><a name="index-reverse_002dbefore_002dmethods_003f"></a>Auxiliary Syntax: <strong>reverse-before-methods?</strong> <em><var>?bool</var></em></dt>
+<dd><p>Define a new syntax, bound to the identifier <var>?definer</var>, to be used
+to define starred generic functions.
+</p>
+<p>The argument of the clause <code>operand-type-inspector</code> must be an
+expression which, evaluated at run&ndash;time, returns a function; such
+function, applied to a multimethod operand, must return the list of type
+<acronym>UID</acronym>s.  This clause is mandatory.  See below for details.
+</p>
+<p>The argument of the clause <code>reverse-before-methods?</code> must be a
+boolean datum: <code>#t</code> if the methods qualified as <code>:before</code> must
+be reversed and so applied from the least specific to the most specific;
+<code>#f</code> if the standard method protocol must be adopted.  This clause
+is optional: the default is to use the standard method protocol.  See
+below for details.
+</p>
+<p>The library <code>(vicare language-extensions multimethods)</code> defines
+the macro <code>define-generic*</code> as follows:
+</p>
+<div class="example">
+<pre class="example">(define-generic*-definer define-generic*
+  (operand-type-inspector  type-unique-identifiers-of)
+  (reverse-before-methods? #f))
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-operand_002dtype_002dinspector-2"></a>Auxiliary Syntax: <strong>operand-type-inspector</strong> <em><var>?func</var></em></dt>
+<dd><p>The clause <code>operand-type-inspector</code> allows the specification of a
+function to map a multimethod operand to the list of <acronym>UID</acronym>s
+representing its type.  <var>?func</var> must be an expression which,
+evaluated at run&ndash;time, returns a function.
+</p>
+<p>When merging generic functions: the type inspector function is the one
+of the multimethod in which the others are merged.
+</p>
+<p>Usually the <code>operand-type-inspector</code> clause selects a wrapper for
+<code>type-unique-identifiers-of</code>.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-reverse_002dbefore_002dmethods_003f-1"></a>Auxiliary Syntax: <strong>reverse-before-methods?</strong> <em><var>?bool</var></em></dt>
+<dd><p>The default methods composition protocol states that <code>:before</code> and
+<code>:around</code> methods are evaluated from the most specific to the least
+specific, while <code>:after</code> methods are evaluated from the least
+specific to the most specific.
+</p>
+<p>When the clause <code>reverse-before-methods?</code> is used and <var>?bool</var>
+is <code>#t</code>: the order of <code>:before</code> methods is reversed to &ldquo;from
+the least specific to the most specific&rdquo; prior to evaluating them.
+<a href="multimethods-methods.html#multimethods-methods">multimethods methods</a> for an example of why this customisation is
+useful.
+</p></dd></dl>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="multimethods-defining.html#multimethods-defining" accesskey="n" rel="next">multimethods defining</a>, Previous: <a href="multimethods-dispatching.html#multimethods-dispatching" accesskey="p" rel="prev">multimethods dispatching</a>, Up: <a href="multimethods.html#multimethods" accesskey="u" rel="up">multimethods</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

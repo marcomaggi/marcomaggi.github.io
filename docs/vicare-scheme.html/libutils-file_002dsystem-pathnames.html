@@ -1,0 +1,259 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.4d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit and 64-bit
+processors.  Vicare is pronounced the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/downloads
+
+the home page of the project is at:
+
+http://marcomaggi.github.io/vicare.html
+
+development takes place at:
+
+http://github.com/marcomaggi/vicare/
+
+and, as a backup, at:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the "History" appendix for details.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Vicare Scheme: libutils file-system pathnames</title>
+
+<meta name="description" content="Vicare Scheme: libutils file-system pathnames">
+<meta name="keywords" content="Vicare Scheme: libutils file-system pathnames">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="libutils-file_002dsystem.html#libutils-file_002dsystem" rel="up" title="libutils file-system">
+<link href="libutils-file_002dsystem-paths.html#libutils-file_002dsystem-paths" rel="next" title="libutils file-system paths">
+<link href="libutils-file_002dsystem-extensions.html#libutils-file_002dsystem-extensions" rel="prev" title="libutils file-system extensions">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="libutils-file_002dsystem-pathnames"></a>
+<div class="header">
+<p>
+Next: <a href="libutils-file_002dsystem-paths.html#libutils-file_002dsystem-paths" accesskey="n" rel="next">libutils file-system paths</a>, Previous: <a href="libutils-file_002dsystem-extensions.html#libutils-file_002dsystem-extensions" accesskey="p" rel="prev">libutils file-system extensions</a>, Up: <a href="libutils-file_002dsystem.html#libutils-file_002dsystem" accesskey="u" rel="up">libutils file-system</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Library-file-pathnames"></a>
+<h4 class="subsection">7.8.2 Library file pathnames</h4>
+
+
+<p>The following bindings are exported by the library <code>(vicare
+libraries)</code>.
+</p>
+
+<dl>
+<dt><a name="index-library_002dname_002d_003efilename_002dstem"></a>Function: <strong>library-name-&gt;filename-stem</strong> <em><var>libname</var></em></dt>
+<dt><a name="index-library_002dreference_002d_003efilename_002dstem"></a>Function: <strong>library-reference-&gt;filename-stem</strong> <em><var>libref</var></em></dt>
+<dd><p>Convert the non&ndash;empty list of identifiers from a <acronym>R6RS</acronym> library name
+<var>libname</var> or reference <var>libref</var> into a string representing the
+corresponding relative file pathname, without extension but including a
+leading <code>#\/</code> character.  Examples:
+</p>
+<div class="example">
+<pre class="example">(library-name-&gt;filename-stem '(alpha beta gamma (1 2 3)))
+&rArr; &quot;/alpha/beta/gamma&quot;
+
+(library-name-&gt;filename-stem '(alpha beta main (1 2 3)))
+&rArr; &quot;/alpha/beta/main_&quot;
+
+(library-reference-&gt;filename-stem '(alpha beta gamma ((&gt;= 3))))
+&rArr; &quot;/alpha/beta/gamma&quot;
+
+(library-reference-&gt;filename-stem '(alpha beta main ((&gt;= 3))))
+&rArr; &quot;/alpha/beta/main_&quot;
+</pre></div>
+
+<p>notice how the component &lsquo;<samp>main</samp>&rsquo;, when appearing last, is &ldquo;quoted&rdquo;
+by appending an underscore.
+</p>
+<p>The returned value can be used as:
+</p>
+<ul>
+<li> Source library name, by appending an extension like <code>.sls</code>.
+
+</li><li> Compiled library name, by appending an extension like <code>.fasl</code>.
+</li></ul>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-directory_002blibrary_002dstem_002d_003elibrary_002dsource_002dpathname"></a>Function: <strong>directory+library-stem-&gt;library-source-pathname</strong> <em><var>directory</var> <var>stem</var></em></dt>
+<dt><a name="index-directory_002blibrary_002dstem_002d_003elibrary_002dbinary_002dpathname"></a>Function: <strong>directory+library-stem-&gt;library-binary-pathname</strong> <em><var>directory</var> <var>stem</var></em></dt>
+<dd><p>Given a string directory pathname and a string library stem: build and
+return a source or binary library file pathname.
+</p>
+<div class="example">
+<pre class="example">(directory+library-stem-&gt;library-source-pathname &quot;a/b/c&quot; &quot;/d/e&quot;)
+&rArr; &quot;a/b/c/d/e.sls&quot;
+
+(directory+library-stem-&gt;library-binary-pathname &quot;a/b/c&quot; &quot;/d/e&quot;)
+&rArr; &quot;a/b/c/d/e.fasl&quot;
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-library_002dname_002d_003elibrary_002dbinary_002dpathname_002din_002dbuild_002ddirectory"></a>Function: <strong>library-name-&gt;library-binary-pathname-in-build-directory</strong> <em><var>libname</var></em></dt>
+<dt><a name="index-library_002dreference_002d_003elibrary_002dbinary_002dpathname_002din_002dbuild_002ddirectory"></a>Function: <strong>library-reference-&gt;library-binary-pathname-in-build-directory</strong> <em><var>libref</var></em></dt>
+<dd><p>Given a <acronym>R6RS</acronym> compliant library name or reference: build and return a
+string representing the pathname of a binary library in the current
+build directory.  The current build directory is the pathname currently
+referenced by the parameter <code>compiled-libraries-build-directory</code>.
+</p>
+<div class="example">
+<pre class="example">(parametrise ((compiled-libraries-build-directory &quot;/a/b&quot;))
+   (library-name-&gt;library-binary-pathname-in-build-directory
+      '(c d (1 2 3))))
+&rArr; &quot;/a/b/c/d.fasl&quot;
+
+(parametrise ((compiled-libraries-build-directory &quot;/a/b&quot;))
+   (library-reference-&gt;library-binary-pathname-in-build-directory
+      '(c d ((&gt;= 2)))))
+&rArr; &quot;/a/b/c/d.fasl&quot;
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-library_002dsource_002dpathname_002d_003elibrary_002dstem_002dpathname"></a>Function: <strong>library-source-pathname-&gt;library-stem-pathname</strong> <em><var>source-pathname</var></em></dt>
+<dd><p>Given a string representing the file pathname of a source library: strip
+the file extensions if it is equal to a supported Vicare file
+extension and return the result.  If the file extension is not
+recognised: return <var>source-pathname</var> itself.
+</p>
+<div class="example">
+<pre class="example">(library-source-pathname-&gt;library-stem-pathname &quot;a/b/c.sls&quot;)
+&rArr; &quot;a/b/c&quot;
+
+(library-source-pathname-&gt;library-stem-pathname &quot;a/b/c.vicare.sls&quot;)
+&rArr; &quot;a/b/c&quot;
+
+(library-source-pathname-&gt;library-stem-pathname &quot;a/b/c.scm&quot;)
+&rArr; &quot;a/b/c&quot;
+
+(library-source-pathname-&gt;library-stem-pathname &quot;a/b/c.ss&quot;)
+&rArr; &quot;a/b/c&quot;
+
+(library-source-pathname-&gt;library-stem-pathname &quot;a/b/c.ciao&quot;)
+&rArr; &quot;a/b/c.ciao&quot;
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-library_002dsource_002dpathname_002d_003elibrary_002dbinary_002dtail_002dpathname"></a>Function: <strong>library-source-pathname-&gt;library-binary-tail-pathname</strong> <em><var>source-pathname</var></em></dt>
+<dd><p>Given a string representing the file pathname of a source library: strip
+the file extension if it is equal to a supported Vicare file
+extension, append the binary library extension and return the result.
+If the file extension is not recognised: return <var>source-pathname</var>
+itself with the binary library extension appended.
+</p>
+<div class="example">
+<pre class="example">(library-source-pathname-&gt;library-binary-tail-pathname
+   &quot;a/b/c.sls&quot;)
+&rArr; &quot;a/b/c.fasl&quot;
+
+(library-source-pathname-&gt;library-binary-tail-pathname
+   &quot;a/b/c.vicare.sls&quot;)
+&rArr; &quot;a/b/c.fasl&quot;
+
+(library-source-pathname-&gt;library-binary-tail-pathname
+   &quot;a/b/c.scm&quot;)
+&rArr; &quot;a/b/c.fasl&quot;
+
+(library-source-pathname-&gt;library-binary-tail-pathname
+   &quot;a/b/c.ss&quot;)
+&rArr; &quot;a/b/c.fasl&quot;
+
+(library-source-pathname-&gt;library-binary-tail-pathname
+   &quot;a/b/c.ciao&quot;)
+&rArr; &quot;a/b/c.ciao.fasl&quot;
+</pre></div>
+</dd></dl>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="libutils-file_002dsystem-paths.html#libutils-file_002dsystem-paths" accesskey="n" rel="next">libutils file-system paths</a>, Previous: <a href="libutils-file_002dsystem-extensions.html#libutils-file_002dsystem-extensions" accesskey="p" rel="prev">libutils file-system extensions</a>, Up: <a href="libutils-file_002dsystem.html#libutils-file_002dsystem" accesskey="u" rel="up">libutils file-system</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

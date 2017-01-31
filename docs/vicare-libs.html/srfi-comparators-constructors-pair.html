@@ -1,0 +1,232 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes the libraries distributed along with version
+0.4d1 of Vicare Scheme, an R6RS compliant native
+compiler for the Scheme language.
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+The documentation of the libraries (vicare parser-tools silex
+-) are derived form the documentation of SILex.  Copyright
+(C) 2001, 2009 Danny Dube'.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Libraries for Vicare Scheme: srfi comparators constructors pair</title>
+
+<meta name="description" content="Libraries for Vicare Scheme: srfi comparators constructors pair">
+<meta name="keywords" content="Libraries for Vicare Scheme: srfi comparators constructors pair">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="srfi-comparators-constructors.html#srfi-comparators-constructors" rel="up" title="srfi comparators constructors">
+<link href="srfi-comparators-constructors-list.html#srfi-comparators-constructors-list" rel="next" title="srfi comparators constructors list">
+<link href="srfi-comparators-constructors-real.html#srfi-comparators-constructors-real" rel="prev" title="srfi comparators constructors real">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="srfi-comparators-constructors-pair"></a>
+<div class="header">
+<p>
+Next: <a href="srfi-comparators-constructors-list.html#srfi-comparators-constructors-list" accesskey="n" rel="next">srfi comparators constructors list</a>, Previous: <a href="srfi-comparators-constructors-real.html#srfi-comparators-constructors-real" accesskey="p" rel="prev">srfi comparators constructors real</a>, Up: <a href="srfi-comparators-constructors.html#srfi-comparators-constructors" accesskey="u" rel="up">srfi comparators constructors</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Pair-comparators"></a>
+<h4 class="subsubsection">2.38.8.3 Pair comparators</h4>
+
+
+<dl>
+<dt><a name="index-make_002dpair_002dcomparator"></a>Function: <strong>make-pair-comparator</strong> <em><var>car-comparator</var> <var>cdr-comparator</var></em></dt>
+<dd><p>Return a comparator that compares pairs first on their cars using
+<var>car-comparator</var>.  If the cars are equal: it compares the cdrs using
+<var>cdr-comparator</var>.  The hash function makes use of both the car and
+the cdr.
+</p>
+<div class="lisp">
+<pre class="lisp">#!vicare
+(import (vicare) (srfi :114))
+
+(define-constant C
+  (make-pair-comparator exact-integer-comparator
+                        real-comparator))
+
+;; type test
+(comparator-test-type C '(1 . 2.0))     &rArr; #t
+(comparator-test-type C '(1 . 2.0))     &rArr; #t
+(comparator-test-type C '())            &rArr; #f
+(comparator-test-type C '(1 . 2+1i))    &rArr; #f
+(comparator-test-type C &quot;ciao&quot;)         &rArr; #f
+
+;; type check
+(comparator-check-type C '(1 . 2.0))    &rArr; #t
+(try
+    (comparator-check-type C (void))
+  (catch E
+    ((&amp;comparator-type-error)
+     #t)
+    (else E)))
+&rArr; #t
+
+;; comparison
+(comparator-compare C '(1 . 2.0) '(1 . 2.0))   &rArr; 0
+(comparator-compare C '(1 . 2.0) '(1 . 3))     &rArr; -1
+(comparator-compare C '(1 . 3)   '(1 . 2.0))   &rArr; +1
+
+;; hash
+(non-negative-exact-integer?
+   (comparator-hash C '(1 . 2.0)))      &rArr; #t
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-make_002dcar_002dcomparator"></a>Function: <strong>make-car-comparator</strong> <em><var>comparator</var></em></dt>
+<dd><p>Return a comparator that compares pairs on their cars alone using
+<var>comparator</var>.  The hash function makes use of the car only.
+</p>
+<div class="lisp">
+<pre class="lisp">#!vicare
+(import (vicare) (srfi :114))
+
+(define-constant C
+  (make-car-comparator exact-integer-comparator))
+
+;; type test
+(comparator-test-type C '(1 . 2.0))     &rArr; #t
+(comparator-test-type C '(1 . 2.0))     &rArr; #t
+(comparator-test-type C '(1 . 2+1i))    &rArr; #t
+(comparator-test-type C '(2.0 . 1))     &rArr; #f
+(comparator-test-type C '())            &rArr; #f
+(comparator-test-type C &quot;ciao&quot;)         &rArr; #f
+
+;; type check
+(comparator-check-type C '(1 . 2.0))    &rArr; #t
+(try
+    (comparator-check-type C (void))
+  (catch E
+    ((&amp;comparator-type-error)
+     #t)
+    (else E)))
+&rArr; #t
+
+;; comparison
+(comparator-compare C '(1 . 2) '(1 . 3))        &rArr; 0
+(comparator-compare C '(1 . 2) '(2 . 3))        &rArr; -1
+(comparator-compare C '(2 . 2) '(1 . 2))        &rArr; +1
+
+;; hash
+(non-negative-exact-integer?
+   (comparator-hash C '(1 . 2.0)))      &rArr; #t
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-make_002dcdr_002dcomparator"></a>Function: <strong>make-cdr-comparator</strong> <em><var>comparator</var></em></dt>
+<dd><p>Return a comparator that compares pairs on their cdrs alone using
+<var>comparator</var>.  The hash function makes use of the cdr only.
+</p>
+<div class="lisp">
+<pre class="lisp">#!vicare
+(import (vicare) (srfi :114))
+
+(define-constant C
+  (make-cdr-comparator exact-integer-comparator))
+
+;; type test
+(comparator-test-type C '(2.0 . 1))     &rArr; #t
+(comparator-test-type C '(2.0 . 1))     &rArr; #t
+(comparator-test-type C '(2+1i . 1))    &rArr; #t
+(comparator-test-type C '(1 . 2.0))     &rArr; #t
+(comparator-test-type C '())            &rArr; #f
+(comparator-test-type C &quot;ciao&quot;)         &rArr; #f
+
+;; type check
+(comparator-check-type C '(2.0 . 1))    &rArr; #t
+(try
+    (comparator-check-type C (void))
+  (catch E
+    ((&amp;comparator-type-error)
+     #t)
+    (else E)))
+&rArr; #t
+
+;; comparison
+(comparator-compare C '(2 . 1) '(3 . 1))        &rArr; 0
+(comparator-compare C '(2 . 1) '(3 . 2))        &rArr; -1
+(comparator-compare C '(2 . 2) '(2 . 1))        &rArr; +1
+
+;; hash
+(non-negative-exact-integer?
+   (comparator-hash C '(2.0 . 1)))      &rArr; #t
+</pre></div>
+</dd></dl>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="srfi-comparators-constructors-list.html#srfi-comparators-constructors-list" accesskey="n" rel="next">srfi comparators constructors list</a>, Previous: <a href="srfi-comparators-constructors-real.html#srfi-comparators-constructors-real" accesskey="p" rel="prev">srfi comparators constructors real</a>, Up: <a href="srfi-comparators-constructors.html#srfi-comparators-constructors" accesskey="u" rel="up">srfi comparators constructors</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

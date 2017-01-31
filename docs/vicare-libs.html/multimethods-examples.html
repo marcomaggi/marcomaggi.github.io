@@ -1,0 +1,218 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes the libraries distributed along with version
+0.4d1 of Vicare Scheme, an R6RS compliant native
+compiler for the Scheme language.
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+The documentation of the libraries (vicare parser-tools silex
+-) are derived form the documentation of SILex.  Copyright
+(C) 2001, 2009 Danny Dube'.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Libraries for Vicare Scheme: multimethods examples</title>
+
+<meta name="description" content="Libraries for Vicare Scheme: multimethods examples">
+<meta name="keywords" content="Libraries for Vicare Scheme: multimethods examples">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="multimethods.html#multimethods" rel="up" title="multimethods">
+<link href="multimethods-application.html#multimethods-application" rel="next" title="multimethods application">
+<link href="multimethods.html#multimethods" rel="prev" title="multimethods">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="multimethods-examples"></a>
+<div class="header">
+<p>
+Next: <a href="multimethods-application.html#multimethods-application" accesskey="n" rel="next">multimethods application</a>, Up: <a href="multimethods.html#multimethods" accesskey="u" rel="up">multimethods</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Examples-of-method-dispatching"></a>
+<h3 class="section">19.1 Examples of method dispatching</h3>
+
+
+<p>Here we look at some examples of what we have to expect from
+multimethods dispatching.  We will always assume that the code in the
+examples is wrapped into a <code>program</code> form as follows:
+</p>
+<div class="lisp">
+<pre class="lisp">#!vicare
+(program (demo)
+  (options typed-language)
+  (import (vicare)
+    (vicare language-extensions multimethods))
+
+  ... ;here goes the code
+
+  #| end of program |# )
+</pre></div>
+
+<p>Let&rsquo;s examine an example using the generic functions definer
+<code>define-generic</code>:
+</p>
+<div class="example">
+<pre class="example">(define-record-type &lt;one&gt;                  (nongenerative one))
+(define-record-type &lt;two&gt;   (parent &lt;one&gt;) (nongenerative two))
+(define-record-type &lt;three&gt; (parent &lt;two&gt;) (nongenerative three))
+</pre></div>
+
+<p>the type hierarchy is:
+</p>
+<div class="example">
+<pre class="example">&lt;top&gt; -&gt; &lt;struct&gt; -&gt; &lt;record&gt; -&gt; &lt;one&gt; -&gt; &lt;two&gt; -&gt; &lt;three&gt;
+</pre></div>
+
+<p>the list of <acronym>UID</acronym>s for <code>&lt;three&gt;</code> is:
+</p>
+<div class="example">
+<pre class="example">(type-unique-identifiers &lt;three&gt;)
+&rArr; (three two one
+    vicare:scheme-type:&lt;record&gt;
+    vicare:scheme-type:&lt;struct&gt;
+    vicare:scheme-type:&lt;top&gt;)
+</pre></div>
+
+<p>so for the generic function:
+</p>
+<div class="example">
+<pre class="example">(define-generic doit (o))
+(define-method (doit {o &lt;one&gt;}) 'one)
+(define-method (doit {o &lt;two&gt;}) 'two)
+</pre></div>
+
+<p>applied to a value of type <code>&lt;three&gt;</code>: the method with <code>&lt;two&gt;</code> in
+the signature is <em>more specific</em> than the method with <code>&lt;one&gt;</code>
+in the signature:
+</p>
+<div class="example">
+<pre class="example">(doit (new &lt;three&gt;)) &rArr; two
+</pre></div>
+
+<p>also the method with <code>&lt;one&gt;</code> in the signature is the &ldquo;next method&rdquo;
+of the method with <code>&lt;two&gt;</code> in the signature, we can call it using
+<code>call-next-method</code>.  The following example shows a call to the next
+method:
+</p>
+<div class="example">
+<pre class="example">(define-generic fluff (o))
+
+(define-method (fluff {o &lt;one&gt;})
+  'one)
+
+(define-method (fluff {o &lt;two&gt;})
+  (cons 'two (call-next-method)))
+
+(define o (new &lt;three&gt;))
+
+(fluff o)
+&rArr; (two . one)
+</pre></div>
+
+<p>The syntax <code>define-generic</code> defines a macro which can be used as a
+function; the syntax <code>define-method</code> adds a new method to the
+generic function; <code>define-generic</code> establishes the number of
+arguments for the generic function: all the methods must have the same
+number of arguments.
+</p>
+<p>It is possible to define a function accepting different numbers of
+arguments as follows:
+</p>
+<div class="example">
+<pre class="example">(case-define fluff
+  ((a)
+   (fluff-1 a))
+  ((a b)
+   (fluff-2 a b))
+  ((a b . rest)
+   (fluff-3 a b rest)))
+
+(define-generic fluff-1 (o))
+(define-generic fluff-2 (o p))
+(define-generic fluff-3 (o p rest))
+
+(define-method (fluff-1 {o &lt;one&gt;})
+  ---)
+
+(define-method (fluff-2 {o &lt;one&gt;} {p &lt;two&gt;})
+  ---)
+
+(define-method (fluff-3 {o &lt;one&gt;} {p &lt;two&gt;} rest)
+  ---)
+</pre></div>
+
+<p>this way we turn a set of macros into a single &ldquo;generic function&rdquo;
+which is truly a function.  If we avoid wrapping the macros into a
+function we may gain a bit of speed in function calls.
+</p>
+<hr>
+<div class="header">
+<p>
+Next: <a href="multimethods-application.html#multimethods-application" accesskey="n" rel="next">multimethods application</a>, Up: <a href="multimethods.html#multimethods" accesskey="u" rel="up">multimethods</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

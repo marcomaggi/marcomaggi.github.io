@@ -1,0 +1,247 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes the libraries distributed along with version
+0.4d1 of Vicare Scheme, an R6RS compliant native
+compiler for the Scheme language.
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+The documentation of the libraries (vicare parser-tools silex
+-) are derived form the documentation of SILex.  Copyright
+(C) 2001, 2009 Danny Dube'.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Libraries for Vicare Scheme: tracing</title>
+
+<meta name="description" content="Libraries for Vicare Scheme: tracing">
+<meta name="keywords" content="Libraries for Vicare Scheme: tracing">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="index.html#Top" rel="up" title="Top">
+<link href="multimethods.html#multimethods" rel="next" title="multimethods">
+<link href="checks-output.html#checks-output" rel="prev" title="checks output">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="tracing"></a>
+<div class="header">
+<p>
+Next: <a href="multimethods.html#multimethods" accesskey="n" rel="next">multimethods</a>, Previous: <a href="checks.html#checks" accesskey="p" rel="prev">checks</a>, Up: <a href="index.html#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Tracing-syntaxes"></a>
+<h2 class="chapter">18 Tracing syntaxes</h2>
+
+
+<a name="index-Library-_0028vicare-language_002dextensions-tracing_002dsyntaxes_0029"></a>
+<a name="index-_0028vicare-language_002dextensions-tracing_002dsyntaxes_0029_002c-library"></a>
+
+
+<dl>
+<dt><a name="index-make_002dtraced_002dprocedure"></a>Procedure: <strong>make-traced-procedure</strong> <em><var>name</var> <var>proc</var></em></dt>
+<dd><p>The procedure <code>make-traced-procedure</code> takes a name (typically a
+symbol) and a procedure.  It returns a procedure similar to <var>proc</var>
+except that it traces its arguments and values.
+</p>
+<div class="example">
+<pre class="example">&gt; (define (fact n)
+    (if (zero? n)
+        (lambda (k) (k 1))
+        (lambda (k)
+          ((fact (- n 1))
+           (make-traced-procedure `(k ,n)
+             (lambda (v)
+               (k (* v n))))))))
+&gt; (call/cc
+    (lambda (k)
+      ((fact 5) (make-traced-procedure 'K k))))
+|((k 1) 1)
+|((k 2) 1)
+|((k 3) 2)
+|((k 4) 6)
+|((k 5) 24)
+|(K 120)
+120
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-trace_002ddefine"></a>Syntax: <strong>trace-define</strong> <em>(<var>?name</var> . <var>?args</var>) <var>?body0</var> <var>?body</var> &hellip;</em></dt>
+<dt><a name="index-trace_002ddefine-1"></a>Syntax: <strong>trace-define</strong> <em><var>?name</var> <var>?expression</var></em></dt>
+<dd><p>The <code>trace-define</code> syntax is similar to <code>define</code> except
+that the bound value, which must be a procedure, becomes a traced
+procedure.  A traced procedure prints its arguments when it is called
+and prints its values when it returns.
+</p>
+<div class="example">
+<pre class="example">&gt; (trace-define (fact n)
+    (if (zero? n) 1 (* n (fact (- n 1)))))
+&gt; (fact 5)
+|(fact 5)
+| (fact 4)
+| |(fact 3)
+| | (fact 2)
+| | |(fact 1)
+| | | (fact 0)
+| | | 1
+| | |1
+| | 2
+| |6
+| 24
+|120
+120
+</pre></div>
+
+<p>The tracing facility in Vicare preserves and shows tail recursion and
+distinguishes it from non&ndash;tail recursion by showing tail calls starting
+at the same line in which their parent was called.
+</p>
+<div class="example">
+<pre class="example">&gt; (trace-define (fact n)
+    (trace-define (fact-aux n m)
+      (if (zero? n) m (fact-aux (- n 1) (* n m))))
+    (fact-aux n 1))
+&gt; (fact 5)
+|(fact 5)
+|(fact-aux 5 1)
+|(fact-aux 4 5)
+|(fact-aux 3 20)
+|(fact-aux 2 60)
+|(fact-aux 1 120)
+|(fact-aux 0 120)
+|120
+120
+</pre></div>
+
+<p>Moreover, the tracing facility interacts well with continuations and
+exceptions.
+</p>
+<div class="example">
+<pre class="example">&gt; (call/cc
+    (lambda (k)
+      (trace-define (loop n)
+        (if (zero? n)
+            (k 'done)
+            (+ (loop (- n 1)) 1)))
+      (loop 5)))
+|(loop 5)
+| (loop 4)
+| |(loop 3)
+| | (loop 2)
+| | |(loop 1)
+| | | (loop 0)
+done
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-trace_002dlambda"></a>Syntax: <strong>trace-lambda</strong> <em><var>?name</var> <var>?args</var> <var>?body0</var> <var>?body</var> &hellip;</em></dt>
+<dd><p>The <code>trace-lambda</code> macro is similar to <code>lambda</code> except
+that the resulting procedure is traced: it prints the arguments it
+receives and the results it returns.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-trace_002ddefine_002dsyntax"></a>Syntax: <strong>trace-define-syntax</strong> <em><var>?keyword</var> <var>?expression</var></em></dt>
+<dd><p>Like <code>define-syntax</code> but create a tracing transformer function.
+Whenever the macro is expanded the transformer function will print its
+argument (the input form) and its return value (the output form).
+Example:
+</p>
+<div class="example">
+<pre class="example">(trace-define-syntax ciao
+  (syntax-rules ()
+    ((_ ?a)
+     (list 1 ?a 3))))
+
+(ciao 2)
+-| |(ciao (ciao 2))
+-| |(list 1 2 3)
+</pre></div>
+
+<p>the first printed symbolic expression <code>(ciao (ciao 2))</code> shows the
+called tranformer function <code>(ciao ---)</code> and its argument being the
+input form <code>(ciao 2)</code>, filtered through <code>syntax-&gt;datum</code>.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-trace_002dlet_002dsyntax"></a>Syntax: <strong>trace-let-syntax</strong> <em><var>?bindings</var> <var>?form</var> &hellip;</em></dt>
+<dt><a name="index-trace_002dletrec_002dsyntax"></a>Syntax: <strong>trace-letrec-syntax</strong> <em><var>?bindings</var> <var>?form</var> &hellip;</em></dt>
+<dd><p>Like <code>let-syntax</code> and <code>letrec-syntax</code> but define tracing
+transformer functions.
+</p></dd></dl>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="multimethods.html#multimethods" accesskey="n" rel="next">multimethods</a>, Previous: <a href="checks.html#checks" accesskey="p" rel="prev">checks</a>, Up: <a href="index.html#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

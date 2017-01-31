@@ -1,0 +1,150 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes the libraries distributed along with version
+0.4d1 of Vicare Scheme, an R6RS compliant native
+compiler for the Scheme language.
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+The documentation of the libraries (vicare parser-tools silex
+-) are derived form the documentation of SILex.  Copyright
+(C) 2001, 2009 Danny Dube'.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Libraries for Vicare Scheme: srfi comparators definitions</title>
+
+<meta name="description" content="Libraries for Vicare Scheme: srfi comparators definitions">
+<meta name="keywords" content="Libraries for Vicare Scheme: srfi comparators definitions">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="srfi-comparators.html#srfi-comparators" rel="up" title="srfi comparators">
+<link href="srfi-comparators-limitations.html#srfi-comparators-limitations" rel="next" title="srfi comparators limitations">
+<link href="srfi-comparators-rationale.html#srfi-comparators-rationale" rel="prev" title="srfi comparators rationale">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="srfi-comparators-definitions"></a>
+<div class="header">
+<p>
+Next: <a href="srfi-comparators-limitations.html#srfi-comparators-limitations" accesskey="n" rel="next">srfi comparators limitations</a>, Previous: <a href="srfi-comparators-rationale.html#srfi-comparators-rationale" accesskey="p" rel="prev">srfi comparators rationale</a>, Up: <a href="srfi-comparators.html#srfi-comparators" accesskey="u" rel="up">srfi comparators</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Definitions"></a>
+<h4 class="subsection">2.38.3 Definitions</h4>
+
+
+<p>A comparator is an object of a disjoint type.  It is a bundle of
+procedures that are useful for comparing two objects either for equality
+or for ordering.  There are four procedures in the bundle:
+</p>
+<dl compact="compact">
+<dt><strong>Type test predicate</strong></dt>
+<dd><p>It returns <code>#t</code> if its argument has the correct type to be passed as
+an argument to the other three procedures, and <code>#f</code> otherwise.
+</p>
+</dd>
+<dt><strong>Equality predicate</strong></dt>
+<dd><p>It returns <code>#t</code> if the two objects are the same in the sense of the
+comparator, and <code>#f</code> otherwise.  It is the programmer&rsquo;s
+responsibility to ensure that it is reflexive, symmetric, transitive,
+and can handle any arguments that satisfy the type test predicate.
+</p>
+</dd>
+<dt><strong>Comparison procedure</strong></dt>
+<dd><p>It returns <code>-1</code>, <code>0</code>, or <code>+1</code> if the first object
+precedes the second, is equal to the second, or follows the second,
+respectively, in a total order defined by the comparator.  It is the
+programmer&rsquo;s responsibility to ensure that it is reflexive, weakly
+antisymmetric, transitive, can handle any arguments that satisfy the
+type test predicate, and returns <code>0</code> if and only if the equality
+predicate returns <code>#t</code>.  Comparison procedures are compatible with
+the <em>compare procedures</em> of <acronym>SRFI</acronym>-67; see <acronym>SRFI</acronym>-67 for the
+rationale for adopting this return convention.
+</p>
+</dd>
+<dt><strong>Hash function</strong></dt>
+<dd><p>It takes one argument, and returns an exact non&ndash;negative integer.  It
+is the programmer&rsquo;s responsibility to ensure that it can handle any
+argument that satisfies the type test predicate, and that it returns the
+same value on two objects if the equality predicate says they are the
+same (but not necessarily the converse).
+</p></dd>
+</dl>
+
+<p>It is also the programmer&rsquo;s responsibility to ensure that all four
+procedures provide the same result whenever they are applied to the same
+object(s) (in the sense of <code>eqv?</code>), unless the object(s) have been
+mutated since the last invocation.  In particular, they must not depend
+in any way on memory addresses in implementations where the garbage
+collector can move objects in memory.
+</p>
+<hr>
+<div class="header">
+<p>
+Next: <a href="srfi-comparators-limitations.html#srfi-comparators-limitations" accesskey="n" rel="next">srfi comparators limitations</a>, Previous: <a href="srfi-comparators-rationale.html#srfi-comparators-rationale" accesskey="p" rel="prev">srfi comparators rationale</a>, Up: <a href="srfi-comparators.html#srfi-comparators" accesskey="u" rel="up">srfi comparators</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

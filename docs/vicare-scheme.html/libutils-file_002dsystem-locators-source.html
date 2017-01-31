@@ -1,0 +1,319 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.4d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit and 64-bit
+processors.  Vicare is pronounced the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/downloads
+
+the home page of the project is at:
+
+http://marcomaggi.github.io/vicare.html
+
+development takes place at:
+
+http://github.com/marcomaggi/vicare/
+
+and, as a backup, at:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the "History" appendix for details.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Vicare Scheme: libutils file-system locators source</title>
+
+<meta name="description" content="Vicare Scheme: libutils file-system locators source">
+<meta name="keywords" content="Vicare Scheme: libutils file-system locators source">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="libutils-file_002dsystem-locators.html#libutils-file_002dsystem-locators" rel="up" title="libutils file-system locators">
+<link href="libutils-dynamic.html#libutils-dynamic" rel="next" title="libutils dynamic">
+<link href="libutils-file_002dsystem-locators-compile.html#libutils-file_002dsystem-locators-compile" rel="prev" title="libutils file-system locators compile">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="libutils-file_002dsystem-locators-source"></a>
+<div class="header">
+<p>
+Previous: <a href="libutils-file_002dsystem-locators-compile.html#libutils-file_002dsystem-locators-compile" accesskey="p" rel="prev">libutils file-system locators compile</a>, Up: <a href="libutils-file_002dsystem-locators.html#libutils-file_002dsystem-locators" accesskey="u" rel="up">libutils file-system locators</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Source-library-file-locator"></a>
+<h4 class="subsubsection">7.8.6.3 Source library file locator</h4>
+
+
+<p>The source library locator must be selected explicitly with the command
+line option <code>--library-locator source</code> or by setting the parameter
+<code>current-library-locator</code> to <code>source-library-locator</code>; it is
+meant to be used to search for source libraries first and then for
+compiled ones.  The reference scenario for the source library locator is
+this:
+</p>
+<ol>
+<li> We install the package Vicare Scheme, compiling bundled libraries and
+putting them in some system directory; the libraries might be installed
+with pathnames like:
+
+<div align="center"><samp>/usr/local/lib/vicare-scheme/vicare/posix.fasl</samp>
+</div>
+</li><li> We install additional packages, compiling distributed libraries and
+putting them in some system directory; the libraries might be installed
+with pathnames like:
+
+<div align="center"><samp>/usr/local/lib/vicare-scheme/vicare/something.fasl</samp>
+</div>
+</li><li> We checkout the source tree of a package repository to develop even more
+libraries.  We have the source libraries under:
+
+<div class="example">
+<pre class="example">$(srcdir)/lib/vicare/this.sls
+$(srcdir)/lib/vicare/that.sls
+</pre></div>
+
+<p>we want to compile them under the build directory:
+</p>
+<div class="example">
+<pre class="example">$(builddir)/lib/vicare/this.fasl
+$(builddir)/lib/vicare/that.fasl
+</pre></div>
+
+<p>and then install them in a system directory:
+</p>
+<div class="example">
+<pre class="example">/usr/local/lib/vicare-scheme/vicare/this.fasl
+/usr/local/lib/vicare-scheme/vicare/that.fasl
+</pre></div>
+
+<p>In the package&rsquo;s building infrastructure (for example a Makefile managed
+by the <acronym>GNU</acronym> Autotools) we need to write appropriate invocations of
+<code>vicare</code> to build the libraries locally and pick the
+appropriate source libraries and compiled libraries.
+</p>
+<p>This is the gist: we want to automatically generate an include Makefile
+holding the compilation and installation recipes correctly describing
+the dependencies among libraries.  For this we need to load all the
+source libraries in the package&rsquo;s source tree.
+</p>
+</li><li> It may be that the libraries in the source tree need to load installed
+libraries and also have local dependencies:
+
+<div class="lisp">
+<pre class="lisp">(library (vicare this)
+  (export)
+  (import (vicare)
+    (vicare that))
+  ---)
+
+(library (vicare that)
+  (export)
+  (import (vicare)
+    (prefix (vicare posix) px.)
+    (vicare something))
+  ---)
+</pre></div>
+
+</li><li> It may be that an older version of the package is already installed, so
+there already exist installed binary libraries:
+
+<div class="example">
+<pre class="example">/usr/local/lib/vicare-scheme/vicare/this.fasl
+/usr/local/lib/vicare-scheme/vicare/that.fasl
+</pre></div>
+
+<p>we want these installed libraries to be ignored.  It may be that there
+exist installed source libraries:
+</p>
+<div class="example">
+<pre class="example">/usr/local/lib/vicare-scheme/vicare/this.sls
+/usr/local/lib/vicare-scheme/vicare/that.sls
+</pre></div>
+
+<p>we want the libraries under <code>$(srcdir)/lib</code> to take precedence over
+the libraries under <samp>/usr/local/lib/vicare-scheme</samp>.
+</p></li></ol>
+
+<p>At the Scheme level we want the following:
+</p>
+<ul>
+<li> Configure the library source search path to include only the local
+source directory:
+
+<div class="lisp">
+<pre class="lisp">(library-source-search-path)
+&rArr; (&quot;$(srcdir)/lib&quot;)
+</pre></div>
+
+</li><li> Configure the library binary search path to include the system
+directory:
+
+<div class="lisp">
+<pre class="lisp">(library-binary-search-path)
+&rArr; (... &quot;/usr/local/lib/vicare-scheme&quot; ...)
+</pre></div>
+
+</li><li> Configure the library binary file scanner parameter:
+
+<div class="lisp">
+<pre class="lisp">(current-library-binary-search-path-scanner
+    default-library-binary-search-path-scanner)
+</pre></div>
+
+<p>which will scan the search path returned by
+<code>(library-binary-search-path)</code>.
+</p>
+</li><li> Configure the library source file scanner parameter:
+
+<div class="lisp">
+<pre class="lisp">(current-library-source-search-path-scanner
+    default-library-source-search-path-scanner)
+</pre></div>
+
+<p>which will scan the search path returned by
+<code>(library-source-search-path)</code>.
+</p>
+</li><li> Configure the library locator parameter:
+
+<div class="example">
+<pre class="example">(current-library-locator source-library-locator)
+</pre></div>
+
+<p>which implements the appropriate policy.
+</p></li></ul>
+
+<p>To achieve the desired result, in the Makefile we write rules as
+follows:
+</p>
+<div class="example">
+<pre class="example">.PHONY: dependencies
+
+DEPSCRIPT = $(srcdir)/scripts/build-makefile-rules.sps
+
+dependencies:
+        VICARE_SOURCE_PATH=; export VICARE_SOURCE_PATH; \
+        vicare --library-locator source                 \
+          --library-path /usr/local/lib/vicare-scheme   \
+          --source-path  $(srcdir)/lib                  \
+          --r6rs-script  $(DEPSCRIPT) --                \
+          $(slsdir)/libraries.scm &gt;$(slsdir)/dependencies.make
+</pre></div>
+
+<p>where the executed Scheme script generates the Makefile rules
+automatically.
+</p>
+<p>The following bindings are exported by the library <code>(vicare
+libraries)</code>.
+</p>
+
+<dl>
+<dt><a name="index-source_002dlibrary_002dlocator"></a>Function: <strong>source-library-locator</strong> <em><var>libref</var></em></dt>
+<dd><p>Possible value for the parameter <code>current-library-locator</code>; this
+function is meant to be used to search for source libraries first and
+for binary libraries later.
+</p>
+<p>Given a <acronym>R6RS</acronym> library reference: return a thunk to be used to start
+the search for a matching library.  The returned thunk uses the current
+source library scanner referenced by
+<code>current-library-source-search-path-scanner</code>, with the purpose of
+finding a library file that matches a given <acronym>R6RS</acronym> library reference.
+If no source library is found: the current binary library scanner
+referenced by <code>current-library-binary-search-path-scanner</code> is used.
+</p>
+<p>When successful the returned thunk returns 2 values:
+</p>
+<ol>
+<li> An input port.  If it is a textual input port: a source library can be
+read from it.  If it is a binary input port: a binary library can be
+read from it.  It is responsibility of the caller to close the returned
+port when no more needed.
+
+</li><li> A thunk to be called to continue the search.  This thunk allows the
+caller to reject a library if it does not meet some additional
+constraint; for example: if its version number does not conform to
+<var>libref</var>.
+</li></ol>
+
+<p>When no matching library is found: the returned thunk returns <code>#f</code>
+and <code>#f</code>.
+</p></dd></dl>
+
+<hr>
+<div class="header">
+<p>
+Previous: <a href="libutils-file_002dsystem-locators-compile.html#libutils-file_002dsystem-locators-compile" accesskey="p" rel="prev">libutils file-system locators compile</a>, Up: <a href="libutils-file_002dsystem-locators.html#libutils-file_002dsystem-locators" accesskey="u" rel="up">libutils file-system locators</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

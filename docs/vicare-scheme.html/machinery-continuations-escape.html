@@ -1,60 +1,36 @@
-<html lang="en">
-<head>
-<title>machinery continuations escape - Vicare Scheme</title>
-<meta http-equiv="Content-Type" content="text/html">
-<meta name="description" content="Vicare Scheme">
-<meta name="generator" content="makeinfo 4.13">
-<link title="Top" rel="start" href="index.html#Top">
-<link rel="up" href="machinery-continuations.html#machinery-continuations" title="machinery continuations">
-<link rel="prev" href="machinery-continuations-non.html#machinery-continuations-non" title="machinery continuations non">
-<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
-<!--
-This document describes version 0.3d7 of Vicare Scheme, an
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.4d1 of Vicare Scheme, an
 R6RS compliant native compiler for the Scheme language, producing
-single threaded programs running on Intel x86 32-bit processors, with
-experimental support for 64-bit machines.  _Vicare_ is pronounced
-the etruscan way.
+single threaded programs running on Intel x86 32-bit and 64-bit
+processors.  Vicare is pronounced the etruscan way.
 
 The package, including its documentation, is distributed under the terms
 of the GNU General Public License (GPL) and can be downloaded
 from:
 
-        `http://sourceforge.net/projects/vicare-scheme/files/'
-
+https://bitbucket.org/marcomaggi/vicare-scheme/downloads
 
 the home page of the project is at:
 
-              `http://marcomaggi.github.com/vicare.html'
-
+http://marcomaggi.github.io/vicare.html
 
 development takes place at:
 
-                `http://github.com/marcomaggi/vicare/'
-
+http://github.com/marcomaggi/vicare/
 
 and, as a backup, at:
 
-                     `http://gitorious.org/vicare'
+https://bitbucket.org/marcomaggi/vicare-scheme/
 
-
-and at:
-
-           `http://sourceforge.net/projects/vicare-scheme/'
-
-
-this project has a mailing list:
-
-             `http://groups.google.com/group/vicare-users'
-
-
-Copyright (C) 2010-2013 by Marco Maggi.
+Copyright (C) 2010-2017 by Marco Maggi.
 
 Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
 
 Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
 
 This document is derived from the original Ikarus documentation by the
-Vicare Scheme contributors, see the ``History'' appendix for details.
+Vicare Scheme contributors, see the "History" appendix for details.
 
 The documentation of IrRegex is Copyright (C) 2005-2012 Alex
 Shinn.  All rights reserved.
@@ -62,485 +38,535 @@ Shinn.  All rights reserved.
 The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
 Sitaram.  All rights reserved.
 
-The documentation of the library `(vicare formations)' is derived
+The documentation of the library (vicare formations) is derived
 from the documentation of Guile.  Copyright (C) 1996-2005,
 2009-2013 Free Software Foundation.
 
-     This program is free software: you can redistribute it and/or
-     modify it under the terms of the GNU General Public License
-     version 3 as published by the Free Software Foundation.
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
 
-     This program is distributed in the hope that it will be useful, but
-     WITHOUT ANY WARRANTY; without even the implied warranty of
-     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-     General Public License for more details.
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
 
-     You should have received a copy of the GNU General Public License
-     along with this program.  If not, see
-     `http://www.gnu.org/licenses/'.
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
 
-Trademarks used herein are the property of their respective owners.-->
-<meta http-equiv="Content-Style-Type" content="text/css">
-<style type="text/css"><!--
-  pre.display { font-family:inherit }
-  pre.format  { font-family:inherit }
-  pre.smalldisplay { font-family:inherit; font-size:smaller }
-  pre.smallformat  { font-family:inherit; font-size:smaller }
-  pre.smallexample { font-size:smaller }
-  pre.smalllisp    { font-size:smaller }
-  span.sc    { font-variant:small-caps }
-  span.roman { font-family:serif; font-weight:normal; } 
-  span.sansserif { font-family:sans-serif; font-weight:normal; } 
---></style>
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Vicare Scheme: machinery continuations escape</title>
+
+<meta name="description" content="Vicare Scheme: machinery continuations escape">
+<meta name="keywords" content="Vicare Scheme: machinery continuations escape">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="machinery-continuations.html#machinery-continuations" rel="up" title="machinery continuations">
+<link href="machinery-stack-overflow.html#machinery-stack-overflow" rel="next" title="machinery stack overflow">
+<link href="machinery-continuations-non.html#machinery-continuations-non" rel="prev" title="machinery continuations non">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
 </head>
-<body>
-<div class="node">
-<a name="machinery-continuations-escape"></a>
-<p>
-Previous:&nbsp;<a rel="previous" accesskey="p" href="machinery-continuations-non.html#machinery-continuations-non">machinery continuations non</a>,
-Up:&nbsp;<a rel="up" accesskey="u" href="machinery-continuations.html#machinery-continuations">machinery continuations</a>
-<hr>
-</div>
 
-<h4 class="subsection">12.5.5 Subordinate function calls with invoked continuation</h4>
+<body lang="en">
+<a name="machinery-continuations-escape"></a>
+<div class="header">
+<p>
+Previous: <a href="machinery-continuations-non.html#machinery-continuations-non" accesskey="p" rel="prev">machinery continuations non</a>, Up: <a href="machinery-continuations.html#machinery-continuations" accesskey="u" rel="up">machinery continuations</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Subordinate-function-calls-with-invoked-continuation"></a>
+<h4 class="subsection">16.5.5 Subordinate function calls with invoked continuation</h4>
+
 
 <p>We assume the validity of machinery simplifications to focus on some
-aspect of the runtime behaviour, <a href="machinery-simplifications.html#machinery-simplifications">Simplification assumptions</a>.  Let's consider the following program that
+aspect of the runtime behaviour, <a href="machinery-simplifications.html#machinery-simplifications">Simplification assumptions</a>.  Let&rsquo;s consider the following program that
 creates a continuation and invokes its escape function:
+</p>
+<div class="example">
+<pre class="example">(import (rnrs))
+(define (alpha A)
+  (call/cc
+     (lambda (escape)
+       (beta escape A))))
+(define (beta escape B)
+  (escape (+ B 2)))
+(alpha 1)
+</pre></div>
 
-<pre class="example">     (import (rnrs))
-     (define (alpha A)
-       (call/cc
-          (lambda (escape)
-            (beta escape A))))
-     (define (beta escape B)
-       (escape (+ B 2)))
-     (alpha 1)
-</pre>
-   <p class="noindent">we can understand how the stack grows until right after the call to
+<p>we can understand how the stack grows until right after the call to
 <code>call/cc</code> but before <code>call/cc</code> actually does something,
-<a href="fig_003aMCE_005fcallcc_005fbegin.html#fig_003aMCE_005fcallcc_005fbegin">machinery continuations escape</a>.
+<a href="#fig_003aMCE_005fcallcc_005fbegin">machinery continuations escape</a>.
+</p>
+<div class="float"><a name="fig_003aMCE_005fcallcc_005fbegin"></a>
+<div class="example">
+<pre class="example">      high memory
+|                      |
+|----------------------|
+|                      | &lt;- pcb-&gt;frame_base
+|----------------------|
+| ik_underflow_handler |
+|----------------------|         --
+|  return addr to top  |         . frame of toplevel
+|----------------------|         --
+|    argument A == 1   |         .
+|----------------------|         . frame of alpha
+| return addr to alpha |         .
+|----------------------|         --
+|      receiver        |         . locals of call/cc
+|----------------------|         .
+|                      |
+       low memory
+</pre></div>
 
-   <div class="float">
-<a name="fig_003aMCE_005fcallcc_005fbegin"></a>
-<pre class="example">           high memory
-     |                      |
-     |----------------------|
-     |                      | &lt;- pcb-&gt;frame_base
-     |----------------------|
-     | ik_underflow_handler |
-     |----------------------|         --
-     |  return addr to top  |         . frame of toplevel
-     |----------------------|         --
-     |    argument A == 1   |         .
-     |----------------------|         . frame of alpha
-     | return addr to alpha |         .
-     |----------------------|         --
-     |      receiver        |         . locals of call/cc
-     |----------------------|         .
-     |                      |
-            low memory
-</pre>
-   <p><strong class="float-caption">Figure 12.34: Stack right after the call to <code>call/cc</code> but before
-<code>call/cc</code> does something.</strong></p></div>
+<div class="float-caption"><p><strong>Figure 16.34: </strong>Stack right after the call to <code>call/cc</code> but before
+<code>call/cc</code> does something.</p></div></div>
+<p><code>call/cc</code> creates a continuation object by freezing the call frames
+currently on the stack between <acronym>FPR</acronym> and <em>2</em> words below
+<code>pcb-&gt;frame_base</code>, <a href="#fig_003aMCE_005fcallcc_005ffreezing">machinery
+continuations escape</a>.
+</p>
+<div class="float"><a name="fig_003aMCE_005fcallcc_005ffreezing"></a>
+<div class="example">
+<pre class="example">      high memory
+|                      |
+|----------------------|
+|                      | &lt;- pcb-&gt;frame_base
+|----------------------|
+| ik_underflow_handler |
+|----------------------|         --
+|  return addr to top  |         .
+|----------------------|         . freezed
+|    argument A == 1   |         . frames
+|----------------------|         .
+| return addr to alpha | &lt;- FPR  .
+|----------------------|         --
+|       receiver       |         . locals of
+|----------------------|         . call/cc
+|                      |
+       low memory
+</pre></div>
 
-   <p><code>call/cc</code> creates a continuation object by freezing the call frames
-currently on the stack between <acronym>FPR</acronym> and 2 words below
-<code>pcb-&gt;frame_base</code>, <a href="fig_003aMCE_005fcallcc_005ffreezing.html#fig_003aMCE_005fcallcc_005ffreezing">machinery continuations escape</a>.
-
-   <div class="float">
-<a name="fig_003aMCE_005fcallcc_005ffreezing"></a>
-<pre class="example">           high memory
-     |                      |
-     |----------------------|
-     |                      | &lt;- pcb-&gt;frame_base
-     |----------------------|
-     | ik_underflow_handler |
-     |----------------------|         --
-     |  return addr to top  |         .
-     |----------------------|         . freezed
-     |    argument A == 1   |         . frames
-     |----------------------|         .
-     | return addr to alpha | &lt;- FPR  .
-     |----------------------|         --
-     |       receiver       |         . locals of
-     |----------------------|         . call/cc
-     |                      |
-            low memory
-</pre>
-   <p><strong class="float-caption">Figure 12.35: Region of stack freezed by <code>call/cc</code>.</strong></p></div>
-
-   <p>The continuation object references the array of freezed words on the
+<div class="float-caption"><p><strong>Figure 16.35: </strong>Region of stack freezed by <code>call/cc</code>.</p></div></div>
+<p>The continuation object references the array of freezed words on the
 stack, keeping a reference to the value of <acronym>FPR</acronym> at creation time.  The
 continuation object is also a node in a simply linked list of
 continuation objects, whose head is stored in a field of the <acronym>PCB</acronym>:
 <code>pcb-&gt;next_k</code>.  In more detail <code>call/cc</code> does the following:
+</p>
+<ol>
+<li> Create the continuation object and prepend it to the list in
+<code>pcb-&gt;next_k</code>; let&rsquo;s call this continuation object <em>K_1</em>;
+<a href="#fig_003aMCE_005fcallcc_005fnext_005fk_005fK1">machinery continuations escape</a>.
 
-     <ol type=1 start=1>
-<li>Create the continuation object and prepend it to the list in
-<code>pcb-&gt;next_k</code>; let's call this continuation object K_1;
-<a href="fig_003aMCE_005fcallcc_005fnext_005fk_005fK1.html#fig_003aMCE_005fcallcc_005fnext_005fk_005fK1">machinery continuations escape</a>.
+<div class="float"><a name="fig_003aMCE_005fcallcc_005fnext_005fk_005fK1"></a>
+<div class="example">
+<pre class="example">|--------|---| PCB
+           |
+     next_k --------&gt; |-----|-| K_1
+                             |
+                         next -----&gt; NULL
+</pre></div>
 
-     <div class="float">
-<a name="fig_003aMCE_005fcallcc_005fnext_005fk_005fK1"></a>
-     <pre class="example">          |--------|---| PCB
-                     |
-               next_k --------&gt; |-----|-| K_1
-                                       |
-                                   next -----&gt; NULL
-</pre>
-     <p><strong class="float-caption">Figure 12.36: Continuation object K_1 inserted as new &ldquo;next <acronym>PCB</acronym>
-continuation&rdquo;.</strong></p></div>
-
-        <li>Create a closure object implementing the escape function associated to
+<div class="float-caption"><p><strong>Figure 16.36: </strong>Continuation object <em>K_1</em> inserted as new &ldquo;next <acronym>PCB</acronym>
+continuation&rdquo;.</p></div></div>
+</li><li> Create a closure object implementing the escape function associated to
 the continuation object, the one that will be bound to <var>escape</var> in
-the example; <a href="fig_003aMCE_005fcallcc_005fK1_005fescape.html#fig_003aMCE_005fcallcc_005fK1_005fescape">machinery continuations escape</a>.  In the closure object: the address of the code entry point
+the example; <a href="#fig_003aMCE_005fcallcc_005fK1_005fescape">machinery continuations
+escape</a>.  In the closure object: the address of the code entry point
 references the special subroutine <code>SL_continuation_code</code>, the
 single slot for free variables references the continuation object.
 
-        <div class="float">
-<a name="fig_003aMCE_005fcallcc_005fK1_005fescape"></a>
-     <pre class="example">          |-----|-----| closure object
-             |     |
-             |      --------&gt; |------| K_1
-             |
-              --------------&gt; |------| code object
-</pre>
-        <p><strong class="float-caption">Figure 12.37: Closure object implementing the escape function for
-K_1.</strong></p></div>
+<div class="float"><a name="fig_003aMCE_005fcallcc_005fK1_005fescape"></a>
+<div class="example">
+<pre class="example">|-----|-----| closure object
+   |     |
+   |      --------&gt; |------| K_1
+   |
+    --------------&gt; |------| code object
+</pre></div>
 
-        <li>Prepare the application of the receiver closure to the escape function:
+<div class="float-caption"><p><strong>Figure 16.37: </strong>Closure object implementing the escape function for
+<em>K_1</em>.</p></div></div>
+</li><li> Prepare the application of the receiver closure to the escape function:
 the reference to the receiver closure is moved in the <acronym>CPR</acronym>; the
 address of the underflow handler is moved on the stack and the <acronym>FPR</acronym> is
 set to reference it; the value of <code>pcb-&gt;frame_base</code> is set to
 exclude the freezed frames from the stack segment;
-<a href="fig_003aMCE_005fcallcc_005fbefore_005freceiver.html#fig_003aMCE_005fcallcc_005fbefore_005freceiver">machinery continuations escape</a>.
+<a href="#fig_003aMCE_005fcallcc_005fbefore_005freceiver">machinery continuations escape</a>.
 
-        <div class="float">
-<a name="fig_003aMCE_005fcallcc_005fbefore_005freceiver"></a>
-     <pre class="example">                high memory
-          |                      |
-          |----------------------|
-          | ik_underflow_handler |
-          |----------------------|                     --
-          |  return addr to top  |                     .
-          |----------------------|                     . freezed
-          |    argument A == 1   |                     . frames
-          |----------------------|                     . in K_1
-          | return addr to alpha | &lt;- pcb-&gt;frame_base  .
-          |----------------------|                     --
-          | ik_underflow_handler | &lt;- FPR
-          |----------------------|                     -- locals of
-          |    escape closure    |                     .  receiver
-          |----------------------|                     .  closure
-          |                      |
-                 low memory
-          
-</pre>
-        <p><strong class="float-caption">Figure 12.38: Stack right before the call to the receiver closure.</strong></p></div>
+<div class="float"><a name="fig_003aMCE_005fcallcc_005fbefore_005freceiver"></a>
+<div class="example">
+<pre class="example">      high memory
+|                      |
+|----------------------|
+| ik_underflow_handler |
+|----------------------|                     --
+|  return addr to top  |                     .
+|----------------------|                     . freezed
+|    argument A == 1   |                     . frames
+|----------------------|                     . in K_1
+| return addr to alpha | &lt;- pcb-&gt;frame_base  .
+|----------------------|                     --
+| ik_underflow_handler | &lt;- FPR
+|----------------------|                     -- locals of
+|    escape closure    |                     .  receiver
+|----------------------|                     .  closure
+|                      |
+       low memory
 
-        <li>Perform a direct jump to the entry point of the receiver closure without
+</pre></div>
+
+<div class="float-caption"><p><strong>Figure 16.38: </strong>Stack right before the call to the receiver closure.</p></div></div>
+</li><li> Perform a direct jump to the entry point of the receiver closure without
 pushing a return address on the stack.  The <acronym>FPR</acronym> is left referencing
 the entry point of the stack underflow handler.
-        </ol>
+</li></ol>
 
-   <p>In this example, the receiver closure calls <code>beta</code> with 2
-arguments, <a href="fig_003aMCE_005fcallcc_005fenter_005fbeta.html#fig_003aMCE_005fcallcc_005fenter_005fbeta">machinery continuations escape</a>.
+<p>In this example, the receiver closure calls <code>beta</code> with <em>2</em>
+arguments, <a href="#fig_003aMCE_005fcallcc_005fenter_005fbeta">machinery continuations
+escape</a>.
+</p>
+<div class="float"><a name="fig_003aMCE_005fcallcc_005fenter_005fbeta"></a>
+<div class="example">
+<pre class="example">      high memory
+|                      |
+|----------------------|
+| ik_underflow_handler |
+|----------------------|                     --
+|  return addr to top  |                     .
+|----------------------|                     . freezed
+|    argument A == 1   |                     . frames
+|----------------------|                     . in K_1
+| return addr to alpha | &lt;- pcb-&gt;frame_base  .
+|----------------------|                     --
+| ik_underflow_handler |
+|----------------------|                     -- frame of
+| return addr to receiv| &lt;- FPR              .  receiver
+|----------------------|                     --
+|    escape closure    |                     . locals
+|----------------------|                     . in beta
+|    argument B == 1   |                     .
+|----------------------|                     .
+|                      |
+       low memory
+</pre></div>
 
-   <div class="float">
-<a name="fig_003aMCE_005fcallcc_005fenter_005fbeta"></a>
-<pre class="example">           high memory
-     |                      |
-     |----------------------|
-     | ik_underflow_handler |
-     |----------------------|                     --
-     |  return addr to top  |                     .
-     |----------------------|                     . freezed
-     |    argument A == 1   |                     . frames
-     |----------------------|                     . in K_1
-     | return addr to alpha | &lt;- pcb-&gt;frame_base  .
-     |----------------------|                     --
-     | ik_underflow_handler |
-     |----------------------|                     -- frame of
-     | return addr to receiv| &lt;- FPR              .  receiver
-     |----------------------|                     --
-     |    escape closure    |                     . locals
-     |----------------------|                     . in beta
-     |    argument B == 1   |                     .
-     |----------------------|                     .
-     |                      |
-            low memory
-</pre>
-   <p><strong class="float-caption">Figure 12.39: Stack right after the call to <code>beta</code>.</strong></p></div>
-
-   <p><code>beta</code> applies the escape closure to the result of <code>(+ B 2)</code>,
-let's skip the details of performing the addition.  To apply the escape
+<div class="float-caption"><p><strong>Figure 16.39: </strong>Stack right after the call to <code>beta</code>.</p></div></div>
+<p><code>beta</code> applies the escape closure to the result of <code>(+ B 2)</code>,
+let&rsquo;s skip the details of performing the addition.  To apply the escape
 closure to the single argument representing the addition: the reference
 to escape function is copied in the <acronym>CPR</acronym>, the single argument is
 placed after an empty machine word, the <acronym>FPR</acronym> is moved right above the
 empty word, finally a <code>call</code> Assembly instruction is executed,
-<a href="fig_003aMCE_005fcallcc_005fenter_005fescape.html#fig_003aMCE_005fcallcc_005fenter_005fescape">machinery continuations escape</a>.
+<a href="#fig_003aMCE_005fcallcc_005fenter_005fescape">machinery continuations escape</a>.
+</p>
+<div class="float"><a name="fig_003aMCE_005fcallcc_005fenter_005fescape"></a>
+<div class="example">
+<pre class="example">      high memory
+|                      |
+|----------------------|
+| ik_underflow_handler |
+|----------------------|                     --
+|  return addr to top  |                     .
+|----------------------|                     . freezed
+|    argument A == 1   |                     . frames
+|----------------------|                     . in K_1
+| return addr to alpha | &lt;- pcb-&gt;frame_base  .
+|----------------------|                     --
+| ik_underflow_handler |
+|----------------------|                     -- frame of
+| return addr to receiv| &lt;- FPR              .  receiver
+|----------------------|                     --
+|    escape closure    |                     .
+|----------------------|                     .  frame
+|    argument B == 1   |                     .  of beta
+|----------------------|                     .
+| return addr to beta  | &lt;- FPR              .
+|----------------------|                     --
+|   argument fixnum 3  |                     . locals of
+|----------------------|                     . escape
+|                      |
+       low memory
+</pre></div>
 
-   <div class="float">
-<a name="fig_003aMCE_005fcallcc_005fenter_005fescape"></a>
-<pre class="example">           high memory
-     |                      |
-     |----------------------|
-     | ik_underflow_handler |
-     |----------------------|                     --
-     |  return addr to top  |                     .
-     |----------------------|                     . freezed
-     |    argument A == 1   |                     . frames
-     |----------------------|                     . in K_1
-     | return addr to alpha | &lt;- pcb-&gt;frame_base  .
-     |----------------------|                     --
-     | ik_underflow_handler |
-     |----------------------|                     -- frame of
-     | return addr to receiv| &lt;- FPR              .  receiver
-     |----------------------|                     --
-     |    escape closure    |                     .
-     |----------------------|                     .  frame
-     |    argument B == 1   |                     .  of beta
-     |----------------------|                     .
-     | return addr to beta  | &lt;- FPR              .
-     |----------------------|                     --
-     |   argument fixnum 3  |                     . locals of
-     |----------------------|                     . escape
-     |                      |
-            low memory
-</pre>
-   <p><strong class="float-caption">Figure 12.40: Stack right after the call to <code>escape</code>.</strong></p></div>
-
-   <p>A continuation's escape function is a special subroutine that throws
+<div class="float-caption"><p><strong>Figure 16.40: </strong>Stack right after the call to <code>escape</code>.</p></div></div>
+<p>A continuation&rsquo;s escape function is a special subroutine that throws
 away all the stack frames up to, and excluding, the undeflow handler
 address below the <code>pcb-&gt;frame_base</code>,
-<a href="fig_003aMCE_005fcallcc_005fthrow_005faway.html#fig_003aMCE_005fcallcc_005fthrow_005faway">machinery continuations escape</a>.
+<a href="#fig_003aMCE_005fcallcc_005fthrow_005faway">machinery continuations escape</a>.
+</p>
+<div class="float"><a name="fig_003aMCE_005fcallcc_005fthrow_005faway"></a>
+<div class="example">
+<pre class="example">      high memory
+|                      |
+|----------------------|
+| ik_underflow_handler |
+|----------------------|                     --
+|  return addr to top  |                     .
+|----------------------|                     . freezed
+|    argument A == 1   |                     . frames
+|----------------------|                     . in K_1
+| return addr to alpha | &lt;- pcb-&gt;frame_base  .
+|----------------------|                     --
+| ik_underflow_handler | &lt;- FPR
+|----------------------|
+|                      |
+       low memory
+</pre></div>
 
-   <div class="float">
-<a name="fig_003aMCE_005fcallcc_005fthrow_005faway"></a>
-<pre class="example">           high memory
-     |                      |
-     |----------------------|
-     | ik_underflow_handler |
-     |----------------------|                     --
-     |  return addr to top  |                     .
-     |----------------------|                     . freezed
-     |    argument A == 1   |                     . frames
-     |----------------------|                     . in K_1
-     | return addr to alpha | &lt;- pcb-&gt;frame_base  .
-     |----------------------|                     --
-     | ik_underflow_handler | &lt;- FPR
-     |----------------------|
-     |                      |
-            low memory
-</pre>
-   <p><strong class="float-caption">Figure 12.41: Stack right after <code>escape</code> has thrown away the useless
-stack frames.</strong></p></div>
-
-   <p>The argument of the escape function becomes its return value; in this
-example there is a single return value, so it is moved in the <acronym>AAR</acronym>. 
-The continuation object K_1 in the escape closure is stored in
+<div class="float-caption"><p><strong>Figure 16.41: </strong>Stack right after <code>escape</code> has thrown away the useless
+stack frames.</p></div></div>
+<p>The argument of the escape function becomes its return value; in this
+example there is a single return value, so it is moved in the <acronym>AAR</acronym>.
+The continuation object <em>K_1</em> in the escape closure is stored in
 <code>pcb-&gt;next_k</code>, becoming the &ldquo;next <acronym>PCB</acronym> continuation&rdquo;; the old
 value of <code>pcb-&gt;next_k</code> is simply overwritten: a new list of
 continuations is installed in the <acronym>PCB</acronym>.  Finally a <code>ret</code> Assembly
 instruction is executed.
-
-   <p>The <acronym>FPR</acronym> references the underflow handler, so the <code>ret</code>
+</p>
+<p>The <acronym>FPR</acronym> references the underflow handler, so the <code>ret</code>
 instruction will cause the execution flow to jump there; the stack
 underflow handler does the following:
+</p>
+<ol>
+<li> Detect the presence of a multiframe continuation object as &ldquo;next <acronym>PCB</acronym>
+continuation&rdquo;, so split <em>K_1</em> in two continuation objects: the
+mutated <em>K_1</em> referencing only the frame of <code>alpha</code> and a new
+continuation object <em>K_2</em> referencing all the other frames,
+<a href="#fig_003aMCE_005fcallcc_005fK2_005fframes">machinery continuations escape</a>.
 
-     <ol type=1 start=1>
-<li>Detect the presence of a multiframe continuation object as &ldquo;next <acronym>PCB</acronym>
-continuation&rdquo;, so split K_1 in two continuation objects: the
-mutated K_1 referencing only the frame of <code>alpha</code> and a new
-continuation object K_2 referencing all the other frames,
-<a href="fig_003aMCE_005fcallcc_005fK2_005fframes.html#fig_003aMCE_005fcallcc_005fK2_005fframes">machinery continuations escape</a>.
+<div class="float"><a name="fig_003aMCE_005fcallcc_005fK2_005fframes"></a>
+<div class="example">
+<pre class="example">      high memory
+|                      |
+|----------------------|
+| ik_underflow_handler |
+|----------------------|                     -- freezed
+|  return addr to top  |                     .  frame K_2
+|----------------------|                     --
+|    argument A == 1   |                     . freezed
+|----------------------|                     . frame
+| return addr to alpha | &lt;- pcb-&gt;frame_base  . in K_1
+|----------------------|                     --
+| ik_underflow_handler | &lt;- FPR
+|----------------------|
+|                      |
+       low memory
+</pre></div>
 
-     <div class="float">
-<a name="fig_003aMCE_005fcallcc_005fK2_005fframes"></a>
-     <pre class="example">                high memory
-          |                      |
-          |----------------------|
-          | ik_underflow_handler |
-          |----------------------|                     -- freezed
-          |  return addr to top  |                     .  frame K_2
-          |----------------------|                     --
-          |    argument A == 1   |                     . freezed
-          |----------------------|                     . frame
-          | return addr to alpha | &lt;- pcb-&gt;frame_base  . in K_1
-          |----------------------|                     --
-          | ik_underflow_handler | &lt;- FPR
-          |----------------------|
-          |                      |
-                 low memory
-</pre>
-     <p><strong class="float-caption">Figure 12.42: Continuation object K_1 mutated to reference a single
-frame.</strong></p></div>
+<div class="float-caption"><p><strong>Figure 16.42: </strong>Continuation object <em>K_1</em> mutated to reference a single
+frame.</p></div></div>
+</li><li> Insert <em>K_2</em> in the linked list of continuation objects after
+<em>K_1</em> and register it as the new &ldquo;next <acronym>PCB</acronym> continuation&rdquo;,
+<a href="#fig_003aMCE_005fcallcc_005fnext_005fk_005fK2">machinery continuations escape</a>.
 
-        <li>Insert K_2 in the linked list of continuation objects after
-K_1 and register it as the new &ldquo;next <acronym>PCB</acronym> continuation&rdquo;,
-<a href="fig_003aMCE_005fcallcc_005fnext_005fk_005fK2.html#fig_003aMCE_005fcallcc_005fnext_005fk_005fK2">machinery continuations escape</a>.
+<div class="float"><a name="fig_003aMCE_005fcallcc_005fnext_005fk_005fK2"></a>
+<div class="example">
+<pre class="example">|--------|---| PCB
+           |
+     next_k|     |-----|-| K_1
+           |            |
+           |        next --&gt;|
+            ---------------&gt;|-----|-| K_2
+                                   |
+                               next -----&gt; NULL
+</pre></div>
 
-        <div class="float">
-<a name="fig_003aMCE_005fcallcc_005fnext_005fk_005fK2"></a>
-     <pre class="example">          |--------|---| PCB
-                     |
-               next_k|     |-----|-| K_1
-                     |            |
-                     |        next --&gt;|
-                      ---------------&gt;|-----|-| K_2
-                                             |
-                                         next -----&gt; NULL
-</pre>
-        <p><strong class="float-caption">Figure 12.43: Continuation object K_2 inserted as new &ldquo;next
-continuation&rdquo;.</strong></p></div>
-
-        <li>Duplicate the stack frame referenced by K_1 below the address of
+<div class="float-caption"><p><strong>Figure 16.43: </strong>Continuation object <em>K_2</em> inserted as new &ldquo;next
+continuation&rdquo;.</p></div></div>
+</li><li> Duplicate the stack frame referenced by <em>K_1</em> below the address of
 the underflow handler, adjust the <acronym>FPR</acronym> to reference the return address
-of the frame, <a href="fig_003aMCE_005fcallcc_005fK1_005fcopy.html#fig_003aMCE_005fcallcc_005fK1_005fcopy">machinery continuations escape</a>.
+of the frame, <a href="#fig_003aMCE_005fcallcc_005fK1_005fcopy">machinery continuations
+escape</a>.
 
-        <div class="float">
-<a name="fig_003aMCE_005fcallcc_005fK1_005fcopy"></a>
-     <pre class="example">                high memory
-          |                      |
-          |----------------------|
-          | ik_underflow_handler |
-          |----------------------|                     -- freezed
-          |  return addr to top  |                     .  frame K_2
-          |----------------------|                     --
-          |    argument A == 1   |                     . freezed
-          |----------------------|                     . frame
-          | return addr to alpha | &lt;- pcb-&gt;frame_base  . in K_1
-          |----------------------|                     --
-          | ik_underflow_handler |
-          |----------------------|
-          |    argument A == 1   |
-          |----------------------|
-          | return addr to alpha | &lt;- FPR
-          |----------------------|
-          |                      |
-                 low memory
-</pre>
-        <p><strong class="float-caption">Figure 12.44: Stack frame in K_1 duplicated below the underflow
-handler address.</strong></p></div>
+<div class="float"><a name="fig_003aMCE_005fcallcc_005fK1_005fcopy"></a>
+<div class="example">
+<pre class="example">      high memory
+|                      |
+|----------------------|
+| ik_underflow_handler |
+|----------------------|                     -- freezed
+|  return addr to top  |                     .  frame K_2
+|----------------------|                     --
+|    argument A == 1   |                     . freezed
+|----------------------|                     . frame
+| return addr to alpha | &lt;- pcb-&gt;frame_base  . in K_1
+|----------------------|                     --
+| ik_underflow_handler |
+|----------------------|
+|    argument A == 1   |
+|----------------------|
+| return addr to alpha | &lt;- FPR
+|----------------------|
+|                      |
+       low memory
+</pre></div>
 
-        <li>There is a single return value, so: perform a <code>ret</code> Assembly
+<div class="float-caption"><p><strong>Figure 16.44: </strong>Stack frame in <em>K_1</em> duplicated below the underflow
+handler address.</p></div></div>
+</li><li> There is a single return value, so: perform a <code>ret</code> Assembly
 instruction to go back to the body of <code>alpha</code>.
-        </ol>
+</li></ol>
 
-   <p>The code of <code>alpha</code> is reentered right after the call to
+<p>The code of <code>alpha</code> is reentered right after the call to
 <code>call/cc</code> and the <acronym>FPR</acronym> is adjusted to reference the address of
-the stack underflow handler, <a href="fig_003aMCE_005fcallcc_005falpha_005fret.html#fig_003aMCE_005fcallcc_005falpha_005fret">compiler machinery continuations escape</a>.  <code>alpha</code> must return the same
+the stack underflow handler, <a href="#fig_003aMCE_005fcallcc_005falpha_005fret">compiler
+machinery continuations escape</a>.  <code>alpha</code> must return the same
 return value, which is already in the <acronym>AAR</acronym>: it executes a <code>ret</code>
 Assembly instruction.
+</p>
+<div class="float"><a name="fig_003aMCE_005fcallcc_005falpha_005fret"></a>
+<div class="example">
+<pre class="example">      high memory
+|                      |
+|----------------------|
+| ik_underflow_handler |
+|----------------------|                     -- freezed
+|  return addr to top  |                     .  frame K_2
+|----------------------|                     --
+|    argument A == 1   |                     . freezed
+|----------------------|                     . frame
+| return addr to alpha | &lt;- pcb-&gt;frame_base  . in K_1
+|----------------------|                     --
+| ik_underflow_handler | &lt;- FPR
+|----------------------|
+|                      |
+       low memory
+</pre></div>
 
-   <div class="float">
-<a name="fig_003aMCE_005fcallcc_005falpha_005fret"></a>
-<pre class="example">           high memory
-     |                      |
-     |----------------------|
-     | ik_underflow_handler |
-     |----------------------|                     -- freezed
-     |  return addr to top  |                     .  frame K_2
-     |----------------------|                     --
-     |    argument A == 1   |                     . freezed
-     |----------------------|                     . frame
-     | return addr to alpha | &lt;- pcb-&gt;frame_base  . in K_1
-     |----------------------|                     --
-     | ik_underflow_handler | &lt;- FPR
-     |----------------------|
-     |                      |
-            low memory
-</pre>
-   <p><strong class="float-caption">Figure 12.45: Stack right before <code>alpha</code> executes the <code>ret</code>
-Assembly instruction; the return value is in the <acronym>AAR</acronym>.</strong></p></div>
-
-   <p>The stack underflow handler is reentered and does the following:
-
-     <ol type=1 start=1>
-<li>Detect the presence of a single&ndash;frame continuation object K_2 as
+<div class="float-caption"><p><strong>Figure 16.45: </strong>Stack right before <code>alpha</code> executes the <code>ret</code>
+Assembly instruction; the return value is in the <acronym>AAR</acronym>.</p></div></div>
+<p>The stack underflow handler is reentered and does the following:
+</p>
+<ol>
+<li> Detect the presence of a single&ndash;frame continuation object <em>K_2</em> as
 &ldquo;next <acronym>PCB</acronym> continuation&rdquo;, so store its next continuation reference
-in <code>pcb-&gt;next_k</code>, <a href="fig_003aMCE_005fcallcc_005fnext_005fk_005fK2.html#fig_003aMCE_005fcallcc_005fnext_005fk_005fK2">machinery continuations escape</a>.
+in <code>pcb-&gt;next_k</code>, <a href="#fig_003aMCE_005fcallcc_005fnext_005fk_005fK2">machinery
+continuations escape</a>.
 
-     <div class="float">
-<a name="fig_003aMCE_005fcallcc_005fnext_005fk_005fK3"></a>
-     <pre class="example">          |-----|---| PCB
-                  |
-            next_k|   |-----|-| K_1
-                  |          |
-                  |      next --&gt;|-----|-| K_2
-                  |                     |
-                  |                 next -----&gt; NULL
-                   --&gt; NULL
-</pre>
-     <p><strong class="float-caption">Figure 12.46: Continuation object K_2 removed from the <acronym>PCB</acronym>.</strong></p></div>
+<div class="float"><a name="fig_003aMCE_005fcallcc_005fnext_005fk_005fK3"></a>
+<div class="example">
+<pre class="example">|-----|---| PCB
+        |
+  next_k|   |-----|-| K_1
+        |          |
+        |      next --&gt;|-----|-| K_2
+        |                     |
+        |                 next -----&gt; NULL
+         --&gt; NULL
+</pre></div>
 
-        <li>Duplicate the stack frame referenced by K_2 below the address of
+<div class="float-caption"><p><strong>Figure 16.46: </strong>Continuation object <em>K_2</em> removed from the <acronym>PCB</acronym>.</p></div></div>
+</li><li> Duplicate the stack frame referenced by <em>K_2</em> below the address of
 the underflow handler, adjust the <acronym>FPR</acronym> to reference the return address
-of the frame, <a href="fig_003aMCE_005fcallcc_005fK2_005fcopy.html#fig_003aMCE_005fcallcc_005fK2_005fcopy">machinery continuations escape</a>.
+of the frame, <a href="#fig_003aMCE_005fcallcc_005fK2_005fcopy">machinery continuations
+escape</a>.
 
-        <div class="float">
-<a name="fig_003aMCE_005fcallcc_005fK2_005fcopy"></a>
-     <pre class="example">                high memory
-          |                      |
-          |----------------------|
-          | ik_underflow_handler |
-          |----------------------|                     -- freezed
-          |  return addr to top  |                     .  frame K_2
-          |----------------------|                     --
-          |    argument A == 1   |                     . freezed
-          |----------------------|                     . frame
-          | return addr to alpha | &lt;- pcb-&gt;frame_base  . in K_1
-          |----------------------|                     --
-          | ik_underflow_handler |
-          |----------------------|
-          |  return addr to top  | &lt;- FPR
-          |----------------------|
-          |                      |
-                 low memory
-</pre>
-        <p><strong class="float-caption">Figure 12.47: Stack frame in K_2 duplicated below the underflow
-handler address.</strong></p></div>
+<div class="float"><a name="fig_003aMCE_005fcallcc_005fK2_005fcopy"></a>
+<div class="example">
+<pre class="example">      high memory
+|                      |
+|----------------------|
+| ik_underflow_handler |
+|----------------------|                     -- freezed
+|  return addr to top  |                     .  frame K_2
+|----------------------|                     --
+|    argument A == 1   |                     . freezed
+|----------------------|                     . frame
+| return addr to alpha | &lt;- pcb-&gt;frame_base  . in K_1
+|----------------------|                     --
+| ik_underflow_handler |
+|----------------------|
+|  return addr to top  | &lt;- FPR
+|----------------------|
+|                      |
+       low memory
+</pre></div>
 
-        <li>There is a single return value, so: perform a <code>ret</code> Assembly
+<div class="float-caption"><p><strong>Figure 16.47: </strong>Stack frame in <em>K_2</em> duplicated below the underflow
+handler address.</p></div></div>
+</li><li> There is a single return value, so: perform a <code>ret</code> Assembly
 instruction to go back to the top level expression.
-        </ol>
+</li></ol>
 
-   <p>The code of the top level expression is reentered right after the call
+<p>The code of the top level expression is reentered right after the call
 to <code>alpha</code> and the <acronym>FPR</acronym> is adjusted to reference the address of
-the stack underflow handler, <a href="fig_003aMCE_005fcallcc_005ftop_005fret.html#fig_003aMCE_005fcallcc_005ftop_005fret">compiler machinery continuations escape</a>.  The top level expression is the last
+the stack underflow handler, <a href="#fig_003aMCE_005fcallcc_005ftop_005fret">compiler
+machinery continuations escape</a>.  The top level expression is the last
 one in the program, so it returns the return value it receives, which is
 already in the <acronym>AAR</acronym>: it executes a <code>ret</code> Assembly instruction.
+</p>
+<div class="float"><a name="fig_003aMCE_005fcallcc_005ftop_005fret"></a>
+<div class="example">
+<pre class="example">      high memory
+|                      |
+|----------------------|
+| ik_underflow_handler |
+|----------------------|                     -- freezed
+|  return addr to top  |                     .  frame K_2
+|----------------------|                     --
+|    argument A == 1   |                     . freezed
+|----------------------|                     . frame
+| return addr to alpha | &lt;- pcb-&gt;frame_base  . in K_1
+|----------------------|                     --
+| ik_underflow_handler | &lt;- FPR
+|----------------------|
+|                      |
+       low memory
+</pre></div>
 
-   <div class="float">
-<a name="fig_003aMCE_005fcallcc_005ftop_005fret"></a>
-<pre class="example">           high memory
-     |                      |
-     |----------------------|
-     | ik_underflow_handler |
-     |----------------------|                     -- freezed
-     |  return addr to top  |                     .  frame K_2
-     |----------------------|                     --
-     |    argument A == 1   |                     . freezed
-     |----------------------|                     . frame
-     | return addr to alpha | &lt;- pcb-&gt;frame_base  . in K_1
-     |----------------------|                     --
-     | ik_underflow_handler | &lt;- FPR
-     |----------------------|
-     |                      |
-            low memory
-</pre>
-   <p><strong class="float-caption">Figure 12.48: Stack right before the top level expression executes the
-<code>ret</code> Assembly instruction; the return value is in the <acronym>AAR</acronym>.</strong></p></div>
-
-   <p>The underflow handler is reentered again with <code>NULL</code> as &ldquo;next <acronym>PCB</acronym>
+<div class="float-caption"><p><strong>Figure 16.48: </strong>Stack right before the top level expression executes the
+<code>ret</code> Assembly instruction; the return value is in the <acronym>AAR</acronym>.</p></div></div>
+<p>The underflow handler is reentered again with <code>NULL</code> as &ldquo;next <acronym>PCB</acronym>
 continuation&rdquo;: this means the program is terminated, so the underflow
 handler does what is needed.
-
-   <p>We can understand that this mechanism of duplicating the freezed frames
+</p>
+<p>We can understand that this mechanism of duplicating the freezed frames
 can be repeated any number of times, allowing the execution flow to go
 back to a saved continuation any number of times.
+</p>
+<hr>
+<div class="header">
+<p>
+Previous: <a href="machinery-continuations-non.html#machinery-continuations-non" accesskey="p" rel="prev">machinery continuations non</a>, Up: <a href="machinery-continuations.html#machinery-continuations" accesskey="u" rel="up">machinery continuations</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
 
-<!-- page -->
-   </body></html>
 
+
+</body>
+</html>

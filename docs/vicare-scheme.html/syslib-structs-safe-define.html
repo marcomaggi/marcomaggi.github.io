@@ -1,0 +1,314 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.4d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit and 64-bit
+processors.  Vicare is pronounced the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/downloads
+
+the home page of the project is at:
+
+http://marcomaggi.github.io/vicare.html
+
+development takes place at:
+
+http://github.com/marcomaggi/vicare/
+
+and, as a backup, at:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the "History" appendix for details.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Vicare Scheme: syslib structs safe define</title>
+
+<meta name="description" content="Vicare Scheme: syslib structs safe define">
+<meta name="keywords" content="Vicare Scheme: syslib structs safe define">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="syslib-structs-safe.html#syslib-structs-safe" rel="up" title="syslib structs safe">
+<link href="syslib-structs-safe-using.html#syslib-structs-safe-using" rel="next" title="syslib structs safe using">
+<link href="syslib-structs-safe.html#syslib-structs-safe" rel="prev" title="syslib structs safe">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="syslib-structs-safe-define"></a>
+<div class="header">
+<p>
+Next: <a href="syslib-structs-safe-using.html#syslib-structs-safe-using" accesskey="n" rel="next">syslib structs safe using</a>, Up: <a href="syslib-structs-safe.html#syslib-structs-safe" accesskey="u" rel="up">syslib structs safe</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Defining-structure-types"></a>
+<h4 class="subsubsection">12.14.1.1 Defining structure types</h4>
+
+
+<dl>
+<dt><a name="index-define_002dstruct"></a>Syntax: <strong>define-struct</strong> <em><var>?type-name</var> (<var>?field</var> &hellip;)</em></dt>
+<dt><a name="index-define_002dstruct-1"></a>Syntax: <strong>define-struct</strong> <em><var>?type-name</var> (<var>?field</var> &hellip;) (nongenerative <var>?uid</var>)</em></dt>
+<dt><a name="index-define_002dstruct-2"></a>Syntax: <strong>define-struct</strong> <em>(<var>?type-name</var> <var>?constructor</var> <var>?predicate</var>) (<var>?field</var> &hellip;)</em></dt>
+<dt><a name="index-define_002dstruct-3"></a>Syntax: <strong>define-struct</strong> <em>(<var>?type-name</var> <var>?constructor</var> <var>?predicate</var>) (<var>?field</var> &hellip;) (nongenerative <var>?uid</var>)</em></dt>
+<dt><a name="index-nongenerative-2"></a>Auxiliary Syntax: <strong>nongenerative</strong></dt>
+<dd><p>Define a new struct type.  This macro is embedded in the expander.
+</p>
+<p><var>?type-name</var> must be a symbol representing the name of the structure; it
+is used to build names for the constructor, predicate, field accessors
+and mutators.  When <var>?constructor</var> is used: it must be an identifier
+representing the name of the constructor.  When <var>?predicate</var> is
+used: it must be an identifier representing the name of the predicate.
+</p>
+<p>The <var>?field</var> values must be either symbols representing the names of
+the fields or <code>brace</code> forms representing the name and type of
+fields:
+</p>
+<div class="lisp">
+<pre class="lisp">(brace <var>?field-name</var> <var>?tag</var>)
+</pre></div>
+
+<p>they are used to build names for the accessors and mutators.
+</p>
+<p>When the <code>nongenerative</code> clause is used: <var>?uid</var> must be a
+symbol uniquely identifying the struct type.  Multiple definitions of
+struct type using the same <var>?uid</var> must have the same type name and
+field names, and represent the same type definition.  See
+<code>make-struct-type</code> for more details.
+</p>
+<p>The following definition:
+</p>
+<div class="example">
+<pre class="example">(define-struct color
+  (red green blue))
+</pre></div>
+
+<p>expands to the definition of the following syntactic bindings:
+</p>
+<dl compact="compact">
+<dt><code>color</code></dt>
+<dd><p>A syntactic identifier representing the type name.  When the tagged
+language is enabled, we can use this identifier to tag a variable
+syntactic binding:
+</p>
+<div class="lisp">
+<pre class="lisp">(define {O color}
+  (make-color 1 2 3))
+
+(O red)         &rArr; 1
+(O green)       &rArr; 2
+(O blue)        &rArr; 3
+</pre></div>
+
+<p>We can use the identifier as argument for the <code>is-a?</code> syntax:
+</p>
+<div class="lisp">
+<pre class="lisp">(is-a? (make-color 1 2 3) color)        &rArr; #t
+(is-a? &quot;ciao&quot; color)                    &rArr; #f
+</pre></div>
+
+<p>When the identifier is used in macro keyword position with the syntax:
+</p>
+<div class="example">
+<pre class="example">(<var>?type-name</var> (<var>?expr</var> ...))
+</pre></div>
+
+<p>the form is expanded to the application of the constructor to the
+results of evaluating the <var>?expr</var> arguments:
+</p>
+<div class="example">
+<pre class="example">(color (1 2 3)) &rArr; #[&quot;color&quot; red=1 green=2 blue=3]
+</pre></div>
+
+</dd>
+<dt><code>make-color <var>red</var> <var>green</var> <var>blue</var></code></dt>
+<dd><p>A structure constructor accepting as much arguments as there are fields.
+The constructor makes use of the <code>$struct</code> low level operation.
+</p>
+</dd>
+<dt><code>color? <var>obj</var></code></dt>
+<dd><p>A predicate to distinguish between references to <code>color</code> structures
+and other values.  This predicate makes use of the <code>$struct/rtd?</code>
+low level operation.
+</p>
+</dd>
+<dt><code>color-red <var>stru</var></code></dt>
+<dt><code>color-green <var>stru</var></code></dt>
+<dt><code>color-blue <var>stru</var></code></dt>
+<dd><p>Accessor functions for the fields of the structure.  These accessors
+make use of the <code>$struct/rtd?</code> low level operation to validate the
+argument and if successful they use <code>$struct-ref</code> to extract the
+value; if the argument is of invalid type: an assertion violation is
+raised.
+</p>
+</dd>
+<dt><code>set-color-red! <var>stru</var> <var>red</var></code></dt>
+<dt><code>set-color-green! <var>stru</var> <var>green</var></code></dt>
+<dt><code>set-color-blue! <var>stru</var> <var>blue</var></code></dt>
+<dd><p>Mutator functions for the fields of the structure.  These mutators make
+use of the <code>$struct/rtd?</code> low level operation to validate the
+argument <var>stru</var> and if successful they use <code>$struct-set!</code> to
+set the value; if the argument <var>stru</var> is of invalid type: an
+assertion violation is raised.
+</p>
+</dd>
+<dt><code>$color-red <var>stru</var></code></dt>
+<dt><code>$color-green <var>stru</var></code></dt>
+<dt><code>$color-blue <var>stru</var></code></dt>
+<dd><p>Unsafe accessor syntaxes for the fields of the structure.  These
+accessors do not validate the arguments and expand directly to a use of
+<code>$struct-ref</code> to extract the value; if the argument is invalid: the
+behaviour is undefined.
+</p>
+</dd>
+<dt><code>$set-color-red! <var>stru</var> <var>red</var></code></dt>
+<dt><code>$set-color-green! <var>stru</var> <var>green</var></code></dt>
+<dt><code>$set-color-blue! <var>stru</var> <var>blue</var></code></dt>
+<dd><p>Unsafe mutator syntaxes for the fields of the structure.  These mutators
+do not validate the arguments and expand directly to a use of
+<code>$struct-set!</code> to set the value; if the argument <var>stru</var> is
+invalid: the behaviour is undefined.
+</p></dd>
+</dl>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-make_002dstruct_002dtype"></a>Function: <strong>make-struct-type</strong> <em><var>type-name</var> <var>fields</var></em></dt>
+<dt><a name="index-make_002dstruct_002dtype-1"></a>Function: <strong>make-struct-type</strong> <em><var>type-name</var> <var>fields</var> <var>uid</var></em></dt>
+<dd><p>Build and return a new struct&ndash;type descriptor.  <var>type-name</var> must be
+a string representing the type name.  <var>fields</var> must be a list of
+symbols representing the field names.
+</p>
+<p>The optional <var>uid</var> argument must be a symbol uniquely identifying
+this type; when not supplied, a symbol is automatically generated.  The
+<code>value</code> field of the symbol object <var>uid</var> is set to the newly
+created <acronym>RTD</acronym>; if <var>uid</var> already has a symbol value: such value must
+be a struct descriptor equal to the newly created <acronym>RTD</acronym>.
+</p>
+<p>The use of a <var>uid</var> allows us to define a unique struct type in
+different libraries without sharing the definition by importing
+syntactic bindings.  For example, we can define a struct type in a
+library and import the definition in other libraries:
+</p>
+<div class="example">
+<pre class="example">(library (one)
+  (export
+    make-color color?
+    color-red color-green color-blue)
+  (import (vicare))
+  (define-struct color
+    (red green blue)))
+
+(library (two)
+  (export C)
+  (import (vicare) (one))
+  (define C (make-color 1 2 3)))
+
+(library (three)
+  (export)
+  (import (vicare) (one) (two))
+  (display (color-red C)))
+</pre></div>
+
+<p>but, by specifying a <var>uid</var>, we can also do:
+</p>
+<div class="example">
+<pre class="example">(library (two)
+  (export C)
+  (import (vicare))
+  (define-struct color
+    (red green blue)
+    (nongenerative the-color))
+  (define C
+    (make-color 1 2 3)))
+
+(library (three)
+  (export)
+  (import (vicare))
+  (define-struct color
+    (red green blue)
+    (nongenerative the-color))
+  (display (color-red C)))
+</pre></div>
+
+<p>and everything will work as before.
+</p></dd></dl>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="syslib-structs-safe-using.html#syslib-structs-safe-using" accesskey="n" rel="next">syslib structs safe using</a>, Up: <a href="syslib-structs-safe.html#syslib-structs-safe" accesskey="u" rel="up">syslib structs safe</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

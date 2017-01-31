@@ -1,0 +1,635 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes the libraries distributed along with version
+0.4d1 of Vicare Scheme, an R6RS compliant native
+compiler for the Scheme language.
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+The documentation of the libraries (vicare parser-tools silex
+-) are derived form the documentation of SILex.  Copyright
+(C) 2001, 2009 Danny Dube'.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Libraries for Vicare Scheme: srfi ilists procs fold</title>
+
+<meta name="description" content="Libraries for Vicare Scheme: srfi ilists procs fold">
+<meta name="keywords" content="Libraries for Vicare Scheme: srfi ilists procs fold">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="srfi-ilists-procs.html#srfi-ilists-procs" rel="up" title="srfi ilists procs">
+<link href="srfi-ilists-procs-filter.html#srfi-ilists-procs-filter" rel="next" title="srfi ilists procs filter">
+<link href="srfi-ilists-procs-misc.html#srfi-ilists-procs-misc" rel="prev" title="srfi ilists procs misc">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="srfi-ilists-procs-fold"></a>
+<div class="header">
+<p>
+Next: <a href="srfi-ilists-procs-filter.html#srfi-ilists-procs-filter" accesskey="n" rel="next">srfi ilists procs filter</a>, Previous: <a href="srfi-ilists-procs-misc.html#srfi-ilists-procs-misc" accesskey="p" rel="prev">srfi ilists procs misc</a>, Up: <a href="srfi-ilists-procs.html#srfi-ilists-procs" accesskey="u" rel="up">srfi ilists procs</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Fold_002c-unfold-and-map-2"></a>
+<h4 class="subsubsection">2.40.6.6 Fold, unfold and map</h4>
+
+
+<dl>
+<dt><a name="index-ifold"></a>Function: <em><var>value</var></em> <strong>ifold</strong> <em><var>kons</var> <var>knil</var> <var>ilist1</var> <var>ilist2</var> &hellip;</em></dt>
+<dd><p>The fundamental ilist iterator.
+</p>
+<p>First, consider the single <var>ilist</var>&ndash;parameter case.  If:
+</p>
+<div class="example">
+<pre class="example"><var>ilist1</var> == (e1 e2 ... en)
+</pre></div>
+
+<p>then this procedure returns
+</p>
+<div class="lisp">
+<pre class="lisp">(kons en ... (kons e2 (kons e1 knil)) ...)
+</pre></div>
+
+<p>That is, it obeys the (tail) recursion:
+</p>
+<div class="example">
+<pre class="example">(ifold kons knil lis)
+&equiv; (ifold kons (kons (icar lis) knil) (icdr lis))
+
+(ifold kons knil '())
+&equiv; knil
+</pre></div>
+
+<p>Examples:
+</p>
+<div class="lisp">
+<pre class="lisp">(ifold + 0 lis)                 ; Add up the elements of LIS.
+
+(ifold ipair '() lis)           ; Reverse LIS.
+
+(ifold ipair tail rev-head)     ; See APPEND-REVERSE.
+
+;; How many symbols in LIS?
+(ifold (lambda (x count)
+         (if (symbol? x) (+ count 1) count))
+   0
+   lis)
+
+;; Length of the longest string in LIS:
+(ifold (lambda (s max-len)
+         (max max-len (string-length s)))
+   0
+   lis)
+</pre></div>
+
+<p>If <var>n</var> ilist arguments are provided, then the <var>kons</var> function
+must take &lsquo;<samp><var>n</var>+1</samp>&rsquo; parameters: one element from each ilist, and
+the &ldquo;seed&rdquo; or fold state, which is initially <var>knil</var>.  The fold
+operation terminates when the shortest ilist runs out of values:
+</p>
+<div class="lisp">
+<pre class="lisp">(ifold ipair* '() (iq a b c) (iq 1 2 3 4 5)) &rArr; (c 3 b 2 a 1)
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-ifold_002dright"></a>Function: <em><var>value</var></em> <strong>ifold-right</strong> <em><var>kons</var> <var>knil</var> <var>ilist1</var> <var>ilist2</var> &hellip;</em></dt>
+<dd><p>The fundamental ilist recursion operator.
+</p>
+<p>First, consider the single <var>ilist</var>&ndash;parameter case.  If:
+</p>
+<div class="example">
+<pre class="example"><var>ilist1</var> == (e1 e2 ... en)
+</pre></div>
+
+<p>then this procedure returns:
+</p>
+<div class="lisp">
+<pre class="lisp">(kons e1 (kons e2 ... (kons en knil)))
+</pre></div>
+
+<p>That is, it obeys the recursion
+</p>
+<div class="lisp">
+<pre class="lisp">(ifold-right kons knil lis)
+&equiv; (kons (icar lis) (ifold-right kons knil (icdr lis)))
+
+(ifold-right kons knil '())
+&equiv; knil
+</pre></div>
+
+<p>Examples:
+</p>
+<div class="lisp">
+<pre class="lisp">(ifold-right ipair '() lis)         ; Copy LIS.
+
+;; Filter the even numbers out of LIS.
+(ifold-right (lambda (x l)
+               (if (even? x) (ipair x l) l))
+  '() lis)
+</pre></div>
+
+<p>If <var>n</var> ilist arguments are provided, then the kons procedure must
+take &lsquo;<samp><var>n</var>+1</samp>&rsquo; parameters: one element from each ilist, and the
+&ldquo;seed&rdquo; or fold state, which is initially <var>knil</var>.  The fold
+operation terminates when the shortest ilist runs out of values:
+</p>
+<div class="lisp">
+<pre class="lisp">(ifold-right ipair* '() (iq a b c) (iq 1 2 3 4 5))
+&rArr; (a 1 b 2 c 3)
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-ipair_002dfold"></a>Function: <em><var>value</var></em> <strong>ipair-fold</strong> <em><var>kons</var> <var>knil</var> <var>ilist2</var> <var>ilist2</var> &hellip;</em></dt>
+<dd><p>Analogous to fold, but <var>kons</var> is applied to successive sub&ndash;ilists
+of the <var>ilist</var>s, rather than successive elements: that is,
+<var>kons</var> is applied to the ipairs making up the lists, giving this
+(tail) recursion:
+</p>
+<div class="lisp">
+<pre class="lisp">(ipair-fold kons knil lis)
+&equiv; (let ((tail (icdr lis)))
+   (ipair-fold kons (kons lis knil) tail))
+
+(ipair-fold kons knil '()) &equiv; knil
+</pre></div>
+
+<p>Example:
+</p>
+<div class="lisp">
+<pre class="lisp">(ipair-fold ipair '() (iq a b c)) &rArr; ((c) (b c) (a b c))
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-ipair_002dfold_002dright"></a>Function: <em><var>value</var></em> <strong>ipair-fold-right</strong> <em><var>kons</var> <var>knil</var> <var>ilist1</var> <var>ilist2</var> &hellip;</em></dt>
+<dd><p>Hold the same relationship with <code>ifold-right</code> that
+<code>ipair-fold</code> holds with <code>ifold</code>.  Obeys the recursion:
+</p>
+<div class="lisp">
+<pre class="lisp">(ipair-fold-right kons knil lis)
+&equiv; (kons lis (ipair-fold-right kons knil (icdr lis)))
+
+(ipair-fold-right kons knil '()) &equiv; knil
+</pre></div>
+
+<p>Example:
+</p>
+<div class="lisp">
+<pre class="lisp">(ipair-fold-right ipair '() (iq a b c)) &rArr; ((a b c) (b c) (c))
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-ireduce"></a>Function: <em><var>value</var></em> <strong>ireduce</strong> <em><var>f</var> <var>ridentity</var> <var>ilist</var></em></dt>
+<dd><p><code>ireduce</code> is a variant of <code>ifold</code>.
+</p>
+<p><var>ridentity</var> should be a &ldquo;right identity&rdquo; of the procedure <var>f</var>:
+that is, for any value <var>x</var> acceptable to <var>f</var>:
+</p>
+<div class="lisp">
+<pre class="lisp">(f x ridentity) &equiv; x
+</pre></div>
+
+<p><code>ireduce</code> has the following definition:
+</p>
+<ul>
+<li> If &lsquo;<samp><var>ilist</var> &equiv; ()</samp>&rsquo;, return <var>ridentity</var>.
+
+</li><li> Otherwise, return:
+
+<div class="lisp">
+<pre class="lisp">(ifold f (icar ilist) (icdr ilist))
+</pre></div>
+</li></ul>
+
+<p>in other words, we compute &lsquo;<samp>(ifold <var>f</var> <var>ridentity</var>
+<var>ilist</var>)</samp>&rsquo;.
+</p>
+<p>Note that <var>ridentity</var> is used only in the empty&ndash;list case.  You
+typically use <code>ireduce</code> when applying <var>f</var> is expensive and
+you&rsquo;d like to avoid the extra application incurred when <code>ifold</code>
+applies <var>f</var> to the head of <var>ilist</var> and the identity value,
+redundantly producing the same value passed in to <var>f</var>.  For example,
+if <var>f</var> involves searching a file directory or performing a database
+query, this can be significant.  In general, however, <code>ifold</code> is
+useful in many contexts where <code>ireduce</code> is not (consider the
+examples given in the <code>ifold</code> definition: only one of the five
+folds uses a function with a right identity.  The other four may not be
+performed with <code>ireduce</code>).
+</p>
+<div class="lisp">
+<pre class="lisp">;; take the max of an ilist of non-negative integers
+(ireduce max 0 nums) ; i.e., (iapply max 0 nums)
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-ireduce_002dright"></a>Function: <em><var>value</var></em> <strong>ireduce-right</strong> <em><var>f</var> <var>ridentity</var> <var>ilist</var></em></dt>
+<dd><p><code>ireduce-right</code> is the fold&ndash;right variant of <code>ireduce</code>.  It
+obeys the following definition:
+</p>
+<div class="lisp">
+<pre class="lisp">(ireduce-right f ridentity '()) &equiv; ridentity
+
+(ireduce-right f ridentity (iq e1))
+&equiv; (f e1 ridentity) &equiv; e1
+
+(ireduce-right f ridentity (iq e1 e2 ...))
+&equiv; (f e1 (ireduce f ridentity (e2 ...)))
+</pre></div>
+
+<p>in other words, we compute &lsquo;<samp>(ifold-right f ridentity ilist)</samp>&rsquo;.
+</p>
+<div class="lisp">
+<pre class="lisp">;; Append a bunch of ilists together.
+;; I.e., (iapply iappend ilist-of-ilists)
+(ireduce-right iappend '() ilist-of-ilists)
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-iunfold"></a>Function: <em><var>ilist</var></em> <strong>iunfold</strong> <em><var>p</var> <var>f</var> <var>g</var> <var>seed</var></em></dt>
+<dt><a name="index-iunfold-1"></a>Function: <em><var>ilist</var></em> <strong>iunfold</strong> <em><var>p</var> <var>f</var> <var>g</var> <var>seed</var> <var>tail-gen</var></em></dt>
+<dd><p><code>iunfold</code> is best described by its basic recursion:
+</p>
+<div class="lisp">
+<pre class="lisp">(iunfold p f g seed) &equiv;
+  (if (p seed) (tail-gen seed)
+      (ipair (f seed)
+             (iunfold p f g (g seed))))
+</pre></div>
+
+<dl compact="compact">
+<dt><var>p</var></dt>
+<dd><p>Determines when to stop unfolding.
+</p>
+</dd>
+<dt><var>f</var></dt>
+<dd><p>Maps each seed value to the corresponding ilist element.
+</p>
+</dd>
+<dt><var>g</var></dt>
+<dd><p>Maps each seed value to next seed value.
+</p>
+</dd>
+<dt><var>seed</var></dt>
+<dd><p>The &ldquo;state&rdquo; value for the unfold.
+</p>
+</dd>
+<dt><var>tail-gen</var></dt>
+<dd><p>Creates the tail of the ilist; defaults to <code>(lambda (x) '())</code>.
+</p></dd>
+</dl>
+
+<p>In other words, we use <var>g</var> to generate a sequence of seed values.
+</p>
+<div class="example">
+<pre class="example">seed, g(seed), g2(seed), g3(seed), ...
+</pre></div>
+
+<p>these seed values are mapped to ilist elements by <var>f</var>, producing the
+elements of the result ilist in a left&ndash;to&ndash;right order.  <var>p</var> says
+when to stop.
+</p>
+<p><code>iunfold</code> is the fundamental recursive ilist constructor, just as
+<code>ifold-right</code> is the fundamental recursive ilist consumer.  While
+<code>iunfold</code> may seem a bit abstract to novice functional programmers,
+it can be used in a number of ways:
+</p>
+<div class="lisp">
+<pre class="lisp">;; Ilist of squares: 1^2 ... 10^2
+(iunfold (lambda (x) (&gt; x 10))
+         (lambda (x) (* x x))
+         (lambda (x) (+ x 1))
+         1)
+
+(iunfold null-ilist? icar icdr lis) ; Copy a proper ilist.
+
+;; Read current input port into an ilist of values.
+(iunfold eof-object? values (lambda (x) (read)) (read))
+
+;; Copy a possibly non-proper ilist:
+(iunfold not-ipair? icar icdr lis values)
+
+;; Append HEAD onto TAIL:
+(iunfold null-ilist? icar icdr head (lambda (x) tail))
+</pre></div>
+
+<p>Interested functional programmers may enjoy noting that
+<code>ifold-right</code> and <code>iunfold</code> are in some sense inverses.  That
+is, given operations <var>knull?</var>, <var>kar</var>, <var>kdr</var>, <var>kons</var>, and
+<var>knil</var> satisfying
+</p>
+<div class="example">
+<pre class="example">(kons (kar x) (kdr x)) &rArr; x
+(knull? knil) &rArr; #t
+</pre></div>
+
+<p>then:
+</p>
+<div class="lisp">
+<pre class="lisp">(ifold-right kons knil (iunfold knull? kar kdr x)) &rArr; x
+</pre></div>
+
+<p>and:
+</p>
+<div class="lisp">
+<pre class="lisp">(iunfold knull? kar kdr (ifold-right kons knil x)) &rArr; x
+</pre></div>
+
+<p>This combinator sometimes is called an &ldquo;anamorphism&rdquo;; when an explicit
+<var>tail-gen</var> procedure is supplied, it is called an &ldquo;apomorphism&rdquo;.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-iunfold_002dright"></a>Function: <em><var>ilist</var></em> <strong>iunfold-right</strong> <em><var>p</var> <var>f</var> <var>g</var> <var>seed</var></em></dt>
+<dt><a name="index-iunfold_002dright-1"></a>Function: <em><var>ilist</var></em> <strong>iunfold-right</strong> <em><var>p</var> <var>f</var> <var>g</var> <var>seed</var> <var>tail</var></em></dt>
+<dd><p><code>iunfold-right</code> constructs an ilist with the following loop:
+</p>
+<div class="lisp">
+<pre class="lisp">(let lp ((seed seed) (lis tail))
+  (if (p seed) lis
+      (lp (g seed)
+          (ipair (f seed) lis))))
+</pre></div>
+
+<dl compact="compact">
+<dt><var>p</var></dt>
+<dd><p>Determines when to stop unfolding.
+</p>
+</dd>
+<dt><var>f</var></dt>
+<dd><p>Maps each seed value to the corresponding ilist element.
+</p>
+</dd>
+<dt><var>g</var></dt>
+<dd><p>Maps each seed value to next seed value.
+</p>
+</dd>
+<dt><var>seed</var></dt>
+<dd><p>The &ldquo;state&rdquo; value for the unfold.
+</p>
+</dd>
+<dt><var>tail</var></dt>
+<dd><p>Ilist terminator; defaults to &lsquo;<samp>()</samp>&rsquo;.
+</p></dd>
+</dl>
+
+<p>In other words, we use <var>g</var> to generate a sequence of seed values:
+</p>
+<div class="example">
+<pre class="example">seed, g(seed), g2(seed), g3(seed), ...
+</pre></div>
+
+<p>these seed values are mapped to ilist elements by <var>f</var>, producing the
+elements of the result ilist in a right&ndash;to&ndash;left order.  <var>p</var> says
+when to stop.
+</p>
+<p><code>iunfold-right</code> is the fundamental iterative ilist constructor,
+just as <code>ifold</code> is the fundamental iterative ilist consumer.  While
+<code>iunfold-right</code> may seem a bit abstract to novice functional
+programmers, it can be used in a number of ways:
+</p>
+<div class="lisp">
+<pre class="lisp">;; Ilist of squares: 1^2 ... 10^2
+(iunfold-right zero?
+               (lambda (x) (* x x))
+               (lambda (x) (- x 1))
+               10)
+
+;; Reverse a proper ilist.
+(iunfold-right null-ilist? icar icdr lis)
+
+;; Read current input port into an ilist of values.
+(iunfold-right eof-object? values (lambda (x) (read)) (read))
+
+;; (iappend-reverse rev-head tail)
+(iunfold-right null-ilist? icar icdr rev-head tail)
+</pre></div>
+
+<p>Interested functional programmers may enjoy noting that <code>ifold</code> and
+<code>iunfold-right</code> are in some sense inverses.  That is, given
+operations <var>knull?</var>, <var>kar</var>, <var>kdr</var>, <var>kons</var>, and
+<var>knil</var> satisfying:
+</p>
+<div class="lisp">
+<pre class="lisp">(kons (kar x) (kdr x)) &rArr; x
+(knull? knil) &rArr; #t
+</pre></div>
+
+<p>then:
+</p>
+<div class="lisp">
+<pre class="lisp">(ifold kons knil (iunfold-right knull? kar kdr x)) &rArr; x
+</pre></div>
+
+<p>and:
+</p>
+<div class="lisp">
+<pre class="lisp">(iunfold-right knull? kar kdr (ifold kons knil x)) &rArr; x
+</pre></div>
+
+<p>This combinator presumably has some pretentious mathematical name;
+interested readers are invited to communicate it to the author.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-imap"></a>Function: <em><var>ilist</var></em> <strong>imap</strong> <em><var>proc</var> <var>ilist1</var> <var>ilist2</var> &hellip;</em></dt>
+<dd><p><var>proc</var> is a procedure taking as many arguments as there are ilist
+arguments and returning a single value.  <code>imap</code> applies <var>proc</var>
+element&ndash;wise to the elements of the ilists and returns an ilist of the
+results, in order.  The dynamic order in which <var>proc</var> is applied to
+the elements of the ilists is unspecified.
+</p>
+<div class="lisp">
+<pre class="lisp">(imap icadr (iq (a b) (d e) (g h)))
+&rArr; (b e h)
+
+(imap (lambda (n) (expt n n)) (iq 1 2 3 4 5))
+&rArr; (1 4 27 256 3125)
+
+(imap + (iq 1 2 3) (iq 4 5 6))
+&rArr; (5 7 9)
+
+(let ((count 0))
+  (imap (lambda (ignored)
+          (set! count (+ count 1))
+          count)
+        (iq a b)))
+&rArr; (1 2) or (2 1)
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-ifor_002deach"></a>Function: <strong>ifor-each</strong> <em><var>proc</var> <var>ilist1</var> <var>ilist2</var> &hellip;</em></dt>
+<dd><p>The arguments to <code>ifor-each</code> are like the arguments to <code>imap</code>,
+but <code>ifor-each</code> calls <var>proc</var> for its side effects rather than
+for its values.  Unlike <code>imap</code>, <code>ifor-each</code> is guaranteed to
+call <var>proc</var> on the elements of the ilists in order from the first
+element(s) to the last, and the value returned by <code>ifor-each</code> is
+unspecified.
+</p>
+<div class="lisp">
+<pre class="lisp">(let ((v (make-vector 5)))
+  (ifor-each (lambda (i)
+               (vector-set! v i (* i i)))
+             (iq 0 1 2 3 4))
+  v)
+&rArr; #(0 1 4 9 16)
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-iappend_002dmap"></a>Function: <em><var>value</var></em> <strong>iappend-map</strong> <em><var>f</var> <var>ilist1</var> <var>ilist2</var> &hellip;</em></dt>
+<dd><p>Equivalent to:
+</p>
+<div class="lisp">
+<pre class="lisp">(iapply iappend (imap f ilist1 ilist2 ...))
+</pre></div>
+
+<p>and.
+</p>
+<div class="lisp">
+<pre class="lisp">(iapply iappend (imap f ilist1 ilist2 ...))
+</pre></div>
+
+<p>Map <var>f</var> over the elements of the ilists, just as in the <code>imap</code>
+function.  However, the results of the applications are appended
+together (using <code>iappend</code>) to make the final result.
+</p>
+<p>The dynamic order in which the various applications of <var>f</var> are made
+is not specified.
+</p>
+<p>Example:
+</p>
+<div class="lisp">
+<pre class="lisp">(iappend-map (lambda (x) (ilist x (- x))) (iq 1 3 8))
+&rArr; (1 -1 3 -3 8 -8)
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-imap_002din_002dorder"></a>Function: <em><var>ilist</var></em> <strong>imap-in-order</strong> <em><var>f</var> <var>ilist1</var> <var>ilist2</var> &hellip;</em></dt>
+<dd><p>A variant of the <code>imap</code> procedure that guarantees to apply <var>f</var>
+across the elements of the <var>ilisti</var> arguments in a left&ndash;to&ndash;right
+order.  This is useful for mapping procedures that both have side
+effects and return useful values.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-ipair_002dfor_002deach"></a>Function: <strong>ipair-for-each</strong> <em><var>f</var> <var>ilist1</var> <var>ilist2</var> &hellip;</em></dt>
+<dd><p>Like <code>ifor-each</code>, but <var>f</var> is applied to successive sub&ndash;ilists
+of the argument <var>ilist</var>s.  That is, <var>f</var> is applied to the cells
+of the ilists, rather than the ilists&rsquo; elements.  These applications
+occur in left&ndash;to&ndash;right order.
+</p>
+<div class="lisp">
+<pre class="lisp">(ipair-for-each (lambda (ipair)
+                  (display ipair)
+                  (newline))
+  (iq a b c))
+-| (a b c)
+-| (b c)
+-| (c)
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-ifilter_002dmap"></a>Function: <em><var>ilist</var></em> <strong>ifilter-map</strong> <em><var>f</var> <var>ilist1</var> <var>ilist2</var> &hellip;</em></dt>
+<dd><p>Like <code>imap</code>, but only true values are saved.
+</p>
+<div class="lisp">
+<pre class="lisp">(ifilter-map (lambda (x)
+               (and (number? x) (* x x)))
+  (iq a 1 b 3 c 7))
+&rArr; (1 9 49)
+</pre></div>
+
+<p>The dynamic order in which the various applications of <var>f</var> are made
+is not specified.
+</p></dd></dl>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="srfi-ilists-procs-filter.html#srfi-ilists-procs-filter" accesskey="n" rel="next">srfi ilists procs filter</a>, Previous: <a href="srfi-ilists-procs-misc.html#srfi-ilists-procs-misc" accesskey="p" rel="prev">srfi ilists procs misc</a>, Up: <a href="srfi-ilists-procs.html#srfi-ilists-procs" accesskey="u" rel="up">srfi ilists procs</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

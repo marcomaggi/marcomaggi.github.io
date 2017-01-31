@@ -1,0 +1,199 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.4d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit and 64-bit
+processors.  Vicare is pronounced the etruscan way.  The focus of
+this document is over the typed language extension.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/downloads
+
+the home page of the project is at:
+
+http://marcomaggi.github.io/vicare.html
+
+development takes place at:
+
+http://github.com/marcomaggi/vicare/
+
+and, as a backup, at:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/
+
+Copyright (C) 2016-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Vicare Scheme&rsquo;s typed language: syntaxes define</title>
+
+<meta name="description" content="Vicare Scheme&rsquo;s typed language: syntaxes define">
+<meta name="keywords" content="Vicare Scheme&rsquo;s typed language: syntaxes define">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="type-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="syntaxes.html#syntaxes" rel="up" title="syntaxes">
+<link href="syntaxes-new_002ddelete.html#syntaxes-new_002ddelete" rel="next" title="syntaxes new-delete">
+<link href="syntaxes-type_002dof.html#syntaxes-type_002dof" rel="prev" title="syntaxes type-of">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="syntaxes-define"></a>
+<div class="header">
+<p>
+Next: <a href="syntaxes-new_002ddelete.html#syntaxes-new_002ddelete" accesskey="n" rel="next">syntaxes new-delete</a>, Previous: <a href="syntaxes-type_002dof.html#syntaxes-type_002dof" accesskey="p" rel="prev">syntaxes type-of</a>, Up: <a href="syntaxes.html#syntaxes" accesskey="u" rel="up">syntaxes</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Defining-type-annotations"></a>
+<h3 class="section">5.2 Defining type annotations</h3>
+
+
+<p>The following syntactic bindings are exported by the library
+<code>(vicare)</code>.
+</p>
+
+<dl>
+<dt><a name="index-define_002dtype"></a>Syntax: <strong>define-type</strong> <em><var>?name</var></em></dt>
+<dt><a name="index-define_002dtype-1"></a>Syntax: <strong>define-type</strong> <em><var>?name</var> <var>?annotation</var></em></dt>
+<dd><p>Define a new type annotation bound to <var>?name</var>.  The argument
+<var>?name</var> must be a syntactic identifier.  The argument
+<var>?annotation</var> must be a type annotation syntax.
+</p></dd></dl>
+
+
+<p>We can define new type annotations using the syntax
+<code>define-type</code>:
+</p>
+<div class="lisp">
+<pre class="lisp">(define-type &lt;nnfx&gt;
+  &lt;non-negative-fixnum&gt;)
+
+(define-type &lt;compound&gt;
+  (or &lt;vector&gt; &lt;list&gt;))
+</pre></div>
+
+<p>This syntax allows recursive type definitions:
+</p>
+<div class="lisp">
+<pre class="lisp">(define-type &lt;it&gt;
+  (or (list-of &lt;fixnum&gt;)
+      (vector-of &lt;it&gt;)))
+</pre></div>
+
+<p>This syntax allows <em>forward definitions</em>: type annotations that are
+half&ndash;defined to allow for mutually recursive type definitions.  Here is
+an example of forward definition that does nothing useful:
+</p>
+<div class="lisp">
+<pre class="lisp">(define-type &lt;it&gt;)      ;forward definition
+(define-type &lt;it&gt;)      ;does nothing
+
+;;Complete the definition of &quot;&lt;it&gt;&quot;.
+(define-type &lt;it&gt; &lt;number&gt;)
+</pre></div>
+
+<p>Here is a possible definition for a <code>&lt;syntax-object&gt;</code> type using
+mutually recursive definitions:
+</p>
+<div class="lisp">
+<pre class="lisp">(import (rename (only (vicare expander)
+                      &lt;stx&gt; &lt;syntactic-identifier&gt;)
+                (&lt;stx&gt; &lt;wrapped-syntax-object&gt;)))
+
+(define-type &lt;datum&gt;
+  (or &lt;null&gt; &lt;boolean&gt; &lt;char&gt; &lt;number&gt; &lt;string&gt; &lt;bytevector&gt;))
+
+(define-type &lt;syntax-object&gt;)
+
+(define-type &lt;pair-of-syntax-objects&gt;
+  (pair-of &lt;syntax-object&gt;))
+
+(define-type &lt;vector-of-syntax-objects&gt;
+  (vector-of &lt;syntax-object&gt;))
+
+(define-type &lt;syntax-object&gt;
+  (or &lt;datum&gt;
+      &lt;wrapped-syntax-object&gt;
+      &lt;syntactic-identifier&gt;
+      &lt;pair-of-syntax-objects&gt;
+      &lt;vector-of-syntax-objects&gt;))
+</pre></div>
+
+<p>Forward definitions work only for identifiers defined in the same
+lexical contour.  So the following works:
+</p>
+<div class="lisp">
+<pre class="lisp">(define-type &lt;it&gt;)
+(define-type &lt;it&gt;
+  &lt;fixnum&gt;)
+</pre></div>
+
+<p>but the following will fail:
+</p>
+<div class="lisp">
+<pre class="lisp">(define-type &lt;it&gt;)
+(module (&lt;it&gt;)
+  (define-type &lt;it&gt;
+    &lt;fixnum&gt;))
+</pre></div>
+
+<p>because the concrete definition is inside a module, which represents a
+lexical contour.
+</p>
+
+
+
+</body>
+</html>

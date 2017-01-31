@@ -1,0 +1,284 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.4d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit and 64-bit
+processors.  Vicare is pronounced the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/downloads
+
+the home page of the project is at:
+
+http://marcomaggi.github.io/vicare.html
+
+development takes place at:
+
+http://github.com/marcomaggi/vicare/
+
+and, as a backup, at:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the "History" appendix for details.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Vicare Scheme: compiler lifting combinators</title>
+
+<meta name="description" content="Vicare Scheme: compiler lifting combinators">
+<meta name="keywords" content="Vicare Scheme: compiler lifting combinators">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="compiler-lifting.html#compiler-lifting" rel="up" title="compiler lifting">
+<link href="compiler-lifting-optimisation.html#compiler-lifting-optimisation" rel="next" title="compiler lifting optimisation">
+<link href="compiler-lifting-prerequisites.html#compiler-lifting-prerequisites" rel="prev" title="compiler lifting prerequisites">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="compiler-lifting-combinators"></a>
+<div class="header">
+<p>
+Next: <a href="compiler-lifting-optimisation.html#compiler-lifting-optimisation" accesskey="n" rel="next">compiler lifting optimisation</a>, Previous: <a href="compiler-lifting-prerequisites.html#compiler-lifting-prerequisites" accesskey="p" rel="prev">compiler lifting prerequisites</a>, Up: <a href="compiler-lifting.html#compiler-lifting" accesskey="u" rel="up">compiler lifting</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Combinators-and-non_002d_002dcombinators"></a>
+<h4 class="subsection">17.20.3 Combinators and non&ndash;combinators</h4>
+
+
+<p>To discuss the transformations we define:
+</p>
+<dl compact="compact">
+<dt><em>combinator</em></dt>
+<dd><p>A Scheme function without free variables; a combinator does not capture
+any binding.  The closure object implementing a combinator can be
+created once and for all at compile&ndash;time; for example:
+</p>
+<div class="example">
+<pre class="example">(define (compute x y z)
+  (define (lincomb a b c)
+    (+ (* a b) (* a c)))
+  (lincomb x y z))
+</pre></div>
+
+<p>assuming function integration is disabled: the closure object
+implementing the function <code>lincomb</code> can be created once at
+compile&ndash;time and reused at every call to <code>compute</code>.
+</p>
+</dd>
+<dt><em>non&ndash;combinator</em></dt>
+<dd><p>A Scheme function with free variables, whose current value must be
+captured at run&ndash;time.  To implement a non&ndash;combinator: a new closure
+object must be created at run&ndash;time every time the control flow reaches
+the <code>lambda</code> form, to capture the current values of the free
+variables; for example:
+</p>
+<div class="example">
+<pre class="example">(define (adder x)
+  (lambda (x)
+    (+ x y)))
+</pre></div>
+
+<p>at every call to the function <code>adder</code> a new closure object must be
+created and returned, capturing the value of the argument <code>x</code>.
+</p></dd>
+</dl>
+
+<p>We want to discuss how to recognise combinators and non&ndash;combinators
+among the bindings defined by a <code>fix</code> struct.  Let&rsquo;s consider
+the recordised code:
+</p>
+<div class="example">
+<pre class="example">(bind ((<var>?lhs1</var> <var>?rhs1</var>) ...)
+  (fix ((<var>?lhs0</var> <var>?rhs0</var>) ...)
+    (bind ((<var>?lhs2</var> <var>?rhs2</var>) ...)
+      <var>?body</var>)))
+</pre></div>
+
+<p>at this point in the sequence of compiler passes, we know that all the
+<var>?rhs0</var> are <code>closure-maker</code> structs.  The <code>var</code>
+structs <var>?lhs0</var> and <var>?lhs1</var> may appear in the body of each
+<var>?rhs0</var>, while the internally defined <code>var</code> structs
+<var>?lhs2</var> cannot; so the <var>?lhs2</var> do not influence the nature of
+the <var>?rhs0</var> expressions: we can ignore all the internally defined
+bindings.  So let&rsquo;s switch to inspect the recordised code:
+</p>
+<div class="example">
+<pre class="example">(bind ((<var>?lhs1</var> <var>?rhs1</var>) ...)
+  (fix ((<var>?lhs0</var> <var>?rhs0</var>) ...)
+    <var>?body</var>))
+</pre></div>
+
+<p>the <code>var</code> structs <var>?lhs0</var> and <var>?lhs1</var> may appear in the
+body of each <var>?rhs0</var>; this includes the case of recursive
+<var>?rhs0</var>, in which a <var>?lhs0</var> <code>var</code> appears in the list of
+free variables of the associated <var>?rhs0</var>.
+</p>
+<ul>
+<li> If a list of free variables is empty: the corresponding <var>?rhs0</var> is a
+combinator.  For example, in the recordised code:
+
+<div class="example">
+<pre class="example">(bind ((a <var>?rhs-a</var>) (b <var>?rhs-b</var>))
+  (fix ((f (closure-maker (lambda () '3) no-freevars))
+        (g (closure-maker (lambda () '4) no-freevars)))
+    <var>?body</var>))
+</pre></div>
+
+<p>both the <code>fix</code>&ndash;bound functions have empty list of free
+variables, so both functions are combinators.
+</p>
+</li><li> If a list of free variables contains only externally defined <var>?lhs1</var>
+structs: the corresponding <var>?rhs0</var> is a non&ndash;combinator.  For
+example, in the recordised code:
+
+<div class="example">
+<pre class="example">(bind ((a <var>?rhs-a</var>) (b <var>?rhs-b</var>))
+  (fix ((f (closure-maker (lambda () a)
+                          (freevars: a)))
+        (g (closure-maker (lambda () (constant 3))
+                          no-freevars)))
+    <var>?body</var>))
+</pre></div>
+
+<p>the function bound to <code>f</code> has the <code>var</code> <code>a</code> in its
+free variables list; the value of the free variable <code>a</code> is known
+only at run&ndash;time, so the closure maker must capture a run&ndash;time value,
+so the function <code>f</code> is a non&ndash;combinator.
+</p>
+</li><li> If a list of free variables contains only <var>?lhs0</var> structs defined at
+by the same <code>fix</code> and bound to combinators: the corresponding
+<var>?rhs0</var> is a combinator.  For example, in the recordised code:
+
+<div class="example">
+<pre class="example">(bind ((a <var>?rhs-a</var>) (b <var>?rhs-b</var>))
+  (fix ((f (closure-maker (lambda () (constant 3))
+                          no-freevars))
+        (g (closure-maker (lambda () (funcall f))
+                          (freevars: f))))
+    <var>?body</var>))
+</pre></div>
+
+<p>the function bound to <code>f</code> has no free variables, so it is a
+combinator; the function bound to <code>g</code> has <code>f</code> in its list of
+free variables; the value of <code>f</code> is known at compile&ndash;time, so the
+closure maker of <code>g</code> does not need to capture a free variable&rsquo;s
+run&ndash;time value, so the function <code>g</code> is a combinator too.
+</p>
+</li><li> If every list of free variables contains only <var>?lhs0</var> structs
+defined by the same <code>fix</code>: all the corresponding <var>?rhs0</var> are
+combinators.  For example, in the recordised code:
+
+<div class="example">
+<pre class="example">(bind ((a <var>?rhs-a</var>) (b <var>?rhs-b</var>))
+  (fix ((f (closure-maker (lambda () (funcall g))
+                          (freevars: g)))
+        (g (closure-maker (lambda () (funcall f))
+                          (freevars: f))))
+    <var>?body</var>))
+</pre></div>
+
+<p>both the functions have lists of free variables including only
+<code>var</code> structs defined by the same <code>fix</code>; the values of
+the free variables is known at compile&ndash;time, so the closure makers do
+not need to capture the free variables&rsquo; run&ndash;time values, so both the
+functions are combinators.
+</p>
+</li><li> If a list of free variables contains a <var>?lhs0</var> struct bound to a
+non&ndash;combinator, the corresponding <var>?rhs0</var> is a non&ndash;combinator too.
+For example, in the recordised code:
+
+<div class="example">
+<pre class="example">(bind ((a <var>?rhs-a</var>) (b <var>?rhs-b</var>))
+  (fix ((f (closure-maker (lambda () a)
+                          (freevars: a)))
+        (g (closure-maker (lambda () (funcall f))
+                          (freevars: f))))
+    <var>?body</var>))
+</pre></div>
+
+<p>the function bound to <code>f</code> is a non&ndash;combinator; the function bound
+to <code>g</code> has <code>f</code> in its free variables list; the value of
+<code>f</code> includes the run&ndash;time value of <code>a</code>, so the value of the
+free variable <code>f</code> is known only at run&ndash;time, so the closure maker
+of <code>g</code> must capture the run&ndash;time value, so the function <code>g</code>
+is a non&ndash;combinator too.
+</p></li></ul>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="compiler-lifting-optimisation.html#compiler-lifting-optimisation" accesskey="n" rel="next">compiler lifting optimisation</a>, Previous: <a href="compiler-lifting-prerequisites.html#compiler-lifting-prerequisites" accesskey="p" rel="prev">compiler lifting prerequisites</a>, Up: <a href="compiler-lifting.html#compiler-lifting" accesskey="u" rel="up">compiler lifting</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

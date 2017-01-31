@@ -1,0 +1,243 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.4d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit and 64-bit
+processors.  Vicare is pronounced the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/downloads
+
+the home page of the project is at:
+
+http://marcomaggi.github.io/vicare.html
+
+development takes place at:
+
+http://github.com/marcomaggi/vicare/
+
+and, as a backup, at:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the "History" appendix for details.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Vicare Scheme: libutils interning</title>
+
+<meta name="description" content="Vicare Scheme: libutils interning">
+<meta name="keywords" content="Vicare Scheme: libutils interning">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="libutils.html#libutils" rel="up" title="libutils">
+<link href="libutils-expanding.html#libutils-expanding" rel="next" title="libutils expanding">
+<link href="libutils-libraries-ops.html#libutils-libraries-ops" rel="prev" title="libutils libraries ops">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="libutils-interning"></a>
+<div class="header">
+<p>
+Next: <a href="libutils-expanding.html#libutils-expanding" accesskey="n" rel="next">libutils expanding</a>, Previous: <a href="libutils-libraries.html#libutils-libraries" accesskey="p" rel="prev">libutils libraries</a>, Up: <a href="libutils.html#libutils" accesskey="u" rel="up">libutils</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Interning-libraries"></a>
+<h3 class="section">7.4 Interning libraries</h3>
+
+
+<p>When a library is loaded in source or binary form, it is &ldquo;interned&rdquo;;
+to intern a library means to add it to an internal collection along with
+all its dependency libraries.  Interned libraries are neither invoked
+nor visited; the invoke&ndash;time and visit&ndash;time depend upon the usage we
+make of them.
+</p>
+<p>In a Vicare process, there can be only one library with a given
+sequence of symbols in its name; if we have already loaded the library
+<code>(a b (1))</code>, it is not possible to load a library <code>(a b
+(2))</code>, because they have the sequence <code>(a b)</code> in common.
+</p>
+<p>The following bindings are exported by the library <code>(vicare
+libraries)</code>.
+</p>
+
+<dl>
+<dt><a name="index-interned_002dlibraries"></a>Function: <strong>interned-libraries</strong></dt>
+<dt><a name="index-interned_002dlibraries-1"></a>Function: <strong>interned-libraries</strong> <em><var>all?</var></em></dt>
+<dd><p>Return a list of <code>&lt;library&gt;</code> objects representing interned
+libraries.  If <var>all?</var>  is non&ndash;false: return all the interned
+libraries, else return only the visible ones.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-find_002dlibrary_002dby_002dname"></a>Function: <strong>find-library-by-name</strong> <em><var>libname</var></em></dt>
+<dd><p>Given a <acronym>R6RS</acronym> library name: try to search and intern the
+corresponding library, if it is not already interned; when successful
+return the corresponding <code>&lt;library&gt;</code> object, otherwise raise an
+exception.
+</p>
+<p>First search for the library among the interned ones then, if not found,
+in an external libraries repository using the procedure referenced by
+the parameter <code>current-library-loader</code>.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-find_002dlibrary_002dby_002dreference"></a>Function: <strong>find-library-by-reference</strong> <em><var>libref</var></em></dt>
+<dd><p>Given a <acronym>R6RS</acronym> library reference: try to search and intern the
+corresponding library, if it is not already interned; when successful
+return the corresponding <code>&lt;library&gt;</code> object, otherwise raise an
+exception.
+</p>
+<p>First search for the library among the interned ones then, if not found,
+in an external libraries repository using the procedure referenced by
+the parameter <code>current-library-loader</code>.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-find_002dlibrary_002dby_002ddescriptor"></a>Function: <strong>find-library-by-descriptor</strong> <em><var>libdescr</var></em></dt>
+<dd><p>Given a library descriptor, as generated by the function
+<code>library-descriptor</code> (see <a href="libutils-libraries.html#libutils-libraries">library-descriptor</a>): try to search and intern the corresponding
+library, if it is not already interned; when successful return the
+corresponding <code>&lt;library&gt;</code> object, otherwise raise an exception.
+</p>
+<p>First search for the library among the interned ones then, if not found,
+in an external libraries repository using the procedure referenced by
+the parameter <code>current-library-loader</code>.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-find_002dlibrary_002din_002dcollection_002dby_002dpredicate"></a>Function: <strong>find-library-in-collection-by-predicate</strong> <em><var>pred</var></em></dt>
+<dd><p>Visit the collection of interned libraries and return the first for
+which <var>pred</var> returns non&ndash;false.  If <var>pred</var> returns <code>#f</code> for
+all the interned libraries: return <code>#f</code>.
+</p>
+<p><var>pred</var> must be a function accepting as single argument a
+<code>&lt;library&gt;</code> object.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-find_002dlibrary_002din_002dcollection_002dby_002dname"></a>Function: <strong>find-library-in-collection-by-name</strong> <em><var>libname</var></em></dt>
+<dd><p>Given a symbolic expression representing a <acronym>R6RS</acronym> library name: visit
+the collection of interned libraries and return the first
+<code>&lt;library&gt;</code> object having conforming library name identifiers.  If
+no matching library is found: return <code>#f</code>.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-find_002dlibrary_002din_002dcollection_002dby_002dreference"></a>Function: <strong>find-library-in-collection-by-reference</strong> <em><var>libref</var></em></dt>
+<dd><p>Given a symbolic expression representing a <acronym>R6RS</acronym> library reference:
+visit the collection of interned libraries and return the first
+<code>&lt;library&gt;</code> object having conforming library name identifiers.  If
+no matching library is found: return <code>#f</code>.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-find_002dlibrary_002din_002dcollection_002dby_002ddescriptor"></a>Function: <strong>find-library-in-collection-by-descriptor</strong> <em><var>libdescr</var></em></dt>
+<dd><p>Given a library descriptor, as generated by the function
+<code>library-descriptor</code>: visit the collection of interned libraries
+and return the first <code>&lt;library&gt;</code> object having the same library
+<acronym>UID</acronym>.  If no matching library is found: <strong>raise an exception</strong>.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-unintern_002dlibrary"></a>Function: <strong>unintern-library</strong> <em><var>libname</var></em></dt>
+<dt><a name="index-unintern_002dlibrary-1"></a>Function: <strong>unintern-library</strong> <em><var>libname</var> <var>err?</var></em></dt>
+<dd><p>Interned libraries can be uninterned, either to free system resources or
+to allow reinterning from new files.
+</p>
+<p>This function uninterns a library given its <acronym>R6RS</acronym> library name.  If
+<var>err?</var> is non&ndash;false: if the library is not currently interned an
+exception is raised; otherwise nothing happens.  Return unspecified
+values.
+</p>
+<blockquote>
+<p><strong>NOTE</strong> The implementation of this function is incomplete.  It is
+to be used at the <acronym>REPL</acronym> when experimenting does not hurt.
+</p></blockquote>
+</dd></dl>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="libutils-expanding.html#libutils-expanding" accesskey="n" rel="next">libutils expanding</a>, Previous: <a href="libutils-libraries.html#libutils-libraries" accesskey="p" rel="prev">libutils libraries</a>, Up: <a href="libutils.html#libutils" accesskey="u" rel="up">libutils</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

@@ -1,0 +1,380 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.4d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit and 64-bit
+processors.  Vicare is pronounced the etruscan way.  The focus of
+this document is over the typed language extension.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/downloads
+
+the home page of the project is at:
+
+http://marcomaggi.github.io/vicare.html
+
+development takes place at:
+
+http://github.com/marcomaggi/vicare/
+
+and, as a backup, at:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/
+
+Copyright (C) 2016-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Vicare Scheme&rsquo;s typed language: labels</title>
+
+<meta name="description" content="Vicare Scheme&rsquo;s typed language: labels">
+<meta name="keywords" content="Vicare Scheme&rsquo;s typed language: labels">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="type-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="index.html#Top" rel="up" title="Top">
+<link href="friends.html#friends" rel="next" title="friends">
+<link href="interfaces-examples.html#interfaces-examples" rel="prev" title="interfaces examples">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="labels"></a>
+<div class="header">
+<p>
+Next: <a href="friends.html#friends" accesskey="n" rel="next">friends</a>, Previous: <a href="interfaces.html#interfaces" accesskey="p" rel="prev">interfaces</a>, Up: <a href="index.html#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Sub_002d_002dtyping-with-labels"></a>
+<h2 class="chapter">11 Sub&ndash;typing with labels</h2>
+
+
+<a name="index-Library-_0028vicare-language_002dextensions-labels_0029"></a>
+<a name="index-_0028vicare-language_002dextensions-labels_0029_002c-library"></a>
+
+
+<p><em>Labels</em> are types built on top of other types: we put label&ndash;types
+on values of a parent type to handle them locally in a special way.
+There are two kinds of labels:
+</p>
+<ul>
+<li> Labels without custom type predicate.  They are synonyms of their parent
+type and add methods to it.  A value matches the label&ndash;type if it
+matches the parent type.
+
+</li><li> Labels with custom type predicate.  A value matches the label&ndash;type if
+it satisfies the label&rsquo;s type predicate; it is possible to establish
+when a value matches the label&ndash;type only at run&ndash;time.
+</li></ul>
+
+<p>The following syntactic bindings are exported by the library
+<code>(vicare language-extensions labels)</code>.  All the auxiliary syntaxes
+are exported by the library <code>(vicare)</code> and reexported by the
+library <code>(vicare language-extensions labels)</code>.
+</p>
+
+<dl>
+<dt><a name="index-define_002dlabel_002dtype"></a>Syntax: <strong>define-label-type</strong> <em><var>?type-name</var> <var>?clause</var> &hellip;</em></dt>
+<dt><a name="index-nongenerative-1"></a>Auxiliary Syntax: <strong>nongenerative</strong></dt>
+<dt><a name="index-parent-1"></a>Auxiliary Syntax: <strong>parent</strong></dt>
+<dt><a name="index-constructor"></a>Auxiliary Syntax: <strong>constructor</strong></dt>
+<dt><a name="index-destructor"></a>Auxiliary Syntax: <strong>destructor</strong></dt>
+<dt><a name="index-type_002dpredicate"></a>Auxiliary Syntax: <strong>type-predicate</strong></dt>
+<dt><a name="index-equality_002dpredicate-1"></a>Auxiliary Syntax: <strong>equality-predicate</strong></dt>
+<dt><a name="index-comparison_002dprocedure-1"></a>Auxiliary Syntax: <strong>comparison-procedure</strong></dt>
+<dt><a name="index-hash_002dfunction-1"></a>Auxiliary Syntax: <strong>hash-function</strong></dt>
+<dt><a name="index-method-1"></a>Auxiliary Syntax: <strong>method</strong></dt>
+<dt><a name="index-mixins-1"></a>Auxiliary Syntax: <strong>mixins</strong></dt>
+<dd><p>Define a new label type.  <var>?type-name</var> must be a syntactic
+identifier representing the label name.
+</p>
+<p>The clause <code>parent</code> is mandatory and its single argument must be
+a type annotation.
+</p>
+<p>The following clauses can be used in the same way they are used in
+<code>define-record-type</code>:
+</p>
+<div class="lisp">
+<pre class="lisp">parent type-predicate
+equality-predicate comparison-procedure hash-function
+method mixins
+</pre></div>
+
+<p>notice that labels <strong>cannot</strong> implement interfaces.
+</p>
+<p>The clause <code>constructor</code> may appear zero, one or more times;
+these clauses define a constructor function to be used with the syntax
+<code>new</code>.  The <code>constructor</code> clause has a syntax similar to
+<code>lambda/checked</code>; it must have the format:
+</p>
+<div class="lisp">
+<pre class="lisp">(constructor <var>?typed-formals</var> <var>?body0</var> <var>?body</var> ...)
+</pre></div>
+
+<p><var>?typed-formals</var> must <strong>not</strong> specify a return value: the
+constructor returns a single value of type <var>type-name</var>, and its
+specification is automatically generated.
+</p>
+<p>The clause <code>destructor</code> may appear zero or one time; this clause
+defines a destructor function to be used with the syntax
+<code>delete</code>; this destructor is <strong>not</strong> used by the garbage
+collector.  The <code>destructor</code> clause has a syntax similar to
+<code>lambda</code>; it must have the format:
+</p>
+<div class="lisp">
+<pre class="lisp">(destructor <var>?formals</var> <var>?body0</var> <var>?body</var> ...)
+</pre></div>
+
+<p>where <var>?formals</var> must specify a single argument of type
+<var>?type-name</var>.  <var>?formals</var> must <strong>not</strong> specify a return
+value: the destructor should return unspecified values.
+</p>
+<p>The optional clause <code>nongenerative</code> must be used with a single
+argument being a symbol representing a <acronym>UID</acronym> associated with the label
+type; such symbol is used by <code>type-unique-identifiers</code> and so it
+allows multimethods to use label types.
+</p></dd></dl>
+
+
+<a name="Examples-of-simple-labels"></a>
+<h4 class="subsubheading">Examples of simple labels</h4>
+
+<p>The following example defines a label <code>&lt;String&gt;</code> that is just a
+synonym for <code>&lt;string&gt;</code>:
+</p>
+<div class="lisp">
+<pre class="lisp">(define-label-type &lt;String&gt;
+  (parent &lt;string&gt;))
+
+(define {O &lt;String&gt;}
+  &quot;ciao&quot;)
+
+(.length O)     &rArr; 4
+(hash    O)     &rarr; (string-hash O)
+</pre></div>
+
+<p>The following example defines a label to represent fixnums returned by
+comparison procedures (&lsquo;<samp>-1</samp>&rsquo;, &lsquo;<samp>0</samp>&rsquo;, &lsquo;<samp>+1</samp>&rsquo;):
+</p>
+<div class="lisp">
+<pre class="lisp">(define-label-type &lt;comparison-fixnum&gt;
+  (parent (or &lt;non-negative-fixnum&gt; &lt;negative-fixnum&gt;))
+  (type-predicate
+    (lambda ({parent-pred &lt;type-predicate&gt;})
+      (lambda (obj)
+        (and (parent-pred obj)
+             (fx&lt;=? obj +1)
+             (fx&gt;=? obj -1))))))
+
+(is-a? +1 &lt;comparison-fixnum&gt;)  &rArr; #t
+(is-a? -1 &lt;comparison-fixnum&gt;)  &rArr; #t
+(is-a?  0 &lt;comparison-fixnum&gt;)  &rArr; #t
+
+(is-a? +2 &lt;comparison-fixnum&gt;)  &rArr; #f
+(is-a? -2 &lt;comparison-fixnum&gt;)  &rArr; #f
+</pre></div>
+
+
+<a name="Examples-of-hash-function"></a>
+<h4 class="subsubheading">Examples of hash function</h4>
+
+<p>Now let&rsquo;s define a custom hash function (we ignore the parent hash
+function that gets passed as <var>parent-hash</var> argument):
+</p>
+<div class="lisp">
+<pre class="lisp">(define-label-type &lt;String&gt;
+  (parent &lt;string&gt;)
+  (hash-function
+    (lambda (parent-hash)
+      (lambda (S)
+        (if (string-empty? S)
+            0
+          (char-hash (string-ref S 0)))))))
+
+(define {O &lt;String&gt;}
+  &quot;ciao&quot;)
+
+(hash O)     &equiv; (char-hash #\c)
+</pre></div>
+
+
+<a name="Examples-of-methods"></a>
+<h4 class="subsubheading">Examples of methods</h4>
+
+<p>Let&rsquo;s define a label with a method to increment a fixnum.
+</p>
+<div class="lisp">
+<pre class="lisp">(define-label-type &lt;fx&gt;
+  (parent &lt;fixnum&gt;)
+  (method (incr)
+    (fxadd1 this)))
+
+(define {O &lt;fx&gt;}
+  10)
+
+(.incr O)       &rArr; 11
+</pre></div>
+
+<p>Now let&rsquo;s define a method for adding prefixes and suffixes:
+</p>
+<div class="lisp">
+<pre class="lisp">(define-label-type &lt;String&gt;
+  (parent &lt;string&gt;)
+  (method ({append &lt;String&gt;} {suff &lt;String&gt;})
+    (string-append this suff))
+  (method ({append &lt;String&gt;} {pref &lt;String&gt;} {suff &lt;String&gt;})
+    (string-append pref this suff)))
+
+(define {O &lt;String&gt;}
+  &quot;ciao&quot;)
+
+(.append O &quot;-suff&quot;)             &rArr; &quot;ciao-suff&quot;
+(.append O &quot;pref-&quot; &quot;-suff&quot;)     &rArr; &quot;pref-ciao-suff&quot;
+
+(.length (.append O &quot;pref-&quot; &quot;-suff&quot;))
+&rArr; 14
+</pre></div>
+
+
+<a name="Defining-a-constructor-function"></a>
+<h4 class="subsubheading">Defining a constructor function</h4>
+
+<p>In the following example:
+</p>
+<div class="lisp">
+<pre class="lisp">(define-label-type &lt;vec&gt;
+  (parent &lt;nevector&gt;)
+  (constructor (a b)
+    (vector a b))
+  (constructor (a b c)
+    (vector a b c)))
+
+(new &lt;vec&gt; 1 2)         &rArr; #(1 2)
+(new &lt;vec&gt; 1 2 3)       &rArr; #(1 2 3)
+</pre></div>
+
+<p>we can think of the <code>constructor</code> clauses as generating the
+following functions definition:
+</p>
+<div class="lisp">
+<pre class="lisp">(define/overload ({&lt;vec&gt;-constructor &lt;vec&gt;} a b)
+  (vector a b))
+
+(define/overload ({&lt;vec&gt;-constructor &lt;vec&gt;} a b c)
+  (vector a b c))
+</pre></div>
+
+<p>notice that a type signature for the return value has been automatically
+inserted.
+</p>
+
+<a name="Defining-a-destructor-function"></a>
+<h4 class="subsubheading">Defining a destructor function</h4>
+
+<p>Here we define a bogus destructor function:
+</p>
+<div class="lisp">
+<pre class="lisp">(define-label-type &lt;vec&gt;
+  (parent &lt;vector&gt;)
+  (destructor ({O &lt;vec&gt;})
+    `(deleted ,O)))
+
+(define {O &lt;vec&gt;}
+  '#(1 2))
+
+(delete O)      &rArr; (deleted #(1 2))
+</pre></div>
+
+<p>we can think of the <code>destructor</code> clauses as generating the
+following function definition:
+</p>
+<div class="lisp">
+<pre class="lisp">(define (&lt;vec&gt;-destructor {O &lt;vec&gt;})
+  `(deleted ,O))
+</pre></div>
+
+
+<a name="Example-of-mixin"></a>
+<h4 class="subsubheading">Example of mixin</h4>
+
+<p>Here we show how to include mixin clauses in a label definition:
+</p>
+<div class="lisp">
+<pre class="lisp">(define-mixin-type &lt;stuff&gt;
+  (method (pussy)
+    (list 'pussy (.name this))))
+
+(define-label-type &lt;peluche&gt;
+  (parent (list &lt;symbol&gt;))
+  (method (name)
+    (car this))
+  (mixins &lt;stuff&gt;))
+
+(define {O &lt;peluche&gt;}
+  '(cat))
+
+(.name  O)      &rArr; cat
+(.pussy O)      &rArr; (pussy cat)
+</pre></div>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="friends.html#friends" accesskey="n" rel="next">friends</a>, Previous: <a href="interfaces.html#interfaces" accesskey="p" rel="prev">interfaces</a>, Up: <a href="index.html#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

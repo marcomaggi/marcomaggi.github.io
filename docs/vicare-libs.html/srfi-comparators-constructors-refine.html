@@ -1,0 +1,206 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes the libraries distributed along with version
+0.4d1 of Vicare Scheme, an R6RS compliant native
+compiler for the Scheme language.
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+The documentation of the libraries (vicare parser-tools silex
+-) are derived form the documentation of SILex.  Copyright
+(C) 2001, 2009 Danny Dube'.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Libraries for Vicare Scheme: srfi comparators constructors refine</title>
+
+<meta name="description" content="Libraries for Vicare Scheme: srfi comparators constructors refine">
+<meta name="keywords" content="Libraries for Vicare Scheme: srfi comparators constructors refine">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="srfi-comparators-constructors.html#srfi-comparators-constructors" rel="up" title="srfi comparators constructors">
+<link href="srfi-comparators-constructors-reverse.html#srfi-comparators-constructors-reverse" rel="next" title="srfi comparators constructors reverse">
+<link href="srfi-comparators-constructors-select.html#srfi-comparators-constructors-select" rel="prev" title="srfi comparators constructors select">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="srfi-comparators-constructors-refine"></a>
+<div class="header">
+<p>
+Next: <a href="srfi-comparators-constructors-reverse.html#srfi-comparators-constructors-reverse" accesskey="n" rel="next">srfi comparators constructors reverse</a>, Previous: <a href="srfi-comparators-constructors-select.html#srfi-comparators-constructors-select" accesskey="p" rel="prev">srfi comparators constructors select</a>, Up: <a href="srfi-comparators-constructors.html#srfi-comparators-constructors" accesskey="u" rel="up">srfi comparators constructors</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Refining-comparators"></a>
+<h4 class="subsubsection">2.38.8.8 Refining comparators</h4>
+
+
+<dl>
+<dt><a name="index-make_002drefining_002dcomparator"></a>Function: <strong>make-refining-comparator</strong> <em><var>comparator0</var> <var>comparator</var> &hellip;</em></dt>
+<dd><p>Return a comparator that makes use of the <var>comparator</var>s in the same
+way as <code>make-selecting-comparator</code>, except that its procedures can
+look past the first comparator whose type test predicate is satisfied.
+</p>
+<p>If the comparison procedure of the first comparator returns zero: the
+next comparator whose type test predicate is satisfied is tried, then
+the next and so on, until one returns a non&ndash;zero value.  If there are
+no more such comparators, then the comparison procedure returns zero.
+</p>
+<p>The equality predicate is defined in the same way.  If no type test
+predicate is satisfied, an error is signalled.
+</p>
+<p>The hash function of the result returns a value computed using the last
+comparator in the given list for which the type test procedure returns
+true.
+</p>
+<blockquote>
+<p>According to the <acronym>SRFI</acronym>: the hash function of the result returns a
+value which depends, in an implementation&ndash;defined way, on the results
+of invoking the hash functions of the comparators whose type test
+predicates are satisfied on its argument.  In particular, it may depend
+solely on the first or last such hash function.  If no type test
+predicate is satisfied, an error is signalled.
+</p></blockquote>
+
+<p>This procedure is analogous to the expression type <code>refine-compare</code>
+from <acronym>SRFI</acronym>-67.
+</p>
+<div class="lisp">
+<pre class="lisp">#!vicare
+(import (vicare) (srfi :114))
+
+(define* (round-to-epsilon {R flonum?} {epsilon flonum?})
+  (infix round(R / epsilon) * epsilon))
+
+(define-constant C
+  (make-refining-comparator
+   (make-inexact-real-comparator 0.1   round-to-epsilon 'error)
+   (make-inexact-real-comparator 0.01  round-to-epsilon 'error)
+   (make-inexact-real-comparator 0.001 round-to-epsilon 'error)))
+
+;; type test
+(let ((test-type (comparator-type-test-procedure C)))
+  (test-type 1.1)       &rArr; #t
+  (test-type 1)         &rArr; #f
+  (test-type &quot;ciao&quot;))   &rArr; #f
+
+;; type check
+(let ((check-type (comparator-check-type-procedure C)))
+  (check-type 1.1)      &rArr; #t
+  (try
+      (comparator-check-type C 1)
+    (catch E
+      ((&amp;comparator-type-error)
+       #t)
+      (else E))))       &rArr; #t
+
+;; comparison
+(let ((compare (comparator-comparison-procedure C)))
+  (compare 1. 1.)       &rArr; 0
+  (compare 2. 1.)       &rArr; +1
+  (compare 1. 2.)       &rArr; -1
+
+  ;;Equal according to the first comparator,
+  ;;different according to the second.
+  (compare 1.00 1.05)   &rArr; -1
+  (compare 1.05 1.00)   &rArr; +1
+
+  ;;Equal according to the first and second
+  ;;comparators, different according to the
+  ;;third.
+  (compare 1.0   1.005) &rArr; -1
+  (compare 1.005 1.0)   &rArr; +1
+
+  ;;Equal according to the first, second and
+  ;;third comparators.
+  (compare 1.0 1.0005)  &rArr; 0
+  (compare 1.0005 1.0)  &rArr; 0
+
+  (try
+      (compare 1 &quot;ciao&quot;)
+    (catch E
+      ((&amp;comparator-type-error)
+       #t)
+      (else E))))       &rArr; #t
+
+;; hash
+(let ((hash (comparator-hash-function C)))
+  (non-negative-exact-integer? (hash 1.2))      &rArr; #t
+
+  (try
+      (hash 1+2i)
+    (catch E
+      ((&amp;comparator-type-error)
+       #t)
+      (else E))))       &rArr; #t
+</pre></div>
+</dd></dl>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="srfi-comparators-constructors-reverse.html#srfi-comparators-constructors-reverse" accesskey="n" rel="next">srfi comparators constructors reverse</a>, Previous: <a href="srfi-comparators-constructors-select.html#srfi-comparators-constructors-select" accesskey="p" rel="prev">srfi comparators constructors select</a>, Up: <a href="srfi-comparators-constructors.html#srfi-comparators-constructors" accesskey="u" rel="up">srfi comparators constructors</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

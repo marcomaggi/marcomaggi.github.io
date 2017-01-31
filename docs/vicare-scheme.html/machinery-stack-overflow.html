@@ -1,61 +1,36 @@
-<html lang="en">
-<head>
-<title>machinery stack overflow - Vicare Scheme</title>
-<meta http-equiv="Content-Type" content="text/html">
-<meta name="description" content="Vicare Scheme">
-<meta name="generator" content="makeinfo 4.13">
-<link title="Top" rel="start" href="index.html#Top">
-<link rel="up" href="machinery.html#machinery" title="machinery">
-<link rel="prev" href="machinery-continuations.html#machinery-continuations" title="machinery continuations">
-<link rel="next" href="machinery-call-arguments.html#machinery-call-arguments" title="machinery call arguments">
-<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
-<!--
-This document describes version 0.3d7 of Vicare Scheme, an
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.4d1 of Vicare Scheme, an
 R6RS compliant native compiler for the Scheme language, producing
-single threaded programs running on Intel x86 32-bit processors, with
-experimental support for 64-bit machines.  _Vicare_ is pronounced
-the etruscan way.
+single threaded programs running on Intel x86 32-bit and 64-bit
+processors.  Vicare is pronounced the etruscan way.
 
 The package, including its documentation, is distributed under the terms
 of the GNU General Public License (GPL) and can be downloaded
 from:
 
-        `http://sourceforge.net/projects/vicare-scheme/files/'
-
+https://bitbucket.org/marcomaggi/vicare-scheme/downloads
 
 the home page of the project is at:
 
-              `http://marcomaggi.github.com/vicare.html'
-
+http://marcomaggi.github.io/vicare.html
 
 development takes place at:
 
-                `http://github.com/marcomaggi/vicare/'
-
+http://github.com/marcomaggi/vicare/
 
 and, as a backup, at:
 
-                     `http://gitorious.org/vicare'
+https://bitbucket.org/marcomaggi/vicare-scheme/
 
-
-and at:
-
-           `http://sourceforge.net/projects/vicare-scheme/'
-
-
-this project has a mailing list:
-
-             `http://groups.google.com/group/vicare-users'
-
-
-Copyright (C) 2010-2013 by Marco Maggi.
+Copyright (C) 2010-2017 by Marco Maggi.
 
 Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
 
 Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
 
 This document is derived from the original Ikarus documentation by the
-Vicare Scheme contributors, see the ``History'' appendix for details.
+Vicare Scheme contributors, see the "History" appendix for details.
 
 The documentation of IrRegex is Copyright (C) 2005-2012 Alex
 Shinn.  All rights reserved.
@@ -63,191 +38,232 @@ Shinn.  All rights reserved.
 The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
 Sitaram.  All rights reserved.
 
-The documentation of the library `(vicare formations)' is derived
+The documentation of the library (vicare formations) is derived
 from the documentation of Guile.  Copyright (C) 1996-2005,
 2009-2013 Free Software Foundation.
 
-     This program is free software: you can redistribute it and/or
-     modify it under the terms of the GNU General Public License
-     version 3 as published by the Free Software Foundation.
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
 
-     This program is distributed in the hope that it will be useful, but
-     WITHOUT ANY WARRANTY; without even the implied warranty of
-     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-     General Public License for more details.
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
 
-     You should have received a copy of the GNU General Public License
-     along with this program.  If not, see
-     `http://www.gnu.org/licenses/'.
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
 
-Trademarks used herein are the property of their respective owners.-->
-<meta http-equiv="Content-Style-Type" content="text/css">
-<style type="text/css"><!--
-  pre.display { font-family:inherit }
-  pre.format  { font-family:inherit }
-  pre.smalldisplay { font-family:inherit; font-size:smaller }
-  pre.smallformat  { font-family:inherit; font-size:smaller }
-  pre.smallexample { font-size:smaller }
-  pre.smalllisp    { font-size:smaller }
-  span.sc    { font-variant:small-caps }
-  span.roman { font-family:serif; font-weight:normal; } 
-  span.sansserif { font-family:sans-serif; font-weight:normal; } 
---></style>
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Vicare Scheme: machinery stack overflow</title>
+
+<meta name="description" content="Vicare Scheme: machinery stack overflow">
+<meta name="keywords" content="Vicare Scheme: machinery stack overflow">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="machinery.html#machinery" rel="up" title="machinery">
+<link href="machinery-call-arguments.html#machinery-call-arguments" rel="next" title="machinery call arguments">
+<link href="machinery-continuations-escape.html#machinery-continuations-escape" rel="prev" title="machinery continuations escape">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
 </head>
-<body>
-<div class="node">
+
+<body lang="en">
 <a name="machinery-stack-overflow"></a>
+<div class="header">
 <p>
-Next:&nbsp;<a rel="next" accesskey="n" href="machinery-call-arguments.html#machinery-call-arguments">machinery call arguments</a>,
-Previous:&nbsp;<a rel="previous" accesskey="p" href="machinery-continuations.html#machinery-continuations">machinery continuations</a>,
-Up:&nbsp;<a rel="up" accesskey="u" href="machinery.html#machinery">machinery</a>
-<hr>
+Next: <a href="machinery-call-arguments.html#machinery-call-arguments" accesskey="n" rel="next">machinery call arguments</a>, Previous: <a href="machinery-continuations.html#machinery-continuations" accesskey="p" rel="prev">machinery continuations</a>, Up: <a href="machinery.html#machinery" accesskey="u" rel="up">machinery</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
 </div>
+<hr>
+<a name="Scheme-stack-overflow"></a>
+<h3 class="section">16.6 Scheme stack overflow</h3>
 
-<h3 class="section">12.6 Scheme stack overflow</h3>
 
-<p>Let's recall how the Scheme stack segment looks,
-<a href="fig_003aMSO_005fstack_005fboundary.html#fig_003aMSO_005fstack_005fboundary">machinery stack overflow</a>.  Function call
+<p>Let&rsquo;s recall how the Scheme stack segment looks,
+<a href="#fig_003aMSO_005fstack_005fboundary">machinery stack overflow</a>.  Function call
 frames are put on the stack starting from high memory addresses, stack
 usage grows towards low memory addresses; at some point the stack runs
 out of space.
+</p>
+<div class="float"><a name="fig_003aMSO_005fstack_005fboundary"></a>
+<div class="example">
+<pre class="example">      high memory
+|                      |
+|----------------------|
+|                      | &lt;- pcb-&gt;frame_base
+|----------------------|                        --
+| ik_underflow_handler |                        .
+|----------------------|                        .
+           .                                    .
+           .                                    .
+           .                                    .
+|----------------------|                        .
+|                      | &lt;- pcb-&gt;frame_redline  . stack
+|----------------------|                        . segment
+           .                                    . size
+           .                                    .
+           .                                    .
+|----------------------|                        .
+|                      | &lt;- pcb-&gt;stack_base     .
+|----------------------|                        --
+|                      |
+       low memory
+</pre></div>
 
-   <div class="float">
-<a name="fig_003aMSO_005fstack_005fboundary"></a>
-<pre class="example">           high memory
-     |                      |
-     |----------------------|
-     |                      | &lt;- pcb-&gt;frame_base
-     |----------------------|                        --
-     | ik_underflow_handler |                        .
-     |----------------------|                        .
-                .                                    .
-                .                                    .
-                .                                    .
-     |----------------------|                        .
-     |                      | &lt;- pcb-&gt;frame_redline  . stack
-     |----------------------|                        . segment
-                .                                    . size
-                .                                    .
-                .                                    .
-     |----------------------|                        .
-     |                      | &lt;- pcb-&gt;stack_base     .
-     |----------------------|                        --
-     |                      |
-            low memory
-</pre>
-   <p><strong class="float-caption">Figure 12.49: Stack boundaries as represented by the <acronym>PCB</acronym>.</strong></p></div>
-
-   <p>To detect stack usage approaching the end of available stack space: the
-<acronym>PCB</acronym> contains a field referencing a machine word 2 memory
-chunks (4096 bytes each) above the lower boundary; whenever stack
+<div class="float-caption"><p><strong>Figure 16.49: </strong>Stack boundaries as represented by the <acronym>PCB</acronym>.</p></div></div>
+<p>To detect stack usage approaching the end of available stack space: the
+<acronym>PCB</acronym> contains a field referencing a machine word <em>2</em> memory
+chunks (<em>4096</em> bytes each) above the lower boundary; whenever stack
 usage crosses this &ldquo;red line&rdquo;: a new stack segment needs to be
 allocated and call frames must be put on the new stack;
-<a href="fig_003aMSO_005fredline_005fcrossed.html#fig_003aMSO_005fredline_005fcrossed">machinery stack overflow</a>.
+<a href="#fig_003aMSO_005fredline_005fcrossed">machinery stack overflow</a>.
+</p>
+<div class="float"><a name="fig_003aMSO_005fredline_005fcrossed"></a>
+<div class="example">
+<pre class="example">      high memory
+|                      | &lt;- pcb-&gt;frame_base
+|----------------------|
+| ik_underflow_handler |
+|----------------------|
+           .
+           .
+           .
+|----------------------|                        --
+|     local value      |                        .
+|----------------------|                        .
+|     local value      | &lt;- pcb-&gt;frame_redline  .
+|----------------------|                        . framesize
+|     local value      |                        .
+|----------------------|                        .
+|    return address    | &lt;- FPR                 .
+|----------------------|                        --
+|   function argument  |
+|----------------------|
+|   function argument  |
+|----------------------|
+           .
+           .
+           .
+|----------------------|
+|                      | &lt;- pcb-&gt;stack_base
+|----------------------|
+|                      |
+      low memory
+</pre></div>
 
-   <div class="float">
-<a name="fig_003aMSO_005fredline_005fcrossed"></a>
-<pre class="example">           high memory
-     |                      | &lt;- pcb-&gt;frame_base
-     |----------------------|
-     | ik_underflow_handler |
-     |----------------------|
-                .
-                .
-                .
-     |----------------------|                        --
-     |     local value      |                        .
-     |----------------------|                        .
-     |     local value      | &lt;- pcb-&gt;frame_redline  .
-     |----------------------|                        . framesize
-     |     local value      |                        .
-     |----------------------|                        .
-     |    return address    | &lt;- FPR                 .
-     |----------------------|                        --
-     |   function argument  |
-     |----------------------|
-     |   function argument  |
-     |----------------------|
-                .
-                .
-                .
-     |----------------------|
-     |                      | &lt;- pcb-&gt;stack_base
-     |----------------------|
-     |                      |
-           low memory
-</pre>
-   <p><strong class="float-caption">Figure 12.50: Scenario on the Scheme stack that triggers the stack overflow;
-we see that: <acronym>FPR</acronym> &lt; <code>pcb-&gt;frame_redline</code>.</strong></p></div>
-
-   <p>Scheme functions can be partitioned in: those that may use more stack
+<div class="float-caption"><p><strong>Figure 16.50: </strong>Scenario on the Scheme stack that triggers the stack overflow;
+we see that: <acronym>FPR</acronym> &lt; <code>pcb-&gt;frame_redline</code>.</p></div></div>
+<p>Scheme functions can be partitioned in: those that may use more stack
 space, those that do not; Vicare recognises this partition and
-inserts a stack overflow check at the beginning of each of the former. 
+inserts a stack overflow check at the beginning of each of the former.
 The pseudo&ndash;Assembly performing the check is as follows:
+</p>
+<div class="example">
+<pre class="example">(label function_entry_point)
+  (cmpl FPR pcb-&gt;frame_redline)
+  (jb L0)
 
-<pre class="example">     (label function_entry_point)
-       (cmpl FPR pcb-&gt;frame_redline)
-       (jb L0)
-     
-     (label L1)
-       ... the function body ...
-       (ret)
-     
-     (label L0)
-       (forcall "ik_stack_overflow")
-       (jmp L1)
-</pre>
-   <p>When stack overflow happens the C function <code>ik_stack_overflow()</code> is
+(label L1)
+  ... the function body ...
+  (ret)
+
+(label L0)
+  (forcall &quot;ik_stack_overflow&quot;)
+  (jmp L1)
+</pre></div>
+
+<p>When stack overflow happens the C function <code>ik_stack_overflow()</code> is
 called through the <code>forcall</code> primitive instruction and the Assembly
 subroutine <code>ik_foreign_call</code>; <code>forcall</code> creates a new stack
 frame and then calls <code>ik_foreign_call</code> which in turn calls the C
-function, <a href="fig_003aMSO_005fforcall_005fframe.html#fig_003aMSO_005fforcall_005fframe">machinery stack overflow</a>.
+function, <a href="#fig_003aMSO_005fforcall_005fframe">machinery stack overflow</a>.
+</p>
+<div class="float"><a name="fig_003aMSO_005fforcall_005fframe"></a>
+<div class="example">
+<pre class="example">      high memory
+|                      |
+|----------------------|                        --
+|     local value      |                        .
+|----------------------|                        .
+|     local value      | &lt;- pcb-&gt;frame_redline  .
+|----------------------|                        . framesize
+|     local value      |                        .
+|----------------------|                        .
+|    return address    |                        .
+|----------------------|                        --
+|   function argument  |                        .
+|----------------------|                        . frame of
+|   function argument  |                        . forcall
+|----------------------|                        .
+|    return address    | &lt;- FPR                 .
+|----------------------|                        --
+|                      |
+      low memory
+</pre></div>
 
-   <div class="float">
-<a name="fig_003aMSO_005fforcall_005fframe"></a>
-<pre class="example">           high memory
-     |                      |
-     |----------------------|                        --
-     |     local value      |                        .
-     |----------------------|                        .
-     |     local value      | &lt;- pcb-&gt;frame_redline  .
-     |----------------------|                        . framesize
-     |     local value      |                        .
-     |----------------------|                        .
-     |    return address    |                        .
-     |----------------------|                        --
-     |   function argument  |                        .
-     |----------------------|                        . frame of
-     |   function argument  |                        . forcall
-     |----------------------|                        .
-     |    return address    | &lt;- FPR                 .
-     |----------------------|                        --
-     |                      |
-           low memory
-</pre>
-   <p><strong class="float-caption">Figure 12.51: Call frame of <code>forcall</code> on top of the call frame that
-caused the stack underflow.</strong></p></div>
-
-   <p><code>ik_stack_overflow()</code> does the following:
-
-     <ol type=1 start=1>
-<li>Freeze all the call frames on the stack in a continuation object;
+<div class="float-caption"><p><strong>Figure 16.51: </strong>Call frame of <code>forcall</code> on top of the call frame that
+caused the stack underflow.</p></div></div>
+<p><code>ik_stack_overflow()</code> does the following:
+</p>
+<ol>
+<li> Freeze all the call frames on the stack in a continuation object;
 prepend such object to the list of continuations in the <acronym>PCB</acronym>, so that
 it becomes the &ldquo;next <acronym>PCB</acronym> continuation&rdquo;.
 
-     <li>Allocate and initialise a new stack segment and register it in the
+</li><li> Allocate and initialise a new stack segment and register it in the
 <acronym>PCB</acronym>.  The frame pointer is set to reference the first machine word on
 the stack, which contains the address of the underflow handler.
 
-     <li>For garbage collection purposes: reconfigure old stack segment's memory
+</li><li> For garbage collection purposes: reconfigure old stack segment&rsquo;s memory
 block as data segment.
-        </ol>
+</li></ol>
 
-   <p>Upon returning to the caller <code>ik_foreign_call</code> performs a
+<p>Upon returning to the caller <code>ik_foreign_call</code> performs a
 <code>ret</code> Assembly instruction with the <acronym>FPR</acronym> referencing the
 underflow handler; so returning from a stack reallocation is exactly
 like returning to the next <acronym>PCB</acronym> continuation.
+</p>
+<hr>
+<div class="header">
+<p>
+Next: <a href="machinery-call-arguments.html#machinery-call-arguments" accesskey="n" rel="next">machinery call arguments</a>, Previous: <a href="machinery-continuations.html#machinery-continuations" accesskey="p" rel="prev">machinery continuations</a>, Up: <a href="machinery.html#machinery" accesskey="u" rel="up">machinery</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
 
-<!-- page -->
-   </body></html>
 
+
+</body>
+</html>

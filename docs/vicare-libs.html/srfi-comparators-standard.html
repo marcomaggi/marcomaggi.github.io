@@ -1,0 +1,515 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes the libraries distributed along with version
+0.4d1 of Vicare Scheme, an R6RS compliant native
+compiler for the Scheme language.
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+The documentation of the libraries (vicare parser-tools silex
+-) are derived form the documentation of SILex.  Copyright
+(C) 2001, 2009 Danny Dube'.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Libraries for Vicare Scheme: srfi comparators standard</title>
+
+<meta name="description" content="Libraries for Vicare Scheme: srfi comparators standard">
+<meta name="keywords" content="Libraries for Vicare Scheme: srfi comparators standard">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="srfi-comparators.html#srfi-comparators" rel="up" title="srfi comparators">
+<link href="srfi-comparators-default.html#srfi-comparators-default" rel="next" title="srfi comparators default">
+<link href="srfi-comparators-predicates.html#srfi-comparators-predicates" rel="prev" title="srfi comparators predicates">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="srfi-comparators-standard"></a>
+<div class="header">
+<p>
+Next: <a href="srfi-comparators-default.html#srfi-comparators-default" accesskey="n" rel="next">srfi comparators default</a>, Previous: <a href="srfi-comparators-predicates.html#srfi-comparators-predicates" accesskey="p" rel="prev">srfi comparators predicates</a>, Up: <a href="srfi-comparators.html#srfi-comparators" accesskey="u" rel="up">srfi comparators</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Standard-comparators"></a>
+<h4 class="subsection">2.38.6 Standard comparators</h4>
+
+
+<p>The following comparators are analogous to the standard compare
+procedures of <acronym>SRFI</acronym>-67.  They all provide appropriate hash functions
+as well.
+</p>
+
+<dl>
+<dt><a name="index-boolean_002dcomparator"></a>Constant: <strong>boolean-comparator</strong></dt>
+<dd><p>Compare booleans using the total order <code>#f &lt; #t</code>.
+</p>
+<div class="lisp">
+<pre class="lisp">(import (vicare) (srfi :114))
+
+(define C boolean-comparator)
+
+(comparator-test-type C #f)     &rArr; #t
+(comparator-test-type C #t)     &rArr; #t
+(comparator-test-type C 123)    &rArr; #f
+
+(comparator-check-type C #f)    &rArr; #t
+(comparator-check-type C #t)    &rArr; #t
+(try
+    (comparator-check-type C (void))
+  (catch E
+    ((&amp;comparator-type-error)   #t)
+    (else                       #f)))
+&rArr; #t
+
+(comparator-equal? C #f #f)     &rArr; #t
+(comparator-equal? C #f #t)     &rArr; #f
+
+(comparator-compare C #f #f)    &rArr; 0
+(comparator-compare C #f #t)    &rArr; -1
+(comparator-compare C #t #f)    &rArr; +1
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-char_002dcomparator"></a>Constant: <strong>char-comparator</strong></dt>
+<dd><p>Compare characters using the total order implied by <code>char&lt;?</code>.  On
+<acronym>R6RS</acronym> and <acronym>R7RS</acronym> systems, this is Unicode code point order.
+</p>
+<div class="lisp">
+<pre class="lisp">(import (vicare) (srfi :114))
+
+(define C char-comparator)
+
+(comparator-test-type C #\a)    &rArr; #t
+(comparator-test-type C #\b)    &rArr; #t
+(comparator-test-type C 123)    &rArr; #f
+
+(comparator-check-type C #\a)   &rArr; #t
+(comparator-check-type C #\b)   &rArr; #t
+(try
+    (comparator-check-type C (void))
+  (catch E
+    ((&amp;comparator-type-error)   #t)
+    (else                       #f)))
+&rArr; #t
+
+(comparator-equal? C #\a #\a)   &rArr; #t
+(comparator-equal? C #\a #\b)   &rArr; #f
+
+(comparator-compare C #\a #\a)  &rArr; 0
+(comparator-compare C #\a #\b)  &rArr; -1
+(comparator-compare C #\b #\a)  &rArr; +1
+
+(comparator-hash C #\a)         &rArr; 97
+(comparator-hash C #\b)         &rArr; 98
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-char_002dci_002dcomparator"></a>Constant: <strong>char-ci-comparator</strong></dt>
+<dd><p>Compare characters using the total order implied by <code>char-ci&lt;?</code>.
+On <acronym>R6RS</acronym> and <acronym>R7RS</acronym> systems, this is Unicode code point order after
+the characters have been folded to lower case.
+</p>
+<div class="lisp">
+<pre class="lisp">(import (vicare) (srfi :114))
+
+(define C char-ci-comparator)
+
+(comparator-test-type C #\A)    &rArr; #t
+(comparator-test-type C #\b)    &rArr; #t
+(comparator-test-type C 123)    &rArr; #f
+
+(comparator-check-type C #\A)   &rArr; #t
+(comparator-check-type C #\b)   &rArr; #t
+(try
+    (comparator-check-type C (void))
+  (catch E
+    ((&amp;comparator-type-error)   #t)
+    (else                       #f)))
+&rArr; #t
+
+(comparator-equal? C #\A #\A)   &rArr; #t
+(comparator-equal? C #\A #\b)   &rArr; #f
+
+(comparator-compare C #\A #\A)  &rArr; 0
+(comparator-compare C #\A #\b)  &rArr; -1
+(comparator-compare C #\b #\A)  &rArr; +1
+
+(comparator-hash C #\A)         &rArr; 97
+(comparator-hash C #\b)         &rArr; 98
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-string_002dcomparator"></a>Constant: <strong>string-comparator</strong></dt>
+<dd><p>Compare strings using the total order implied by <code>string&lt;?</code>.  Note
+that this order is implementation&ndash;dependent.
+</p>
+<div class="lisp">
+<pre class="lisp">(import (vicare) (srfi :114))
+
+(define C string-comparator)
+
+(comparator-test-type C &quot;a&quot;)    &rArr; #t
+(comparator-test-type C &quot;b&quot;)    &rArr; #t
+(comparator-test-type C 123)    &rArr; #f
+
+(comparator-check-type C &quot;a&quot;)   &rArr; #t
+(comparator-check-type C &quot;b&quot;)   &rArr; #t
+(try
+    (comparator-check-type C (void))
+  (catch E
+    ((&amp;comparator-type-error)   #t)
+    (else                       #f)))
+&rArr; #t
+
+(comparator-equal? C &quot;a&quot; &quot;a&quot;)   &rArr; #t
+(comparator-equal? C &quot;a&quot; &quot;b&quot;)   &rArr; #f
+
+(comparator-compare C &quot;a&quot; &quot;a&quot;)  &rArr; 0
+(comparator-compare C &quot;a&quot; &quot;b&quot;)  &rArr; -1
+(comparator-compare C &quot;b&quot; &quot;a&quot;)  &rArr; +1
+
+(comparator-hash C &quot;a&quot;)         &rArr; 1798195
+(comparator-hash C &quot;b&quot;)         &rArr; 36222037
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-string_002dci_002dcomparator"></a>Constant: <strong>string-ci-comparator</strong></dt>
+<dd><p>Compare strings using the total order implied by <code>string-ci&lt;?</code>.
+Note that this order is implementation&ndash;dependent.
+</p>
+<div class="lisp">
+<pre class="lisp">(import (vicare) (srfi :114))
+
+(define C string-ci-comparator)
+
+(comparator-test-type C &quot;A&quot;)    &rArr; #t
+(comparator-test-type C &quot;b&quot;)    &rArr; #t
+(comparator-test-type C 123)    &rArr; #f
+
+(comparator-check-type C &quot;A&quot;)   &rArr; #t
+(comparator-check-type C &quot;b&quot;)   &rArr; #t
+(try
+    (comparator-check-type C (void))
+  (catch E
+    ((&amp;comparator-type-error)   #t)
+    (else                       #f)))
+&rArr; #t
+
+(comparator-equal? C &quot;A&quot; &quot;A&quot;)   &rArr; #t
+(comparator-equal? C &quot;A&quot; &quot;b&quot;)   &rArr; #f
+
+(comparator-compare C &quot;A&quot; &quot;A&quot;)  &rArr; 0
+(comparator-compare C &quot;A&quot; &quot;b&quot;)  &rArr; -1
+(comparator-compare C &quot;b&quot; &quot;A&quot;)  &rArr; +1
+
+(comparator-hash C &quot;A&quot;)         &rArr; 1798195
+(comparator-hash C &quot;b&quot;)         &rArr; 36222037
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-symbol_002dcomparator"></a>Constant: <strong>symbol-comparator</strong></dt>
+<dd><p>Compare symbols using the total order implied by applying
+<code>symbol-&gt;string</code> to the symbols and comparing them using the total
+order implied by <code>string&lt;?</code>.  It is not a requirement that the hash
+function of <code>symbol-comparator</code> be consistent with the hash
+function of <code>string-comparator</code>.
+</p>
+<div class="lisp">
+<pre class="lisp">(import (vicare) (srfi :114))
+
+(define C string-comparator)
+
+(comparator-test-type C 'a)     &rArr; #t
+(comparator-test-type C 'b)     &rArr; #t
+(comparator-test-type C 123)    &rArr; #f
+
+(comparator-check-type C 'a)    &rArr; #t
+(comparator-check-type C 'b)    &rArr; #t
+(try
+    (comparator-check-type C (void))
+  (catch E
+    ((&amp;comparator-type-error)   #t)
+    (else                       #f)))
+&rArr; #t
+
+(comparator-equal? C 'a 'a)     &rArr; #t
+(comparator-equal? C 'a 'b)     &rArr; #f
+
+(comparator-compare C 'a 'a)    &rArr; 0
+(comparator-compare C 'a 'b)    &rArr; -1
+(comparator-compare C 'b 'a)    &rArr; +1
+
+(comparator-hash C 'a)          &rArr; 1798195
+(comparator-hash C 'b)          &rArr; 36222037
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-fixnum_002dcomparator"></a>Constant: <strong>fixnum-comparator</strong></dt>
+<dt><a name="index-exact_002dinteger_002dcomparator"></a>Constant: <strong>exact-integer-comparator</strong></dt>
+<dt><a name="index-integer_002dcomparator"></a>Constant: <strong>integer-comparator</strong></dt>
+<dt><a name="index-rational_002dcomparator"></a>Constant: <strong>rational-comparator</strong></dt>
+<dt><a name="index-real_002dcomparator"></a>Constant: <strong>real-comparator</strong></dt>
+<dt><a name="index-complex_002dcomparator"></a>Constant: <strong>complex-comparator</strong></dt>
+<dt><a name="index-number_002dcomparator"></a>Constant: <strong>number-comparator</strong></dt>
+<dd><p>These comparators compare fixnums, exact integers, integers, rational
+numbers, real numbers, complex numbers, and any numbers using the total
+order implied by <code>&lt;</code>.
+</p>
+<p>They must be compatible with the <acronym>R5RS</acronym> numerical tower in the
+following sense: if <code>S</code> is a subtype of the numerical type <code>T</code>
+and the two objects are members of <code>S</code>, then the equality predicate
+and comparison procedures (but not necessarily the hash function) of
+<code>S-comparator</code> and <code>T-comparator</code> compute the same results on
+those objects.
+</p>
+<p>Since non&ndash;real numbers cannot be compared with <code>&lt;</code>, the following
+least&ndash;surprising ordering is defined: if the real parts are <code>&lt;</code> or
+<code>&gt;</code>, so are the numbers; otherwise, the numbers are ordered by
+their imaginary parts.  This can still produce surprising results if one
+real part is exact and the other is inexact.
+</p>
+<p><code>fixnum-comparator</code> is a Vicare extension.
+</p>
+<div class="lisp">
+<pre class="lisp">(import (vicare) (srfi :114))
+
+(define C exact-integer-comparator)
+
+(comparator-test-type C 1)      &rArr; #t
+(comparator-test-type C 2)      &rArr; #t
+(comparator-test-type C 123)    &rArr; #f
+
+(comparator-check-type C 1)     &rArr; #t
+(comparator-check-type C 2)     &rArr; #t
+(try
+    (comparator-check-type C (void))
+  (catch E
+    ((&amp;comparator-type-error)   #t)
+    (else                       #f)))
+&rArr; #t
+
+(comparator-equal? C 1 1)       &rArr; #t
+(comparator-equal? C 1 2)       &rArr; #f
+
+(comparator-compare C 1 1)      &rArr; 0
+(comparator-compare C 1 2)      &rArr; -1
+(comparator-compare C 2 1)      &rArr; +1
+
+(comparator-hash C 1)           &rArr; 1
+(comparator-hash C 2)           &rArr; 2
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-pair_002dcomparator"></a>Constant: <strong>pair-comparator</strong></dt>
+<dd><p>Compare pairs using <code>default-comparator</code>  on their cars.
+If the cars are not equal, that value is returned.  If they are equal,
+<code>default-comparator</code> is used on their cdrs and that value is
+returned.
+</p>
+<div class="lisp">
+<pre class="lisp">(import (vicare) (srfi :114))
+
+(define C pair-comparator)
+
+(comparator-test-type C '(1 . 2))       &rArr; #t
+(comparator-test-type C '(3 . 4))       &rArr; #t
+(comparator-test-type C 123)            &rArr; #f
+
+(comparator-check-type C '(1 . 2))      &rArr; #t
+(comparator-check-type C '(3 . 4))      &rArr; #t
+(try
+    (comparator-check-type C (void))
+  (catch E
+    ((&amp;comparator-type-error)   #t)
+    (else                       #f)))
+&rArr; #t
+
+(comparator-equal? C '(1 . 2) '(1 . 2)) &rArr; #t
+(comparator-equal? C '(1 . 2) '(3 . 4)) &rArr; #f
+
+(comparator-compare C '(1 . 2) '(1 . 2)) &rArr; 0
+(comparator-compare C '(1 . 2) '(3 . 4)) &rArr; -1
+(comparator-compare C '(3 . 4) '(1 . 2)) &rArr; +1
+
+(comparator-hash C '(1 . 2))            &rArr; 3
+(comparator-hash C '(3 . 4))            &rArr; 7
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-list_002dcomparator"></a>Constant: <strong>list-comparator</strong></dt>
+<dd><p>Compare lists lexicographically, as follows:
+</p>
+<ul>
+<li> The empty list compares equal to itself.
+
+</li><li> The empty list compares less than any non&ndash;empty list.
+
+</li><li> Two non&ndash;empty lists are compared by comparing their cars.  If the cars
+are not equal when compared using <code>default-comparator</code> ,
+then the result is the result of that comparison.  Otherwise, the cdrs
+are compared using <code>list-comparator</code>.
+</li></ul>
+
+<div class="lisp">
+<pre class="lisp">(import (vicare) (srfi :114))
+
+(define C list-comparator)
+
+(comparator-test-type C '(1 2))         &rArr; #t
+(comparator-test-type C '(3 4))         &rArr; #t
+(comparator-test-type C 123)            &rArr; #f
+
+(comparator-check-type C '(1 2))        &rArr; #t
+(comparator-check-type C '(3 4))        &rArr; #t
+(try
+    (comparator-check-type C (void))
+  (catch E
+    ((&amp;comparator-type-error)   #t)
+    (else                       #f)))
+&rArr; #t
+
+(comparator-equal? C '(1 2) '(1 2))     &rArr; #t
+(comparator-equal? C '(1 2) '(3 4))     &rArr; #f
+
+(comparator-compare C '(1 2) '(1 2))    &rArr; 0
+(comparator-compare C '(1 2) '(3 4))    &rArr; -1
+(comparator-compare C '(3 4) '(1 2))    &rArr; +1
+
+(comparator-hash C '(1 2))              &rArr; 617064
+(comparator-hash C '(3 4))              &rArr; 617132
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-vector_002dcomparator"></a>Constant: <strong>vector-comparator</strong></dt>
+<dt><a name="index-bytevector_002dcomparator"></a>Constant: <strong>bytevector-comparator</strong></dt>
+<dd><p>Compare vectors and bytevectors by comparing their lengths.  A shorter
+argument is always less than a longer one.  If the lengths are equal,
+then each element is compared in turn using <code>default-comparator</code>
+until a pair of unequal elements is found, in which case the result is
+the result of that comparison.  If all elements are equal, the arguments
+are equal.
+</p>
+<blockquote>
+<p><strong>NOTE</strong> Vicare supports bytevectors, other Scheme
+implementations might not support them.  If the implementation does not
+support bytevectors, <code>bytevector-comparator</code> has a type testing
+procedure that always returns <code>#f</code>.
+</p></blockquote>
+
+<div class="lisp">
+<pre class="lisp">(import (vicare) (srfi :114))
+
+(define C vector-comparator)
+
+(comparator-test-type C '#(1 2))        &rArr; #t
+(comparator-test-type C '#(3 4))        &rArr; #t
+(comparator-test-type C 123)            &rArr; #f
+
+(comparator-check-type C '#(1 2))       &rArr; #t
+(comparator-check-type C '#(3 4))       &rArr; #t
+(try
+    (comparator-check-type C (void))
+  (catch E
+    ((&amp;comparator-type-error)   #t)
+    (else                       #f)))
+&rArr; #t
+
+(comparator-equal? C '#(1 2) '#(1 2))   &rArr; #t
+(comparator-equal? C '#(1 2) '#(3 4))   &rArr; #f
+
+(comparator-compare C '#(1 2) '#(1 2))  &rArr; 0
+(comparator-compare C '#(1 2) '#(3 4))  &rArr; -1
+(comparator-compare C '#(3 4) '#(1 2))  &rArr; +1
+
+(comparator-hash C '#(1 2))             &rArr; 177575
+(comparator-hash C '#(3 4))             &rArr; 177577
+</pre></div>
+</dd></dl>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="srfi-comparators-default.html#srfi-comparators-default" accesskey="n" rel="next">srfi comparators default</a>, Previous: <a href="srfi-comparators-predicates.html#srfi-comparators-predicates" accesskey="p" rel="prev">srfi comparators predicates</a>, Up: <a href="srfi-comparators.html#srfi-comparators" accesskey="u" rel="up">srfi comparators</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

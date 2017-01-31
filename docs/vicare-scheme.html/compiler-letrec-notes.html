@@ -1,0 +1,379 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.4d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit and 64-bit
+processors.  Vicare is pronounced the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/downloads
+
+the home page of the project is at:
+
+http://marcomaggi.github.io/vicare.html
+
+development takes place at:
+
+http://github.com/marcomaggi/vicare/
+
+and, as a backup, at:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the "History" appendix for details.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Vicare Scheme: compiler letrec notes</title>
+
+<meta name="description" content="Vicare Scheme: compiler letrec notes">
+<meta name="keywords" content="Vicare Scheme: compiler letrec notes">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="compiler-letrec.html#compiler-letrec" rel="up" title="compiler letrec">
+<link href="compiler-letrec-basic.html#compiler-letrec-basic" rel="next" title="compiler letrec basic">
+<link href="compiler-letrec-api.html#compiler-letrec-api" rel="prev" title="compiler letrec api">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="compiler-letrec-notes"></a>
+<div class="header">
+<p>
+Next: <a href="compiler-letrec-basic.html#compiler-letrec-basic" accesskey="n" rel="next">compiler letrec basic</a>, Previous: <a href="compiler-letrec-api.html#compiler-letrec-api" accesskey="p" rel="prev">compiler letrec api</a>, Up: <a href="compiler-letrec.html#compiler-letrec" accesskey="u" rel="up">compiler letrec</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="General-notes-on-the-context-of-letrec-optimisations"></a>
+<h4 class="subsection">17.10.3 General notes on the context of <code>letrec</code> optimisations</h4>
+
+
+<a name="On-let-and-let_002a-bindings"></a>
+<h4 class="subsubheading">On <code>let</code> and <code>let*</code> bindings</h4>
+
+<p>Let&rsquo;s consider the following program:
+</p>
+<div class="example">
+<pre class="example">(import (rnrs))
+(let ((A B))
+  #t)
+</pre></div>
+
+<p>it will fail with &ldquo;unbound identifier B&rdquo;; we are <strong>not</strong>
+concerned with unbound identifiers in this compiler pass.  So let&rsquo;s move
+on to the following program:
+</p>
+<div class="example">
+<pre class="example">(import (rnrs))
+(let ((A 123))
+  (let ((A A))
+    #t))
+</pre></div>
+
+<p>no errors here: the identifier <code>A</code> in reference position is
+captured by the outer <code>let</code> binding for <code>A</code>.  Now this
+program:
+</p>
+<div class="example">
+<pre class="example">(import (rnrs))
+(let* ((A 123)
+       (B A))
+  #t)
+</pre></div>
+
+<p>everything is all right; now this program:
+</p>
+<div class="example">
+<pre class="example">(import (rnrs))
+(let* ((A 123)
+       (A A))
+  #t)
+</pre></div>
+
+<p>again no error: the identifier <code>A</code> in reference position is
+captured by the first <code>let*</code> binding for <code>A</code>; <code>let*</code>
+allows us to create bindings with the same name.
+</p>
+
+<a name="letrec-bindings"></a>
+<h4 class="subsubheading"><code>letrec</code> bindings</h4>
+
+<p>Let&rsquo;s move to the <code>letrec</code> syntax.  This program is legal:
+</p>
+<div class="example">
+<pre class="example">(import (rnrs))
+(letrec ((A (lambda () A)))
+  #t)
+</pre></div>
+
+<p>because <code>letrec</code> defines recursive bindings, so we are allowed to
+reference <code>A</code> in the right&ndash;hand side of the binding for <code>A</code>
+itself, as long as we put such reference in the body of a <code>lambda</code>.
+</p>
+<p>This program is also legal:
+</p>
+<div class="example">
+<pre class="example">(import (rnrs))
+(letrec ((A (lambda () B))
+         (B (lambda () A)))
+  #t)
+</pre></div>
+
+<p>because the cross references to <code>A</code> and <code>B</code> are in the body of
+<code>lambda</code> syntaxes.
+</p>
+<p>This program is illegal:
+</p>
+<div class="example">
+<pre class="example">(import (rnrs))
+(letrec ((A (list A)))
+  #t)
+</pre></div>
+
+<p>because the identifier <code>A</code> in reference position is not in the body
+of a <code>lambda</code> syntax: to evaluate the right&ndash;hand side of the
+binding we need the value of the binding itself.  Notice that <code>A</code>
+in reference position is <strong>not</strong> an unbound identifier: it is
+captured by the <code>A</code> in binding position; it is just &ldquo;illegal&rdquo; and
+we must detect this situation, according to <acronym>R6RS</acronym>.
+</p>
+<p>This program is illegal:
+</p>
+<div class="example">
+<pre class="example">(import (rnrs))
+(letrec ((A 123)
+         (B (list A)))
+  #t)
+</pre></div>
+
+<p>because the identifier <code>A</code> in reference position is not in the body
+of a <code>lambda</code> syntax: <code>letrec</code> does not impose an order to the
+evaluation of the init expressions, so to evaluate the right&ndash;hand side
+of the binding we need the value of the binding itself.
+</p>
+
+<a name="On-letrec_002a-bindings"></a>
+<h4 class="subsubheading">On <code>letrec*</code> bindings</h4>
+
+<p>Let&rsquo;s move to the <code>letrec*</code> syntax; it is similar, but not equal,
+to <code>letrec</code>.  This program is legal:
+</p>
+<div class="example">
+<pre class="example">(import (rnrs))
+(letrec* ((A (lambda () A)))
+  #t)
+</pre></div>
+
+<p>because <code>letrec*</code> defines recursive bindings, so we are allowed to
+reference <code>A</code> in the right&ndash;hand side of the binding for <code>A</code>
+itself, as long as we put such reference in the body of a <code>lambda</code>.
+</p>
+<p>This program is also legal:
+</p>
+<div class="example">
+<pre class="example">(import (rnrs))
+(letrec* ((A (lambda () B))
+          (B (lambda () A)))
+  #t)
+</pre></div>
+
+<p>because the cross references to <code>A</code> and <code>B</code> are in the body of
+<code>lambda</code> syntaxes.
+</p>
+<p>This program is illegal:
+</p>
+<div class="example">
+<pre class="example">(import (rnrs))
+(letrec* ((A (list A)))
+  #t)
+</pre></div>
+
+<p>because the identifier <code>A</code> in reference position is not in the body
+of a <code>lambda</code> syntax: to evaluate the right&ndash;hand side of the
+binding we need the value of the binding itself.  Again, notice that
+<code>A</code> in reference position is <strong>not</strong> an unbound identifier: it
+is captured by the <code>A</code> in binding position; it is just &ldquo;illegal&rdquo;
+and we must detect this situation, according to <acronym>R6RS</acronym>.
+</p>
+<p>This program is legal:
+</p>
+<div class="example">
+<pre class="example">(import (rnrs))
+(letrec* ((A 123)
+          (B (list A)))
+  #t)
+</pre></div>
+
+<p>because <code>letrec*</code> imposes a left&ndash;to&ndash;right order to the evaluation
+of the init expressions.
+</p>
+
+<a name="On-illegal-bindings"></a>
+<h4 class="subsubheading">On illegal bindings</h4>
+
+<p><acronym>R6RS</acronym> mandates that illegal references to bindings established by
+<code>letrec</code> and <code>letrec*</code> are detected at run&ndash;time and cause an
+assertion violation to be raised.  Vicare detects them at
+compile&ndash;time, so some fully <acronym>R6RS</acronym>-compliant code will not work under
+Vicare.
+</p>
+<p>The following code is illegal under both <acronym>R6RS</acronym> and Vicare:
+</p>
+<div class="example">
+<pre class="example">(import (rnrs))
+(letrec ((x y)
+         (y x))
+  'should-not-get-here)
+</pre></div>
+
+<p>The following program will run under a <acronym>R6RS</acronym>-compliant
+implementation:
+</p>
+<div class="example">
+<pre class="example">(import (rnrs))
+(letrec ((x (if (eq? (cons 1 2)
+                     (cons 1 2))
+                x
+              1)))
+  x)
+</pre></div>
+
+<p>because the form <code>x</code> in reference position in the right&ndash;hand side
+of the binding is never evaluated; under Vicare this code will
+rather raise a syntax violation at compile&ndash;time.
+</p>
+
+<a name="Bindings-on-the-Scheme-stack"></a>
+<h4 class="subsubheading">Bindings on the Scheme stack</h4>
+
+<p>In the <code>recbind</code> forms the right&ndash;hand side expressions
+<var>?rhs</var> have no imposed order of evaluation; the following two forms,
+in which the order of the bindings is reversed, must be completely
+equivalent:
+</p>
+<div class="example">
+<pre class="example">(recbind ((<var>?lhs1</var> <var>?rhs1</var>)
+          (<var>?lhs2</var> <var>?rhs2</var>))
+  <var>?body</var>)
+
+(recbind ((<var>?lhs2</var> <var>?rhs2</var>)
+          (<var>?lhs1</var> <var>?rhs1</var>))
+  <var>?body</var>)
+</pre></div>
+
+<p>In the <code>rec*bind</code> forms the right-hand side expressions <var>?rhs</var>
+must be evaluated in the same order in which they appear.
+</p>
+<p>In a lower&ndash;level compiler pass: instances of struct <code>bind</code> will
+be converted to code that evaluates the <var>?rhs</var> expressions and store
+their return value into appropriately allocated Scheme stack machine
+words; a machine word for every <var>?lhs</var> will be allocated, each
+<var>?lhs</var> will represent an actual &ldquo;local variable&rdquo;.
+</p>
+<p>If we think about the Scheme stack, it is clear why <code>bind</code>
+structures cannot represent recursive bindings; given the core language
+expression:
+</p>
+<div class="example">
+<pre class="example">(letrec ((f (lambda () f)))
+  <var>?body</var>)
+</pre></div>
+
+<p>the internal representation must be:
+</p>
+<div class="example">
+<pre class="example">(bind ((f_0 '#!void))
+  (seq
+    (assign f_0 (lambda () f_0))
+    <var>?body</var>))
+</pre></div>
+
+<p>so that: first <code>bind</code> reserves a Scheme stack machine word for
+the local variable, initialised to <code>#&lt;void&gt;</code>; then a closure object
+is created, referencing the local variable <code>f_0</code>; finally a
+reference to the closure object is stored in <code>f_0</code>.  To create the
+closure object, we must first know the address of the allocated machine
+word.
+</p>
+<p>When processing <code>recbind</code> and <code>rec*bind</code> structures: we
+must make sure that a machine word is allocated on the Scheme stack
+before the address of such word is needed by the <var>?rhs</var> expressions.
+We do this by transforming <code>recbind</code> and <code>rec*bind</code>
+instances into a composition of <code>bind</code> and <code>assign</code>
+instances.
+</p>
+<hr>
+<div class="header">
+<p>
+Next: <a href="compiler-letrec-basic.html#compiler-letrec-basic" accesskey="n" rel="next">compiler letrec basic</a>, Previous: <a href="compiler-letrec-api.html#compiler-letrec-api" accesskey="p" rel="prev">compiler letrec api</a>, Up: <a href="compiler-letrec.html#compiler-letrec" accesskey="u" rel="up">compiler letrec</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

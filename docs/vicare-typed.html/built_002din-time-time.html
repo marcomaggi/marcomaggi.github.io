@@ -1,0 +1,261 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.4d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit and 64-bit
+processors.  Vicare is pronounced the etruscan way.  The focus of
+this document is over the typed language extension.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/downloads
+
+the home page of the project is at:
+
+http://marcomaggi.github.io/vicare.html
+
+development takes place at:
+
+http://github.com/marcomaggi/vicare/
+
+and, as a backup, at:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/
+
+Copyright (C) 2016-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Vicare Scheme&rsquo;s typed language: built-in time time</title>
+
+<meta name="description" content="Vicare Scheme&rsquo;s typed language: built-in time time">
+<meta name="keywords" content="Vicare Scheme&rsquo;s typed language: built-in time time">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="type-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="built_002din-time.html#built_002din-time" rel="up" title="built-in time">
+<link href="built_002din-time-epoch.html#built_002din-time-epoch" rel="next" title="built-in time epoch">
+<link href="built_002din-time.html#built_002din-time" rel="prev" title="built-in time">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="built_002din-time-time"></a>
+<div class="header">
+<p>
+Next: <a href="built_002din-time-epoch.html#built_002din-time-epoch" accesskey="n" rel="next">built-in time epoch</a>, Up: <a href="built_002din-time.html#built_002din-time" accesskey="u" rel="up">built-in time</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Time-spans-object_002dtype"></a>
+<h4 class="subsection">6.25.1 Time spans object-type</h4>
+
+
+<dl>
+<dt><a name="index-_003ctime_003e"></a>Built-in Type: <strong>&lt;time&gt;</strong></dt>
+<dt><a name="index-_003crecord_003e-2"></a>Parent Type: <strong>&lt;record&gt;</strong></dt>
+<dd><p>Type name of time objects.  It can represent both absolute times
+(typically elapsed times since the Epoch) and positive and negative time
+spans relative to an arbitrary origin.  The internal time representation
+has nanosecond resolution and it is immutable.
+</p></dd></dl>
+
+
+<a name="Operations"></a>
+<h4 class="subsubheading">Operations</h4>
+
+
+<dl>
+<dt><a name="index-constructor-on-_003ctime_003e"></a>Constructor on &lt;time&gt;: <em>&lt;time&gt;</em> <strong>constructor</strong> <em>{<var>seconds</var> &lt;exact-integer&gt;} {<var>nanoseconds</var> &lt;exact-integer&gt;}</em></dt>
+<dt><a name="index-constructor-on-_003ctime_003e-1"></a>Constructor on &lt;time&gt;: <em>&lt;time&gt;</em> <strong>constructor</strong> <em>{<var>megaseconds</var> &lt;exact-integer&gt;} {<var>seconds</var> &lt;exact-integer&gt;} {<var>nanoseconds</var> &lt;exact-integer&gt;}</em></dt>
+<dd><p>Build and return a new <code>&lt;time&gt;</code> object.  If <var>nanoseconds</var>
+exceeds <code>#e1e9</code> its value is normalised and the excess added to
+<var>seconds</var>.  If <var>seconds</var> exceeds <code>#e1e6</code> its value is
+normalised and the excess added to <var>megaseconds</var>.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-type_002dpredicate-on-_003ctime_003e"></a>Type predicate on &lt;time&gt;: <em>&lt;boolean&gt;</em> <strong>type-predicate</strong> <em><var>obj</var></em></dt>
+<dd><p>Return <code>#t</code> if <var>obj</var> is a <code>&lt;time&gt;</code> object; otherwise return
+<code>#f</code>.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-equality_002dpredicate-on-_003ctime_003e"></a>Equality predicate on &lt;time&gt;: <em>&lt;boolean&gt;</em> <strong>equality-predicate</strong> <em><var>this</var> {<var>T</var> &lt;time&gt;}</em></dt>
+<dd><p>Return <code>#t</code> if the <code>&lt;time&gt;</code> objects are true, otherwise return
+<code>#f</code>.  This equality predicate is used by <code>equal?</code>.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-comparison_002dprocedure-on-_003ctime_003e"></a>Comparison procedure on &lt;time&gt;: <em>&lt;fixnum&gt;</em> <strong>comparison-procedure</strong> <em><var>this</var> {<var>T</var> &lt;time&gt;}</em></dt>
+<dd><p>Return <code>-1</code> if <var>T1</var> is less than <var>T2</var>; return <code>0</code> if
+<var>T1</var> is equal to <var>T2</var>; return <code>+1</code> if <var>T1</var> is greater
+than <var>T2</var>.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-hash_002dfunction-on-_003ctime_003e"></a>Hash function on &lt;time&gt;: <em>&lt;fixnum&gt;</em> <strong>hash-function</strong> <em><var>this</var></em></dt>
+<dd><p>Return a non&ndash;negative fixnum representing the hash value for <var>T</var>.
+This hash function is used by the syntax <code>hash</code>.
+</p></dd></dl>
+
+
+<a name="Accessors"></a>
+<h4 class="subsubheading">Accessors</h4>
+
+
+<dl>
+<dt><a name="index-seconds-on-_003ctime_003e"></a>Method on &lt;time&gt;: <em>&lt;exact-integer&gt;</em> <strong>seconds</strong> <em><var>this</var></em></dt>
+<dd><p>The number of seconds in the represented time span.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-nanoseconds-on-_003ctime_003e"></a>Method on &lt;time&gt;: <em>&lt;fixnum&gt;</em> <strong>nanoseconds</strong> <em><var>this</var></em></dt>
+<dd><p>The number of nanoseconds in the represented time span.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-ratnum-on-_003ctime_003e"></a>Method on &lt;time&gt;: <em>&lt;ratnum&gt;</em> <strong>ratnum</strong> <em><var>this</var></em></dt>
+<dt><a name="index-flonum-on-_003ctime_003e"></a>Method on &lt;time&gt;: <em>&lt;flonum&gt;</em> <strong>flonum</strong> <em><var>this</var></em></dt>
+<dd><p>Return a real number representing the time in seconds.  This single
+number is built from seconds and nanoseconds.
+</p></dd></dl>
+
+
+<a name="Arithmetics"></a>
+<h4 class="subsubheading">Arithmetics</h4>
+
+
+<dl>
+<dt><a name="index-_002b-on-_003ctime_003e"></a>Method on &lt;time&gt;: <em>&lt;time&gt;</em> <strong>+</strong> <em><var>this</var> {<var>T</var> &lt;time&gt;} &hellip;</em></dt>
+<dd><p>Compute the addition between time objects: <code><var>this</var> + <var>T</var> +
+...</code> and return a time object representing it.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-_002d-on-_003ctime_003e"></a>Method on &lt;time&gt;: <em>&lt;time&gt;</em> <strong>-</strong> <em><var>this</var> {<var>T</var> &lt;time&gt;} &hellip;</em></dt>
+<dd><p>When only the instance <var>this</var> is given: return the negation of the
+time object.  When additional arguments <var>T</var> are given, compute the
+difference between time objects: <code><var>this</var> - (<var>T</var> + ...)</code>
+and return a time object representing it.
+</p></dd></dl>
+
+
+<a name="Time-comparison"></a>
+<h4 class="subsubheading">Time comparison</h4>
+
+
+<dl>
+<dt><a name="index-_003d-on-_003ctime_003e"></a>Method on &lt;time&gt;: <em>&lt;boolean&gt;</em> <strong>=</strong> <em><var>this</var> {<var>T</var> &lt;time&gt;} &hellip;</em></dt>
+<dd><p>Return <code>#t</code> if the time objects are equal, else return <code>#f</code>.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-_0021_003d-on-_003ctime_003e"></a>Method on &lt;time&gt;: <em>&lt;boolean&gt;</em> <strong>!=</strong> <em><var>this</var> {<var>T</var> &lt;time&gt;} &hellip;</em></dt>
+<dd><p>Return <code>#t</code> if the arguments are all different: no two arguments are
+equal; otherwise return <code>#f</code>.  When <var>this</var> is the only argument:
+return <code>#f</code>.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-_003c-on-_003ctime_003e"></a>Method on &lt;time&gt;: <em>&lt;boolean&gt;</em> <strong>&lt;</strong> <em><var>this</var> {<var>T</var> &lt;time&gt;} &hellip;</em></dt>
+<dd><p>Return <code>#t</code> if the time objects are monotonically increasing; else
+return <code>#f</code>.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-_003c_003d-on-_003ctime_003e"></a>Method on &lt;time&gt;: <em>&lt;boolean&gt;</em> <strong>&lt;=</strong> <em><var>this</var> {<var>T</var> &lt;time&gt;} &hellip;</em></dt>
+<dd><p>Return <code>#t</code> if the time objects are monotonically non&ndash;decreasing;
+else return <code>#f</code>.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-_003e-on-_003ctime_003e"></a>Method on &lt;time&gt;: <em>&lt;boolean&gt;</em> <strong>&gt;</strong> <em><var>this</var> {<var>T</var> &lt;time&gt;} &hellip;</em></dt>
+<dd><p>Return <code>#t</code> if the time objects are monotonically decreasing; else
+return <code>#f</code>.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-_003e_003d-on-_003ctime_003e"></a>Method on &lt;time&gt;: <em>&lt;boolean&gt;</em> <strong>&gt;=</strong> <em><var>this</var> {<var>T</var> &lt;time&gt;} &hellip;</em></dt>
+<dd><p>Return <code>#t</code> if the time objects are monotonically non&ndash;increasing;
+else return <code>#f</code>.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-max-on-_003ctime_003e"></a>Method on &lt;time&gt;: <em>&lt;boolean&gt;</em> <strong>max</strong> <em><var>this</var> {<var>T</var> &lt;time&gt;} &hellip;</em></dt>
+<dt><a name="index-min-on-_003ctime_003e"></a>Method on &lt;time&gt;: <em>&lt;boolean&gt;</em> <strong>min</strong> <em><var>this</var> {<var>T</var> &lt;time&gt;} &hellip;</em></dt>
+<dd><p>Return the maximum or minimum between the arguments.
+</p></dd></dl>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="built_002din-time-epoch.html#built_002din-time-epoch" accesskey="n" rel="next">built-in time epoch</a>, Up: <a href="built_002din-time.html#built_002din-time" accesskey="u" rel="up">built-in time</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

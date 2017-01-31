@@ -1,0 +1,449 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.4d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit and 64-bit
+processors.  Vicare is pronounced the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/downloads
+
+the home page of the project is at:
+
+http://marcomaggi.github.io/vicare.html
+
+development takes place at:
+
+http://github.com/marcomaggi/vicare/
+
+and, as a backup, at:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the "History" appendix for details.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Vicare Scheme: expander intro lex</title>
+
+<meta name="description" content="Vicare Scheme: expander intro lex">
+<meta name="keywords" content="Vicare Scheme: expander intro lex">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="expander-intro.html#expander-intro" rel="up" title="expander intro">
+<link href="expander-options.html#expander-options" rel="next" title="expander options">
+<link href="expander-intro-bindings.html#expander-intro-bindings" rel="prev" title="expander intro bindings">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="expander-intro-lex"></a>
+<div class="header">
+<p>
+Previous: <a href="expander-intro-bindings.html#expander-intro-bindings" accesskey="p" rel="prev">expander intro bindings</a>, Up: <a href="expander-intro.html#expander-intro" accesskey="u" rel="up">expander intro</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Lexical-variables_002c-labels_002c-location-gensyms"></a>
+<h4 class="subsection">15.1.4 Lexical variables, labels, location gensyms</h4>
+
+
+<p>Let&rsquo;s consider the library:
+</p>
+<div class="lisp">
+<pre class="lisp">(library (demo)
+  (export this)
+  (import (rnrs (6)))
+  (define this 8)
+  (define that 9)
+  (let ((a 1))
+    (let ((a 2))
+      (list a this that))))
+</pre></div>
+
+<p>and concentrate on the body:
+</p>
+<div class="lisp">
+<pre class="lisp">(define this 8)
+(define that 9)
+(let ((a 1))
+  (let ((a 2))
+    (list a this that)))
+</pre></div>
+
+<p>This code defines 4 syntactic bindings: &lsquo;<samp>this</samp>&rsquo; and &lsquo;<samp>that</samp>&rsquo; as
+top level variable bindings, of which &lsquo;<samp>this</samp>&rsquo; is also exported;
+outer &lsquo;<samp>a</samp>&rsquo; as local variable binding; inner &lsquo;<samp>a</samp>&rsquo; as local
+variable binding.
+</p>
+<p>The purpose of the expansion process is to transform the input code into
+output code expressed in the core language.  After the expansion
+process, every syntactic binding is renamed so that its name is unique
+in the whole library body.  For example, we can imagine this
+pseudo&ndash;code:
+</p>
+<div class="lisp">
+<pre class="lisp">(define lex.this 8)
+(define lex.that 9)
+(let ((lex.a.1 1))
+  (let ((lex.a.2 2))
+    ((primitive list) lex.a.2 lex.this lex.that)))
+</pre></div>
+
+<p>notice that the original identifier <code>list</code>, in reference position,
+has been replaced by the symbolic expression <code>(primitive list)</code>
+because it is captured by the core primitive binding of the initial
+lexical environment.  The code undergoes the following lexical variable
+name substitutions:
+</p>
+<table>
+<thead><tr><th>original name</th><th>lexical variable name</th></tr></thead>
+<tr><td>this</td><td>lex.this</td></tr>
+<tr><td>that</td><td>lex.that</td></tr>
+<tr><td>outer a</td><td>lex.a.1</td></tr>
+<tr><td>inner a</td><td>lex.a.2</td></tr>
+</table>
+
+<p>where the <code>lex.*</code> symbols are gensyms; such gensyms are named
+<em>lexical gensyms</em> or <em>lex gensyms</em>.  They uniquely identify a
+syntactic binding established in the library.
+</p>
+<p>Renaming bindings is one of the core purposes of the expansion process;
+it is performed while visiting the source code as a tree in
+breadth&ndash;first order.
+</p>
+
+<a name="Lexical-contours-and-rib-objects-1"></a>
+<h4 class="subsubheading">Lexical contours and <code>rib</code> objects</h4>
+
+<p>To distinguish among different bindings with the same name (like the two
+local bindings both named &lsquo;<samp>a</samp>&rsquo; in the example) we must distinguish
+among different <em>lexical contours</em>: different regions of visibility
+for a set of syntactic bindings.
+</p>
+<p>Every <code>let</code> syntax defines a new lexical contour; lexical
+contours can be nested by nesting <code>let</code> syntaxes; the library
+body is a lexical contour itself.
+</p>
+<blockquote>
+<p><strong>NOTE</strong> For simplicity, here we ignore the fact that <code>let</code>,
+in truth, defines 2 lexical contours: one for the bindings established
+by its first argument and one for the internal definitions.  In the
+example there are no internal definitions, so the internal contour is
+not used.
+</p></blockquote>
+
+<div class="float"><a name="fix_003aexpander_002dintro_002d1"></a>
+<div class="example">
+<pre class="example"> -------------------------------------------------
+| (define this 8)              ;top-level contour |
+| (define that 9)                                 |
+| (let ((a 1))                                    |
+|  -----------------------------------------      |
+| |                            ;contour 1   |     |
+| | (let ((a 2))                            |     |
+| |  -------------------------------------  |     |
+| | |                          ;contour 2 | |     |
+| | | (list a this that)                  | |     |
+| |  -------------------------------------  |     |
+| |   )                                     |     |
+|  -----------------------------------------      |
+|   )                                             |
+ -------------------------------------------------
+</pre></div>
+
+<div class="float-caption"><p><strong>Figure 15.1: </strong>Picture of lexical contours.</p></div></div>
+<p>An <code>eq?</code>-unique object is assigned to each lexical contour; such
+objects are called <em>marks</em>.  In practise each syntactic binding is
+associated to the mark representing its visibility region.  So the
+original code is accompanied by the associations:
+</p>
+<table>
+<thead><tr><th>original name</th><th>lexical contour mark</th></tr></thead>
+<tr><td>this</td><td>src-mark</td></tr>
+<tr><td>that</td><td>src-mark</td></tr>
+<tr><td>outer a</td><td>1-mark</td></tr>
+<tr><td>inner a</td><td>2-mark</td></tr>
+</table>
+
+<p>which are registered in a component of the lexical environment: a record
+of type <code>rib</code>.  Every lexical contour is described by a <code>rib</code>; the
+<code>rib</code> for the top level contour holds the associations:
+</p>
+<table>
+<thead><tr><th>original name</th><th>lexical contour mark</th></tr></thead>
+<tr><td>this</td><td>src-mark</td></tr>
+<tr><td>that</td><td>src-mark</td></tr>
+</table>
+
+<p>the <code>rib</code> of the outer <code>let</code> holds the associations:
+</p>
+<table>
+<thead><tr><th>original name</th><th>lexical contour mark</th></tr></thead>
+<tr><td>outer a</td><td>1-mark</td></tr>
+</table>
+
+<p>the <code>rib</code> of the inner <code>let</code> holds the associations:
+</p>
+<table>
+<thead><tr><th>original name</th><th>lexical contour mark</th></tr></thead>
+<tr><td>inner a</td><td>2-mark</td></tr>
+</table>
+
+
+<a name="Syntax-objects-and-syntax-identifiers"></a>
+<h4 class="subsubheading">Syntax objects and syntax identifiers</h4>
+
+<p>While the code is being visited by the expander: data structures called
+<em>syntax objects</em> are created to keep track of the lexical contours.
+</p>
+<ol>
+<li> At first, the whole code is in a syntax object referencing the top
+<code>rib</code> structure:
+
+<div class="example">
+<pre class="example">#&lt;syntax-object
+   expr=(begin
+          (define this 8)
+          (define that 9)
+          (let ((a 1))
+            (let ((a 2))
+              (list a this that))))
+   rib=#&lt;rib mark=src-mark&gt;&gt;
+</pre></div>
+
+<p>syntactic bindings established in this contour will get the src&ndash;mark;
+expressions in the right&ndash;hand sides of binding definitions are expanded
+in the context of the src-mark.
+</p>
+</li><li> After the outer contour has been processed, the outer <code>let</code> is in
+a syntax object:
+
+<div class="example">
+<pre class="example">#&lt;syntax-object
+   expr=(let ((a 1))
+          (let ((a 2))
+            (list a this that)))
+   rib=#&lt;rib mark=1-mark&gt;&gt;
+</pre></div>
+
+<p>syntactic bindings established in this contour will get the 1-mark;
+expressions in the right&ndash;hand sides of binding definitions are expanded
+in the context of the src-mark.
+</p>
+</li><li> After the outer <code>let</code> has been processed, the inner <code>let</code>
+is in a syntax object:
+
+<div class="example">
+<pre class="example">#&lt;syntax-object
+   expr=(let ((a 2))
+          (list a this that))
+   rib=#&lt;rib mark=2-mark&gt;&gt;
+</pre></div>
+
+<p>syntactic bindings established in this contour will get the 2-mark;
+expressions in the right&ndash;hand sides of binding definitions are expanded
+in the context of the 1-mark.
+</p>
+</li><li> After the inner <code>let</code> has been processed, the expression is in a
+syntax object:
+
+<div class="example">
+<pre class="example">#&lt;syntax-object
+   expr=(list a this that)
+   rib=#&lt;rib mark=2-mark&gt;&gt;
+</pre></div>
+
+<p>the expression is expanded in the context of the 2-mark.
+</p></li></ol>
+
+<p>A syntax object having a syntactic binding name as source code
+expression is called <em>syntactic identifiers</em>; an identifier is a
+data structure holding the mark of its visibility region/lexical contour
+among its fields.
+</p>
+
+<a name="Label-gensyms-and-rib-objects"></a>
+<h4 class="subsubheading">Label gensyms and <code>rib</code> objects</h4>
+
+<p>An <code>eq?</code>-unique object is assigned to each syntactic binding: a
+gensym indicated as <em>label gensym</em> or just <em>label</em>; such
+associations are also stored in the <code>rib</code> representing a lexical
+contour:
+</p>
+<table>
+<thead><tr><th>original name</th><th>lexical contour mark</th><th>label</th></tr></thead>
+<tr><td>this</td><td>src-mark</td><td>lab.this</td></tr>
+<tr><td>that</td><td>src-mark</td><td>lab.that</td></tr>
+<tr><td>outer a</td><td>1-mark</td><td>lab.a.1</td></tr>
+<tr><td>inner a</td><td>2-mark</td><td>lab.a.2</td></tr>
+</table>
+
+<p>where the symbols <code>lab.*</code> are gensyms.
+</p>
+
+<a name="Lexical-variable-gensyms-and-the-LEXENV"></a>
+<h4 class="subsubheading">Lexical variable gensyms and the <small>LEXENV</small></h4>
+
+<p>The fact that the lex gensyms in the expanded code are syntactic
+bindings representing variables is registered in a portion of the
+lexical environment indicated as <small>LEXENV</small>.  So the expanded code is
+accompanied by the association:
+</p>
+<table>
+<thead><tr><th>label</th><th>lexical variables</th></tr></thead>
+<tr><td>lab.this</td><td>lex.this</td></tr>
+<tr><td>lab.that</td><td>lex.that</td></tr>
+<tr><td>lab.a.1</td><td>lex.a.1</td></tr>
+<tr><td>lab.a.2</td><td>lex.a.2</td></tr>
+</table>
+
+<p>Notice that, after the expansion: the original names of the internal
+bindings (those defined by <code>let</code>) do not matter anymore; the
+original names of the non&ndash;exported top level bindings do not matter
+anymore; only the original name of the exported top level bindings is
+still important.
+</p>
+
+<a name="Storage-location-gensyms-and-GLOBAL_002dENV"></a>
+<h4 class="subsubheading">Storage location gensyms and <small>GLOBAL-ENV</small></h4>
+
+<p>About the value of syntactic bindings:
+</p>
+<ul>
+<li> The value of local variables goes on the Scheme stack and it exists only
+while the code is being evaluated.
+
+</li><li> The value of local keywords goes on the Scheme stack and it exists only
+while the code is being expanded.
+
+</li><li> The value of top level bindings must be stored in some persistent
+location, because it must exist for the whole time the library is loaded
+in a running Vicare process.
+</li></ul>
+
+<p>But where is a top level binding value stored?  The answer is: gensyms
+are created for the sole purpose of acting as storage locations for top
+level bindings; such gensyms are indicated as <em>location gensyms</em> or
+<em>loc gensyms</em>.  Under Vicare, symbols are data structures
+having a <code>value</code> slot: such slot has <code>symbol-value</code> as
+accessor and <code>set-symbol-value!</code> as mutator and it is used as
+storage location.
+</p>
+<p>So the expanded code is accompanied by the following association:
+</p>
+<table>
+<thead><tr><th>label</th><th>location gensym</th></tr></thead>
+<tr><td>lab.this</td><td>loc.this</td></tr>
+<tr><td>lab.that</td><td>loc.that</td></tr>
+</table>
+
+<p>where the <code>loc.*</code> symbols are gensyms.  To represent the
+association between the top level binding labels (both the exported ones
+and the non&ndash;exported ones) and their storage location gensyms, the
+expander builds a data structure indicated as <small>GLOBAL-ENV</small>.
+</p>
+
+<a name="Exported-bindings-and-EXPORT_002dSUBST"></a>
+<h4 class="subsubheading">Exported bindings and <small>EXPORT-SUBST</small></h4>
+
+<p>Not all the top level syntactic bindings are exported by a library.  To
+list those that are, a data structure is built and indicated as
+<small>EXPORT-SUBST</small>; such data structure associates the external name of
+exported bindings to their label gensym.  For the example library, the
+<small>EXPORT-SUBST</small> represents the association:
+</p>
+<table>
+<thead><tr><th>label</th><th>external name</th></tr></thead>
+<tr><td>lab.this</td><td>this</td></tr>
+</table>
+
+<p>If the <code>export</code> clause of the <code>library</code> form renames a
+binding as in:
+</p>
+<div class="example">
+<pre class="example">(export (rename this external-this))
+</pre></div>
+
+<p>then the <small>EXPORT-SUBST</small> represents the association:
+</p>
+<table>
+<thead><tr><th>label</th><th>external name</th></tr></thead>
+<tr><td>lab.this</td><td>external-this</td></tr>
+</table>
+
+<hr>
+<div class="header">
+<p>
+Previous: <a href="expander-intro-bindings.html#expander-intro-bindings" accesskey="p" rel="prev">expander intro bindings</a>, Up: <a href="expander-intro.html#expander-intro" accesskey="u" rel="up">expander intro</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

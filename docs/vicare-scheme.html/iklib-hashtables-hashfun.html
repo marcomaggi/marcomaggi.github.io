@@ -1,0 +1,361 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.4d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit and 64-bit
+processors.  Vicare is pronounced the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/downloads
+
+the home page of the project is at:
+
+http://marcomaggi.github.io/vicare.html
+
+development takes place at:
+
+http://github.com/marcomaggi/vicare/
+
+and, as a backup, at:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the "History" appendix for details.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Vicare Scheme: iklib hashtables hashfun</title>
+
+<meta name="description" content="Vicare Scheme: iklib hashtables hashfun">
+<meta name="keywords" content="Vicare Scheme: iklib hashtables hashfun">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="iklib-hashtables.html#iklib-hashtables" rel="up" title="iklib hashtables">
+<link href="iklib-hashtables-tcbuckets.html#iklib-hashtables-tcbuckets" rel="next" title="iklib hashtables tcbuckets">
+<link href="iklib-hashtables-iterators.html#iklib-hashtables-iterators" rel="prev" title="iklib hashtables iterators">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="iklib-hashtables-hashfun"></a>
+<div class="header">
+<p>
+Next: <a href="iklib-hashtables-tcbuckets.html#iklib-hashtables-tcbuckets" accesskey="n" rel="next">iklib hashtables tcbuckets</a>, Previous: <a href="iklib-hashtables-iterators.html#iklib-hashtables-iterators" accesskey="p" rel="prev">iklib hashtables iterators</a>, Up: <a href="iklib-hashtables.html#iklib-hashtables" accesskey="u" rel="up">iklib hashtables</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Additional-hash-functions"></a>
+<h4 class="subsection">6.34.3 Additional hash functions</h4>
+
+
+<dl>
+<dt><a name="index-bytevector_002dhash"></a>Function: <strong>bytevector-hash</strong> <em><var>bv</var></em></dt>
+<dt><a name="index-bytevector_002dhash-1"></a>Function: <strong>bytevector-hash</strong> <em><var>bv</var> <var>max-len</var></em></dt>
+<dd><p>Return a non&ndash;negative fixnum representing the hash value for <var>bv</var>,
+based on its current contents.  When creating hash tables using
+bytevectors as keys: this hash function is suitable for use with
+<code>bytevector=?</code> as an equivalence function.
+</p>
+<p>About the <var>max-len</var> argument:
+</p>
+<ul>
+<li> When <var>max-len</var> is a non&ndash;negative fixnum: it is the maximum number
+of bytes to use to compute the hash value, starting from the beginning
+of <var>bv</var>.  If the length of <var>bv</var> is greater than <var>max-len</var>:
+only the first <var>max-len</var> bytes are used.  If the length of <var>bv</var>
+is less than or equal to <var>max-len</var>: all the bytes in <var>bv</var> are
+used.
+
+</li><li> When <var>max-len</var> is <code>#f</code> or not present: if the length of <var>bv</var>
+is greater than <em>256</em> bytes, only the first <em>256</em> bytes are
+used to compute the hash.
+
+</li><li> When <var>max-len</var> is <code>#t</code>: all the bytes in <var>bv</var> are used.
+</li></ul>
+
+<p><strong>NOTE</strong> When the hash value is computed using a number of bytes
+<em>N</em> less than the bytevector length: applications <strong>must not</strong>
+assume that two bytevectors having the first <em>N</em> bytes equal will
+have the same hash value.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-vector_002dhash"></a>Function: <strong>vector-hash</strong> <em><var>vec</var></em></dt>
+<dt><a name="index-vector_002dhash-1"></a>Function: <strong>vector-hash</strong> <em><var>vec</var> <var>max-len</var></em></dt>
+<dd><p>Return a non&ndash;negative fixnum representing the hash value for <var>vec</var>,
+based on its current contents.  When creating hash tables using vectors
+as keys: this hash function is suitable for use with <code>vector=?</code>  as
+an equivalence function.
+</p>
+<p>About the <var>max-len</var> argument:
+</p>
+<ul>
+<li> When <var>max-len</var> is a non&ndash;negative fixnum: it is the maximum number
+of items to use to compute the hash value, starting from the beginning
+of <var>vec</var>.  If the length of <var>vec</var> is greater than <var>max-len</var>:
+only the first <var>max-len</var> items are used.  If the length of <var>vec</var>
+is less than or equal to <var>max-len</var>: all the items in <var>vec</var> are
+used.
+
+</li><li> When <var>max-len</var> is <code>#f</code> or not present: if the length of
+<var>vec</var> is greater than <em>3</em> items, only the first <em>3</em> items
+are used to compute the hash.
+
+</li><li> When <var>max-len</var> is <code>#t</code>: all the items in <var>vec</var> are used.
+</li></ul>
+
+<p><strong>NOTE</strong> When the hash value is computed using a number of items
+<em>N</em> less than the vector length: applications <strong>must not</strong>
+assume that two vectors having the first <em>N</em> items equal will have
+the same hash value.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-list_002dhash"></a>Function: <strong>list-hash</strong> <em><var>ell</var></em></dt>
+<dt><a name="index-list_002dhash-1"></a>Function: <strong>list-hash</strong> <em><var>ell</var> <var>max-len</var></em></dt>
+<dd><p>Return a non&ndash;negative fixnum representing the hash value for <var>ell</var>,
+based on its current contents.  When creating hash tables using lists as
+keys: this hash function is suitable for use with <code>equal?</code>  as an
+equivalence function.
+</p>
+<p>About the <var>max-len</var> argument:
+</p>
+<ul>
+<li> When <var>max-len</var> is a non&ndash;negative fixnum: it is the maximum number
+of items to use to compute the hash value, starting from the beginning
+of <var>ell</var>.  If the length of <var>ell</var> is greater than <var>max-len</var>:
+only the first <var>max-len</var> items are used.  If the length of <var>ell</var>
+is less than or equal to <var>max-len</var>: all the items in <var>ell</var> are
+used.
+
+</li><li> When <var>max-len</var> is <code>#f</code> or not present: if the length of
+<var>ell</var> is greater than <em>3</em> items, only the first <em>3</em> items
+are used to compute the hash.
+
+</li><li> When <var>max-len</var> is <code>#t</code>: all the items in <var>ell</var> are used.
+</li></ul>
+
+<p><strong>NOTE</strong> When the hash value is computed using a number of items
+<em>N</em> less than the list length: applications <strong>must not</strong>
+assume that two lists having the first <em>N</em> items equal will have
+the same hash value.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-pair_002dhash"></a>Function: <strong>pair-hash</strong> <em><var>pair</var></em></dt>
+<dt><a name="index-ipair_002dhash"></a>Function: <strong>ipair-hash</strong> <em><var>ipair</var></em></dt>
+<dd><p>Hash functions for pairs and immutable pairs.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-char_002dhash"></a>Function: <strong>char-hash</strong> <em><var>ch</var></em></dt>
+<dt><a name="index-char_002dci_002dhash"></a>Function: <strong>char-ci-hash</strong> <em><var>ch</var></em></dt>
+<dd><p>Hash function for characters.  <code>char-ci-hash</code> first applies
+<code>char-foldcase</code> to <var>ch</var>.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-boolean_002dhash"></a>Function: <strong>boolean-hash</strong> <em><var>bool</var></em></dt>
+<dd><p>Hash function for booleans.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-fixnum_002dhash"></a>Function: <strong>fixnum-hash</strong> <em><var>fx</var></em></dt>
+<dd><p>Hash function for fixnums.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-bignum_002dhash"></a>Function: <strong>bignum-hash</strong> <em><var>bn</var></em></dt>
+<dd><p>Hash function for bignums.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-exact_002dinteger_002dhash"></a>Function: <strong>exact-integer-hash</strong> <em><var>N</var></em></dt>
+<dd><p>Hash function for exact integers, fixnums and bignums.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-flonum_002dhash"></a>Function: <strong>flonum-hash</strong> <em><var>fl</var></em></dt>
+<dd><p>Hash function for flonums.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-ratnum_002dhash"></a>Function: <strong>ratnum-hash</strong> <em><var>rn</var></em></dt>
+<dd><p>Hash function for ratnums.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-cflonum_002dhash"></a>Function: <strong>cflonum-hash</strong> <em><var>cfl</var></em></dt>
+<dd><p>Hash function for cflonums.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-flonum_002dhash-1"></a>Function: <strong>flonum-hash</strong> <em><var>fl</var></em></dt>
+<dd><p>Hash function for flonums.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-compnum_002dhash"></a>Function: <strong>compnum-hash</strong> <em><var>Z</var></em></dt>
+<dd><p>Hash function for compnum objects.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-struct_002dhash"></a>Function: <strong>struct-hash</strong> <em><var>stru</var></em></dt>
+<dd><p>Hash function for Vicare structs.  This is a very low quality
+hash function.
+</p>
+<blockquote>
+<p><strong>NOTE</strong> The result returned by this hash function depends on the values in the struct fields,
+so: it will change if the struct is mutated.
+</p></blockquote>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-record_002dhash"></a>Function: <strong>record-hash</strong> <em><var>reco</var></em></dt>
+<dd><p>Hash function for <acronym>R6RS</acronym> records.  This is a very low quality hash
+function.  Notice that it does <strong>not</strong> use the custom hash function
+of <var>reco</var> (if any).
+</p>
+<blockquote>
+<p><strong>NOTE</strong> The result returned by this hash function depends on the values in the record fields,
+so: it will change if the record is mutated.
+</p></blockquote>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-enum_002dset_002dhash"></a>Function: <strong>enum-set-hash</strong> <em><var>es</var></em></dt>
+<dd><p>Hash function for enumeration sets.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-pointer_002dhash"></a>Function: <strong>pointer-hash</strong> <em><var>ptr</var></em></dt>
+<dd><p>Return a fixnum representing the hash value of <var>ptr</var>.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-promise_002dhash"></a>Function: <strong>promise-hash</strong> <em><var>prom</var></em></dt>
+<dd><p>Hash function for promise objects.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-void_002dhash"></a>Function: <strong>void-hash</strong> <em><var>obj</var></em></dt>
+<dt><a name="index-eof_002dobject_002dhash"></a>Function: <strong>eof-object-hash</strong> <em><var>obj</var></em></dt>
+<dt><a name="index-would_002dblock_002dhash"></a>Function: <strong>would-block-hash</strong> <em><var>obj</var></em></dt>
+<dt><a name="index-sentinel_002dhash"></a>Function: <strong>sentinel-hash</strong> <em><var>obj</var></em></dt>
+<dd><p>Ignore <var>obj</var> and return a non&ndash;negative exact integer representing
+the hash value for <code>(void)</code>, <code>(eof-object)</code>,
+<code>(would-block-object)</code> and <code>(sentinel)</code>.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-object_002dhash"></a>Function: <strong>object-hash</strong> <em><var>obj</var></em></dt>
+<dd><p>Hash function for any Scheme object.  For some object types: this is a
+very low quality hash function.
+</p>
+<p>When <var>obj</var> is a record whose record&ndash;type defines a custom hash
+function: <code>object-hash</code> makes use of such custom function;
+otherwise <code>record-hash</code> is used.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-pointer_002dvalue"></a>Function: <strong>pointer-value</strong> <em><var>obj</var></em></dt>
+<dd><p>This is used by <code>eq?</code> hashtables to obtain a fixnum from references
+to objects that are meant to be compared with <code>eq?</code>.
+</p></dd></dl>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="iklib-hashtables-tcbuckets.html#iklib-hashtables-tcbuckets" accesskey="n" rel="next">iklib hashtables tcbuckets</a>, Previous: <a href="iklib-hashtables-iterators.html#iklib-hashtables-iterators" accesskey="p" rel="prev">iklib hashtables iterators</a>, Up: <a href="iklib-hashtables.html#iklib-hashtables" accesskey="u" rel="up">iklib hashtables</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

@@ -1,0 +1,625 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.4d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit and 64-bit
+processors.  Vicare is pronounced the etruscan way.  The focus of
+this document is over the typed language extension.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/downloads
+
+the home page of the project is at:
+
+http://marcomaggi.github.io/vicare.html
+
+development takes place at:
+
+http://github.com/marcomaggi/vicare/
+
+and, as a backup, at:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/
+
+Copyright (C) 2016-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Vicare Scheme&rsquo;s typed language: annotations syntaxes</title>
+
+<meta name="description" content="Vicare Scheme&rsquo;s typed language: annotations syntaxes">
+<meta name="keywords" content="Vicare Scheme&rsquo;s typed language: annotations syntaxes">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="type-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="annotations.html#annotations" rel="up" title="annotations">
+<link href="annotations-relations.html#annotations-relations" rel="next" title="annotations relations">
+<link href="annotations-inserting.html#annotations-inserting" rel="prev" title="annotations inserting">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="annotations-syntaxes"></a>
+<div class="header">
+<p>
+Next: <a href="annotations-relations.html#annotations-relations" accesskey="n" rel="next">annotations relations</a>, Previous: <a href="annotations-inserting.html#annotations-inserting" accesskey="p" rel="prev">annotations inserting</a>, Up: <a href="annotations.html#annotations" accesskey="u" rel="up">annotations</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="The-syntax-of-type-annotations"></a>
+<h3 class="section">2.2 The syntax of type annotations</h3>
+
+
+<p>Type annotations are either standalone type identifiers like
+<code>&lt;fixnum&gt;</code>, <code>&lt;string&gt;</code>, <code>&amp;message</code> or compound type
+syntaxes like the following:
+</p>
+<div class="lisp">
+<pre class="lisp">(pair      &lt;fixnum&gt; &lt;string&gt;)
+(list      &lt;fixnum&gt; &lt;string&gt; &lt;symbol&gt;)
+(vector    &lt;fixnum&gt; &lt;string&gt; &lt;symbol&gt;)
+(pair-of   &lt;fixnum&gt;)
+(list-of   &lt;fixnum&gt;)
+(nelist-of &lt;fixnum&gt;)
+(vector-of &lt;fixnum&gt;)
+(nevector-of &lt;fixnum&gt;)
+(hashtable &lt;symbol&gt; &lt;string&gt;)
+(alist     &lt;symbol&gt; &lt;string&gt;)
+(enumeration <var>?symbol0</var> <var>?symbol</var> ...)
+(condition &amp;who &amp;message &amp;irritants)
+(or    &lt;false&gt; &lt;symbol&gt; &lt;string&gt;)
+(and   &lt;exact&gt; &lt;positive&gt;)
+(not   &lt;exact&gt;)
+(maybe &lt;string&gt;)
+(lambda (&lt;fixnum&gt;) =&gt; (&lt;string&gt;))
+(case-lambda
+  ((&lt;fixnum&gt;) =&gt; (&lt;string&gt;))
+  ((&lt;flonum&gt;) =&gt; (&lt;string&gt;)))
+(type-of <var>?expr</var>)
+</pre></div>
+
+<p>and others; compound type annotations can be nested at will:
+</p>
+<div class="lisp">
+<pre class="lisp">(or (list-of   &lt;fixnum&gt;)
+    (vector-of &lt;fixnum&gt;))
+</pre></div>
+
+<p>For every type annotation: a parent type is documented, but the
+super&ndash;type/sub&ndash;type relation is &ldquo;flexible&rdquo;.  For example,
+<code>list-of</code> and <code>list</code> annotations are both sub&ndash;types of
+<code>&lt;list&gt;</code>; but it also stands that:
+</p>
+<div class="lisp">
+<pre class="lisp">(type-annotation-super-and-sub? (list-of &lt;fixnum&gt;)
+                                (list &lt;fixnum&gt; &lt;fixnum&gt;))
+&rArr; #t
+
+(type-annotation-super-and-sub? (list-of &lt;fixnum&gt;)
+                                (list &lt;fixnum&gt; &lt;string&gt;))
+&rArr; #f
+</pre></div>
+
+
+<p>The following syntactic bindings are exported by <code>(vicare)</code>.
+</p>
+
+<dl>
+<dt><a name="index-pair"></a>Type Annotation: <strong>pair</strong> <em><var>?car-type</var> <var>?car-type</var></em></dt>
+<dt><a name="index-_003cpair_003e"></a>Parent Type: <strong>&lt;pair&gt;</strong></dt>
+<dd><p>Describe a pair having car of type <var>?car-type</var> and cdr of type
+<var>?car-type</var>.  Both <var>?car-type</var> and <var>?cdr-type</var> are nested
+type annotations.
+</p>
+<div class="lisp">
+<pre class="lisp">(is-a? '(1 . 2.3) (pair &lt;fixnum&gt; &lt;flonum&gt;))
+&rArr; #t
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-list"></a>Type Annotation: <strong>list</strong> <em><var>?item-type0</var> <var>?item-type</var> &hellip;</em></dt>
+<dt><a name="index-_003clist_003e"></a>Parent Type: <strong>&lt;list&gt;</strong></dt>
+<dd><p>Describe a proper list holding a fixed number of items of the specified
+types (in the given order).  Every <var>?item-type</var> is a nested type
+annotation.
+</p>
+<div class="lisp">
+<pre class="lisp">(is-a? '(1 2.3) (list &lt;fixnum&gt; &lt;flonum&gt;))
+&rArr; #t
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-vector"></a>Type Annotation: <strong>vector</strong> <em><var>?item-type0</var> <var>?item-type</var> &hellip;</em></dt>
+<dt><a name="index-_003cvector_003e"></a>Parent Type: <strong>&lt;vector&gt;</strong></dt>
+<dd><p>Describe a vector holding a fixed number of items of the specified types
+(in the given order).  Every <var>?item-type</var> is a nested type
+annotation.
+</p>
+<div class="lisp">
+<pre class="lisp">(is-a? '#(1 2.3) (vector &lt;fixnum&gt; &lt;flonum&gt;))
+&rArr; #t
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-pair_002dof"></a>Type Annotation: <strong>pair-of</strong> <em><var>?item-type</var></em></dt>
+<dt><a name="index-_003cpair_003e-1"></a>Parent Type: <strong>&lt;pair&gt;</strong></dt>
+<dd><p>Describe a pair having both the car and cdr of type <var>?item-type</var>.
+The syntax <var>?item-type</var> is a nested type annotation.
+</p>
+<div class="lisp">
+<pre class="lisp">(is-a? '(1 . 2) (pair-of &lt;fixnum&gt;))
+&rArr; #t
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-list_002dof"></a>Type Annotation: <strong>list-of</strong> <em><var>?item-type</var></em></dt>
+<dt><a name="index-_003clist_003e-1"></a>Parent Type: <strong>&lt;list&gt;</strong></dt>
+<dd><p>Describe a proper list holding any number of items (including zero) all
+of the specified type.  The syntax <var>?item-type</var> is a nested type
+annotation.
+</p>
+<div class="lisp">
+<pre class="lisp">(is-a? '(1 2) (list-of &lt;fixnum&gt;))       &rArr; #t
+(is-a? '()    (list-of &lt;fixnum&gt;))       &rArr; #t
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-nelist_002dof"></a>Type Annotation: <strong>nelist-of</strong> <em><var>?item-type</var></em></dt>
+<dt><a name="index-_003cpair_003e-2"></a>Parent Type: <strong>&lt;pair&gt;</strong></dt>
+<dd><p>Describe a proper non&ndash;empty list holding any number of items all of the
+specified type.  The syntax <var>?item-type</var> is a nested type
+annotation.  This type annotation is expanded to:
+</p>
+<div class="lisp">
+<pre class="lisp">(pair <var>?item-type</var> (list-of <var>?item-type</var>))
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-vector_002dof"></a>Type Annotation: <strong>vector-of</strong> <em><var>?item-type</var></em></dt>
+<dt><a name="index-_003cvector_003e-1"></a>Parent Type: <strong>&lt;vector&gt;</strong></dt>
+<dd><p>Describe a vector holding any number of items (including zero) all of
+the specified type.  The syntax <var>?item-type</var> is a nested type
+annotation.
+</p>
+<div class="lisp">
+<pre class="lisp">(is-a? '#(1 2) (vector-of &lt;fixnum&gt;))    &rArr; #t
+(is-a? '#()    (vector-of &lt;fixnum&gt;))    &rArr; #t
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-nevector_002dof"></a>Type Annotation: <strong>nevector-of</strong> <em><var>?item-type</var></em></dt>
+<dt><a name="index-_003cnevector_003e"></a>Parent Type: <strong>&lt;nevector&gt;</strong></dt>
+<dd><p>Describe a vector holding one or more items all of the specified type.
+The syntax <var>?item-type</var> is a nested type annotation.
+</p>
+<div class="lisp">
+<pre class="lisp">(is-a? '#(1 2) (nevector-of &lt;fixnum&gt;))  &rArr; #t
+(is-a? '#()    (nevector-of &lt;fixnum&gt;))  &rArr; #f
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-hashtable"></a>Type Annotation: <strong>hashtable</strong> <em><var>?key-type</var> <var>?value-type</var></em></dt>
+<dt><a name="index-_003chashtable_003e"></a>Parent Type: <strong>&lt;hashtable&gt;</strong></dt>
+<dd><p>Describe a hashtable having keys of type <var>?key-type</var> and values of
+type <var>?value-type</var>.  Both <var>?key-type</var> and <var>?value-type</var> are
+nested type annotations.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-enumeration"></a>Type Annotation: <strong>enumeration</strong> <em><var>?symbol0</var> <var>?symbol</var> &hellip;</em></dt>
+<dt><a name="index-_003csymbol_003e"></a>Parent Type: <strong>&lt;symbol&gt;</strong></dt>
+<dd><p>Describe an enumeration of symbols; it is used to match a symbol in a
+specified enumeration set.
+</p>
+<div class="lisp">
+<pre class="lisp">(is-a? 'ciao (enumeration hello ciao salut ohayo))
+&rArr; #t
+
+(is-a? 'blue (enumeration hello ciao salut ohayo))
+&rArr; #f
+</pre></div>
+
+<p>As special case, if we define an alias for an <code>enumeration</code> type
+annotation: we can use such identifier to validate symbols.  Example:
+</p>
+<div class="lisp">
+<pre class="lisp">(define-type greetings
+  (enumeration hello ciao salut ohayo))
+
+(is-a? 'ciao greetings) &rArr; #t
+(greetings ciao)        &rArr; ciao
+(greetings blue)        error&rarr; symbol not in enumeration
+</pre></div>
+
+<p>The enumeration identifier is indeed used in the implementation of the
+<code>define-enumeration</code> built&ndash;in syntax; <a href="../vicare-scheme/stdlib-enum.html#stdlib-enum">(vicare-scheme)define-enumeration</a>.
+</p>
+<div class="lisp">
+<pre class="lisp">(define-enumeration greetings
+  (hello ciao salut ohayo)
+  make-greetings)
+
+(is-a? 'ciao greetings) &rArr; #t
+(greetings ciao)        &rArr; ciao
+(greetings blue)        error&rarr; symbol not in enumeration
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-alist"></a>Type Annotation: <strong>alist</strong> <em><var>?key-type</var> <var>?value-type</var></em></dt>
+<dt><a name="index-_003clist_003e-2"></a>Parent Type: <strong>&lt;list&gt;</strong></dt>
+<dd><p>Describe an association list having keys of type <var>?key-type</var> and
+values of type <var>?value-type</var>.  Both <var>?key-type</var> and
+<var>?value-type</var> are nested type annotations.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-condition"></a>Type Annotation: <strong>condition</strong> <em><var>?cond-type0</var> <var>?cond-type</var> &hellip;</em></dt>
+<dt><a name="index-_003ccompound_002dcondition_003e"></a>Parent Type: <strong>&lt;compound-condition&gt;</strong></dt>
+<dd><p>Describe a compound condition object holding at least one instance of
+the specified types (the order does not matter).  Every <var>?cond-type</var>
+is a nested type annotation that must be one among: <code>&lt;condition&gt;</code>,
+<code>&lt;compound-condition&gt;</code>, a sub&ndash;type of <code>&amp;condition</code>.
+</p>
+<div class="lisp">
+<pre class="lisp">(is-a? (condition (make-who-condition 'I)
+                  (make-message-condition &quot;hello&quot;))
+       (condition &amp;who &amp;message))
+&rArr; #t
+
+(is-a? (condition (make-who-condition 'I)
+                  (make-message-condition &quot;hello&quot;))
+       (condition &amp;message &amp;who))
+&rArr; #t
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-lambda"></a>Type Annotation: <strong>lambda</strong> <em><var>?args-signature</var> =&gt; <var>?rv-signature</var></em></dt>
+<dt><a name="index-_003cprocedure_003e"></a>Parent Type: <strong>&lt;procedure&gt;</strong></dt>
+<dd><p>Describe a sub&ndash;type of <code>&lt;procedure&gt;</code> having a single clause, like
+procedures defined by <code>lambda</code>.  <code>=&gt;</code> is the syntactic
+binding exported by <code>(rnrs base (6))</code>.
+</p>
+<p>The argument <var>?args-signature</var> must be a syntax object representing
+the type signature of the procedure&rsquo;s arguments.  The argument
+<var>?rv-signature</var> must be a syntax object representing the type
+signature of the procedure&rsquo;s return values.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-case_002dlambda"></a>Type Annotation: <strong>case-lambda</strong> <em><var>?clause0</var> <var>?clause</var> &hellip;</em></dt>
+<dt><a name="index-_003cprocedure_003e-1"></a>Parent Type: <strong>&lt;procedure&gt;</strong></dt>
+<dd><p>Describe a sub&ndash;type of <code>&lt;procedure&gt;</code> having multiple clauses, like
+procedures defined by <code>case-lambda</code>.  <code>=&gt;</code> is the
+syntactic binding exported by <code>(rnrs base (6))</code>.
+</p>
+<p>Each <var>?clause</var> argument must have the format:
+</p>
+<div class="example">
+<pre class="example">(<var>?args-signature</var> =&gt; <var>?rv-signature</var>)
+</pre></div>
+
+<p>where: <var>?args-signature</var> must be a syntax object representing the
+type signature of the clause&rsquo;s arguments; <var>?rv-signature</var> must be a
+syntax object representing the type signature of the clause&rsquo;s return
+values.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-or"></a>Type Annotation: <strong>or</strong> <em><var>?type0</var> <var>?type</var> &hellip;</em></dt>
+<dt><a name="index-_003ctop_003e"></a>Parent Type: <strong>&lt;top&gt;</strong></dt>
+<dd><p>Describe the union between the specified types.  Every <var>?type</var> is a
+nested type annotation.  A value matches a union of types if its type
+matches at least one of the union&rsquo;s types.
+</p>
+<div class="lisp">
+<pre class="lisp">(is-a? 1      (or &lt;fixnum&gt; &lt;string&gt;))   &rArr; #t
+(is-a? &quot;ciao&quot; (or &lt;fixnum&gt; &lt;string&gt;))   &rArr; #t
+(is-a? 1.23   (or &lt;fixnum&gt; &lt;string&gt;))   &rArr; #f
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-or-1"></a>Type Annotation: <strong>or</strong> <em><var>?type0</var> <var>?type</var> &hellip;</em></dt>
+<dt><a name="index-_003ctop_003e-1"></a>Parent Type: <strong>&lt;top&gt;</strong></dt>
+<dd><p>Describe the union between the specified types.  Every <var>?type</var> is a
+nested type annotation.  A value matches a union of types if its type
+matches at least one of the union&rsquo;s types.
+</p>
+<div class="lisp">
+<pre class="lisp">(is-a? 1      (or &lt;fixnum&gt; &lt;string&gt;))   &rArr; #t
+(is-a? &quot;ciao&quot; (or &lt;fixnum&gt; &lt;string&gt;))   &rArr; #t
+(is-a? 1.23   (or &lt;fixnum&gt; &lt;string&gt;))   &rArr; #f
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-maybe"></a>Type Annotation: <strong>maybe</strong> <em><var>?type</var></em></dt>
+<dt><a name="index-_003ctop_003e-2"></a>Parent Type: <strong>&lt;top&gt;</strong></dt>
+<dd><p>It is a shortcut for:
+</p>
+<div class="lisp">
+<pre class="lisp">(or &lt;false&gt; <var>?type</var>)
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-not"></a>Type Annotation: <strong>not</strong> <em><var>?type</var></em></dt>
+<dt><a name="index-_003ctop_003e-3"></a>Parent Type: <strong>&lt;top&gt;</strong></dt>
+<dd><p>Describe the complement of the type.  The argument <var>?type</var> is a
+nested type annotation.  A value of type <var>?val-type</var> matches the
+complement of <var>?type</var> if <var>?val-type</var> is neither <var>?type</var> nor
+a sub&ndash;type of <var>?type</var>.
+</p>
+<div class="lisp">
+<pre class="lisp">(is-a? 1   (not &lt;string&gt;))      &rArr; #t
+(is-a? 1.0 (not &lt;fixnum&gt;))      &rArr; #f
+
+;;If something is not a &quot;&lt;number&gt;&quot;, for sure it is
+;;not a &quot;&lt;fixnum&gt;&quot;.
+(type-annotation-super-and-sub? (not &lt;fixnum&gt;) (not &lt;number&gt;))
+&rArr; #t
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-parent_002dof"></a>Type Annotation: <strong>parent-of</strong> <em><var>?type</var></em></dt>
+<dt><a name="index-_003ctop_003e-4"></a>Parent Type: <strong>&lt;top&gt;</strong></dt>
+<dd><p>Describe the parent of the type; an exception is raised if the type has
+no parent.  The argument <var>?type</var> is a nested type annotation.
+</p>
+<div class="lisp">
+<pre class="lisp">(type-annotation=? &lt;struct&gt; (parent-of &lt;record&gt;))
+&rArr; #t
+
+(type-annotation=? &lt;fixnum&gt; (parent-of &lt;positive-fixnum&gt;))
+&rArr; #t
+
+(type-annotation=? &lt;positive-fixnum&gt; (parent-of &lt;fixnum&gt;))
+&rArr; #f
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-ancestor_002dof"></a>Type Annotation: <strong>ancestor-of</strong> <em><var>?type</var></em></dt>
+<dt><a name="index-_003ctop_003e-5"></a>Parent Type: <strong>&lt;top&gt;</strong></dt>
+<dd><p>Describe the ancestors of the type; if the type has no parent: the list
+of ancestors is empty.  The argument <var>?type</var> is a nested type
+annotation and it is not included in its list of ancestors.
+</p>
+<p>This type annotation can be used to match <strong>exactly</strong> a type
+annotation with one of the ancestors of <var>?type</var>:
+</p>
+<div class="lisp">
+<pre class="lisp">(type-annotation-matching (ancestor-of &amp;condition)
+                          &amp;condition)
+&rArr; no-match
+
+(type-annotation-matching (ancestor-of &amp;condition)
+                          &lt;condition&gt;)
+&rArr; exact-match
+
+(type-annotation-matching (ancestor-of &amp;condition)
+                          &lt;record&gt;)
+&rArr; exact-match
+
+(type-annotation-matching (ancestor-of &amp;condition)
+                          &lt;struct&gt;)
+&rArr; exact-match
+
+(type-annotation-matching (ancestor-of &amp;condition)
+                          &lt;top&gt;)
+&rArr; exact-match
+
+(type-annotation-matching &lt;condition&gt;
+                          (ancestor-of &amp;condition))
+&rArr; exact-match
+</pre></div>
+
+<p>When used along with <code>not</code>, it is used to avoid matching exactly
+a type annotation with one of the ancestors of <var>?type</var>:
+</p>
+<div class="lisp">
+<pre class="lisp">(type-annotation-matching (not (ancestor-of &amp;condition))
+                          &lt;condition&gt;)
+&rArr; no-match
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-type_002dpredicate-1"></a>Type Annotation: <strong>type-predicate</strong> <em><var>?type</var></em></dt>
+<dd><p>A short&ndash;cut to specify:
+</p>
+<div class="lisp">
+<pre class="lisp">(lambda (<var>?type</var>) =&gt; (&lt;boolean&gt;))
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-equality_002dpredicate-2"></a>Type Annotation: <strong>equality-predicate</strong> <em><var>?type</var></em></dt>
+<dd><p>A short&ndash;cut to specify:
+</p>
+<div class="lisp">
+<pre class="lisp">(lambda (<var>?type</var> <var>?type</var>) =&gt; (&lt;boolean&gt;))
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-comparison_002dprocedure-2"></a>Type Annotation: <strong>comparison-procedure</strong> <em><var>?type</var></em></dt>
+<dd><p>A short&ndash;cut to specify:
+</p>
+<div class="lisp">
+<pre class="lisp">(lambda (<var>?type</var> <var>?type</var>) =&gt; (&lt;fixnum&gt;))
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-hash_002dfunction-2"></a>Type Annotation: <strong>hash-function</strong> <em><var>?type</var></em></dt>
+<dd><p>A short&ndash;cut to specify:
+</p>
+<div class="lisp">
+<pre class="lisp">(lambda (<var>?type</var>) =&gt; (&lt;non-negative-fixnum&gt;))
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-type_002dof-1"></a>Type Annotation: <strong>type-of</strong> <em><var>?expr</var></em></dt>
+<dd><p>Describe the type of <var>?expr</var>, which must be a Scheme expression.
+The type signature of <var>?expr</var> must hold a single value.  The
+expression is expanded and not evaluated; the side effects of the
+expansion are performed, so this type annotation must be used with care.
+</p>
+<div class="lisp">
+<pre class="lisp">(type-annotation-syntax (type-of 123))
+&rArr; &lt;positive-fixnum&gt;
+
+(type-annotation-syntax (type-of (void)))
+&rArr; &lt;void&gt;
+
+(let ((fun (lambda () 123)))
+  (type-annotation-syntax (type-of (fun))))
+&rArr; &lt;positive-fixnum&gt;
+
+(type-annotation-syntax (or (type-of 1)
+                            (type-of &quot;ciao&quot;)
+                            (type-of 'hey)))
+&rArr; (or &lt;positive-fixnum&gt; &lt;string&gt; (enumeration hey))
+</pre></div>
+
+<p>The expression is not allowed not to return:
+</p>
+<div class="lisp">
+<pre class="lisp">(type-annotation-syntax (type-of (error #f &quot;error&quot;)))
+error&rarr; &amp;assertion
+</pre></div>
+
+<p>The expression is not allowed to return zero, two or more values:
+</p>
+<div class="lisp">
+<pre class="lisp">(type-annotation-syntax (type-of (values)))
+error&rarr; &amp;assertion
+
+(type-annotation-syntax (type-of (values 1 2)))
+error&rarr; &amp;assertion
+
+(type-annotation-syntax (type-of (values 1 2 3)))
+error&rarr; &amp;assertion
+</pre></div>
+
+<p>The expression is not allowed to return unspecified values:
+</p>
+<div class="lisp">
+<pre class="lisp">(letrec ((fun (lambda ({_ . &lt;list&gt;}) (fun))))
+  (type-annotation-syntax (type-of (fun))))
+error&rarr; &amp;assertion
+</pre></div>
+
+<p>The expression is expanded in the current lexical environment for phase
+zero, but with empty lexical environment for the other phases:
+</p>
+<div class="lisp">
+<pre class="lisp">(let-syntax ((outer (lambda (stx) 123)))
+  (type-annotation-syntax (outer)))
+error&rarr; identifier OUTER out of context
+
+(let-syntax  ((outer (lambda (stx) 123)))
+  (type-annotation-syntax
+     (type-of (let-syntax ((inner (lambda (stx) (outer))))
+                (inner)))))
+error&rarr; identifier OUTER out of context
+</pre></div>
+</dd></dl>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="annotations-relations.html#annotations-relations" accesskey="n" rel="next">annotations relations</a>, Previous: <a href="annotations-inserting.html#annotations-inserting" accesskey="p" rel="prev">annotations inserting</a>, Up: <a href="annotations.html#annotations" accesskey="u" rel="up">annotations</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

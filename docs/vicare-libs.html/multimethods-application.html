@@ -1,0 +1,345 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes the libraries distributed along with version
+0.4d1 of Vicare Scheme, an R6RS compliant native
+compiler for the Scheme language.
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+The documentation of the libraries (vicare parser-tools silex
+-) are derived form the documentation of SILex.  Copyright
+(C) 2001, 2009 Danny Dube'.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Libraries for Vicare Scheme: multimethods application</title>
+
+<meta name="description" content="Libraries for Vicare Scheme: multimethods application">
+<meta name="keywords" content="Libraries for Vicare Scheme: multimethods application">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="multimethods.html#multimethods" rel="up" title="multimethods">
+<link href="multimethods-dispatching.html#multimethods-dispatching" rel="next" title="multimethods dispatching">
+<link href="multimethods-examples.html#multimethods-examples" rel="prev" title="multimethods examples">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="multimethods-application"></a>
+<div class="header">
+<p>
+Next: <a href="multimethods-dispatching.html#multimethods-dispatching" accesskey="n" rel="next">multimethods dispatching</a>, Previous: <a href="multimethods-examples.html#multimethods-examples" accesskey="p" rel="prev">multimethods examples</a>, Up: <a href="multimethods.html#multimethods" accesskey="u" rel="up">multimethods</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="How-generic-functions-and-methods-are-invoked"></a>
+<h3 class="section">19.2 How generic functions and methods are invoked</h3>
+
+
+<p>The library <code>(vicare language-extensions multimethods)</code> is
+designed to work with type definitions from the library <code>(vicare)</code>
+(<code>&lt;fixnum&gt;</code>, <code>&lt;string&gt;</code>, et cetera); these types and their
+hierarchy are identified by unique symbols (<acronym>UID</acronym>).  For example:
+</p>
+<div class="lisp">
+<pre class="lisp">(type-unique-identifiers &lt;string&gt;)
+&rArr; (vicare:scheme-type:&lt;string&gt;
+    vicare:scheme-type:&lt;top&gt;)
+</pre></div>
+
+<p>Every method has arguments specified by a tuple of type identifiers; for
+example, the method definition:
+</p>
+<div class="lisp">
+<pre class="lisp">(define-method (fluff {A &lt;string&gt;} {B &lt;struct&gt;} {C &lt;top&gt;})
+  ---)
+</pre></div>
+
+<p>has arguments specified by the tuple of identifiers:
+</p>
+<div class="lisp">
+<pre class="lisp">(&lt;string&gt; &lt;struct&gt; &lt;top&gt;)
+</pre></div>
+
+<p>Every tuple of operands to which a multimethod is applied is associated
+to a tuple of type identifiers; for example, in the multimethod
+application:
+</p>
+<div class="lisp">
+<pre class="lisp">(define {B &lt;struct&gt;} ---)
+(define {C &lt;top&gt;}    ---)
+(fluff &quot;ciao&quot; B C)
+</pre></div>
+
+<p>the type of the operands is specified by the tuple of type identifiers:
+</p>
+<div class="lisp">
+<pre class="lisp">(&lt;string&gt; &lt;struct&gt; &lt;top&gt;)
+</pre></div>
+
+<p>This way each tuple of method&rsquo;s arguments and each tuple of operands is
+associated to a tuple of <acronym>UID</acronym>s lists.  For example, the tuple of type
+identifiers:
+</p>
+<div class="lisp">
+<pre class="lisp">(&lt;string&gt; &lt;struct&gt; &lt;top&gt;)
+</pre></div>
+
+<p>is associated to the tuple of <acronym>UID</acronym> lists:
+</p>
+<div class="lisp">
+<pre class="lisp">((vicare:scheme-type:&lt;string&gt; vicare:scheme-type:&lt;top&gt;)
+ (vicare:scheme-type:&lt;struct&gt; vicare:scheme-type:&lt;top&gt;)
+ (vicare:scheme-type:&lt;top&gt;))
+</pre></div>
+
+<p>A tuple of <acronym>UID</acronym> lists is called <em>signature</em>.  Each multimethod
+holds an internal collection in which every method&rsquo;s closure object is
+associated to a signature.
+</p>
+
+<a name="Ordinary-multimethods"></a>
+<h4 class="subsubheading">Ordinary multimethods</h4>
+
+<p>Ordinary multimethods allow the association of a single method to a type
+signature.  When an ordinary multimethod is applied to a tuple of
+operands, the following happens:
+</p>
+<ol>
+<li> For each operand a type is determined and the list of <acronym>UID</acronym>s
+representing the type hierarchy is acquired.  The operands&rsquo; signature is
+formed.
+
+</li><li> The internal collection of methods is queried for all the methods
+applicable to the tuple of operands, using the operands&rsquo; signature as
+search key.
+
+</li><li> The list of applicable methods is sorted from the most specific to the
+least specific for the operands&rsquo; signature.  From now on the list of
+sorted, applicable methods is handled as a stack.
+
+</li><li> The next method is popped from the stack and its closure applied to the
+tuple of arguments; the return value of this application becomes the
+return value of the generic function application.  If the function calls
+its &ldquo;next method&rdquo;: recurse to step 4 (see <a href="multimethods-next.html#multimethods-next">Invoking the next method</a>).
+</li></ol>
+
+
+<a name="Starred-multimethods"></a>
+<h4 class="subsubheading">Starred multimethods</h4>
+
+<p>Starred multimethods allow the definition of four qualified methods:
+<code>:primary</code>, <code>:around</code>, <code>:before</code> and <code>:after</code>; we
+can think of ordinary multimethods as starred generics supporting only
+<code>:primary</code> methods.  The short description is that: <code>:around</code>
+methods are applied first, then <code>:before</code>, <code>:primary</code> and
+<code>:after</code> methods are applied in this order.
+</p>
+<p>For each method qualification (<code>:primary</code>, <code>:around</code>,
+&hellip;): a starred multimethod holds an internal collection in which
+every method&rsquo;s closure is associated to an arguments&rsquo; signature.
+</p>
+<p>When a starred multimethod is applied to a tuple of operands, the
+following happens:
+</p>
+<ol>
+<li> For each operand a type is determined and the list of <acronym>UID</acronym>s
+representing the type hierarchy is acquired.  The operands&rsquo; signature is
+formed.
+
+</li><li> For each method qualification: the internal collection is queried for
+all the methods applicable to the tuple of operands, using the operands&rsquo;
+signature as search key.
+
+</li><li> For each method qualification: the list of applicable methods is sorted
+from the most specific to the least specific for the operands&rsquo;
+signature.  The list of <code>:after</code> methods is reversed: from the
+least specific to the most specific.
+</li></ol>
+
+<p>From now on the lists of sorted applicable methods are handled as
+stacks; the stacks of <code>:primary</code>, <code>:around</code> and <code>:before</code>
+methods have the most specific method on the top; the stack of
+<code>:after</code> methods has the least specific method on the top.
+</p>
+<p>From now on the application of the multimethod enters an implicit loop
+in which more methods&rsquo; closures can be applied to the same tuple of
+operands.  The loop can terminate if a method&rsquo;s closure throws an
+exception or, for <code>:around</code> and <code>:primary</code> methods, if it does
+not take the special action of calling <code>call-next-method</code>.
+</p>
+<p>The loop is a bit articulated, so we may have to read the following
+descriptions multiple times.  We split the description in two branches:
+First a simplified invocation for multimethods having at least one
+applicable <code>:primary</code> method, no <code>:around</code> methods, and
+performing no calls to <code>call-next-method</code>; then the full
+application algorithm.
+</p>
+<p>Here is the simplified branch with no <code>:around</code> methods and no
+calls to <code>call-next-method</code>:
+</p>
+<ol start="4">
+<li> Pop all the <code>:before</code> methods from the stack and apply their
+closures to the tuple of operands.  The return values of these
+applications are discarded.
+
+</li><li> Pop the next <code>:primary</code> method from the stack and apply its closure
+to the tuple of operands.  The return value of this application is saved
+in a temporary location.
+
+</li><li> Pop all the <code>:after</code> methods from the stack and apply their
+closures to the tuple of operands.  The return values of these
+applications are discarded.
+
+</li><li> Return the saved return value of the <code>:primary</code> method.
+</li></ol>
+
+<p>here is the full application algorithm:
+</p>
+<ol start="4">
+<li> Test if this function application originated from a call to
+<code>call-next-method</code> from a <code>:before</code> or <code>:after</code> method;
+if it has: raise an assertion violation.
+
+</li><li> Test if this function application originated from a call to
+<code>call-next-method</code> from a <code>:primary</code> method; if it has:
+
+<ol>
+<li> If the stack of <code>:primary</code> methods is empty raise an assertion
+violation.
+
+</li><li> Pop the next <code>:primary</code> method from the stack and apply its closure
+to the tuple of operands.
+
+</li><li> Break out returning the return value of this application: it becomes the
+return value of <code>call-next-method</code>.
+</li></ol>
+
+</li><li> If the stack of <code>:primary</code> methods is empty: raise an assertion
+violation.  This condition means that the multimethod has no applicable
+methods for the tuple of operands.
+
+</li><li> If the stack of <code>:around</code> methods is not empty: pop the next
+<code>:around</code> method and apply its closure to the tuple of operands.
+Break out returning the return value of this application.
+
+</li><li> Pop all the <code>:before</code> methods from the stack and apply their
+closures to the tuple of operands.  The return values of these
+applications are discarded.
+
+</li><li> Pop the next <code>:primary</code> method from the stack and apply its closure
+to the tuple of operands.  The return value of this application is
+saved in a temporary location.
+
+</li><li> Pop all the <code>:after</code> methods from the stack and apply their
+closures to the tuple of operands.  The return values of these
+applications are discarded.
+
+</li><li> Return the saved return value of the <code>:primary</code> method.
+</li></ol>
+
+<p>The <code>:primary</code> methods are meant to do the real work of the
+function.  Only the most specific is applied to the operands, however
+it can use <code>call-next-method</code> to invoke a least specialised version
+and use its return value, and so on recursively until there are no more
+next methods.
+</p>
+<p><code>:before</code> and <code>:after</code> methods are meant to execute additional
+work before and after the primary methods; for example test pre and post
+conditions on the operands.  While <code>:before</code> methods are applied
+from the most specific to the least specific, <code>:after</code> methods are
+applied from the least specific to the most specific.  Notice that the
+<code>:after</code> methods have no access to the return value of the
+<code>:primary</code> methods.
+</p>
+<p><code>:around</code> methods are yet another level for performing tasks before
+and after the primary methods; only the most specific is applied to the
+operands.  It is expected, but not mandatory, that an <code>:around</code>
+method invokes <code>call-next-method</code>; when such invocations are
+performed recursively: they will consume all the applicable
+<code>:around</code> methods, from the most specific to the least specific,
+and then will start the application of <code>:before</code>, <code>:primary</code>
+and <code>:after</code> methods.
+</p>
+<p>The protocol of application for methods in a starred multimethod is
+meant to be the same as the standard method combination for
+<acronym>CLOS</acronym> methods as defined by the Common Lisp
+standard<a name="DOCF4" href="#FOOT4"><sup>4</sup></a>.
+</p>
+<div class="footnote">
+<hr>
+<h4 class="footnotes-heading">Footnotes</h4>
+
+<h3><a name="FOOT4" href="#DOCF4">(4)</a></h3>
+<p>See for example (<acronym>URL</acronym> last verified Aug 7, 2013):
+</p>
+<div align="center"><a href="http://www.cs.cmu.edu/Groups/AI/html/cltl/clm/node285.html">http://www.cs.cmu.edu/Groups/AI/html/cltl/clm/node285.html</a>
+</div>
+</div>
+<hr>
+<div class="header">
+<p>
+Next: <a href="multimethods-dispatching.html#multimethods-dispatching" accesskey="n" rel="next">multimethods dispatching</a>, Previous: <a href="multimethods-examples.html#multimethods-examples" accesskey="p" rel="prev">multimethods examples</a>, Up: <a href="multimethods.html#multimethods" accesskey="u" rel="up">multimethods</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

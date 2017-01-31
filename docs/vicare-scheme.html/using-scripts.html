@@ -1,0 +1,229 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.4d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit and 64-bit
+processors.  Vicare is pronounced the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/downloads
+
+the home page of the project is at:
+
+http://marcomaggi.github.io/vicare.html
+
+development takes place at:
+
+http://github.com/marcomaggi/vicare/
+
+and, as a backup, at:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the "History" appendix for details.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Vicare Scheme: using scripts</title>
+
+<meta name="description" content="Vicare Scheme: using scripts">
+<meta name="keywords" content="Vicare Scheme: using scripts">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="using.html#using" rel="up" title="using">
+<link href="using-libraries.html#using-libraries" rel="next" title="using libraries">
+<link href="using-invoking.html#using-invoking" rel="prev" title="using invoking">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="using-scripts"></a>
+<div class="header">
+<p>
+Next: <a href="using-libraries.html#using-libraries" accesskey="n" rel="next">using libraries</a>, Previous: <a href="using-invoking.html#using-invoking" accesskey="p" rel="prev">using invoking</a>, Up: <a href="using.html#using" accesskey="u" rel="up">using</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Executing-Scheme-scripts"></a>
+<h3 class="section">2.3 Executing Scheme scripts</h3>
+
+
+<p>Scheme scripts can be executed using the following command:
+</p>
+<div class="example">
+<pre class="example">vicare --r6rs-script <var>PROGRAM</var>
+</pre></div>
+
+<p>or the shorter:
+</p>
+<div class="example">
+<pre class="example">vicare <var>PROGRAM</var>
+</pre></div>
+
+<p>Vicare Scheme follows the <acronym>R6RS</acronym> recommendations to install a
+wrapper program called <code>scheme-script</code> only when the
+<code>configure</code> option <samp>--enable-scheme-script</samp> is used at
+package configuration time; this is to avoid conflicts with other Scheme
+implementations.  In this scenario, it is possible to execute Scheme
+scripts as follows:
+</p>
+<div class="example">
+<pre class="example">scheme-script <var>PROGRAM</var> [program options]
+</pre></div>
+
+<p>where the optional program options can be retrieved with
+<code>command-line</code>, <a href="stdlib-programlib.html#stdlib-programlib">command-line</a>.  When using
+<code>scheme-script</code> it is impossible to select command arguments to
+be passed to Vicare rather than to the script.
+</p>
+<p>Here is a sample script (Pig Latin&mdash;&ldquo;Igpay Atinlay&rdquo;&mdash;is a code that
+was at one time popular among very young North American children).
+</p>
+<div class="example">
+<pre class="example">(import (rnrs))
+
+;;; Convert a string to its Pig Latin equivalent.
+;;;
+;;; If the first character is a vowel, append &quot;yay&quot;.
+;;; &quot;egg&quot; -&gt; &quot;eggyay&quot;
+;;;
+;;; If the first character is a consonant, remove it,
+;;; and append it plus &quot;ay&quot; to the string.
+;;; &quot;foo&quot; -&gt; &quot;oofay&quot;
+
+(define pig-latin
+  (lambda (str)
+    (let ((first (string-ref str 0)))
+      (if (memv first '(#\a #\e #\i #\o #\u))
+	  (string-append str &quot;yay&quot;)
+	  (string-append
+ 	    (substring str 1 (string-length str))
+	    (string first) &quot;ay&quot;)))))
+
+(display
+ (map pig-latin
+     (cdr (command-line))))
+(newline)
+(flush-output-port (current-output-port))
+</pre></div>
+
+<p>Assuming we have stored the script in the file <samp>demo.sps</samp>, we can
+invoke this script via <code>vicare</code>:
+</p>
+<div class="example">
+<pre class="example">$ vicare --r6rs-script demo.sps ice cream after dinner
+(iceyay reamcay afteryay innerday)
+</pre></div>
+
+<p>On Unix/Linux systems, scripts generally start with a &ldquo;shebang&rdquo; line
+(<em>sh</em>arp plus <em>bang</em>) which names an interpreter for the
+script.  All modern systems have the <code>env</code> command which
+searches for a command in the user&rsquo;s path.
+</p>
+<div class="example">
+<pre class="example">#!/usr/bin/env vicare --r6rs-script
+(import (rnrs))
+
+...
+</pre></div>
+
+<p>Now we can make the file executable, and use it directly.
+</p>
+<div class="example">
+<pre class="example">$ chmod +x demo.sps
+$ ./demo.sps ice cream after dinner
+(iceyay reamcay afteryay innerday)
+</pre></div>
+
+<p>There are a few fine points.
+</p>
+<ul>
+<li> If the first two bytes of a script represent the sequence &lsquo;<samp>#!</samp>&rsquo; in
+<acronym>ASCII</acronym> encoding: the first line is discarded and not parsed as Scheme
+code.  This allows scripts on Unix systems to start with the command
+line needed to use them; notice that this will discard valid sharp&ndash;bang
+comments (like <code>#!r6rs</code>) if they are at the very beginning of a
+file.
+
+</li><li> Under Mac OS X, if a script name ends with the <code>.command</code>
+extension, then it can be executed from the Finder by double&ndash;clicking
+on it.  This brings up a terminal window in which the script is
+executed.  The <code>.command</code> extension can be hidden from the
+<em>Get Info</em> item from the Finder&rsquo;s File menu.
+</li></ul>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="using-libraries.html#using-libraries" accesskey="n" rel="next">using libraries</a>, Previous: <a href="using-invoking.html#using-invoking" accesskey="p" rel="prev">using invoking</a>, Up: <a href="using.html#using" accesskey="u" rel="up">using</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

@@ -1,0 +1,212 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.4d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit and 64-bit
+processors.  Vicare is pronounced the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/downloads
+
+the home page of the project is at:
+
+http://marcomaggi.github.io/vicare.html
+
+development takes place at:
+
+http://github.com/marcomaggi/vicare/
+
+and, as a backup, at:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the "History" appendix for details.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Vicare Scheme: expander lexenv fluids</title>
+
+<meta name="description" content="Vicare Scheme: expander lexenv fluids">
+<meta name="keywords" content="Vicare Scheme: expander lexenv fluids">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="expander-lexenv.html#expander-lexenv" rel="up" title="expander lexenv">
+<link href="expander-lexenv-synonyms.html#expander-lexenv-synonyms" rel="next" title="expander lexenv synonyms">
+<link href="expander-lexenv-internal-displaced.html#expander-lexenv-internal-displaced" rel="prev" title="expander lexenv internal displaced">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="expander-lexenv-fluids"></a>
+<div class="header">
+<p>
+Next: <a href="expander-lexenv-synonyms.html#expander-lexenv-synonyms" accesskey="n" rel="next">expander lexenv synonyms</a>, Previous: <a href="expander-lexenv-internal.html#expander-lexenv-internal" accesskey="p" rel="prev">expander lexenv internal</a>, Up: <a href="expander-lexenv.html#expander-lexenv" accesskey="u" rel="up">expander lexenv</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="How-fluid-syntaxes-work"></a>
+<h4 class="subsection">15.3.7 How fluid syntaxes work</h4>
+
+
+<p>When a fluid syntax&rsquo;s syntactic binding is established by
+<code>define-fluid-syntax</code> in the source code of a library or program:
+</p>
+<div class="example">
+<pre class="example">(define-fluid-syntax <var>?lhs</var> <var>?rhs</var>)
+</pre></div>
+
+<p>an identifier <var>?lhs</var> is associated to a main label <var>?label</var> in
+the current <code>rib</code>; an entry is pushed on the <small>LEXENV</small>:
+</p>
+<div class="example">
+<pre class="example">(<var>?label</var> . ($fluid . <var>?fluid-label</var>))
+</pre></div>
+
+<p>when querying the <small>LEXENV</small> for the binding descriptor associated to
+<var>?label</var>: the descriptor with type <code>$fluid</code> is always returned,
+qualifying the binding as fluid syntax.
+</p>
+<p>At the same time, <code>define-fluid-syntax</code> pushes another entry on
+the <small>LEXENV</small>:
+</p>
+<div class="example">
+<pre class="example">(<var>?fluid-label</var> . <var>?syntactic-binding</var>)
+</pre></div>
+
+<p>where <var>?syntactic-binding</var> is the concrete binding descriptor
+created by expanding and evaluating <var>?rhs</var> then interpreting its
+return value.
+</p>
+<p>Given the identifier <var>?lhs</var>: we can retrieve the associated
+<var>?label</var> and so the <var>?fluid-label</var>; then we can &ldquo;follow
+through&rdquo; <var>?fluid-label</var> to retrieve the actual binding descriptor.
+</p>
+<p>The fluid syntax can be redefined any number of times by using
+<code>fluid-let-syntax</code>:
+</p>
+<div class="example">
+<pre class="example">(fluid-let-syntax ((<var>?lhs</var> <var>?inner-rhs</var>)) . <var>?body</var>)
+</pre></div>
+
+<p>causing other entries associated to <var>?fluid-label</var> to be pushed on
+the <small>LEXENV</small>:
+</p>
+<div class="example">
+<pre class="example">(<var>?fluid-label</var> . <var>?inner-syntactic-binding</var>)
+</pre></div>
+
+<p>where <var>?inner-syntactic-binding</var> is the binding descriptor resulting
+from expanding and evaluating <var>?inner-rhs</var> then interpreting its
+return value.
+</p>
+<p>When searching the <small>LEXENV</small> for a syntactic binding descriptor matching
+the label <var>?fluid-label</var>: the topmost entry is found, so the binding
+appears to be redefined.
+</p>
+
+<a name="Primitive-fluid-syntaxes"></a>
+<h4 class="subsubheading">Primitive fluid syntaxes</h4>
+
+<p>This is <strong>not</strong> what happens for the primitive fluid syntaxes
+exported by the boot image like <code>return</code>, <code>break</code> and
+<code>continue</code>.  For these syntaxes the lexical environment of the
+boot image includes only the entries:
+</p>
+<div class="example">
+<pre class="example">(<var>?return-label</var>   . ($fluid .   <var>?return-fluid-label</var>))
+(<var>?break-label</var>    . ($fluid .    <var>?break-fluid-label</var>))
+(<var>?continue-label</var> . ($fluid . <var>?continue-fluid-label</var>))
+</pre></div>
+
+<p>and there are no entries for the fluid labels <var>?return-fluid-label</var>,
+<var>?break-fluid-label</var> and <var>?continue-fluid-label</var>.  The keywords
+of these fluid syntaxes are bound in the environment, but they are bound
+to &ldquo;nothing&rdquo;; trying to follow through the fluid labels to the
+concrete binding descriptors will result in the binding descriptor:
+</p>
+<div class="example">
+<pre class="example">(displaced-lexical . #f)
+</pre></div>
+
+<p>which is interpreted as the error &ldquo;keyword identifier out of context&rdquo;.
+</p>
+<p>Such half&ndash;defined fluid syntaxes are fully usable as auxiliary syntaxes
+and can be redefined with <code>fluid-let-syntax</code>.  There are
+<strong>no</strong> transformer functions for <code>return</code>, <code>break</code>,
+<code>continue</code> and similar syntaxes.
+</p>
+<hr>
+<div class="header">
+<p>
+Next: <a href="expander-lexenv-synonyms.html#expander-lexenv-synonyms" accesskey="n" rel="next">expander lexenv synonyms</a>, Previous: <a href="expander-lexenv-internal.html#expander-lexenv-internal" accesskey="p" rel="prev">expander lexenv internal</a>, Up: <a href="expander-lexenv.html#expander-lexenv" accesskey="u" rel="up">expander lexenv</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

@@ -1,0 +1,384 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.4d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit and 64-bit
+processors.  Vicare is pronounced the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/downloads
+
+the home page of the project is at:
+
+http://marcomaggi.github.io/vicare.html
+
+development takes place at:
+
+http://github.com/marcomaggi/vicare/
+
+and, as a backup, at:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the "History" appendix for details.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Vicare Scheme: iklib bytevectors conversion</title>
+
+<meta name="description" content="Vicare Scheme: iklib bytevectors conversion">
+<meta name="keywords" content="Vicare Scheme: iklib bytevectors conversion">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="iklib-bytevectors.html#iklib-bytevectors" rel="up" title="iklib bytevectors">
+<link href="iklib-bytevectors-valpred.html#iklib-bytevectors-valpred" rel="next" title="iklib bytevectors valpred">
+<link href="iklib-bytevectors-comparison.html#iklib-bytevectors-comparison" rel="prev" title="iklib bytevectors comparison">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="iklib-bytevectors-conversion"></a>
+<div class="header">
+<p>
+Next: <a href="iklib-bytevectors-valpred.html#iklib-bytevectors-valpred" accesskey="n" rel="next">iklib bytevectors valpred</a>, Previous: <a href="iklib-bytevectors-comparison.html#iklib-bytevectors-comparison" accesskey="p" rel="prev">iklib bytevectors comparison</a>, Up: <a href="iklib-bytevectors.html#iklib-bytevectors" accesskey="u" rel="up">iklib bytevectors</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Converting-bytevectors"></a>
+<h4 class="subsection">6.26.3 Converting bytevectors</h4>
+
+
+<p>These conversion functions work like <code>bytevector-&gt;u8-list</code> and
+<code>u8-list-&gt;bytevector</code>.  The following bindings are exported by the
+library <code>(vicare)</code>.
+</p>
+
+<dl>
+<dt><a name="index-utf8_002d_003estring_002dlength"></a>Function: <strong>utf8-&gt;string-length</strong> <em><var>bv</var></em></dt>
+<dt><a name="index-utf8_002d_003estring_002dlength-1"></a>Function: <strong>utf8-&gt;string-length</strong> <em><var>bv</var> <var>handling-mode</var></em></dt>
+<dd><p>Given a bytevector representing a string in <acronym>UTF</acronym>-8 encoding: compute
+and return the length of the Scheme string required to hold the
+characters.
+</p>
+<p>The optional <var>handling-mode</var> must be an error handling mode as
+validated by the standard syntax <code>error-handling-mode</code>; when not
+given: it defaults to &lsquo;<samp>raise</samp>&rsquo;.  This argument has the same meaning
+it has for <code>utf8-&gt;string</code> (see <a href="stdlib-bytevector-strings.html#stdlib-bytevector-strings">utf8-&gt;string</a>).
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-utf16_002d_003estring_002dlength"></a>Function: <strong>utf16-&gt;string-length</strong> <em><var>bytevector</var> <var>endianness</var></em></dt>
+<dt><a name="index-utf16_002d_003estring_002dlength-1"></a>Function: <strong>utf16-&gt;string-length</strong> <em><var>bytevector</var> <var>endianness</var> <var>endianness-mandatory</var></em></dt>
+<dt><a name="index-utf16_002d_003estring_002dlength-2"></a>Function: <strong>utf16-&gt;string-length</strong> <em><var>bytevector</var> <var>endianness</var> <var>endianness-mandatory</var> <var>handling-mode</var></em></dt>
+<dd><p>Given a bytevector representing a string in <acronym>UTF</acronym>-16 encoding: compute
+the length of the Scheme string required to hold the characters and
+return it as non&ndash;negative fixnum.
+</p>
+<p>All the arguments have the same meaning they have for
+<code>utf16-&gt;string</code> (see <a href="stdlib-bytevector-strings.html#stdlib-bytevector-strings">utf16-&gt;string</a>).
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-utf32_002d_003estring_002dlength"></a>Function: <strong>utf32-&gt;string-length</strong> <em><var>bytevector</var> <var>endianness</var></em></dt>
+<dt><a name="index-utf32_002d_003estring_002dlength-1"></a>Function: <strong>utf32-&gt;string-length</strong> <em><var>bytevector</var> <var>endianness</var> <var>endianness-mandatory</var></em></dt>
+<dt><a name="index-utf32_002d_003estring_002dlength-2"></a>Function: <strong>utf32-&gt;string-length</strong> <em><var>bytevector</var> <var>endianness</var> <var>endianness-mandatory</var> <var>handling-mode</var></em></dt>
+<dd><p>Given a bytevector representing a string in <acronym>UTF</acronym>-32 encoding: compute
+the length of the Scheme string required to hold the characters and
+return it as non&ndash;negative fixnum.
+</p>
+<p>All the arguments have the same meaning they have for
+<code>utf32-&gt;string</code> (see <a href="stdlib-bytevector-strings.html#stdlib-bytevector-strings">utf32-&gt;string</a>).
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-bytevector_002d_003es8_002dlist"></a>Function: <strong>bytevector-&gt;s8-list</strong> <em><var>bytevector</var></em></dt>
+<dt><a name="index-s8_002dlist_002d_003ebytevector"></a>Function: <strong>s8-list-&gt;bytevector</strong> <em><var>list</var></em></dt>
+<dd><p>Convert between a list of signed bytes and a bytevector.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-s16l_002dlist_002d_003ebytevector"></a>Function: <strong>s16l-list-&gt;bytevector</strong> <em><var>list</var></em></dt>
+<dt><a name="index-s16b_002dlist_002d_003ebytevector"></a>Function: <strong>s16b-list-&gt;bytevector</strong> <em><var>list</var></em></dt>
+<dt><a name="index-s16n_002dlist_002d_003ebytevector"></a>Function: <strong>s16n-list-&gt;bytevector</strong> <em><var>list</var></em></dt>
+<dt><a name="index-u16l_002dlist_002d_003ebytevector"></a>Function: <strong>u16l-list-&gt;bytevector</strong> <em><var>list</var></em></dt>
+<dt><a name="index-u16b_002dlist_002d_003ebytevector"></a>Function: <strong>u16b-list-&gt;bytevector</strong> <em><var>list</var></em></dt>
+<dt><a name="index-u16n_002dlist_002d_003ebytevector"></a>Function: <strong>u16n-list-&gt;bytevector</strong> <em><var>list</var></em></dt>
+<dt><a name="index-bytevector_002d_003es16l_002dlist"></a>Function: <strong>bytevector-&gt;s16l-list</strong> <em><var>bytevector</var></em></dt>
+<dt><a name="index-bytevector_002d_003es16b_002dlist"></a>Function: <strong>bytevector-&gt;s16b-list</strong> <em><var>bytevector</var></em></dt>
+<dt><a name="index-bytevector_002d_003es16n_002dlist"></a>Function: <strong>bytevector-&gt;s16n-list</strong> <em><var>bytevector</var></em></dt>
+<dt><a name="index-bytevector_002d_003eu16l_002dlist"></a>Function: <strong>bytevector-&gt;u16l-list</strong> <em><var>bytevector</var></em></dt>
+<dt><a name="index-bytevector_002d_003eu16b_002dlist"></a>Function: <strong>bytevector-&gt;u16b-list</strong> <em><var>bytevector</var></em></dt>
+<dt><a name="index-bytevector_002d_003eu16n_002dlist"></a>Function: <strong>bytevector-&gt;u16n-list</strong> <em><var>bytevector</var></em></dt>
+<dd><p>Convert between a list of signed or unsigned 16-bit words and a
+bytevector in which the words are stored in little, big or native
+endianness.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-s32l_002dlist_002d_003ebytevector"></a>Function: <strong>s32l-list-&gt;bytevector</strong> <em><var>list</var></em></dt>
+<dt><a name="index-s32b_002dlist_002d_003ebytevector"></a>Function: <strong>s32b-list-&gt;bytevector</strong> <em><var>list</var></em></dt>
+<dt><a name="index-s32n_002dlist_002d_003ebytevector"></a>Function: <strong>s32n-list-&gt;bytevector</strong> <em><var>list</var></em></dt>
+<dt><a name="index-u32l_002dlist_002d_003ebytevector"></a>Function: <strong>u32l-list-&gt;bytevector</strong> <em><var>list</var></em></dt>
+<dt><a name="index-u32b_002dlist_002d_003ebytevector"></a>Function: <strong>u32b-list-&gt;bytevector</strong> <em><var>list</var></em></dt>
+<dt><a name="index-u32n_002dlist_002d_003ebytevector"></a>Function: <strong>u32n-list-&gt;bytevector</strong> <em><var>list</var></em></dt>
+<dt><a name="index-bytevector_002d_003es32l_002dlist"></a>Function: <strong>bytevector-&gt;s32l-list</strong> <em><var>bytevector</var></em></dt>
+<dt><a name="index-bytevector_002d_003es32b_002dlist"></a>Function: <strong>bytevector-&gt;s32b-list</strong> <em><var>bytevector</var></em></dt>
+<dt><a name="index-bytevector_002d_003es32n_002dlist"></a>Function: <strong>bytevector-&gt;s32n-list</strong> <em><var>bytevector</var></em></dt>
+<dt><a name="index-bytevector_002d_003eu32l_002dlist"></a>Function: <strong>bytevector-&gt;u32l-list</strong> <em><var>bytevector</var></em></dt>
+<dt><a name="index-bytevector_002d_003eu32b_002dlist"></a>Function: <strong>bytevector-&gt;u32b-list</strong> <em><var>bytevector</var></em></dt>
+<dt><a name="index-bytevector_002d_003eu32n_002dlist"></a>Function: <strong>bytevector-&gt;u32n-list</strong> <em><var>bytevector</var></em></dt>
+<dd><p>Convert between a list of signed or unsigned 32-bit words and a
+bytevector in which the words are stored in little, big or native
+endianness.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-s64l_002dlist_002d_003ebytevector"></a>Function: <strong>s64l-list-&gt;bytevector</strong> <em><var>list</var></em></dt>
+<dt><a name="index-s64b_002dlist_002d_003ebytevector"></a>Function: <strong>s64b-list-&gt;bytevector</strong> <em><var>list</var></em></dt>
+<dt><a name="index-s64n_002dlist_002d_003ebytevector"></a>Function: <strong>s64n-list-&gt;bytevector</strong> <em><var>list</var></em></dt>
+<dt><a name="index-u64l_002dlist_002d_003ebytevector"></a>Function: <strong>u64l-list-&gt;bytevector</strong> <em><var>list</var></em></dt>
+<dt><a name="index-u64b_002dlist_002d_003ebytevector"></a>Function: <strong>u64b-list-&gt;bytevector</strong> <em><var>list</var></em></dt>
+<dt><a name="index-u64n_002dlist_002d_003ebytevector"></a>Function: <strong>u64n-list-&gt;bytevector</strong> <em><var>list</var></em></dt>
+<dt><a name="index-bytevector_002d_003es64l_002dlist"></a>Function: <strong>bytevector-&gt;s64l-list</strong> <em><var>bytevector</var></em></dt>
+<dt><a name="index-bytevector_002d_003es64b_002dlist"></a>Function: <strong>bytevector-&gt;s64b-list</strong> <em><var>bytevector</var></em></dt>
+<dt><a name="index-bytevector_002d_003es64n_002dlist"></a>Function: <strong>bytevector-&gt;s64n-list</strong> <em><var>bytevector</var></em></dt>
+<dt><a name="index-bytevector_002d_003eu64l_002dlist"></a>Function: <strong>bytevector-&gt;u64l-list</strong> <em><var>bytevector</var></em></dt>
+<dt><a name="index-bytevector_002d_003eu64b_002dlist"></a>Function: <strong>bytevector-&gt;u64b-list</strong> <em><var>bytevector</var></em></dt>
+<dt><a name="index-bytevector_002d_003eu64n_002dlist"></a>Function: <strong>bytevector-&gt;u64n-list</strong> <em><var>bytevector</var></em></dt>
+<dd><p>Convert between a list of signed or unsigned 64-bit words and a
+bytevector in which the words are stored in little, big or native
+endianness.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-f4l_002dlist_002d_003ebytevector"></a>Function: <strong>f4l-list-&gt;bytevector</strong> <em><var>list</var></em></dt>
+<dt><a name="index-f4b_002dlist_002d_003ebytevector"></a>Function: <strong>f4b-list-&gt;bytevector</strong> <em><var>list</var></em></dt>
+<dt><a name="index-f4n_002dlist_002d_003ebytevector"></a>Function: <strong>f4n-list-&gt;bytevector</strong> <em><var>list</var></em></dt>
+<dt><a name="index-bytevector_002d_003ef4l_002dlist"></a>Function: <strong>bytevector-&gt;f4l-list</strong> <em><var>bytevector</var></em></dt>
+<dt><a name="index-bytevector_002d_003ef4b_002dlist"></a>Function: <strong>bytevector-&gt;f4b-list</strong> <em><var>bytevector</var></em></dt>
+<dt><a name="index-bytevector_002d_003ef4n_002dlist"></a>Function: <strong>bytevector-&gt;f4n-list</strong> <em><var>bytevector</var></em></dt>
+<dd><p>Convert between a list of single&ndash;precision flonums and a bytevector in
+which the flonums are stored in little, big or native endianness.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-f8l_002dlist_002d_003ebytevector"></a>Function: <strong>f8l-list-&gt;bytevector</strong> <em><var>list</var></em></dt>
+<dt><a name="index-f8b_002dlist_002d_003ebytevector"></a>Function: <strong>f8b-list-&gt;bytevector</strong> <em><var>list</var></em></dt>
+<dt><a name="index-f8n_002dlist_002d_003ebytevector"></a>Function: <strong>f8n-list-&gt;bytevector</strong> <em><var>list</var></em></dt>
+<dt><a name="index-bytevector_002d_003ef8l_002dlist"></a>Function: <strong>bytevector-&gt;f8l-list</strong> <em><var>bytevector</var></em></dt>
+<dt><a name="index-bytevector_002d_003ef8b_002dlist"></a>Function: <strong>bytevector-&gt;f8b-list</strong> <em><var>bytevector</var></em></dt>
+<dt><a name="index-bytevector_002d_003ef8n_002dlist"></a>Function: <strong>bytevector-&gt;f8n-list</strong> <em><var>bytevector</var></em></dt>
+<dd><p>Convert between a list of double&ndash;precision flonums and a bytevector in
+which the flonums are stored in little, big or native endianness.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-c4l_002dlist_002d_003ebytevector"></a>Function: <strong>c4l-list-&gt;bytevector</strong> <em><var>list</var></em></dt>
+<dt><a name="index-c4b_002dlist_002d_003ebytevector"></a>Function: <strong>c4b-list-&gt;bytevector</strong> <em><var>list</var></em></dt>
+<dt><a name="index-c4n_002dlist_002d_003ebytevector"></a>Function: <strong>c4n-list-&gt;bytevector</strong> <em><var>list</var></em></dt>
+<dt><a name="index-bytevector_002d_003ec4l_002dlist"></a>Function: <strong>bytevector-&gt;c4l-list</strong> <em><var>bytevector</var></em></dt>
+<dt><a name="index-bytevector_002d_003ec4b_002dlist"></a>Function: <strong>bytevector-&gt;c4b-list</strong> <em><var>bytevector</var></em></dt>
+<dt><a name="index-bytevector_002d_003ec4n_002dlist"></a>Function: <strong>bytevector-&gt;c4n-list</strong> <em><var>bytevector</var></em></dt>
+<dd><p>Convert between a list of single&ndash;precision cflonums and a bytevector in
+which the cflonums are stored in little, big or native endianness, real
+part first.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-c8l_002dlist_002d_003ebytevector"></a>Function: <strong>c8l-list-&gt;bytevector</strong> <em><var>list</var></em></dt>
+<dt><a name="index-c8b_002dlist_002d_003ebytevector"></a>Function: <strong>c8b-list-&gt;bytevector</strong> <em><var>list</var></em></dt>
+<dt><a name="index-c8n_002dlist_002d_003ebytevector"></a>Function: <strong>c8n-list-&gt;bytevector</strong> <em><var>list</var></em></dt>
+<dt><a name="index-bytevector_002d_003ec8l_002dlist"></a>Function: <strong>bytevector-&gt;c8l-list</strong> <em><var>bytevector</var></em></dt>
+<dt><a name="index-bytevector_002d_003ec8b_002dlist"></a>Function: <strong>bytevector-&gt;c8b-list</strong> <em><var>bytevector</var></em></dt>
+<dt><a name="index-bytevector_002d_003ec8n_002dlist"></a>Function: <strong>bytevector-&gt;c8n-list</strong> <em><var>bytevector</var></em></dt>
+<dd><p>Convert between a list of double&ndash;precision cflonums and a bytevector in
+which the flonums are stored in little, big or native endianness, real
+part first.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-octets_002dencoded_002dbytevector_003f"></a>Function: <strong>octets-encoded-bytevector?</strong> <em><var>bytevector</var></em></dt>
+<dd><p>Return <code>#t</code> if <var>bytevector</var> is a bytevector object.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-ascii_002dencoded_002dbytevector_003f"></a>Function: <strong>ascii-encoded-bytevector?</strong> <em><var>bytevector</var></em></dt>
+<dd><p>Return <code>#t</code> if <var>bytevector</var> can be interpreted as an <acronym>ASCII</acronym>
+encoded string, otherwise return <code>#f</code>.  An octet <var>chi</var> is
+considered an <acronym>ASCII</acronym> code point if:
+</p>
+<div class="example">
+<pre class="example">(&lt;= #x00 chi #x7F)      &rArr; #t
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-latin1_002dencoded_002dbytevector_003f"></a>Function: <strong>latin1-encoded-bytevector?</strong> <em><var>bytevector</var></em></dt>
+<dd><p>Return <code>#t</code> if <var>bytevector</var> can be interpreted as a Latin1
+encoded string, otherwise return <code>#f</code>.  <a href="iklib-chars-unicode-latin1.html#iklib-chars-unicode-latin1">iklib chars unicode latin1</a> for the definition of Latin-1 encoding used by Vicare.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-hex_002d_003ebytevector"></a>Function: <strong>hex-&gt;bytevector</strong> <em><var>bytevector</var></em></dt>
+<dt><a name="index-bytevector_002d_003ehex"></a>Function: <strong>bytevector-&gt;hex</strong> <em><var>bytevector</var></em></dt>
+<dd><p>Convert to and from a Scheme bytevector containing octets and a Scheme
+bytevector containing the <acronym>ASCII</acronym> hexadecimal representation of the
+octets.
+</p>
+<p>The input hex bytevector contains the uppercase or lowercase hexadecimal
+representation of the octets.  The output hex bytevector contains the
+uppercase hexadecimal representation of octets.
+</p>
+<p>If an error occurs in the conversion: the return value is <code>#f</code>.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-base64_002d_003ebytevector"></a>Function: <strong>base64-&gt;bytevector</strong> <em><var>bytevector</var></em></dt>
+<dt><a name="index-bytevector_002d_003ebase64"></a>Function: <strong>bytevector-&gt;base64</strong> <em><var>bytevector</var></em></dt>
+<dd><p>Convert to and from a Scheme bytevector containing octets and a Scheme
+bytevector containing the <acronym>ASCII</acronym> Base64 representation of the octets.
+</p>
+<p>If an error occurs in the conversion: the return value is <code>#f</code>.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-uri_002dencode"></a>Function: <strong>uri-encode</strong> <em><var>bytevector</var></em></dt>
+<dt><a name="index-uri_002ddecode"></a>Function: <strong>uri-decode</strong> <em><var>bytevector</var></em></dt>
+<dt><a name="index-percent_002dencode"></a>Function: <strong>percent-encode</strong> <em><var>bytevector</var></em></dt>
+<dt><a name="index-percent_002ddecode"></a>Function: <strong>percent-decode</strong> <em><var>bytevector</var></em></dt>
+<dd><p>Encode or decode a bytevector according to <acronym>RFC</acronym> 3986 <acronym>URI</acronym>
+percent encoding; return a bytevector.  All the octets are encoded
+except the ones having the following <acronym>ASCII</acronym> representation:
+</p>
+<div class="example">
+<pre class="example">ABCDEFGHIJKLMNOPQRSTUVWXYZ
+abcdefghijklmnopqrstuvwxyz
+0123456789
+-._~
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-normalise_002duri_002dencoding"></a>Function: <strong>normalise-uri-encoding</strong> <em><var>bytevector</var></em></dt>
+<dt><a name="index-normalise_002dpercent_002dencoding"></a>Function: <strong>normalise-percent-encoding</strong> <em><var>bytevector</var></em></dt>
+<dd><p>Given a bytevector encoded according to to <acronym>RFC</acronym> 3986 <acronym>URI</acronym>
+percent encoding: return an encoded and normalised bytevector, octets
+that are encoded but should not are decoded.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-uri_002dencoded_002dbytevector_003f"></a>Function: <strong>uri-encoded-bytevector?</strong> <em><var>bv</var></em></dt>
+<dt><a name="index-percent_002dencoded_002dbytevector_003f"></a>Function: <strong>percent-encoded-bytevector?</strong> <em><var>bv</var></em></dt>
+<dd><p>Return <code>#t</code> if the argument is a correctly percent&ndash;encoded
+bytevector according to <acronym>RFC</acronym> 3986.  This means every octet represents
+either one of the following characters in <acronym>ASCII</acronym> encoding:
+</p>
+<div class="example">
+<pre class="example">ABCDEFGHIJKLMNOPQRSTUVWXYZ
+abcdefghijklmnopqrstuvwxyz
+0123456789
+-._~
+</pre></div>
+
+<p>or it is part of a percent&ndash;encoded sequence defined by the following
+grammar:
+</p>
+<div class="example">
+<pre class="example">pct-encoded   = &quot;%&quot; HEXDIG HEXDIG
+HEXDIG        = [0-9a-fA-F]
+</pre></div>
+</dd></dl>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="iklib-bytevectors-valpred.html#iklib-bytevectors-valpred" accesskey="n" rel="next">iklib bytevectors valpred</a>, Previous: <a href="iklib-bytevectors-comparison.html#iklib-bytevectors-comparison" accesskey="p" rel="prev">iklib bytevectors comparison</a>, Up: <a href="iklib-bytevectors.html#iklib-bytevectors" accesskey="u" rel="up">iklib bytevectors</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

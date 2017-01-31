@@ -1,0 +1,284 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes the libraries distributed along with version
+0.4d1 of Vicare Scheme, an R6RS compliant native
+compiler for the Scheme language.
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+The documentation of the libraries (vicare parser-tools silex
+-) are derived form the documentation of SILex.  Copyright
+(C) 2001, 2009 Danny Dube'.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Libraries for Vicare Scheme: posix process exec</title>
+
+<meta name="description" content="Libraries for Vicare Scheme: posix process exec">
+<meta name="keywords" content="Libraries for Vicare Scheme: posix process exec">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="posix-process.html#posix-process" rel="up" title="posix process">
+<link href="posix-status.html#posix-status" rel="next" title="posix status">
+<link href="posix-process-fork-textual.html#posix-process-fork-textual" rel="prev" title="posix process fork textual">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="posix-process-exec"></a>
+<div class="header">
+<p>
+Previous: <a href="posix-process-fork.html#posix-process-fork" accesskey="p" rel="prev">posix process fork</a>, Up: <a href="posix-process.html#posix-process" accesskey="u" rel="up">posix process</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Executing-a-file"></a>
+<h4 class="subsection">4.6.3 Executing a file</h4>
+
+
+<p>The <acronym>POSIX</acronym> functions in the family <code>exec*</code> execute a file and
+replace the current Vicare process with the new process; when these
+functions are successful: they do not return.
+</p>
+<blockquote>
+<p><strong>NOTE</strong> For a clean subprocess execution: before executing the
+command we must call <code>close-ports-in-close-on-exec-mode</code>.  All the
+<code>exec*</code> functions below perform this call automatically.
+</p></blockquote>
+
+
+<dl>
+<dt><a name="index-execv"></a>Function: <strong>execv</strong> <em><var>filename</var> <var>argv</var></em></dt>
+<dd><a name="index-Executing-processes"></a>
+<a name="index-Processes_002c-executing"></a>
+<p>Interface to the C function <code>execv()</code>, <a href="http://www.gnu.org/software/libc/manual/html_node/Executing-a-File.html#Executing-a-File">(libc)execv</a>.  <var>filename</var> must be the pathname of an executable file;
+<var>argv</var> must be a list of strings representing command line
+arguments.  Execute the command; if the function returns: an error has
+occurred, an exception is raised.
+</p>
+<p>Example that runs <code>ls</code>:
+</p>
+<div class="example">
+<pre class="example">(import (vicare)
+  (prefix (vicare posix) px.))
+
+(px.execv &quot;/bin/ls&quot; '(&quot;ls&quot; &quot;-l&quot;))
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-execve"></a>Function: <strong>execve</strong> <em><var>filename</var> <var>argv</var> <var>env</var></em></dt>
+<dd><p>Interface to the C function <code>execve()</code>, <a href="http://www.gnu.org/software/libc/manual/html_node/Executing-a-File.html#Executing-a-File">(libc)execve</a>.  <var>filename</var> must be the pathname of an executable file;
+<var>argv</var> must be a list of strings representing command line
+arguments; <var>env</var> must be a list of strings representing environment
+variables assignments.  Execute the command; if the function returns: an
+error has occurred, an exception is raised.
+</p>
+<p>Example that runs <code>sh</code>:
+</p>
+<div class="example">
+<pre class="example">(import (vicare)
+  (prefix (vicare posix) px.))
+
+(px.execve &quot;/bin/sh&quot; '(&quot;sh&quot; &quot;-c&quot; &quot;echo A is $A&quot;) '(&quot;A=1&quot;))
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-execvp"></a>Function: <strong>execvp</strong> <em><var>filename</var> <var>argv</var></em></dt>
+<dd><p>Interface to the C function <code>execvp()</code>, <a href="http://www.gnu.org/software/libc/manual/html_node/Executing-a-File.html#Executing-a-File">(libc)execvp</a>.  <var>filename</var> must be the pathname of an executable file
+reachable in the current <code>PATH</code>; <var>argv</var> must be a list of
+strings representing command line arguments.  Execute the command; if
+the function returns: an error has occurred, an exception is raised.
+</p>
+<p>Example that runs <code>ls</code>:
+</p>
+<div class="example">
+<pre class="example">(import (vicare)
+  (prefix (vicare posix) px.))
+
+(px.execvp &quot;ls&quot; '(&quot;ls&quot; &quot;-l&quot;))
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-execl"></a>Function: <strong>execl</strong> <em><var>filename</var> <var>arg0</var> <var>arg</var> ...</em></dt>
+<dd><p>Like <code>execv</code> but allows the arguments to be given explicitly.
+Example that runs <code>ls</code>:
+</p>
+<div class="example">
+<pre class="example">(import (vicare)
+  (prefix (vicare posix) px.))
+
+(px.execl &quot;/bin/ls&quot; &quot;ls&quot; &quot;-l&quot;)
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-execle"></a>Function: <strong>execle</strong> <em><var>filename</var> <var>argv0</var> <var>arg</var> &hellip; <var>env</var></em></dt>
+<dd><p>Like <code>execve</code> but allows the arguments to be given explicitly.
+Example that runs <code>sh</code>:
+</p>
+<div class="example">
+<pre class="example">(import (vicare)
+  (prefix (vicare posix) px.))
+
+(px.execle &quot;/bin/sh&quot; &quot;sh&quot; &quot;-c&quot; &quot;echo A is $A&quot; '(&quot;A=123&quot;))
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-execlp"></a>Function: <strong>execlp</strong> <em><var>filename</var> <var>arg0</var> <var>arg</var> ...</em></dt>
+<dd><p>Like <code>execvp</code> but allows the arguments to be given explicitly.
+Example that runs <code>ls</code>:
+</p>
+<div class="example">
+<pre class="example">(import (vicare)
+  (prefix (vicare posix) px.))
+
+(px.execlp &quot;ls&quot; &quot;ls&quot; &quot;-l&quot;)
+</pre></div>
+</dd></dl>
+
+
+<a name="Finding-executable-files"></a>
+<h4 class="subsubheading">Finding executable files</h4>
+
+
+<a name="index-Finding-executable-files"></a>
+<a name="index-Executable-files_002c-finding"></a>
+<a name="index-Finding-programs"></a>
+<a name="index-Programs_002c-finding"></a>
+
+
+<dl>
+<dt><a name="index-find_002dexecutable_002das_002dbytevector"></a>Function: <strong>find-executable-as-bytevector</strong> <em><var>bv-pathname</var></em></dt>
+<dt><a name="index-find_002dexecutable_002das_002dstring"></a>Function: <strong>find-executable-as-string</strong> <em><var>str-pathname</var></em></dt>
+<dd><p>Given an absolute or relative file pathname or just the name of a file,
+search the file system for a matching executable file; when found return
+its absolute pathname as bytevector or Scheme string, else return
+<code>#f</code>.  If an error occurs while inspecting the file system: raise an
+exception.
+</p>
+<p><var>bv-pathname</var> must be a bytevector, <var>str-pathname</var> must be a
+string.
+</p>
+<div class="example">
+<pre class="example">#!vicare
+(import (vicare)
+  (prefix (vicare posix) px.))
+
+(px.find-executable-as-string &quot;/usr/local/bin/vicare&quot;)
+&rArr; &quot;/usr/local/bin/vicare&quot;
+
+(px.find-executable-as-string &quot;vicare&quot;)
+&rArr; &quot;/usr/local/bin/vicare&quot;
+
+(px.find-executable-as-string &quot;this-cannot-exist&quot;)
+&rArr; #f
+
+(px.find-executable-as-string &quot;ls&quot;)
+&rArr; &quot;/usr/bin/ls&quot;
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-vicare_002dexecutable_002das_002dbytevector"></a>Function: <strong>vicare-executable-as-bytevector</strong></dt>
+<dt><a name="index-vicare_002dexecutable_002das_002dstring"></a>Function: <strong>vicare-executable-as-string</strong></dt>
+<dd><p>Acquire the return value of <code>vicare-argv0</code> and search the file
+system for a matching executable file; when found return its absolute
+pathname as bytevector or Scheme string, else return <code>#f</code>.  If an
+error occurs while inspecting the file system: raise an exception.
+</p>
+<p>Upon starting a Vicare process:
+</p>
+<ul>
+<li> If the executable <code>vicare</code> is specified as pathname relative to
+the current working directory: these functions will return the wrong
+absolute path when the current working directory is changed before a
+call to them.
+
+</li><li> If the executable <code>vicare</code> is specified as file name with no
+directory part: these functions may return the wrong absolute path when
+the environment variable <code>PATH</code> is changed before a call to them.
+</li></ul>
+
+<p>For these reasons: these functions are both invoked upon loading the
+library <code>(vicare posix)</code> and they cache the result internally.
+Beware to neither change the current working directory nor change the
+<code>PATH</code> before loading <code>(vicare posix)</code>.
+</p></dd></dl>
+
+<hr>
+<div class="header">
+<p>
+Previous: <a href="posix-process-fork.html#posix-process-fork" accesskey="p" rel="prev">posix process fork</a>, Up: <a href="posix-process.html#posix-process" accesskey="u" rel="up">posix process</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

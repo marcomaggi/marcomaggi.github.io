@@ -1,0 +1,205 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.4d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit and 64-bit
+processors.  Vicare is pronounced the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/downloads
+
+the home page of the project is at:
+
+http://marcomaggi.github.io/vicare.html
+
+development takes place at:
+
+http://github.com/marcomaggi/vicare/
+
+and, as a backup, at:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the "History" appendix for details.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Vicare Scheme: objects symbols values</title>
+
+<meta name="description" content="Vicare Scheme: objects symbols values">
+<meta name="keywords" content="Vicare Scheme: objects symbols values">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="objects-symbols.html#objects-symbols" rel="up" title="objects symbols">
+<link href="objects-symbols-ops.html#objects-symbols-ops" rel="next" title="objects symbols ops">
+<link href="objects-symbols.html#objects-symbols" rel="prev" title="objects symbols">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="objects-symbols-values"></a>
+<div class="header">
+<p>
+Next: <a href="objects-symbols-ops.html#objects-symbols-ops" accesskey="n" rel="next">objects symbols ops</a>, Up: <a href="objects-symbols.html#objects-symbols" accesskey="u" rel="up">objects symbols</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="The-value-and-proc-slots"></a>
+<h4 class="subsection">13.12.1 The <code>value</code> and <code>proc</code> slots</h4>
+
+
+<p>The <code>value</code> field has multiple purposes:
+</p>
+<ul>
+<li> When the symbol is the unique identifier of a data structure type: the
+<code>value</code> field holds a reference to the data struct&ndash;type
+descriptor.
+
+</li><li> When the symbol is the unique identifier of a <acronym>R6RS</acronym> record type: the
+<code>value</code> field holds a reference to the record&ndash;type descriptor.
+
+</li><li> Bindings defined at the top level of libraries, programs or standalone
+expressions to be evaluated by <code>eval</code>, have their current value
+stored in the <code>value</code> slot of symbols, or, more precisely, of
+gensyms; such symbols are called <em>location gensyms</em> or <em>loc
+gensyms</em>.
+
+</li><li> Bindings defined at the top level of libraries, programs or standalone
+expressions to be evaluated by <code>eval</code>, have a <em>label gensym</em>
+associated to them: a symbol whose <code>value</code> slot holds a reference
+to the syntactic binding descriptor to be used by the expander.
+
+</li><li> And more.
+</li></ul>
+
+<p>About the <code>proc</code> slot: when a top level binding is never assigned
+(in other words: it is immutable) and its value is a closure object, the
+associated loc gensym holds its value in both the <code>value</code> slot and
+the <code>proc</code> slot.  Whenever binary code in a code object performs a
+call to a non&ndash;assigned top level closure object, it does the following:
+</p>
+<ol>
+<li> From the relocation vector of the current code object: retrieve the loc
+gensym of the closure to call.
+
+</li><li> From the loc gensym: extract the value of the <code>proc</code> slot, which is
+meant to be a reference to the closure object.  This is done by
+accessing the gensym object with a low&ndash;level assembly instruction,
+<strong>not necessarily</strong> by using the primitive operation
+<code>$symbol-proc</code>.
+
+</li><li> Actually call the closure object.
+</li></ol>
+
+<p>Values stored in the <code>value</code> slot of loc gensyms can be closure
+objects or not; they can be called by binary code, but they need to be
+validated as closure objects first.  Values stored in the <code>proc</code>
+slot can only be references to closure objects and they can be called by
+binary code without being first validated.
+</p>
+
+<a name="Use-in-primitive-function-syntactic-bindings"></a>
+<h4 class="subsubheading">Use in primitive function syntactic bindings</h4>
+
+<p>All the primitive functions implemented by code in Vicare&rsquo;s
+boot image are accessible from libraries defined by the boot image; such
+primitive functions have a loc gensym associated to them, in which both
+the <code>value</code> and <code>proc</code> slots hold a reference to the actual
+closure object.  The bindings of primitive functions are immutable.
+</p>
+
+<a name="Use-in-library-top-level-syntactic-bindings"></a>
+<h4 class="subsubheading">Use in library top level syntactic bindings</h4>
+
+<p>All the top level bindings defined by a <code>library</code> form have a loc
+gensym associated to them:
+</p>
+<ul>
+<li> If a binding is never assigned in the source code of the library and its
+value is a closure object: both the <code>value</code> and <code>proc</code> slots
+of its loc gensym hold a reference to the actual closure object.
+
+</li><li> If a binding is assigned in the source code of the library: its value is
+stored in the <code>value</code> slot of its loc gensym; the <code>proc</code> slot
+of the loc gensym is set to the unbound object.
+
+</li><li> If a binding&rsquo;s value is not a closure object: its value is stored in the
+<code>value</code> slot of its loc gensym; the <code>proc</code> slot of the loc
+gensym is set to the unbound object.
+</li></ul>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="objects-symbols-ops.html#objects-symbols-ops" accesskey="n" rel="next">objects symbols ops</a>, Up: <a href="objects-symbols.html#objects-symbols" accesskey="u" rel="up">objects symbols</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

@@ -1,0 +1,184 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes the libraries distributed along with version
+0.4d1 of Vicare Scheme, an R6RS compliant native
+compiler for the Scheme language.
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+The documentation of the libraries (vicare parser-tools silex
+-) are derived form the documentation of SILex.  Copyright
+(C) 2001, 2009 Danny Dube'.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Libraries for Vicare Scheme: pipelines</title>
+
+<meta name="description" content="Libraries for Vicare Scheme: pipelines">
+<meta name="keywords" content="Libraries for Vicare Scheme: pipelines">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="lang.html#lang" rel="up" title="lang">
+<link href="streams.html#streams" rel="next" title="streams">
+<link href="c_002denums.html#c_002denums" rel="prev" title="c-enums">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="pipelines"></a>
+<div class="header">
+<p>
+Next: <a href="streams.html#streams" accesskey="n" rel="next">streams</a>, Previous: <a href="c_002denums.html#c_002denums" accesskey="p" rel="prev">c-enums</a>, Up: <a href="lang.html#lang" accesskey="u" rel="up">lang</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Pipelining-expressions"></a>
+<h3 class="section">1.14 Pipelining expressions</h3>
+
+
+<a name="index-_0028vicare-language_002dextensions-pipelines_0029_002c-library"></a>
+<a name="index-Library-_0028vicare-language_002dextensions-pipelines_0029"></a>
+
+
+<p>The following bindings are exported by the library <code>(vicare
+language-extensions pipelines)</code>.
+</p>
+
+<dl>
+<dt><a name="index-pipeline"></a>Syntax: <strong>pipeline</strong> <em><var>?producer</var> =&gt; <var>?formals</var> <var>?consumer</var> &hellip;</em></dt>
+<dt><a name="index-_003d_003e-1"></a>Auxiliary Syntax: <strong>=&gt;</strong></dt>
+<dd><p>Allow a sequence of producer/consumer expressions to be written with
+simpler and less indented syntax.  The following expansions are
+implemented:
+</p>
+<div class="example">
+<pre class="example">(pipeline <var>?producer</var> =&gt; <var>?formals</var> <var>?consumer</var>)
+&rarr; (call-with-values
+        (lambda () <var>?producer</var>)
+      (lambda <var>?formals</var> <var>?consumer</var>))
+
+(pipeline <var>?producer</var>
+  =&gt; <var>?formals0</var>
+  <var>?consumer0</var>
+  =&gt; <var>?formals1</var>
+  <var>?consumer1</var>)
+&rarr; (call-with-values
+        (lambda () <var>?producer</var>)
+      (lambda <var>?formals0</var>
+        (call-with-values
+            (lambda () <var>?consumer0</var>)
+          (lambda <var>?formals1</var>
+            <var>?consumer1</var>))))
+</pre></div>
+
+<p>The auxiliary syntax <code>=&gt;</code> is the one exported by
+<code>(rnrs base (6))</code>.
+</p></dd></dl>
+
+
+<p>Examples:
+</p>
+<div class="example">
+<pre class="example">(pipeline 1)
+&rArr; 1
+
+(pipeline
+  1.2
+  =&gt; (x0)
+  (sin x0)
+  =&gt; (x1)
+  (cos x1)
+  =&gt; (x2)
+  (tan x2)
+  =&gt; (x3)
+  x3)
+&equiv; (tan (cos (sin 1.2)))
+
+(pipeline
+  (values 1 2)
+  =&gt; (a0 b0)
+  (values (times10 a0) (times10 b0))
+  =&gt; (a1 b1)
+  (values (times10 a1) (times10 b1))
+  =&gt; (a2 b2)
+  (values (times10 a2) (times10 b2))
+  =&gt; (a3 b3)
+  (list a3 b3))
+&rArr; (1000 2000)
+
+(pipeline
+  (values 1 2 3 4)
+  =&gt; (a0 b0 . rest0)
+  (apply values (times10 a0) (times10 b0) (map times10 rest0))
+  =&gt; (a1 b1 . rest1)
+  (apply values (times10 a1) (times10 b1) (map times10 rest1))
+  =&gt; (a2 b2 . rest2)
+  (apply values (times10 a2) (times10 b2) (map times10 rest2))
+  =&gt; (a3 b3 . rest3)
+  (cons* a3 b3 rest3))
+&rArr; (1000 2000 3000 4000)
+</pre></div>
+
+
+
+
+
+</body>
+</html>

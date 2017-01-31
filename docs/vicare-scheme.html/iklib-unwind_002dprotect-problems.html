@@ -1,0 +1,260 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.4d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit and 64-bit
+processors.  Vicare is pronounced the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/downloads
+
+the home page of the project is at:
+
+http://marcomaggi.github.io/vicare.html
+
+development takes place at:
+
+http://github.com/marcomaggi/vicare/
+
+and, as a backup, at:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the "History" appendix for details.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Vicare Scheme: iklib unwind-protect problems</title>
+
+<meta name="description" content="Vicare Scheme: iklib unwind-protect problems">
+<meta name="keywords" content="Vicare Scheme: iklib unwind-protect problems">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="iklib-unwind_002dprotect.html#iklib-unwind_002dprotect" rel="up" title="iklib unwind-protect">
+<link href="iklib-unwind_002dprotect-call_002fcc.html#iklib-unwind_002dprotect-call_002fcc" rel="next" title="iklib unwind-protect call/cc">
+<link href="iklib-unwind_002dprotect-dyn_002denv.html#iklib-unwind_002dprotect-dyn_002denv" rel="prev" title="iklib unwind-protect dyn-env">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="iklib-unwind_002dprotect-problems"></a>
+<div class="header">
+<p>
+Next: <a href="iklib-unwind_002dprotect-call_002fcc.html#iklib-unwind_002dprotect-call_002fcc" accesskey="n" rel="next">iklib unwind-protect call/cc</a>, Previous: <a href="iklib-unwind_002dprotect-dyn_002denv.html#iklib-unwind_002dprotect-dyn_002denv" accesskey="p" rel="prev">iklib unwind-protect dyn-env</a>, Up: <a href="iklib-unwind_002dprotect.html#iklib-unwind_002dprotect" accesskey="u" rel="up">iklib unwind-protect</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Known-problems"></a>
+<h4 class="subsection">6.9.12 Known problems</h4>
+
+
+<p>The unwind protection mechanism may misbehave in some cases.
+Specifically the unwind handler may not be called in the following
+cases:
+</p>
+<ul>
+<li> An exception is raised by a thunk and, while handling it, a second
+exception is raised.
+
+</li><li> An exception is raised by the in&ndash;guard or out&ndash;guard thunks of a call
+to <code>dynamic-wind</code>.
+</li></ul>
+
+
+<a name="Raising-exceptions-from-an-exception-handler"></a>
+<h4 class="subsubheading">Raising exceptions from an exception handler</h4>
+
+<p>In the following example an exception is raised by an exception handler:
+the unwind handler is called, but the original exception is lost.
+</p>
+<div class="example">
+<pre class="example">(import (vicare)
+  (only (vicare checks)
+        with-result
+        add-result))
+
+(with-result
+  (guard (E (else
+             (add-result 'guard-else)
+             E))
+    (with-exception-handler
+        (lambda (E)
+          (add-result 'exception-handler)
+          (raise 2))
+      (lambda ()
+        (with-unwind-protection
+            (lambda (why)
+              (add-result 'unwind-handler))
+          (lambda ()
+            (dynamic-wind
+                (lambda ()
+                  (add-result 'in-guard))
+                (lambda ()
+                  (add-result 'thunk-in)
+                  (raise 1)
+                  (add-result 'thunk-out))
+                (lambda ()
+                  (add-result 'out-guard)))))))))
+&rArr; (2 (in-guard
+       thunk-in
+       exception-handler
+       out-guard
+       in-guard out-guard unwind-handler
+       guard-else))
+</pre></div>
+
+
+<a name="Raising-exceptions-from-a-guard_0027s-test"></a>
+<h4 class="subsubheading">Raising exceptions from a <code>guard</code>&rsquo;s test</h4>
+
+<p>In the following example an exception is raised from a <code>guard</code>&rsquo;s
+test expression: the unwind handler is <strong>not</strong> called and the
+original exception is lost.
+</p>
+<div class="example">
+<pre class="example">(import (vicare)
+  (only (vicare checks)
+        with-result
+        add-result))
+
+(with-result
+  (guard (E (else
+             (add-result 'outer-guard-else)
+             E))
+    (guard (E ((begin
+                 (add-result 'inner-guard-test)
+                 (raise 2))
+               E))
+      (with-unwind-protection
+          (lambda (why)
+            (add-result 'unwind-handler))
+        (lambda ()
+          (dynamic-wind
+              (lambda ()
+                (add-result 'in-guard))
+              (lambda ()
+                (add-result 'thunk-in)
+                (raise 1)
+                (add-result 'thunk-out))
+              (lambda ()
+                (add-result 'out-guard))))))))
+&rArr; (2 (in-guard
+       thunk-in
+       out-guard
+       inner-guard-test
+       outer-guard-else))
+</pre></div>
+
+
+<a name="Raising-exceptions-from-dynamic_002dwind-guards"></a>
+<h4 class="subsubheading">Raising exceptions from <code>dynamic-wind</code> guards</h4>
+
+<p>In the following example an exception is raised from a
+<code>dynamic-wind</code>&rsquo;s in&ndash;guard thunk: the unwind handler is
+<strong>not</strong> called and the original exception is lost.
+</p>
+<div class="example">
+<pre class="example">(with-result
+  (guard (E (else
+             (add-result 'guard-else)
+             E))
+    (dynamic-wind
+        (let ((flag #f))
+          (lambda ()
+            (cond (flag
+                   (add-result 'in-guard/raise)
+                   (raise 2))
+                  (else
+                   (set! flag #t)
+                   (add-result 'in-guard)))))
+        (lambda ()
+          (with-unwind-handler
+              (lambda (E)
+                (add-result 'unwind-handler))
+            (lambda ()
+              (add-result 'thunk-in)
+              (raise 1))))
+        (lambda ()
+          (add-result 'out-guard)))))
+&rArr; (2 (in-guard
+       thunk-in
+       out-guard
+       in-guard/raise
+       guard-else))
+</pre></div>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="iklib-unwind_002dprotect-call_002fcc.html#iklib-unwind_002dprotect-call_002fcc" accesskey="n" rel="next">iklib unwind-protect call/cc</a>, Previous: <a href="iklib-unwind_002dprotect-dyn_002denv.html#iklib-unwind_002dprotect-dyn_002denv" accesskey="p" rel="prev">iklib unwind-protect dyn-env</a>, Up: <a href="iklib-unwind_002dprotect.html#iklib-unwind_002dprotect" accesskey="u" rel="up">iklib unwind-protect</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

@@ -1,0 +1,219 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.4d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit and 64-bit
+processors.  Vicare is pronounced the etruscan way.  The focus of
+this document is over the typed language extension.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/downloads
+
+the home page of the project is at:
+
+http://marcomaggi.github.io/vicare.html
+
+development takes place at:
+
+http://github.com/marcomaggi/vicare/
+
+and, as a backup, at:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/
+
+Copyright (C) 2016-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Vicare Scheme&rsquo;s typed language: descriptors core</title>
+
+<meta name="description" content="Vicare Scheme&rsquo;s typed language: descriptors core">
+<meta name="keywords" content="Vicare Scheme&rsquo;s typed language: descriptors core">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="type-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="descriptors.html#descriptors" rel="up" title="descriptors">
+<link href="descriptors-compound.html#descriptors-compound" rel="next" title="descriptors compound">
+<link href="descriptors-retrieving.html#descriptors-retrieving" rel="prev" title="descriptors retrieving">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="descriptors-core"></a>
+<div class="header">
+<p>
+Next: <a href="descriptors-compound.html#descriptors-compound" accesskey="n" rel="next">descriptors compound</a>, Previous: <a href="descriptors-retrieving.html#descriptors-retrieving" accesskey="p" rel="prev">descriptors retrieving</a>, Up: <a href="descriptors.html#descriptors" accesskey="u" rel="up">descriptors</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Core-object_002d_002dtype-descriptors"></a>
+<h3 class="section">4.2 Core object&ndash;type descriptors</h3>
+
+
+<p>Core object&ndash;type descriptors gather the run&ndash;time characteristics of
+object&ndash;types like fixnums and strings; for every core object&ndash;type
+there is an already defined type descriptor, bound to a syntactic
+binding exported by the library <code>(vicare system
+type-descriptors)</code>.
+</p>
+<p>Such syntactic bindings have name derived from the type name by
+appending &lsquo;<samp>-ctd</samp>&rsquo; (where &lsquo;<samp>ctd</samp>&rsquo; stands for Core Type
+Descriptor).  So the type name <code>&lt;fixnum&gt;</code> has the associated type
+descriptor <code>&lt;fixnum&gt;-ctd</code>, the type name <code>&lt;string&gt;</code> has the
+associated type descriptor <code>&lt;string&gt;-ctd</code>, et cetera.
+</p>
+<p>Some usage examples:
+</p>
+<div class="lisp">
+<pre class="lisp">(import (only (vicare system type-descriptors)
+              &lt;string&gt;-ctd))
+
+(type-descriptor &lt;string&gt;)         &rArr; &lt;string&gt;-ctd
+(.name &lt;string&gt;-ctd)               &rArr; &lt;string&gt;
+(.parent &lt;string&gt;-ctd)             &rArr; &lt;top&gt;-ctd
+
+(.uids-list &lt;string&gt;-ctd)
+&rArr; (vicare:core-type:&lt;string&gt; vicare:core-type:&lt;top&gt;)
+
+(let* ((retriever (.method-retriever &lt;string&gt;-ctd))
+       (strlen    (retriever 'length)))
+  (strlen &quot;ciao&quot;))
+&rArr; 4
+</pre></div>
+
+<p>The following syntactic bindings are exported by the library
+<code>(vicare system type-descriptors)</code>.
+</p>
+
+<dl>
+<dt><a name="index-_003ccore_002dtype_002ddescriptor_003e"></a>Record Type: <strong>&lt;core-type-descriptor&gt;</strong></dt>
+<dd><p>The type name of objects describing core object&ndash;types.  It has the
+following immutable fields:
+</p>
+<dl compact="compact">
+<dt><code>name</code></dt>
+<dd><p>A symbol representing the name of this type.  For example:
+&lsquo;<samp>&lt;string&gt;</samp>&rsquo;.
+</p>
+</dd>
+<dt><code>parent</code></dt>
+<dd><p>If this type has a parent: an instance of <code>&lt;core-type-descriptor&gt;</code>
+representing the parent of this type; otherwise <code>#f</code>.
+</p>
+</dd>
+<dt><code>type-predicate</code></dt>
+<dd><p><code>#f</code> or a function implementing the type predicate.
+</p>
+</dd>
+<dt><code>equality-predicate</code></dt>
+<dd><p><code>#f</code> or a function implementing the equality predicate.
+</p>
+</dd>
+<dt><code>comparison-procedure</code></dt>
+<dd><p><code>#f</code> or a function implementing the comparison procedure.
+</p>
+</dd>
+<dt><code>hash-function</code></dt>
+<dd><p><code>#f</code> or a function implementing the hash function.
+</p>
+</dd>
+<dt><code>uids-list</code></dt>
+<dd><p>A list of symbols representing the hierarchy of unique identifiers
+(<acronym>UID</acronym>s) for this type.  The first item in the list is the <acronym>UID</acronym> of
+this type, then the parent&rsquo;s <acronym>UID</acronym>, then the grandparent&rsquo;s <acronym>UID</acronym>, et
+cetera.
+</p>
+</dd>
+<dt><code>method-retriever</code></dt>
+<dd><p>If this type has methods: a procedure to be applied to the method name
+(a symbol) to retrieve the method implementation function; otherwise
+<code>#f</code>.
+</p></dd>
+</dl>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-core_002dtype_002ddescriptor_003f"></a>Function: <strong>core-type-descriptor?</strong> <em><var>obj</var></em></dt>
+<dd><p>Return <code>#t</code> if <var>obj</var> is an instance of
+<code>&lt;core-type-descriptor&gt;</code>; otherwise return <code>#f</code>.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-core_002dtype_002ddescriptor_002ename"></a>Function: <strong>core-type-descriptor.name</strong> <em><var>ctd</var></em></dt>
+<dt><a name="index-core_002dtype_002ddescriptor_002eparent"></a>Function: <strong>core-type-descriptor.parent</strong> <em><var>ctd</var></em></dt>
+<dt><a name="index-core_002dtype_002ddescriptor_002euids_002dlist"></a>Function: <strong>core-type-descriptor.uids-list</strong> <em><var>ctd</var></em></dt>
+<dt><a name="index-core_002dtype_002ddescriptor_002etype_002dpredicate"></a>Function: <strong>core-type-descriptor.type-predicate</strong> <em><var>ctd</var></em></dt>
+<dt><a name="index-core_002dtype_002ddescriptor_002eequality_002dpredicate"></a>Function: <strong>core-type-descriptor.equality-predicate</strong> <em><var>ctd</var></em></dt>
+<dt><a name="index-core_002dtype_002ddescriptor_002ecomparison_002dprocedure"></a>Function: <strong>core-type-descriptor.comparison-procedure</strong> <em><var>ctd</var></em></dt>
+<dt><a name="index-core_002dtype_002ddescriptor_002ehash_002dfunction"></a>Function: <strong>core-type-descriptor.hash-function</strong> <em><var>ctd</var></em></dt>
+<dt><a name="index-core_002dtype_002ddescriptor_002emethod_002dretriever"></a>Function: <strong>core-type-descriptor.method-retriever</strong> <em><var>ctd</var></em></dt>
+<dd><p>Accessors for the fields of <code>&lt;core-type-descriptor&gt;</code>.
+</p></dd></dl>
+
+<dl>
+<dt><a name="index-core_002dtype_002ddescriptor_002euid"></a>Function: <strong>core-type-descriptor.uid</strong> <em><var>ctd</var></em></dt>
+<dd><p>Return the <acronym>UID</acronym> of the core&ndash;type descriptor <var>ctd</var>.
+</p></dd></dl>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="descriptors-compound.html#descriptors-compound" accesskey="n" rel="next">descriptors compound</a>, Previous: <a href="descriptors-retrieving.html#descriptors-retrieving" accesskey="p" rel="prev">descriptors retrieving</a>, Up: <a href="descriptors.html#descriptors" accesskey="u" rel="up">descriptors</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

@@ -1,0 +1,355 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.4d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit and 64-bit
+processors.  Vicare is pronounced the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/downloads
+
+the home page of the project is at:
+
+http://marcomaggi.github.io/vicare.html
+
+development takes place at:
+
+http://github.com/marcomaggi/vicare/
+
+and, as a backup, at:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the "History" appendix for details.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Vicare Scheme: libutils libraries global-env</title>
+
+<meta name="description" content="Vicare Scheme: libutils libraries global-env">
+<meta name="keywords" content="Vicare Scheme: libutils libraries global-env">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="libutils-libraries.html#libutils-libraries" rel="up" title="libutils libraries">
+<link href="libutils-libraries-ops.html#libutils-libraries-ops" rel="next" title="libutils libraries ops">
+<link href="libutils-libraries-typedef.html#libutils-libraries-typedef" rel="prev" title="libutils libraries typedef">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="libutils-libraries-global_002denv"></a>
+<div class="header">
+<p>
+Next: <a href="libutils-libraries-ops.html#libutils-libraries-ops" accesskey="n" rel="next">libutils libraries ops</a>, Previous: <a href="libutils-libraries-typedef.html#libutils-libraries-typedef" accesskey="p" rel="prev">libutils libraries typedef</a>, Up: <a href="libutils-libraries.html#libutils-libraries" accesskey="u" rel="up">libutils libraries</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="The-global_002denv-field"></a>
+<h4 class="subsection">7.3.2 The <code>global-env</code> field</h4>
+
+
+<dl>
+<dt><a name="index-library_002dglobal_002denv"></a>Accessor for <code>&lt;library&gt;</code>: <strong>library-global-env</strong> <em><var>lib</var></em></dt>
+<dd><p>Return the lexical environment exported by the <code>&lt;library&gt;</code> object
+<var>lib</var>.
+</p></dd></dl>
+
+
+<p>The <code>global-env</code> is a data structure used to map the label gensyms
+of top level syntactic bindings defined by a library to the
+corresponding storage location gensyms.  &ldquo;Top level bindings&rdquo; does not
+mean &ldquo;exported bindings&rdquo;: not all the entries in <code>global-env</code>
+represent exported bindings, it is the role of the <code>export-subst</code>
+to select the exported ones.
+</p>
+<p>An <code>global-env</code> is an alist whose entries have the format:
+</p>
+<div class="example">
+<pre class="example">(<var>?label</var> . <var>?export-descriptor</var>)
+</pre></div>
+
+<p>and <var>?export-descriptor</var> has the format:
+</p>
+<div class="example">
+<pre class="example">(<var>?binding-type</var> . <var>?binding-value</var>)
+</pre></div>
+
+<p>where: <var>?label</var> is the syntactic binding&rsquo;s label gensym;
+<var>?binding-type</var> is a symbol representing the syntactic binding&rsquo;s
+type; the format of <var>?binding-value</var> depends upon the type.
+</p>
+<p>The symbol <var>?binding-type</var> is one among:
+</p>
+<dl compact="compact">
+<dt><code>global</code></dt>
+<dd><p>Denotes a syntactic binding representing a variable binding which is
+never assigned in the code (it is initialised to a value and that value
+never changes).  The export descriptor has the format:
+</p>
+<div class="example">
+<pre class="example">(global . <var>?lex/loc</var>)
+</pre></div>
+
+<p>where <var>?lex/loc</var> is a gensym acting both as lexical gensym and
+storage location gensym; after the library is invoked: the loc gensym
+holds the variable&rsquo;s value in its <code>value</code> slot (immutable).  This
+binding can be exported.
+</p>
+</dd>
+<dt><code>mutable</code></dt>
+<dd><p>Denotes a syntactic binding representing a variable binding which is
+assigned somewhere in the code.  The export descriptor has the format:
+</p>
+<div class="example">
+<pre class="example">(mutable . <var>?lex/loc</var>)
+</pre></div>
+
+<p>where <var>?lex/loc</var> is a gensym acting both as lexical gensym and
+storage location gensym; after the library is invoked: the loc gensym
+holds the variable&rsquo;s value in its <code>value</code> slot (mutable).  This
+binding <strong>cannot</strong> be exported.
+</p>
+</dd>
+<dt><code>global-macro</code></dt>
+<dd><p>Denotes a syntactic binding representing a non&ndash;variable macro.  The
+export descriptor has the format:
+</p>
+<div class="example">
+<pre class="example">(global-macro . <var>?loc</var>)
+</pre></div>
+
+<p>where <var>?loc</var> is the storage location gensym; after the library has
+been visited: <var>?loc</var> holds the macro transformer in its <code>value</code>
+slot.  This binding can be exported.
+</p>
+<p>Syntactic bindings of this type are established by uses of
+<code>define-syntax</code>, <code>let-syntax</code> and similar when the result
+of evaluating the right&ndash;hand side expression is a function.
+</p>
+</dd>
+<dt><code>global-macro!</code></dt>
+<dd><p>Denotes a syntactic binding representing a variable macro.  The export
+descriptor has the format:
+</p>
+<div class="example">
+<pre class="example">(global-macro! . <var>?loc</var>)
+</pre></div>
+
+<p>where <var>?loc</var> is the storage location gensym; after the library has
+been visited: <var>?loc</var> holds the macro transformer in its <code>value</code>
+slot.  This binding can be exported.
+</p>
+<p>Syntactic bindings of this type are established by uses of
+<code>define-syntax</code>, <code>let-syntax</code> and similar when the result
+of evaluating the right&ndash;hand side expression is the return value of a
+call to <code>make-variable-transformer</code>.
+</p>
+</dd>
+<dt><code>global-etv</code></dt>
+<dd><p>Denotes a syntactic binding representing an expand&ndash;time value.  The
+export descriptor has the format:
+</p>
+<div class="example">
+<pre class="example">(global-etv . <var>?loc</var>)
+</pre></div>
+
+<p>where <var>?loc</var> is the storage location gensym; after the library has
+been visited: <var>?loc</var> holds the actual expand&ndash;time object.  This
+binding can be exported.
+</p>
+<p>Syntactic bindings of this type are established by
+<code>define-syntax</code>, <code>let-syntax</code> and similar when the result
+of evaluating their right&ndash;hand side expression is the return value of a
+call to <code>make-expand-time-value</code>.
+</p>
+</dd>
+<dt><code>$struct-type-descriptor</code></dt>
+<dd><p>Denotes a syntactic binding representing a Vicare&rsquo;s
+struct&ndash;type name.  The export descriptor has the format:
+</p>
+<div class="example">
+<pre class="example">($struct-type-descriptor . <var>?type-descriptor-struct</var>)
+</pre></div>
+
+<p>where <var>?type-descriptor-struct</var> is a struct representing the
+struct&ndash;type descriptor.
+</p>
+<p>Syntactic bindings of this type are established by uses of the syntax
+<code>define-struct</code>.
+</p>
+</dd>
+<dt><code>$record-type-descriptor</code></dt>
+<dd><p>Denotes a syntactic binding representing a <acronym>R6RS</acronym> record&ndash;type name.
+The export descriptor has one of the formats:
+</p>
+<div class="example">
+<pre class="example">($record-type-descriptor . (<var>?rtd-id</var> <var>?rcd-id</var>))
+($record-type-descriptor . (<var>?rtd-id</var> <var>?rcd-id</var> . <var>?spec</var>))
+</pre></div>
+
+<p>where: <var>?rtd-id</var> is the syntactic identifier to which the
+record&ndash;type descriptor is bound; <var>?rcd-id</var> is the syntactic
+identifier to which the default record&ndash;constructor descriptor is bound;
+<var>?spec</var> is an instance of record type
+<code>r6rs-record-type-spec</code>.
+</p>
+<p>Syntactic bindings of this type are established by uses of the syntaxes
+<code>define-record-type</code> and <code>define-condition-type</code>.
+</p>
+</dd>
+<dt><code>$module</code></dt>
+<dd><p>Denotes a syntactic binding representing a module interface.  The export
+descriptor has format:
+</p>
+<div class="example">
+<pre class="example">($module . <var>?module-interface</var>)
+</pre></div>
+
+<p>where <var>?module-interface</var> is a record of type
+<code>module-interface</code>.
+</p>
+<p>Syntactic bindings of this type are established by uses of the syntax
+<code>module</code>.
+</p>
+</dd>
+<dt><code>$fluid</code></dt>
+<dd><p>Denotes a syntactic binding representing a fluid syntax.  The export
+descriptor has format:
+</p>
+<div class="example">
+<pre class="example">($fluid . <var>?fluid-label</var>)
+</pre></div>
+
+<p>where <var>?fluid-label</var> is the label gensym associated to the fluid
+syntax.
+</p>
+</dd>
+<dt><code>$synonym</code></dt>
+<dd><p>Denotes a syntactic binding representing a synonym syntax.  The export
+descriptor has format:
+</p>
+<div class="example">
+<pre class="example">($synonym . <var>?synonym-label</var>)
+</pre></div>
+
+<p>where <var>?synonym-label</var> is the label gensym associated to the aliased
+syntax.
+</p></dd>
+</dl>
+
+
+<a name="Example-library-1"></a>
+<h4 class="subsubheading">Example library</h4>
+
+<p>We can toy with the <code>global-env</code> with the following program:
+</p>
+<div class="lisp">
+<pre class="lisp">(import (vicare)
+  (vicare libraries))
+
+(library (demo)
+  (export var macro var-macro macro-id
+          etv color &lt;color&gt; modu fluid synonym alias)
+  (import (vicare))
+  (define var 1)
+  (define (fun) 2)
+  (define-syntax macro (lambda (stx) 3))
+  (define-syntax macro-id (identifier-syntax 4))
+  (define-syntax var-macro
+    (make-variable-transformer (lambda (stx) 5)))
+  (define-syntax etv (make-expand-time-value 6))
+  (module modu (modu-var) (define modu-var 7))
+  (define-fluid-syntax fluid (lambda (stx) 8))
+  (define-syntax synonym (make-synonym-transformer #'var))
+  (define-alias alias var)
+  (define-struct color (red green blue))
+  (define-record-type &lt;color&gt; (fields red green blue))
+  (define mvar 9)
+  (set! mvar 10)
+  #| end of library |# )
+
+(define lib
+  (find-library-by-name '(demo)))
+
+(print-gensym #f)
+(pretty-print
+ (library-global-env lib))
+
+(flush-output-port (current-output-port))
+</pre></div>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="libutils-libraries-ops.html#libutils-libraries-ops" accesskey="n" rel="next">libutils libraries ops</a>, Previous: <a href="libutils-libraries-typedef.html#libutils-libraries-typedef" accesskey="p" rel="prev">libutils libraries typedef</a>, Up: <a href="libutils-libraries.html#libutils-libraries" accesskey="u" rel="up">libutils libraries</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

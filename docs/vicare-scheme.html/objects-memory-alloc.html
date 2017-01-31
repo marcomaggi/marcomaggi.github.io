@@ -1,0 +1,342 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.4d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit and 64-bit
+processors.  Vicare is pronounced the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/downloads
+
+the home page of the project is at:
+
+http://marcomaggi.github.io/vicare.html
+
+development takes place at:
+
+http://github.com/marcomaggi/vicare/
+
+and, as a backup, at:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the "History" appendix for details.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Vicare Scheme: objects memory alloc</title>
+
+<meta name="description" content="Vicare Scheme: objects memory alloc">
+<meta name="keywords" content="Vicare Scheme: objects memory alloc">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="objects-memory.html#objects-memory" rel="up" title="objects memory">
+<link href="objects-memory-usage.html#objects-memory-usage" rel="next" title="objects memory usage">
+<link href="objects-memory-pcb.html#objects-memory-pcb" rel="prev" title="objects memory pcb">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="objects-memory-alloc"></a>
+<div class="header">
+<p>
+Next: <a href="objects-memory-usage.html#objects-memory-usage" accesskey="n" rel="next">objects memory usage</a>, Previous: <a href="objects-memory-pcb.html#objects-memory-pcb" accesskey="p" rel="prev">objects memory pcb</a>, Up: <a href="objects-memory.html#objects-memory" accesskey="u" rel="up">objects memory</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Basic-memory-allocation-functions"></a>
+<h4 class="subsection">13.3.4 Basic memory allocation functions</h4>
+
+
+<p>A memory allocation operation that is allowed to trigger a garbage
+collection is performed as follows:
+</p>
+<div class="example">
+<pre class="example">ikpcb_t *  pcb             = ...;
+ikuword_t  number_of_bytes = ...;
+ikuword_t  aligned_size    = IK_ALIGN(number_of_bytes);
+ikptr_t    P = ik_safe_alloc(pcb, aligned_size);
+</pre></div>
+
+<p>while a memory allocation operation that is forbidden to trigger a
+garbage collection is performed as follows:
+</p>
+<div class="example">
+<pre class="example">ikpcb_t *  pcb             = ...;
+ikuword_t  number_of_bytes = ...;
+ikuword_t  aligned_size    = IK_ALIGN(number_of_bytes);
+ikptr_t    P = ik_unsafe_alloc(pcb, aligned_size);
+</pre></div>
+
+<p>where <code>P</code> is an untagged memory pointer and <code>pcb</code> is a pointer
+to the &ldquo;Process Control Block&rdquo; data structure.
+</p>
+<p>To add a tag, for example the <code>vector_tag</code>, to an untagged memory
+pointer we can do:
+</p>
+<div class="example">
+<pre class="example">ikpcb_t *  pcb             = ...;
+ikuword_t  number_of_bytes = ...;
+ikuword_t  aligned_size    = IK_ALIGN(number_of_bytes);
+ikptr_t    S = ik_safe_alloc(pcb, aligned_size) | vector_tag;
+</pre></div>
+
+<p>Objects subject to garbage collection are allocated on the Scheme heap;
+a new Scheme object is allocated in the nursery&rsquo;s hot memory block:
+</p>
+<div class="example">
+<pre class="example">    allocated  allocated      allocated
+    block      block          block
+...|----------|--------------|--------|------...
+    ^          ^              ^        ^
+    |          |              |        |
+  pointer    pointer        pointer   pointer to
+                                      next block
+</pre></div>
+
+<p>every pointer must satisfy alignment constraints with the following
+purposes:
+</p>
+<ol>
+<li> To make pointer indirection efficient for the underlying platform.
+
+</li><li> To have pointer values with the <em>3</em> least significant bits set to
+zero, so that such bits can be used to hold an object&rsquo;s type tag.
+
+</li><li> To allocate a data area for Scheme objects at least <em>2</em> machine
+words wide; this is required for garbage collection purposes: the
+<em>2</em> words are used by the garbage collector to register
+informations when a live Scheme object is gathered.
+</li></ol>
+
+<p>for these reasons we must always filter the requested size (number of
+bytes) through the <code>IK_ALIGN()</code> macro.
+</p>
+<p>The <acronym>PCB</acronym> always references a &ldquo;pointer to the next free block&rdquo; with
+alignment constraints satisfied; if we filter the requested number of
+bytes through <code>IK_ALIGN()</code>, we obtain a number of bytes which, added
+to the pointer, gives a correctly aligned pointer:
+</p>
+<div class="example">
+<pre class="example">ikpcb_t   pcb             = ...;
+ikuword_t requested_size  = ...;
+uint8_t * allocated_block = (uint8_t *)pcb-&gt;allocation_pointer;
+ikuword_t aligned_size    = IK_ALIGN(requested_size);
+uint8_t * next_free_block = allocated_block + aligned_size;
+pcb-&gt;allocation_pointer   = (ikptr_t)next_free_block;
+</pre></div>
+
+<p>the scenario is as follows:
+</p>
+<div class="example">
+<pre class="example">       requested size      wasted
+  |.......................|..|
+          aligned size
+--|--------------------------|--- nursery's hot block
+   ^                          ^
+   |                          |
+pointer to an              pointer to the
+allocated block            next block
+</pre></div>
+
+<p>if the aligned size is bigger than the requested size: the small chunk
+of memory at the end of the allocated block is wasted.
+</p>
+
+<dl>
+<dt><a name="index-ik_005fthe_005fpcb"></a>Function: <em>ikpcb_t *</em> <strong>ik_the_pcb</strong> <em>(void)</em></dt>
+<dd><p>Return a pointer to the current process control block.  It is rarely
+needed: when calling a C function from Scheme a pointer to the <acronym>PCB</acronym> is
+always pushed on the C stack as last argument.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-IK_005fALIGN"></a>Preprocessor Macro: <em>ikuword_t</em> <strong>IK_ALIGN</strong> <em>(ikuword_t <var>number_of_bytes</var>)</em></dt>
+<dd><p>Convert <var>number_of_bytes</var> to the number of bytes requested to
+satisfy pointer alignment constraints.  The aligned size is always an
+exact multiple of the underlying platform&rsquo;s word size (32-bit or
+64-bit); precisely: it is the smallest multiple of the wordsize which is
+greater than <var>number_of_bytes</var> and makes the pointer have the
+<em>3</em> least significant bits set to zero.
+</p>
+<p>This means that it is impossible to allocate less than <em>2</em> machine
+words.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-ik_005fsafe_005falloc"></a>Function: <em>ikptr_t</em> <strong>ik_safe_alloc</strong> <em>(ikpcb_t * <var>pcb</var>, ikuword_t <var>aligned_size</var>)</em></dt>
+<dd><p>Reserve a memory block on the Scheme heap&rsquo;s nursery hot block and return
+a reference to it as an <strong>untagged</strong> pointer.  <var>pcb</var> must
+reference the process control block, <var>aligned_size</var> must be the
+requested number of bytes filtered through <code>IK_ALIGN()</code>.
+</p>
+<p>If not enough memory is available on the current hot block: a garbage
+collection is triggered; then allocation is tried again: if it still
+fails the process is terminated with exit status <code>EXIT_FAILURE</code>.
+</p>
+<p>The reserved memory is <strong>not</strong> initialised to safe values: its
+contents have to be considered invalid.  However, notice that the heap&rsquo;s
+nursery is <strong>not</strong> a garbage collection root; so if we leave some
+machine words uninitialised on the nursery, outside of Scheme objects:
+nothing bad happens, because the garbage collector never sees them.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-ik_005funsafe_005falloc"></a>Function: <em>ikptr_t</em> <strong>ik_unsafe_alloc</strong> <em>(ikpcb_t * <var>pcb</var>, ikuword_t <var>aligned_size</var>)</em></dt>
+<dd><p>Reserve a memory block on the Scheme heap&rsquo;s nursery hot block and return
+a reference to it as an <strong>untagged</strong> pointer.  <var>pcb</var> must
+reference the process control block, <var>aligned_size</var> must be the
+requested number of bytes filtered through <code>IK_ALIGN()</code>.
+</p>
+<p>If not enough memory is available on the current hot block: such hot
+block is stored away in a linked list referenced by the <var>pcb</var>, and a
+new hot block is allocated; if such allocation fails: the process is
+terminated with exit status <code>EXIT_FAILURE</code>.
+</p>
+<p>The reserved memory is <strong>not</strong> initialised to safe values: its
+contents have to be considered invalid.  However, notice that the heap&rsquo;s
+nursery is <strong>not</strong> a garbage collection root; so if we leave some
+machine words uninitialised on the nursery, outside of Scheme objects:
+nothing bad happens, because the garbage collector never sees them.
+</p>
+<p>We notice explicitly that this function <strong>does not</strong> trigger a
+garbage collection run, so, when using it, it is not needed to register
+C pointers as garbage collection roots.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-IK_005fASS"></a>Preprocessor Macro: <strong>IK_ASS</strong> <em>(ikptr_t <var>left</var>, ikptr_t <var>right</var>)</em></dt>
+<dd><p>Perform a C language assignment enforcing the order of evaluation of the
+left&ndash;side and right&ndash;side expressions:
+</p>
+<ol>
+<li> Evaluate <var>right</var>.
+
+</li><li> Evaluate <var>left</var>.
+
+</li><li> Store the result of <var>right</var> in the lvalue resulting from evaluating
+<var>left</var>.
+</li></ol>
+
+<p>After a use of this macro: if <var>right</var> is a reference to a
+non&ndash;immediate Scheme object, the function
+<code>ik_signal_dirt_in_page_of_pointer()</code> must be applied to the lvalue
+resulting from evaluating <var>left</var>.  For example, when allocating a
+pair filled with non&ndash;immediate numbers:
+</p>
+<div class="example">
+<pre class="example">ikptr_t   s_pair = ika_pair_alloc(pcb);
+
+pcb-&gt;root0 = &amp;s_pair;
+{
+  IK_ASS(IK_CAR(s_pair), ika_integer_from_int(pcb, 1));
+  IK_SIGNAL_DIRT(pcb, IK_CAR_PTR(s_pair));
+
+  IK_ASS(IK_CDR(s_pair), ika_integer_from_int(pcb, 2));
+  IK_SIGNAL_DIRT(pcb, IK_CDR_PTR(s_pair));
+}
+pcb-&gt;root = NULL;
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-ik_005fsignal_005fdirt_005fin_005fpage_005fof_005fpointer"></a>Function: <em>void</em> <strong>ik_signal_dirt_in_page_of_pointer</strong> <em>(ikpcb_t * <var>pcb</var>, ikptr_t <var>pointer</var>)</em></dt>
+<dd><p>Register in the dirty vector that the memory page containing the
+location referenced by <var>pointer</var> has been mutated.  This function
+must be called every time we mutate a pair, vector, structure, record,
+ratnum, cflonum, compnum, port, symbol slot by storing in it a reference
+to another non&ndash;immediate Scheme object that might be in a newer garbage
+collection generation.
+</p>
+<p>If we call this function when there is no need for it: nothing bad will
+happen; the garbage collector will just do some useless work, slowing
+down the collection time a bit.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-IK_005fSIGNAL_005fDIRT"></a>Preprocessor Macro: <em>void</em> <strong>IK_SIGNAL_DIRT</strong> <em>(ikpcb_t * <var>pcb</var>, ikptr_t <var>pointer</var>)</em></dt>
+<dd><p>Just a wrapper for <code>ik_signal_dirt_in_page_of_pointer()</code>; it has a
+shorter name.
+</p></dd></dl>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="objects-memory-usage.html#objects-memory-usage" accesskey="n" rel="next">objects memory usage</a>, Previous: <a href="objects-memory-pcb.html#objects-memory-pcb" accesskey="p" rel="prev">objects memory pcb</a>, Up: <a href="objects-memory.html#objects-memory" accesskey="u" rel="up">objects memory</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

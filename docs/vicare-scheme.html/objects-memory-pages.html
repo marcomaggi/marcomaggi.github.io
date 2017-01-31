@@ -1,0 +1,309 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.4d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit and 64-bit
+processors.  Vicare is pronounced the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/downloads
+
+the home page of the project is at:
+
+http://marcomaggi.github.io/vicare.html
+
+development takes place at:
+
+http://github.com/marcomaggi/vicare/
+
+and, as a backup, at:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the "History" appendix for details.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Vicare Scheme: objects memory pages</title>
+
+<meta name="description" content="Vicare Scheme: objects memory pages">
+<meta name="keywords" content="Vicare Scheme: objects memory pages">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="objects-memory.html#objects-memory" rel="up" title="objects memory">
+<link href="objects-memory-segments.html#objects-memory-segments" rel="next" title="objects memory segments">
+<link href="objects-memory.html#objects-memory" rel="prev" title="objects memory">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="objects-memory-pages"></a>
+<div class="header">
+<p>
+Next: <a href="objects-memory-segments.html#objects-memory-segments" accesskey="n" rel="next">objects memory segments</a>, Up: <a href="objects-memory.html#objects-memory" accesskey="u" rel="up">objects memory</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="System-memory-pages-and-Vicare-memory-pages"></a>
+<h4 class="subsection">13.3.1 System memory pages and Vicare memory pages</h4>
+
+
+<a name="index-IK_005fMMAP_005fALLOCATION_005fGRANULARITY_002c-C-preprocessor-symbol"></a>
+<a name="index-IK_005fPAGESIZE_002c-C-preprocessor-symbol"></a>
+<a name="index-IK_005fPAGESHIFT_002c-C-preprocessor-symbol"></a>
+<a name="index-IK_005fCHUNK_005fSIZE_002c-C-preprocessor-symbol"></a>
+
+
+<p>In this section we discuss some private C preprocessor symbols related
+to memory allocation and garbage collection concepts.
+</p>
+<p>The preprocessor constant <code>IK_MMAP_ALLOCATION_GRANULARITY</code> is
+determined by the <acronym>GNU</acronym> Autotools&rsquo;s <code>configure</code> script and
+defined in the automatically generated header file <samp>config.h</samp>.  The
+constants <code>IK_PAGESIZE</code> and <code>IK_PAGESHIFT</code> are hard&ndash;coded.
+</p>
+<p>The constant <code>IK_MMAP_ALLOCATION_GRANULARITY</code> represents the memory
+allocation granularity used by <code>mmap()</code>: no matter the number of
+bytes we request to <code>mmap()</code>, it will always allocate the smallest
+multiple of the granularity that can contain the requested bytes:
+</p>
+<div class="example">
+<pre class="example">|----------------------------| requested_size
+|-----------|-----------|-----------| allocated_size
+ granularity granularity granularity
+</pre></div>
+
+<p>On some platforms the allocation granularity equals the system page size
+(example <acronym>GNU</acronym>+Linux), on other platforms it does not (example Cygwin).
+We assume the allocation granularity can be obtained on any platform
+with:
+</p>
+<div class="example">
+<pre class="example">#include &lt;unistd.h&gt;
+long granularity = sysconf(_SC_PAGESIZE);
+</pre></div>
+
+<p>which should &ldquo;officially&rdquo; return the system page size, but in truth it
+does not (see Cygwin&rsquo;s documentation).
+</p>
+<p>To mind its own business, Vicare defines a &ldquo;page size&rdquo; as the
+preprocessor symbol <code>IK_PAGESIZE</code>, the number of bytes in
+Vicare&rsquo;s page size is:
+</p>
+<div class="example">
+<pre class="example">4096 = 4 * 1024 = 4 * 2^10 = 2^12 = #x1000 = #b1000000000000
+</pre></div>
+
+<p>notice how many bits are set to zero in the binary representation of
+<em>4096</em>:
+</p>
+<div class="lisp">
+<pre class="lisp">(number-&gt;string 4096 2) &rArr; #b1000000000000
+;;                           2109876543210
+</pre></div>
+
+<p>the constant <em>4096</em> is used often in the code, so the preprocessor
+symbol <code>IK_CHUNK_SIZE</code> is also defined to it.
+</p>
+<p>Vicare&rsquo;s page size is <strong>not</strong> defined to be equal to the
+system page size, but:
+</p>
+<ul>
+<li> Most likely the system page size and Vicare&rsquo;s page size are
+equal.
+
+</li><li> We assume that the system page size is equal to, or an exact multiple
+of, Vicare&rsquo;s page size.
+
+</li><li> We assume that <code>mmap()</code> returns pointers such that: the pointer
+references the first byte of a system page, and so also the first byte
+of a Vicare page; the numeric address of the pointer is an
+exact multiple of <em>4096</em> (the <em>12</em> least significant bits are
+zero).
+</li></ul>
+
+<p>It is natural to assign a zero&ndash;based index to each Vicare
+page:
+</p>
+<div class="example">
+<pre class="example">   page     page     page     page     page     page
+|--------|--------|--------|--------|--------|--------|
+ ^        ^        ^        ^        ^        ^
+#x0000   #x1000   #x2000   #x3000   #x4000   #x5000
+index 0  index 1  index 2  index 3  index 4  index 5
+</pre></div>
+
+<p>The preprocessor symbol <code>IK_PAGESHIFT</code> is the number of bits to
+right&ndash;shift a tagged or untagged pointer to obtain the index of the
+page it is in; it is the number for which:
+</p>
+<div class="example">
+<pre class="example">IK_PAGESIZE &gt;&gt; IK_PAGESHIFT = 1
+2^IK_PAGESHIFT = IK_PAGESIZE
+</pre></div>
+
+<p>if <code>IK_PAGESIZE</code> is <em>4096</em>, the value of <code>IK_PAGESHIFT</code>
+is <em>12</em>; so for the example sizes <em>4000</em>, <em>8000</em> and
+<em>10000</em> we have:
+</p>
+<div class="example">
+<pre class="example">0 * 4096 &lt;=  4000 &lt; 1 * 4096        4000 &gt;&gt; 12 = 0
+1 * 4096 &lt;=  8000 &lt; 2 * 4096        8000 &gt;&gt; 12 = 1
+2 * 4096 &lt;= 10000 &lt; 3 * 4096       10000 &gt;&gt; 12 = 2
+</pre></div>
+
+<p>all the tagged pointers hold the tag in the <em>3</em> least significant
+bits, so right&ndash;shifting by <code>IK_PAGESHIFT</code> removes the tag:
+right&ndash;shifting by <code>IK_PAGESHIFT</code> works fine on both tagged and
+untagged pointers.
+</p>
+
+<dl>
+<dt><a name="index-IK_005fPAGE_005fINDEX"></a>C Preprocessor Macro: <em>ikuword_t</em> <strong>IK_PAGE_INDEX</strong> <em>(ikptr_t <var>X</var>)</em></dt>
+<dd><p>Given the tagged or untagged pointer <var>X</var>: evaluate to the index of
+the memory page it is in; notice that the tag bits of a tagged pointer
+are not influent.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-IK_005fPAGE_005fINDEX_005fRANGE"></a>C Preprocessor Macro: <em>ikuword_t</em> <strong>IK_PAGE_INDEX_RANGE</strong> <em>(ikuword_t <var>size</var>)</em></dt>
+<dd><p>Given a number of bytes <var>size</var>: evaluate to the difference between
+two page indexes representing a region big enough to hold <var>size</var>
+bytes.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-IK_005fPAGE_005fPOINTER_005fFROM_005fINDEX"></a>C Preprocessor Macro: <em>ikptr_t</em> <strong>IK_PAGE_POINTER_FROM_INDEX</strong> <em>(ikuword_t <var>idx</var>)</em></dt>
+<dd><p>Given a Vicare page index <var>idx</var>: return an untagged pointer
+to the first word of the page.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-IK_005fMMAP_005fALLOCATION_005fSIZE"></a>C Preprocessor Macro: <em>ikuword_t</em> <strong>IK_MMAP_ALLOCATION_SIZE</strong> <em>(ikuword_t <var>size</var>)</em></dt>
+<dd><p>Given a memory <var>size</var> in bytes: compute the smallest number of bytes
+<code>mmap()</code> will allocate to hold it.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-IK_005fMINIMUM_005fPAGES_005fNUMBER_005fFOR_005fSIZE"></a>C Preprocessor Macro: <em>ikuword_t</em> <strong>IK_MINIMUM_PAGES_NUMBER_FOR_SIZE</strong> <em>(ikuword_t <var>size</var>)</em></dt>
+<dd><p>Given a memory <var>size</var> in bytes: compute the smallest number of pages
+of size <code>IK_PAGESIZE</code> needed to hold it.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-IK_005fMMAP_005fALLOCATION_005fSIZE_005fFOR_005fPAGES"></a>C Preprocessor Macro: <em>ikuword_t</em> <strong>IK_MMAP_ALLOCATION_SIZE_FOR_PAGES</strong> <em>(ikuword_t <var>npages</var>)</em></dt>
+<dd><p>Given a number of Vicare pages: return the number of bytes
+<code>mmap()</code> allocates to hold them.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-IK_005fALIGN_005fTO_005fNEXT_005fPAGE"></a>C Preprocessor Macro: <em>ikuword_t</em> <strong>IK_ALIGN_TO_NEXT_PAGE</strong> <em>(ikuword_t <var>X</var>)</em></dt>
+<dd><p>Given a pointer or tagged pointer <var>X</var>: return an untagged pointer
+referencing the first byte in the page right after the one <var>X</var>
+belongs to.
+</p>
+<div class="example">
+<pre class="example">   page     page     page
+|--------|--------|--------|
+               ^   ^
+               X   |
+                  returned_value
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-IK_005fALIGN_005fTO_005fPREV_005fPAGE"></a>C Preprocessor Macro: <em>ikuword_t</em> <strong>IK_ALIGN_TO_PREV_PAGE</strong> <em>(ikuword_t <var>X</var>)</em></dt>
+<dd><p>Given a pointer or tagged pointer <var>X</var>: return an untagged pointer
+referencing the first byte in the page <var>X</var> belongs to.
+</p>
+<div class="example">
+<pre class="example">   page     page     page
+|--------|--------|--------|
+          ^    ^
+          |    X
+ returned_value
+</pre></div>
+</dd></dl>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="objects-memory-segments.html#objects-memory-segments" accesskey="n" rel="next">objects memory segments</a>, Up: <a href="objects-memory.html#objects-memory" accesskey="u" rel="up">objects memory</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

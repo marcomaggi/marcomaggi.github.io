@@ -1,0 +1,227 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes the libraries distributed along with version
+0.4d1 of Vicare Scheme, an R6RS compliant native
+compiler for the Scheme language.
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+The documentation of the libraries (vicare parser-tools silex
+-) are derived form the documentation of SILex.  Copyright
+(C) 2001, 2009 Danny Dube'.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Libraries for Vicare Scheme: dynamic arrays objects</title>
+
+<meta name="description" content="Libraries for Vicare Scheme: dynamic arrays objects">
+<meta name="keywords" content="Libraries for Vicare Scheme: dynamic arrays objects">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="dynamic-arrays.html#dynamic-arrays" rel="up" title="dynamic arrays">
+<link href="dynamic-arrays-inspection.html#dynamic-arrays-inspection" rel="next" title="dynamic arrays inspection">
+<link href="dynamic-arrays.html#dynamic-arrays" rel="prev" title="dynamic arrays">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="dynamic-arrays-objects"></a>
+<div class="header">
+<p>
+Next: <a href="dynamic-arrays-inspection.html#dynamic-arrays-inspection" accesskey="n" rel="next">dynamic arrays inspection</a>, Up: <a href="dynamic-arrays.html#dynamic-arrays" accesskey="u" rel="up">dynamic arrays</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Dynamic_002dArrays-objects"></a>
+<h3 class="section">40.1 Dynamic-Arrays objects</h3>
+
+
+<p>Dynamic arrays are implemented as built&ndash;in vector objects of which only
+a subrange of slots is used:
+</p>
+<div class="example">
+<pre class="example">  left span       used slots     right span
+|...........|...................|...........|
+
+|---|---|---|+++|+++|+++|+++|+++|---|---|---| vector
+              0   1   2   3   4
+</pre></div>
+
+<p>when a new object is inserted: if there is room at the beginning or end
+of the vector, that room is consumed.  Indexing in dynamic arrays is
+zero&ndash;based, with index &lsquo;<samp>0</samp>&rsquo; referencing the first used slot.
+</p>
+<p>The following syntactic bindings are exported by the library
+<code>(vicare containers dynamic-arrays)</code>.
+</p>
+
+<dl>
+<dt><a name="index-_003cdynamic_002darray_003e"></a><acronym>R6RS</acronym> Record Type: <strong>&lt;dynamic-array&gt;</strong></dt>
+<dd><a name="index-arry-argument"></a>
+<a name="index-Argument-arry"></a>
+<p>Record type representing a dynamic-arrays object.  The
+<code>&lt;dynamic-array&gt;</code> type is non&ndash;generative and available for
+subtyping.  In this documentation <code>&lt;dynamic-array&gt;</code> objects used
+as arguments to functions are indicated as <var>arry</var>.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-make_002ddynamic_002darray"></a>Function: <strong>make-dynamic-array</strong></dt>
+<dt><a name="index-make_002ddynamic_002darray-1"></a>Function: <strong>make-dynamic-array</strong> <em><var>full-length</var> <var>left-span</var></em></dt>
+<dd><p>Build and return a new <code>&lt;dynamic-array&gt;</code> object.
+</p>
+<p>The optional argument <var>full-length</var> must be a non&ndash;negative fixnum
+representing the number of slots in the internal vector object; when not
+used, it defaults to &lsquo;<samp>15</samp>&rsquo;.  The optional argument <var>left-span</var>
+must be a non&ndash;negative fixnum representing the number of slots to
+initially leave unused at the left; when not used, it defaults to
+&lsquo;<samp>7</samp>&rsquo;.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-dynamic_002darray_003f"></a>Function: <strong>dynamic-array?</strong> <em><var>obj</var></em></dt>
+<dd><p>Return <code>#t</code> if <var>obj</var> is a record of type
+<code>&lt;dynamic-array&gt;</code>; otherwise return <code>#f</code>.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-dynamic_002darray"></a>Function: <strong>dynamic-array</strong> <em><var>obj</var> &hellip;</em></dt>
+<dd><p>Build and return a <code>&lt;dynamic-array&gt;</code> object holding the given
+objects, which are pushed on the dynamic-array left to right from the
+rear side.  The size of the internal vector is set to the default.
+</p>
+<div class="lisp">
+<pre class="lisp">(define D
+  (dynamic-array 0 1 2))
+
+(dynamic-array-front D)         &rArr; 0
+(dynamic-array-rear  D)         &rArr; 2
+</pre></div>
+</dd></dl>
+
+
+<a name="Object-properties-6"></a>
+<h4 class="subsubheading">Object properties</h4>
+
+
+<dl>
+<dt><a name="index-dynamic_002darray_002dputprop"></a>Function: <strong>dynamic-array-putprop</strong> <em><var>arry</var> <var>key</var> <var>value</var></em></dt>
+<dt><a name="index-_0024dynamic_002darray_002dputprop"></a>Function: <strong>$dynamic-array-putprop</strong> <em><var>arry</var> <var>key</var> <var>value</var></em></dt>
+<dd><p>Add a new property <var>key</var> to the property list of <var>arry</var>;
+<var>key</var> must be a symbol.  If <var>key</var> is already set: the old entry
+is mutated to reference the new <var>value</var>.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-dynamic_002darray_002dgetprop"></a>Function: <strong>dynamic-array-getprop</strong> <em><var>arry</var> <var>key</var></em></dt>
+<dt><a name="index-_0024dynamic_002darray_002dgetprop"></a>Function: <strong>$dynamic-array-getprop</strong> <em><var>arry</var> <var>key</var></em></dt>
+<dd><p>Return the value of the property <var>key</var> in the property list of
+<var>arry</var>; if <var>key</var> is not set: return <code>#f</code>.  <var>key</var> must
+be a symbol.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-dynamic_002darray_002dremprop"></a>Function: <strong>dynamic-array-remprop</strong> <em><var>arry</var> <var>key</var></em></dt>
+<dt><a name="index-_0024dynamic_002darray_002dremprop"></a>Function: <strong>$dynamic-array-remprop</strong> <em><var>arry</var> <var>key</var></em></dt>
+<dd><p>Remove the property <var>key</var> from the property list of <var>arry</var>; if
+<var>key</var> is not set: nothing happens.  <var>key</var> must be a symbol.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-dynamic_002darray_002dproperty_002dlist"></a>Function: <strong>dynamic-array-property-list</strong> <em><var>arry</var></em></dt>
+<dt><a name="index-_0024dynamic_002darray_002dproperty_002dlist"></a>Function: <strong>$dynamic-array-property-list</strong> <em><var>arry</var></em></dt>
+<dd><p>Return a new association list representing the property list of
+<var>arry</var>.  The order of the entries is the same as the property
+creation order.
+</p></dd></dl>
+
+
+<a name="Other-operations-5"></a>
+<h4 class="subsubheading">Other operations</h4>
+
+
+<dl>
+<dt><a name="index-dynamic_002darray_002dhash"></a>Function: <strong>dynamic-array-hash</strong> <em><var>arry</var></em></dt>
+<dt><a name="index-_0024dynamic_002darray_002dhash"></a>Function: <strong>$dynamic-array-hash</strong> <em><var>arry</var></em></dt>
+<dd><p>Return an exact integer to be used as hashtable key for <var>arry</var>.
+Hashtables having a <code>&lt;dynamic-array&gt;</code> as key can be instantiated
+as follows:
+</p>
+<div class="example">
+<pre class="example">(make-hashtable dynamic-array-hash eq?)
+</pre></div>
+</dd></dl>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="dynamic-arrays-inspection.html#dynamic-arrays-inspection" accesskey="n" rel="next">dynamic arrays inspection</a>, Up: <a href="dynamic-arrays.html#dynamic-arrays" accesskey="u" rel="up">dynamic arrays</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

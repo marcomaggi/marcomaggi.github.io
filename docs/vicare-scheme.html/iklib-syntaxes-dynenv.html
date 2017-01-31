@@ -1,0 +1,185 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.4d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit and 64-bit
+processors.  Vicare is pronounced the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/downloads
+
+the home page of the project is at:
+
+http://marcomaggi.github.io/vicare.html
+
+development takes place at:
+
+http://github.com/marcomaggi/vicare/
+
+and, as a backup, at:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the "History" appendix for details.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Vicare Scheme: iklib syntaxes dynenv</title>
+
+<meta name="description" content="Vicare Scheme: iklib syntaxes dynenv">
+<meta name="keywords" content="Vicare Scheme: iklib syntaxes dynenv">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="iklib-syntaxes.html#iklib-syntaxes" rel="up" title="iklib syntaxes">
+<link href="iklib-syntaxes-integrable.html#iklib-syntaxes-integrable" rel="next" title="iklib syntaxes integrable">
+<link href="iklib-syntaxes-blocking.html#iklib-syntaxes-blocking" rel="prev" title="iklib syntaxes blocking">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="iklib-syntaxes-dynenv"></a>
+<div class="header">
+<p>
+Next: <a href="iklib-syntaxes-integrable.html#iklib-syntaxes-integrable" accesskey="n" rel="next">iklib syntaxes integrable</a>, Previous: <a href="iklib-syntaxes-blocking.html#iklib-syntaxes-blocking" accesskey="p" rel="prev">iklib syntaxes blocking</a>, Up: <a href="iklib-syntaxes.html#iklib-syntaxes" accesskey="u" rel="up">iklib syntaxes</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Capturing-the-current-dynamic-environment"></a>
+<h4 class="subsection">6.8.10 Capturing the current dynamic environment</h4>
+
+
+<dl>
+<dt><a name="index-with_002dcurrent_002ddynamic_002denvironment"></a>Syntax: <strong>with-current-dynamic-environment</strong> <em><var>?exception-retvals-maker</var> <var>?thunk</var></em></dt>
+<dd><p>Install and return a thunk that, wherever it is called, evaluates
+<var>?thunk</var> in the dynamic environment of the macro use and returns its
+return values.  If <var>?thunk</var> raises an exception: apply the procedure
+<var>?exception-retvals-maker</var> to the raised object and return its
+return values.
+</p>
+<p>Exceptions raised by <var>?exception-retvals-maker</var> are <strong>not</strong>
+blocked.
+</p></dd></dl>
+
+
+<p>Usage examples:
+</p>
+<div class="example">
+<pre class="example">(import (vicare)
+  (only (vicare checks)
+        with-result
+        add-result))
+
+(define parm
+  (make-parameter #f))
+
+(with-result
+  (parametrise ((parm 'outer))
+    (let* ((counter 0)
+           (thunk   (parametrise ((parm 'inner))
+                      (with-current-dynamic-environment
+                          values
+                        (lambda ()
+                          (set! counter (+ 1 counter))
+                          (add-result (list 'inside-thunk (parm))))))))
+      (add-result (parm))
+      (add-result 'calling-thunk-1)
+      (thunk)
+      (add-result 'calling-thunk-2)
+      (thunk)
+      counter)))
+&rArr; (2 (outer
+       calling-thunk-1 (inside-thunk inner)
+       calling-thunk-2 (inside-thunk inner)))
+
+(with-result
+  (parametrise ((parm 'outer))
+    (let* ((counter 0)
+           (thunk   (parametrise ((parm 'inner))
+                      (with-current-dynamic-environment
+                          values
+                        (lambda ()
+                          (set! counter (+ 1 counter))
+                          (add-result (list 'inside-thunk (parm)))
+                          (add-result 'raise-exception)
+                          (raise 123))))))
+      (add-result (parm))
+      (add-result 'calling-thunk-1)
+      (thunk)
+      (add-result 'calling-thunk-2)
+      (thunk)
+      counter)))
+&rArr; (2 (outer
+       calling-thunk-1 (inside-thunk inner) raise-exception
+       calling-thunk-2 (inside-thunk inner) raise-exception))
+</pre></div>
+
+
+
+
+</body>
+</html>

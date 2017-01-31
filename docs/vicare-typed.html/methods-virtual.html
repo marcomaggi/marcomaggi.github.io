@@ -1,0 +1,247 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.4d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit and 64-bit
+processors.  Vicare is pronounced the etruscan way.  The focus of
+this document is over the typed language extension.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/downloads
+
+the home page of the project is at:
+
+http://marcomaggi.github.io/vicare.html
+
+development takes place at:
+
+http://github.com/marcomaggi/vicare/
+
+and, as a backup, at:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/
+
+Copyright (C) 2016-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Vicare Scheme&rsquo;s typed language: methods virtual</title>
+
+<meta name="description" content="Vicare Scheme&rsquo;s typed language: methods virtual">
+<meta name="keywords" content="Vicare Scheme&rsquo;s typed language: methods virtual">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="type-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="methods.html#methods" rel="up" title="methods">
+<link href="methods-sealing.html#methods-sealing" rel="next" title="methods sealing">
+<link href="methods-concrete-override.html#methods-concrete-override" rel="prev" title="methods concrete override">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="methods-virtual"></a>
+<div class="header">
+<p>
+Next: <a href="methods-sealing.html#methods-sealing" accesskey="n" rel="next">methods sealing</a>, Previous: <a href="methods-concrete.html#methods-concrete" accesskey="p" rel="prev">methods concrete</a>, Up: <a href="methods.html#methods" accesskey="u" rel="up">methods</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Virtual-methods"></a>
+<h3 class="section">7.2 Virtual methods</h3>
+
+
+<p>The clause <code>virtual-method</code> allows the definition of virtual
+methods associated to a record&ndash;type.  Virtual methods work almost like
+concrete methods, but the rules of overriding are different: with
+virtual methods we request run&ndash;time dynamic dispatching, to have the
+methods of the sub&ndash;types take precedence over the methods of the
+super&ndash;types.
+</p>
+<blockquote>
+<p><strong>NOTE</strong> Virtual methods must have an implementation, there are no
+abstract methods.
+</p></blockquote>
+
+<p>Example:
+</p>
+<div class="lisp">
+<pre class="lisp">(define-record-type &lt;super&gt;
+  (virtual-method (doit)
+    1))
+
+(define-record-type &lt;sub&gt;
+  (parent &lt;super&gt;)
+  (method (doit)
+    2))
+
+(define (super-fun {O &lt;super&gt;})
+  (.doit O))
+
+(define (sub-fun   {O &lt;sub&gt;})
+  (.doit O))
+
+(define O
+  (new &lt;sub&gt;))
+
+(super-fun O)   &rArr; 2
+(sub-fun   O)   &rArr; 2
+</pre></div>
+
+<p>we see that even though the function <code>super-fun</code> accesses the
+instance of <code>&lt;sub&gt;</code> with the type specification <code>&lt;super&gt;</code>, the
+actually called method is the one defined by <code>&lt;sub&gt;</code>.
+</p>
+<p>The overriding method&rsquo;s type signature must be a sub&ndash;type of the
+overridden method&rsquo;s type signature.  For example, the following
+definitions are fine:
+</p>
+<div class="lisp">
+<pre class="lisp">(define-record-type &lt;super&gt;
+  (fields value)
+  (virtual-method ({doit &lt;number&gt;} {S &lt;nestring&gt;})
+    (.value this)))
+
+(define-record-type &lt;sub&gt;
+  (parent &lt;super&gt;)
+  (virtual-method ({doit &lt;fixnum&gt;} {S &lt;string&gt;})
+    (.value this)))
+</pre></div>
+
+<p>because:
+</p>
+<div class="lisp">
+<pre class="lisp">(type-annotation-super-and-sub?
+   (lambda (&lt;nestring&gt;) =&gt; (&lt;number&gt;))
+   (lambda (&lt;string&gt;)   =&gt; (&lt;fixnum&gt;)))
+&rArr; #t
+</pre></div>
+
+<p>while the following definitions will cause a syntax violation exception
+at expand&ndash;time:
+</p>
+<div class="lisp">
+<pre class="lisp">(define-record-type &lt;super&gt;
+  (fields value)
+  (virtual-method ({doit &lt;number&gt;} {S &lt;nestring&gt;})
+    (.value this)))
+
+(define-record-type &lt;sub&gt;
+  (parent &lt;super&gt;)
+  (virtual-method ({doit &lt;fixnum&gt;} {S &lt;vector&gt;})
+    (.value this)))
+</pre></div>
+
+<p>because:
+</p>
+<div class="lisp">
+<pre class="lisp">(type-annotation-super-and-sub?
+   (lambda (&lt;nestring&gt;) =&gt; (&lt;number&gt;))
+   (lambda (&lt;string&gt;)   =&gt; (&lt;vector&gt;)))
+&rArr; #f
+</pre></div>
+
+<p>Once a method has been defined as virtual in a super&ndash;type, it does not
+matter if the sub&ndash;type makes use of <code>method</code>,
+<code>virtual-method</code> or <code>seal-method</code>: all these clauses will
+override the super&ndash;type&rsquo;s method if they use the same name.  Example:
+</p>
+<div class="lisp">
+<pre class="lisp">(define-record-type &lt;super&gt;
+  (virtual-method (darkness)
+    1)
+  (virtual-method (light)
+    2))
+
+(define-record-type &lt;sub&gt;
+  (parent &lt;super&gt;)
+  (method (darkness)
+    11)
+  (virtual-method (light)
+    22))
+
+(define {P &lt;super&gt;}
+  (new &lt;sub&gt;))
+
+(.darkness P)   &rArr; 11
+(.light    P)   &rArr; 22
+</pre></div>
+
+<p>Notice that it is not possible to define a sub&ndash;type having a field with
+the same name of a super&ndash;type&rsquo;s virtual method; the following
+definitions will cause an expand&ndash;time exception:
+</p>
+<div class="lisp">
+<pre class="lisp">(define-record-type &lt;super&gt;
+  (method (doit)
+    1))
+
+(define-record-type &lt;sub&gt;
+  (parent &lt;super&gt;)
+  (fields doit))
+error&rarr; &amp;syntax
+</pre></div>
+
+<p>The clause <code>seal-method</code> seals a method name so that the
+sub&ndash;types can no more use it; it does not matter if the super&ndash;types
+actually use it or not.
+</p>
+<hr>
+<div class="header">
+<p>
+Next: <a href="methods-sealing.html#methods-sealing" accesskey="n" rel="next">methods sealing</a>, Previous: <a href="methods-concrete.html#methods-concrete" accesskey="p" rel="prev">methods concrete</a>, Up: <a href="methods.html#methods" accesskey="u" rel="up">methods</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

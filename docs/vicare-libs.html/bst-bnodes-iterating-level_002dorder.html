@@ -1,0 +1,203 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes the libraries distributed along with version
+0.4d1 of Vicare Scheme, an R6RS compliant native
+compiler for the Scheme language.
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+The documentation of the libraries (vicare parser-tools silex
+-) are derived form the documentation of SILex.  Copyright
+(C) 2001, 2009 Danny Dube'.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Libraries for Vicare Scheme: bst bnodes iterating level-order</title>
+
+<meta name="description" content="Libraries for Vicare Scheme: bst bnodes iterating level-order">
+<meta name="keywords" content="Libraries for Vicare Scheme: bst bnodes iterating level-order">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="bst-bnodes-iterating.html#bst-bnodes-iterating" rel="up" title="bst bnodes iterating">
+<link href="bst-bnodes-iterating-breadth_002dfirst.html#bst-bnodes-iterating-breadth_002dfirst" rel="next" title="bst bnodes iterating breadth-first">
+<link href="bst-bnodes-iterating-post_002dorder.html#bst-bnodes-iterating-post_002dorder" rel="prev" title="bst bnodes iterating post-order">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="bst-bnodes-iterating-level_002dorder"></a>
+<div class="header">
+<p>
+Next: <a href="bst-bnodes-iterating-breadth_002dfirst.html#bst-bnodes-iterating-breadth_002dfirst" accesskey="n" rel="next">bst bnodes iterating breadth-first</a>, Previous: <a href="bst-bnodes-iterating-post_002dorder.html#bst-bnodes-iterating-post_002dorder" accesskey="p" rel="prev">bst bnodes iterating post-order</a>, Up: <a href="bst-bnodes-iterating.html#bst-bnodes-iterating" accesskey="u" rel="up">bst bnodes iterating</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Level_002d_002dorder-iterations"></a>
+<h4 class="subsubsection">41.2.6.4 Level&ndash;order iterations</h4>
+
+
+<p>Level&ndash;order iteration: visit the tree level by level.  Example:
+</p>
+<div class="example">
+<pre class="example">5-------10----12
+|        |     |
+1--3--4  7--9 11
+   |     |  |
+   2     6  8
+</pre></div>
+
+<p>the order of the forwards iteration is: 5, 1, 10, 3, 7, 12, 2, 4, 6, 9,
+11, 8.  To do it we need a moving cursor that always &ldquo;turns right&rdquo;
+keeping the count of the level.  The order of the backwards iteration
+is: 5, 10, 1, 12, 7, 3, 11, 9, 6, 4, 2, 8.
+</p>
+<p>The implementation of the level&ndash;order iteration is particularly slow,
+but it has the current node as the only state.  The level&ndash;order
+iteration is usually called &ldquo;breadth&ndash;first iteration&rdquo; or
+&ldquo;breadth&ndash;first search&rdquo;, that name is reserved for another
+implementation (see <a href="bst-bnodes-iterating-breadth_002dfirst.html#bst-bnodes-iterating-breadth_002dfirst">Breadth&ndash;first iterations</a>).
+</p>
+<p>The following syntactic bindings are exported by the library
+<code>(vicare containers binary-search-trees)</code>.  The bindings whose
+name is prefixed with <code>$</code> are unsafe operations: they do
+<strong>not</strong> validate their arguments before accessing them.
+</p>
+
+<a name="Forwards-iteration-3"></a>
+<h4 class="subsubheading">Forwards iteration</h4>
+
+
+<dl>
+<dt><a name="index-binary_002dtree_002dfold_002dlevel_002dorder_002dforwards"></a>Function: <strong>binary-tree-fold-level-order-forwards</strong> <em><var>kons</var> <var>knil</var> <var>root</var></em></dt>
+<dt><a name="index-_0024binary_002dtree_002dfold_002dlevel_002dorder_002dforwards"></a>Function: <strong>$binary-tree-fold-level-order-forwards</strong> <em><var>kons</var> <var>knil</var> <var>root</var></em></dt>
+<dd><p>Like <code>fold-left</code> for lists, visit the nodes of a binary tree
+with a level&ndash;order forwards iteration.  The argument <var>root</var> must be
+<code>#f</code> to represent an empty tree or an instance of
+<code>&lt;binary-node&gt;</code> representing the root of a tree.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-binary_002dtree_002dbegin_002dlevel_002dorder_002dforwards"></a>Function: <strong>binary-tree-begin-level-order-forwards</strong> <em><var>root</var></em></dt>
+<dt><a name="index-_0024binary_002dtree_002dbegin_002dlevel_002dorder_002dforwards"></a>Function: <strong>$binary-tree-begin-level-order-forwards</strong> <em><var>root</var></em></dt>
+<dd><p>Perform the first step in a level&ndash;order forwards iteration.  The argument
+<var>root</var> must be <code>#f</code> to represent an empty tree or an instance of
+<code>&lt;binary-node&gt;</code> representing the root of a tree.  If the tree is
+empty: return <code>#f</code>; otherwise return an instance of
+<code>&lt;binary-node&gt;</code> representing the first visited node.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-binary_002dtree_002dstep_002dlevel_002dorder_002dforwards"></a>Function: <strong>binary-tree-step-level-order-forwards</strong> <em><var>bnode</var></em></dt>
+<dt><a name="index-_0024binary_002dtree_002dstep_002dlevel_002dorder_002dforwards"></a>Function: <strong>$binary-tree-step-level-order-forwards</strong> <em><var>bnode</var></em></dt>
+<dd><p>Advance a level&ndash;order forwards iteration by one step starting from
+<var>bnode</var>, which must be an instance of <code>&lt;binary-node&gt;</code>.  If
+<var>bnode</var> is the last in the iteration: return <code>#f</code>; otherwise
+return an instance of <code>&lt;binary-node&gt;</code> representing the next
+visited node.
+</p></dd></dl>
+
+
+<a name="Backwards-iteration-3"></a>
+<h4 class="subsubheading">Backwards iteration</h4>
+
+
+<dl>
+<dt><a name="index-binary_002dtree_002dfold_002dlevel_002dorder_002dbackwards"></a>Function: <strong>binary-tree-fold-level-order-backwards</strong> <em><var>kons</var> <var>knil</var> <var>root</var></em></dt>
+<dt><a name="index-_0024binary_002dtree_002dfold_002dlevel_002dorder_002dbackwards"></a>Function: <strong>$binary-tree-fold-level-order-backwards</strong> <em><var>kons</var> <var>knil</var> <var>root</var></em></dt>
+<dd><p>Like <code>fold-right</code> for lists,a visit the nodes of a binary tree with
+a level&ndash;order backwards iteration.  The argument <var>root</var> must be
+<code>#f</code> to represent an empty tree or an instance of
+<code>&lt;binary-node&gt;</code> representing the root of a tree.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-binary_002dtree_002dbegin_002dlevel_002dorder_002dbackwards"></a>Function: <strong>binary-tree-begin-level-order-backwards</strong> <em><var>root</var></em></dt>
+<dt><a name="index-_0024binary_002dtree_002dbegin_002dlevel_002dorder_002dbackwards"></a>Function: <strong>$binary-tree-begin-level-order-backwards</strong> <em><var>root</var></em></dt>
+<dd><p>Perform the first step in a level&ndash;order backwards iteration.  The argument
+<var>root</var> must be <code>#f</code> to represent an empty tree or an instance of
+<code>&lt;binary-node&gt;</code> representing the root of a tree.  If the tree is
+empty: return <code>#f</code>; otherwise return an instance of
+<code>&lt;binary-node&gt;</code> representing the first visited node.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-binary_002dtree_002dstep_002dlevel_002dorder_002dbackwards"></a>Function: <strong>binary-tree-step-level-order-backwards</strong> <em><var>bnode</var></em></dt>
+<dt><a name="index-_0024binary_002dtree_002dstep_002dlevel_002dorder_002dbackwards"></a>Function: <strong>$binary-tree-step-level-order-backwards</strong> <em><var>bnode</var></em></dt>
+<dd><p>Advance a level&ndash;order backwards iteration by one step starting from
+<var>bnode</var>, which must be an instance of <code>&lt;binary-node&gt;</code>.  If
+<var>bnode</var> is the last in the iteration: return <code>#f</code>; otherwise
+return an instance of <code>&lt;binary-node&gt;</code> representing the next
+visited node.
+</p></dd></dl>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="bst-bnodes-iterating-breadth_002dfirst.html#bst-bnodes-iterating-breadth_002dfirst" accesskey="n" rel="next">bst bnodes iterating breadth-first</a>, Previous: <a href="bst-bnodes-iterating-post_002dorder.html#bst-bnodes-iterating-post_002dorder" accesskey="p" rel="prev">bst bnodes iterating post-order</a>, Up: <a href="bst-bnodes-iterating.html#bst-bnodes-iterating" accesskey="u" rel="up">bst bnodes iterating</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

@@ -1,0 +1,396 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes the libraries distributed along with version
+0.4d1 of Vicare Scheme, an R6RS compliant native
+compiler for the Scheme language.
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+The documentation of the libraries (vicare parser-tools silex
+-) are derived form the documentation of SILex.  Copyright
+(C) 2001, 2009 Danny Dube'.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Libraries for Vicare Scheme: srfi ilists procs searching</title>
+
+<meta name="description" content="Libraries for Vicare Scheme: srfi ilists procs searching">
+<meta name="keywords" content="Libraries for Vicare Scheme: srfi ilists procs searching">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="srfi-ilists-procs.html#srfi-ilists-procs" rel="up" title="srfi ilists procs">
+<link href="srfi-ilists-procs-deletion.html#srfi-ilists-procs-deletion" rel="next" title="srfi ilists procs deletion">
+<link href="srfi-ilists-procs-filter.html#srfi-ilists-procs-filter" rel="prev" title="srfi ilists procs filter">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="srfi-ilists-procs-searching"></a>
+<div class="header">
+<p>
+Next: <a href="srfi-ilists-procs-deletion.html#srfi-ilists-procs-deletion" accesskey="n" rel="next">srfi ilists procs deletion</a>, Previous: <a href="srfi-ilists-procs-filter.html#srfi-ilists-procs-filter" accesskey="p" rel="prev">srfi ilists procs filter</a>, Up: <a href="srfi-ilists-procs.html#srfi-ilists-procs" accesskey="u" rel="up">srfi ilists procs</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Searching-3"></a>
+<h4 class="subsubsection">2.40.6.8 Searching</h4>
+
+
+<p>The following procedures all search ilists for a leftmost element
+satisfying some criteria.  This means they do not always examine the
+entire ilist; thus, there is no efficient way for them to reliably
+detect and signal an error when passed a dotted ilist.  Here are the
+general rules describing how these procedures work when applied to
+different kinds of ilists:
+</p>
+<dl compact="compact">
+<dt>Proper ilists</dt>
+<dd><p>The standard, canonical behavior happens in this case.
+</p>
+</dd>
+<dt>Dotted ilists</dt>
+<dd><p>It is an error to pass these procedures a dotted ilist that does not
+contain an element satisfying the search criteria.  That is, it is an
+error if the procedure has to search all the way to the end of the
+dotted ilist.  However, this <acronym>SRFI</acronym> does not specify anything at all
+about the behavior of these procedures when passed a dotted ilist
+containing an element satisfying the search criteria.  It may finish
+successfully, signal an error, or perform some third action.  Different
+implementations may provide different functionality in this case; code
+which is compliant with this <acronym>SRFI</acronym> may not rely on any particular
+behavior.  Future <acronym>SRFI</acronym>s may refine this <acronym>SRFI</acronym> to define specific
+behavior in this case.
+</p></dd>
+</dl>
+
+<p>In brief, compliant code may not pass a dotted ilist argument to these
+procedures.
+</p>
+<p>Here are some examples, using the <code>ifind</code> and <code>iany</code>
+procedures as canonical representatives:
+</p>
+<div class="lisp">
+<pre class="lisp">;; Proper ilist: success
+(ifind even? (iq 1 2 3))	&rArr; 2
+(iany  even? (iq 1 2 3))	&rArr; #t
+
+;; proper ilist: failure
+(ifind even? (iq 1 7 3))	&rArr; #f
+(iany  even? (iq 1 7 3))	&rArr; #f
+
+;; Failure is error on a dotted ilist.
+(ifind even? (ipair (1 (ipair 3 x)))	error&rarr; invalid argument
+(iany  even? (ipair (1 (ipair 3 x)))	error&rarr; invalid argument
+
+;; The dotted ilist contains an element satisfying the search.
+;; This case is not specified: it could be success, an error,
+;; or some third possibility.
+(ifind even? (ipair (1 (ipair 2 x)))
+&rArr; error/undefined
+(iany  even? (ipair (1 (ipair 2 x))))
+&rArr; error/undefined ; success, error or other
+</pre></div>
+
+
+<dl>
+<dt><a name="index-ifind"></a>Function: <em><var>value</var></em> <strong>ifind</strong> <em><var>pred</var> <var>ilist</var></em></dt>
+<dd><p>Return the first element of <var>ilist</var> that satisfies predicate
+<var>pred</var>; return <code>#f</code> if no element does.
+</p>
+<div class="lisp">
+<pre class="lisp">(ifind even? (iq 3 1 4 1 5 9)) &rArr; 4
+</pre></div>
+
+<p>Note that <code>ifind</code> has an ambiguity in its lookup semantics: if
+<code>ifind</code> returns <code>#f</code>, you cannot tell (in general) if it found
+a <code>#f</code> element that satisfied pred, or if it did not find any
+element at all.  In many situations, this ambiguity cannot arise: either
+the <var>ilist</var> being searched is known not to contain any <code>#f</code>
+elements, or the ilist is guaranteed to have an element satisfying
+<var>pred</var>.  However, in cases where this ambiguity can arise, you
+should use <code>ifind-tail</code> instead of <code>ifind</code>: <code>ifind-tail</code>
+has no such ambiguity:
+</p>
+<div class="lisp">
+<pre class="lisp">(cond ((ifind-tail pred lis)
+       =&gt; (lambda (ipair) ...)) ; Handle (icar ipair)
+      (else ...))               ; Search failed
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-ifind_002dtail"></a>Function: <em><var>value</var></em> <strong>ifind-tail</strong> <em><var>pred</var> <var>ilist</var></em></dt>
+<dd><p>Return the first ipair of <var>ilist</var> whose icar satisfies <var>pred</var>.
+If no ipair does, return <code>#f</code>.
+</p>
+<p><code>ifind-tail</code> can be viewed as a general&ndash;predicate variant of the
+<code>imember</code> function.
+</p>
+<p>Examples:
+</p>
+<div class="lisp">
+<pre class="lisp">(ifind-tail even? (iq 3 1 37 -8 -5 0 0)) &rArr; (-8 -5 0 0)
+(ifind-tail even? (iq 3 1 37 -5))        &rArr; #f
+
+;; IMEMBER X LIS:
+(ifind-tail (lambda (elt) (equal? x elt)) lis)
+</pre></div>
+
+<p><code>ifind-tail</code> is essentially <code>idrop-while</code>, where the sense of
+the predicate is inverted: <code>ifind-tail</code> searches until it finds an
+element satisfying the predicate; <code>idrop-while</code> searches until it
+finds an element that doesn&rsquo;t satisfy the predicate.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-itake_002dwhile"></a>Function: <em><var>ilist</var></em> <strong>itake-while</strong> <em><var>pred</var> <var>ilist</var></em></dt>
+<dd><p>Return the longest initial prefix of <var>ilist</var> whose elements all
+satisfy the predicate <var>pred</var>.
+</p>
+<div class="lisp">
+<pre class="lisp">(itake-while even? (iq 2 18 3 10 22 9)) &rArr; (2 18)
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-idrop_002dwhile"></a>Function: <em><var>ilist</var></em> <strong><code>idrop-while</code></strong> <em><var>pred</var> <var>ilist</var></em></dt>
+<dd><p>Drop the longest initial prefix of ilist whose elements all satisfy the
+predicate <var>pred</var>, and returns the rest of the <var>ilist</var>.
+</p>
+<div class="lisp">
+<pre class="lisp">(idrop-while even? (iq 2 18 3 10 22 9)) &rArr; (3 10 22 9)
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-ispan"></a>Function: <em><var>ilist</var> <var>ilist</var></em> <strong>ispan</strong> <em><var>pred</var> <var>ilist</var></em></dt>
+<dt><a name="index-ibreak"></a>Function: <em><var>ilist</var> <var>ilist</var></em> <strong>ibreak</strong> <em><var>pred</var> <var>ilist</var></em></dt>
+<dd><p><code>ispan</code> splits the <var>ilist</var> into the longest initial prefix
+whose elements all satisfy <var>pred</var>, and the remaining tail.
+<code>ibreak</code> inverts the sense of the predicate: the tail commences
+with the first element of the input ilist that satisfies the predicate.
+</p>
+<p>In other words: <code>ispan</code> finds the initial span of elements
+satisfying <var>pred</var>, and <code>ibreak</code> breaks the ilist at the first
+element satisfying <var>pred</var>.
+</p>
+<p><code>ispan</code> is equivalent to.
+</p>
+<div class="lisp">
+<pre class="lisp">(values (itake-while pred ilist)
+        (idrop-while pred ilist))
+</pre></div>
+
+<div class="lisp">
+<pre class="lisp">(ispan even? (iq 2 18 3 10 22 9))
+&rArr; (2 18) (3 10 22 9)
+
+(ibreak even? (iq 3 1 4 1 5 9))
+&rArr; (3 1) (4 1 5 9)
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-iany"></a>Function: <em><var>value</var></em> <strong>iany</strong> <em><var>pred</var> <var>ilist1</var> <var>ilist2</var> &hellip;</em></dt>
+<dd><p>Applies the predicate across the ilists, returning true if the predicate
+returns true on any application.
+</p>
+<p>If there are <var>n</var> ilist arguments: then <var>pred</var> must be a
+procedure taking <var>n</var> arguments and returning a boolean result.
+</p>
+<p><code>iany</code> applies pred to the first elements of the ilist parameters.
+If this application returns a true value, <code>iany</code> immediately
+returns that value.  Otherwise, it iterates, applying <var>pred</var> to the
+second elements of the ilist parameters, then the third, and so forth.
+The iteration stops when a true value is produced or one of the ilists
+runs out of values; in the latter case, <code>iany</code> returns <code>#f</code>.
+The application of pred to the last element of the ilists is a tail
+call.
+</p>
+<p>Note the difference between <code>ifind</code> and <code>iany</code>: <code>ifind</code>
+returns the element that satisfied the predicate; <code>iany</code> returns
+the true value that the predicate produced.
+</p>
+<p>Like <code>ievery</code>, <code>iany</code>&rsquo;s name does not end with a question
+mark: this is to indicate that it does not return a simple boolean
+(<code>#t</code> or <code>#f</code>), but a general value.
+</p>
+<div class="lisp">
+<pre class="lisp">(iany integer? (iq a 3 b 2.7))   &rArr; #t
+(iany integer? (iq a 3.1 b 2.7)) &rArr; #f
+(iany &lt; (iq 3 1 4 1 5)
+        (iq 2 7 1 8 2))
+&rArr; #t
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-ievery"></a>Function: <em><var>value</var></em> <strong>ievery</strong> <em><var>pred</var> <var>ilist1</var> <var>ilist2</var> &hellip;</em></dt>
+<dd><p>Applies the predicate across the ilists, returning true if the predicate
+returns true on every application.
+</p>
+<p>If there are <var>n</var> ilist arguments: <var>pred</var> must be a procedure
+taking n arguments and returning a boolean result.
+</p>
+<p><code>ievery</code> applies <var>pred</var> to the first elements of the ilist
+parameters.  If this application returns <code>#f</code>: <code>ievery</code>
+immediately returns <code>#f</code>.  Otherwise, it iterates, applying
+<var>pred</var> to the second elements of the ilist parameters, then the
+third, and so forth.  The iteration stops when a <code>#f</code> value is
+produced or one of the ilists runs out of values.  In the latter case,
+<code>ievery</code> returns the true value produced by its final application
+of <var>pred</var>.  The application of <var>pred</var> to the last element of the
+ilists is a tail call.
+</p>
+<p>If one of the ilist has no elements: <code>ievery</code> simply returns
+<code>#f</code>.
+</p>
+<p>Like <code>iany</code>, <code>ievery</code>&rsquo;s name does not end with a question
+mark: this is to indicate that it does not return a simple boolean
+(<code>#t</code> or <code>#f</code>), but a general value.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-ilist_002dindex"></a>Function: <em><var>value</var></em> <strong>ilist-index</strong> <em><var>pred</var> <var>ilist1</var> <var>ilist2</var> &hellip;</em></dt>
+<dd><p>Return the index of the leftmost element that satisfies <var>pred</var>.
+</p>
+<p>If there are <var>n</var> ilist arguments: <var>pred</var> must be a function
+taking <var>n</var> arguments and returning a boolean result.
+</p>
+<p><code>ilist-index</code> applies pred to the first elements of the ilist
+parameters.  If this application returns true, <code>ilist-index</code>
+immediately returns zero; otherwise, it iterates, applying <var>pred</var> to
+the second elements of the ilisti parameters, then the third, and so
+forth.  When it finds a tuple of ilist elements that cause <var>pred</var> to
+return true, it stops and returns the zero&ndash;based index of that position
+in the ilists.
+</p>
+<p>The iteration stops when one of the ilists runs out of values; in this
+case: <code>ilist-index</code> returns <code>#f</code>.
+</p>
+<div class="lisp">
+<pre class="lisp">(ilist-index even? (iq 3 1 4 1 5 9)) &rArr; 2
+(ilist-index &lt; (iq 3 1 4 1 5 9 2 5 6) (iq 2 7 1 8 2)) &rArr; 1
+(ilist-index = (iq 3 1 4 1 5 9 2 5 6) (iq 2 7 1 8 2)) &rArr; #f
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-imember"></a>Function: <em><var>ilist</var></em> <strong>imember</strong> <em><var>x</var> <var>ilist</var></em></dt>
+<dt><a name="index-imember-1"></a>Function: <em><var>ilist</var></em> <strong>imember</strong> <em><var>x</var> <var>ilist</var> <var>=</var></em></dt>
+<dt><a name="index-imemq"></a>Function: <em><var>ilist</var></em> <strong>imemq</strong> <em><var>x</var> <var>ilist</var></em></dt>
+<dt><a name="index-imemv"></a>Function: <em><var>ilist</var></em> <strong>imemv</strong> <em><var>x</var> <var>ilist</var></em></dt>
+<dd><p>These procedures return the first sub&ndash;ilist of ilist whose icar is
+<var>x</var>, where the sub&ndash;ilists of <var>ilist</var> are the non&ndash;empty ilists
+returned by <code>(idrop <var>ilist</var> <var>i</var>)</code> for <var>i</var> less than the
+length of <var>ilist</var>.  If <var>x</var> does not occur in <var>ilist</var>:
+<code>#f</code> is returned.  <code>imemq</code> uses <code>eq?</code>  to compare <var>x</var>
+with the elements of ilist, while imemv uses <code>eqv?</code>, and
+<code>imember</code> uses <code>equal?</code>.
+</p>
+<div class="lisp">
+<pre class="lisp">(imemq 'a (iq a b c))           &rArr;  (a b c)
+(imemq 'b (iq a b c))           &rArr;  (b c)
+(imemq 'a (iq b c d))           &rArr;  #f
+(imemq (ilist 'a) (iq b (a) c)) &rArr;  #f
+(imember (ilist 'a)
+         (iq b (a) c))          &rArr;  ((a) c)
+(imemq 101 (iq 100 101 102))    &rArr;  *unspecified*
+(imemv 101 (iq 100 101 102))    &rArr;  (101 102)
+</pre></div>
+
+<p>The comparison procedure is used to compare the elements <var>ei</var> of
+<var>ilist</var> to the key <var>x</var> in this way:
+</p>
+<div class="lisp">
+<pre class="lisp">(= x ei) ; ilist is (E1 ... En)
+</pre></div>
+
+<p>that is, the first argument is always <var>x</var>, and the second argument
+is one of the ilist elements.  Thus one can reliably find the first
+element of ilist that is greater than five with <code>(imember 5 ilist
+&lt;)</code>.
+</p>
+<p>Note that fully general ilist searching may be performed with the
+<code>ifind-tail</code> and <code>ifind</code> procedures, e.g.
+</p>
+<div class="lisp">
+<pre class="lisp">(ifind-tail even? ilist) ; Find the first elt with an even key.
+</pre></div>
+</dd></dl>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="srfi-ilists-procs-deletion.html#srfi-ilists-procs-deletion" accesskey="n" rel="next">srfi ilists procs deletion</a>, Previous: <a href="srfi-ilists-procs-filter.html#srfi-ilists-procs-filter" accesskey="p" rel="prev">srfi ilists procs filter</a>, Up: <a href="srfi-ilists-procs.html#srfi-ilists-procs" accesskey="u" rel="up">srfi ilists procs</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

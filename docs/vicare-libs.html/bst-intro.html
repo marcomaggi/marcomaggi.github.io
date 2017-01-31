@@ -1,0 +1,244 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes the libraries distributed along with version
+0.4d1 of Vicare Scheme, an R6RS compliant native
+compiler for the Scheme language.
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+The documentation of the libraries (vicare parser-tools silex
+-) are derived form the documentation of SILex.  Copyright
+(C) 2001, 2009 Danny Dube'.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Libraries for Vicare Scheme: bst intro</title>
+
+<meta name="description" content="Libraries for Vicare Scheme: bst intro">
+<meta name="keywords" content="Libraries for Vicare Scheme: bst intro">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="bst.html#bst" rel="up" title="bst">
+<link href="bst-bnodes.html#bst-bnodes" rel="next" title="bst bnodes">
+<link href="bst.html#bst" rel="prev" title="bst">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="bst-intro"></a>
+<div class="header">
+<p>
+Next: <a href="bst-bnodes.html#bst-bnodes" accesskey="n" rel="next">bst bnodes</a>, Up: <a href="bst.html#bst" accesskey="u" rel="up">bst</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Introduction-to-binary-search-trees"></a>
+<h3 class="section">41.1 Introduction to binary search trees</h3>
+
+
+<p>The <em>binary search trees</em> are tree structures in which every node
+has at most two children.  Every node is associated to a &ldquo;sort key&rdquo;: a
+value that can be used to establish an ordering among the nodes.  The
+node insertion and node removal operations are implemented in such a way
+that:
+</p>
+<ul>
+<li> The left child of a node has key less than the one the node.
+
+</li><li> The right child of a node has key greater than, or equal to, the one of
+the node.
+</li></ul>
+
+<p>Here is an example of binary search tree, with nodes in the correct
+order:
+</p>
+<div class="example">
+<pre class="example">5-------10----12
+|        |     |
+1--3--4  7--9 11
+   |     |  |
+   2     6  8
+</pre></div>
+
+<p>the root node has sort key &lsquo;<samp>5</samp>&rsquo;; the left child of the root has sort
+key &lsquo;<samp>1</samp>&rsquo;; the right child of the root has sort key &lsquo;<samp>10</samp>&rsquo;.  Let&rsquo;s
+take &lsquo;<samp>10</samp>&rsquo; as example: every node in its left subtree has key less
+than &lsquo;<samp>10</samp>&rsquo;; every node in its right subtree has key greater than, or
+equal to, &lsquo;<samp>10</samp>&rsquo;.  This is a general property of binary search trees.
+</p>
+<p>The library <code>(vicare containers binary-search-trees)</code> is the core
+library for binary search tree implementation; it implements trees in
+such a way that:
+</p>
+<ul>
+<li> The empty tree is represented by <code>#f</code>.
+
+</li><li> A node is represented by an instance of type <code>&lt;binary-node&gt;</code> or
+a subtype of this type.
+
+</li><li> The type <code>&lt;binary-node&gt;</code> has <em>3</em> fields: <code>parent</code>,
+<code>left</code>, <code>right</code>.  The value of these fields can be <code>#f</code> or
+an instance of <code>&lt;binary-node&gt;</code>.
+
+</li><li> If the <code>parent</code> field of a node is set to <code>#f</code>: it means that
+node is the root of a tree.
+</li></ul>
+
+<p>All the functions acting on instances of <code>&lt;binary-node&gt;</code> are
+meant to be usable on trees implementing any node balancing strategy;
+they only expect the binary tree to be a binary search tree as defined
+above.  The core library only implements unbalanced binary search trees,
+in which nodes have the type <code>&lt;unbalanced-binary-node&gt;</code>.  The
+type hierarchy is:
+</p>
+<div class="lisp">
+<pre class="lisp">(define-record-type &lt;binary-node&gt;
+  ---)
+
+(define-record-type &lt;unbalanced-binary-node&gt;
+  (parent &lt;binary-node&gt;)
+  ---)
+</pre></div>
+
+<p>By themselves, these types have no sort key; to associate a sort key
+with a node instance we need to subtype them.  The following is an
+example of binary search tree of fixnums:
+</p>
+<div class="lisp">
+<pre class="lisp">(import (vicare)
+  (vicare containers binary-search-trees))
+
+(define-record-type &lt;fixnum-node&gt;
+  (parent &lt;unbalanced-binary-node&gt;)
+
+  (fields (immutable sort-key))
+
+  (protocol
+   (lambda (make-unbalanced-binary-node)
+     (case-lambda*
+       (()
+        ((make-unbalanced-binary-node #f #f) (void)))
+
+       ((key)
+        ((make-unbalanced-binary-node #f #f) key))
+
+       (({key   fixnum?}
+         {left  false-or-unbalanced-binary-node?}
+         {right false-or-unbalanced-binary-node?})
+        ((make-unbalanced-binary-node left right) key)))))
+
+  #| end of DEFINE-RECORD-TYPE |# )
+
+(define (key&lt; new old)
+  (fx&lt;? (&lt;fixnum-node&gt;-sort-key new)
+        (&lt;fixnum-node&gt;-sort-key old)))
+
+(define (make-comparison-proc target-key)
+  (lambda (node)
+    (let ((key (&lt;fixnum-node&gt;-sort-key node)))
+      (cond ((fx=? target-key key)       0)
+            ((fx&lt;? target-key key)      -1)
+            (else                       +1)))))
+</pre></div>
+
+<p>we can build a tree from a list and then search for a node as follows:
+</p>
+<div class="lisp">
+<pre class="lisp">(define (tree . key*)
+  (fold-left (lambda (root key)
+               (unbalanced-tree-insert! root key&lt;
+                  (make-&lt;fixnum-node&gt; key)))
+    #f key*))
+
+;; 5-------10----12
+;; |        |     |
+;; 1--3--4  7--9 11
+;;    |     |  |
+;;    2     6  8
+(define root
+  (tree 5 1 3 2 4 10 7 12 6 9 8 11))
+
+(define node
+  (binary-tree-find root (make-comparison-proc 8)))
+</pre></div>
+
+<p>we can perform a forwards in&ndash;order iteration as follows:
+</p>
+<div class="lisp">
+<pre class="lisp">(binary-tree-fold-in-order-forwards
+    (lambda (knil node)
+      (cons (&lt;fixnum-node&gt;-sort-key node) knil))
+  '() root))
+&rArr; (12 11 10 9 8 7 6 5 4 3 2 1)
+</pre></div>
+
+<p>in the result of this operation: the sort key in the first node from the
+search is the last item in the list.
+</p>
+<hr>
+<div class="header">
+<p>
+Next: <a href="bst-bnodes.html#bst-bnodes" accesskey="n" rel="next">bst bnodes</a>, Up: <a href="bst.html#bst" accesskey="u" rel="up">bst</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

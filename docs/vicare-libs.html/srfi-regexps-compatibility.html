@@ -1,0 +1,155 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes the libraries distributed along with version
+0.4d1 of Vicare Scheme, an R6RS compliant native
+compiler for the Scheme language.
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+The documentation of the libraries (vicare parser-tools silex
+-) are derived form the documentation of SILex.  Copyright
+(C) 2001, 2009 Danny Dube'.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Libraries for Vicare Scheme: srfi regexps compatibility</title>
+
+<meta name="description" content="Libraries for Vicare Scheme: srfi regexps compatibility">
+<meta name="keywords" content="Libraries for Vicare Scheme: srfi regexps compatibility">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="srfi-regexps.html#srfi-regexps" rel="up" title="srfi regexps">
+<link href="srfi-regexps-procs.html#srfi-regexps-procs" rel="next" title="srfi regexps procs">
+<link href="srfi-regexps-conventions.html#srfi-regexps-conventions" rel="prev" title="srfi regexps conventions">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="srfi-regexps-compatibility"></a>
+<div class="header">
+<p>
+Next: <a href="srfi-regexps-procs.html#srfi-regexps-procs" accesskey="n" rel="next">srfi regexps procs</a>, Previous: <a href="srfi-regexps-conventions.html#srfi-regexps-conventions" accesskey="p" rel="prev">srfi regexps conventions</a>, Up: <a href="srfi-regexps.html#srfi-regexps" accesskey="u" rel="up">srfi regexps</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Compatibility-levels-and-features"></a>
+<h4 class="subsection">2.39.5 Compatibility levels and features</h4>
+
+
+<p>We specify a thorough, though not exhaustive, syntax with many
+extensions popular in modern regular expression libraries such as PCRE.
+This is because it is assumed in many cases said libraries will be used
+as the underlying implementation, the features will be desirable, and if
+left unspecified people will provide their own, often incompatible,
+extensions.
+</p>
+<p>On the other hand it is acknowledged that not all implementations will
+be able to support all extensions.  Some are difficult to implement for
+DFA implementations, and some, like &lsquo;<samp>backref</samp>&rsquo;, are prohibitively
+expensive for any implementation.  Furthermore, even if an
+implementation has Unicode support, its regexp library may not.
+</p>
+<p>To resolve these differences we divide the syntax into a minimal core
+which all implementations are required to support, and additional
+extensions.  In <acronym>R7RS</acronym> or other implementations which support
+<acronym>SRFI</acronym>-0 <code>cond-expand</code> with library level features, the
+availability can be tested with the following <code>cond-expand</code>
+features:
+</p>
+<dl compact="compact">
+<dt><code>regexp-non-greedy</code></dt>
+<dd><p>The non&ndash;greedy repetition patterns &lsquo;<samp>??</samp>&rsquo;, &lsquo;<samp>*?</samp>&rsquo;, and &lsquo;<samp>**?</samp>&rsquo;
+are supported.
+</p>
+</dd>
+<dt><code>regexp-look-around</code></dt>
+<dd><p>The &lsquo;<samp>[neg-]look-ahead</samp>&rsquo; and &lsquo;<samp>[neg-]look-behind</samp>&rsquo; zero&ndash;width
+assertions are supported.
+</p>
+</dd>
+<dt><code>regexp-backrefs</code></dt>
+<dd><p>The &lsquo;<samp>backref</samp>&rsquo; pattern is supported.
+</p>
+</dd>
+<dt><code>regexp-unicode</code></dt>
+<dd><p>Regexp character sets support Unicode.
+</p></dd>
+</dl>
+
+<p>The first three simply refer to support for certain SRE patterns.
+</p>
+<p>&lsquo;<samp>regexp-unicode</samp>&rsquo; indicates support for Unicode contexts.  Toggling
+between Unicode and <acronym>ASCII</acronym> can be done with the &lsquo;<samp>w/unicode</samp>&rsquo; and
+&lsquo;<samp>w/ascii</samp>&rsquo; patterns.  In a Unicode context, the named character sets
+have their full Unicode definition as described below and grapheme
+boundaries are &ldquo;extended grapheme clusters&rdquo; as defined in UAX #29
+(Unicode Text Segmentation).  Implementations which provide this feature
+may still support non&ndash;Unicode characters.
+</p>
+<hr>
+<div class="header">
+<p>
+Next: <a href="srfi-regexps-procs.html#srfi-regexps-procs" accesskey="n" rel="next">srfi regexps procs</a>, Previous: <a href="srfi-regexps-conventions.html#srfi-regexps-conventions" accesskey="p" rel="prev">srfi regexps conventions</a>, Up: <a href="srfi-regexps.html#srfi-regexps" accesskey="u" rel="up">srfi regexps</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

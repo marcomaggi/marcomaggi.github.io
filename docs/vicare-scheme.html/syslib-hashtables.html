@@ -1,61 +1,36 @@
-<html lang="en">
-<head>
-<title>syslib hashtables - Vicare Scheme</title>
-<meta http-equiv="Content-Type" content="text/html">
-<meta name="description" content="Vicare Scheme">
-<meta name="generator" content="makeinfo 4.13">
-<link title="Top" rel="start" href="index.html#Top">
-<link rel="up" href="syslib.html#syslib" title="syslib">
-<link rel="prev" href="syslib-pointers.html#syslib-pointers" title="syslib pointers">
-<link rel="next" href="syslib-codes.html#syslib-codes" title="syslib codes">
-<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
-<!--
-This document describes version 0.3d7 of Vicare Scheme, an
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.4d1 of Vicare Scheme, an
 R6RS compliant native compiler for the Scheme language, producing
-single threaded programs running on Intel x86 32-bit processors, with
-experimental support for 64-bit machines.  _Vicare_ is pronounced
-the etruscan way.
+single threaded programs running on Intel x86 32-bit and 64-bit
+processors.  Vicare is pronounced the etruscan way.
 
 The package, including its documentation, is distributed under the terms
 of the GNU General Public License (GPL) and can be downloaded
 from:
 
-        `http://sourceforge.net/projects/vicare-scheme/files/'
-
+https://bitbucket.org/marcomaggi/vicare-scheme/downloads
 
 the home page of the project is at:
 
-              `http://marcomaggi.github.com/vicare.html'
-
+http://marcomaggi.github.io/vicare.html
 
 development takes place at:
 
-                `http://github.com/marcomaggi/vicare/'
-
+http://github.com/marcomaggi/vicare/
 
 and, as a backup, at:
 
-                     `http://gitorious.org/vicare'
+https://bitbucket.org/marcomaggi/vicare-scheme/
 
-
-and at:
-
-           `http://sourceforge.net/projects/vicare-scheme/'
-
-
-this project has a mailing list:
-
-             `http://groups.google.com/group/vicare-users'
-
-
-Copyright (C) 2010-2013 by Marco Maggi.
+Copyright (C) 2010-2017 by Marco Maggi.
 
 Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
 
 Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
 
 This document is derived from the original Ikarus documentation by the
-Vicare Scheme contributors, see the ``History'' appendix for details.
+Vicare Scheme contributors, see the "History" appendix for details.
 
 The documentation of IrRegex is Copyright (C) 2005-2012 Alex
 Shinn.  All rights reserved.
@@ -63,80 +38,338 @@ Shinn.  All rights reserved.
 The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
 Sitaram.  All rights reserved.
 
-The documentation of the library `(vicare formations)' is derived
+The documentation of the library (vicare formations) is derived
 from the documentation of Guile.  Copyright (C) 1996-2005,
 2009-2013 Free Software Foundation.
 
-     This program is free software: you can redistribute it and/or
-     modify it under the terms of the GNU General Public License
-     version 3 as published by the Free Software Foundation.
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
 
-     This program is distributed in the hope that it will be useful, but
-     WITHOUT ANY WARRANTY; without even the implied warranty of
-     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-     General Public License for more details.
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
 
-     You should have received a copy of the GNU General Public License
-     along with this program.  If not, see
-     `http://www.gnu.org/licenses/'.
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
 
-Trademarks used herein are the property of their respective owners.-->
-<meta http-equiv="Content-Style-Type" content="text/css">
-<style type="text/css"><!--
-  pre.display { font-family:inherit }
-  pre.format  { font-family:inherit }
-  pre.smalldisplay { font-family:inherit; font-size:smaller }
-  pre.smallformat  { font-family:inherit; font-size:smaller }
-  pre.smallexample { font-size:smaller }
-  pre.smalllisp    { font-size:smaller }
-  span.sc    { font-variant:small-caps }
-  span.roman { font-family:serif; font-weight:normal; } 
-  span.sansserif { font-family:sans-serif; font-weight:normal; } 
---></style>
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Vicare Scheme: syslib hashtables</title>
+
+<meta name="description" content="Vicare Scheme: syslib hashtables">
+<meta name="keywords" content="Vicare Scheme: syslib hashtables">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="syslib.html#syslib" rel="up" title="syslib">
+<link href="syslib-tcbuckets.html#syslib-tcbuckets" rel="next" title="syslib tcbuckets">
+<link href="syslib-pointers.html#syslib-pointers" rel="prev" title="syslib pointers">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
 </head>
-<body>
-<div class="node">
+
+<body lang="en">
 <a name="syslib-hashtables"></a>
+<div class="header">
 <p>
-Next:&nbsp;<a rel="next" accesskey="n" href="syslib-codes.html#syslib-codes">syslib codes</a>,
-Previous:&nbsp;<a rel="previous" accesskey="p" href="syslib-pointers.html#syslib-pointers">syslib pointers</a>,
-Up:&nbsp;<a rel="up" accesskey="u" href="syslib.html#syslib">syslib</a>
+Next: <a href="syslib-tcbuckets.html#syslib-tcbuckets" accesskey="n" rel="next">syslib tcbuckets</a>, Previous: <a href="syslib-pointers.html#syslib-pointers" accesskey="p" rel="prev">syslib pointers</a>, Up: <a href="syslib.html#syslib" accesskey="u" rel="up">syslib</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
 <hr>
+<a name="Low-level-hashtable-objects-operations"></a>
+<h3 class="section">12.22 Low level hashtable objects operations</h3>
+
+
+<a name="index-_0028vicare-system-_0024hashtables_0029_002c-library"></a>
+<a name="index-Library-_0028vicare-system-_0024hashtables_0029"></a>
+
+
+<p>The following bindings are exported by the library <code>(vicare
+system $hashtables)</code>.
+</p>
+
+<dl>
+<dt><a name="index-_0024string_002dhash"></a>Unsafe Operation: <strong>$string-hash</strong> <em><var>string</var></em></dt>
+<dt><a name="index-_0024string_002dhash-1"></a>Unsafe Operation: <strong>$string-hash</strong> <em><var>string</var> <var>max-len</var></em></dt>
+<dd><p>Return an integer hash value for <var>string</var>, based on its current
+contents.  This hash function is suitable for use with <code>string=?</code>
+as an equivalence function.
+</p>
+<p>About the <var>max-len</var> argument:
+</p>
+<ul>
+<li> When <var>max-len</var> is a non&ndash;negative fixnum: it is the maximum number
+of characters to use to compute the hash value, starting from the
+beginning of <var>string</var>.  If the length of <var>string</var> is greater
+than <var>max-len</var>: only the first <var>max-len</var> characters are used.
+If the length of <var>string</var> is less than or equal to <var>max-len</var>:
+all the bytes in <var>string</var> are used.
+
+</li><li> When <var>max-len</var> is <code>#f</code> or not used: if the length of
+<var>string</var> is greater than <em>64</em> characters, only the first
+<em>64</em> bytes are used to compute the hash.
+
+</li><li> When <var>max-len</var> is <code>#t</code>: all the bytes in <var>string</var> are used.
+</li></ul>
+
+<p><strong>NOTE</strong> When the hash value is computed using a number of
+characters <em>N</em> less than the string length: applications
+<strong>must not</strong> assume that two strings having the first <em>N</em>
+characters equal will have the same hash value.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-_0024string_002dci_002dhash"></a>Unsafe Operation: <strong>$string-ci-hash</strong> <em><var>string</var></em></dt>
+<dt><a name="index-_0024string_002dci_002dhash-1"></a>Unsafe Operation: <strong>$string-ci-hash</strong> <em><var>string</var> <var>max-len</var></em></dt>
+<dd><p>Return an integer hash value for <var>string</var> based on its current
+contents, ignoring case.  This hash function is suitable for use with
+<code>string-ci=?</code> as an equivalence function.
+</p>
+<p>The optional argument <var>max-len</var> is used as in <code>$string-hash</code>.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-_0024symbol_002dhash"></a>Unsafe Operation: <strong>$symbol-hash</strong> <em><var>symbol</var></em></dt>
+<dd><p>Return an integer hash value for <var>symbol</var>.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-_0024bytevector_002dhash"></a>Unsafe Operation: <strong>$bytevector-hash</strong> <em><var>bytevector</var></em></dt>
+<dt><a name="index-_0024bytevector_002dhash-1"></a>Unsafe Operation: <strong>$bytevector-hash</strong> <em><var>bytevector</var> <var>max-len</var></em></dt>
+<dd><p>Return an integer hash value for <var>bytevector</var>, based on its current
+contents.  This hash function is suitable for use with
+<code>bytevector=?</code> as an equivalence function.
+</p>
+<p>About the <var>max-len</var> argument:
+</p>
+<ul>
+<li> When <var>max-len</var> is a non&ndash;negative fixnum: it is the maximum number
+of bytes to use to compute the hash value, starting from the beginning
+of <var>bv</var>.  If the length of <var>bv</var> is greater than <var>max-len</var>:
+only the first <var>max-len</var> bytes are used.  If the length of <var>bv</var>
+is less than or equal to <var>max-len</var>: all the bytes in <var>bv</var> are
+used.
+
+</li><li> When <var>max-len</var> is <code>#f</code> or not present: if the length of <var>bv</var>
+is greater than <em>256</em> bytes, only the first <em>256</em> bytes are
+used to compute the hash.
+
+</li><li> When <var>max-len</var> is <code>#t</code>: all the bytes in <var>bv</var> are used.
+</li></ul>
+
+<p><strong>NOTE</strong> When the hash value is computed using a number of bytes
+<em>N</em> less than the bytevector length: applications <strong>must not</strong>
+assume that two bytevectors having the first <em>N</em> bytes equal will
+have the same hash value.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-_0024vector_002dhash"></a>Unsafe Operation: <strong>$vector-hash</strong> <em><var>vec</var></em></dt>
+<dt><a name="index-_0024vector_002dhash-1"></a>Unsafe Operation: <strong>$vector-hash</strong> <em><var>vec</var> <var>max-len</var></em></dt>
+<dd><p>Return a non&ndash;negative fixnum representing the hash value for <var>vec</var>,
+based on its current contents.  When creating hash tables using vectors
+as keys: this hash function is suitable for use with <code>vector=?</code>  as
+an equivalence function.
+</p>
+<p>About the <var>max-len</var> argument:
+</p>
+<ul>
+<li> When <var>max-len</var> is a non&ndash;negative fixnum: it is the maximum number
+of items to use to compute the hash value, starting from the beginning
+of <var>vec</var>.  If the length of <var>vec</var> is greater than <var>max-len</var>:
+only the first <var>max-len</var> items are used.  If the length of <var>vec</var>
+is less than or equal to <var>max-len</var>: all the items in <var>vec</var> are
+used.
+
+</li><li> When <var>max-len</var> is <code>#f</code> or not present: if the length of
+<var>vec</var> is greater than <em>3</em> items, only the first <em>3</em> items
+are used to compute the hash.
+
+</li><li> When <var>max-len</var> is <code>#t</code>: all the items in <var>vec</var> are used.
+</li></ul>
+
+<p><strong>NOTE</strong> When the hash value is computed using a number of items
+<em>N</em> less than the vector length: applications <strong>must not</strong>
+assume that two vectors having the first <em>N</em> items equal will have
+the same hash value.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-_0024list_002dhash"></a>Unsafe Operation: <strong>$list-hash</strong> <em><var>ell</var></em></dt>
+<dt><a name="index-_0024list_002dhash-1"></a>Unsafe Operation: <strong>$list-hash</strong> <em><var>ell</var> <var>max-len</var></em></dt>
+<dd><p>Return a non&ndash;negative fixnum representing the hash value for <var>ell</var>,
+based on its current contents.  When creating hash tables using lists
+as keys: this hash function is suitable for use with <code>list=?</code>  as
+an equivalence function.
+</p>
+<p>About the <var>max-len</var> argument:
+</p>
+<ul>
+<li> When <var>max-len</var> is a non&ndash;negative fixnum: it is the maximum number
+of items to use to compute the hash value, starting from the beginning
+of <var>ell</var>.  If the length of <var>ell</var> is greater than <var>max-len</var>:
+only the first <var>max-len</var> items are used.  If the length of <var>ell</var>
+is less than or equal to <var>max-len</var>: all the items in <var>ell</var> are
+used.
+
+</li><li> When <var>max-len</var> is <code>#f</code> or not present: if the length of
+<var>ell</var> is greater than <em>3</em> items, only the first <em>3</em> items
+are used to compute the hash.
+
+</li><li> When <var>max-len</var> is <code>#t</code>: all the items in <var>ell</var> are used.
+</li></ul>
+
+<p><strong>NOTE</strong> When the hash value is computed using a number of items
+<em>N</em> less than the list length: applications <strong>must not</strong>
+assume that two lists having the first <em>N</em> items equal will have
+the same hash value.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-_0024pair_002dhash"></a>Unsafe Operation: <strong>$pair-hash</strong> <em><var>pair</var></em></dt>
+<dt><a name="index-_0024ipair_002dhash"></a>Unsafe Operation: <strong>$ipair-hash</strong> <em><var>ipair</var></em></dt>
+<dd><p>Hash function for pairs and immutable pairs.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-_0024char_002dhash"></a>Unsafe Operation: <strong>$char-hash</strong> <em><var>ch</var></em></dt>
+<dt><a name="index-_0024char_002dci_002dhash"></a>Unsafe Operation: <strong>$char-ci-hash</strong> <em><var>ch</var></em></dt>
+<dd><p>Compute and return the hash value.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-_0024fixnum_002dhash"></a>Unsafe Operation: <strong>$fixnum-hash</strong> <em><var>fx</var></em></dt>
+<dd><p>Compute and return the hash value.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-_0024bignum_002dhash"></a>Unsafe Operation: <strong>$bignum-hash</strong> <em><var>bn</var></em></dt>
+<dd><p>Compute and return the hash value.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-_0024exact_002dinteger_002dhash"></a>Unsafe Operation: <strong>$exact-integer-hash</strong> <em><var>ei</var></em></dt>
+<dd><p>Compute and return the hash value.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-_0024ratnum_002dhash"></a>Unsafe Operation: <strong>$ratnum-hash</strong> <em><var>rn</var></em></dt>
+<dd><p>Compute and return the hash value.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-_0024flonum_002dhash"></a>Unsafe Operation: <strong>$flonum-hash</strong> <em><var>fl</var></em></dt>
+<dd><p>Compute and return the hash value.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-_0024cflonum_002dhash"></a>Unsafe Operation: <strong>$cflonum-hash</strong> <em><var>cfl</var></em></dt>
+<dd><p>Compute and return the hash value.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-_0024compnum_002dhash"></a>Unsafe Operation: <strong>$compnum-hash</strong> <em><var>cn</var></em></dt>
+<dd><p>Compute and return the hash value.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-_0024transcoder_002dhash"></a>Unsafe Operation: <strong>$transcoder-hash</strong> <em><var>tran</var></em></dt>
+<dd><p>Compute and return the hash value.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-_0024enum_002dset_002dhash"></a>Unsafe Operation: <strong>$enum-set-hash</strong> <em><var>es</var></em></dt>
+<dd><p>Hash function for enumeration sets.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-_0024pointer_002dhash"></a>Unsafe Operation: <strong>$pointer-hash</strong> <em><var>ptr</var></em></dt>
+<dd><p>Return a fixnum representing the hash value of <var>ptr</var>.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-_0024promise_002dhash"></a>Unsafe Operation: <strong>$promise-hash</strong> <em><var>prom</var></em></dt>
+<dd><p>Hash function for promise objects.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-_0024record_002dhash"></a>Unsafe Operation: <strong>$record-hash</strong> <em><var>reco</var></em></dt>
+<dt><a name="index-_0024struct_002dhash"></a>Unsafe Operation: <strong>$struct-hash</strong> <em><var>stru</var></em></dt>
+<dd><p>Compute and return the hash value.
+</p>
+<blockquote>
+<p><strong>NOTE</strong> The result returned by these hash functions depends on the values in the fields, so:
+it will change if the fields are mutated.
+</p></blockquote>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-_0024hashtable_002dtype_002ddescriptor"></a>Unsafe Operation: <strong>$hashtable-type-descriptor</strong> <em><var>table</var></em></dt>
+<dt><a name="index-_0024hashtable_002dtype_002ddescriptor_002dset_0021"></a>Unsafe Operation: <strong>$hashtable-type-descriptor-set!</strong> <em><var>table</var> <var>des</var></em></dt>
+<dd><p>Setter and getter for the hashtable run&ndash;time type descriptor.
+<var>des</var> must be an instance of <code>&lt;hashtable-type-descr&gt;</code>.
+</p></dd></dl>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="syslib-tcbuckets.html#syslib-tcbuckets" accesskey="n" rel="next">syslib tcbuckets</a>, Previous: <a href="syslib-pointers.html#syslib-pointers" accesskey="p" rel="prev">syslib pointers</a>, Up: <a href="syslib.html#syslib" accesskey="u" rel="up">syslib</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
 </div>
 
-<h3 class="section">8.19 Low level hashtable objects operations</h3>
 
-<p><a name="index-g_t_0040library_007bikarus-system-hashtables_007d_002c-library-2976"></a><a name="index-Library-_0040library_007bikarus-system-hashtables_007d-2977"></a><a name="index-g_t_0040library_007bvicare-system-hashtables_007d_002c-library-2978"></a><a name="index-Library-_0040library_007bvicare-system-hashtables_007d-2979"></a>
 
-   <p>The following bindings are exported by the libraries <code>(ikarus
-system $hashtables)</code> and <code>(vicare system hashtables)</code>.
-
-<div class="defun">
-&mdash; Unsafe Operation: <b>$string-hash</b><var> string<a name="index-g_t_0024string_002dhash-2980"></a></var><br>
-<blockquote><p>Return an integer hash value for <var>string</var>, based on its current
-contents.  This hash function is suitable for use with <code>string=?</code>
-as an equivalence function. 
-</p></blockquote></div>
-
-<div class="defun">
-&mdash; Unsafe Operation: <b>$string-ci-hash</b><var> string<a name="index-g_t_0024string_002dci_002dhash-2981"></a></var><br>
-<blockquote><p>Return an integer hash value for <var>string</var> based on its current
-contents, ignoring case.  This hash function is suitable for use with
-<code>string-ci=?</code> as an equivalence function. 
-</p></blockquote></div>
-
-<div class="defun">
-&mdash; Unsafe Operation: <b>$symbol-hash</b><var> symbol<a name="index-g_t_0024symbol_002dhash-2982"></a></var><br>
-<blockquote><p>Return an integer hash value for <var>symbol</var>. 
-</p></blockquote></div>
-
-<div class="defun">
-&mdash; Unsafe Operation: <b>$bytevector-hash</b><var> bytevector<a name="index-g_t_0024bytevector_002dhash-2983"></a></var><br>
-<blockquote><p>Return an integer hash value for <var>bytevector</var>, based on its current
-contents.  This hash function is suitable for use with
-<code>bytevector=?</code> as an equivalence function. 
-</p></blockquote></div>
-
-<!-- page -->
-   </body></html>
-
+</body>
+</html>

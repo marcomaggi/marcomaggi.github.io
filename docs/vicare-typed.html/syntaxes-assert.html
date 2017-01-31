@@ -1,0 +1,496 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.4d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit and 64-bit
+processors.  Vicare is pronounced the etruscan way.  The focus of
+this document is over the typed language extension.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/downloads
+
+the home page of the project is at:
+
+http://marcomaggi.github.io/vicare.html
+
+development takes place at:
+
+http://github.com/marcomaggi/vicare/
+
+and, as a backup, at:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/
+
+Copyright (C) 2016-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Vicare Scheme&rsquo;s typed language: syntaxes assert</title>
+
+<meta name="description" content="Vicare Scheme&rsquo;s typed language: syntaxes assert">
+<meta name="keywords" content="Vicare Scheme&rsquo;s typed language: syntaxes assert">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="type-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="syntaxes.html#syntaxes" rel="up" title="syntaxes">
+<link href="syntaxes-unsafe_002dcast.html#syntaxes-unsafe_002dcast" rel="next" title="syntaxes unsafe-cast">
+<link href="syntaxes-predicates.html#syntaxes-predicates" rel="prev" title="syntaxes predicates">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="syntaxes-assert"></a>
+<div class="header">
+<p>
+Next: <a href="syntaxes-unsafe_002dcast.html#syntaxes-unsafe_002dcast" accesskey="n" rel="next">syntaxes unsafe-cast</a>, Previous: <a href="syntaxes-predicates.html#syntaxes-predicates" accesskey="p" rel="prev">syntaxes predicates</a>, Up: <a href="syntaxes.html#syntaxes" accesskey="u" rel="up">syntaxes</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Validating-signatures"></a>
+<h3 class="section">5.5 Validating signatures</h3>
+
+
+<p>The following syntactic bindings are exported by the library
+<code>(vicare)</code>.
+</p>
+
+<dl>
+<dt><a name="index-assert_002dsignature"></a>Syntax: <strong>assert-signature</strong> <em><var>?signature</var> <var>?expr</var></em></dt>
+<dt><a name="index-assert_002dsignature_002dand_002dreturn"></a>Syntax: <strong>assert-signature-and-return</strong> <em><var>?signature</var> <var>?expr</var></em></dt>
+<dt><a name="index-cast_002dsignature"></a>Syntax: <strong>cast-signature</strong> <em><var>?signature</var> <var>?expr</var></em></dt>
+<dd><p>Validate the type signature of the values returned by <var>?expr</var>,
+either at expand&ndash;time or run&ndash;time.  <var>?expr</var> can be any Scheme
+expression.  <var>?signature</var> must be a proper or improper list of type
+annotations representing the type signature.
+</p>
+<p>The syntax <code>assert-signature</code> returns a single unspecified value.
+The syntax <code>assert-signature-and-return</code> returns the return
+values of <var>?expr</var> with the original type signature of <var>?expr</var>.
+The syntax <code>cast-signature</code> returns the return values of
+<var>?expr</var> with the type signature <var>?signature</var>.
+</p>
+<div class="lisp">
+<pre class="lisp">(type-of 123)
+&rArr; #[signature (&lt;positive-fixnum&gt;)]
+
+(type-of (assert-signature-and-return (&lt;top&gt;) 123))
+&rArr; #[signature (&lt;positive-fixnum&gt;)]
+
+(type-of (cast-signature (&lt;top&gt;) 123))
+&rArr; #[signature (&lt;top&gt;)]
+</pre></div>
+
+<p>If it is possible to validate the signature at expand&ndash;time: when
+successful, the syntax use just expands to the evaluation of
+<var>?expr</var>; when a type mismatch is detected, an expand&ndash;time exception
+is raised.  Otherwise the syntax use expands to an expression that
+validates the values at run&ndash;time.
+</p>
+<p>As special cases, when <var>?signature</var> is &lsquo;<samp>()</samp>&rsquo;, a proper or
+improper list of <code>&lt;top&gt;</code> and <code>&lt;list&gt;</code> types like:
+</p>
+<div class="lisp">
+<pre class="lisp">&lt;list&gt;
+(&lt;top&gt;)
+(&lt;top&gt; &lt;top&gt; &lt;top&gt;)
+(&lt;top&gt; &lt;top&gt; . &lt;list&gt;)
+</pre></div>
+
+<p>no validation is performed at run&ndash;time, only at expand&ndash;time.
+</p></dd></dl>
+
+
+<p>Here are some validation examples:
+</p>
+<div class="lisp">
+<pre class="lisp">(assert-signature () (values))
+(assert-signature-and-return (&lt;fixnum&gt;) 123)    &rArr; 123
+(assert-signature-and-return (&lt;string&gt;) &quot;ciao&quot;) &rArr; &quot;ciao&quot;
+
+(assert-signature-and-return (&lt;fixnum&gt; &lt;flonum&gt;) (values 1 2.0))
+&rArr; 1 2.0
+
+(expansion-of
+  (assert-signature (&lt;fixnum&gt;) 123))
+&rArr; (begin (quote 123) (quote #!void))
+
+(expansion-of
+  (assert-signature-and-return (&lt;fixnum&gt;) 123))
+&rArr; (quote 123)
+
+(expansion-of
+  (assert-signature-and-return (&lt;fixnum&gt;)
+    (unsafe-cast-signature &lt;fixnum&gt; (read))))
+&rArr; ((primitive read))
+</pre></div>
+
+<p>There are some interesting special cases:
+</p>
+<ul>
+<li> If we want to assert (at expand&ndash;time) that an expression returns zero
+values, we can do:
+
+<div class="lisp">
+<pre class="lisp">(assert-signature () <var>?expr</var>)
+</pre></div>
+
+</li><li> If we want to assert nothing, we can do:
+
+<div class="lisp">
+<pre class="lisp">(assert-signature &lt;list&gt; <var>?expr</var>)
+</pre></div>
+
+<p>which will just expand to the evaluation of <var>?expr</var>; this might be
+useful when the syntax is used in the output form of another macro use.
+</p>
+</li><li> If we want to assert (at expand&ndash;time) that an expression returns a
+single value, of any type, we can do:
+
+<div class="lisp">
+<pre class="lisp">(assert-signature (&lt;top&gt;) <var>?expr</var>)
+</pre></div>
+
+</li><li> If we want to assert (at expand&ndash;time) that an expression returns two
+values, of any type, we can do:
+
+<div class="lisp">
+<pre class="lisp">(assert-signature (&lt;top&gt; &lt;top&gt;) <var>?expr</var>)
+</pre></div>
+
+</li><li> If we want to assert (at expand&ndash;time) that an expression returns two or
+more values, of any type, we can do:
+
+<div class="lisp">
+<pre class="lisp">(assert-signature (&lt;top&gt; &lt;top&gt; . &lt;list&gt;) <var>?expr</var>)
+</pre></div>
+</li></ul>
+
+
+<a name="Expansion-examples-for-run_002d_002dtime-validation"></a>
+<h4 class="subheading">Expansion examples for run&ndash;time validation</h4>
+
+<p>Let&rsquo;s say we have a function &lsquo;<samp>fun</samp>&rsquo; such that:
+</p>
+<div class="lisp">
+<pre class="lisp">(type-of (fun))
+&rArr; #[signature &lt;list&gt;]
+</pre></div>
+
+<p>there is nothing the expander can do to infer the type signature of the
+function application.
+</p>
+
+<a name="Example-1_003a-multiple-values-and-return-values"></a>
+<h4 class="subsubheading">Example 1: multiple values and return values</h4>
+
+<p>The following syntax use:
+</p>
+<div class="lisp">
+<pre class="lisp">(assert-signature-and-return
+    (&lt;fixnum&gt; &lt;flonum&gt; &lt;string&gt;)
+  (fun))
+</pre></div>
+
+<p>is expanded to:
+</p>
+<div class="lisp">
+<pre class="lisp">(call-with-values
+    (lambda () (fun))
+  (lambda (arg1 arg2 arg3)
+    (values ((lambda (obj value-index caller-who)
+               (if (fixnum? obj)
+                   obj
+                 (expression-return-value-violation
+                     caller-who
+                   '&quot;return value of invalid type&quot;
+                   value-index '(is-a? _ &lt;fixnum&gt;) obj)))
+             arg1 '1 'assert-signature-and-return)
+            ((lambda (obj value-index caller-who)
+               (if (flonum? obj)
+                   obj
+                 (expression-return-value-violation
+                     caller-who
+                   '&quot;return value of invalid type&quot;
+                   value-index '(is-a? _ &lt;flonum&gt;) obj)))
+             arg2 '2 'assert-signature-and-return)
+            ((lambda (obj value-index caller-who)
+               (if (string? obj)
+                   obj
+                 (expression-return-value-violation
+                     caller-who
+                   '&quot;return value of invalid type&quot;
+                   value-index '(is-a? _ &lt;string&gt;) obj)))
+             arg3 '3 'assert-signature-and-return))))
+</pre></div>
+
+
+<a name="Example-2_003a-multiple-values-and-no-return-values"></a>
+<h4 class="subsubheading">Example 2: multiple values and no return values</h4>
+
+<p>The following syntax use:
+</p>
+<div class="lisp">
+<pre class="lisp">(assert-signature
+    (&lt;fixnum&gt; &lt;flonum&gt; &lt;string&gt;)
+  (fun))
+</pre></div>
+
+<p>is expanded to:
+</p>
+<div class="lisp">
+<pre class="lisp">(call-with-values
+    (lambda () (fun))
+  (lambda (arg1 arg2 arg3)
+    ((lambda (obj value-index caller-who)
+       (if (not (fixnum? obj))
+           (expression-return-value-violation
+               caller-who '&quot;return value of invalid type&quot;
+               value-index '(is-a? _ &lt;fixnum&gt;) obj)
+         '#!void))
+     arg1 '1 'assert-signature)
+    ((lambda (obj value-index caller-who)
+       (if (not (flonum? obj))
+           (expression-return-value-violation
+               caller-who '&quot;return value of invalid type&quot;
+               value-index '(is-a? _ &lt;flonum&gt;) obj)
+         '#!void))
+     arg2 '2 'assert-signature)
+    ((lambda (obj value-index caller-who)
+       (if (not (string? obj))
+           (expression-return-value-violation
+               caller-who '&quot;return value of invalid type&quot;
+               value-index '(is-a? _ &lt;string&gt;) obj)
+         '#!void))
+     arg3 '3 'assert-signature)
+    (void)))
+</pre></div>
+
+
+<a name="Example-3_003a-list-of-values-and-return-values"></a>
+<h4 class="subsubheading">Example 3: list of values and return values</h4>
+
+<p>The following syntax use:
+</p>
+<div class="lisp">
+<pre class="lisp">(assert-signature-and-return
+    (list-of &lt;fixnum&gt;)
+  (fun))
+</pre></div>
+
+<p>is expanded to:
+</p>
+<div class="lisp">
+<pre class="lisp">((lambda arg1
+   (lambda (list-value first-value-index caller-who)
+     (fold-left
+         (lambda (item-index item-value)
+           ((lambda (obj value-index caller-who)
+              (if (not ((letrec
+                            ((pred (lambda (obj)
+                                     (if (pair? obj)
+                                         (if (fixnum? (car obj))
+                                             (pred (cdr obj))
+                                           '#f)
+                                       (null? obj)))))
+                          pred)
+                        obj))
+                  (expression-return-value-violation caller-who
+                    '&quot;return value of invalid type&quot;
+                    value-index '(is-a? _ (list-of &lt;fixnum&gt;))
+                    obj)
+                '#!void))
+            item-value item-index caller-who)
+           (fxadd1 item-index))
+       first-value-index list-value)
+     list-value))
+ (fun))
+</pre></div>
+
+
+<a name="Example-5_003a-multiple-values-and-return-values"></a>
+<h4 class="subsubheading">Example 5: multiple values and return values</h4>
+
+<p>The following syntax use:
+</p>
+<div class="lisp">
+<pre class="lisp">(assert-signature-and-return
+    (&lt;fixnum&gt; &lt;flonum&gt; . (list-of &lt;fixnum&gt;))
+  (fun))
+</pre></div>
+
+<p>is expanded to:
+</p>
+<div class="smalllisp">
+<pre class="smalllisp">(call-with-values
+    (lambda () (fun))
+  (lambda (arg1 arg2 . arg3)
+    (apply values
+           ((lambda (obj value-index caller-who)
+              (if (fixnum? obj)
+                  obj
+                (expression-return-value-violation
+                    caller-who
+                  '&quot;return value of invalid type&quot;
+                  value-index '(is-a? _ &lt;fixnum&gt;) obj)))
+            arg1 '1 'assert-signature-and-return)
+           ((lambda (obj value-index caller-who)
+              (if (flonum? obj)
+                  obj
+                (expression-return-value-violation
+                    caller-who
+                  '&quot;return value of invalid type&quot;
+                  value-index '(is-a? _ &lt;flonum&gt;) obj)))
+            arg2 '2 'assert-signature-and-return)
+           (lambda (list-value first-value-index caller-who)
+             (fold-left
+                 (lambda (item-index item-value)
+                   ((lambda (obj value-index caller-who)
+                      (if (not ((letrec
+                                    ((pred (lambda (obj)
+                                             (if (pair? obj)
+                                                 (if (fixnum? (car obj))
+                                                     (pred (cdr obj))
+                                                   '#f)
+                                               (null? obj)))))
+                                  pred) obj))
+                          (expression-return-value-violation
+                              caller-who
+                            '&quot;return value of invalid type&quot;
+                            value-index
+                            '(is-a? _ (list-of &lt;fixnum&gt;)) obj)
+                        '#!void))
+                    item-value item-index caller-who)
+                   (fxadd1 item-index))
+               first-value-index list-value)
+             list-value)
+           arg3 '3 'assert-signature-and-return)))
+</pre></div>
+
+
+<a name="Example-5_003a-single-value-and-return-values"></a>
+<h4 class="subsubheading">Example 5: single value and return values</h4>
+
+<p>The following syntax use:
+</p>
+<div class="lisp">
+<pre class="lisp">(assert-signature-and-return
+    (&lt;fixnum&gt;)
+  (fun))
+</pre></div>
+
+<p>is expanded to:
+</p>
+<div class="lisp">
+<pre class="lisp">((lambda (arg1)
+   ((lambda (obj value-index caller-who)
+      (if (fixnum? obj)
+          obj
+        (expression-return-value-violation caller-who
+          '&quot;return value of invalid type&quot;
+          value-index '(is-a? _ &lt;fixnum&gt;) obj)))
+    arg1 '1 'assert-signature-and-return))
+ (fun))
+</pre></div>
+
+
+<a name="Example-6_003a-no-validation-and-single-return-value"></a>
+<h4 class="subsubheading">Example 6: no validation and single return value</h4>
+
+<p>The following syntax use:
+</p>
+<div class="lisp">
+<pre class="lisp">(assert-signature-and-return
+    (&lt;top&gt;)
+  (fun))
+</pre></div>
+
+<p>is expanded to:
+</p>
+<div class="lisp">
+<pre class="lisp">(fun)
+</pre></div>
+
+<p>there is no need to insert a validation form because a single value of
+any type matches the type signature.
+</p>
+
+<a name="Example-7_003a-no-validation-and-return-values"></a>
+<h4 class="subsubheading">Example 7: no validation and return values</h4>
+
+<p>The following syntax use:
+</p>
+<div class="lisp">
+<pre class="lisp">(assert-signature-and-return
+    &lt;list&gt;
+  (fun))
+</pre></div>
+
+<p>is expanded to:
+</p>
+<div class="lisp">
+<pre class="lisp">(fun)
+</pre></div>
+
+<p>there is no need to insert a validation form because any number of
+return values of any type matches the type signature.
+</p>
+<hr>
+<div class="header">
+<p>
+Next: <a href="syntaxes-unsafe_002dcast.html#syntaxes-unsafe_002dcast" accesskey="n" rel="next">syntaxes unsafe-cast</a>, Previous: <a href="syntaxes-predicates.html#syntaxes-predicates" accesskey="p" rel="prev">syntaxes predicates</a>, Up: <a href="syntaxes.html#syntaxes" accesskey="u" rel="up">syntaxes</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

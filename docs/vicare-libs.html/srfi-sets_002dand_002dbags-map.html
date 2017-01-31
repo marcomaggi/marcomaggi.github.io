@@ -1,0 +1,281 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes the libraries distributed along with version
+0.4d1 of Vicare Scheme, an R6RS compliant native
+compiler for the Scheme language.
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+The documentation of the libraries (vicare parser-tools silex
+-) are derived form the documentation of SILex.  Copyright
+(C) 2001, 2009 Danny Dube'.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Libraries for Vicare Scheme: srfi sets-and-bags map</title>
+
+<meta name="description" content="Libraries for Vicare Scheme: srfi sets-and-bags map">
+<meta name="keywords" content="Libraries for Vicare Scheme: srfi sets-and-bags map">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="srfi-sets_002dand_002dbags.html#srfi-sets_002dand_002dbags" rel="up" title="srfi sets-and-bags">
+<link href="srfi-sets_002dand_002dbags-copy.html#srfi-sets_002dand_002dbags-copy" rel="next" title="srfi sets-and-bags copy">
+<link href="srfi-sets_002dand_002dbags-whole.html#srfi-sets_002dand_002dbags-whole" rel="prev" title="srfi sets-and-bags whole">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="srfi-sets_002dand_002dbags-map"></a>
+<div class="header">
+<p>
+Next: <a href="srfi-sets_002dand_002dbags-copy.html#srfi-sets_002dand_002dbags-copy" accesskey="n" rel="next">srfi sets-and-bags copy</a>, Previous: <a href="srfi-sets_002dand_002dbags-whole.html#srfi-sets_002dand_002dbags-whole" accesskey="p" rel="prev">srfi sets-and-bags whole</a>, Up: <a href="srfi-sets_002dand_002dbags.html#srfi-sets_002dand_002dbags" accesskey="u" rel="up">srfi sets-and-bags</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Mapping-and-folding"></a>
+<h4 class="subsection">2.37.7 Mapping and folding</h4>
+
+
+<dl>
+<dt><a name="index-set_002dmap"></a>Function: <strong>set-map</strong> <em><var>comparator</var> <var>proc</var> <var>set</var></em></dt>
+<dd><p>Apply <var>proc</var> to each element of <var>set</var> in arbitrary order and
+return a newly allocated set, created as if by <code>(set
+<var>comparator</var>)</code>, which contains the results of the applications.  For
+example:
+</p>
+<div class="lisp">
+<pre class="lisp">(set-map string-ci-comparator
+         symbol-&gt;string
+         (set eq-comparator 'foo 'bar 'baz))
+&equiv; (set string-ci-comparator &quot;foo&quot; &quot;bar&quot; &quot;baz&quot;)
+</pre></div>
+
+<p>Note that, when <var>proc</var> defines a mapping that is not <em>1:1</em>,
+some of the mapped objects may be equivalent in the sense of
+comparator&rsquo;s equality predicate, and in this case duplicate elements are
+omitted as in the set constructor.  For example:
+</p>
+<div class="lisp">
+<pre class="lisp">(set-map integer-comparator
+         (lambda (x)
+           (quotient x 2))
+         (set integer-comparator 1 2 3 4 5))
+&equiv; (set integer-comparator 0 1 2)
+</pre></div>
+
+<p>If the elements are the same in the sense of <code>eqv?</code>, it is
+unpredictable which one will be preserved in the result.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-bag_002dmap"></a>Function: <strong>bag-map</strong> <em><var>comparator</var> <var>proc</var> <var>bag</var></em></dt>
+<dd><p>Apply <var>proc</var> to each element of <var>bag</var> in arbitrary order and
+return a newly allocated bag, created as if by <code>(bag
+<var>comparator</var>)</code>, which contains the results of the applications.  For
+example:
+</p>
+<div class="lisp">
+<pre class="lisp">(bag-map string-ci-comparator
+         symbol-&gt;string
+         (bag eq-comparator 'foo 'bar 'baz))
+&equiv; (bag string-ci-comparator &quot;foo&quot; &quot;bar&quot; &quot;baz&quot;)
+
+(list-sort &lt;
+  (bag-&gt;list
+    (bag-map integer-comparator
+             (lambda (x)
+               (quotient x 2))
+             (bag integer-comparator 1 2 3 4 5))))
+&rArr; (0 1 1 2 2)
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-set_002dfor_002deach"></a>Function: <strong>set-for-each</strong> <em><var>proc</var> <var>set</var></em></dt>
+<dt><a name="index-bag_002dfor_002deach"></a>Function: <strong>bag-for-each</strong> <em><var>proc</var> <var>bag</var></em></dt>
+<dd><p>Apply <var>proc</var> to <var>set</var> or <var>bag</var> in arbitrary order,
+discarding the returned values.  Return unspecified results.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-set_002dfold"></a>Function: <strong>set-fold</strong> <em><var>proc</var> <var>nil</var> <var>set</var></em></dt>
+<dt><a name="index-bag_002dfold"></a>Function: <strong>bag-fold</strong> <em><var>proc</var> <var>nil</var> <var>bag</var></em></dt>
+<dd><p>Invoke <var>proc</var> on each member of <var>set</var> or <var>bag</var> in arbitrary
+order, passing the result of the previous invocation as a second
+argument.  For the first invocation, <var>nil</var> is used as the second
+argument.  Return the result of the last invocation, or <var>nil</var> if
+there was no invocation.
+</p>
+<div class="lisp">
+<pre class="lisp">(import (vicare) (srfi :113) (srfi :114))
+
+(list-sort &lt;
+  (set-fold (lambda (elm nil)
+              (cons elm nil))
+              '()
+              (set fixnum-comparator 1 2 3)))
+&rArr; (1 2 3)
+
+(list-sort &lt;
+  (bag-fold (lambda (elm nil)
+              (cons elm nil))
+            '()
+            (bag fixnum-comparator 1 2 2 3)))
+&rArr; (1 2 2 3)
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-set_002dfilter"></a>Function: <strong>set-filter</strong> <em><var>predicate</var> <var>set</var></em></dt>
+<dt><a name="index-bag_002dfilter"></a>Function: <strong>bag-filter</strong> <em><var>predicate</var> <var>bag</var></em></dt>
+<dd><p>Return a newly allocated set or bag with the same comparator as
+<var>set</var> or <var>bag</var>, containing just the elements of <var>set</var> or
+<var>bag</var> that satisfy <var>predicate</var>.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-set_002dfilter_0021"></a>Function: <strong>set-filter!</strong> <em><var>predicate</var> <var>set</var></em></dt>
+<dt><a name="index-bag_002dfilter_0021"></a>Function: <strong>bag-filter!</strong> <em><var>predicate</var> <var>bag</var></em></dt>
+<dd><p>Like <code>set-filter</code> and <code>bag-filter</code> but they are permitted to
+mutate and return <var>set</var> or <var>bag</var> rather than allocating a new
+set or bag.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-set_002dremove"></a>Function: <strong>set-remove</strong> <em><var>predicate</var> <var>set</var></em></dt>
+<dt><a name="index-bag_002dremove"></a>Function: <strong>bag-remove</strong> <em><var>predicate</var> <var>bag</var></em></dt>
+<dd><p>Return a newly allocated set or bag with the same comparator as
+<var>set</var> or <var>bag</var>, containing just the elements that do
+<strong>not</strong> satisfy <var>predicate</var>.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-set_002dremove_0021"></a>Function: <strong>set-remove!</strong> <em><var>predicate</var> <var>set</var></em></dt>
+<dt><a name="index-bag_002dremove_0021"></a>Function: <strong>bag-remove!</strong> <em><var>predicate</var> <var>bag</var></em></dt>
+<dd><p>Like <code>set-remove</code> and <code>bag-remove</code> but they are permitted to
+mutate and return <var>set</var> or <var>bag</var> rather than allocating a new
+set or bag.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-set_002dpartition"></a>Function: <strong>set-partition</strong> <em><var>predicate</var> <var>set</var></em></dt>
+<dt><a name="index-bag_002dpartition"></a>Function: <strong>bag-partition</strong> <em><var>predicate</var> <var>bag</var></em></dt>
+<dd><p>Return two values:
+</p>
+<ol>
+<li> A newly allocated set or bag, with the same comparator as <var>set</var> or
+<var>bag</var>, that contains just the elements that <strong>do</strong> satisfy
+<var>predicate</var>.
+
+</li><li> A newly allocated set or bag, with the same comparator as <var>set</var> or
+<var>bag</var>, that contains just the elements that <strong>do not</strong> satisfy
+<var>predicate</var>.
+</li></ol>
+
+<p>Usage example:
+</p>
+<div class="lisp">
+<pre class="lisp">(import (vicare) (srfi :113) (srfi :114))
+
+(receive (in out)
+    (set-partition (lambda (elm)
+                     (&lt;= 2 elm))
+                   (set fixnum-comparator 1 2 2 3))
+  (values (set-&gt;list in  #t)
+          (set-&gt;list out #t)))
+&rArr; (2 3) (1)
+
+(receive (in out)
+    (bag-partition (lambda (elm)
+                     (&lt;= 2 elm))
+                   (bag fixnum-comparator 1 2 2 3))
+  (values (bag-&gt;list in  #t)
+          (bag-&gt;list out #t)))
+&rArr; (2 2 3) (1)
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-set_002dpartition_0021"></a>Function: <strong>set-partition!</strong> <em><var>predicate</var> <var>set</var></em></dt>
+<dt><a name="index-bag_002dpartition_0021"></a>Function: <strong>bag-partition!</strong> <em><var>predicate</var> <var>bag</var></em></dt>
+<dd><p>Like <code>set-partition</code> and <code>bag-partition</code> but they are
+permitted to mutate and return <var>set</var> or <var>bag</var> rather than
+allocating a new set or bag.
+</p></dd></dl>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="srfi-sets_002dand_002dbags-copy.html#srfi-sets_002dand_002dbags-copy" accesskey="n" rel="next">srfi sets-and-bags copy</a>, Previous: <a href="srfi-sets_002dand_002dbags-whole.html#srfi-sets_002dand_002dbags-whole" accesskey="p" rel="prev">srfi sets-and-bags whole</a>, Up: <a href="srfi-sets_002dand_002dbags.html#srfi-sets_002dand_002dbags" accesskey="u" rel="up">srfi sets-and-bags</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

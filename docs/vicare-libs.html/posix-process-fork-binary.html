@@ -1,0 +1,326 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes the libraries distributed along with version
+0.4d1 of Vicare Scheme, an R6RS compliant native
+compiler for the Scheme language.
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+The documentation of the libraries (vicare parser-tools silex
+-) are derived form the documentation of SILex.  Copyright
+(C) 2001, 2009 Danny Dube'.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Libraries for Vicare Scheme: posix process fork binary</title>
+
+<meta name="description" content="Libraries for Vicare Scheme: posix process fork binary">
+<meta name="keywords" content="Libraries for Vicare Scheme: posix process fork binary">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="posix-process-fork.html#posix-process-fork" rel="up" title="posix process fork">
+<link href="posix-process-fork-textual.html#posix-process-fork-textual" rel="next" title="posix process fork textual">
+<link href="posix-process-fork-fds.html#posix-process-fork-fds" rel="prev" title="posix process fork fds">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="posix-process-fork-binary"></a>
+<div class="header">
+<p>
+Next: <a href="posix-process-fork-textual.html#posix-process-fork-textual" accesskey="n" rel="next">posix process fork textual</a>, Previous: <a href="posix-process-fork-fds.html#posix-process-fork-fds" accesskey="p" rel="prev">posix process fork fds</a>, Up: <a href="posix-process-fork.html#posix-process-fork" accesskey="u" rel="up">posix process fork</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Preparing-binary-input_002foutput-ports"></a>
+<h4 class="subsubsection">4.6.2.3 Preparing binary input/output ports</h4>
+
+
+<dl>
+<dt><a name="index-fork_002dwith_002dbinary_002dports"></a>Function: <strong>fork-with-binary-ports</strong> <em><var>parent-proc</var> <var>child-thunk</var></em></dt>
+<dd><p>Wrapper for <code>fork</code> that sets up the file descriptor pipes and
+binary input/output ports to communicate with the child process,
+<a href="posix-process-fork-fork.html#posix-process-fork-fork">fork</a>.  When successful: return the same
+return value of <code>fork</code>; otherwise raise the same exception of
+<code>fork</code>.
+</p>
+<p>The procedure <var>parent-proc</var> is called as follows:
+</p>
+<div class="example">
+<pre class="example">(parent-proc child-pid
+             parent-&gt;child-stdin
+             parent&lt;-child-stdout
+             parent&lt;-child-stderr)
+</pre></div>
+
+<p>where the arguments are the following objects:
+</p>
+<dl compact="compact">
+<dt><code>child-pid</code></dt>
+<dd><p>It is a fixnum representing the pid of the child process.
+</p>
+</dd>
+<dt><code>parent-&gt;child-stdin</code></dt>
+<dd><p>It is a binary output port writing into the standard input of the child
+process.
+</p>
+</dd>
+<dt><code>parent&lt;-child-stdout</code></dt>
+<dd><p>It is a binary input port reading from the standard output of the child
+process.
+</p>
+</dd>
+<dt><code>parent&lt;-child-stderr</code></dt>
+<dd><p>It is a binary input port reading from the standard error of the child
+process.
+</p></dd>
+</dl>
+
+<p>The thunk <var>child-thunk</var> is called with no arguments.  The child can
+use the standard ports returned by <code>standard-input-port</code>,
+<code>standard-output-port</code>, <code>standard-error-port</code> which are made
+to wrap standard file descriptors distinct from the parent&rsquo;s standard
+file descriptors.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-after_002dfork_002fprepare_002dchild_002dbinary_002dinput_002foutput_002dports"></a>Function: <strong>after-fork/prepare-child-binary-input/output-ports</strong></dt>
+<dd><p>To be called in the child process, after a fork operation and after
+calling <code>after-fork/prepare-child-file-descriptors</code> to prepare
+binary input and output ports wrapping the standard file descriptors.
+Return 3 values:
+</p>
+<ol>
+<li> Binary input port reading from the standard file descriptor <code>0</code>.
+It is the port returned by <code>standard-input-port</code>.
+
+</li><li> Binary input port writing to the standard file descriptor <code>1</code>.  It
+is the port returned by <code>standard-output-port</code>.
+
+</li><li> Binary input port writing to the standard file descriptor <code>2</code>.  It
+is the port returned by <code>standard-error-port</code>.
+</li></ol>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-after_002dfork_002fprepare_002dparent_002dbinary_002dinput_002foutput_002dports"></a>Function: <strong>after-fork/prepare-parent-binary-input/output-ports</strong> <em><var>parent-&gt;child-stdin</var> <var>parent&lt;-child-stdout</var> <var>parent&lt;-child-stderr</var></em></dt>
+<dd><p>To be called in the parent process, after a fork operation, to build
+Scheme input and output binary ports around standard file descriptors
+for the child process.  The arguments are:
+</p>
+<dl compact="compact">
+<dt><var>parent-&gt;child-stdin</var></dt>
+<dd><p>It must be a file descriptor that writes in the standard input of the
+child process.
+</p>
+</dd>
+<dt><var>parent&lt;-child-stdout</var></dt>
+<dd><p>It must be a file descriptor that reads from the standard output of the
+child process.
+</p>
+</dd>
+<dt><var>parent&lt;-child-stderr</var></dt>
+<dd><p>It must be must be a file descriptor that reads from the standard error
+of the child process.
+</p></dd>
+</dl>
+
+<p>Return 3 values:
+</p>
+<ol>
+<li> Binary output port that writes in the standard input of the child
+process.  Closing this port will also close the underlying file
+descriptor.
+
+</li><li> Binary input port that reads from the standard output of the child
+process.  Closing this port will also close the underlying file
+descriptor.
+
+</li><li> Binary input port that reads from the standard error of the child
+process.  Closing this port will also close the underlying file
+descriptor.
+</li></ol>
+</dd></dl>
+
+
+<p>Here is an example that forks a process, sets up the file descriptors in
+the child process, sets up binary ports in both the parent and the
+child, waits for child to terminate.
+</p>
+<div class="example">
+<pre class="example">(import (vicare)
+  (prefix (vicare posix) px.))
+
+(let-values
+    (((child-stdin          parent-&gt;child-stdin) (px.pipe))
+     ((parent&lt;-child-stdout child-stdout)        (px.pipe))
+     ((parent&lt;-child-stderr child-stderr)        (px.pipe)))
+
+  (define (parent-proc child-pid)
+    (px.close child-stdin)
+    (px.close child-stdout)
+    (px.close child-stderr)
+    (receive (child-stdin child-stdout child-stderr)
+        (px.after-fork/prepare-parent-binary-input/output-ports
+             parent-&gt;child-stdin
+             parent&lt;-child-stdout
+             parent&lt;-child-stderr)
+      (unwind-protect
+          (let ((bufout (make-bytevector 4 0))
+                (buferr (make-bytevector 4 0)))
+            (put-bytevector child-stdin '#ve(ascii &quot;ciao\n&quot;))
+            (flush-output-port child-stdin)
+            (let ((status (px.waitpid child-pid 0)))
+              (if (and (px.WIFEXITED status)
+                       (zero? (px.WEXITSTATUS status)))
+                  (begin
+                    (get-bytevector-n! child-stdout bufout 0 4)
+                    (get-bytevector-n! child-stderr buferr 0 4)
+                    (values bufout buferr))
+                (error #f
+                  &quot;child process exited abnormally&quot;
+                  status))))
+        (close-output-port child-stdin)
+        (close-input-port  child-stdout)
+        (close-input-port  child-stderr))))
+
+  (define (child-thunk)
+    (guard (E (else
+               (print-condition E)
+               (exit 1)))
+      (px.close parent-&gt;child-stdin)
+      (px.close parent&lt;-child-stdout)
+      (px.close parent&lt;-child-stderr)
+      (px.after-fork/prepare-child-file-descriptors
+          child-stdin child-stdout child-stderr)
+      (receive (stdin-port stdout-port stderr-port)
+          (px.after-fork/prepare-child-binary-input/output-ports)
+        (let ((buf (make-bytevector 5 0)))
+          (get-bytevector-n! stdin-port buf 0 5)
+          (assert (bytevector=? buf '#ve(ascii &quot;ciao\n&quot;)))
+          (put-bytevector stdout-port '#ve(ascii &quot;out\n&quot;))
+          (put-bytevector stderr-port '#ve(ascii &quot;err\n&quot;))
+          (flush-output-port stdout-port)
+          (flush-output-port stderr-port)
+          (exit 0)))))
+
+  (flush-output-port (console-output-port))
+  (flush-output-port (console-error-port))
+  (px.fork parent-proc child-thunk))
+</pre></div>
+
+<p>here is the same example using <code>fork-with-binary-ports</code>:
+</p>
+<div class="example">
+<pre class="example">(import (vicare)
+  (prefix (vicare posix) px.))
+
+(define (parent-proc child-pid
+           child-stdin child-stdout child-stderr)
+  (unwind-protect
+      (let ((bufout (make-bytevector 4 0))
+            (buferr (make-bytevector 4 0)))
+        (put-bytevector child-stdin '#ve(ascii &quot;ciao\n&quot;))
+        (flush-output-port child-stdin)
+        (let ((status (px.waitpid child-pid 0)))
+          (if (and (px.WIFEXITED status)
+                   (zero? (px.WEXITSTATUS status)))
+              (begin
+                (get-bytevector-n! child-stdout bufout 0 4)
+                (get-bytevector-n! child-stderr buferr 0 4)
+                (values bufout buferr))
+            (error #f
+              &quot;child process exited abnormally&quot;
+              status))))
+    (close-output-port child-stdin)
+    (close-input-port  child-stdout)
+    (close-input-port  child-stderr)))
+
+(define (child-thunk)
+  (guard (E (else
+             (print-condition E)
+             (exit 1)))
+    (define-constant stdin-port  (standard-input-port))
+    (define-constant stdout-port (standard-output-port))
+    (define-constant stderr-port (standard-error-port))
+    (let ((buf (make-bytevector 5 0)))
+      (get-bytevector-n! stdin-port buf 0 5)
+      (assert (bytevector=? buf '#ve(ascii &quot;ciao\n&quot;)))
+      (put-bytevector stdout-port '#ve(ascii &quot;out\n&quot;))
+      (put-bytevector stderr-port '#ve(ascii &quot;err\n&quot;))
+      (flush-output-port stdout-port)
+      (flush-output-port stderr-port)
+      (exit 0))))
+
+(px.fork-with-binary-ports parent-proc child-thunk)
+</pre></div>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="posix-process-fork-textual.html#posix-process-fork-textual" accesskey="n" rel="next">posix process fork textual</a>, Previous: <a href="posix-process-fork-fds.html#posix-process-fork-fds" accesskey="p" rel="prev">posix process fork fds</a>, Up: <a href="posix-process-fork.html#posix-process-fork" accesskey="u" rel="up">posix process fork</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

@@ -1,0 +1,189 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.4d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit and 64-bit
+processors.  Vicare is pronounced the etruscan way.  The focus of
+this document is over the typed language extension.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/downloads
+
+the home page of the project is at:
+
+http://marcomaggi.github.io/vicare.html
+
+development takes place at:
+
+http://github.com/marcomaggi/vicare/
+
+and, as a backup, at:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/
+
+Copyright (C) 2016-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Vicare Scheme&rsquo;s typed language: built-in void</title>
+
+<meta name="description" content="Vicare Scheme&rsquo;s typed language: built-in void">
+<meta name="keywords" content="Vicare Scheme&rsquo;s typed language: built-in void">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="type-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="built_002din.html#built_002din" rel="up" title="built-in">
+<link href="built_002din-top.html#built_002din-top" rel="next" title="built-in top">
+<link href="built_002din.html#built_002din" rel="prev" title="built-in">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="built_002din-void"></a>
+<div class="header">
+<p>
+Next: <a href="built_002din-top.html#built_002din-top" accesskey="n" rel="next">built-in top</a>, Up: <a href="built_002din.html#built_002din" accesskey="u" rel="up">built-in</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="The-type-of-the-void-value"></a>
+<h3 class="section">6.1 The type of the void value</h3>
+
+
+<p>The type <code>&lt;void&gt;</code> is the type of the void object returned by
+<code>void</code>.  We should never use <code>&lt;void&gt;</code> in a type annotation,
+because the only legitimate use of the void object is as single return
+value of functions returning &ldquo;unspecified values&rdquo; (under
+Vicare returning a single value is faster than returning zero
+values).  If we need a unique value: we should use the sentinel value,
+see <a href="../vicare-scheme/iklib-sentinel.html#iklib-sentinel">(vicare-scheme)The sentinel object</a>.
+</p>
+<p>Expressions of type <code>&lt;void&gt;</code> are deprecated as operands in function
+applications and forbidden in logic predicates.  For example:
+</p>
+<div class="lisp">
+<pre class="lisp">(display (vector-set! (vector 1) 0 2))
+</pre></div>
+
+<p>raises an exception because <code>vector-set!</code> returns the void value.
+The type <code>&lt;void&gt;</code> has no parent (it is <strong>not</strong> a sub&ndash;type of
+<code>&lt;top&gt;</code>) and it should be like not&ndash;a&ndash;number for numeric
+computations.  Here are some consequences when the expander can
+determine the type of an operand:
+</p>
+<ul>
+<li> Composing <code>&lt;void&gt;</code> with other types results in void:
+
+<div class="lisp">
+<pre class="lisp">(type-annotation-syntax (or &lt;fixnum&gt; &lt;void&gt;))
+&rArr; &lt;void&gt;
+
+(type-annotation-syntax (and &lt;fixnum&gt; &lt;void&gt;))
+&rArr; &lt;void&gt;
+
+(type-annotation-syntax (not &lt;void&gt;))
+&rArr; &lt;void&gt;
+</pre></div>
+
+</li><li> A void expression as operand of <code>and</code>, <code>or</code>, <code>xor</code>
+and test of <code>if</code> will cause an expand&ndash;time syntax violation.
+
+</li><li> A void expression as operand of <code>not</code> will cause an expand&ndash;time
+syntax violation.
+
+</li><li> Remembering that <code>cond</code> and <code>case</code> return void when no
+<code>else</code> clause is present and no clause matches: when
+<code>cond</code> or <code>case</code> are used as operands, an <code>else</code>
+clause is mandatory.
+
+</li><li> Remembering that <code>when</code> and <code>unless</code> return void when the
+body is not evaluated: <code>when</code> and <code>unless</code> cannot be used
+as operands.
+
+</li><li> Uses of the syntax <code>set!</code> cannot be operand expressions.
+</li></ul>
+
+<p>The only function that is allowed to have a void operand is the core
+primitive <code>void-object?</code>.
+</p>
+
+<dl>
+<dt><a name="index-_003cvoid_003e"></a>Core Type: <strong>&lt;void&gt;</strong></dt>
+<dd><p>The type of the void object.  <code>&lt;void&gt;</code> has no parent type.  The
+union and intersection between <code>&lt;void&gt;</code> and any other type is
+<code>&lt;void&gt;</code> itself.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-type_002dconstructor-on-_003cvoid_003e"></a>Constructor on <code>&lt;void&gt;</code>: <em>&lt;void&gt;</em> <strong>type-constructor</strong></dt>
+<dd><p>Return the void object.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-type_002dpredicate-on-_003cvoid_003e"></a>Type predicate on <code>&lt;void&gt;</code>: <em>&lt;boolean&gt;</em> <strong>type-predicate</strong> <em><var>obj</var></em></dt>
+<dd><p>The type predicate is <code>void-object?</code>.  Return <code>#t</code> if <var>obj</var>
+is void; otherwise return <code>#f</code>.
+</p></dd></dl>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="built_002din-top.html#built_002din-top" accesskey="n" rel="next">built-in top</a>, Up: <a href="built_002din.html#built_002din" accesskey="u" rel="up">built-in</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

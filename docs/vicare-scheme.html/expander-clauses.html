@@ -1,0 +1,146 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.4d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit and 64-bit
+processors.  Vicare is pronounced the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/downloads
+
+the home page of the project is at:
+
+http://marcomaggi.github.io/vicare.html
+
+development takes place at:
+
+http://github.com/marcomaggi/vicare/
+
+and, as a backup, at:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the "History" appendix for details.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Vicare Scheme: expander clauses</title>
+
+<meta name="description" content="Vicare Scheme: expander clauses">
+<meta name="keywords" content="Vicare Scheme: expander clauses">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="expander.html#expander" rel="up" title="expander">
+<link href="expander-clauses-intro.html#expander-clauses-intro" rel="next" title="expander clauses intro">
+<link href="expander-utils-expanding.html#expander-utils-expanding" rel="prev" title="expander utils expanding">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="expander-clauses"></a>
+<div class="header">
+<p>
+Next: <a href="expander-system_002dlabels.html#expander-system_002dlabels" accesskey="n" rel="next">expander system-labels</a>, Previous: <a href="expander-utils.html#expander-utils" accesskey="p" rel="prev">expander utils</a>, Up: <a href="expander.html#expander" accesskey="u" rel="up">expander</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Syntax-clauses-helpers"></a>
+<h3 class="section">15.5 Syntax clauses helpers</h3>
+
+
+<p>When writing definition macros similar to <code>define-record-type</code> it
+is quite useful to include in the syntax &ldquo;clauses&rdquo; that optionally
+specify the behaviour of the defined thing.  A list of clauses is a
+syntax object with the format:
+</p>
+<div class="example">
+<pre class="example">((<var>?identifier</var> <var>?thing</var> ...) ...)
+</pre></div>
+
+<p>in which <var>?identifier</var> is meant to be an auxiliary syntax (as
+defined by <code>define-auxiliary-syntaxes</code> or <code>define-syntax</code>) and
+the optional <var>?thing</var> arguments can represent any symbolic
+expression.  The functions documented in this section help in validating
+and processing such clauses.
+</p>
+<table class="menu" border="0" cellspacing="0">
+<tr><td align="left" valign="top">&bull; <a href="expander-clauses-intro.html#expander-clauses-intro" accesskey="1">expander clauses intro</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Introduction to clauses functions.
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="expander-clauses-utils.html#expander-clauses-utils" accesskey="2">expander clauses utils</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Syntax clauses utilities.
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="expander-clauses-constr.html#expander-clauses-constr" accesskey="3">expander clauses constr</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Syntax clauses constraints.
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="expander-clauses-objects.html#expander-clauses-objects" accesskey="4">expander clauses objects</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Clause specification objects.
+</td></tr>
+</table>
+
+
+
+
+</body>
+</html>

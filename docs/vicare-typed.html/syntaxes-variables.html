@@ -1,0 +1,531 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.4d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit and 64-bit
+processors.  Vicare is pronounced the etruscan way.  The focus of
+this document is over the typed language extension.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/downloads
+
+the home page of the project is at:
+
+http://marcomaggi.github.io/vicare.html
+
+development takes place at:
+
+http://github.com/marcomaggi/vicare/
+
+and, as a backup, at:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/
+
+Copyright (C) 2016-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Vicare Scheme&rsquo;s typed language: syntaxes variables</title>
+
+<meta name="description" content="Vicare Scheme&rsquo;s typed language: syntaxes variables">
+<meta name="keywords" content="Vicare Scheme&rsquo;s typed language: syntaxes variables">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="type-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="syntaxes.html#syntaxes" rel="up" title="syntaxes">
+<link href="syntaxes-overloads.html#syntaxes-overloads" rel="next" title="syntaxes overloads">
+<link href="syntaxes-case_002dtype.html#syntaxes-case_002dtype" rel="prev" title="syntaxes case-type">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="syntaxes-variables"></a>
+<div class="header">
+<p>
+Next: <a href="syntaxes-overloads.html#syntaxes-overloads" accesskey="n" rel="next">syntaxes overloads</a>, Previous: <a href="syntaxes-case_002dtype.html#syntaxes-case_002dtype" accesskey="p" rel="prev">syntaxes case-type</a>, Up: <a href="syntaxes.html#syntaxes" accesskey="u" rel="up">syntaxes</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Defining-typed-variables"></a>
+<h3 class="section">5.8 Defining typed variables</h3>
+
+
+<p>In all the following syntax definitions, we assume the following formats
+for the input form components:
+</p>
+<div class="lisp">
+<pre class="lisp"><var>?standard-clause</var> ==
+  | (<var>?standard-formals</var> . <var>?body</var>)
+
+<var>?typed-clause</var> ==
+  | (<var>?typed-clause-formals</var> . <var>?body</var>)
+
+<var>?typed-clause-formals</var> ==
+  | <var>?typed-formals</var>
+  | (<var>?anonymous-retvals</var> . <var>?typed-formals</var>)
+
+<var>?anonymous-retvals</var> ==
+  | (brace _ <var>?rv-type0</var> <var>?rv-type</var> ...)
+  | (brace _ <var>?rv-type</var> ... . <var>?rest-rv-type</var>)
+
+<var>?typed-var</var> ==
+  | <var>?name-id</var>
+  | (brace <var>?name-id</var> <var>?type</var>)
+
+<var>?typed-who</var> ==
+  | <var>?who-id</var>
+  | (brace <var>?who-id</var> <var>?rv-type0</var> <var>?rv-type</var> ...)
+  | (brace <var>?who-id</var> <var>?rv-type</var> ... . <var>?rest-rv-type</var>)
+
+<var>?standard-formals</var> ==
+  | <var>?args-id</var>
+  | (<var>?arg-id</var> ...)
+  | (<var>?arg-id</var> <var>?arg-id0</var> ... . <var>?args-id</var>)
+
+<var>?typed-formals</var> ==
+  | <var>?typed-args</var>
+  | (<var>?typed-arg</var> ...)
+  | (<var>?typed-arg0</var> <var>?typed-arg</var> ... . <var>?typed-rest</var>)
+
+<var>?typed-arg</var> ==
+  | <var>?arg-id</var>
+  | (brace <var>?arg-id</var> <var>?arg-type</var>)
+
+<var>?typed-args</var> ==
+  | <var>?args-id</var>
+  | (brace <var>?args-id</var> <var>?args-type</var>)
+
+<var>?typed-rest</var> ==
+  | <var>?rest-id</var>
+  | (brace <var>?rest-id</var> <var>?rest-type</var>)
+
+<var>?standard-binding</var> ==
+  | <var>?standard-var</var>
+
+<var>?standard-var</var> ==
+  | <var>?name-id</var>
+
+<var>?typed-binding</var> ==
+  | <var>?standard-var</var>
+</pre></div>
+
+<p>where the following components are syntactic identifiers:
+</p>
+<div class="lisp">
+<pre class="lisp"><var>?name-id</var> <var>?who-id</var> <var>?arg-id</var> <var>?args-id</var> <var>?rest-id</var>
+</pre></div>
+
+<p>the following components are type annotations:
+</p>
+<div class="lisp">
+<pre class="lisp"><var>?type</var> <var>?arg-type</var> <var>?rv-type</var>
+</pre></div>
+
+<p>and the following components are type annotations that must represent
+lists:
+</p>
+<div class="lisp">
+<pre class="lisp"><var>?args-type</var> <var>?rest-type</var> <var>?rest-rv-type</var>
+</pre></div>
+
+<p>The following syntactic bindings are exported by the library
+<code>(vicare)</code>.
+</p>
+
+<a name="Standard-syntaxes"></a>
+<h4 class="subsubheading">Standard syntaxes</h4>
+
+
+<dl>
+<dt><a name="index-define_002fstd"></a>Syntax: <strong>define/std</strong> <em><var>?who-id</var></em></dt>
+<dt><a name="index-define_002fstd-1"></a>Syntax: <strong>define/std</strong> <em><var>?who-id</var> <var>?expr</var></em></dt>
+<dt><a name="index-define_002fstd-2"></a>Syntax: <strong>define/std</strong> <em>(<var>?who-id</var> . <var>?standard-formals</var>) . <var>?body</var></em></dt>
+<dd><p>This is the <code>define</code> syntax as defined by <acronym>R6RS</acronym>; whenever the
+<code>define</code> syntactic binding is used in code with the typed
+language <strong>disabled</strong>: it expands into a use of
+<code>define/std</code>.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-case_002ddefine_002fstd"></a>Syntax: <strong>case-define/std</strong> <em><var>?who-id</var> <var>?standard-clause0</var> <var>?standard-clause</var> &hellip;</em></dt>
+<dd><p>This is a <code>case-define</code> syntax compatible with the <acronym>R6RS</acronym>
+language; whenever the <code>case-define</code> syntactic binding is used in
+code with the typed language <strong>disabled</strong>: it expands into a use of
+<code>case-define/std</code>.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-lambda_002fstd"></a>Syntax: <strong>lambda/std</strong> <em><var>?standard-formals</var> . <var>?body</var></em></dt>
+<dd><p>This is the <code>lambda</code> syntax as defined by <acronym>R6RS</acronym>; whenever the
+<code>lambda</code> syntactic binding is used in code with the typed
+language <strong>disabled</strong>: it expands into a use of
+<code>lambda/std</code>.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-named_002dlambda_002fstd"></a>Syntax: <strong>named-lambda/std</strong> <em><var>?name</var> <var>?standard-formals</var> . <var>?body</var></em></dt>
+<dd><p>This is like <code>lambda/std</code>, but accepts an argument <var>?name</var>
+which must be a syntactic identifier representing the name of the
+generated closure object.  In the body of the clauses the quoted name is
+bound to the fluid syntax <code>__who__</code>.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-case_002dlambda_002fstd"></a>Syntax: <strong>case-lambda/std</strong> <em><var>?standard-clause0</var> <var>?standard-clause</var> &hellip;</em></dt>
+<dd><p>This is a <code>case-lambda</code> syntax defined by <acronym>R6RS</acronym>; whenever the
+<code>case-lambda</code> syntactic binding is used in code with the typed
+language <strong>disabled</strong>: it expands into a use of
+<code>case-lambda/std</code>.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-named_002dcase_002dlambda_002fstd"></a>Syntax: <strong>named-case-lambda/std</strong> <em><var>?name</var> <var>?standard-clause0</var> <var>?standard-clause</var> &hellip;</em></dt>
+<dd><p>This is like <code>case-lambda/std</code>, but accepts an argument
+<var>?name</var> which must be a syntactic identifier representing the name
+of the generated closure object.  In the body of the clauses the quoted
+name is bound to the fluid syntax <code>__who__</code>.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-let_002fstd"></a>Syntax: <strong>let/std</strong> <em>(<var>?standard-binding</var> &hellip;) . <var>?body</var></em></dt>
+<dt><a name="index-let_002a_002fstd"></a>Syntax: <strong>let*/std</strong> <em>(<var>?standard-binding</var> &hellip;) . <var>?body</var></em></dt>
+<dt><a name="index-letrec_002fstd"></a>Syntax: <strong>letrec/std</strong> <em>(<var>?standard-binding</var> &hellip;) . <var>?body</var></em></dt>
+<dt><a name="index-letrec_002a_002fstd"></a>Syntax: <strong>letrec*/std</strong> <em>(<var>?standard-binding</var> &hellip;) . <var>?body</var></em></dt>
+<dd><p>These are the binding syntaxes defined by <acronym>R6RS</acronym>: whenever the
+syntaxes <code>let</code>, <code>let*</code>, <code>letrec</code>, <code>letrec*</code>
+are used in code with the typed language <strong>disabled</strong>: they expand
+into a uses of <code>let/std</code>, <code>let*/std</code>, <code>letrec/std</code>,
+<code>letrec*/std</code>.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-receive_002fstd"></a>Syntax: <strong>receive/std</strong> <em><var>?standard-formals</var> <var>?producer-expr</var> . <var>?body</var></em></dt>
+<dt><a name="index-receive_002dand_002dreturn_002fstd"></a>Syntax: <strong>receive-and-return/std</strong> <em><var>?standard-formals</var> <var>?producer-expr</var> . <var>?body</var></em></dt>
+<dd><p>These are <code>receive</code> and <code>receive-and-return</code> syntaxes
+which define standard syntactic bindings: whenever the syntaxes
+<code>receive</code>, <code>receive-and-return</code> are used in code with the
+typed language <strong>disabled</strong>: they expand into a uses of
+<code>receive/std</code> and <code>receive-and-return/std</code>.
+</p></dd></dl>
+
+
+<a name="Checked-syntaxes"></a>
+<h4 class="subsubheading">Checked syntaxes</h4>
+
+
+<dl>
+<dt><a name="index-define_002fchecked"></a>Syntax: <strong>define/checked</strong> <em><var>?typed-var</var></em></dt>
+<dt><a name="index-define_002fchecked-1"></a>Syntax: <strong>define/checked</strong> <em><var>?typed-var</var> <var>?expr</var></em></dt>
+<dt><a name="index-define_002fchecked-2"></a>Syntax: <strong>define/checked</strong> <em>(<var>?typed-who</var> . <var>?typed-formals</var>) . <var>?body</var></em></dt>
+<dd><p>This is the <code>define</code> syntax that supports the typed language;
+whenever the <code>define</code> syntactic binding is used in code with the
+typed language <strong>enabled</strong>: it expands into a use of
+<code>define/checked</code>.
+</p>
+<p>When defining a variable: the result of the expression is validated
+either at expand&ndash;time or at run&ndash;time, to make sure that it matches the
+type of the variable.  The expression&rsquo;s type must be a sub&ndash;type of the
+variable&rsquo;s type.
+</p>
+<p>When defining a function: the operands and return values are validated
+either at expand&ndash;time or at run&ndash;time, to make sure that they match the
+type of the function&rsquo;s type signature.  The operands&rsquo; types must be
+sub&ndash;types of the arguments&rsquo; types; the return values&rsquo; types must be
+sub&ndash;types of the declared signature types.
+</p>
+<p>Usage examples:
+</p>
+<div class="lisp">
+<pre class="lisp">(define/checked var1
+  123)
+
+(define/checked {var2 &lt;string&gt;}
+  &quot;hello&quot;)
+
+(define/checked ({fun &lt;string&gt;} {N &lt;fixnum&gt;})
+  (fixnum-&gt;string N))
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-case_002ddefine_002fchecked"></a>Syntax: <strong>case-define/checked</strong> <em><var>?who-id</var> <var>?typed-clause0</var> <var>?typed-clause</var> &hellip;</em></dt>
+<dd><p>This is a <code>case-define</code> variant that supports the typed language.
+Operands and return values are validated either at expand&ndash;time or at
+run&ndash;time, to make sure that they match the type signature.
+</p>
+<p>Usage examples:
+</p>
+<div class="lisp">
+<pre class="lisp">(case-define/checked fun-1
+  ((a b c)
+   (list a b c))
+  ((a b c . rest)
+   (cons* a b c rest)))
+
+(case-define/checked fun-2
+  (({_ (list &lt;fixnum&gt; &lt;fixnum&gt; &lt;fixnum&gt;)}
+      {a &lt;fixnum&gt;} {b &lt;fixnum&gt;} {c &lt;fixnum&gt;})
+   (list a b c))
+  (({_ (list-of &lt;fixnum&gt;)}
+      {a &lt;fixnum&gt;} {b &lt;fixnum&gt;} {c &lt;fixnum&gt;}
+      . {rest (list-of &lt;fixnum&gt;)})
+   (cons* a b c rest)))
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-lambda_002fchecked"></a>Syntax: <strong>lambda/checked</strong> <em><var>?typed-clause-formals</var> . <var>?body</var></em></dt>
+<dd><p>This is the <code>lambda</code> syntax that supports the typed language;
+whenever the <code>lambda</code> syntactic binding is used in code with the
+typed language <strong>enabled</strong>: it expands into a use of
+<code>lambda/checked</code>.
+</p>
+<p>The operands and return values are validated either at expand&ndash;time and
+at run&ndash;time, to make sure that they match the type of the function&rsquo;s
+type signature.  The operands&rsquo; types must be sub&ndash;types of the
+arguments&rsquo; types; the return values&rsquo; types must be sub&ndash;types of the
+declared signature types.
+</p>
+<p>Usage examples:
+</p>
+<div class="lisp">
+<pre class="lisp">(lambda/checked (a b)
+  (list a b))
+
+(lambda/checked ({_ (list &lt;fixnum&gt; &lt;fixnum&gt;)}
+                  {a &lt;fixnum&gt;} {b &lt;fixnum&gt;})
+  (list a b))
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-named_002dlambda_002fchecked"></a>Syntax: <strong>named-lambda/checked</strong> <em><var>?name</var> <var>?typed-clause-formals</var> . <var>?body</var></em></dt>
+<dd><p>This is like <code>lambda/checked</code>, but accepts an argument
+<var>?name</var> which must be a syntactic identifier representing the name
+of the generated closure object.  In the body of the clauses the quoted
+name is bound to the fluid syntax <code>__who__</code>.
+</p>
+<p>Usage examples:
+</p>
+<div class="lisp">
+<pre class="lisp">(named-lambda/checked fun ({_ &lt;string&gt;} {N &lt;fixnum&gt;})
+  (fixnum-&gt;string N))
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-case_002dlambda_002fchecked"></a>Syntax: <strong>case-lambda/checked</strong> <em><var>?typed-clause0</var> <var>?typed-clause</var> &hellip;</em></dt>
+<dd><p>This is a <code>case-lambda</code> syntax that supports the typed language;
+whenever the <code>case-lambda</code> syntactic binding is used in code with
+the typed language <strong>enabled</strong>: it expands into a use of
+<code>case-lambda/checked</code>.
+</p>
+<p>Usage examples:
+</p>
+<div class="lisp">
+<pre class="lisp">(case-lambda/checked
+  (({_ &lt;string&gt;} {N &lt;fixnum&gt;})
+   (fixnum-&gt;string N))
+  (({_ &lt;string&gt;} {N &lt;fixnum&gt;} {base &lt;fixnum&gt;})
+   (fixnum-&gt;string N base)))
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-named_002dcase_002dlambda_002fchecked"></a>Syntax: <strong>named-case-lambda/checked</strong> <em><var>?name</var> <var>?typed-clause0</var> <var>?typed-clause</var> &hellip;</em></dt>
+<dd><p>This is like <code>case-lambda/checked</code>, but accepts an argument
+<var>?name</var> which must be a syntactic identifier representing the name
+of the generated closure object.  In the body of the clauses the quoted
+name is bound to the fluid syntax <code>__who__</code>.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-let_002fchecked"></a>Syntax: <strong>let/checked</strong> <em>(<var>?typed-binding</var> &hellip;) . <var>?body</var></em></dt>
+<dt><a name="index-let_002fchecked-1"></a>Syntax: <strong>let/checked</strong> <em><var>?recur</var> (<var>?typed-binding</var> &hellip;) . <var>?body</var></em></dt>
+<dt><a name="index-let_002a_002fchecked"></a>Syntax: <strong>let*/checked</strong> <em>(<var>?typed-binding</var> &hellip;) . <var>?body</var></em></dt>
+<dt><a name="index-letrec_002fchecked"></a>Syntax: <strong>letrec/checked</strong> <em>(<var>?typed-binding</var> &hellip;) . <var>?body</var></em></dt>
+<dt><a name="index-letrec_002a_002fchecked"></a>Syntax: <strong>letrec*/checked</strong> <em>(<var>?typed-binding</var> &hellip;) . <var>?body</var></em></dt>
+<dd><p>These are the binding syntaxes that support the typed language: whenever
+the syntaxes <code>let</code>, <code>let*</code>, <code>letrec</code>,
+<code>letrec*</code> are used in code with the typed language
+<strong>enabled</strong>: they expand into a uses of <code>let/checked</code>,
+<code>let*/checked</code>, <code>letrec/checked</code>,
+<code>letrec*/checked</code>.
+</p>
+<p>Notice how we can specify type annotation when using the named&ndash;<code>let</code> syntax.  The following
+recursive function and its application to operands:
+</p>
+<div class="lisp">
+<pre class="lisp">(define/checked ({loop &lt;fixnum&gt;} {a &lt;fixnum&gt;} {b &lt;list&gt;})
+  (if (fx=? a 3)
+      b
+    (loop (fxadd1 a) (cons a b))))
+
+(loop 1 '())
+</pre></div>
+
+<p>can be written:
+</p>
+<div class="lisp">
+<pre class="lisp">(let/checked {loop &lt;fixnum&gt;} (({a &lt;fixnum&gt;} 1)
+                                ({b &lt;list&gt;}   '()))
+  (if (fx=? a 3)
+      b
+    (loop (fxadd1 a) (cons a b))))
+</pre></div>
+
+<p>where the &ldquo;name&rdquo; of the named&ndash;<code>let</code> contains the type annotations of the return values.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-receive_002fchecked"></a>Syntax: <strong>receive/checked</strong> <em><var>?typed-formals</var> <var>?producer-expr</var> . <var>?body</var></em></dt>
+<dt><a name="index-receive_002dand_002dreturn_002fchecked"></a>Syntax: <strong>receive-and-return/checked</strong> <em><var>?typed-formals</var> <var>?producer-expr</var> . <var>?body</var></em></dt>
+<dd><p>These are <code>receive</code> and <code>receive-and-return</code> syntaxes
+which define typed syntactic bindings: whenever the syntaxes
+<code>receive</code>, <code>receive-and-return</code> are used in code with the
+typed language <strong>enabled</strong>: they expand into a uses of
+<code>receive/checked</code> and <code>receive-and-return/checked</code>.
+</p></dd></dl>
+
+
+<a name="Typed-syntaxes"></a>
+<h4 class="subsubheading">Typed syntaxes</h4>
+
+
+<dl>
+<dt><a name="index-define_002ftyped"></a>Syntax: <strong>define/typed</strong> <em><var>?typed-var</var></em></dt>
+<dt><a name="index-define_002ftyped-1"></a>Syntax: <strong>define/typed</strong> <em><var>?typed-var</var> <var>?expr</var></em></dt>
+<dt><a name="index-define_002ftyped-2"></a>Syntax: <strong>define/typed</strong> <em>(<var>?typed-who</var> . <var>?typed-formals</var>) . <var>?body</var></em></dt>
+<dd><p>This is a <code>define</code> syntax variant that supports the typed
+language: with expand&ndash;time validation, without run&ndash;time validation.
+</p>
+<p>When defining a variable: the result of the expression is validated only
+at expand&ndash;time, to make sure that it matches the type of the variable.
+The expression&rsquo;s type must be a sub&ndash;type of the variable&rsquo;s type.
+</p>
+<p>When defining a function: the operands and return values are validated
+only at expand&ndash;time, to make sure that they match the type of the
+function&rsquo;s type signature.  The operands&rsquo; types must be sub&ndash;types of
+the arguments&rsquo; types; the return values&rsquo; types must be sub&ndash;types of the
+declared signature types.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-case_002ddefine_002ftyped"></a>Syntax: <strong>case-define/typed</strong> <em><var>?who-id</var> <var>?typed-clause0</var> <var>?typed-clause</var> &hellip;</em></dt>
+<dd><p>This is a <code>case-define</code> variant that supports the typed language.
+Operands and return values are validated only expand&ndash;time, to make sure
+that they match the type signature.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-lambda_002ftyped"></a>Syntax: <strong>lambda/typed</strong> <em><var>?typed-clause-formals</var> . <var>?body</var></em></dt>
+<dd><p>This is a <code>lambda</code> syntax variant supports the typed language:
+with expand&ndash;time validation, without run&ndash;time validation.
+</p>
+<p>The operands and return values are validated only at expand&ndash;time, to
+make sure that they match the type of the function&rsquo;s type signature.
+The operands&rsquo; types must be sub&ndash;types of the arguments&rsquo; types; the
+return values&rsquo; types must be sub&ndash;types of the declared signature types.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-named_002dlambda_002ftyped"></a>Syntax: <strong>named-lambda/typed</strong> <em><var>?name</var> <var>?typed-clause-formals</var> . <var>?body</var></em></dt>
+<dd><p>This is like <code>lambda/typed</code>, but accepts an argument <var>?name</var>
+which must be a syntactic identifier representing the name of the
+generated closure object.  In the body of the clauses the quoted name is
+bound to the fluid syntax <code>__who__</code>.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-case_002dlambda_002ftyped"></a>Syntax: <strong>case-lambda/typed</strong> <em><var>?typed-clause0</var> <var>?typed-clause</var> &hellip;</em></dt>
+<dd><p>This is a <code>case-lambda</code> syntax that supports the typed language:
+with expand&ndash;time validation, without run&ndash;time validation.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-named_002dcase_002dlambda_002ftyped"></a>Syntax: <strong>named-case-lambda/typed</strong> <em><var>?name</var> <var>?typed-clause0</var> <var>?typed-clause</var> &hellip;</em></dt>
+<dd><p>This is like <code>case-lambda/typed</code>, but accepts an argument
+<var>?name</var> which must be a syntactic identifier representing the name
+of the generated closure object.  In the body of the clauses the quoted
+name is bound to the fluid syntax <code>__who__</code>.
+</p></dd></dl>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="syntaxes-overloads.html#syntaxes-overloads" accesskey="n" rel="next">syntaxes overloads</a>, Previous: <a href="syntaxes-case_002dtype.html#syntaxes-case_002dtype" accesskey="p" rel="prev">syntaxes case-type</a>, Up: <a href="syntaxes.html#syntaxes" accesskey="u" rel="up">syntaxes</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

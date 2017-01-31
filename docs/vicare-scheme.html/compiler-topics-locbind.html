@@ -1,0 +1,352 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.4d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit and 64-bit
+processors.  Vicare is pronounced the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/downloads
+
+the home page of the project is at:
+
+http://marcomaggi.github.io/vicare.html
+
+development takes place at:
+
+http://github.com/marcomaggi/vicare/
+
+and, as a backup, at:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the "History" appendix for details.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Vicare Scheme: compiler topics locbind</title>
+
+<meta name="description" content="Vicare Scheme: compiler topics locbind">
+<meta name="keywords" content="Vicare Scheme: compiler topics locbind">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="compiler-topics.html#compiler-topics" rel="up" title="compiler topics">
+<link href="compiler-topics-clambda.html#compiler-topics-clambda" rel="next" title="compiler topics clambda">
+<link href="compiler-topics-topbind.html#compiler-topics-topbind" rel="prev" title="compiler topics topbind">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="compiler-topics-locbind"></a>
+<div class="header">
+<p>
+Next: <a href="compiler-topics-clambda.html#compiler-topics-clambda" accesskey="n" rel="next">compiler topics clambda</a>, Previous: <a href="compiler-topics-topbind.html#compiler-topics-topbind" accesskey="p" rel="prev">compiler topics topbind</a>, Up: <a href="compiler-topics.html#compiler-topics" accesskey="u" rel="up">compiler topics</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Handling-of-lexical-local-bindings"></a>
+<h4 class="subsection">17.3.2 Handling of lexical local bindings</h4>
+
+
+<p>Lexical local bindings are defined in the core language by the forms:
+<code>let</code>, <code>letrec</code>, <code>letrec*</code>, <code>lambda</code>,
+<code>case-lambda</code>, <code>annotated-case-lambda</code>.  These forms have
+syntax:
+</p>
+<div class="example">
+<pre class="example">(let     ((<var>?lex</var> <var>?rhs</var>) ...) <var>?body</var>)
+(letrec  ((<var>?lex</var> <var>?rhs</var>) ...) <var>?body</var>)
+(letrec* ((<var>?lex</var> <var>?rhs</var>) ...) <var>?body</var>)
+(case-lambda (<var>?formals</var> <var>?body</var>) ...)
+(annotated-case-lambda <var>?annotation</var> (<var>?formals</var> <var>?body</var>) ...)
+(lambda <var>?formals</var> <var>?body</var>)
+</pre></div>
+
+<p>in which: <var>?lex</var> is a lexical gensym that uniquely identifies the
+binding in the core language form; <var>?rhs</var> is the initialisation
+expression; <var>?formals</var> is a proper or improper list of lex gensyms
+uniquely identifying arguments to function.
+</p>
+<p>References to local bindings are represented by standalone <var>?lex</var>
+gensyms; assignments to local bindings are represented by <code>set!</code>
+forms:
+</p>
+<div class="example">
+<pre class="example">(set! <var>?lex</var> <var>?rhs</var>)
+</pre></div>
+
+<p>where the right&ndash;hand side expression <var>?rhs</var> will, at run&ndash;time,
+evaluate to the new binding&rsquo;s value.
+</p>
+
+<a name="Recordised-language-representation-1"></a>
+<h4 class="subsubheading">Recordised language representation</h4>
+
+<p>The <code>let</code>, <code>letrec</code> and <code>letrec*</code> forms are recordised
+into nested hierarchies of <code>bind</code>, <code>recbind</code> and
+<code>rec*bind</code> structs:
+</p>
+<div class="example">
+<pre class="example">(bind     ((<var>?prel</var> <var>?rhs</var>) ...) <var>?body</var>)
+(recbind  ((<var>?prel</var> <var>?rhs</var>) ...) <var>?body</var>)
+(rec*bind ((<var>?prel</var> <var>?rhs</var>) ...) <var>?body</var>)
+</pre></div>
+
+<p>in which <var>?prel</var> is a <code>prelex</code> struct holding the <var>?lex</var>
+gensym.
+</p>
+<p>The <code>lambda</code>, <code>case-lambda</code> and <code>annotated-case-lambda</code>
+forms are recordised as <code>clambda</code> structs:
+</p>
+<div class="example">
+<pre class="example">(clambda (<var>?prel-formals</var> <var>?body</var>) ...)
+</pre></div>
+
+<p>in which <var>?prel-formals</var> is a a proper or improper list of
+<code>prel</code> structs representing arguments to each <code>clambda</code>
+clause.
+</p>
+<p>References to local bindings are represented by standalone
+<code>prelex</code> structs; assignments to local bindings are represented
+by <code>assign</code> structs:
+</p>
+<div class="example">
+<pre class="example">(assign <var>?prel</var> <var>?rhs</var>)
+</pre></div>
+
+
+<a name="Implementation-of-references-and-assignments-1"></a>
+<h4 class="subsubheading">Implementation of references and assignments</h4>
+
+<p>We distinguish between bindings that are only referenced (unassigned,
+read&ndash;only) and bindings that are also assigned (assigned, read&ndash;write).
+Example of code in which the binding <code>X</code> is only referenced:
+</p>
+<div class="example">
+<pre class="example">(let ((X 123)) (display X))
+</pre></div>
+
+<p>example of code in which the binding <code>X</code> is assigned and
+referenced:
+</p>
+<div class="example">
+<pre class="example">(let ((X 123)) (set! X 456) (display X))
+</pre></div>
+
+<p>The implementation technique for continuations used by Vicare
+mandates that: once an immediate Scheme object or reference to
+non&ndash;immediate Scheme object is stored in a machine word on the Scheme
+stack, such machine word <strong>must not be mutated</strong>; this allows the
+run&ndash;time system to copy stack frames at will.  As a consequence the
+following implementation techniques for local bindings are adopted:
+</p>
+<ul>
+<li> The value of unassigned lexical local bindings is stored in words
+allocated on the Scheme stack, with no further troubles.
+
+</li><li> The value of assigned lexical local bindings is stored in single&ndash;slot
+vectors providing mutable memory locations: a vector of one slot for
+each binding; a word allocated on the Scheme stack contains a reference
+to the single&ndash;slot vector.
+</li></ul>
+
+<p>References to unassigned bindings must be implemented as Scheme stack
+operations; references and assignments to assigned bindings must be
+substituted with appropriate vector operations.
+</p>
+
+<a name="Recordisation-and-transformation-of-unassigned-bindings"></a>
+<h4 class="subsubheading">Recordisation and transformation of unassigned bindings</h4>
+
+<p>After the <code>letrec</code> optimiser has processed <code>recbind</code> and
+<code>rec*bind</code> forms, unassigned local bindings always end up
+defined as:
+</p>
+<div class="example">
+<pre class="example">(bind ((<var>?prel</var> <var>?rhs</var>)) <var>?body</var>)
+</pre></div>
+
+<p>and references are represented by standalone <code>prelex</code> structs.
+Whenever a <var>?rhs</var> expression is recognised to be of type
+<code>clambda</code>, the corresponding <code>bind</code> is transformed into:
+</p>
+<div class="example">
+<pre class="example">(fix ((<var>?prel</var> <var>?rhs</var>)) <var>?body</var>)
+</pre></div>
+
+<p>No further transformations are needed for recordised code.
+</p>
+
+<a name="Recordisation-and-transformation-of-assigned-bindings"></a>
+<h4 class="subsubheading">Recordisation and transformation of assigned bindings</h4>
+
+<p>After the <code>letrec</code> optimiser has processed <code>recbind</code> and
+<code>rec*bind</code> forms, assigned local bindings always end up defined
+as:
+</p>
+<div class="example">
+<pre class="example">(bind ((<var>?prel</var> <var>?rhs</var>)) <var>?body</var>)
+</pre></div>
+
+<p>references are represented by standalone <code>prelex</code> structs and
+assignments are represented by <code>assign</code> structs.
+</p>
+<blockquote>
+<p><strong>NOTE</strong> No matter if a <var>?rhs</var> expression is of type
+<code>clambda</code>: its associated <code>bind</code> struct is <strong>not</strong>
+transformed into a <code>fix</code> struct; only unassigned
+<code>clambda</code> bindings can be defined by a <code>fix</code> struct.
+</p></blockquote>
+
+<p>Definitions, references and assignments are transformed by introducing
+the appropriate vector operations; such operation are equivalent to the
+following:
+</p>
+<div class="example">
+<pre class="example">(let ((x 123))
+  (set! x 456)
+  x)
+</pre></div>
+
+<p>is transformed into:
+</p>
+<div class="example">
+<pre class="example">(let ((t 123))
+  (let ((x (vector t)))
+    ($vector-set! x 0 456)
+    ($vector-ref  x 0)))
+</pre></div>
+
+<p>where the temporary binding <code>t</code> is generated by the compiler; the
+code always only access the first and single slot of the vector.  Using
+recordised code:
+</p>
+<div class="example">
+<pre class="example">(bind ((x_0 123))
+  (seq
+    (assign x_0 456)
+    x))
+</pre></div>
+
+<p>is transformed into:
+</p>
+<div class="example">
+<pre class="example">(bind ((x_0 123))
+  (bind ((x_1 (funcall (primref vector) x_0)))
+    (seq
+      (funcall (primref $vector-set!)
+               x_1
+               (constant 0)
+               (constant 456))
+      (funcall (primref $vector-ref)
+               x_1
+               (constant 0)))))
+</pre></div>
+
+<p>Formal bindings in <code>clambda</code> structs are also processed this
+way; for example:
+</p>
+<div class="example">
+<pre class="example">(lambda (a)
+  (display a)
+  (set! a 1)
+  a)
+</pre></div>
+
+<p>is transformed into:
+</p>
+<div class="example">
+<pre class="example">(lambda (a_0)
+  (bind ((a_1 (funcall (primref vector) a_0)))
+    (seq
+      (funcall (primref display)
+               (funcall (primref $vector-ref)
+                        a_1 (constant 0)))
+      (funcall (primref $vector-set!)
+               a_1 (constant 0) (constant 1))
+      (funcall (primref $vector-ref)
+               a_1 (constant 0)))))
+</pre></div>
+
+<blockquote>
+<p><strong>NOTE</strong> Assigned local bindings whose RHS expression is a
+<code>clambda</code> struct are also transformed by introducing a vector.
+After this transformation: there are no more <code>bind</code> struct whose
+RHS is a <code>clambda</code> struct.
+</p></blockquote>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="compiler-topics-clambda.html#compiler-topics-clambda" accesskey="n" rel="next">compiler topics clambda</a>, Previous: <a href="compiler-topics-topbind.html#compiler-topics-topbind" accesskey="p" rel="prev">compiler topics topbind</a>, Up: <a href="compiler-topics.html#compiler-topics" accesskey="u" rel="up">compiler topics</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

@@ -1,0 +1,228 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.4d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit and 64-bit
+processors.  Vicare is pronounced the etruscan way.  The focus of
+this document is over the typed language extension.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/downloads
+
+the home page of the project is at:
+
+http://marcomaggi.github.io/vicare.html
+
+development takes place at:
+
+http://github.com/marcomaggi/vicare/
+
+and, as a backup, at:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/
+
+Copyright (C) 2016-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Vicare Scheme&rsquo;s typed language: mixins</title>
+
+<meta name="description" content="Vicare Scheme&rsquo;s typed language: mixins">
+<meta name="keywords" content="Vicare Scheme&rsquo;s typed language: mixins">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="type-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="index.html#Top" rel="up" title="Top">
+<link href="interfaces.html#interfaces" rel="next" title="interfaces">
+<link href="protlev.html#protlev" rel="prev" title="protlev">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="mixins"></a>
+<div class="header">
+<p>
+Next: <a href="interfaces.html#interfaces" accesskey="n" rel="next">interfaces</a>, Previous: <a href="protlev.html#protlev" accesskey="p" rel="prev">protlev</a>, Up: <a href="index.html#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Sharing-object_002d_002dtype-definition-clauses"></a>
+<h2 class="chapter">9 Sharing object&ndash;type definition clauses</h2>
+
+
+<a name="index-Library-_0028vicare-language_002dextensions-mixins_0029"></a>
+<a name="index-_0028vicare-language_002dextensions-mixins_0029_002c-library"></a>
+
+
+<p><em>Mixins</em> are a way to add definition clauses to record&ndash;types and
+labels.  Interfaces are implemented half in the boot image and half in
+the library <code>(vicare language-extensions mixins)</code>.
+</p>
+<p>Let&rsquo;s consider this situation:
+</p>
+<div class="lisp">
+<pre class="lisp">(define-record-type &lt;alpha&gt;
+  (fields a))
+
+(define-record-type &lt;beta&gt;
+  (fields b))
+
+(define-record-type &lt;delta&gt;
+  (parent &lt;alpha&gt;)
+  (fields v)
+  (method (doit)
+    (+ 1 (.v this))))
+
+(define-record-type &lt;gamma&gt;
+  (parent &lt;beta&gt;)
+  (fields v)
+  (method (doit)
+    (+ 1 (.v this))))
+</pre></div>
+
+<p>the definitions of <code>&lt;delta&gt;</code> and <code>&lt;gamma&gt;</code> share some clauses;
+both of them already have a parent type and multiple inheritance is not
+supported by Vicare.  Is it possible to write the shared
+clauses only once and attach them to the record&ndash;type definitions?  Yes,
+with mixins.  The example above is equivalent to the following:
+</p>
+<div class="lisp">
+<pre class="lisp">(define-record-type &lt;alpha&gt;
+  (field a))
+
+(define-record-type &lt;beta&gt;
+  (field b))
+
+(define-mixin-type &lt;stuff&gt;
+  (field v)
+  (method (doit)
+    (+ 1 (.v this))))
+
+(define-record-type &lt;delta&gt;
+  (parent &lt;alpha&gt;)
+  (mixins &lt;stuff&gt;))
+
+(define-record-type &lt;gamma&gt;
+  (parent &lt;beta&gt;)
+  (mixins &lt;stuff&gt;))
+</pre></div>
+
+<p>the syntax use of <code>define-mixin-type</code> associates a set of clauses to
+the identifier <code>&lt;stuff&gt;</code>; when the <code>mixins</code> clause is used in
+the body of a record&ndash;type definition:
+</p>
+<ol>
+<li> The clauses associated to the selected mixin identifier are retrieved as
+syntax object.
+
+</li><li> All the instances of the identifier <code>&lt;stuff&gt;</code> are substituted with
+the identifier of the enclosing record&ndash;type; <code>&lt;delta&gt;</code> and
+<code>&lt;gamma&gt;</code> in the example.
+
+</li><li> The resulting clauses are added to the enclosing definition.
+</li></ol>
+
+
+<dl>
+<dt><a name="index-mixins"></a>Auxiliary Syntax: <strong>mixins</strong> <em><var>?mixin-name</var> &hellip;</em></dt>
+<dd><p>Compose the enclosing record&ndash;type, label or mixin definition with the
+given list of mixins.  This clause can be used multiple times.  This
+syntactic binding is exported by the library <code>(vicare)</code>.
+</p>
+<p>The syntactic identifiers <var>?mixin-name</var> are used to reference the
+mixins to be imported.  The clauses are included in the same order in
+which the <var>?mixin-name</var> identifiers are present in the
+<code>mixins</code> clause and in the same place in which the
+<code>mixins</code> clause is present in the enclosing definition.
+</p>
+<p>It is a syntax violation if a mixin identifier name is not already
+associated to a set of clauses at the time the receiving definition is
+expanded.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-define_002dmixin_002dtype"></a>Syntax: <strong>define-mixin-type</strong> <em><var>?mixin-name</var> <var>?clause0</var> <var>?clause</var> ...</em></dt>
+<dd><p>Associate a set of mixin clauses to the identifier <var>?mixin-name</var>,
+which can be later referenced by a <code>mixins</code> clause in the body of
+a class or label definition.  This syntactic binding is exported by the
+library <code>(vicare language-extensions mixins)</code>.
+</p>
+<p>The <code>mixins</code> clause can be used in the body of a mixin
+definition; the result is that the clauses of the imported mixins are
+added to the enclosing mixin definition.
+</p>
+<p>The following clauses are accepted in the body of a
+<code>define-mixin-type</code>:
+</p>
+<div class="lisp">
+<pre class="lisp">define-type-descriptors strip-angular-parentheses
+nongenerative sealed opaque protocol super-protocol fields
+method virtual-method seal-method
+custom-printer type-predicate equality-predicate
+comparison-procedure hash-function
+public protected private
+implements
+</pre></div>
+</dd></dl>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="interfaces.html#interfaces" accesskey="n" rel="next">interfaces</a>, Previous: <a href="protlev.html#protlev" accesskey="p" rel="prev">protlev</a>, Up: <a href="index.html#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

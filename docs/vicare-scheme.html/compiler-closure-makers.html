@@ -1,0 +1,280 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.4d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit and 64-bit
+processors.  Vicare is pronounced the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/downloads
+
+the home page of the project is at:
+
+http://marcomaggi.github.io/vicare.html
+
+development takes place at:
+
+http://github.com/marcomaggi/vicare/
+
+and, as a backup, at:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the "History" appendix for details.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Vicare Scheme: compiler closure makers</title>
+
+<meta name="description" content="Vicare Scheme: compiler closure makers">
+<meta name="keywords" content="Vicare Scheme: compiler closure makers">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="compiler.html#compiler" rel="up" title="compiler">
+<link href="compiler-lifting.html#compiler-lifting" rel="next" title="compiler lifting">
+<link href="compiler-vars.html#compiler-vars" rel="prev" title="compiler vars">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="compiler-closure-makers"></a>
+<div class="header">
+<p>
+Next: <a href="compiler-lifting.html#compiler-lifting" accesskey="n" rel="next">compiler lifting</a>, Previous: <a href="compiler-vars.html#compiler-vars" accesskey="p" rel="prev">compiler vars</a>, Up: <a href="compiler.html#compiler" accesskey="u" rel="up">compiler</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Introducing-closure-makers"></a>
+<h3 class="section">17.19 Introducing closure makers</h3>
+
+
+<p>We can think of <code>clambda</code> structs as representing code that,
+once compiled, becomes the machine code stored in code objects
+implementing Scheme functions.  This compiler pass wraps each
+<code>clambda</code> struct into a <code>closure-maker</code> struct, which
+represents code that, executed at run&ndash;time, builds and returns a
+closure object using the <code>clambda</code>&rsquo;s code object as
+implementation.  While wrapping <code>clambda</code>, a list of variable
+references that are free in the body of the <code>clambda</code> is
+gathered for future use.
+</p>
+<blockquote>
+<p><strong>NOTE</strong> The <strong>true</strong> purpose of this compiler pass is to
+gather lists of free variables referenced by <code>clambda</code> bodies.
+We might introduce the closure makers at a later pass and store the
+lists of free variables in the <code>clambda</code> structs; we introduce
+the closure makers here because it helps a bit in reasoning about the
+transformations.
+</p></blockquote>
+
+<p>Upon entering this compiler pass:
+</p>
+<ul>
+<li> For bindings defined by <code>bind</code> structs:
+
+<div class="example">
+<pre class="example">(bind ((<var>?lhs</var> <var>?rhs</var>) ...) <var>?body</var>)
+</pre></div>
+
+<p>the <var>?lhs</var> are <code>var</code> structs; the <var>?rhs</var> are
+non&ndash;<code>clambda</code> structs; the <code>var</code> in <var>?lhs</var> do
+<strong>not</strong> appear in the <var>?rhs</var> expressions.
+</p>
+</li><li> For bindings defined by <code>fix</code> structs:
+
+<div class="example">
+<pre class="example">(fix ((<var>?lhs</var> <var>?rhs</var>) ...) <var>?body</var>)
+</pre></div>
+
+<p>the <var>?lhs</var> are <code>var</code> structs; the <var>?rhs</var> are
+<code>clambda</code> structs; the <code>var</code> in <var>?lhs</var> might appear
+in the <var>?rhs</var> expressions.
+</p>
+</li><li> Structs of type <code>clambda</code> appear only as right&ndash;hand side
+expressions of <code>fix</code> structs.
+</li></ul>
+
+<p>This compiler pass transforms:
+</p>
+<div class="example">
+<pre class="example">(fix ((<var>?lhs</var> <var>?clambda-rhs</var>) ...) <var>?body</var>)
+</pre></div>
+
+<p>into:
+</p>
+<div class="example">
+<pre class="example">(fix ((<var>?lhs</var> (closure-maker <var>?clambda-rhs</var>)) ...) <var>?body</var>)
+</pre></div>
+
+<p>The following bindings are exported by the library <code>(vicare
+compiler)</code>.
+</p>
+
+<dl>
+<dt><a name="index-pass_002dintroduce_002dclosure_002dmakers"></a>Function: <strong>pass-introduce-closure-makers</strong> <em><var>input</var></em></dt>
+<dd><p>Perform code transformations traversing the whole hierarchy in
+<var>input</var>, which must be a struct instance representing recordised
+code, and building a new hierarchy of recordised code; return the new
+hierarchy.
+</p>
+<p>This function wraps each <code>clambda</code> struct in the input
+recordised code into <code>closure-maker</code> structures, compiling a
+list of free variables referenced by each <code>clambda</code>.
+</p></dd></dl>
+
+
+<a name="Examples-2"></a>
+<h4 class="subsubheading">Examples</h4>
+
+<p>This example generates a function with no free variables:
+</p>
+<div class="example">
+<pre class="example">(lambda () '1)
+&rarr; (fix ((tmp_0 (closure-maker (lambda () (constant 1))
+                                no-freevars)))
+      tmp_0)
+</pre></div>
+
+<p>This example generates a multi&ndash;clause function with no free variables:
+</p>
+<div class="example">
+<pre class="example">(case-lambda
+ (() '1)
+ ((a) a))
+&rarr; (fix ((tmp_0 (closure-maker (case-lambda
+                                 (()    (constant 1))
+                                 ((a_0) a_0))
+                                no-freevars)))
+      tmp_0)
+</pre></div>
+
+<p>This example generates a function with a free variable:
+</p>
+<div class="example">
+<pre class="example">(let ((a ((primitive read))))
+  (lambda () a))
+&rarr; (bind ((a_0 (funcall (primref read))))
+      (fix ((tmp_0 (closure-maker (lambda () a_0)
+                                  (freevars: a_0))))
+        tmp_0))
+</pre></div>
+
+<p>This example generates a recursive function with no free variables other
+than the reference to itself:
+</p>
+<div class="example">
+<pre class="example">(letrec ((f (lambda () (f))))
+  f)
+&rarr; (fix ((f_0 (closure-maker
+                  (lambda ()
+                    (jmpcall asmlabel:f:clambda:case-0 f_0))
+                  (freevars: f_0))))
+      f_0)
+</pre></div>
+
+<p>The core language form:
+</p>
+<div class="example">
+<pre class="example">(library-letrec*
+    ((a a.loc (lambda () '1))
+     (b b.loc (lambda () '2))
+     (c c.loc (lambda () '3))
+     (d d.loc '4))
+  (quote #!void))
+</pre></div>
+
+<p>is transformed into:
+</p>
+<div class="example">
+<pre class="example">(fix ((a_0 (closure-maker (lambda () (constant 1)) no-freevars))
+      (b_0 (closure-maker (lambda () (constant 2)) no-freevars))
+      (c_0 (closure-maker (lambda () (constant 3)) no-freevars)))
+  (seq
+    (funcall (primref $set-symbol-value/proc!)
+             (constant a.loc) a_0)
+    (funcall (primref $init-symbol-value!)
+             (constant b.loc) b_0)
+    (funcall (primref $init-symbol-value!)
+             (constant c.loc) c_0)
+    (bind ((d_0 (constant 4)))
+      (seq
+        (funcall (primref $init-symbol-value!)
+                 (constant d.loc) d_0)
+        (constant #!void)))))
+</pre></div>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="compiler-lifting.html#compiler-lifting" accesskey="n" rel="next">compiler lifting</a>, Previous: <a href="compiler-vars.html#compiler-vars" accesskey="p" rel="prev">compiler vars</a>, Up: <a href="compiler.html#compiler" accesskey="u" rel="up">compiler</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

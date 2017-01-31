@@ -1,61 +1,36 @@
-<html lang="en">
-<head>
-<title>machinery call frames - Vicare Scheme</title>
-<meta http-equiv="Content-Type" content="text/html">
-<meta name="description" content="Vicare Scheme">
-<meta name="generator" content="makeinfo 4.13">
-<link title="Top" rel="start" href="index.html#Top">
-<link rel="up" href="machinery.html#machinery" title="machinery">
-<link rel="prev" href="machinery-scheme-stack.html#machinery-scheme-stack" title="machinery scheme stack">
-<link rel="next" href="machinery-continuations.html#machinery-continuations" title="machinery continuations">
-<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
-<!--
-This document describes version 0.3d7 of Vicare Scheme, an
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.4d1 of Vicare Scheme, an
 R6RS compliant native compiler for the Scheme language, producing
-single threaded programs running on Intel x86 32-bit processors, with
-experimental support for 64-bit machines.  _Vicare_ is pronounced
-the etruscan way.
+single threaded programs running on Intel x86 32-bit and 64-bit
+processors.  Vicare is pronounced the etruscan way.
 
 The package, including its documentation, is distributed under the terms
 of the GNU General Public License (GPL) and can be downloaded
 from:
 
-        `http://sourceforge.net/projects/vicare-scheme/files/'
-
+https://bitbucket.org/marcomaggi/vicare-scheme/downloads
 
 the home page of the project is at:
 
-              `http://marcomaggi.github.com/vicare.html'
-
+http://marcomaggi.github.io/vicare.html
 
 development takes place at:
 
-                `http://github.com/marcomaggi/vicare/'
-
+http://github.com/marcomaggi/vicare/
 
 and, as a backup, at:
 
-                     `http://gitorious.org/vicare'
+https://bitbucket.org/marcomaggi/vicare-scheme/
 
-
-and at:
-
-           `http://sourceforge.net/projects/vicare-scheme/'
-
-
-this project has a mailing list:
-
-             `http://groups.google.com/group/vicare-users'
-
-
-Copyright (C) 2010-2013 by Marco Maggi.
+Copyright (C) 2010-2017 by Marco Maggi.
 
 Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
 
 Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
 
 This document is derived from the original Ikarus documentation by the
-Vicare Scheme contributors, see the ``History'' appendix for details.
+Vicare Scheme contributors, see the "History" appendix for details.
 
 The documentation of IrRegex is Copyright (C) 2005-2012 Alex
 Shinn.  All rights reserved.
@@ -63,313 +38,360 @@ Shinn.  All rights reserved.
 The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
 Sitaram.  All rights reserved.
 
-The documentation of the library `(vicare formations)' is derived
+The documentation of the library (vicare formations) is derived
 from the documentation of Guile.  Copyright (C) 1996-2005,
 2009-2013 Free Software Foundation.
 
-     This program is free software: you can redistribute it and/or
-     modify it under the terms of the GNU General Public License
-     version 3 as published by the Free Software Foundation.
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
 
-     This program is distributed in the hope that it will be useful, but
-     WITHOUT ANY WARRANTY; without even the implied warranty of
-     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-     General Public License for more details.
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
 
-     You should have received a copy of the GNU General Public License
-     along with this program.  If not, see
-     `http://www.gnu.org/licenses/'.
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
 
-Trademarks used herein are the property of their respective owners.-->
-<meta http-equiv="Content-Style-Type" content="text/css">
-<style type="text/css"><!--
-  pre.display { font-family:inherit }
-  pre.format  { font-family:inherit }
-  pre.smalldisplay { font-family:inherit; font-size:smaller }
-  pre.smallformat  { font-family:inherit; font-size:smaller }
-  pre.smallexample { font-size:smaller }
-  pre.smalllisp    { font-size:smaller }
-  span.sc    { font-variant:small-caps }
-  span.roman { font-family:serif; font-weight:normal; } 
-  span.sansserif { font-family:sans-serif; font-weight:normal; } 
---></style>
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Vicare Scheme: machinery call frames</title>
+
+<meta name="description" content="Vicare Scheme: machinery call frames">
+<meta name="keywords" content="Vicare Scheme: machinery call frames">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="machinery.html#machinery" rel="up" title="machinery">
+<link href="machinery-continuations.html#machinery-continuations" rel="next" title="machinery continuations">
+<link href="machinery-scheme-stack.html#machinery-scheme-stack" rel="prev" title="machinery scheme stack">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
 </head>
-<body>
-<div class="node">
-<a name="machinery-call-frames"></a>
-<p>
-Next:&nbsp;<a rel="next" accesskey="n" href="machinery-continuations.html#machinery-continuations">machinery continuations</a>,
-Previous:&nbsp;<a rel="previous" accesskey="p" href="machinery-scheme-stack.html#machinery-scheme-stack">machinery scheme stack</a>,
-Up:&nbsp;<a rel="up" accesskey="u" href="machinery.html#machinery">machinery</a>
-<hr>
-</div>
 
-<h3 class="section">12.4 Basics of function call frames</h3>
+<body lang="en">
+<a name="machinery-call-frames"></a>
+<div class="header">
+<p>
+Next: <a href="machinery-continuations.html#machinery-continuations" accesskey="n" rel="next">machinery continuations</a>, Previous: <a href="machinery-scheme-stack.html#machinery-scheme-stack" accesskey="p" rel="prev">machinery scheme stack</a>, Up: <a href="machinery.html#machinery" accesskey="u" rel="up">machinery</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Basics-of-function-call-frames"></a>
+<h3 class="section">16.4 Basics of function call frames</h3>
+
 
 <p>We assume the validity of machinery simplifications to focus on some
 aspect of the runtime behaviour, <a href="machinery-simplifications.html#machinery-simplifications">Simplification assumptions</a>.
+</p>
+<p>Let&rsquo;s consider the program:
+</p>
+<div class="example">
+<pre class="example">(import (rnrs))
+(define (one A)
+  (+ A 1))
+(one 2)
+</pre></div>
 
-   <p>Let's consider the program:
-
-<pre class="example">     (import (rnrs))
-     (define (one A)
-       (+ A 1))
-     (one 2)
-</pre>
-   <p class="noindent">in which the call to Scheme function generates a stack frame; the form
+<p>in which the call to Scheme function generates a stack frame; the form
 <code>(one 2)</code> is the &ldquo;call site&rdquo; and we can think of it as generating
 Assembly code containing the chunk:
+</p>
+<div class="example">
+<pre class="example">(call address_of_one)
+(label return_address)
+</pre></div>
 
-<pre class="example">     (call address_of_one)
-     (label return_address)
-</pre>
-   <p>Let's start with an empty Scheme stack represented by <acronym>CPU</acronym> registers
-and <acronym>PCB</acronym> fields, <a href="fig_003aMCF_005fempty_005fstack_005fScheme.html#fig_003aMCF_005fempty_005fstack_005fScheme">machinery call frames</a>.
+<p>Let&rsquo;s start with an empty Scheme stack represented by <acronym>CPU</acronym> registers
+and <acronym>PCB</acronym> fields, <a href="#fig_003aMCF_005fempty_005fstack_005fScheme">machinery call
+frames</a>.
+</p>
+<div class="float"><a name="fig_003aMCF_005fempty_005fstack_005fScheme"></a>
+<div class="example">
+<pre class="example">      high memory
+|                      |
+|----------------------|
+|                      | &lt;- pcb-&gt;frame_base
+|----------------------|
+| ik_underflow_handler | &lt;- Frame Pointer Register (FPR)
+|----------------------|
+            .
+            .
+            .
+|----------------------|
+|                      | &lt;- pcb-&gt;stack_base
+|----------------------|
+|                      |
+       low memory
+</pre></div>
 
-   <div class="float">
-<a name="fig_003aMCF_005fempty_005fstack_005fScheme"></a>
-<pre class="example">           high memory
-     |                      |
-     |----------------------|
-     |                      | &lt;- pcb-&gt;frame_base
-     |----------------------|
-     | ik_underflow_handler | &lt;- Frame Pointer Register (FPR)
-     |----------------------|
-                 .
-                 .
-                 .
-     |----------------------|
-     |                      | &lt;- pcb-&gt;stack_base
-     |----------------------|
-     |                      |
-            low memory
-</pre>
-   <p><strong class="float-caption">Figure 12.4: Empty Scheme stack as represented in the <acronym>CPU</acronym> registers and
-the <acronym>PCB</acronym> structure while running Scheme code.</strong></p></div>
+<div class="float-caption"><p><strong>Figure 16.4: </strong>Empty Scheme stack as represented in the <acronym>CPU</acronym> registers and
+the <acronym>PCB</acronym> structure while running Scheme code.</p></div></div>
+<p>Running the program means executing the following operations:
+</p>
+<ol>
+<li> Prepare to call <code>one</code>: put the single argument on the stack
+<em>2</em> machine words below the underflow handler,
+<a href="#fig_003aMCF_005fone_005fbefore">machinery call frames</a>.
 
-   <p>Running the program means executing the following operations:
+<div class="float"><a name="fig_003aMCF_005fone_005fbefore"></a>
+<div class="example">
+<pre class="example">      high memory
+|                      |
+|----------------------|
+|                      | &lt;- pcb-&gt;frame_base
+|----------------------|
+| ik_underflow_handler | &lt;- FPR
+|----------------------|
+|                      | &lt;- FPR - 1*wordsize
+|----------------------|
+|    argument A == 2   | &lt;- FPR - 2*wordsize
+|----------------------|
+|                      |
+       low memory
+</pre></div>
 
-     <ol type=1 start=1>
-<li>Prepare to call <code>one</code>: put the single argument on the stack
-2 machine words below the underflow handler,
-<a href="fig_003aMCF_005fone_005fbefore.html#fig_003aMCF_005fone_005fbefore">machinery call frames</a>.
-
-     <div class="float">
-<a name="fig_003aMCF_005fone_005fbefore"></a>
-     <pre class="example">                high memory
-          |                      |
-          |----------------------|
-          |                      | &lt;- pcb-&gt;frame_base
-          |----------------------|
-          | ik_underflow_handler | &lt;- FPR
-          |----------------------|
-          |                      | &lt;- FPR - 1*wordsize
-          |----------------------|
-          |    argument A == 2   | &lt;- FPR - 2*wordsize
-          |----------------------|
-          |                      |
-                 low memory
-</pre>
-     <p><strong class="float-caption">Figure 12.5: Preparing the function call to <code>one</code> by putting the
-argument on the stack.</strong></p></div>
-
-        <li>Call <code>one</code>: execute the Assembly instruction <code>call</code>; this puts
+<div class="float-caption"><p><strong>Figure 16.5: </strong>Preparing the function call to <code>one</code> by putting the
+argument on the stack.</p></div></div>
+</li><li> Call <code>one</code>: execute the Assembly instruction <code>call</code>; this puts
 the return address on the stack and decrements the <acronym>FPR</acronym> by a machine
-word, <a href="fig_003aMCF_005fone_005fafter.html#fig_003aMCF_005fone_005fafter">machinery call frames</a>.  Notice that the
+word, <a href="#fig_003aMCF_005fone_005fafter">machinery call frames</a>.  Notice that the
 stack now contains a single stack frame representing the status of the
 code before the call.
 
-        <div class="float">
-<a name="fig_003aMCF_005fone_005fafter"></a>
-     <pre class="example">                high memory
-          |                      |
-          |----------------------|
-          |                      | &lt;- pcb-&gt;frame_base
-          |----------------------|
-          | ik_underflow_handler |
-          |----------------------|         --
-          |    return address    | &lt;- FPR  . frame of caller
-          |----------------------|         --
-          |    argument A == 2   |
-          |----------------------|
-          |                      |
-                 low memory
-</pre>
-        <p><strong class="float-caption">Figure 12.6: Stack right after the function call to <code>one</code>.</strong></p></div>
+<div class="float"><a name="fig_003aMCF_005fone_005fafter"></a>
+<div class="example">
+<pre class="example">      high memory
+|                      |
+|----------------------|
+|                      | &lt;- pcb-&gt;frame_base
+|----------------------|
+| ik_underflow_handler |
+|----------------------|         --
+|    return address    | &lt;- FPR  . frame of caller
+|----------------------|         --
+|    argument A == 2   |
+|----------------------|
+|                      |
+       low memory
+</pre></div>
 
-        <li>Prepare to call <code>+</code>: put the two arguments on the stack 2
-machine words below the return address, <a href="fig_003aMCF_005fplus_005fbefore.html#fig_003aMCF_005fplus_005fbefore">compiler machinery call frames</a>.
+<div class="float-caption"><p><strong>Figure 16.6: </strong>Stack right after the function call to <code>one</code>.</p></div></div>
+</li><li> Prepare to call <code>+</code>: put the two arguments on the stack <em>2</em>
+machine words below the return address, <a href="#fig_003aMCF_005fplus_005fbefore">compiler machinery call frames</a>.
 
-        <div class="float">
-<a name="fig_003aMCF_005fplus_005fbefore"></a>
-     <pre class="example">                high memory
-          |                      |
-          |----------------------|
-          |                      | &lt;- pcb-&gt;frame_base
-          |----------------------|
-          | ik_underflow_handler |
-          |----------------------|         --
-          |    return address    | &lt;- FPR  . frame of caller
-          |----------------------|         --
-          |    argument A == 2   |         .
-          |----------------------|         . frame of ONE
-          |                      |         .
-          |----------------------|         --
-          |   1st argument == 2  |
-          |----------------------|
-          |   2nd argument == 1  |
-          |----------------------|
-          |                      |
-                 low memory
-</pre>
-        <p><strong class="float-caption">Figure 12.7: Preparing the call to <code>+</code>.</strong></p></div>
+<div class="float"><a name="fig_003aMCF_005fplus_005fbefore"></a>
+<div class="example">
+<pre class="example">      high memory
+|                      |
+|----------------------|
+|                      | &lt;- pcb-&gt;frame_base
+|----------------------|
+| ik_underflow_handler |
+|----------------------|         --
+|    return address    | &lt;- FPR  . frame of caller
+|----------------------|         --
+|    argument A == 2   |         .
+|----------------------|         . frame of ONE
+|                      |         .
+|----------------------|         --
+|   1st argument == 2  |
+|----------------------|
+|   2nd argument == 1  |
+|----------------------|
+|                      |
+       low memory
+</pre></div>
 
-        <li>Adjust the <acronym>FPR</acronym> to reference the machine word right above the one that
-will hold the return address, <a href="fig_003aMCF_005fplus_005fadjust.html#fig_003aMCF_005fplus_005fadjust">compiler machinery call frames</a>.
+<div class="float-caption"><p><strong>Figure 16.7: </strong>Preparing the call to <code>+</code>.</p></div></div>
+</li><li> Adjust the <acronym>FPR</acronym> to reference the machine word right above the one that
+will hold the return address, <a href="#fig_003aMCF_005fplus_005fadjust">compiler
+machinery call frames</a>.
 
-        <div class="float">
-<a name="fig_003aMCF_005fplus_005fadjust"></a>
-     <pre class="example">                high memory
-          |                      |
-          |----------------------|
-          |                      | &lt;- pcb-&gt;frame_base
-          |----------------------|
-          | ik_underflow_handler |
-          |----------------------|         --
-          |    return address    |         . frame of caller
-          |----------------------|         --
-          |    argument A == 2   | &lt;- FPR
-          |----------------------|
-          |                      |
-          |----------------------|
-          |   1st argument == 2  |
-          |----------------------|
-          |   2nd argument == 1  |
-          |----------------------|
-          |                      |
-                 low memory
-</pre>
-        <p><strong class="float-caption">Figure 12.8: Adjusting the <acronym>FPR</acronym> for the call to <code>+</code>.</strong></p></div>
+<div class="float"><a name="fig_003aMCF_005fplus_005fadjust"></a>
+<div class="example">
+<pre class="example">      high memory
+|                      |
+|----------------------|
+|                      | &lt;- pcb-&gt;frame_base
+|----------------------|
+| ik_underflow_handler |
+|----------------------|         --
+|    return address    |         . frame of caller
+|----------------------|         --
+|    argument A == 2   | &lt;- FPR
+|----------------------|
+|                      |
+|----------------------|
+|   1st argument == 2  |
+|----------------------|
+|   2nd argument == 1  |
+|----------------------|
+|                      |
+       low memory
+</pre></div>
 
-        <li>Call <code>+</code>: execute the Assembly instruction <code>call</code>; this puts
+<div class="float-caption"><p><strong>Figure 16.8: </strong>Adjusting the <acronym>FPR</acronym> for the call to <code>+</code>.</p></div></div>
+</li><li> Call <code>+</code>: execute the Assembly instruction <code>call</code>; this puts
 the return address on the stack and decrements the <acronym>FPR</acronym> by a machine
-word, <a href="fig_003aMCF_005fplus_005fafter.html#fig_003aMCF_005fplus_005fafter">machinery call frames</a>.  Notice that the
+word, <a href="#fig_003aMCF_005fplus_005fafter">machinery call frames</a>.  Notice that the
 stack now contains two stack frames representing the status of the code
 before the call.
 
-        <div class="float">
-<a name="fig_003aMCF_005fplus_005fafter"></a>
-     <pre class="example">                high memory
-          |                      |
-          |----------------------|
-          |                      | &lt;- pcb-&gt;frame_base
-          |----------------------|
-          | ik_underflow_handler |
-          |----------------------|         --
-          |    return address    |         . frame of caller
-          |----------------------|         --
-          |    argument A == 2   |         .
-          |----------------------|         . frame of ONE
-          |    return address    | &lt;- FPR  .
-          |----------------------|         --
-          |   1st argument == 2  |
-          |----------------------|
-          |   2nd argument == 1  |
-          |----------------------|
-          |                      |
-                 low memory
-</pre>
-        <p><strong class="float-caption">Figure 12.9: Stack right after the call to <code>+</code>.</strong></p></div>
+<div class="float"><a name="fig_003aMCF_005fplus_005fafter"></a>
+<div class="example">
+<pre class="example">      high memory
+|                      |
+|----------------------|
+|                      | &lt;- pcb-&gt;frame_base
+|----------------------|
+| ik_underflow_handler |
+|----------------------|         --
+|    return address    |         . frame of caller
+|----------------------|         --
+|    argument A == 2   |         .
+|----------------------|         . frame of ONE
+|    return address    | &lt;- FPR  .
+|----------------------|         --
+|   1st argument == 2  |
+|----------------------|
+|   2nd argument == 1  |
+|----------------------|
+|                      |
+       low memory
+</pre></div>
 
-        <li>Let's skip how <code>+</code> performs the addition and just assume that the
+<div class="float-caption"><p><strong>Figure 16.9: </strong>Stack right after the call to <code>+</code>.</p></div></div>
+</li><li> Let&rsquo;s skip how <code>+</code> performs the addition and just assume that the
 result is stored in the <acronym>AAR</acronym> register.
 
-        <li>Return from <code>+</code>: execute the Assembly instruction <code>ret</code> which:
+</li><li> Return from <code>+</code>: execute the Assembly instruction <code>ret</code> which:
 loads the machine word from the stack location referenced by <acronym>FPR</acronym> into
-the <acronym>CPU</acronym>'s Instruction Pointer Register, increments the <acronym>FPR</acronym> by a
+the <acronym>CPU</acronym>&rsquo;s Instruction Pointer Register, increments the <acronym>FPR</acronym> by a
 machine word, jumps to the code address in the Instruction Pointer
-Register, <a href="fig_003aMCF_005fplus_005fret.html#fig_003aMCF_005fplus_005fret">machinery call frames</a>.
+Register, <a href="#fig_003aMCF_005fplus_005fret">machinery call frames</a>.
 
-        <div class="float">
-<a name="fig_003aMCF_005fplus_005fret"></a>
-     <pre class="example">                high memory
-          |                      |
-          |----------------------|
-          |                      | &lt;- pcb-&gt;frame_base
-          |----------------------|
-          | ik_underflow_handler |
-          |----------------------|         --
-          |    return address    |         . frame of caller
-          |----------------------|         --
-          |    argument A == 2   | &lt;- FPR  .
-          |----------------------|         . frame of ONE
-          |    return address    |         .
-          |----------------------|         --
-          |                      |
-                 low memory
-</pre>
-        <p><strong class="float-caption">Figure 12.10: Stack right after the <code>ret</code> instruction that returns from
-<code>+</code>.</strong></p></div>
+<div class="float"><a name="fig_003aMCF_005fplus_005fret"></a>
+<div class="example">
+<pre class="example">      high memory
+|                      |
+|----------------------|
+|                      | &lt;- pcb-&gt;frame_base
+|----------------------|
+| ik_underflow_handler |
+|----------------------|         --
+|    return address    |         . frame of caller
+|----------------------|         --
+|    argument A == 2   | &lt;- FPR  .
+|----------------------|         . frame of ONE
+|    return address    |         .
+|----------------------|         --
+|                      |
+       low memory
+</pre></div>
 
-        <li>Adjust back the <acronym>FPR</acronym> to reference the return address of the caller
-<a href="fig_003aMCF_005fcaller_005fadjust.html#fig_003aMCF_005fcaller_005fadjust">machinery call frames</a>.
+<div class="float-caption"><p><strong>Figure 16.10: </strong>Stack right after the <code>ret</code> instruction that returns from
+<code>+</code>.</p></div></div>
+</li><li> Adjust back the <acronym>FPR</acronym> to reference the return address of the caller
+<a href="#fig_003aMCF_005fcaller_005fadjust">machinery call frames</a>.
 
-        <div class="float">
-<a name="fig_003aMCF_005fcaller_005fadjust"></a>
-     <pre class="example">                high memory
-          |                      |
-          |----------------------|
-          |                      | &lt;- pcb-&gt;frame_base
-          |----------------------|
-          | ik_underflow_handler |
-          |----------------------|         --
-          |    return address    | &lt;- FPR  . frame of caller
-          |----------------------|         --
-          |    argument A == 2   |
-          |----------------------|
-          |                      |
-                 low memory
-</pre>
-        <p><strong class="float-caption">Figure 12.11: Adjusting the <acronym>FPR</acronym> back after returning from <code>+</code>.</strong></p></div>
+<div class="float"><a name="fig_003aMCF_005fcaller_005fadjust"></a>
+<div class="example">
+<pre class="example">      high memory
+|                      |
+|----------------------|
+|                      | &lt;- pcb-&gt;frame_base
+|----------------------|
+| ik_underflow_handler |
+|----------------------|         --
+|    return address    | &lt;- FPR  . frame of caller
+|----------------------|         --
+|    argument A == 2   |
+|----------------------|
+|                      |
+       low memory
+</pre></div>
 
-        <li>Return from <code>one</code>: execute the Assembly instruction <code>ret</code>
+<div class="float-caption"><p><strong>Figure 16.11: </strong>Adjusting the <acronym>FPR</acronym> back after returning from <code>+</code>.</p></div></div>
+</li><li> Return from <code>one</code>: execute the Assembly instruction <code>ret</code>
 which: loads the machine word from the stack location referenced by
-<acronym>FPR</acronym> into the <acronym>CPU</acronym>'s Instruction Pointer Register, increments the
+<acronym>FPR</acronym> into the <acronym>CPU</acronym>&rsquo;s Instruction Pointer Register, increments the
 <acronym>FPR</acronym> by a machine word, jumps to the code address in the Instruction
-Pointer Register, <a href="fig_003aMCF_005fone_005fret.html#fig_003aMCF_005fone_005fret">machinery call frames</a>.  The
+Pointer Register, <a href="#fig_003aMCF_005fone_005fret">machinery call frames</a>.  The
 return value is still in the <acronym>AAR</acronym> register.
 
-        <div class="float">
-<a name="fig_003aMCF_005fone_005fret"></a>
-     <pre class="example">                high memory
-          |                      |
-          |----------------------|
-          |                      | &lt;- pcb-&gt;frame_base
-          |----------------------|
-          | ik_underflow_handler | &lt;- FPR
-          |----------------------|
-          |                      |
-                 low memory
-</pre>
-        <p><strong class="float-caption">Figure 12.12: Stack right after the <code>ret</code> instruction that returns from
-<code>one</code>.</strong></p></div>
+<div class="float"><a name="fig_003aMCF_005fone_005fret"></a>
+<div class="example">
+<pre class="example">      high memory
+|                      |
+|----------------------|
+|                      | &lt;- pcb-&gt;frame_base
+|----------------------|
+| ik_underflow_handler | &lt;- FPR
+|----------------------|
+|                      |
+       low memory
+</pre></div>
 
-        <li>The form <code>(one 2)</code> is the only top&ndash;level expression in the
+<div class="float-caption"><p><strong>Figure 16.12: </strong>Stack right after the <code>ret</code> instruction that returns from
+<code>one</code>.</p></div></div>
+</li><li> The form <code>(one 2)</code> is the only top&ndash;level expression in the
 program, so, after executing it, the execution flow must go back to the
 C code that started the program; we can imagine the Assembly code:
 
-     <pre class="example">          (call address_of_one)
-          (label return_address)
-          ;; move the return value from AAR to the stack
-          (movl AAR (disp (- wordsize) FPR))
-          (ret)
-</pre>
-        <p class="noindent">where <code>(ret)</code> jumps to the underflow handler.
-        </ol>
+<div class="example">
+<pre class="example">(call address_of_one)
+(label return_address)
+;; move the return value from AAR to the stack
+(movl AAR (disp (- wordsize) FPR))
+(ret)
+</pre></div>
 
-   <p>After the program execution: the stack is left empty as it was at the
+<p>where <code>(ret)</code> jumps to the underflow handler.
+</p></li></ol>
+
+<p>After the program execution: the stack is left empty as it was at the
 beginning; this is because no continuation objects have been created.
+</p>
+<hr>
+<div class="header">
+<p>
+Next: <a href="machinery-continuations.html#machinery-continuations" accesskey="n" rel="next">machinery continuations</a>, Previous: <a href="machinery-scheme-stack.html#machinery-scheme-stack" accesskey="p" rel="prev">machinery scheme stack</a>, Up: <a href="machinery.html#machinery" accesskey="u" rel="up">machinery</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
 
-<!-- page -->
-   </body></html>
 
+
+</body>
+</html>

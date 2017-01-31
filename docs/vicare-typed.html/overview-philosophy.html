@@ -1,0 +1,259 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.4d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit and 64-bit
+processors.  Vicare is pronounced the etruscan way.  The focus of
+this document is over the typed language extension.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/downloads
+
+the home page of the project is at:
+
+http://marcomaggi.github.io/vicare.html
+
+development takes place at:
+
+http://github.com/marcomaggi/vicare/
+
+and, as a backup, at:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/
+
+Copyright (C) 2016-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Vicare Scheme&rsquo;s typed language: overview philosophy</title>
+
+<meta name="description" content="Vicare Scheme&rsquo;s typed language: overview philosophy">
+<meta name="keywords" content="Vicare Scheme&rsquo;s typed language: overview philosophy">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="type-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="overview.html#overview" rel="up" title="overview">
+<link href="overview-enabling.html#overview-enabling" rel="next" title="overview enabling">
+<link href="overview.html#overview" rel="prev" title="overview">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="overview-philosophy"></a>
+<div class="header">
+<p>
+Next: <a href="overview-enabling.html#overview-enabling" accesskey="n" rel="next">overview enabling</a>, Up: <a href="overview.html#overview" accesskey="u" rel="up">overview</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Typed-language-philosophy"></a>
+<h3 class="section">1.1 Typed language philosophy</h3>
+
+
+<p>In this document we refer to the standard Scheme language defined by the
+<acronym>R6RS</acronym> specifications as the <em>standard language</em>; we refer to the
+typed Scheme language defined by Vicare as the <em>typed
+language</em>.
+</p>
+<p>To understand how Vicare represents the types of values, we
+must remember that every Scheme expression might return multiple values;
+so we can think of an expression evaluation as follows:
+</p>
+<div class="lisp">
+<pre class="lisp">(call-with-values
+     (lambda () <var>?epxr</var>)
+  (lambda <var>?formals</var> <var>?body</var>))
+</pre></div>
+
+<p>the return values of <var>?expr</var> are bound to the <var>?formals</var> and
+used in the <var>?body</var>.  For example, in the code:
+</p>
+<div class="lisp">
+<pre class="lisp">(call-with-values
+     (lambda () (values 1 2 3))
+  (lambda (a b c) <var>?body</var>))
+</pre></div>
+
+<p>while the expansion of <var>?body</var> takes place: a typed language would
+annotate the syntactic bindings <code>a</code>, <code>b</code> and <code>c</code> with the
+information that the values are fixnums.
+</p>
+<p>The tuple of type annotations associated to the <var>?formals</var> is called
+<em>type signature</em>; a type signature represents informations about
+both the number of values and their type.  We need a type signature to
+represent the types of values returned by an expression.  We need a type
+signature to represent the types of the arguments accepted in a function
+application.
+</p>
+<p>Given the <code>call-with-values</code> model of thinking to expressions
+evaluations: the whole purpose of a typed language is to verify, at
+expand&ndash;time, that the type signature of an expression matches the type
+signature of the arguments of a function.
+</p>
+<p>The standard language already mandates that the operands in a function
+application must be validated at run&ndash;time; this means the type
+signature of the operands is matched, at run&ndash;time, with the type
+signature of the arguments.  The typed language extends this feature to
+make it possible at expand&ndash;time.
+</p>
+<p>Type annotations are not mandatory in the typed language, so some
+operands are validated and others are not.
+</p>
+<p>To understand the role of Vicare&rsquo;s typed language extensions,
+we have to consider that:
+</p>
+<ul>
+<li> Standard Scheme is dynamically typed: language implementations might
+perform application signatures validation at run&ndash;time every time a
+function is called, considering that the return values of a function
+application are discarded or become the arguments of another function
+application.  For example the function <code>flsin</code> can be implemented
+as:
+
+<div class="example">
+<pre class="example">#!r6rs
+(import (except (rnrs (6))
+                flsin)
+  (vicare system $flonums))
+
+(define (flsin x)
+  (assert (flonum? x))
+  ($flsin x))
+</pre></div>
+
+</li><li> It is possible to build a standard Scheme language implementation that
+performs compile&ndash;time type inference; with such implementation:
+occasionally the compiler can determine the type of operands and return
+values and collapse multiple validations into a single one.  For
+example:
+
+<div class="example">
+<pre class="example">#!r6rs
+(import (rnrs (6)))
+
+(define (flsomething x)
+  (values (flsin x) (flcos x) (fltan x)))
+</pre></div>
+
+<p>can be transformed into (pseudo&ndash;code):
+</p>
+<div class="example">
+<pre class="example">#!r6rs
+(import (rnrs (6))
+  (vicare system $flonums))
+
+(define (flsomething x)
+  (assert (flonum? x))
+  (values ($flsin x) ($flcos x) ($fltan x)))
+</pre></div>
+
+<p>or automatically defined safe and unsafe variants of the same function:
+</p>
+<div class="example">
+<pre class="example">#!r6rs
+(import (rnrs (6))
+  (vicare system $flonums))
+
+(define (flsomething x)
+  (assert (flonum? x))
+  ($flsomething x))
+
+(define ($flsomething x)
+  (values ($flsin x) ($flcos x) ($fltan x)))
+</pre></div>
+
+<p>so that the unsafe <code>$flsomething</code> can be used later in place of the
+safe <code>flsomething</code> if we know that the argument is a flonum.
+</p>
+</li><li> The evaluation of a Scheme language program or library is defined to
+have two steps: expansion; compilation&ndash;and&ndash;evaluation or
+interpretation.  Standard Scheme is a &ldquo;high&ndash;level language&rdquo; which is
+transformed into a &ldquo;core language&rdquo; by the process of expansion; the
+expander allows macros to implement customised high&ndash;level
+transformations.  The core language expressions are handed to the
+compiler or the interpreter.
+
+</li><li> Type inference does not blend well with standard Scheme macro expansion;
+it is, in general, impossible to infer the types of a macro use before
+fully expanding it, or, in special cases, at least partially expanding
+it.  True type inference can be performed on the core language that is
+the result of fully expanding the standard language.  This means we
+cannot integrate the powerful features of the expander in the code
+resulting from transformations made possible by type inference.
+
+</li><li> Vicare is a language dialect whose purpose is to be a standard
+Scheme language with extensions; it allows mixed use of standard
+language syntax and extended language syntax.  The language extensions
+are mostly implemented in the expander, to allow user code to customise
+the generation of core language.
+
+</li><li> By explicitly specifying the types of lexical bindings:
+Vicare&rsquo;s dialect allows some of the expand&ndash;time validations
+and transformations that would be possible in a language with full type
+inference.
+</li></ul>
+
+<p>Since there is no type inference: the code writer is invited to
+explicitly add type annotations to the syntaxes that establish syntactic
+bindings.
+</p>
+<hr>
+<div class="header">
+<p>
+Next: <a href="overview-enabling.html#overview-enabling" accesskey="n" rel="next">overview enabling</a>, Up: <a href="overview.html#overview" accesskey="u" rel="up">overview</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

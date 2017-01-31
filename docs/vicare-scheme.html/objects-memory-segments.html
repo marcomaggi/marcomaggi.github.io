@@ -1,0 +1,256 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.4d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit and 64-bit
+processors.  Vicare is pronounced the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/downloads
+
+the home page of the project is at:
+
+http://marcomaggi.github.io/vicare.html
+
+development takes place at:
+
+http://github.com/marcomaggi/vicare/
+
+and, as a backup, at:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the "History" appendix for details.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Vicare Scheme: objects memory segments</title>
+
+<meta name="description" content="Vicare Scheme: objects memory segments">
+<meta name="keywords" content="Vicare Scheme: objects memory segments">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="objects-memory.html#objects-memory" rel="up" title="objects memory">
+<link href="objects-memory-pcb.html#objects-memory-pcb" rel="next" title="objects memory pcb">
+<link href="objects-memory-pages.html#objects-memory-pages" rel="prev" title="objects memory pages">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="objects-memory-segments"></a>
+<div class="header">
+<p>
+Next: <a href="objects-memory-pcb.html#objects-memory-pcb" accesskey="n" rel="next">objects memory pcb</a>, Previous: <a href="objects-memory-pages.html#objects-memory-pages" accesskey="p" rel="prev">objects memory pages</a>, Up: <a href="objects-memory.html#objects-memory" accesskey="u" rel="up">objects memory</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Logic-memory-segments"></a>
+<h4 class="subsection">13.3.2 Logic memory segments</h4>
+
+
+<a name="index-IK_005fSEGMENT_005fSIZE_002c-C-preprocessor-symbol"></a>
+<a name="index-IK_005fSEGMENT_005fSHIFT_002c-C-preprocessor-symbol"></a>
+
+
+<p>Some memory for use by the Scheme program is allocated through
+<code>mmap()</code> in blocks called <em>allocated segments</em>.  A segment&rsquo;s
+size is a fixed constant which must be defined as an exact multiple of
+the memory allocation granularity used by <code>mmap()</code>; we define the
+preprocessor macro <code>IK_SEGMENT_SIZE</code> to be such constant.
+</p>
+<p>On Unix platforms we expect <code>mmap()</code>&rsquo;s allocation granularity to be
+4096; on Windows platforms, under Cygwin, we expect <code>mmap()</code>&rsquo;s
+allocation granularity to be <code>2^16 = 65536 = 16 * IK_PAGESIZE</code>.  So
+the allocation granularity is not always equal to the system page size,
+and not always equal to Vicare&rsquo;s page size.
+</p>
+<p>Remembering that we have defined the preprocessor constant
+<code>IK_CHUNK_SIZE</code> to be 4096, and assuming:
+</p>
+<div class="example">
+<pre class="example">1 mebibyte = 1 MiB = 2^20 bytes = 1024 * 1024 bytes
+           = 1048576 bytes
+</pre></div>
+
+<p>we want the segment size to be 4 MiB:
+</p>
+<div class="example">
+<pre class="example">4 MiB = 4 * 1024 * 1024 = 64 * 2^16 = 64 * 65536
+      = 4096 * 1024 = 4096 * (4096 / 4) = IK_CHUNK_SIZE * 1024
+      = 2^22 = 4194304 bytes
+      = #x400000
+      = #b10000000000000000000000
+</pre></div>
+
+<p>notice how many zero bits there are in the binary representation of 4
+MiB:
+</p>
+<div class="example">
+<pre class="example">(number-&gt;string (* 4096 1024) 2)
+&rArr; #b10000000000000000000000
+;;   21098765432109876543210
+</pre></div>
+
+<p>Vicare distinguishes between <em>allocated segments</em> and
+<em>logic segments</em>:
+</p>
+<ul>
+<li> We assume <code>mmap()</code> returns pointers such that: the pointer
+references the first byte of a platform&rsquo;s system page; the numeric
+address of the pointer is an exact multiple of <em>4096</em> (the
+<em>12</em> least significant bits are zero).
+
+</li><li> We request <code>mmap()</code> to allocate memory in sizes that are multiples
+of the segment size; this memory is composed of <em>allocated
+segments</em>.
+
+</li><li> We define a <em>logic segment</em> as a region of memory whose size is
+equal to the segment size and whose starting address is an exact
+multiple of the segment size.  The segment size is 4 MiB so: a memory
+address referencing the first byte of a logic segment has the <em>22</em>
+least significant bits set to zero; for example: the memory starting at
+address <em>0</em> is part of the first logic segment.
+</li></ul>
+
+<p>so, typically, allocated segments of size <code>IK_SEGMENT_SIZE</code> are
+displaced from logic segments:
+</p>
+<div class="example">
+<pre class="example">       alloc segment  alloc segment  alloc segment
+-----|--------------|--------------|--------------|----------
+
+  logic segment  logic segment  logic segment  logic segment
+|--------------|--------------|--------------|--------------|
+
+ page page page page page page page page page page page page
+|----|----|----|----|----|----|----|----|----|----|----|----|
+</pre></div>
+
+<p>logic segments are absolute portions of the memory seen by a running
+system process.  It is natural to assign a zero&ndash;based index to each
+logic segment:
+</p>
+<div class="example">
+<pre class="example">  logic segment  logic segment  logic segment  logic segment
+|--------------|--------------|--------------|--------------|
+ ^              ^              ^              ^
+#x000000       #x400000       #x800000       #xC00000
+index 0        index 1        index 2        index 3
+</pre></div>
+
+
+<p><code>IK_SEGMENT_SHIFT</code> is the number of bits to right&ndash;shift a pointer
+or tagged pointer to obtain the index of the logic segment containing
+the pointer itself; it is the number for which:
+</p>
+<div class="example">
+<pre class="example">IK_SEGMENT_SIZE &gt;&gt; IK_SEGMENT_SHIFT = 1
+2^IK_SEGMENT_SHIFT = IK_SEGMENT_SIZE
+</pre></div>
+
+<p>When we want to determine the page index and logic segement index of the
+pointer <var>X</var>:
+</p>
+<div class="example">
+<pre class="example">  logic segment  logic segment  logic segment
+|--------------|--------------|--------------|
+ page page page page page page page page page
+|----|----|----|----|----|----|----|----|----|
+                       ^
+                       X
+|----|----|----|----|----|----|----|----|----| page indexes
+  P   P+1  P+2  P+3  P+4  P+5  P+6  P+7  P+7
+
+|--------------|--------------|--------------| segment indexes
+       S             S+1            S+2
+</pre></div>
+
+<p>we do:
+</p>
+<div class="example">
+<pre class="example">X &gt;&gt; IK_PAGESHIFT     == IK_PAGE_INDEX(X)    == P+4
+X &gt;&gt; IK_SEGMENT_SHIFT == IK_SEGMENT_INDEX(X) == S+1
+</pre></div>
+
+
+<dl>
+<dt><a name="index-IK_005fSEGMENT_005fINDEX"></a>C Preprocessor Macro: <em>ikuword_t</em> <strong>IK_SEGMENT_INDEX</strong> <em>(ikuword_t <var>X</var>)</em></dt>
+<dd><p>Given a tagged or untagged pointer <var>X</var>: return the index of the
+logic segment it belongs to.
+</p></dd></dl>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="objects-memory-pcb.html#objects-memory-pcb" accesskey="n" rel="next">objects memory pcb</a>, Previous: <a href="objects-memory-pages.html#objects-memory-pages" accesskey="p" rel="prev">objects memory pages</a>, Up: <a href="objects-memory.html#objects-memory" accesskey="u" rel="up">objects memory</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

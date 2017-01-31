@@ -1,0 +1,201 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.4d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit and 64-bit
+processors.  Vicare is pronounced the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/downloads
+
+the home page of the project is at:
+
+http://marcomaggi.github.io/vicare.html
+
+development takes place at:
+
+http://github.com/marcomaggi/vicare/
+
+and, as a backup, at:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the "History" appendix for details.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Vicare Scheme: iklib records defs destructor</title>
+
+<meta name="description" content="Vicare Scheme: iklib records defs destructor">
+<meta name="keywords" content="Vicare Scheme: iklib records defs destructor">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="iklib-records-defs.html#iklib-records-defs" rel="up" title="iklib records defs">
+<link href="iklib-records-defs-consig.html#iklib-records-defs-consig" rel="next" title="iklib records defs consig">
+<link href="iklib-records-defs-super_002dproto.html#iklib-records-defs-super_002dproto" rel="prev" title="iklib records defs super-proto">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="iklib-records-defs-destructor"></a>
+<div class="header">
+<p>
+Next: <a href="iklib-records-defs-consig.html#iklib-records-defs-consig" accesskey="n" rel="next">iklib records defs consig</a>, Previous: <a href="iklib-records-defs-super_002dproto.html#iklib-records-defs-super_002dproto" accesskey="p" rel="prev">iklib records defs super-proto</a>, Up: <a href="iklib-records-defs.html#iklib-records-defs" accesskey="u" rel="up">iklib records defs</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="The-destructor-protocol"></a>
+<h4 class="subsubsection">6.19.1.2 The destructor protocol</h4>
+
+
+<a name="index-destructor_002dprotocol_002c-record_002d_002dtype-definition-clause"></a>
+
+
+<p>In a use of the syntax <code>define-record-type</code>, the definition
+clause:
+</p>
+<div class="lisp">
+<pre class="lisp">(destructor-protocol <var>?expr</var>)
+</pre></div>
+
+<p>allows the specification of an expression <var>?expr</var> which must
+evaluate to the destructor protocol function; this function is used as
+explained below to construct a destructor function to be called:
+</p>
+<ul>
+<li> Implicitly by the garbage collector when a record of this type is
+collected.
+
+</li><li> Explicitly with the <code>delete</code> syntax.
+</li></ul>
+
+<p><a href="iklib-records-final.html#iklib-records-final">iklib records final</a> for further details.
+</p>
+<p>Here is how the destructor function is built:
+</p>
+<ul>
+<li> If this type has a <code>destructor-protocol</code> clause and no parent:
+<var>?expr</var> must evaluate to a closure object accepting no arguments and
+returning a closure object acting as destructor function for records of
+this type.  For example:
+
+<div class="lisp">
+<pre class="lisp">(define-record-type &lt;port&gt;
+  (fields port)
+  (destructor-protocol
+    (lambda ()
+      (lambda (record)
+        (close-port (&lt;port&gt;-port record))))))
+</pre></div>
+
+</li><li> If this type has a <code>destructor-protocol</code> clause and a parent
+specified with the <code>parent</code> or <code>parent-rtd</code> clauses:
+<var>?expr</var> must evaluate to a closure object accepting as single
+argument the parent&rsquo;s destructor function and returning as single value
+a closure object acting as destructor function for records of this type.
+For example:
+
+<div class="lisp">
+<pre class="lisp">(define-record-type &lt;port&gt;
+  (fields port)
+  (destructor-protocol
+    (lambda ()
+      (lambda (record)
+        (close-port (&lt;port&gt;-port record))))))
+
+(define-record-type &lt;file&gt;
+  (parent &lt;port&gt;)
+  (fields filename)
+  (destructor-protocol
+    (lambda (destroy-&lt;port&gt;)
+      (lambda (record)
+        (destroy-&lt;port&gt; record)))))
+</pre></div>
+
+<p>notice that the destructor of &lsquo;<samp>&lt;file&gt;</samp>&rsquo; is meant to call the
+destructor of its supertype &lsquo;<samp>&lt;port&gt;</samp>&rsquo; at some point; however calling
+the supertype&rsquo;s destructor is optional.
+</p>
+</li><li> If this type has no <code>destructor-protocol</code> clause, it has a parent
+and the parent has a destructor function: the parent&rsquo;s destructor
+function becomes this type&rsquo;s destructor function.
+</li></ul>
+
+<p>The destructor function must return zero values (for example using <code>(values)</code> in tail
+position).
+</p>
+<hr>
+<div class="header">
+<p>
+Next: <a href="iklib-records-defs-consig.html#iklib-records-defs-consig" accesskey="n" rel="next">iklib records defs consig</a>, Previous: <a href="iklib-records-defs-super_002dproto.html#iklib-records-defs-super_002dproto" accesskey="p" rel="prev">iklib records defs super-proto</a>, Up: <a href="iklib-records-defs.html#iklib-records-defs" accesskey="u" rel="up">iklib records defs</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

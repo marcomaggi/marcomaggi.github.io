@@ -1,0 +1,218 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes the libraries distributed along with version
+0.4d1 of Vicare Scheme, an R6RS compliant native
+compiler for the Scheme language.
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+The documentation of the libraries (vicare parser-tools silex
+-) are derived form the documentation of SILex.  Copyright
+(C) 2001, 2009 Danny Dube'.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Libraries for Vicare Scheme: srfi sets-and-bags intro</title>
+
+<meta name="description" content="Libraries for Vicare Scheme: srfi sets-and-bags intro">
+<meta name="keywords" content="Libraries for Vicare Scheme: srfi sets-and-bags intro">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="srfi-sets_002dand_002dbags.html#srfi-sets_002dand_002dbags" rel="up" title="srfi sets-and-bags">
+<link href="srfi-sets_002dand_002dbags-constr.html#srfi-sets_002dand_002dbags-constr" rel="next" title="srfi sets-and-bags constr">
+<link href="srfi-sets_002dand_002dbags.html#srfi-sets_002dand_002dbags" rel="prev" title="srfi sets-and-bags">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="srfi-sets_002dand_002dbags-intro"></a>
+<div class="header">
+<p>
+Next: <a href="srfi-sets_002dand_002dbags-constr.html#srfi-sets_002dand_002dbags-constr" accesskey="n" rel="next">srfi sets-and-bags constr</a>, Up: <a href="srfi-sets_002dand_002dbags.html#srfi-sets_002dand_002dbags" accesskey="u" rel="up">srfi sets-and-bags</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Introduction-8"></a>
+<h4 class="subsection">2.37.1 Introduction</h4>
+
+
+<p>Sets and bags are mutually disjoint types; they are also disjoint from
+other types of Scheme objects.
+</p>
+<ul>
+<li> Sets enforce the constraint that no two elements can be the same in the
+sense of the set&rsquo;s associated equality predicate.
+
+</li><li> Bags are like sets, but can contain the same object more than once.
+However, if two elements that are the same in the sense of the equality
+predicate, but not in the sense of <code>eqv?</code>, are both included, it is
+not guaranteed that they will remain distinct when retrieved from the
+bag: if two elements in a bag are the same in the sense of the bag&rsquo;s
+comparator, the implementation may in fact store just one of them.
+</li></ul>
+
+<p>The procedures for creating and manipulating bags are the same as those
+for sets, except that <code>set</code> is replaced by <code>bag</code> in their
+names, and that adjoining an element to a bag is effective even if the
+bag already contains the element.
+</p>
+
+<a name="Constraints"></a>
+<h4 class="subsubheading">Constraints</h4>
+
+<p>The <acronym>API</acronym> defined by <code>(srfi :113)</code> imposes usage constraints:
+</p>
+<ul>
+<li> It is an error for any procedure to be invoked on sets or bags with
+distinct comparators (in the sense of <code>eq?</code>).
+
+</li><li> It is an error to mutate any object while it is contained in a set or
+bag.
+
+</li><li> It is an error to add an object to a set or bag which does not satisfy
+the type test predicate of the comparator.
+
+</li><li> It is an error to add or remove an object from a set or a bag while
+iterating over it.
+</li></ul>
+
+
+<a name="Linear-update"></a>
+<h4 class="subsubheading">Linear update</h4>
+
+<p>The procedures of this <acronym>SRFI</acronym>, by default, are &ldquo;pure functional&rdquo;:
+they do not alter their parameters.  However, this <acronym>SRFI</acronym> also defines
+&ldquo;linear&ndash;update&rdquo; procedures, all of whose names end in <code>!</code>.  They
+have hybrid pure&ndash;functional/side&ndash;effecting semantics: they are
+allowed, but not required, to side&ndash;effect one of their parameters in
+order to construct their result.  An implementation may legally
+implement these procedures as pure, side&ndash;effect&ndash;free functions, or it
+may implement them using side effects, depending upon the details of
+what is the most efficient or simple to implement in terms of the
+underlying representation.
+</p>
+<p>It is an error to rely upon these procedures working by side effect. For
+example, this is not guaranteed to work:
+</p>
+<div class="lisp">
+<pre class="lisp">(let* ((set1 (set 'a 'b 'c))           ; set1 = {a,b,c}.
+       (set2 (set-adjoin! set1 'd)))   ; Add d to {a,b,c}.
+  set1) ; Could be either {a,b,c} or {a,b,c,d}.
+</pre></div>
+
+<p>However, this is well&ndash;defined:
+</p>
+<div class="lisp">
+<pre class="lisp">(let ((set1 (set 'a 'b 'c)))
+  (set-adjoin! set1 'd)) ; Add d to {a,b,c}.
+</pre></div>
+
+<p>So clients of these procedures write in a functional style, but must
+additionally be sure that, when the procedure is called, there are no
+other live pointers to the potentially&ndash;modified character set (hence
+the term &ldquo;linear update&rdquo;).
+</p>
+<p>There are two benefits to this convention:
+</p>
+<ul>
+<li> Implementations are free to provide the most efficient possible
+implementation, either functional or side&ndash;effecting.
+
+</li><li> Programmers may nonetheless continue to assume that sets are purely
+functional data structures: they may be reliably shared without needing
+to be copied, uniquified, and so forth.
+</li></ul>
+
+<p>In practice, these procedures are most useful for efficiently
+constructing sets and bags in a side&ndash;effecting manner, in some limited
+local context, before passing the character set outside the local
+construction scope to be used in a functional manner.
+</p>
+<p>Scheme provides no assistance in checking the linearity of the
+potentially side&ndash;effected parameters passed to these functions: there&rsquo;s
+no linear type checker or run&ndash;time mechanism for detecting violations.
+</p>
+<p>Note that if an implementation uses no side effects at all, it is
+allowed to return existing sets and bags rather than newly allocated
+ones, even where this <acronym>SRFI</acronym> explicitly says otherwise.
+</p>
+
+<a name="Comparator-restrictions"></a>
+<h4 class="subsubheading">Comparator restrictions</h4>
+
+<p>Implementations of this <acronym>SRFI</acronym> are allowed to place restrictions on the
+comparators that the procedures accept.  In particular, an
+implementation may require comparators to provide a comparison
+procedure.  Alternatively, an implementation may require comparators to
+provide a hash function, unless the equality predicate of the comparator
+is <code>eq?</code>, <code>eqv?</code>, <code>equal?</code>, <code>string=?</code>, or
+<code>string-ci=?</code>.  Implementations must not require the provision of
+both a comparison procedure and a hash function.
+</p>
+<hr>
+<div class="header">
+<p>
+Next: <a href="srfi-sets_002dand_002dbags-constr.html#srfi-sets_002dand_002dbags-constr" accesskey="n" rel="next">srfi sets-and-bags constr</a>, Up: <a href="srfi-sets_002dand_002dbags.html#srfi-sets_002dand_002dbags" accesskey="u" rel="up">srfi sets-and-bags</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

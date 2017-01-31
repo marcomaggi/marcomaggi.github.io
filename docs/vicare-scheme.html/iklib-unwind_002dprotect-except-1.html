@@ -1,0 +1,392 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.4d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit and 64-bit
+processors.  Vicare is pronounced the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/downloads
+
+the home page of the project is at:
+
+http://marcomaggi.github.io/vicare.html
+
+development takes place at:
+
+http://github.com/marcomaggi/vicare/
+
+and, as a backup, at:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the "History" appendix for details.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Vicare Scheme: iklib unwind-protect except 1</title>
+
+<meta name="description" content="Vicare Scheme: iklib unwind-protect except 1">
+<meta name="keywords" content="Vicare Scheme: iklib unwind-protect except 1">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="iklib-unwind_002dprotect.html#iklib-unwind_002dprotect" rel="up" title="iklib unwind-protect">
+<link href="iklib-unwind_002dprotect-except-2.html#iklib-unwind_002dprotect-except-2" rel="next" title="iklib unwind-protect except 2">
+<link href="iklib-unwind_002dprotect-dynamic.html#iklib-unwind_002dprotect-dynamic" rel="prev" title="iklib unwind-protect dynamic">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="iklib-unwind_002dprotect-except-1"></a>
+<div class="header">
+<p>
+Next: <a href="iklib-unwind_002dprotect-except-2.html#iklib-unwind_002dprotect-except-2" accesskey="n" rel="next">iklib unwind-protect except 2</a>, Previous: <a href="iklib-unwind_002dprotect-dynamic.html#iklib-unwind_002dprotect-dynamic" accesskey="p" rel="prev">iklib unwind-protect dynamic</a>, Up: <a href="iklib-unwind_002dprotect.html#iklib-unwind_002dprotect" accesskey="u" rel="up">iklib unwind-protect</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Raising-non_002d_002dcontinuable-exceptions-from-the-thunk"></a>
+<h4 class="subsection">6.9.4 Raising non&ndash;continuable exceptions from the thunk</h4>
+
+
+<p>A non&ndash;continuable exception is raised with <code>raise</code>, which can be
+applied to any object; the argument to <code>raise</code> becomes the &ldquo;raised
+object&rdquo;.  The purpose of raising a non&ndash;continuable exception is to
+cause the application of a function, the current exception handler, to
+the raised object; the exception handler is called in the dynamic
+environment of the call to <code>raise</code>.
+</p>
+<p>The execution flow is <strong>not</strong> meant return to the caller of
+<code>raise</code>, so the exception handler has only two options:
+</p>
+<ol>
+<li> Reinstate a previously saved continuation to jump out of the dynamic
+environment in which the exception was raised.  The following example
+shows the basic mechanism:
+
+<div class="example">
+<pre class="example">(import (vicare))
+
+(call/cc
+    (lambda (escape)
+      (with-exception-handler
+          escape
+        (lambda ()
+          (raise 1)))))
+&rArr; 1
+</pre></div>
+
+<p>Reinstating a continuation to jump out of the exception handler is what
+the standard <code>guard</code> syntax does when it handles an exception;
+<code>guard</code> does more than this.
+</p>
+</li><li> Raise the exception again, causing the invocation of the upper level
+exception handler.  The following example shows the basic mechanism:
+
+<div class="example">
+<pre class="example">(import (vicare))
+
+(call/cc
+    (lambda (escape)
+      (with-exception-handler
+          escape
+        (lambda ()
+          (with-exception-handler
+              (lambda (E)
+                (raise E))
+            (lambda ()
+              (raise 1)))))))
+&rArr; 1
+</pre></div>
+</li></ol>
+
+
+<a name="Handling-exceptions-by-escaping"></a>
+<h4 class="subsubheading">Handling exceptions by escaping</h4>
+
+<p>This is <strong>not</strong> the correct way of interfacing with the
+unwind&ndash;protection mechanism.  In the following example we see that
+escaping from the exception handler skips the call to the
+<var>?unwind-handler</var>.
+</p>
+<div class="example">
+<pre class="example">(import (vicare)
+  (only (vicare checks)
+        with-result
+        add-result))
+
+(with-result
+  (call/cc
+      (lambda (escape)
+        (with-exception-handler
+            (lambda (E)
+              (add-result 'exception-handler)
+              (escape E))
+          (lambda ()
+            (with-unwind-protection
+                (lambda (why)
+                  (add-result 'cleanup))
+              (lambda ()
+                (add-result 'thunk-in)
+                (raise 123)
+                (add-result 'thunk-out))))))))
+&rArr; (123 (thunk-in exception-handler))
+</pre></div>
+
+
+<a name="Handling-exceptions-with-guard"></a>
+<h4 class="subsubheading">Handling exceptions with <code>guard</code></h4>
+
+<p>This is the correct way of interfacing with the unwind&ndash;protection
+mechanism.
+</p>
+<p>In the following example: the <var>?thunk</var> raises a non&ndash;continuable
+exception, which is catched by the <code>else</code> clause of a
+<code>guard</code> use; this is equivalent to escaping from an exception
+handler, but it does evaluate the <var>?unwind-handler</var>.  We can see the
+forms evaluation order.
+</p>
+<div class="example">
+<pre class="example">#!vicare
+(import (vicare)
+  (only (vicare checks)
+        with-result
+        add-result))
+
+(with-result
+  (guard (E (else
+             (add-result 'guard-else)
+             E))
+    (with-unwind-protection
+        (lambda (why)
+          (add-result 'cleanup))
+      (lambda ()
+        (add-result 'thunk-in)
+        (raise 2)
+        (add-result 'thunk-out)
+        1))))
+&rArr; (2 (thunk-in cleanup guard-else))
+</pre></div>
+
+<p>In the following example: the <var>?thunk</var> raises a non&ndash;continuable
+exception, which is catched by the clause of a <code>guard</code> use; the
+clause has test and expression.  We can see the forms evaluation order.
+</p>
+<div class="example">
+<pre class="example">#!vicare
+(import (vicare)
+  (only (vicare checks)
+        with-result
+        add-result))
+
+(with-result
+  (guard (E ((begin
+               (add-result 'guard-test)
+               #t)
+             (add-result 'guard-expr)
+             E))
+    (with-unwind-protection
+        (lambda (why)
+          (add-result 'cleanup))
+      (lambda ()
+        (add-result 'thunk-in)
+        (raise 2)
+        (add-result 'thunk-out)
+        1))))
+&rArr; (2 (thunk-in guard-test cleanup guard-expr))
+</pre></div>
+
+<p>The following example with two nested <code>guard</code> uses and two nested
+<code>dynamic-wind</code> calls, makes it even more clear the sequence of
+forms evaluation.  The clause of the inner <code>guard</code> has test
+expression returning <code>#f</code>, so the exception is re&ndash;raised with
+<code>raise-continuable</code>.
+</p>
+<div class="example">
+<pre class="example">#!vicare
+(import (vicare)
+  (only (vicare checks)
+        with-result
+        add-result))
+
+(with-result
+  (guard (E ((begin
+               (add-result 'outer-guard-test)
+               #t)
+             (add-result 'outer-guard-expr)
+             E))
+    (guard (E ((begin
+                 (add-result 'inner-guard-test)
+                 #f)
+               (add-result 'inner-guard-expr)
+               E))
+      (dynamic-wind
+          (lambda ()
+            (add-result 'outer-before))
+          (lambda ()
+            (with-unwind-protection
+                (lambda (why)
+                  (add-result 'cleanup))
+              (lambda ()
+                (dynamic-wind
+                    (lambda ()
+                      (add-result 'inner-before))
+                    (lambda ()
+                      (add-result 'thunk-in)
+                      (raise 2)
+                      (add-result 'thunk-out)
+                      1)
+                    (lambda ()
+                      (add-result 'inner-after))))))
+          (lambda ()
+            (add-result 'outer-after))))))
+&rArr; (2 (outer-before inner-before thunk-in inner-after outer-after
+       inner-guard-test
+       outer-before inner-before inner-after outer-after
+       outer-guard-test
+       outer-before inner-before inner-after cleanup outer-after
+       outer-guard-expr))
+</pre></div>
+
+<p>Let&rsquo;s describe the sequence of operations:
+</p>
+<dl compact="compact">
+<dt><code>outer-before inner-before thunk-in</code></dt>
+<dd><p>Everything goes fine until the <var>?thunk</var> reaches <code>thunk-in</code>.
+</p>
+</dd>
+<dt><code>*</code></dt>
+<dd><p>The <var>?thunk</var> raises an exception.  The exception handler of the
+inner <code>guard</code> is applied to the raised object.
+</p>
+</dd>
+<dt><code>inner-after outer-after</code></dt>
+<dd><p>The continuation of the inner <code>guard</code> use is reinstated, the
+dynamic extent of the call to <var>?thunk</var> is exited: the dynamic
+environment unwinds.
+</p>
+</dd>
+<dt><code>inner-guard-test</code></dt>
+<dd><p>The clause test expression of the inner <code>guard</code> is evaluated in
+the dynamic environment of the <code>guard</code> use: it returns <code>#f</code>.
+</p>
+</dd>
+<dt><code>outer-before inner-before</code></dt>
+<dd><p>The continuation of the inner <code>guard</code> exception handler is
+reinstated, the dynamic extent of the call to <var>?thunk</var> is reentered:
+the dynamic environment is restored.
+</p>
+</dd>
+<dt><code>*</code></dt>
+<dd><p>The exception is raised again by applying <code>raise-continuable</code> to
+the same raised object.  The exception handler of the outer
+<code>guard</code> is applied to the raised object.
+</p>
+</dd>
+<dt><code>inner-after outer-after</code></dt>
+<dd><p>The continuation of the outer <code>guard</code> use is reinstated, the
+dynamic extent of the call to <var>?thunk</var> is exited: the dynamic
+environment unwinds.
+</p>
+</dd>
+<dt><code>outer-guard-test</code></dt>
+<dd><p>The clause test expression of the outer <code>guard</code> is evaluated in
+the dynamic environment of the outer <code>guard</code>: it returns <code>#t</code>.
+</p>
+</dd>
+<dt><code>outer-before inner-before</code></dt>
+<dd><p>The continuation of the of the outer <code>guard</code> exception handler is
+reinstated, the dynamic extent of the call to <var>?thunk</var> is entered:
+the dynamic environment is restored.
+</p>
+</dd>
+<dt><code>inner-after cleanup outer-after</code></dt>
+<dd><p>The continuation of the outer <code>guard</code> clause is reinstated, the
+the dynamic extent of the call to <var>?thunk</var> is exited: the dynamic
+environment unwinds.  While unwinding: the <var>?thunk</var> is found
+terminated and the <var>?unwind-handler</var> is called in the dynamic
+environment of the <code>with-unwind-protection</code> use.
+</p>
+</dd>
+<dt><code>outer-guard-expr</code></dt>
+<dd><p>The clause expression of the outer <code>guard</code> is evaluated in the
+dynamic environment of the outer <code>guard</code>.
+</p></dd>
+</dl>
+
+<p>That&rsquo;s Scheme!
+</p>
+<hr>
+<div class="header">
+<p>
+Next: <a href="iklib-unwind_002dprotect-except-2.html#iklib-unwind_002dprotect-except-2" accesskey="n" rel="next">iklib unwind-protect except 2</a>, Previous: <a href="iklib-unwind_002dprotect-dynamic.html#iklib-unwind_002dprotect-dynamic" accesskey="p" rel="prev">iklib unwind-protect dynamic</a>, Up: <a href="iklib-unwind_002dprotect.html#iklib-unwind_002dprotect" accesskey="u" rel="up">iklib unwind-protect</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

@@ -1,0 +1,236 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.4d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit and 64-bit
+processors.  Vicare is pronounced the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/downloads
+
+the home page of the project is at:
+
+http://marcomaggi.github.io/vicare.html
+
+development takes place at:
+
+http://github.com/marcomaggi/vicare/
+
+and, as a backup, at:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the "History" appendix for details.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Vicare Scheme: expander specs intro</title>
+
+<meta name="description" content="Vicare Scheme: expander specs intro">
+<meta name="keywords" content="Vicare Scheme: expander specs intro">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="expander-specs.html#expander-specs" rel="up" title="expander specs">
+<link href="expander-specs-retrieving.html#expander-specs-retrieving" rel="next" title="expander specs retrieving">
+<link href="expander-specs.html#expander-specs" rel="prev" title="expander specs">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="expander-specs-intro"></a>
+<div class="header">
+<p>
+Next: <a href="expander-specs-retrieving.html#expander-specs-retrieving" accesskey="n" rel="next">expander specs retrieving</a>, Up: <a href="expander-specs.html#expander-specs" accesskey="u" rel="up">expander specs</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Introduction-to-type-specifications"></a>
+<h4 class="subsection">15.9.1 Introduction to type specifications</h4>
+
+
+<p>The internal representation of object&ndash;types is as hierarchy of
+record&ndash;types having the type <code>&lt;object-type-spec&gt;</code> as base.  The
+hierarchy of record&ndash;types is:
+</p>
+<div class="example">
+<pre class="example">&lt;object-type-spec&gt;
+   |
+   +--&gt; &lt;core-type-spec&gt;
+   |
+   +--&gt; &lt;struct-type-spec&gt;
+   |
+   +--&gt; &lt;record-type-spec&gt;
+   |
+   +--&gt; &lt;closure-type-spec&gt;
+   |
+   +--&gt; &lt;compound-condition-type-spec&gt;
+   |
+   +--&gt; &lt;union-type-spec&gt;
+   |
+   +--&gt; &lt;intersection-type-spec&gt;
+   |
+   +--&gt; &lt;complement-type-spec&gt;
+   |
+   +--&gt; &lt;ancestor-of-type-spec&gt;
+   |
+   +--&gt; &lt;pair-type-spec&gt;
+   |
+   +--&gt; &lt;pair-of-type-spec&gt;
+   |
+   +--&gt; &lt;list-type-spec&gt;
+   |
+   +--&gt; &lt;list-of-type-spec&gt; --&gt; &lt;alist-type-spec&gt;
+   |
+   +--&gt; &lt;vector-type-spec&gt;
+   |
+   +--&gt; &lt;vector-of-type-spec&gt;
+   |
+   +--&gt; &lt;hashtable-type-spec&gt;
+   |
+   +--&gt; &lt;enumeration-type-spec&gt;
+   |
+   +--&gt; &lt;label-type-spec&gt;
+   |
+    --&gt; &lt;interface-type-spec&gt;
+</pre></div>
+
+<p>At present, all the record&ndash;types exposed by the library <code>(vicare
+expander)</code> are sealed: they cannot be sub&ndash;typed by user code.
+</p>
+<p>The type <code>&lt;object-type-spec&gt;</code> has a field <code>parent-ots</code> that is
+used to represent the hierarchy of Scheme&ndash;level object&ndash;types.
+</p>
+<p>All the built-in Scheme object types are represented by instances of
+<code>&lt;core-type-spec&gt;</code>; so <code>&lt;top&gt;</code>, <code>&lt;fixnum&gt;</code>, <code>&lt;string&gt;</code>,
+<code>&lt;list&gt;</code> et cetera are represented by instances of
+<code>&lt;core-type-spec&gt;</code>.
+</p>
+
+<a name="Hierarchy-of-list-types"></a>
+<h4 class="subsubheading">Hierarchy of list types</h4>
+
+<p>The hierarchy of list types is as follows:
+</p>
+<div class="example">
+<pre class="example">&lt;list&gt;
+   |
+   +--&gt; &lt;null&gt;
+   |
+   +--&gt; (list-of <var>?type</var>) --&gt; &lt;null&gt;
+   |
+    --&gt; &lt;nelist&gt; --&gt; (list <var>?type0</var> <var>?type</var> ...)
+</pre></div>
+
+<p>notice how <code>&lt;null&gt;</code> is considered a sub&ndash;type of both <code>&lt;list&gt;</code>
+and <code>(list-of <var>?type</var>)</code> annotations, but <strong>not</strong> of
+<code>(list <var>?type0</var> <var>?type</var> ...)</code>; this special handling is
+implemented in the function
+<code>object-type-spec.matching-super-and-sub?</code>.
+</p>
+<p>The type annotations <code>(list-of <var>?type</var>)</code> are represented by
+instances of <code>&lt;list-of-type-spec&gt;</code>.  <code>(list <var>?type0</var>
+<var>?type</var> ...)</code>  annotations are represented by instances of
+<code>&lt;list-type-spec&gt;</code>, and represent non&ndash;empty lists.
+</p>
+
+<a name="Hierarchy-of-vector-types"></a>
+<h4 class="subsubheading">Hierarchy of vector types</h4>
+
+<p>The hierarchy of vector types is as follows:
+</p>
+<div class="example">
+<pre class="example">&lt;vector&gt;
+   |
+   +---&gt; &lt;empty-vector&gt;
+   |
+   +---&gt; (vector-of <var>?type</var>) ---&gt; &lt;empty-vector&gt;
+   |
+    ---&gt; &lt;nevector&gt; ----------&gt; (vector <var>?type0</var> <var>?type</var> ...)
+</pre></div>
+
+<p>notice how <code>&lt;empty-vector&gt;</code> is considered a sub&ndash;type of both
+<code>&lt;vector&gt;</code> and <code>(vector-of <var>?type</var>)</code> annotations, but
+<strong>not</strong> of <code>(vector <var>?type0</var> <var>?type</var> ...)</code>
+annotations; this special handling is implemented in the function
+<code>object-type-spec.matching-super-and-sub?</code>.
+</p>
+<p>The type annotation <code>(vector-of <var>?type</var>)</code> annotations are
+represented by instances of <code>&lt;vector-of-type-spec&gt;</code>.  <code>(vector
+<var>?type0</var> <var>?type</var> ...)</code>  annotations are represented by
+instances of <code>&lt;vector-type-spec&gt;</code>, and represent non&ndash;empty vectors.
+</p>
+<hr>
+<div class="header">
+<p>
+Next: <a href="expander-specs-retrieving.html#expander-specs-retrieving" accesskey="n" rel="next">expander specs retrieving</a>, Up: <a href="expander-specs.html#expander-specs" accesskey="u" rel="up">expander specs</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

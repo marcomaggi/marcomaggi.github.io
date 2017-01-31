@@ -1,0 +1,156 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.4d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit and 64-bit
+processors.  Vicare is pronounced the etruscan way.  The focus of
+this document is over the typed language extension.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/downloads
+
+the home page of the project is at:
+
+http://marcomaggi.github.io/vicare.html
+
+development takes place at:
+
+http://github.com/marcomaggi/vicare/
+
+and, as a backup, at:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/
+
+Copyright (C) 2016-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Vicare Scheme&rsquo;s typed language: syntaxes case-type</title>
+
+<meta name="description" content="Vicare Scheme&rsquo;s typed language: syntaxes case-type">
+<meta name="keywords" content="Vicare Scheme&rsquo;s typed language: syntaxes case-type">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="type-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="syntaxes.html#syntaxes" rel="up" title="syntaxes">
+<link href="syntaxes-variables.html#syntaxes-variables" rel="next" title="syntaxes variables">
+<link href="syntaxes-unsafe_002dcast.html#syntaxes-unsafe_002dcast" rel="prev" title="syntaxes unsafe-cast">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="syntaxes-case_002dtype"></a>
+<div class="header">
+<p>
+Next: <a href="syntaxes-variables.html#syntaxes-variables" accesskey="n" rel="next">syntaxes variables</a>, Previous: <a href="syntaxes-unsafe_002dcast.html#syntaxes-unsafe_002dcast" accesskey="p" rel="prev">syntaxes unsafe-cast</a>, Up: <a href="syntaxes.html#syntaxes" accesskey="u" rel="up">syntaxes</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Branching-on-type-of-expression"></a>
+<h3 class="section">5.7 Branching on type of expression</h3>
+
+
+<p>The following syntactic bindings are exported by the library
+<code>(vicare)</code>.
+</p>
+
+<dl>
+<dt><a name="index-case_002dtype"></a>Syntax: <strong>case-type</strong> <em><var>?expr</var> <var>?clause0</var> <var>?clause</var> &hellip;</em></dt>
+<dt><a name="index-_003d_003e"></a>Auxiliary Syntax: <strong>=&gt;</strong></dt>
+<dt><a name="index-else"></a>Auxiliary Syntax: <strong>else</strong></dt>
+<dd><p>Similar to <code>case</code> but branches based on the type of the single value returned by <var>?expr</var>.
+This syntax is meant to be used with the typed language only, its behaviour is unspecified when
+using the standard language.
+</p>
+<p>Each <var>?clause</var> must have one of the formats:
+</p>
+<div class="lisp">
+<pre class="lisp">((<var>?type-id</var>) . <var>?body</var>)
+((<var>?type-id</var>) =&gt; <var>?receiver-expr</var>)
+(else . <var>?body</var>)
+</pre></div>
+
+<p>where: <var>?type-id</var> must be a type identifier; the <code>else</code>
+clause is valid only as last clause; <var>?receiver-expr</var> must be an
+expression evaluating to a closure object accepting a single argument.
+</p>
+<p>Examples:
+</p>
+<div class="lisp">
+<pre class="lisp">(case-type 123
+  ((&lt;vector&gt;)   'vector)
+  ((&lt;fixnum&gt;)   'fixnum)
+  ((&lt;string&gt;)   'string))
+&rArr; no values
+
+(case-type 123
+  ((&lt;vector&gt;)   'vector)
+  ((&lt;fixnum&gt;)   =&gt; (lambda (arg) (list arg 'fixnum)))
+  ((&lt;string&gt;)   'string)
+  (else   'else))
+&rArr; (123 fixnum)
+
+(case-type #t
+  ((&lt;vector&gt;)   'vector)
+  ((&lt;fixnum&gt;)   'fixnum)
+  ((&lt;string&gt;)   'string)
+  (else         'else))
+&rArr; else
+</pre></div>
+</dd></dl>
+
+
+
+
+</body>
+</html>

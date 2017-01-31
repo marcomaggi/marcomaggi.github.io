@@ -1,0 +1,290 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes the libraries distributed along with version
+0.4d1 of Vicare Scheme, an R6RS compliant native
+compiler for the Scheme language.
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+The documentation of the libraries (vicare parser-tools silex
+-) are derived form the documentation of SILex.  Copyright
+(C) 2001, 2009 Danny Dube'.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Libraries for Vicare Scheme: posix fd device cloexec</title>
+
+<meta name="description" content="Libraries for Vicare Scheme: posix fd device cloexec">
+<meta name="keywords" content="Libraries for Vicare Scheme: posix fd device cloexec">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="posix-fd-device.html#posix-fd-device" rel="up" title="posix fd device">
+<link href="posix-fd-dup.html#posix-fd-dup" rel="next" title="posix fd dup">
+<link href="posix-fd-device-blocking.html#posix-fd-device-blocking" rel="prev" title="posix fd device blocking">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="posix-fd-device-cloexec"></a>
+<div class="header">
+<p>
+Previous: <a href="posix-fd-device-blocking.html#posix-fd-device-blocking" accesskey="p" rel="prev">posix fd device blocking</a>, Up: <a href="posix-fd-device.html#posix-fd-device" accesskey="u" rel="up">posix fd device</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Close_002d_002don_002d_002dexec-mode"></a>
+<h4 class="subsubsection">4.13.8.2 Close&ndash;on&ndash;exec mode</h4>
+
+
+<p>On <acronym>POSIX</acronym> platforms, right after a <code>fork</code> call: the parent and child will
+share all the input/output file descriptors that are open at the time of the
+<code>fork</code> call.  This is problematic.
+</p>
+<p>Let&rsquo;s see what happens with the following program in which we open a file, fork the
+process then close the file in both the parent and child:
+</p>
+<div class="lisp">
+<pre class="lisp">#!vicare
+(import (vicare)
+  (prefix (vicare posix) px.))
+
+(define (parent-proc child-pid)
+  (px.waitpid child-pid 0)
+  (close-output-port port)
+  (exit 0))
+
+(define (child-thunk)
+  (close-output-port port)
+  (exit 0))
+
+(define port
+  (parametrise ((output-file-buffer-size 8))
+    (open-file-output-port &quot;demo.txt&quot;
+			   (file-options no-fail)
+			   (buffer-mode block)
+			   (native-transcoder))))
+
+(put-string port &quot;0123456789ABCDEF&quot;)
+
+(px.fork parent-proc child-thunk)
+</pre></div>
+
+<p>the output <var>port</var> has a buffer of <code>8</code> characters and the string written to
+it is <code>16</code> characters long; the call to <code>put-string</code> immediately flushes
+the first <code>8</code> characters and leaves the rest in the output buffer.  The
+<code>fork</code> call causes the output buffer and its contents to be duplicated, so, when
+we close the port, the two buffers are flushed to the same file.  The resulting file
+contents are:
+</p>
+<div class="example">
+<pre class="example">0123456789ABCDEF89ABCDEF
+</pre></div>
+
+<p>which is not what we want.
+</p>
+<p><acronym>POSIX</acronym> has a partial solution for this problem: to configure file
+descriptors as <em>close&ndash;on&ndash;exec</em>; Vicare extends this to
+propose a partial solution: to configure ports as
+<em>close&ndash;on&ndash;exec</em>.  Notice that it is close&ndash;on&ndash;<strong>exec</strong>, not
+close&ndash;on&ndash;<strong>fork</strong>.  So we can try to address this problem by:
+</p>
+<ol>
+<li> Registering ports to be in close&ndash;on&ndash;exec mode.
+
+</li><li> Before calling <code>fork</code>: flush the ports in close&ndash;on&ndash;exec mode.
+
+</li><li> In the child process: close the ports in close&ndash;on&ndash;exec mode, to free allocated file
+descriptors.
+</li></ol>
+
+<p>Here is the example above modified to do so:
+</p>
+<div class="lisp">
+<pre class="lisp">#!vicare
+(import (vicare)
+  (prefix (vicare posix) px.))
+
+(define (parent-proc child-pid)
+  (px.waitpid child-pid 0)
+  (close-output-port port)
+  (exit 0))
+
+(define (child-thunk)
+  (px.close-ports-in-close-on-exec-mode)
+  (exit 0))
+
+(define port
+  (parametrise ((output-file-buffer-size 8))
+    (open-file-output-port &quot;demo.txt&quot;
+                           (file-options no-fail)
+                           (buffer-mode block)
+                           (native-transcoder))))
+
+(px.port-set-close-on-exec-mode! port)
+
+(put-string port &quot;0123456789ABCDEF&quot;)
+
+(px.flush-ports-in-close-on-exec-mode)
+(px.fork parent-proc child-thunk)
+</pre></div>
+
+
+<a name="File-descriptors-in-close_002d_002don_002d_002dexec-mode"></a>
+<h4 class="subsubheading">File descriptors in close&ndash;on&ndash;exec mode</h4>
+
+
+<dl>
+<dt><a name="index-fd_002dset_002dclose_002don_002dexec_002dmode_0021"></a>Function: <strong>fd-set-close-on-exec-mode!</strong> <em><var>fd</var></em></dt>
+<dt><a name="index-fd_002dunset_002dclose_002don_002dexec_002dmode_0021"></a>Function: <strong>fd-unset-close-on-exec-mode!</strong> <em><var>fd</var></em></dt>
+<dd><p>Special interface to the C function <code>fcntl()</code>, <a href="http://www.gnu.org/software/libc/manual/html_node/Control-Operations.html#Control-Operations">(libc)fcntl</a>.  Configure the file descriptor <var>fd</var> in &ldquo;close
+on exec&rdquo; mode or &ldquo;do not close on exec&rdquo; mode; if successful return
+unspecified values, else raise an exception.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-fd_002din_002dclose_002don_002dexec_002dmode_003f"></a>Function: <strong>fd-in-close-on-exec-mode?</strong> <em><var>fd</var></em></dt>
+<dd><p>Special interface to the C function <code>fcntl()</code>, <a href="http://www.gnu.org/software/libc/manual/html_node/Control-Operations.html#Control-Operations">(libc)fcntl</a>.  Query the file descriptor <var>fd</var> for its &ldquo;close
+on exec&rdquo; mode; if successful: return <code>#t</code> if <var>fd</var> is in &ldquo;close
+on exec&rdquo; mode, <code>#f</code> otherwise.  If an error occurs: raise an
+exception.
+</p></dd></dl>
+
+
+<a name="Ports-in-close_002d_002don_002d_002dexec-mode"></a>
+<h4 class="subsubheading">Ports in close&ndash;on&ndash;exec mode</h4>
+
+
+<dl>
+<dt><a name="index-port_002dset_002dclose_002don_002dexec_002dmode_0021"></a>Function: <strong>port-set-close-on-exec-mode!</strong> <em><var>port</var></em></dt>
+<dd><p>Register a Scheme <var>port</var> to be closed if the current process uses
+one of the <code>exec</code> functions.  If successful: return unspecified
+values, else raise an exception.
+</p>
+<p><var>port</var> can be any port: it is <strong>not</strong> required for it to have a
+file descriptor as underlying device.  If the underlying device is a
+file descriptor: this descriptor is configured in close&ndash;on&ndash;exec mode.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-port_002dunset_002dclose_002don_002dexec_002dmode_0021"></a>Function: <strong>port-unset-close-on-exec-mode!</strong> <em><var>port</var></em></dt>
+<dd><p>Unregister a Scheme <var>port</var> so that it is <strong>not</strong> closed if the
+current process uses one of the <code>exec</code> functions.  If successful:
+return unspecified values, else raise an exception.
+</p>
+<p>If the underlying device is a file descriptor: this descriptor is
+configured <strong>not</strong> to be in close&ndash;on&ndash;exec mode.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-port_002din_002dclose_002don_002dexec_002dmode_003f"></a>Function: <strong>port-in-close-on-exec-mode?</strong> <em><var>port</var></em></dt>
+<dd><p>Return a boolean: true if <var>port</var> is in close&ndash;on&ndash;exec mode, false
+otherwise.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-close_002dports_002din_002dclose_002don_002dexec_002dmode"></a>Function: <strong>close-ports-in-close-on-exec-mode</strong></dt>
+<dt><a name="index-close_002dports_002din_002dclose_002don_002dexec_002dmode-1"></a>Function: <strong>close-ports-in-close-on-exec-mode</strong> <em><var>error-handler</var></em></dt>
+<dd><p>Close all the ports registered to be in close&ndash;on&ndash;exec mode.  Each port
+is closed by applying <code>close-port</code> to it.
+</p>
+<ul>
+<li> When called with no arguments: if <code>close-port</code> raises an exception,
+the exception is blocked and discarded.
+
+</li><li> When called with one argument: the procedure <var>error-handler</var> is
+installed as error handler before applying <code>close-port</code> to the
+port; if <var>error-handler</var> raises an exception, the exception is
+blocked and discarded.
+</li></ul>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-flush_002dports_002din_002dclose_002don_002dexec_002dmode"></a>Function: <strong>flush-ports-in-close-on-exec-mode</strong></dt>
+<dt><a name="index-flush_002dports_002din_002dclose_002don_002dexec_002dmode-1"></a>Function: <strong>flush-ports-in-close-on-exec-mode</strong> <em><var>error-handler</var></em></dt>
+<dd><p>Flush the output buffer of all the output ports registered to be in
+close&ndash;on&ndash;exec mode.  Each port is processed by applying
+<code>flush-output-port</code> to it.
+</p>
+<ul>
+<li> When called with no arguments: if <code>flush-output-port</code> raises an
+exception, the exception is blocked and discarded.
+
+</li><li> When called with one argument: the procedure <var>error-handler</var> is
+installed as error handler before applying <code>flush-output-port</code> to
+the port; if <var>error-handler</var> raises an exception, the exception is
+blocked and discarded.
+</li></ul>
+</dd></dl>
+
+<hr>
+<div class="header">
+<p>
+Previous: <a href="posix-fd-device-blocking.html#posix-fd-device-blocking" accesskey="p" rel="prev">posix fd device blocking</a>, Up: <a href="posix-fd-device.html#posix-fd-device" accesskey="u" rel="up">posix fd device</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

@@ -1,0 +1,391 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.4d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit and 64-bit
+processors.  Vicare is pronounced the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/downloads
+
+the home page of the project is at:
+
+http://marcomaggi.github.io/vicare.html
+
+development takes place at:
+
+http://github.com/marcomaggi/vicare/
+
+and, as a backup, at:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the "History" appendix for details.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Vicare Scheme: iklib hashtables iterators</title>
+
+<meta name="description" content="Vicare Scheme: iklib hashtables iterators">
+<meta name="keywords" content="Vicare Scheme: iklib hashtables iterators">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="iklib-hashtables.html#iklib-hashtables" rel="up" title="iklib hashtables">
+<link href="iklib-hashtables-hashfun.html#iklib-hashtables-hashfun" rel="next" title="iklib hashtables hashfun">
+<link href="iklib-hashtables-pred.html#iklib-hashtables-pred" rel="prev" title="iklib hashtables pred">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="iklib-hashtables-iterators"></a>
+<div class="header">
+<p>
+Next: <a href="iklib-hashtables-hashfun.html#iklib-hashtables-hashfun" accesskey="n" rel="next">iklib hashtables hashfun</a>, Previous: <a href="iklib-hashtables-pred.html#iklib-hashtables-pred" accesskey="p" rel="prev">iklib hashtables pred</a>, Up: <a href="iklib-hashtables.html#iklib-hashtables" accesskey="u" rel="up">iklib hashtables</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Hash-table-iterators"></a>
+<h4 class="subsection">6.34.2 Hash table iterators</h4>
+
+
+<p>Ghuloum and Dybvig explain in the paper:
+</p>
+<blockquote>
+<p>Ghuloum, Dybvig.  &ldquo;Generation&ndash;Friendly Eq Hash Tables&rdquo;.  Proceedings
+of the 2007 Workshop on Scheme and Functional Programming.
+</p></blockquote>
+
+<p>why it is not possible to iterate a hash table by visiting the buckets:
+there&rsquo;s a problem with rehashing entries that are moved by the garbage
+collector.  The iterators always use <code>hashtable-keys</code> and
+<code>hashtable-entries</code>, which is slow and memory consuming, but it is
+safe.
+</p>
+
+<dl>
+<dt><a name="index-hashtable_002dmap_002dkeys"></a>Function: <strong>hashtable-map-keys</strong> <em><var>proc</var> <var>table</var></em></dt>
+<dd><p>Build and return a new hash table with the same hash function and
+equivalence function of <var>table</var>; add associations to the new table
+by applying <var>proc</var> to every key in <var>table</var>, in unspecified
+order, and using the returned value as association value.
+</p>
+<div class="lisp">
+<pre class="lisp">(let* ((A '((a . 1) (b . 2) (c . 3)))
+       (T (alist-&gt;hashtable! (make-eq-hashtable) A))
+       (M (hashtable-map-keys
+              (lambda (key) 123)
+            T)))
+  (hashtable-&gt;alist M (lambda (s1 s2)
+                        (string&lt;? (symbol-&gt;string s1)
+                                  (symbol-&gt;string s2)))))
+&rArr; ((a . 123) (b . 123) (c . 123))
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-hashtable_002dmap_002dentries"></a>Function: <strong>hashtable-map-entries</strong> <em><var>proc</var> <var>table</var></em></dt>
+<dd><p>Build and return a new hash table with the same hash function and
+equivalence function of <var>table</var>; add associations to the new table
+by applying <var>proc</var> to every key and value in <var>table</var>, in
+unspecified order, and using the returned value as association value.
+</p>
+<div class="lisp">
+<pre class="lisp">(let* ((A '((a . 1) (b . 2) (c . 3)))
+       (T (alist-&gt;hashtable! (make-eq-hashtable) A))
+       (M (hashtable-map-entries
+              (lambda (key val)
+                (* 10 val))
+            T)))
+  (hashtable-&gt;alist M (lambda (s1 s2)
+                        (string&lt;? (symbol-&gt;string s1)
+                                  (symbol-&gt;string s2)))))
+&rArr; ((a . 10) (b . 20) (c . 30))
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-hashtable_002dfor_002deach_002dkey"></a>Function: <strong>hashtable-for-each-key</strong> <em><var>proc</var> <var>table</var></em></dt>
+<dd><p>Apply <var>proc</var> to every key in table, in unspecified order, and
+discard the results.  It is implemented as follows:
+</p>
+<div class="lisp">
+<pre class="lisp">(vector-for-each proc (hashtable-keys table))
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-hashtable_002dfor_002deach_002dentry"></a>Function: <strong>hashtable-for-each-entry</strong> <em><var>proc</var> <var>table</var></em></dt>
+<dd><p>Apply <var>proc</var> to every key and value in table, in unspecified order,
+and discard the results.  It is implemented as follows:
+</p>
+<div class="lisp">
+<pre class="lisp">(receive (keys vals)
+    (hashtable-entries table)
+  (vector-for-each proc keys vals))
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-hashtable_002dfor_002dall_002dkeys"></a>Function: <strong>hashtable-for-all-keys</strong> <em><var>pred</var> <var>table</var></em></dt>
+<dd><p>Apply <var>pred</var> to every key in <var>table</var>, in unspecified order,
+stopping at the first key for which <var>pred</var> returns <code>#f</code>.
+</p>
+<ul>
+<li> If <var>pred</var> returns non-false for every key: the return value is the
+return value of the last call to <var>pred</var>.
+
+</li><li> If <var>pred</var> returns <code>#f</code> for a key: the return value is <code>#f</code>.
+</li></ul>
+
+<p>It is implemented as follows:
+</p>
+<div class="lisp">
+<pre class="lisp">(vector-for-all pred (hashtable-keys table))
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-hashtable_002dfor_002dall_002dentries"></a>Function: <strong>hashtable-for-all-entries</strong> <em><var>pred</var> <var>table</var></em></dt>
+<dd><p>Apply <var>pred</var> to every key and value in <var>table</var>, in unspecified
+order, stopping at the first application for which <var>PRED</var> returns
+<code>#f</code>.
+</p>
+<ul>
+<li> If <var>pred</var> returns non&ndash;false for every key and value: the return
+value is the return value of the last call to <var>pred</var>.
+
+</li><li> If <var>pred</var> returns <code>#f</code> for a key and value: the return value is
+<code>#f</code>.
+</li></ul>
+
+<p>It is implemented as follows:
+</p>
+<div class="lisp">
+<pre class="lisp">(receive (keys vals)
+    (hashtable-entries table)
+  (vector-for-all pred keys vals))
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-hashtable_002dexists_002dkey"></a>Function: <strong>hashtable-exists-key</strong> <em><var>proc</var> <var>table</var></em></dt>
+<dd><p>Apply <var>proc</var> to every key in <var>table</var> in unspecified order.
+</p>
+<ul>
+<li> If <var>proc</var> returns <code>#f</code> for every key: the return value is
+<code>#f</code>.
+
+</li><li> If <var>proc</var> returns non&ndash;false for a key: the return value is the
+value returned by <var>proc</var>.
+</li></ul>
+
+<div class="lisp">
+<pre class="lisp">(vector-exists proc (hashtable-keys table)))
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-hashtable_002dexists_002dentry"></a>Function: <strong>hashtable-exists-entry</strong> <em><var>proc</var> <var>table</var></em></dt>
+<dd><p>Apply <var>proc</var> to every key and value in <var>table</var> in unspecified
+order.
+</p>
+<ul>
+<li> If <var>proc</var> returns <code>#f</code> for every key and value: the return value
+is <code>#f</code>.
+
+</li><li> If <var>proc</var> returns non&ndash;false for a key and value: the return value
+is the value returned by <var>proc</var>.
+</li></ul>
+
+<div class="lisp">
+<pre class="lisp">(receive (keys vals)
+    (hashtable-entries table)
+  (vector-exists proc keys vals))
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-hashtable_002dfind_002dkey"></a>Function: <strong>hashtable-find-key</strong> <em><var>proc</var> <var>table</var></em></dt>
+<dd><p>Apply <var>proc</var> to every key in <var>table</var> in unspecified order.
+</p>
+<ul>
+<li> If <var>proc</var> returns <code>#f</code> for every key: the return value is
+<code>#f</code>.
+
+</li><li> If <var>proc</var> returns non&ndash;false for a key: the return value is that
+key.
+</li></ul>
+
+<div class="lisp">
+<pre class="lisp">(vector-find pred (hashtable-keys table)))
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-hashtable_002dfind_002dentry"></a>Function: <strong>hashtable-find-entry</strong> <em><var>proc</var> <var>table</var></em></dt>
+<dd><p>Apply <var>proc</var> to every key and value in <var>table</var> in unspecified
+order.
+</p>
+<ul>
+<li> If <var>proc</var> returns <code>#f</code> for every key and value: the return value
+is <code>#f</code>.
+
+</li><li> If <var>proc</var> returns non&ndash;false for a key and value: the return value
+is a pair having that key as car and that value as cdr.
+</li></ul>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-hashtable_002dfold_002dkeys"></a>Function: <strong>hashtable-fold-keys</strong> <em><var>proc</var> <var>nil</var> <var>table</var></em></dt>
+<dd><p>Apply <var>proc</var> to every key in <var>table</var>, in unspecified order; the
+second argument of the first <var>proc</var> application is <var>nil</var>, then
+it is the return value of the previous application.  Return the return
+value of the last <var>proc</var> application.
+</p>
+<p>It is implemented as follows:
+</p>
+<div class="lisp">
+<pre class="lisp">(vector-fold-right proc nil (hashtable-keys table))
+</pre></div>
+
+<p>To build an list of keys we do:
+</p>
+<div class="lisp">
+<pre class="lisp">(hashtable-fold-keys
+    (lambda (key nil)
+      (cons key nil))
+  '() table)
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-hashtable_002dfold_002dentries"></a>Function: <strong>hashtable-fold-entries</strong> <em><var>proc</var> <var>nil</var> <var>table</var></em></dt>
+<dd><p>Apply <var>proc</var> to every key and value in <var>table</var>, in unspecified
+order; the third argument of the first <var>proc</var> application is
+<var>nil</var>, then it is the return value of the previous application.
+Return the return value of the last <var>proc</var> application.
+</p>
+<p>It is implemented as follows:
+</p>
+<div class="lisp">
+<pre class="lisp">(receive (keys vals)
+    (hashtable-entries table)
+  (vector-fold-right proc nil keys vals))
+</pre></div>
+
+<p>To build an alist from a table we do:
+</p>
+<div class="lisp">
+<pre class="lisp">(hashtable-fold-entries
+    (lambda (key val nil)
+      (cons (cons key val) nil))
+  '() table)
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-hashtable_002d_003ealist"></a>Function: <strong>hashtable-&gt;alist</strong> <em><var>table</var></em></dt>
+<dt><a name="index-hashtable_002d_003ealist-1"></a>Function: <strong>hashtable-&gt;alist</strong> <em><var>table</var> <var>compar</var></em></dt>
+<dd><p>Build and return an alist holding the keys and values of <var>table</var>.
+This function is mostly useful for debugging.
+</p>
+<p>If the optional argument <var>compar</var> is the boolean <code>#f</code>: just
+return the alist; if it is a procedure: sort the resulting alist with
+the standard <code>list-sort</code> using <var>compar</var> as comparison predicate
+for the keys.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-alist_002d_003ehashtable_0021"></a>Function: <strong>alist-&gt;hashtable!</strong> <em><var>table</var> <var>al</var></em></dt>
+<dd><p>Fill <var>table</var> with the entries of the alist <var>al</var>.  Return
+<var>table</var> itself.
+</p></dd></dl>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="iklib-hashtables-hashfun.html#iklib-hashtables-hashfun" accesskey="n" rel="next">iklib hashtables hashfun</a>, Previous: <a href="iklib-hashtables-pred.html#iklib-hashtables-pred" accesskey="p" rel="prev">iklib hashtables pred</a>, Up: <a href="iklib-hashtables.html#iklib-hashtables" accesskey="u" rel="up">iklib hashtables</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

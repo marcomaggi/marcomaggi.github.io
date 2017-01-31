@@ -1,0 +1,336 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.4d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit and 64-bit
+processors.  Vicare is pronounced the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/downloads
+
+the home page of the project is at:
+
+http://marcomaggi.github.io/vicare.html
+
+development takes place at:
+
+http://github.com/marcomaggi/vicare/
+
+and, as a backup, at:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the "History" appendix for details.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Vicare Scheme: includes</title>
+
+<meta name="description" content="Vicare Scheme: includes">
+<meta name="keywords" content="Vicare Scheme: includes">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="index.html#Top" rel="up" title="Top">
+<link href="foreign.html#foreign" rel="next" title="foreign">
+<link href="progutils-expanding.html#progutils-expanding" rel="prev" title="progutils expanding">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="includes"></a>
+<div class="header">
+<p>
+Next: <a href="foreign.html#foreign" accesskey="n" rel="next">foreign</a>, Previous: <a href="progutils.html#progutils" accesskey="p" rel="prev">progutils</a>, Up: <a href="index.html#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Including-source-files-at-expand_002d_002dtime"></a>
+<h2 class="chapter">9 Including source files at expand&ndash;time</h2>
+
+
+<a name="index-Include-files"></a>
+<a name="index-Loading-include-files"></a>
+
+
+<p>Include files are loaded at expand&ndash;time by the syntax <code>include</code>.
+Here is a usage example with the default configuration for searching and
+loading files:
+</p>
+<ol>
+<li> Let&rsquo;s create a source file in the current directory:
+
+<div class="lisp">
+<pre class="lisp">;; demo.scm --
+;;
+
+(define (doit)
+  (display &quot;hello world!\n&quot;))
+
+;;; end of file
+</pre></div>
+
+</li><li> Let&rsquo;s create a library file in the current directory, including the
+source file:
+
+<div class="lisp">
+<pre class="lisp">;; demo.sls --
+;;
+
+(library (demo)
+  (export doit)
+  (import (vicare))
+  (include &quot;demo.scm&quot; #t))
+
+;;; end of file
+</pre></div>
+
+</li><li> Let&rsquo;s enter the <acronym>REPL</acronym>, adding the current directory to the search path
+for source files:
+
+<div class="example">
+<pre class="example">$ vicare --source-path $PWD --option print-loaded-libraries
+...
+vicare&gt; (import (demo))
+vicare: searching include file: demo.scm
+vicare: including file: /tmp/demo.scm
+vicare: loaded library &quot;(demo)&quot; from: /tmp/demo.sls
+vicare&gt; (doit)
+hello world!
+vicare&gt;
+</pre></div>
+
+<p>the syntax <code>include</code> makes uses the same search path selected for
+source libraries.
+</p>
+</li><li> Now we can compile the library:
+
+<div class="example">
+<pre class="example">$ vicare --source-path $PWD --option print-loaded-libraries \
+   --compile-library demo.sls --output demo.fasl
+vicare: compile-source-library: loading library: demo.sls
+vicare: searching include file: demo.scm
+vicare: including file: /tmp/demo.scm
+vicare: serialising library: demo.fasl
+vicare: library serialisation done
+</pre></div>
+
+<p>and remember that <code>include</code> is and expand&ndash;time thing, so the
+compiled library will not perform any inclusion.
+</p>
+</li><li> Finally we enter the <acronym>REPL</acronym> adding the current directory to the search
+path for binary libraries:
+
+<div class="example">
+<pre class="example">$ vicare -L $PWD --option print-loaded-libraries
+...
+vicare&gt; (import (demo))
+vicare: loaded library &quot;(demo)&quot; from: /tmp/demo.fasl
+vicare&gt; (doit)
+hello world!
+vicare&gt;
+</pre></div>
+</li></ol>
+
+<p>The following syntactic bindings are exported by the library
+<code>(vicare)</code>.
+</p>
+
+<dl>
+<dt><a name="index-include"></a>Syntax: <strong>include</strong> <em><var>?filename</var></em></dt>
+<dt><a name="index-include-1"></a>Syntax: <strong>include</strong> <em><var>?filename</var> #t</em></dt>
+<dd><p>Include in the enclosing source file the contents of the file selected
+by the pathname <var>?filename</var>, which must be a string.  Everything
+happens as if the code was present in place of the <code>include</code> form.
+When the optional <code>#t</code> argument is given: print a message on the
+current error port describing the include operation.
+</p></dd></dl>
+
+
+<a name="Customisation-of-include-operation"></a>
+<h4 class="subsubheading">Customisation of include operation</h4>
+
+<dl>
+<dt><a name="index-current_002dinclude_002dloader"></a>Parameter: <strong>current-include-loader</strong></dt>
+<dd><p>Hold a function used to load an include file.  The referenced function
+is called as follows:
+</p>
+<div class="example">
+<pre class="example">((current-include-loader) <var>?include-pathname</var> <var>?verbose</var> <var>?synner</var>)
+</pre></div>
+
+<p>where: <var>?include-pathname</var> must be a string representing an absolute
+or relative pathname; <var>?verbose</var> can be any value; <var>?synner</var>
+must be a procedure used to raise an exception when an error occurs:
+</p>
+<div class="example">
+<pre class="example">(<var>?synner</var> <var>?message-string</var> <var>?irritants</var>)
+</pre></div>
+
+<p>When successful, the referenced function must return two values: the
+absolute pathname from which the file was loaded, a symbolic expression
+representing the file contents (usually such expression is generated by
+the reader).  When an error occurs: call the procedure <var>?synner</var>,
+which is meant to raise an exception.
+</p>
+<p>If <var>?verbose</var> is non&ndash;false: the referenced function must display
+verbose messages on the current error port describing the including
+process.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-default_002dinclude_002dloader"></a>Function: <strong>default-include-loader</strong> <em><var>include-pathname</var> <var>verbose?</var> <var>synner</var></em></dt>
+<dd><p>Default value for the parameter <code>current-include-loader</code>.  Load the
+file with pathname <var>include-pathname</var>.  When successful return two
+values: the absolute pathname from which the file was loaded, a symbolic
+expression representing the file contents.  When an error occurs: call
+the procedure <var>synner</var>, which is meant to raise an exception.
+</p>
+<p>If <var>verbose?</var>  is non&ndash;false: display verbose messages on the
+current error port describing the including process.
+</p>
+<p>The include file is searched using the procedure referenced by the
+parameter <code>current-include-file-locator</code>.  The file is loaded using
+the procedure referenced by the parameter
+<code>current-include-file-loader</code>.
+</p></dd></dl>
+
+
+<a name="Locating-the-file-to-be-included"></a>
+<h4 class="subsubheading">Locating the file to be included</h4>
+
+<dl>
+<dt><a name="index-current_002dinclude_002dfile_002dlocator"></a>Parameter: <strong>current-include-file-locator</strong></dt>
+<dd><p>Hold a function used to convert an include file name into the
+corresponding file pathname.  The referenced function must accept three
+arguments: a string representing the include file name; a boolean, true
+if the process of loading must display verbose messages on the current
+error port; a synner function used to report errors.
+</p>
+<p>The synner function is called as:
+</p>
+<div class="example">
+<pre class="example">(synner <var>?error-message</var> <var>?irritants</var>)
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-default_002dinclude_002dfile_002dlocator"></a>Function: <strong>default-include-file-locator</strong> <em><var>include-pathname</var> <var>synner</var></em></dt>
+<dd><p>Default value for the parameter <code>current-include-file-locator</code>.
+Given a string <var>include-pathname</var>, which must represent an absolute
+or relative file pathname, convert it into the absolute pathname of an
+existing file, as string.  Return the absolute string pathname.
+</p>
+<p>If <var>include-pathname</var> is a relative pathname: the file is searched
+in the search path represented by <code>library-source-search-path</code>, by
+appending <var>include-pathname</var> to the directories in the search path;
+<a href="libutils-file_002dsystem-paths.html#library_002dsource_002dsearch_002dpath">Search path for source libraries</a>.
+</p>
+<p><var>synner</var> must be a procedure used to raise an exception when an
+error occurs.
+</p></dd></dl>
+
+
+<a name="Loading-the-file-to-be-included"></a>
+<h4 class="subsubheading">Loading the file to be included</h4>
+
+<dl>
+<dt><a name="index-current_002dinclude_002dfile_002dloader"></a>Parameter: <strong>current-include-file-loader</strong></dt>
+<dd><p>Hold a function used to load an include file.  The referenced function
+must accept two arguments: a string representing an existent file
+pathname; a synner function used to report errors.
+</p>
+<p>The synner function is called as:
+</p>
+<div class="example">
+<pre class="example">(synner <var>?error-message</var> <var>?irritants</var>)
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-default_002dinclude_002dfile_002dloader"></a>Function: <strong>default-include-file-loader</strong> <em><var>include-pathname</var> <var>synner</var></em></dt>
+<dd><p>Default value for the parameter <code>current-include-file-loader</code>.
+Open the file <var>include-pathname</var>, read all the datums and return
+them.  If an error occurs call <var>synner</var>.  The returned value is a
+list of annotated symbolic expressions as generated by Vicare&rsquo;s
+source code reader.
+</p></dd></dl>
+
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="foreign.html#foreign" accesskey="n" rel="next">foreign</a>, Previous: <a href="progutils.html#progutils" accesskey="p" rel="prev">progutils</a>, Up: <a href="index.html#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

@@ -1,0 +1,195 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.4d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit and 64-bit
+processors.  Vicare is pronounced the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/downloads
+
+the home page of the project is at:
+
+http://marcomaggi.github.io/vicare.html
+
+development takes place at:
+
+http://github.com/marcomaggi/vicare/
+
+and, as a backup, at:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the "History" appendix for details.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Vicare Scheme: expander examples contours single</title>
+
+<meta name="description" content="Vicare Scheme: expander examples contours single">
+<meta name="keywords" content="Vicare Scheme: expander examples contours single">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="expander-examples-contours.html#expander-examples-contours" rel="up" title="expander examples contours">
+<link href="expander-examples-contours-double.html#expander-examples-contours-double" rel="next" title="expander examples contours double">
+<link href="expander-examples-contours.html#expander-examples-contours" rel="prev" title="expander examples contours">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="expander-examples-contours-single"></a>
+<div class="header">
+<p>
+Next: <a href="expander-examples-contours-double.html#expander-examples-contours-double" accesskey="n" rel="next">expander examples contours double</a>, Up: <a href="expander-examples-contours.html#expander-examples-contours" accesskey="u" rel="up">expander examples contours</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Single-internal-body"></a>
+<h4 class="subsubsection">15.8.3.1 Single internal body</h4>
+
+
+<p>Let&rsquo;s create a single lexical contour with the syntax
+<code>internal-body</code> and compare a top&ndash;level binding with a local
+binding:
+</p>
+<div class="lisp">
+<pre class="lisp">(define A 1)
+(internal-body
+  (define B 2)
+  (begin-for-syntax
+    (pretty-print (syntax A))
+    (pretty-print (syntax B))
+    (pretty-print (eq-ribs? (syntax A) (syntax B))))
+  (void))
+-| #&lt;syntactic-identifier expr=A mark*=(src)&gt;
+-| #&lt;syntactic-identifier expr=B mark*=(src)&gt;
+-| #t
+</pre></div>
+
+<p>we see that the syntactic identifiers created by <code>syntax</code> in the
+<code>begin-for-syntax</code> have the same list of marks and the same list
+of <code>rib</code> objects.
+</p>
+<p>Let&rsquo;s see the <code>rib</code> objects:
+</p>
+<div class="lisp">
+<pre class="lisp">(define A 1)
+(internal-body
+  (define B 2)
+  (begin-for-syntax
+    (let ((ribs (xp::stx-rib* #'A)))
+      (pretty-print (length ribs))
+      (pretty-print ribs)))
+  (void))
+-| 2
+-| (#&lt;rib name*=(B)     mark**=((src))     label*=(lab.B)&gt;
+    #&lt;rib name*=(A ...) mark**=((src) ...) label*=(lab.A ...)&gt;)
+</pre></div>
+
+<p>the list of <code>rib</code> objects in the identifier &lsquo;<samp>(syntax A)</samp>&rsquo; has two
+items: the first is the <code>rib</code> associated to <code>internal-body</code>; the
+second is the top <code>rib</code>.  We see the internal <code>rib</code> holds a single
+tuple describing the syntactic binding for &lsquo;<samp>B</samp>&rsquo;; the syntactic
+binding for &lsquo;<samp>A</samp>&rsquo; is in the top <code>rib</code>.
+</p>
+<p>With this layout we can understand what the function <code>id-&gt;label</code>
+does in the call:
+</p>
+<div class="lisp">
+<pre class="lisp">(define A 1)
+(internal-body
+  (begin-for-syntax
+    (pretty-print (id-&gt;label #'A)))
+  (void))
+-| lab.A
+</pre></div>
+
+<p>it extracts from its argument the symbol source&ndash;name &lsquo;<samp>A</samp>&rsquo;, the list
+of marks &lsquo;<samp>(src)</samp>&rsquo; and the list of <code>rib</code> objects, then it scans the
+list of <code>rib</code> objects left&ndash;to&ndash;right looking for a tuple whose
+source&ndash;name is <code>eq?</code>  to &lsquo;<samp>A</samp>&rsquo; and whose list of marks is
+<code>equal?</code> to &lsquo;<samp>(src)</samp>&rsquo;; it finds one in the top <code>rib</code>.
+</p>
+<p>This action of looking for a <code>rib</code>&rsquo;s tuple with the same source&ndash;name
+and the same marks is the <em>syntactic identifier resolution</em>, and we
+say that the tuple <em>captures</em> the identifier.
+</p>
+<p>This is not the whole story: to handle macro expansion we need more than
+this; but for lexical contours: building a list of <code>rib</code> objects and
+using a single mark is enough.
+</p>
+<hr>
+<div class="header">
+<p>
+Next: <a href="expander-examples-contours-double.html#expander-examples-contours-double" accesskey="n" rel="next">expander examples contours double</a>, Up: <a href="expander-examples-contours.html#expander-examples-contours" accesskey="u" rel="up">expander examples contours</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

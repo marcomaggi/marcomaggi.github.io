@@ -1,0 +1,267 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.4d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit and 64-bit
+processors.  Vicare is pronounced the etruscan way.  The focus of
+this document is over the typed language extension.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/downloads
+
+the home page of the project is at:
+
+http://marcomaggi.github.io/vicare.html
+
+development takes place at:
+
+http://github.com/marcomaggi/vicare/
+
+and, as a backup, at:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/
+
+Copyright (C) 2016-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Vicare Scheme&rsquo;s typed language: annotations relations</title>
+
+<meta name="description" content="Vicare Scheme&rsquo;s typed language: annotations relations">
+<meta name="keywords" content="Vicare Scheme&rsquo;s typed language: annotations relations">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="type-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="annotations.html#annotations" rel="up" title="annotations">
+<link href="annotations-signatures.html#annotations-signatures" rel="next" title="annotations signatures">
+<link href="annotations-syntaxes.html#annotations-syntaxes" rel="prev" title="annotations syntaxes">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="annotations-relations"></a>
+<div class="header">
+<p>
+Next: <a href="annotations-signatures.html#annotations-signatures" accesskey="n" rel="next">annotations signatures</a>, Previous: <a href="annotations-syntaxes.html#annotations-syntaxes" accesskey="p" rel="prev">annotations syntaxes</a>, Up: <a href="annotations.html#annotations" accesskey="u" rel="up">annotations</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Relations-between-type-annotations"></a>
+<h3 class="section">2.3 Relations between type annotations</h3>
+
+
+<p>The following syntactic bindings are exported by the library
+<code>(vicare expander)</code>.
+</p>
+
+<dl>
+<dt><a name="index-type_002dannotation_002dsyntax"></a>Syntax: <strong>type-annotation-syntax</strong> <em><var>?type</var></em></dt>
+<dd><p>Expand to a syntax object representing the type annotation of
+<var>?type</var>.  If <var>?type</var> is a compound annotation (<code>or</code>,
+<code>and</code>, <code>condition</code>, &hellip;) some simplification may have
+been applied to the input to produce the output.
+</p>
+<div class="lisp">
+<pre class="lisp">(type-annotation-syntax (or &lt;fixnum&gt; &lt;bignum&gt;))
+&rArr; (or &lt;fixnum&gt; &lt;bignum&gt;)
+
+(type-annotation-syntax (or (enumeration hello salut)
+                            (enumeration ciao)
+                            (enumeration ohayo ciao)))
+&rArr; (enumeration hello salut ciao ohayo)
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-type_002dannotation_003d_003f"></a>Syntax: <strong>type-annotation=?</strong> <em><var>?type1</var> <var>?type2</var></em></dt>
+<dd><p>Expand to a boolean constant: <code>#t</code> if <var>?type1</var> is equal to
+<var>?type2</var>; otherwise <code>#f</code>.
+</p>
+<div class="lisp">
+<pre class="lisp">(type-annotation=? &lt;top&gt;    &lt;top&gt;)              &rArr; #t
+(type-annotation=? &lt;fixnum&gt; &lt;fixnum&gt;)           &rArr; #t
+(type-annotation=? &lt;fixnum&gt; &lt;positive-fixnum&gt;)  &rArr; #f
+
+(internal-body
+  (define-type &lt;my-fixnum&gt; &lt;fixnum&gt;)
+  (type-annotation=? &lt;fixnum&gt; &lt;my-fixnum&gt;))     &rArr; #t
+
+(type-annotation=? (lambda (&lt;fixnum&gt;) =&gt; (&lt;fixnum&gt;))
+                   (lambda (&lt;fixnum&gt;) =&gt; (&lt;fixnum&gt;)))
+&rArr; #t
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-type_002dannotation_002dsuper_002dand_002dsub_003f"></a>Syntax: <strong>type-annotation-super-and-sub?</strong> <em><var>?type1</var> <var>?type2</var></em></dt>
+<dd><p>Expand to a boolean constant: <code>#t</code> if <var>?type1</var> is a super&ndash;type
+of <var>?type2</var>; otherwise <code>#f</code>.
+</p>
+<blockquote>
+<p><strong>NOTE</strong> The type <code>&lt;top&gt;</code> is conventionally the super&ndash;type of
+all the types, with the exception of <code>&lt;void&gt;</code>.  The type
+<code>&lt;bottom&gt;</code> is conventionally the sub&ndash;type of all the types.
+</p></blockquote>
+
+<div class="lisp">
+<pre class="lisp">(type-annotation-super-and-sub? &lt;number&gt; &lt;fixnum&gt;)  &rArr; #t
+(type-annotation-super-and-sub? &lt;number&gt; &lt;string&gt;)  &rArr; #f
+(type-annotation-super-and-sub? &lt;top&gt; &lt;number&gt;)     &rArr; #t
+(type-annotation-super-and-sub? &lt;number&gt; &lt;top&gt;)     &rArr; #f
+
+(expansion-of
+  (type-annotation-super-and-sub? &lt;number&gt; &lt;fixnum&gt;))
+&rArr; (quote #t)
+
+(expansion-of
+  (type-annotation-super-and-sub? &lt;number&gt; &lt;string&gt;))
+&rArr; (quote #f)
+
+(define-record-type alpha)
+
+(define-record-type beta
+  (parent alpha))
+
+(define-record-type gamma
+  (parent beta))
+
+(type-annotation-super-and-sub? alpha beta)        &rArr; #t
+(type-annotation-super-and-sub? beta alpha)        &rArr; #f
+
+(type-annotation-super-and-sub? alpha gamma)       &rArr; #t
+(type-annotation-super-and-sub? gamma alpha)       &rArr; #f
+
+(type-annotation-super-and-sub? beta gamma)        &rArr; #t
+(type-annotation-super-and-sub? gamma beta)        &rArr; #f
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-type_002dannotation_002dmatching"></a>Syntax: <strong>type-annotation-matching</strong> <em><var>?type1</var> <var>?type2</var></em></dt>
+<dd><p>Match the two type annotations as if: <var>?type1</var> is the type of an
+argument requested by a closure object; <var>?type2</var> is the type of the
+operand given to a closure object application.
+</p>
+<p>Expand to a quoted symbol:
+</p>
+<dl compact="compact">
+<dt><code>exact-match</code></dt>
+<dd><p>If there is an exact match between the argument&rsquo;s and operand&rsquo;s
+annotation.
+</p>
+</dd>
+<dt><code>possible-match</code></dt>
+<dd><p>If there is a possible match between the argument&rsquo;s and operand&rsquo;s
+annotation; the operand must be further validated at run&ndash;time.
+</p>
+</dd>
+<dt><code>no-match</code></dt>
+<dd><p>If there is no match between the argument&rsquo;s and operand&rsquo;s annotation.
+</p></dd>
+</dl>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-type_002dannotation_002dcommon_002dancestor"></a>Syntax: <strong>type-annotation-common-ancestor</strong> <em><var>?type1</var> <var>?type2</var></em></dt>
+<dd><p>Expand to a syntax object representing the type annotation that is the
+common ancestor of <var>?type1</var> and <var>?type2</var>.
+</p>
+<div class="lisp">
+<pre class="lisp">(type-annotation-common-ancestor &lt;top&gt; &lt;top&gt;)
+&rArr; #'&lt;top&gt;
+
+(type-annotation-common-ancestor &lt;top&gt; &lt;fixnum&gt;)
+&rArr; #'&lt;top&gt;
+
+(type-annotation-common-ancestor &lt;fixnum&gt; &lt;top&gt;)
+&rArr; #'&lt;top&gt;
+
+(type-annotation-common-ancestor &lt;fixnum&gt; &lt;flonum&gt;)
+&rArr; #'&lt;real&gt;
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-type_002dannotation_002dancestors"></a>Syntax: <strong>type-annotation-ancestors</strong> <em><var>?type</var></em></dt>
+<dd><p>Expand to a (possibly empty) list of type annotations representing the
+ancestors of <var>?type</var>.  <var>?type</var> is <strong>not</strong> included.
+</p>
+<div class="lisp">
+<pre class="lisp">(type-annotation-ancestors &lt;top&gt;)       &rArr; ()
+(type-annotation-ancestors &lt;void&gt;)      &rArr; ()
+
+(type-annotation-ancestors &lt;condition&gt;)
+&rArr; (&lt;record&gt; &lt;struct&gt; &lt;top&gt;)
+
+(type-annotation-ancestors &lt;positive-fixnum&gt;)
+&rArr; (&lt;fixnum&gt;
+    &lt;exact-integer&gt; &lt;integer&gt; &lt;rational&gt; &lt;rational-valued&gt;
+    &lt;real&gt; &lt;real-valued&gt; &lt;complex&gt; &lt;number&gt; &lt;top&gt;)
+</pre></div>
+</dd></dl>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="annotations-signatures.html#annotations-signatures" accesskey="n" rel="next">annotations signatures</a>, Previous: <a href="annotations-syntaxes.html#annotations-syntaxes" accesskey="p" rel="prev">annotations syntaxes</a>, Up: <a href="annotations.html#annotations" accesskey="u" rel="up">annotations</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

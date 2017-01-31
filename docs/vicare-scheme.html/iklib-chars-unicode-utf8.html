@@ -1,0 +1,445 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.4d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit and 64-bit
+processors.  Vicare is pronounced the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/downloads
+
+the home page of the project is at:
+
+http://marcomaggi.github.io/vicare.html
+
+development takes place at:
+
+http://github.com/marcomaggi/vicare/
+
+and, as a backup, at:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the "History" appendix for details.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Vicare Scheme: iklib chars unicode utf8</title>
+
+<meta name="description" content="Vicare Scheme: iklib chars unicode utf8">
+<meta name="keywords" content="Vicare Scheme: iklib chars unicode utf8">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="iklib-chars-unicode.html#iklib-chars-unicode" rel="up" title="iklib chars unicode">
+<link href="iklib-chars-unicode-utf16.html#iklib-chars-unicode-utf16" rel="next" title="iklib chars unicode utf16">
+<link href="iklib-chars-unicode-intro.html#iklib-chars-unicode-intro" rel="prev" title="iklib chars unicode intro">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="iklib-chars-unicode-utf8"></a>
+<div class="header">
+<p>
+Next: <a href="iklib-chars-unicode-utf16.html#iklib-chars-unicode-utf16" accesskey="n" rel="next">iklib chars unicode utf16</a>, Previous: <a href="iklib-chars-unicode-intro.html#iklib-chars-unicode-intro" accesskey="p" rel="prev">iklib chars unicode intro</a>, Up: <a href="iklib-chars-unicode.html#iklib-chars-unicode" accesskey="u" rel="up">iklib chars unicode</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Unicode_0027s-UTF_002d8-encoding"></a>
+<h4 class="subsubsection">6.22.3.2 Unicode&rsquo;s <acronym>UTF</acronym>-8 encoding</h4>
+
+
+<p><acronym>UTF</acronym>-8 is a multioctet character encoding for Unicode which can
+represent every character in the Unicode set: it can represent every
+code point in the ranges &lsquo;<samp>[0, #xD800)</samp>&rsquo; and &lsquo;<samp>(#xDFFF,
+#x10FFFF]</samp>&rsquo;.
+</p>
+<p>A stream of <acronym>UTF</acronym>-8 encoded characters is meant to be stored octet by
+octet in fixed order (and so without the need to specify the endianness
+of words).
+</p>
+<p>The encoding scheme uses sequences of 1, 2, 3 or 4 octets to encode each
+code point as shown in the following table; the first octet in a
+sequence has a unique bit pattern in the most significant bits and so it
+allows the determination of the sequence length; every octet contains a
+number of payload bits which must be concatenated (bitwise inclusive OR)
+to reconstruct the integer representation of a code point:
+</p>
+<div class="example">
+<pre class="example"># of octets | 1st octet  | 2nd octet  | 3rd octet  | 4th octet  |
+------------+------------+------------+------------+------------|
+     1        #b0xxxxxxx
+     2        #b110xxxxx   #b10xxxxxx
+     3        #b1110xxxx   #b10xxxxxx   #b10xxxxxx
+     4        #b11110xxx   #b10xxxxxx   #b10xxxxxx   #b10xxxxxx
+</pre></div>
+
+<div class="example">
+<pre class="example"> # of octets | # of payload bits  |       hex range
+-------------+--------------------+----------------------
+     1                          7     [#x0000,   #x007F]
+     2                 5 + 6 = 11     [#x0080,   #x07FF]
+     3             4 + 6 + 6 = 16     [#x0800,   #xFFFF]
+     4         3 + 6 + 6 + 6 = 21   [#x010000, #x10FFFF]
+</pre></div>
+
+<p>Note that octets &lsquo;<samp>#xFE</samp>&rsquo; (&lsquo;<samp>#b11111110</samp>&rsquo;) and &lsquo;<samp>#xFF</samp>&rsquo;
+(&lsquo;<samp>#b11111111</samp>&rsquo;) cannot appear in a valid stream of <acronym>UTF</acronym>-8 encoded
+characters.
+</p>
+<p>The sequence of 3 octets is the one that could encode (but must not) the
+forbidden range &lsquo;<samp>[#xD800, #xDFFF]</samp>&rsquo; which are not Unicode code
+points.  So the table of valid encoded code points is:
+</p>
+<div class="example">
+<pre class="example"> # of octets |  # of payload bits |    code point range
+-------------+--------------------+----------------------
+     1       |                  7 |   [#x0000,   #x007F]
+     2       |        5 + 6 = 11  |   [#x0080,   #x07FF]
+     3       |     4 + 6 + 6 = 16 |   [#x0800,   #xD7FF]
+     3       |     4 + 6 + 6 = 16 |   [#xE000,   #xFFFF]
+     4       | 3 + 6 + 6 + 6 = 21 | [#x010000, #x10FFFF]
+</pre></div>
+
+<p>The first 128 characters of the Unicode character set correspond
+one&ndash;to&ndash;one with <acronym>ASCII</acronym> and are encoded using a single octet with the
+same binary value as the corresponding <acronym>ASCII</acronym> character, making valid
+<acronym>ASCII</acronym> text valid <acronym>UTF</acronym>-8 encoded Unicode text as well.  Such encoded
+octets have the Most Significant Bit (<acronym>MSB</acronym>) set to zero.
+</p>
+<p>Although the standard does not define it, many programs start a <acronym>UTF</acronym>-8
+stream with a Byte Order Mark (<acronym>BOM</acronym>) composed of the 3 octets:
+&lsquo;<samp>#xEF</samp>&rsquo;, &lsquo;<samp>#xBB</samp>&rsquo;, &lsquo;<samp>#xBF</samp>&rsquo;.
+</p>
+<p>The following syntactic bindings are exported by the library
+<code>(vicare unsafe unicode)</code>.  All the macros are unsafe: no
+validation on the type of the arguments is performed.  For all the
+macros: the argument <var>octet</var> is meant to be a fixnum representing 1
+octet (in the range &lsquo;<samp>[0, 255]</samp>&rsquo;); the argument <var>code-point</var> is
+meant to be a fixnum representing a Unicode code point (in the range
+&lsquo;<samp>[0, #x10FFFF]</samp>&rsquo;, but outside the range &lsquo;<samp>[#xD800, #xDFFF]</samp>&rsquo;).
+</p>
+
+<dl>
+<dt><a name="index-utf_002d8_002dinvalid_002doctet_003f"></a>Syntax: <strong>utf-8-invalid-octet?</strong> <em><var>octet</var></em></dt>
+<dd><p>Evaluate to <code>#t</code> if <var>octet</var> has a value that must never appear in
+a valid <acronym>UTF</acronym>-8 stream; otherwise evaluate to <code>#f</code>.
+</p></dd></dl>
+
+
+
+<a name="Decoding-1_002doctet-UTF_002d8-to-code-points"></a>
+<h4 class="subsubheading">Decoding 1-octet UTF-8 to code points</h4>
+
+
+<dl>
+<dt><a name="index-utf_002d8_002dsingle_002doctet_003f"></a>Syntax: <strong>utf-8-single-octet?</strong> <em><var>octet</var></em></dt>
+<dd><p>Evaluate to <code>#t</code> if <var>octet</var> is valid as 1-octet <acronym>UTF</acronym>-8 encoding
+of a Unicode character; otherwise evaluate to <code>#f</code>.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-utf_002d8_002ddecode_002dsingle_002doctet"></a>Syntax: <strong>utf-8-decode-single-octet</strong> <em><var>octet</var></em></dt>
+<dd><p>Decode the code point of a Unicode character from a 1-octet <acronym>UTF</acronym>-8
+encoding.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-utf_002d8_002dvalid_002dcode_002dpoint_002dfrom_002d1_002doctet_003f"></a>Syntax: <strong>utf-8-valid-code-point-from-1-octet?</strong> <em><var>code-point</var></em></dt>
+<dd><p>Evaluate to true if <var>code-point</var> is a valid fixnum representation
+for a code point decoded from a 2-octets <acronym>UTF</acronym>-8 sequence.
+</p></dd></dl>
+
+
+<a name="Decoding-2_002doctets-UTF_002d8-to-code-points"></a>
+<h4 class="subsubheading">Decoding 2-octets <acronym>UTF</acronym>-8 to code points</h4>
+
+
+<dl>
+<dt><a name="index-utf_002d8_002dfirst_002dof_002dtwo_002doctets_003f"></a>Syntax: <strong>utf-8-first-of-two-octets?</strong> <em><var>octet0</var></em></dt>
+<dd><p>Evaluate to <code>#t</code> if <var>octet0</var> is valid as first of 2-octets
+<acronym>UTF</acronym>-8 encoding of a Unicode character.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-utf_002d8_002dsecond_002dof_002dtwo_002doctets_003f"></a>Syntax: <strong>utf-8-second-of-two-octets?</strong> <em><var>octet1</var></em></dt>
+<dd><p>Evaluate to true if <var>octet1</var> is valid as second of 2-octets <acronym>UTF</acronym>-8
+encoding of a Unicode character.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-utf_002d8_002ddecode_002dtwo_002doctets"></a>Syntax: <strong>utf-8-decode-two-octets</strong> <em><var>octet0</var> <var>octet1</var></em></dt>
+<dd><p>Decode the code point of a Unicode character from a 2-octets <acronym>UTF</acronym>-8
+encoding.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-utf_002d8_002dvalid_002dcode_002dpoint_002dfrom_002d2_002doctets_003f"></a>Syntax: <strong>utf-8-valid-code-point-from-2-octets?</strong> <em><var>code-point</var></em></dt>
+<dd><p>Evaluate to <code>#t</code> if <var>code-point</var> is a valid fixnum representation
+for a code point decoded from a 2-octets <acronym>UTF</acronym>-8 sequence.
+</p></dd></dl>
+
+
+<a name="Decoding-3_002doctets-UTF_002d8-to-code-points"></a>
+<h4 class="subsubheading">Decoding 3-octets <acronym>UTF</acronym>-8 to code points</h4>
+
+
+<dl>
+<dt><a name="index-utf_002d8_002dfirst_002dof_002dthree_002doctets_003f"></a>Syntax: <strong>utf-8-first-of-three-octets?</strong> <em><var>octet0</var></em></dt>
+<dd><p>Evaluate to <code>#t</code> if <var>octet0</var> is valid as first of 3-octets
+<acronym>UTF</acronym>-8 encoding of a Unicode character; otherwise evaluate to
+<code>#f</code>.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-utf_002d8_002dsecond_002dand_002dthird_002dof_002dthree_002doctets_003f"></a>Syntax: <strong>utf-8-second-and-third-of-three-octets?</strong> <em><var>octet1</var> <var>octet2</var></em></dt>
+<dd><p>Evaluate to <code>#t</code> if <var>octet1</var> and <var>octet2</var> are valid as
+second and third of 3-octets <acronym>UTF</acronym>-8 encoding of a Unicode character.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-utf_002d8_002ddecode_002dthree_002doctets"></a>Syntax: <strong>utf-8-decode-three-octets</strong> <em><var>octet0</var> <var>octet1</var> <var>octet2</var></em></dt>
+<dd><p>Decode the code point of a Unicode character from a 3-octets <acronym>UTF</acronym>-8
+encoding.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-utf_002d8_002dvalid_002dcode_002dpoint_002dfrom_002d3_002doctets_003f"></a>Syntax: <strong>utf-8-valid-code-point-from-3-octets?</strong> <em><var>code-point</var></em></dt>
+<dd><p>Evaluate to <code>#t</code> if <var>code-point</var> is a valid integer
+representation for a code point decoded from a 3-octets <acronym>UTF</acronym>-8
+sequence.
+</p></dd></dl>
+
+
+<a name="Decoding-4_002doctets-UTF_002d8-to-code-points"></a>
+<h4 class="subsubheading">Decoding 4-octets <acronym>UTF</acronym>-8 to code points</h4>
+
+
+<dl>
+<dt><a name="index-utf_002d8_002dfirst_002dof_002dfour_002doctets_003f"></a>Syntax: <strong>utf-8-first-of-four-octets?</strong> <em><var>octet0</var></em></dt>
+<dd><p>Evaluate to <code>#t</code> if <var>octet0</var> is valid as first of 4-octets
+<acronym>UTF</acronym>-8 encoding of a Unicode character.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-utf_002d8_002dsecond_002dthird_002dand_002dfourth_002dof_002dfour_002doctets_003f"></a>Syntax: <strong>utf-8-second-third-and-fourth-of-four-octets?</strong> <em><var>octet1</var> <var>octet2</var> <var>octet3</var></em></dt>
+<dd><p>Evaluate to true if <var>octet1</var>, <var>octet2</var> and <var>octet3</var> are
+valid as second, third and fourth of 4-octets <acronym>UTF</acronym>-8 encoding of a
+Unicode character.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-utf_002d8_002ddecode_002dfour_002doctets"></a>Syntax: <strong>utf-8-decode-four-octets</strong> <em><var>octet0</var> <var>octet1</var> <var>octet2</var> <var>octet3</var></em></dt>
+<dd><p>Decode the code point of a Unicode character from a 4-octets UTF-8 encoding.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-utf_002d8_002dvalid_002dcode_002dpoint_002dfrom_002d4_002doctets_003f"></a>Syntax: <strong>utf-8-valid-code-point-from-4-octets?</strong> <em><var>code-point</var></em></dt>
+<dd><p>Evaluate to <code>#t</code> if <var>code-point</var> is a valid integer
+representation for a code point decoded from a 4-octets <acronym>UTF</acronym>-8
+sequence.
+</p></dd></dl>
+
+
+<a name="Encoding-code-points-to-1_002doctet-UTF_002d8"></a>
+<h4 class="subsubheading">Encoding code points to 1-octet <acronym>UTF</acronym>-8</h4>
+
+
+<dl>
+<dt><a name="index-utf_002d8_002dsingle_002doctet_002dcode_002dpoint_003f"></a>Syntax: <strong>utf-8-single-octet-code-point?</strong> <em><var>code-point</var></em></dt>
+<dd><p>Evaluate to <code>#t</code> if <var>code-point</var> is a Unicode code point
+representable as 1-octet <acronym>UTF</acronym>-8 encoding; otherwise evaluate to
+<code>#f</code>.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-utf_002d8_002dencode_002dsingle_002doctet"></a>Syntax: <strong>utf-8-encode-single-octet</strong> <em><var>code-point</var></em></dt>
+<dd><p>Encode the code point of a Unicode character to a 1-octet <acronym>UTF</acronym>-8
+encoding.
+</p></dd></dl>
+
+
+<a name="Encoding-code-points-to-2_002doctet-UTF_002d8"></a>
+<h4 class="subsubheading">Encoding code points to 2-octet <acronym>UTF</acronym>-8</h4>
+
+
+<dl>
+<dt><a name="index-utf_002d8_002dtwo_002doctets_002dcode_002dpoint_003f"></a>Syntax: <strong>utf-8-two-octets-code-point?</strong> <em><var>code-point</var></em></dt>
+<dd><p>Evaluate to <code>#t</code> if <var>code-point</var> is a Unicode code point
+representable as 2-octet <acronym>UTF</acronym>-8 encoding; otherwise evaluate to
+<code>#f</code>.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-utf_002d8_002dencode_002dfirst_002dof_002dtwo_002doctets"></a>Syntax: <strong>utf-8-encode-first-of-two-octets</strong> <em><var>code-point</var></em></dt>
+<dd><p>Encode the code point of a Unicode character to the first octet in a
+2-octet <acronym>UTF</acronym>-8 encoding.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-utf_002d8_002dencode_002dsecond_002dof_002dtwo_002doctets"></a>Syntax: <strong>utf-8-encode-second-of-two-octets</strong> <em><var>code-point</var></em></dt>
+<dd><p>Encode the code point of a Unicode character to the second octet in a
+2-octet <acronym>UTF</acronym>-8 encoding.
+</p></dd></dl>
+
+
+<a name="Encoding-code-points-to-3_002doctet-UTF_002d8"></a>
+<h4 class="subsubheading">Encoding code points to 3-octet <acronym>UTF</acronym>-8</h4>
+
+
+<dl>
+<dt><a name="index-utf_002d8_002dthree_002doctets_002dcode_002dpoint_003f"></a>Syntax: <strong>utf-8-three-octets-code-point?</strong> <em><var>code-point</var></em></dt>
+<dd><p>Evaluate to <code>#t</code> if <var>code-point</var> is a Unicode code point
+representable as 3-octet <acronym>UTF</acronym>-8 encoding; otherwise evaluate to
+<code>#f</code>.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-utf_002d8_002dencode_002dfirst_002dof_002dthree_002doctets"></a>Syntax: <strong>utf-8-encode-first-of-three-octets</strong> <em><var>code-point</var></em></dt>
+<dd><p>Encode the code point of a Unicode character to the first octet in a
+3-octet <acronym>UTF</acronym>-8 encoding.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-utf_002d8_002dencode_002dsecond_002dof_002dthree_002doctets"></a>Syntax: <strong>utf-8-encode-second-of-three-octets</strong> <em><var>code-point</var></em></dt>
+<dd><p>Encode the code point of a Unicode character to the second octet in a
+3-octet <acronym>UTF</acronym>-8 encoding.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-utf_002d8_002dencode_002dthird_002dof_002dthree_002doctets"></a>Syntax: <strong>utf-8-encode-third-of-three-octets</strong> <em><var>code-point</var></em></dt>
+<dd><p>Encode the code point of a Unicode character to the fourth octet in a
+3-octet <acronym>UTF</acronym>-8 encoding.
+</p></dd></dl>
+
+
+<a name="Encoding-code-points-to-4_002doctet-UTF_002d8"></a>
+<h4 class="subsubheading">Encoding code points to 4-octet <acronym>UTF</acronym>-8</h4>
+
+
+<dl>
+<dt><a name="index-utf_002d8_002dfour_002doctets_002dcode_002dpoint_003f"></a>Syntax: <strong>utf-8-four-octets-code-point?</strong> <em><var>code-point</var></em></dt>
+<dd><p>Evaluate to <code>#t</code> if <var>code-point</var> is a Unicode code point
+representable as 4-octet <acronym>UTF</acronym>-8 encoding; otherwise evaluate to
+<code>#f</code>.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-utf_002d8_002dencode_002dfirst_002dof_002dfour_002doctets"></a>Syntax: <strong>utf-8-encode-first-of-four-octets</strong> <em><var>code-point</var></em></dt>
+<dd><p>Encode the code point of a Unicode character to the first octet in a
+4-octet <acronym>UTF</acronym>-8 encoding.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-utf_002d8_002dencode_002dsecond_002dof_002dfour_002doctets"></a>Syntax: <strong>utf-8-encode-second-of-four-octets</strong> <em><var>code-point</var></em></dt>
+<dd><p>Encode the code point of a Unicode character to the second octet in a
+4-octet <acronym>UTF</acronym>-8 encoding.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-utf_002d8_002dencode_002dthird_002dof_002dfour_002doctets"></a>Syntax: <strong>utf-8-encode-third-of-four-octets</strong> <em><var>code-point</var></em></dt>
+<dd><p>Encode the code point of a Unicode character to the third octet in a
+4-octet <acronym>UTF</acronym>-8 encoding.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-utf_002d8_002dencode_002dfourth_002dof_002dfour_002doctets"></a>Syntax: <strong>utf-8-encode-fourth-of-four-octets</strong> <em><var>code-point</var></em></dt>
+<dd><p>Encode the code point of a Unicode character to the fourth octet in a
+4-octet <acronym>UTF</acronym>-8 encoding.
+</p></dd></dl>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="iklib-chars-unicode-utf16.html#iklib-chars-unicode-utf16" accesskey="n" rel="next">iklib chars unicode utf16</a>, Previous: <a href="iklib-chars-unicode-intro.html#iklib-chars-unicode-intro" accesskey="p" rel="prev">iklib chars unicode intro</a>, Up: <a href="iklib-chars-unicode.html#iklib-chars-unicode" accesskey="u" rel="up">iklib chars unicode</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

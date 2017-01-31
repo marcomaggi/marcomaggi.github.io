@@ -1,0 +1,183 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.4d1 of Vicare Scheme, an
+R6RS compliant native compiler for the Scheme language, producing
+single threaded programs running on Intel x86 32-bit and 64-bit
+processors.  Vicare is pronounced the etruscan way.
+
+The package, including its documentation, is distributed under the terms
+of the GNU General Public License (GPL) and can be downloaded
+from:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/downloads
+
+the home page of the project is at:
+
+http://marcomaggi.github.io/vicare.html
+
+development takes place at:
+
+http://github.com/marcomaggi/vicare/
+
+and, as a backup, at:
+
+https://bitbucket.org/marcomaggi/vicare-scheme/
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+Copyright (C) Michael Sperber, R. Kent Dybvig, Matthew Flatt and Anton Van Straaten.
+
+This document is derived from the original Ikarus documentation by the
+Vicare Scheme contributors, see the "History" appendix for details.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Vicare Scheme: expander lexenv imported</title>
+
+<meta name="description" content="Vicare Scheme: expander lexenv imported">
+<meta name="keywords" content="Vicare Scheme: expander lexenv imported">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="expander-lexenv.html#expander-lexenv" rel="up" title="expander lexenv">
+<link href="expander-lexenv-imported-inspect.html#expander-lexenv-imported-inspect" rel="next" title="expander lexenv imported inspect">
+<link href="expander-lexenv-prim-labels.html#expander-lexenv-prim-labels" rel="prev" title="expander lexenv prim labels">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="expander-lexenv-imported"></a>
+<div class="header">
+<p>
+Next: <a href="expander-lexenv-internal.html#expander-lexenv-internal" accesskey="n" rel="next">expander lexenv internal</a>, Previous: <a href="expander-lexenv-prim.html#expander-lexenv-prim" accesskey="p" rel="prev">expander lexenv prim</a>, Up: <a href="expander-lexenv.html#expander-lexenv" accesskey="u" rel="up">expander lexenv</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Imported-syntactic-bindings"></a>
+<h4 class="subsection">15.3.5 Imported syntactic bindings</h4>
+
+
+<p>The data describing syntactic bindings established by a library is
+stored in a <code>library</code> object:
+</p>
+<ul>
+<li> If no <code>rename</code> clause is used in the <code>import</code> clause: the
+imported name equals the exported name and it is taken from the
+<code>export-subst</code> field of the <code>library</code> object.  The
+<code>export-subst</code> maps exported names to label gensyms; it is an alist
+whose entries have format:
+
+<div class="example">
+<pre class="example">(<var>?exported-name</var> . <var>?label</var>)
+</pre></div>
+
+</li><li> The syntactic binding&rsquo;s descriptors are taken from the <code>global-env</code>
+field of the <code>library</code> object.  The <code>global-env</code> maps label
+gensyms to their binding descriptors; it is an alist whose entries have
+format:
+
+<div class="example">
+<pre class="example">(<var>?label</var> . <var>?binding-descriptor</var>)
+</pre></div>
+
+</li><li> When the library is interned: a <code>library</code> object is created and
+the fields <code>export-subst</code> and <code>global-env</code> are used to build
+the label gensyms by storing the descriptors in the <code>value</code> slots
+of the gensyms.
+
+</li><li> When a library is imported: the imported names of syntactic bindings are
+associated to their label gensyms in the <code>rib</code> object representing the
+current lexical context.
+</li></ul>
+
+<table class="menu" border="0" cellspacing="0">
+<tr><td align="left" valign="top">&bull; <a href="expander-lexenv-imported-inspect.html#expander-lexenv-imported-inspect" accesskey="1">expander lexenv imported inspect</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Inspecting descriptors.
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="expander-lexenv-imported-variables.html#expander-lexenv-imported-variables" accesskey="2">expander lexenv imported variables</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Global variables.
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="expander-lexenv-imported-nvmacros.html#expander-lexenv-imported-nvmacros" accesskey="3">expander lexenv imported nvmacros</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Non-variable macros.
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="expander-lexenv-imported-vmacros.html#expander-lexenv-imported-vmacros" accesskey="4">expander lexenv imported vmacros</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Variable macros.
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="expander-lexenv-imported-etv.html#expander-lexenv-imported-etv" accesskey="5">expander lexenv imported etv</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Expand-time values.
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="expander-lexenv-imported-stn.html#expander-lexenv-imported-stn" accesskey="6">expander lexenv imported stn</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Struct-type names.
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="expander-lexenv-imported-rtn.html#expander-lexenv-imported-rtn" accesskey="7">expander lexenv imported rtn</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Record-type names.
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="expander-lexenv-imported-modules.html#expander-lexenv-imported-modules" accesskey="8">expander lexenv imported modules</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Module interfaces.
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="expander-lexenv-imported-fluids.html#expander-lexenv-imported-fluids" accesskey="9">expander lexenv imported fluids</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Fluid syntaxes.
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="expander-lexenv-imported-synonyms.html#expander-lexenv-imported-synonyms">expander lexenv imported synonyms</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Synonym syntaxes.
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="expander-lexenv-imported-examples.html#expander-lexenv-imported-examples">expander lexenv imported examples</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Example library.
+</td></tr>
+</table>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="expander-lexenv-internal.html#expander-lexenv-internal" accesskey="n" rel="next">expander lexenv internal</a>, Previous: <a href="expander-lexenv-prim.html#expander-lexenv-prim" accesskey="p" rel="prev">expander lexenv prim</a>, Up: <a href="expander-lexenv.html#expander-lexenv" accesskey="u" rel="up">expander lexenv</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

@@ -1,0 +1,261 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes the libraries distributed along with version
+0.4d1 of Vicare Scheme, an R6RS compliant native
+compiler for the Scheme language.
+
+Copyright (C) 2010-2017 by Marco Maggi.
+
+Copyright (C) 2006-2010 by Abdulaziz Ghuloum.
+
+The documentation of IrRegex is Copyright (C) 2005-2012 Alex
+Shinn.  All rights reserved.
+
+The documentation of Pregexp is Copyright (C) 1999-2005 Dorai
+Sitaram.  All rights reserved.
+
+The documentation of the library (vicare formations) is derived
+from the documentation of Guile.  Copyright (C) 1996-2005,
+2009-2013 Free Software Foundation.
+
+The documentation of the libraries (vicare parser-tools silex
+-) are derived form the documentation of SILex.  Copyright
+(C) 2001, 2009 Danny Dube'.
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+http://www.gnu.org/licenses/.
+
+Trademarks used herein are the property of their respective owners. -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Libraries for Vicare Scheme: srfi regexps syntax basic</title>
+
+<meta name="description" content="Libraries for Vicare Scheme: srfi regexps syntax basic">
+<meta name="keywords" content="Libraries for Vicare Scheme: srfi regexps syntax basic">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="srfi-regexps-syntax.html#srfi-regexps-syntax" rel="up" title="srfi regexps syntax">
+<link href="srfi-regexps-syntax-repeating.html#srfi-regexps-syntax-repeating" rel="next" title="srfi regexps syntax repeating">
+<link href="srfi-regexps-syntax-summary.html#srfi-regexps-syntax-summary" rel="prev" title="srfi regexps syntax summary">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="srfi-regexps-syntax-basic"></a>
+<div class="header">
+<p>
+Next: <a href="srfi-regexps-syntax-repeating.html#srfi-regexps-syntax-repeating" accesskey="n" rel="next">srfi regexps syntax repeating</a>, Previous: <a href="srfi-regexps-syntax-summary.html#srfi-regexps-syntax-summary" accesskey="p" rel="prev">srfi regexps syntax summary</a>, Up: <a href="srfi-regexps-syntax.html#srfi-regexps-syntax" accesskey="u" rel="up">srfi regexps syntax</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Basic-patterns"></a>
+<h4 class="subsubsection">2.39.7.2 Basic patterns</h4>
+
+
+<dl compact="compact">
+<dt><code>&lt;string&gt;</code></dt>
+<dd><p>A literal string.
+</p>
+<div class="lisp">
+<pre class="lisp">(regexp-search &quot;needle&quot; &quot;hayneedlehay&quot;) &rArr; #&lt;regexp-match&gt;
+(regexp-search &quot;needle&quot; &quot;haynEEdlehay&quot;) &rArr; #f
+</pre></div>
+
+</dd>
+<dt><code>(seq sre ...)</code></dt>
+<dt><code>(: sre ...)</code></dt>
+<dd><p>Sequencing.  Matches if each of sre matches adjacently in order.
+</p>
+<div class="lisp">
+<pre class="lisp">(regexp-search '(: &quot;one&quot; space &quot;two&quot; space &quot;three&quot;)
+               &quot;one two three&quot;)
+&rArr; #&lt;regexp-match&gt;
+</pre></div>
+
+</dd>
+<dt><code>(or sre ...)</code></dt>
+<dt><code>(|\|| sre ...)</code></dt>
+<dd><p>Alternation.  Matches if any of sre match.
+</p>
+<div class="lisp">
+<pre class="lisp">(regexp-search '(or &quot;eeney&quot; &quot;meeney&quot; &quot;miney&quot;) &quot;meeney&quot;)
+&rArr; #&lt;regexp-match&gt;
+(regexp-search '(or &quot;eeney&quot; &quot;meeney&quot; &quot;miney&quot;) &quot;moe&quot;)
+&rArr; #f
+</pre></div>
+
+<blockquote>
+<p><strong>NOTE</strong> The syntax &lsquo;<samp>|\||</samp>&rsquo; is <strong>not</strong> supported by
+Vicare.
+</p></blockquote>
+
+</dd>
+<dt><code>(w/nocase sre ...)</code></dt>
+<dd><p>Enclosed sres are case&ndash;insensitive.  In a Unicode context character and
+string literals match with the default simple Unicode case&ndash;insensitive
+matching.  Implementations may, but are not required to, handle variable
+length case conversions, such as &lsquo;<samp>#\x00DF</samp>&rsquo; matching the two
+characters &lsquo;<samp>SS</samp>&rsquo;.
+</p>
+<p>Character sets match if any character in the set matches
+case&ndash;insensitively to the input.  Conceptually each <var>cset-sre</var> is
+expanded to contain all case variants for all of its characters.  In a
+compound <var>cset-sre</var> the expansion is applied at the terminals
+consisting of characters, strings, embedded <acronym>SRFI</acronym>-14
+<code>char-set</code>s, and named character sets.  For simple unions this
+would be equivalent to computing the full union first and then expanding
+case variants, but the semantics can differ when differences and
+intersections are applied.  For example:
+</p>
+<div class="example">
+<pre class="example">(w/nocase (~ (&quot;Aab&quot;)))
+</pre></div>
+
+<p>is equivalent to:
+</p>
+<div class="example">
+<pre class="example">(~ (&quot;AaBb&quot;))
+</pre></div>
+
+<p>for which &lsquo;<samp>B</samp>&rsquo; is clearly not a member.  However if you were to
+compute &lsquo;<samp>(~ (&quot;Aab&quot;))</samp>&rsquo; first then you would have a
+<code>char-set</code> containing &lsquo;<samp>B</samp>&rsquo;, and after expanding case
+variants both &lsquo;<samp>B</samp>&rsquo; and &lsquo;<samp>b</samp>&rsquo; would be members.
+</p>
+<p>In an <acronym>ASCII</acronym> context only the 52 <acronym>ASCII</acronym> letters &lsquo;<samp>(/ &quot;a-zA-Z&quot;)</samp>&rsquo;
+match case&ndash;insensitively to each other.
+</p>
+<p>In a Unicode context the only named <var>cset-sre</var> which are affected by
+&lsquo;<samp>w/nocase</samp>&rsquo; are upper and lower.  Note that the case insensitive
+versions of these are not equivalent to letter as there are characters
+with the letter property but no case.
+</p>
+<div class="lisp">
+<pre class="lisp">(regexp-search &quot;needle&quot; &quot;haynEEdlehay&quot;)
+&rArr; #f
+(regexp-search '(w/nocase &quot;needle&quot;) &quot;haynEEdlehay&quot;)
+&rArr; #&lt;regexp-match&gt;
+
+(regexp-search '(~ (&quot;Aab&quot;)) &quot;B&quot;) &rArr; #&lt;regexp-match&gt;
+(regexp-search '(~ (&quot;Aab&quot;)) &quot;b&quot;) &rArr; #f
+(regexp-search '(w/nocase (~ (&quot;Aab&quot;))) &quot;B&quot;) &rArr; #f
+(regexp-search '(w/nocase (~ (&quot;Aab&quot;))) &quot;b&quot;) &rArr; #f
+(regexp-search '(~ (w/nocase (&quot;Aab&quot;))) &quot;B&quot;) &rArr; #f
+(regexp-search '(~ (w/nocase (&quot;Aab&quot;))) &quot;b&quot;) &rArr; #f
+</pre></div>
+
+</dd>
+<dt><code>(w/case sre ...)</code></dt>
+<dd><p>Enclosed sres are case&ndash;sensitive.  This is the default, and overrides
+any enclosing &lsquo;<samp>w/nocase</samp>&rsquo; setting.
+</p>
+<div class="lisp">
+<pre class="lisp">(regexp-search '(w/nocase &quot;SMALL&quot; (w/case &quot;BIG&quot;))
+               &quot;smallBIGsmall&quot;)
+&rArr; #&lt;regexp-match&gt;
+
+(regexp-search '(w/nocase (~ (w/case (&quot;Aab&quot;)))) &quot;b&quot;)
+&rArr; #f
+</pre></div>
+
+</dd>
+<dt><code>(w/ascii sre ...)</code></dt>
+<dd><p>Enclosed sres are interpreted in an <acronym>ASCII</acronym> context.  In practice many
+regular expressions are used for simple parsing and only <acronym>ASCII</acronym>
+characters are relevant.  Switching to <acronym>ASCII</acronym> mode can improve
+performance in some implementations.
+</p>
+<div class="lisp">
+<pre class="lisp">(regexp-search '(w/ascii bos (* alpha) eos) &quot;English&quot;)
+&rArr; #&lt;regexp-match&gt;
+</pre></div>
+
+</dd>
+<dt><code>(w/unicode sre ...)</code></dt>
+<dd><p>Enclosed sres are interpreted in a Unicode context; character sets with
+both an <acronym>ASCII</acronym> and Unicode definition take the latter.  Has no effect
+if the &lsquo;<samp>regexp-unicode</samp>&rsquo; feature is not provided.  This is the
+default.
+</p>
+<div class="lisp">
+<pre class="lisp">(regexp-search '(w/unicode bos (* letter) eos) &quot;English&quot;)
+&rArr; #&lt;regexp-match&gt;
+</pre></div>
+
+
+</dd>
+<dt><code>(w/nocapture sre ...)</code></dt>
+<dd><p>Disables capturing for all submatches (&lsquo;<samp>$</samp>&rsquo;, &lsquo;<samp>submatch</samp>&rsquo;,
+&lsquo;<samp>-&gt;</samp>&rsquo; and &lsquo;<samp>submatch-named</samp>&rsquo;) in the enclosed sres.  The
+resulting SRE matches exactly the same strings, but without any
+associated submatch info.  Useful for utility SREs which you want to
+incorporate without affecting your submatch positions.
+</p>
+<div class="lisp">
+<pre class="lisp">(let ((number '($ (+ digit))))
+  (cdr
+   (regexp-match-&gt;list
+    (regexp-search `(: ,number &quot;-&quot; ,number &quot;-&quot; ,number)
+                   &quot;555-867-5309&quot;)))
+  &rArr; (&quot;555&quot; &quot;867&quot; &quot;5309&quot;)
+
+  (cdr
+   (regexp-match-&gt;list
+    (regexp-search `(: ,number &quot;-&quot; (w/nocapture ,number) &quot;-&quot; ,number)
+                   &quot;555-867-5309&quot;))))
+  &rArr; (&quot;555&quot; &quot;5309&quot;)
+</pre></div>
+</dd>
+</dl>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="srfi-regexps-syntax-repeating.html#srfi-regexps-syntax-repeating" accesskey="n" rel="next">srfi regexps syntax repeating</a>, Previous: <a href="srfi-regexps-syntax-summary.html#srfi-regexps-syntax-summary" accesskey="p" rel="prev">srfi regexps syntax summary</a>, Up: <a href="srfi-regexps-syntax.html#srfi-regexps-syntax" accesskey="u" rel="up">srfi regexps syntax</a> &nbsp; [<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>
