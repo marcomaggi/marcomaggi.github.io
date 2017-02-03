@@ -1,6 +1,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
-<!-- This document describes version 0.2d0 of CCExceptions, a C11 language library requiring
+<!-- This document describes version 0.2d1 of CCExceptions, a C11 language library requiring
 GCC extensions; it implements an interface to non-local exits, which is somewhat similar to
 exceptions handling.
 
@@ -286,7 +286,7 @@ Next: <a href="#overview" accesskey="n" rel="next">overview</a>, Up: <a href="di
 <a name="CCExceptions"></a>
 <h1 class="top">CCExceptions</h1>
 
-<p>This document describes version 0.2d0 of CCExceptions, a C11 language library requiring
+<p>This document describes version 0.2d1 of CCExceptions, a C11 language library requiring
 <acronym>GCC</acronym> extensions; it implements an interface to non&ndash;local exits, which is somewhat similar to
 exceptions handling.
 </p>
@@ -366,7 +366,7 @@ Next: <a href="#version" accesskey="n" rel="next">version</a>, Previous: <a href
 <h2 class="chapter">1 Overview of the package</h2>
 
 
-<p>This document describes version 0.2d0 of CCExceptions, a C11 language library requiring
+<p>This document describes version 0.2d1 of CCExceptions, a C11 language library requiring
 <acronym>GCC</acronym> extensions; it implements an interface to non&ndash;local exits, which is somewhat similar to
 exceptions handling.
 </p>
@@ -792,7 +792,7 @@ implemented by the standard C library through the <code>setjmp()</code> and <cod
 is the target of the <code>longjmp()</code> calls.  It has the following public fields:
 </p>
 <dl compact="compact">
-<dt><code>cce_condition_t * condition</code></dt>
+<dt><code>const cce_condition_t * condition</code></dt>
 <dd><p>Pointer to an exceptional condition descriptor.  It is set by <code>cce_raise()</code> and
 <code>cce_retry()</code>.  The client code is responsible of releasing resources associated to this value.
 </p></dd>
@@ -847,7 +847,7 @@ the return value of <code>cce_location()</code> at the first evaluation.
 
 
 <dl>
-<dt><a name="index-cce_005fraise"></a>Function: <em>void</em> <strong>cce_raise</strong> <em>(cce_location_tag_t * <var>L</var>, void * <var>C</var>)</em></dt>
+<dt><a name="index-cce_005fraise"></a>Function: <em>void</em> <strong>cce_raise</strong> <em>(cce_location_tag_t * <var>L</var>, const cce_condition_t * <var>C</var>)</em></dt>
 <dd><p>Raise an exception associated to the destination <var>L</var> and with exceptional condition descriptor
 <var>C</var>.  This function performs the call to <code>longjmp()</code> with code <code>CCE_ERROR</code>.
 </p>
@@ -1037,6 +1037,10 @@ allocation.  Handlers are called starting from the last registered one.
 <dd><p>Run all the error handlers associated to the location <var>L</var>.  Each handler must return to its
 caller, taking care of itself regarding internal error handling and asynchronous resources
 allocation.  Handlers are called starting from the last registered one.
+</p>
+<p><strong>NOTE</strong> It is always better to assume that an error handler might access the exceptional
+condition object associated to <var>L</var>, so this function should always be called <strong>before</strong>
+applying <code>cce_condition_free()</code> to the return value of <code>cce_location_condition()</code>.
 </p></dd></dl>
 
 
@@ -1311,7 +1315,7 @@ property.
 </p>
 
 <dl>
-<dt><a name="index-const-cce_005fcondition_005fdescriptor_005ft-_002a"></a>Dynamic Constant: <strong>const cce_condition_descriptor_t *</strong> <em>cce_root_condition_descriptor</em></dt>
+<dt><a name="index-cce_005froot_005fcondition_005fdescriptor"></a>Dynamic Constant: <em>const cce_condition_descriptor_t *</em> <strong>cce_root_condition_descriptor</strong></dt>
 <dd><p>Pointer to a statically allocated structure representing the root condition descriptor for all the
 condition descriptors.  When a condition descriptors hierarchy is correctly built: using this value
 as second argument in calls to the functions:
@@ -1376,7 +1380,7 @@ condition with unknown cause; it should be used only by:
 </p>
 
 <dl>
-<dt><a name="index-const-cce_005fcondition_005fdescriptor_005ft-_002a-1"></a>Dynamic Constant: <strong>const cce_condition_descriptor_t *</strong> <em>cce_unknown_condition_descriptor</em></dt>
+<dt><a name="index-cce_005funknown_005fcondition_005fdescriptor"></a>Dynamic Constant: <em>const cce_condition_descriptor_t *</em> <strong>cce_unknown_condition_descriptor</strong></dt>
 <dd><p>Pointer to a statically allocated structure representing the unknown condition descriptor for the
 single unknown condition object.  The parent of this descriptor is the root descriptor referenced by
 <code>cce_root_condition_descriptor</code>.
@@ -1387,7 +1391,7 @@ can determine if the condition struct is an unknown condition object.
 
 
 <dl>
-<dt><a name="index-const-cce_005fcondition_005ft-_002a"></a>Dynamic Constant: <strong>const cce_condition_t *</strong> <em>cce_unknown_condition</em></dt>
+<dt><a name="index-cce_005funknown_005fcondition"></a>Dynamic Constant: <em>const cce_condition_t *</em> <strong>cce_unknown_condition</strong></dt>
 <dd><p>Pointer to a statically allocated structure representing the unknown condition object.  This should
 be the single condition object having <code>cce_unknown_condition_descriptor</code> as descriptor.
 </p></dd></dl>
@@ -1445,7 +1449,7 @@ condition descriptor referenced by the <code>descriptor</code> sub&ndash;field i
 
 
 <dl>
-<dt><a name="index-const-cce_005fcondition_005fdescriptor_005ft-_002a-2"></a>Dynamic Constant: <strong>const cce_condition_descriptor_t *</strong> <em>cce_errno_condition_descriptor</em></dt>
+<dt><a name="index-cce_005ferrno_005fcondition_005fdescriptor"></a>Dynamic Constant: <em>const cce_condition_descriptor_t *</em> <strong>cce_errno_condition_descriptor</strong></dt>
 <dd><p>Pointer to a statically allocated structure representing the condition descriptor of all the values
 returned by <code>cce_errno_condition()</code>.
 </p>
@@ -1540,12 +1544,12 @@ by the functions table.
 
 if (cce_location(L))
   {
+    cce_condition_t * C = cce_location_condition(L);
     {
-      cce_condition_t * C = cce_location_condition(L);
       fprintf(stderr, &quot;log: %s\n&quot;, cce_condition_static_message(C));
-      cce_condition_free(C);
+      cce_run_error_handlers(L);
     }
-    cce_run_error_handlers(L);
+    cce_condition_free(C);
   } else {
     do_something();
     if (an_error_occurred()) {
@@ -1565,12 +1569,12 @@ upper_function (void)
 
   if (cce_location(L))
     {
+      cce_condition_t * C = cce_location_condition(L);
       {
-        cce_condition_t * C = cce_location_condition(L);
         do_something_with(cce_condition_static_message(C));
-        cce_condition_free(C);
+        cce_run_error_handlers(L);
       }
-      cce_run_error_handlers(L);
+      cce_condition_free(C);
     }
   else
     {
@@ -1608,21 +1612,22 @@ lower_function (cce_location_tag_t * upper_L)
 
 if (cce_location(L)) {
   cce_condition_t * C = cce_location_condition(L);
-
-  if (cce_condition_is_a(C, cce_unknown_condition_descriptor))
-    {
-      do_something();
-    }
-  else if (cce_condition_is_a(C, cce_errno_condition_descriptor))
-    {
-      do_something();
-    }
-  else
-    {
-      do_something();
-    }
+  {
+    if (cce_condition_is_a(C, cce_unknown_condition_descriptor))
+      {
+        do_something();
+      }
+    else if (cce_condition_is_a(C, cce_errno_condition_descriptor))
+      {
+        do_something();
+      }
+    else
+      {
+        do_something();
+      }
+    cce_run_error_handlers(L);
+  }
   cce_condition_free(C);
-  cce_run_error_handlers(L);
 } else {
   do_something();
   if (an_exception_occurred()) {
@@ -1640,24 +1645,24 @@ if (cce_location(L)) {
 if (cce_location(L)) {
   cce_condition_t *                 C  = cce_location_condition(L);
   const cce_condition_descriptor_t *CD = cce_condition_descriptor(C);
+  {
+    if (cce_condition_descriptor_child_and_parent(CD,
+           cce_unknown_condition_descriptor))
+      {
+        do_something();
+      }
+    else if (cce_condition_descriptor_child_and_parent(CD,
+                cce_errno_condition_descriptor))
+      {
+        do_something();
+      }
+    else
+      {
+        do_something();
+      }
+    cce_run_error_handlers(L);
+  }
   cce_condition_free(C);
-
-  if (cce_condition_descriptor_child_and_parent(CD,
-         cce_unknown_condition_descriptor))
-    {
-      do_something();
-    }
-  else if (cce_condition_descriptor_child_and_parent(CD,
-              cce_errno_condition_descriptor))
-    {
-      do_something();
-    }
-  else
-    {
-      do_something();
-    }
-  cce_condition_free(C);
-  cce_run_error_handlers(L);
 } else {
   do_something();
   if (an_exception_occurred()) {
@@ -1955,8 +1960,8 @@ main (int argc CCE_UNUSED, const char *const argv[])
       } else {
         flag = 0;
       }
-      cce_condition_free(cnd);
       cce_run_error_handlers(L);
+      cce_condition_free(cnd);
     } else {
       cce_raise(L, C_condition_constructor(1, 2, 3));
       cce_run_cleanup_handlers(L);
@@ -1984,8 +1989,8 @@ main (int argc CCE_UNUSED, const char *const argv[])
       } else {
         flag = 0;
       }
-      cce_condition_free(cnd);
       cce_run_error_handlers(L);
+      cce_condition_free(cnd);
     } else {
       cce_raise(L, B_condition_constructor(1, 2));
       cce_run_cleanup_handlers(L);
@@ -2013,8 +2018,8 @@ main (int argc CCE_UNUSED, const char *const argv[])
       } else {
         flag = 0;
       }
-      cce_condition_free(cnd);
       cce_run_error_handlers(L);
+      cce_condition_free(cnd);
     } else {
       cce_raise(L, A_condition_constructor(1));
       cce_run_cleanup_handlers(L);
@@ -2808,13 +2813,13 @@ Next: <a href="#type-index" accesskey="n" rel="next">type index</a>, Previous: <
 <tr><td></td><th align="left">Index Entry</th><td>&nbsp;</td><th align="left"> Section</th></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th><a name="variable-index_vr_letter-C">C</a></th><td></td><td></td></tr>
+<tr><td></td><td valign="top"><a href="#index-cce_005ferrno_005fcondition_005fdescriptor"><code>cce_errno_condition_descriptor</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-errno">conditions errno</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-CCE_005fERROR"><code>CCE_ERROR</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#locations">locations</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-CCE_005fRETRY"><code>CCE_RETRY</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#locations">locations</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-cce_005froot_005fcondition_005fdescriptor"><code>cce_root_condition_descriptor</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-root">conditions root</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-CCE_005fSUCCESS"><code>CCE_SUCCESS</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#locations">locations</a></td></tr>
-<tr><td></td><td valign="top"><a href="#index-const-cce_005fcondition_005fdescriptor_005ft-_002a"><code>const cce_condition_descriptor_t *</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-root">conditions root</a></td></tr>
-<tr><td></td><td valign="top"><a href="#index-const-cce_005fcondition_005fdescriptor_005ft-_002a-1"><code>const cce_condition_descriptor_t *</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-unknown">conditions unknown</a></td></tr>
-<tr><td></td><td valign="top"><a href="#index-const-cce_005fcondition_005fdescriptor_005ft-_002a-2"><code>const cce_condition_descriptor_t *</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-errno">conditions errno</a></td></tr>
-<tr><td></td><td valign="top"><a href="#index-const-cce_005fcondition_005ft-_002a"><code>const cce_condition_t *</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-unknown">conditions unknown</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-cce_005funknown_005fcondition"><code>cce_unknown_condition</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-unknown">conditions unknown</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-cce_005funknown_005fcondition_005fdescriptor"><code>cce_unknown_condition_descriptor</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-unknown">conditions unknown</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 </table>
 <table><tr><th valign="top">Jump to: &nbsp; </th><td><a class="summary-letter" href="#variable-index_vr_letter-C"><b>C</b></a>
