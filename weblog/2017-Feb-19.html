@@ -1,0 +1,206 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- Copyright (C) 2015, 2016, 2017 by Marco Maggi marco.maggi-ipsu@poste.it
+
+Permission is granted to copy, distribute and/or modify this document under the terms
+of the GNU Free Documentation License, Version 1.3 or any later version published
+by the Free Software Foundation; with Invariant Sections being "GNU Free
+Documentation License" and "GNU General Public License", no Front-Cover Texts,
+and no Back-Cover Texts.  A copy of the license is included in the section entitled
+"GNU Free Documentation License". -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Marco&rsquo;s Weblog: 2017 Feb 19</title>
+
+<meta name="description" content="Marco&rsquo;s Weblog: 2017 Feb 19">
+<meta name="keywords" content="Marco&rsquo;s Weblog: 2017 Feb 19">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="concept-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="2017.html#g_t2017" rel="up" title="2017">
+<link href="2017-Feb-18.html#g_t2017-Feb-18" rel="next" title="2017 Feb 18">
+<link href="2017.html#g_t2017" rel="prev" title="2017">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="weblog.css">
+
+
+</head>
+
+<body lang="en">
+<a name="g_t2017-Feb-19"></a>
+<div class="header">
+<p>
+Next: <a href="2017-Feb-18.html#g_t2017-Feb-18" accesskey="n" rel="next">2017 Feb 18</a>, Up: <a href="2017.html#g_t2017" accesskey="u" rel="up">2017</a> &nbsp; [<a href="concept-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="C-language_003a-cast-functions"></a>
+<h3 class="unnumberedsec">C language: cast functions</h3>
+
+
+<p><em>Posted on Sun Feb 19, 2017</em>
+</p>
+
+<p>It&rsquo;s 6AM, milk+coffee makes it one of the best moments of the day.
+</p>
+<p>It happens to define structures as follows, using C11 anonymous fields:
+</p>
+<div class="example">
+<pre class="example">struct alpha_t {
+  ...
+}
+
+struct beta_t {
+  alpha_t;
+  ...
+}
+</pre></div>
+
+<p>when using <acronym>GCC</acronym>&rsquo;s <samp>-fplan9-extensions</samp> facilities: a pointer to
+<code>beta_t</code> is automatically a pointer to <code>alpha_t</code>.
+</p>
+<p>Sometimes we need to cast a pointer as follows:
+</p>
+<div class="example">
+<pre class="example">alpha_t * A = ...;
+beta_t  * B = (beta_t *) A;
+</pre></div>
+
+<p>the cast operation is obviously dangerous; and it&rsquo;s also ugly to look at.
+</p>
+<p>So, I will start to experiment with &ldquo;cast functions&rdquo;.  A cast function from
+<code>alpha_t</code> to <code>beta_t</code> looks like this, using <acronym>GCC</acronym>&rsquo;s function
+attributes:
+</p>
+<div class="example">
+<pre class="example">__attribute__((const,always_inline))
+static inline beta_t *
+cast_to_beta_from_alpha (alpha_t * src)
+{
+  return (beta_t *)src;
+}
+</pre></div>
+
+<p>this begs for a C11 generic macro:
+</p>
+<div class="example">
+<pre class="example">#define cast_to_beta(SRC)               \
+  _Generic(SRC, alpha_t *: cast_to_beta_from_alpha(SRC))
+</pre></div>
+
+<p>which will cause a compiler error if applied to a <var>SRC</var> argument which is not an
+<code>alpha_t</code> pointer.  So the cast operation becomes:
+</p>
+<div class="example">
+<pre class="example">alpha_t * A = ...;
+beta_t  * B = cast_to_beta(A);
+</pre></div>
+
+<p>still dangerous.  Defining cast functions will not forbid us from using the plain
+cast operator, but at least it documents which conversions we are, sometimes,
+expected to do and it provides some type checking.
+</p>
+<p>There&rsquo;s a lot of keyboard typing in defining a cast function, so we can write a
+preprocessor macro (which cannot generate the generic macro):
+</p>
+<div class="example">
+<pre class="example">#define DEFINE_CAST_FUNCTION(FROM_NAME,TO_NAME,FROM_TYPE,TO_TYPE) \
+  __attribute__((const,always_inline)) static inline TO_TYPE *    \
+  cast_to_ ## TO_NAME ## _from_ ## FROM_NAME (FROM_TYPE * src)    \
+  { return (TO_TYPE *)src; }
+</pre></div>
+
+<p>but for now I will try this <acronym>GNU</acronym> Emacs template constructor:
+</p>
+<div class="lisp">
+<pre class="lisp">(defun my-c-insert-cast-function (PREFIX FROM_NAME TO_NAME)
+  &quot;Insert a C language cast function.
+
+The call:
+
+  (my-c-insert-cast-function \&quot;ccevents\&quot; \&quot;source\&quot; \&quot;fd_source\&quot;)
+
+will insert:
+
+  /* Output of: (my-c-insert-cast-function \&quot;ccevents\&quot; \&quot;source\&quot; \&quot;fd_source\&quot;) */
+  __attribute__((const,always_inline))
+  static inline ccevents_fd_source_t *
+  ccevents_cast_to_fd_source_from_source (ccevents_source_t * src)
+  {
+    return (ccevents_fd_source_t *)src;
+  }
+  #define ccevents_cast_to_fd_source(SRC)         \\
+    _Generic(SRC, ccevents_source_t *: ccevents_cast_to_fd_source_from_source(SRC))
+  /* End of output. */&quot;
+  (interactive &quot;*sPrefix: \n\
+sFrom name: \n\
+sTo name: &quot;)
+  (insert (concat &quot;/* Output of: (my-c-insert-cast-function \&quot;&quot; PREFIX &quot;\&quot; \&quot;&quot; FROM_NAME &quot;\&quot; \&quot;&quot; TO_NAME &quot;\&quot;) */
+__attribute__((const,always_inline))
+static inline &quot; PREFIX &quot;_&quot; TO_NAME &quot;_t *
+&quot; PREFIX &quot;_cast_to_&quot; TO_NAME &quot;_from_&quot; FROM_NAME &quot; (&quot; PREFIX &quot;_&quot; FROM_NAME &quot;_t * src)
+{
+  return (&quot; PREFIX &quot;_&quot; TO_NAME &quot;_t *)src;
+}
+#define &quot; PREFIX &quot;_cast_to_&quot; TO_NAME &quot;(SRC)             \\
+  _Generic(SRC, &quot; PREFIX &quot;_&quot; FROM_NAME &quot;_t *: &quot; PREFIX &quot;_cast_to_&quot; TO_NAME &quot;_from_&quot; FROM_NAME &quot;(SRC))
+/* End of output. */
+&quot;)))
+</pre></div>
+
+<p>which, explicitly called from Emacs&rsquo; minibuffer , produces the following text:
+</p>
+<div class="example">
+<pre class="example">/* Output of: (my-c-insert-cast-function &quot;ccevents&quot; &quot;source&quot; &quot;fd_source&quot;) */
+__attribute__((const,always_inline))
+static inline ccevents_fd_source_t *
+ccevents_cast_to_fd_source_from_source (ccevents_source_t * src)
+{
+  return (ccevents_fd_source_t *)src;
+}
+#define ccevents_cast_to_fd_source(SRC)         \
+  _Generic(SRC, ccevents_source_t *: ccevents_cast_to_fd_source_from_source(SRC))
+/* End of output. */
+</pre></div>
+
+<p>Neat.
+</p>
+<hr>
+<div class="header">
+<p>
+Next: <a href="2017-Feb-18.html#g_t2017-Feb-18" accesskey="n" rel="next">2017 Feb 18</a>, Up: <a href="2017.html#g_t2017" accesskey="u" rel="up">2017</a> &nbsp; [<a href="concept-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>
