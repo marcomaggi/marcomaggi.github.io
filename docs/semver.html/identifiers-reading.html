@@ -1,0 +1,253 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.0.1-forked.1 of Libsv, a C
+language library implementing semantic versioning for the C language.
+
+The package is distributed under the terms of the Unlicense, see
+http://unlicense.org.
+
+The latest release, under the GNU Autotools, can be downloaded from:
+
+https://bitbucket.org/marcomaggi/sv/downloads
+
+development of the original project takes place at:
+
+https://github.com/uael/sv/
+
+development of the GNU Autotools repackaging takes place at:
+
+https://github.com/marcomaggi/sv
+
+under the autotools.marcomaggi-2017-05-17 branch, and as backup
+at:
+
+https://bitbucket.org/marcomaggi/sv -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Libsv: identifiers reading</title>
+
+<meta name="description" content="Libsv: identifiers reading">
+<meta name="keywords" content="Libsv: identifiers reading">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="type-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="identifiers.html#identifiers" rel="up" title="identifiers">
+<link href="identifiers-writing.html#identifiers-writing" rel="next" title="identifiers writing">
+<link href="identifiers-typedefs.html#identifiers-typedefs" rel="prev" title="identifiers typedefs">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="semver.css">
+
+
+</head>
+
+<body lang="en">
+<a name="identifiers-reading"></a>
+<div class="header">
+<p>
+Next: <a href="identifiers-writing.html#identifiers-writing" accesskey="n" rel="next">identifiers writing</a>, Previous: <a href="identifiers-typedefs.html#identifiers-typedefs" accesskey="p" rel="prev">identifiers typedefs</a>, Up: <a href="identifiers.html#identifiers" accesskey="u" rel="up">identifiers</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Parsing-from-a-string-3"></a>
+<h3 class="section">7.2 Parsing from a string</h3>
+
+
+<p>All the following symbols are defined in the header file
+<samp>semver.h</samp>.
+</p>
+
+<dl>
+<dt><a name="index-semver_005fid_005fread"></a>Function: <em>char</em> <strong>semver_id_read</strong> <em>(semver_id_t * <var>idp</var>, const char * <var>input_buf</var>, size_t <var>input_len</var>, size_t * <var>input_offp</var>)</em></dt>
+<dd><p>Parse an input string in <acronym>ASCII</acronym> format which is meant to hold an
+identifier.  When successful: the return value is <code>0</code>.  If an error
+occurs: the return value is <code>1</code>.
+</p>
+<p>The results of parsing are stored in the already allocated structure
+referenced by <var>idp</var>; the structure is first initialised with
+<code>semver_id_ctor()</code>.
+</p>
+<p>In both the successful and unsuccessful cases: every call to this
+function must be matched by the application of <code>semver_id_dtor()</code> to
+<var>idp</var>.
+</p>
+<p>The input string is referenced by <var>input_buf</var>; the length of the
+input string is <var>input_len</var> characters.  The argument
+<var>input_offp</var> is both an input and output parameter:
+</p>
+<ul>
+<li> Upon entering the function: the offset of the first character to parse
+in <var>input_buf</var> is acquired from the variable referenced by
+<var>input_offp</var>.
+
+</li><li> When the function returns successfully: the offset of the first
+non&ndash;parsed character is stored in the variable referenced by
+<var>input_offp</var>; further parsing operations can use such value as
+input.
+
+</li><li> When the function returns unsuccessfully: the value stored in the
+variable is invalid.
+</li></ul>
+
+<p>If the string is empty (<var>input_len</var> is zero): the function returns
+unsuccessfully.
+</p>
+<p>Internally, this function allocates memory with <code>malloc()</code>; if
+memory allocation fails: the return value is <code>1</code>.
+</p></dd></dl>
+
+
+<a name="Example_003a-parsing-a-numeric-identifier"></a>
+<h4 class="subsubheading">Example: parsing a numeric identifier</h4>
+
+<p>The following example parses the numeric identifier &lsquo;<samp>123</samp>&rsquo;:
+</p>
+<div class="example">
+<pre class="example">static const char     input_str[] = &quot;123&quot;;
+semver_id_t   id;
+size_t        offset = 0;
+char          rv;
+
+rv = semver_id_read(&amp;id, input_str, strlen(input_str), &amp;offset);
+if (0 == rv) {
+  printf(&quot;numeric?=%d, num=%d, len=%lu, raw=%s, next=%p\n&quot;,
+         (int)id.numeric, id.num, id.len, id.raw,
+         (void *)id.next);
+}
+semver_id_dtor(&amp;id);
+</pre></div>
+
+<p>and it prints:
+</p>
+<div class="example">
+<pre class="example">numeric?=1, num=123, len=3, raw=123, next=(nil)
+</pre></div>
+
+
+<a name="Example_003a-parsing-an-alphabetic-identifier"></a>
+<h4 class="subsubheading">Example: parsing an alphabetic identifier</h4>
+
+<p>The following example parses the alphabetic identifier &lsquo;<samp>alpha</samp>&rsquo;:
+</p>
+<div class="example">
+<pre class="example">static const char     input_str[] = &quot;alpha&quot;;
+semver_id_t   id;
+size_t        offset = 0;
+char          rv;
+
+rv = semver_id_read(&amp;id, input_str, strlen(input_str), &amp;offset);
+if (0 == rv) {
+  printf(&quot;numeric?=%d, num=%d, len=%lu, raw=%s, next=%p\n&quot;,
+         (int)id.numeric, id.num, id.len, id.raw,
+         (void *)id.next);
+}
+semver_id_dtor(&amp;id);
+</pre></div>
+
+<p>and it prints:
+</p>
+<div class="example">
+<pre class="example">numeric?=0, num=0, len=5, raw=alpha, next=(nil)
+</pre></div>
+
+
+<a name="Example_003a-parsing-a-compound-identifier"></a>
+<h4 class="subsubheading">Example: parsing a compound identifier</h4>
+
+<p>The following example parses the compound identifier &lsquo;<samp>1.2.3-alpha.7</samp>&rsquo;:
+</p>
+<div class="example">
+<pre class="example">static const char     input_str[] = &quot;1.2.3-alpha.7&quot;;
+semver_id_t   id;
+size_t        offset = 0;
+char          rv;
+
+rv = semver_id_read(&amp;id, input_str, strlen(input_str), &amp;offset);
+if (0 == rv) {
+  for (semver_id_t * iter = &amp;id; iter; iter = iter-&gt;next) {
+    printf(&quot;numeric?=%d, num=%d, len=%lu, raw=%s\n&quot;,
+           (int)iter-&gt;numeric, iter-&gt;num, iter-&gt;len, iter-&gt;raw);
+  }
+}
+semver_id_dtor(&amp;id);
+</pre></div>
+
+<p>and it prints:
+</p>
+<div class="example">
+<pre class="example">numeric?=1, num=1, len=1, raw=1.2.3-alpha.7
+numeric?=1, num=2, len=1, raw=2.3-alpha.7
+numeric?=0, num=0, len=7, raw=3-alpha.7
+numeric?=1, num=7, len=1, raw=7
+</pre></div>
+
+
+<a name="Example_003a-parsing-a-compound-identifier-with-build-metadata"></a>
+<h4 class="subsubheading">Example: parsing a compound identifier with build metadata</h4>
+
+<p>The following example parses the compound identifier
+&lsquo;<samp>1.2.3-alpha.7+x86-64</samp>&rsquo;:
+</p>
+<div class="example">
+<pre class="example">static const char     input_str[] = &quot;1.2.3-alpha.7+x86-64&quot;;
+semver_id_t   id;
+size_t        offset = 0;
+char          rv;
+
+rv = semver_id_read(&amp;id, input_str, strlen(input_str), &amp;offset);
+if (0 == rv) {
+  for (semver_id_t * iter = &amp;id; iter; iter = iter-&gt;next) {
+    printf(&quot;numeric?=%d, num=%d, len=%lu, raw=%s\n&quot;,
+           (int)iter-&gt;numeric, iter-&gt;num, iter-&gt;len, iter-&gt;raw);
+  }
+}
+semver_id_dtor(&amp;id);
+</pre></div>
+
+<p>and it prints:
+</p>
+<div class="example">
+<pre class="example">numeric?=1, num=1, len=1, raw=1.2.3-alpha.7+x86-64
+numeric?=1, num=2, len=1, raw=2.3-alpha.7+x86-64
+numeric?=0, num=0, len=7, raw=3-alpha.7+x86-64
+numeric?=1, num=7, len=1, raw=7+x86-64
+</pre></div>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="identifiers-writing.html#identifiers-writing" accesskey="n" rel="next">identifiers writing</a>, Previous: <a href="identifiers-typedefs.html#identifiers-typedefs" accesskey="p" rel="prev">identifiers typedefs</a>, Up: <a href="identifiers.html#identifiers" accesskey="u" rel="up">identifiers</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

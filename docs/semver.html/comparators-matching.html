@@ -1,0 +1,146 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.0.1-forked.1 of Libsv, a C
+language library implementing semantic versioning for the C language.
+
+The package is distributed under the terms of the Unlicense, see
+http://unlicense.org.
+
+The latest release, under the GNU Autotools, can be downloaded from:
+
+https://bitbucket.org/marcomaggi/sv/downloads
+
+development of the original project takes place at:
+
+https://github.com/uael/sv/
+
+development of the GNU Autotools repackaging takes place at:
+
+https://github.com/marcomaggi/sv
+
+under the autotools.marcomaggi-2017-05-17 branch, and as backup
+at:
+
+https://bitbucket.org/marcomaggi/sv -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Libsv: comparators matching</title>
+
+<meta name="description" content="Libsv: comparators matching">
+<meta name="keywords" content="Libsv: comparators matching">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="type-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="comparators.html#comparators" rel="up" title="comparators">
+<link href="ranges.html#ranges" rel="next" title="ranges">
+<link href="comparators-writing.html#comparators-writing" rel="prev" title="comparators writing">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="semver.css">
+
+
+</head>
+
+<body lang="en">
+<a name="comparators-matching"></a>
+<div class="header">
+<p>
+Previous: <a href="comparators-writing.html#comparators-writing" accesskey="p" rel="prev">comparators writing</a>, Up: <a href="comparators.html#comparators" accesskey="u" rel="up">comparators</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Matching-with-versions"></a>
+<h3 class="section">4.5 Matching with versions</h3>
+
+
+<p>All the following symbols are defined in the header file
+<samp>semver.h</samp>.
+</p>
+
+<dl>
+<dt><a name="index-semver_005fpmatch"></a>Function: <em>char</em> <strong>semver_pmatch</strong> <em>(const semver_t * <var>versionp</var>, const semver_comp_t * <var>compp</var>)</em></dt>
+<dd><p>Match a version referenced by <var>versionp</var> against all the comparators
+in the linked list referenced by <var>compp</var>.  The return value is
+<code>1</code> if the version matches; it is <code>0</code> otherwise.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-semver_005fmatch"></a>Preprocessor Macro: <em>int</em> <strong>semver_match</strong> <em>(semver_t <var>version</var>, semver_comp_t <var>comp</var>)</em></dt>
+<dd><p>Like <code>semver_pmatch()</code>, but accept the version and comparator
+structures as arguments, rather than pointers to them.
+</p></dd></dl>
+
+
+<a name="Example_003a-matching-a-version"></a>
+<h4 class="subsubheading">Example: matching a version</h4>
+
+
+<p>The following example matches a version against a standalone comparator:
+</p>
+<div class="example">
+<pre class="example">static const char     version_str[] = &quot;1.2.3&quot;;
+static const char     compar_str[]  = &quot;&gt;=2.0.0&quot;;
+semver_t      version;
+semver_comp_t comp;
+size_t        version_off = 0, comp_off = 0;
+char          rv;
+
+rv = semver_read(&amp;version, \
+        version_str, strlen(version_str), &amp;version_off);
+if (0 == rv) {
+  rv = semver_comp_read(&amp;comp, \
+          compar_str, strlen(compar_str), &amp;comp_off);
+  if (0 == rv) {
+    int       result = (int)semver_match(version, comp);
+    printf(&quot;matches?=%s\n&quot;, (result)? &quot;yes&quot; : &quot;no&quot;);
+  }
+  semver_comp_dtor(&amp;comp);
+}
+semver_dtor(&amp;version);
+</pre></div>
+
+<p>the code prints:
+</p>
+<div class="example">
+<pre class="example">matches?=no
+</pre></div>
+
+<hr>
+<div class="header">
+<p>
+Previous: <a href="comparators-writing.html#comparators-writing" accesskey="p" rel="prev">comparators writing</a>, Up: <a href="comparators.html#comparators" accesskey="u" rel="up">comparators</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

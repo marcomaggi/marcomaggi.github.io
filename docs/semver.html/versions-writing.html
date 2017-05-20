@@ -1,0 +1,158 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.0.1-forked.1 of Libsv, a C
+language library implementing semantic versioning for the C language.
+
+The package is distributed under the terms of the Unlicense, see
+http://unlicense.org.
+
+The latest release, under the GNU Autotools, can be downloaded from:
+
+https://bitbucket.org/marcomaggi/sv/downloads
+
+development of the original project takes place at:
+
+https://github.com/uael/sv/
+
+development of the GNU Autotools repackaging takes place at:
+
+https://github.com/marcomaggi/sv
+
+under the autotools.marcomaggi-2017-05-17 branch, and as backup
+at:
+
+https://bitbucket.org/marcomaggi/sv -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Libsv: versions writing</title>
+
+<meta name="description" content="Libsv: versions writing">
+<meta name="keywords" content="Libsv: versions writing">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="type-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="versions.html#versions" rel="up" title="versions">
+<link href="versions-comparing.html#versions-comparing" rel="next" title="versions comparing">
+<link href="versions-reading.html#versions-reading" rel="prev" title="versions reading">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="semver.css">
+
+
+</head>
+
+<body lang="en">
+<a name="versions-writing"></a>
+<div class="header">
+<p>
+Next: <a href="versions-comparing.html#versions-comparing" accesskey="n" rel="next">versions comparing</a>, Previous: <a href="versions-reading.html#versions-reading" accesskey="p" rel="prev">versions reading</a>, Up: <a href="versions.html#versions" accesskey="u" rel="up">versions</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Writing-to-a-string"></a>
+<h3 class="section">3.3 Writing to a string</h3>
+
+
+<p>All the following symbols are defined in the header file
+<samp>semver.h</samp>.
+</p>
+
+<dl>
+<dt><a name="index-semver_005fpwrite"></a>Function: <em>int</em> <strong>semver_pwrite</strong> <em>(const semver_t * <var>versionp</var>, char * <var>output_buf</var>, size_t <var>output_len</var>)</em></dt>
+<dd><p>Serialise the version <var>versionp</var> as <acronym>ASCII</acronym> string in the memory
+block referenced by <var>output_buf</var>, which has at least
+<var>output_len</var> characters available.  If the buffer has not enough
+room to hold the full version serialisation: the string is truncated to
+<var>output_len</var> characters.
+</p>
+<p>Like <code>snprintf()</code>: return the number of characters needed to hold
+the full serialisation, excluding the trailing null; if the return value
+is greater than or equal to <var>output_len</var>, the string has been
+truncated.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-semver_005fwrite"></a>Preprocessor Macro: <em>int</em> <strong>semver_write</strong> <em>(semver_t <var>version</var>, char * <var>output_buf</var>, size_t <var>output_len</var>)</em></dt>
+<dd><p>Like <code>semver_pwrite()</code>, but accept the version structure as
+argument, rather than a pointer to it.
+</p></dd></dl>
+
+
+<a name="Example_003a-serialising-a-version"></a>
+<h4 class="subsubheading">Example: serialising a version</h4>
+
+<p>The following example serialises a version specification:
+</p>
+<div class="example">
+<pre class="example">static const char     input_str[] = &quot;1.2.3-alpha.7&quot;;
+size_t        buffer_len = 32;
+char          buffer_ptr[buffer_len];
+semver_t      version;
+size_t        offset = 0;
+char          rv;
+
+memset(buffer_ptr, 0, buffer_len);
+
+rv = semver_read(&amp;version, input_str, strlen(input_str), &amp;offset);
+if (0 == rv) {
+  size_t      needed_count;
+  size_t      actual_count;
+  needed_count = (size_t)semver_write(version, \
+     buffer_ptr, buffer_len);
+  if (0 &lt; needed_count) {
+    actual_count = (needed_count &lt; buffer_len)? \
+        needed_count : buffer_len;
+    printf(&quot;len=%lu, actual_count=%lu, id=&quot;,
+           strlen(input_str), actual_count);
+    fwrite(buffer_ptr, sizeof(char), actual_count, stdout);
+    printf(&quot;\n&quot;);
+  }
+}
+semver_dtor(&amp;version);
+</pre></div>
+
+<p>the code prints:
+</p>
+<div class="example">
+<pre class="example">len=13, actual_count=13, id=1.2.3-alpha.7
+</pre></div>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="versions-comparing.html#versions-comparing" accesskey="n" rel="next">versions comparing</a>, Previous: <a href="versions-reading.html#versions-reading" accesskey="p" rel="prev">versions reading</a>, Up: <a href="versions.html#versions" accesskey="u" rel="up">versions</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

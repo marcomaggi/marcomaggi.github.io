@@ -1,0 +1,234 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.0.1-forked.1 of Libsv, a C
+language library implementing semantic versioning for the C language.
+
+The package is distributed under the terms of the Unlicense, see
+http://unlicense.org.
+
+The latest release, under the GNU Autotools, can be downloaded from:
+
+https://bitbucket.org/marcomaggi/sv/downloads
+
+development of the original project takes place at:
+
+https://github.com/uael/sv/
+
+development of the GNU Autotools repackaging takes place at:
+
+https://github.com/marcomaggi/sv
+
+under the autotools.marcomaggi-2017-05-17 branch, and as backup
+at:
+
+https://bitbucket.org/marcomaggi/sv -->
+<!-- Created by GNU Texinfo 6.3, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>Libsv: versions reading</title>
+
+<meta name="description" content="Libsv: versions reading">
+<meta name="keywords" content="Libsv: versions reading">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="type-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="versions.html#versions" rel="up" title="versions">
+<link href="versions-writing.html#versions-writing" rel="next" title="versions writing">
+<link href="versions-typedefs.html#versions-typedefs" rel="prev" title="versions typedefs">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="semver.css">
+
+
+</head>
+
+<body lang="en">
+<a name="versions-reading"></a>
+<div class="header">
+<p>
+Next: <a href="versions-writing.html#versions-writing" accesskey="n" rel="next">versions writing</a>, Previous: <a href="versions-typedefs.html#versions-typedefs" accesskey="p" rel="prev">versions typedefs</a>, Up: <a href="versions.html#versions" accesskey="u" rel="up">versions</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Parsing-from-a-string"></a>
+<h3 class="section">3.2 Parsing from a string</h3>
+
+
+<p>All the following symbols are defined in the header file
+<samp>semver.h</samp>.
+</p>
+
+<dl>
+<dt><a name="index-semver_005fread"></a>Function: <em>char</em> <strong>semver_read</strong> <em>(semver_t * <var>versionp</var>, const char * <var>input_buf</var>, size_t <var>input_len</var>, size_t * <var>input_offp</var>)</em></dt>
+<dd><p>Parse an input string in <acronym>ASCII</acronym> format which is meant to hold a
+version specification.  When successful: the return value is <code>0</code>.
+If an error occurs: the return value is <code>1</code>.
+</p>
+<p>The results of parsing are stored in the already allocated structure
+referenced by <var>versionp</var>; the structure is first initialised with
+<code>semver_ctor()</code>.
+</p>
+<p>In both the successful and unsuccessful cases: every call to this
+function must be matched by the application of <code>semver_dtor()</code> to
+<var>versionp</var>.
+</p>
+<p>The input string is referenced by <var>input_buf</var>; the length of the
+input string is <var>input_len</var> characters.  The argument
+<var>input_offp</var> is both an input and output parameter:
+</p>
+<ul>
+<li> Upon entering the function: the offset of the first character to parse
+in <var>input_buf</var> is acquired from the variable referenced by
+<var>input_offp</var>.
+
+</li><li> When the function returns successfully: the offset of the first
+non&ndash;parsed character is stored in the variable referenced by
+<var>input_offp</var>; further parsing operations can use such value as
+input.
+
+</li><li> When the function returns unsuccessfully: the value stored in the
+variable is invalid.
+</li></ul>
+
+<p>If the string is empty (<var>input_len</var> is zero): the function returns
+unsuccessfully.
+</p>
+<p>Internally, this function allocates memory with <code>malloc()</code>; if
+memory allocation fails: the return value is <code>1</code>.
+</p></dd></dl>
+
+
+<a name="Example_003a-parsing-a-numeric-version"></a>
+<h4 class="subsubheading">Example: parsing a numeric version</h4>
+
+<p>The following example parses the numeric version &lsquo;<samp>1.2.3</samp>&rsquo;:
+</p>
+<div class="example">
+<pre class="example">const char    input_str[] = &quot;1.2.3&quot;;
+semver_t      version;
+size_t        offset = 0;
+char          rv;
+
+rv = semver_read(&amp;version, input_str, strlen(input_str), &amp;offset);
+if (0 == rv) {
+  printf(&quot;major=%d, minor=%d, patch=%d, &quot;,
+         version.major, version.minor, version.patch);
+  printf(&quot;prerelease=&quot;);
+  semver_id_fwrite(&amp;version.prerelease, stdout);
+  printf(&quot;, &quot;);
+  printf(&quot;build=&quot;);
+  semver_id_fwrite(&amp;version.build, stdout);
+  printf(&quot;\n&quot;);
+}
+semver_dtor(&amp;version);
+</pre></div>
+
+<p>and it prints:
+</p>
+<div class="example">
+<pre class="example">major=1, minor=2, patch=3, prerelease=, build=
+</pre></div>
+
+
+<a name="Example_003a-parsing-a-tagged-version"></a>
+<h4 class="subsubheading">Example: parsing a tagged version</h4>
+
+<p>The following example parses the version &lsquo;<samp>1.2.3-alpha.7</samp>&rsquo;, which has
+a prerelease tag:
+</p>
+<div class="example">
+<pre class="example">static const char     input_str[] = &quot;1.2.3-alpha.7&quot;;
+semver_t      version;
+size_t        offset = 0;
+char          rv;
+
+rv = semver_read(&amp;version, input_str, strlen(input_str), &amp;offset);
+if (0 == rv) {
+  printf(&quot;major=%d, minor=%d, patch=%d, &quot;,
+         version.major, version.minor, version.patch);
+  printf(&quot;prerelease=&quot;);
+  semver_id_fwrite(&amp;version.prerelease, stdout);
+  printf(&quot;, &quot;);
+  printf(&quot;build=&quot;);
+  semver_id_fwrite(&amp;version.build, stdout);
+  printf(&quot;\n&quot;);
+}
+semver_dtor(&amp;version);
+</pre></div>
+
+<p>and it prints:
+</p>
+<div class="example">
+<pre class="example">major=1, minor=2, patch=3, prerelease=alpha.7, build=
+</pre></div>
+
+
+<a name="Example_003a-parsing-a-full-version"></a>
+<h4 class="subsubheading">Example: parsing a full version</h4>
+
+<p>The following example parses the version &lsquo;<samp>1.2.3-alpha.7+x86-64</samp>&rsquo;,
+which has both a prerelease tag and build metadata:
+</p>
+<div class="example">
+<pre class="example">static const char     input_str[] = &quot;1.2.3-alpha.7+x86-64&quot;;
+semver_t      version;
+size_t        offset = 0;
+char          rv;
+
+rv = semver_read(&amp;version, input_str, strlen(input_str), &amp;offset);
+if (0 == rv) {
+  printf(&quot;major=%d, minor=%d, patch=%d, &quot;,
+         version.major, version.minor, version.patch);
+  printf(&quot;prerelease=&quot;);
+  semver_id_fwrite(&amp;version.prerelease, stdout);
+  printf(&quot;, &quot;);
+  printf(&quot;build=&quot;);
+  semver_id_fwrite(&amp;version.build, stdout);
+  printf(&quot;\n&quot;);
+}
+semver_dtor(&amp;version);
+</pre></div>
+
+<p>and it prints:
+</p>
+<div class="example">
+<pre class="example">major=1, minor=2, patch=3, prerelease=alpha.7, build=x86-64
+</pre></div>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="versions-writing.html#versions-writing" accesskey="n" rel="next">versions writing</a>, Previous: <a href="versions-typedefs.html#versions-typedefs" accesskey="p" rel="prev">versions typedefs</a>, Up: <a href="versions.html#versions" accesskey="u" rel="up">versions</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>
