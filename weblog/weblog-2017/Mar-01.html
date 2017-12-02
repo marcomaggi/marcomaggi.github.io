@@ -1,0 +1,290 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- Copyright (C) 2015, 2016, 2017 by Marco Maggi marco.maggi-ipsu@poste.it
+
+Permission is granted to copy, distribute and/or modify this document under the terms
+of the GNU Free Documentation License, Version 1.3 or any later version published
+by the Free Software Foundation; with Invariant Sections being "GNU Free
+Documentation License" and "GNU General Public License", no Front-Cover Texts,
+and no Back-Cover Texts.  A copy of the license is included in the section entitled
+"GNU Free Documentation License". -->
+<!-- Created by GNU Texinfo 6.5, http://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<title>Mar 01 (Marco&rsquo;s 2017 Weblog)</title>
+
+<meta name="description" content="Mar 01 (Marco&rsquo;s 2017 Weblog)">
+<meta name="keywords" content="Mar 01 (Marco&rsquo;s 2017 Weblog)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="concept-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="index.html#Top" rel="up" title="Top">
+<link href="Feb-28.html#Feb-28" rel="next" title="Feb 28">
+<link href="Mar-02.html#Mar-02" rel="prev" title="Mar 02">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="weblog.css">
+
+
+</head>
+
+<body lang="en">
+<a name="Mar-01"></a>
+<div class="header">
+<p>
+Next: <a href="Feb-28.html#Feb-28" accesskey="n" rel="next">Feb 28</a>, Previous: <a href="Mar-02.html#Mar-02" accesskey="p" rel="prev">Mar 02</a>, Up: <a href="index.html#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="concept-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Useless-attempt-to-avoid-GCC-extensions"></a>
+<h2 class="unnumbered">Useless attempt to avoid <acronym>GCC</acronym> extensions</h2>
+
+
+<p><em>Posted on Wed Mar  1, 2017</em>
+</p>
+
+<p>March is here.  Along with my allergy.  Yay!
+</p>
+<p>The <acronym>GNU</acronym> C Compiler offers extensions to the C language; among them the
+<samp>-fplan9-extensions</samp> allow special handling of the first anonymous field of a
+data structure.  Is it possible to mimic what the <samp>-fplan9-extensions</samp> do with
+the facilities of the standard C11 language?
+</p>
+
+<a name="A-scenario-under-the-standard-language"></a>
+<h4 class="subsubheading">A scenario under the standard language</h4>
+
+<p>Let&rsquo;s say we have the following data structures hierarchy:
+</p>
+<div class="example">
+<pre class="example">typedef struct alpha_t {
+  int      X;
+} alpha_t;
+
+typedef struct beta_t {
+  alpha_t  parent;
+  int      Y;
+} beta_t;
+
+typedef struct gamma_t {
+  beta_t   parent;
+  int      Z;
+} gamma_t;
+</pre></div>
+
+<p>to extract a pointer to <code>beta_t</code> or <code>alpha_t</code> from a pointer to
+<code>gamma_t</code> we have to do:
+</p>
+<div class="example">
+<pre class="example">gamma_t    g = { .parent.parent.X = 0, .parent.Y = 1, .Z = 3 };
+gamma_t *  G = &amp;g;
+beta_t  *  B = &amp;(G-&gt;parent);
+alpha_t *  A = &amp;(G-&gt;parent.parent);
+
+fprintf(stderr, &quot;X=%d, Y=%d, Z=%d\n&quot;, A-&gt;X, B-&gt;Y, G-&gt;Z);
+</pre></div>
+
+<p>because, under the C language, a pointer to <code>gamma_t</code> is not &ldquo;formally&rdquo; a
+pointer to <code>beta_t</code> or <code>alpha_t</code>.
+</p>
+
+<a name="Friendly-code-using-the-extensions"></a>
+<h4 class="subsubheading">Friendly code using the extensions</h4>
+
+<p>Now let&rsquo;s switch to C11 with the <samp>-fplan9-extensions</samp>; we define the structure
+types as follows:
+</p>
+<div class="example">
+<pre class="example">typedef struct alpha_t {
+  int   X;
+} alpha_t;
+
+typedef struct beta_t {
+  alpha_t;
+  int   Y;
+} beta_t;
+
+typedef struct gamma_t {
+  beta_t;
+  int   Z;
+} gamma_t;
+</pre></div>
+
+<p>to extract a pointer to <code>beta_t</code> or <code>alpha_t</code> from a pointer to
+<code>gamma_t</code> we can do:
+</p>
+<div class="example">
+<pre class="example">gamma_t     g = { .X = 0, .Y = 1, .Z = 3 };
+gamma_t *   G = &amp;g;
+beta_t  *   B = G;
+alpha_t *   A = G;
+
+fprintf(stderr, &quot;X=%d, Y=%d, Z=%d\n&quot;, A-&gt;X, B-&gt;Y, G-&gt;Z);
+</pre></div>
+
+<p>because, under this extended C language, a pointer to <code>gamma_t</code> is &ldquo;formally&rdquo;
+a pointer to <code>beta_t</code> and also a pointer to <code>alpha_t</code>.
+</p>
+<p>I&rsquo;m a weak thinker, so this feature really pleases me.  But avoiding non&ndash;standard
+compiler&ndash;specific extensions would be better.
+</p>
+
+<a name="Ugly-code-under-the-standard-language"></a>
+<h4 class="subsubheading">Ugly code under the standard language</h4>
+
+
+<p>What could we do with the facilities of C11?  We have <code>_Generic</code> dispatching.
+Let&rsquo;s define the types with named fields:
+</p>
+<div class="example">
+<pre class="example">typedef struct alpha_t {
+  int      X;
+} alpha_t;
+
+typedef struct beta_t {
+  alpha_t  parent;
+  int      Y;
+} beta_t;
+
+typedef struct gamma_t {
+  beta_t   parent;
+  int      Z;
+} gamma_t;
+</pre></div>
+
+<p>now we define cast functions for <code>alpha_t</code>:
+</p>
+<div class="example">
+<pre class="example">__attribute__((pure,nonnull(1),returns_nonnull,always_inline))
+inline alpha_t *
+my_alpha_from_alpha (alpha_t * A)
+{
+  return A;
+}
+
+__attribute__((pure,nonnull(1),returns_nonnull,always_inline))
+inline alpha_t *
+my_alpha_from_beta (beta_t * B)
+{
+  return &amp;(B-&gt;parent);
+}
+
+__attribute__((pure,nonnull(1),returns_nonnull,always_inline))
+inline alpha_t *
+my_alpha_from_gamma (gamma_t * G)
+{
+  return my_alpha_from_beta(&amp;(G-&gt;parent));
+}
+</pre></div>
+
+<p>and for <code>beta_t</code>:
+</p>
+<div class="example">
+<pre class="example">__attribute__((pure,nonnull(1),returns_nonnull,always_inline))
+inline beta_t *
+my_beta_from_beta (beta_t * B)
+{
+  return B;
+}
+
+__attribute__((pure,nonnull(1),returns_nonnull,always_inline))
+inline beta_t *
+my_beta_from_gamma (gamma_t * G)
+{
+  return &amp;(G-&gt;parent);
+}
+</pre></div>
+
+<p>finally we define the cast macros with <code>_Generic</code> dispatching:
+</p>
+<div class="example">
+<pre class="example">#define my_alpha(SELF)  _Generic((SELF),                                \
+                                 alpha_t *: my_alpha_from_alpha,        \
+                                 beta_t  *: my_alpha_from_beta,         \
+                                 gamma_t *: my_alpha_from_gamma)(SELF)
+
+#define my_beta(SELF)   _Generic((SELF),                                \
+                                 beta_t  *: my_beta_from_beta,          \
+                                 gamma_t *: my_beta_from_gamma)(SELF)
+</pre></div>
+
+<p>so we can do this:
+</p>
+<div class="example">
+<pre class="example">gamma_t     g = { .parent.parent.X = 0, .parent.Y = 1, .Z = 3 };
+gamma_t *   G = &amp;g;
+beta_t  *   B = my_beta(G);
+alpha_t *   A = my_alpha(G);
+
+fprintf(stderr, &quot;X=%d, Y=%d, Z=%d\n&quot;, A-&gt;X, B-&gt;Y, G-&gt;Z);
+</pre></div>
+
+<p>We can define functions as follows:
+</p>
+<div class="example">
+<pre class="example">void
+alpha_doit (alpha_t * A)
+{
+  fprintf(stderr, &quot;%s %d\n&quot;, __func__, A-&gt;X);
+}
+
+void
+beta_doit (beta_t * B)
+{
+  fprintf(stderr, &quot;%s %d\n&quot;, __func__, B-&gt;Y);
+}
+
+#define Alpha_doit(SELF)        alpha_doit(my_alpha(SELF))
+#define Beta_doit(SELF)         beta_doit(my_beta(SELF))
+</pre></div>
+
+<p>and call them with:
+</p>
+<div class="example">
+<pre class="example">gamma_t     g = { .parent.parent.X = 0, .parent.Y = 1, .Z = 3 };
+gamma_t *   G = &amp;g;
+
+Alpha_doit(G);
+Beta_doit(G);
+</pre></div>
+
+<p>We can do it, but there is a lot to write.  Ideally, a lot of this code would be
+automatically generated.  I cannot say now if it would be worthy.
+</p>
+<hr>
+<div class="header">
+<p>
+Next: <a href="Feb-28.html#Feb-28" accesskey="n" rel="next">Feb 28</a>, Previous: <a href="Mar-02.html#Mar-02" accesskey="p" rel="prev">Mar 02</a>, Up: <a href="index.html#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="concept-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

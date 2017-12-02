@@ -1,0 +1,237 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- Copyright (C) 2015, 2016, 2017 by Marco Maggi marco.maggi-ipsu@poste.it
+
+Permission is granted to copy, distribute and/or modify this document under the terms
+of the GNU Free Documentation License, Version 1.3 or any later version published
+by the Free Software Foundation; with Invariant Sections being "GNU Free
+Documentation License" and "GNU General Public License", no Front-Cover Texts,
+and no Back-Cover Texts.  A copy of the license is included in the section entitled
+"GNU Free Documentation License". -->
+<!-- Created by GNU Texinfo 6.5, http://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<title>March 24 (Marco&rsquo;s 2015 Weblog)</title>
+
+<meta name="description" content="March 24 (Marco&rsquo;s 2015 Weblog)">
+<meta name="keywords" content="March 24 (Marco&rsquo;s 2015 Weblog)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="concept-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="index.html#Top" rel="up" title="Top">
+<link href="March-20.html#March-20" rel="next" title="March 20">
+<link href="April-18.html#April-18" rel="prev" title="April 18">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="weblog.css">
+
+
+</head>
+
+<body lang="en">
+<a name="March-24"></a>
+<div class="header">
+<p>
+Next: <a href="March-20.html#March-20" accesskey="n" rel="next">March 20</a>, Previous: <a href="April-18.html#April-18" accesskey="p" rel="prev">April 18</a>, Up: <a href="index.html#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="concept-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Musings-on-the-tagged-language-_0028part-5_0029-_00282015-March-24_0029"></a>
+<h2 class="unnumbered">Musings on the tagged language (part 5) (2015 March 24)</h2>
+
+
+<p>In this tagged language design for <a href="References.html#References">Vicare</a>: one day everything looks fine, the
+next day everything looks wrong.  For sure I am having some ideas that would be hard
+to implement efficiently and maybe quite weird to use.  In the last entry on the
+tagged language (see <a href="February-18.html#February-18">February 18</a>) I left myself with the idea of
+implementing function overloading, which means having the following expansions:
+</p>
+<div class="lisp">
+<pre class="lisp">(length '(1 2))         &rarr; (list-length       '(1 2))
+(length '#(1 2))        &rarr; (vector-length     '#(1 2))
+(length '#vu8(1 2))     &rarr; (bytevector-length '#vu8(1 2))
+(length &quot;1 2&quot;)          &rarr; (list-length       &quot;1 2&quot;)
+</pre></div>
+
+<p>but function overloading should <strong>not</strong> interfere with macro expansion; the
+code:
+</p>
+<div class="lisp">
+<pre class="lisp">(import (vicare))
+(add-method length (&lt;string&gt;) string-length)
+(define (frob obj)
+  ---)
+(let-syntax ((length (syntax-rules ()
+                       ((_ ?expr)
+                        (frob ?expr))
+                       )))
+  (length &quot;ciao&quot;))
+</pre></div>
+
+<p>should cause the following expansion to happen:
+</p>
+<div class="lisp">
+<pre class="lisp">(length &quot;ciao&quot;) &rarr; (frob &quot;ciao&quot;)
+</pre></div>
+
+<p>is this actually doable?
+</p>
+
+<a name="When-to-search-the-table-of-methods"></a>
+<h3 class="unnumberedsec">When to search the table of methods</h3>
+
+<p>Let&rsquo;s step back one moment.  The following works and is already implemented in
+<code>(vicare)</code>:
+</p>
+<div class="lisp">
+<pre class="lisp">(&quot;ciao&quot; length)         &rArr; 4
+</pre></div>
+
+<p>because first the expander determines the type of <code>&quot;ciao&quot;</code> to be <code>&lt;string&gt;</code>,
+then it searches the name <code>length</code> in the table of methods in <code>&lt;string&gt;</code>.
+</p>
+<p>What should happen in the following:
+</p>
+<div class="lisp">
+<pre class="lisp">(length &quot;ciao&quot;)         &rArr; 4
+</pre></div>
+
+<p>is not clear.  Should the expander first search for a binding named <code>length</code>
+using normal bindings resolution, then visit the methods table only if no syntax with
+such name exists in the lexical context?  And if no method named <code>length</code>
+exists: should it go back in the lexical context to search for a non&ndash;syntax binding?
+</p>
+<p>This going back and forth is inefficient and confusing.
+</p>
+<p>By using a method call syntax:
+</p>
+<div class="lisp">
+<pre class="lisp">(method-call length &quot;ciao&quot;)
+</pre></div>
+
+<p>everything is solved because we are explicitly declaring that we want to visit the
+table of methods.  So we can keep normal bindings resolution.
+</p>
+
+<a name="Reconsidering-dot-quoting"></a>
+<h3 class="unnumberedsec">Reconsidering dot quoting</h3>
+
+<p>Let&rsquo;s say we change the reader to implement the following &ldquo;quoting with dot&rdquo;:
+</p>
+<div class="lisp">
+<pre class="lisp">(.<var>?symbol</var> <var>?arg</var> &hellip;) &rarr; (method-call <var>?symbol</var> <var>?arg</var> &hellip;)
+</pre></div>
+
+<p>using this syntax we could take the following function:
+</p>
+<div class="lisp">
+<pre class="lisp">(define (list-of-strings? obj)
+  (if (pair? obj)
+      (and (string? (car obj))
+           (list-of-strings? (cdr obj)))
+    (null? obj)))
+</pre></div>
+
+<p>and rewrite it as follows to generalise it to other implementations of lists (for
+example the immutable lists of <acronym>SRFI</acronym>-116):
+</p>
+<div class="lisp">
+<pre class="lisp">(define (list-of-strings? obj)
+  (if (.pair? obj)
+      (and (string? (.car obj))
+           (list-of-strings? (.cdr obj)))
+    (.null? obj)))
+</pre></div>
+
+<p>does it look bad with all those dots?
+</p>
+<p>What if the following sequence of transformations is implemented?
+</p>
+<div class="lisp">
+<pre class="lisp">(.length &quot;ciao&quot;)
+&rarr; (method-call length &quot;ciao&quot;)
+&rarr; (&quot;ciao&quot; length)
+</pre></div>
+
+<p>we would have prefix notation and the same mechanism for querying the table of
+methods already half&ndash;implemented in <code>(vicare)</code>.
+</p>
+
+<a name="About-interfaces"></a>
+<h3 class="unnumberedsec">About interfaces</h3>
+
+<p>I want Vicare to be a practical language, not only a beautiful language as is
+Scheme; for this reason I have included some syntaxes to implement loops with C
+language style (<code>while</code>, <code>until</code>, <code>do &hellip; while</code>, <code>do &hellip;
+until</code>): they look ugly in Scheme, but some people are used to them<a name="DOCF3" href="#FOOT3"><sup>3</sup></a>.
+</p>
+<p>Everybody outside the Lisp world likes interfaces: the gist of them is to give a name
+to a collection of method signatures which an object type can declare to implement.
+With Lisp notation it should look something like this:
+</p>
+<div class="lisp">
+<pre class="lisp">(define-interface &lt;shape&gt;
+  (method (draw (obj &lt;shape&gt;))))
+
+(define-class &lt;circle&gt;
+  (implements &lt;shape&gt;)
+  (fields x-center y-center radius)
+  (method (draw (O &lt;circle&gt;))
+    (actually-draw O)))
+</pre></div>
+
+<p>and, at expand&ndash;time, it is verified that the class <code>&lt;circle&gt;</code> actually contains
+definitions for the methods in <code>&lt;shape&gt;</code>.  This is possible if the method
+definitions are inside the <code>define-class</code> form.
+</p>
+<p>What if I implement overloaded functions with <acronym>CLOS</acronym>&ndash;like syntax?  They are not
+declared inside the type syntax, so would it be possible to implement interfaces?
+</p>
+<div class="footnote">
+<hr>
+<h4 class="footnotes-heading">Footnotes</h4>
+
+<h3><a name="FOOT3" href="#DOCF3">(3)</a></h3>
+<p>They do
+not look as ugly as <code>loop</code> in Common Lisp, but still uglier than looping with
+recursion.  By the way: after having implemented a library providing Common Lisp
+style restarts, I want <code>loop</code>, too, in a standalone library.  (There are so
+many clauses!!!  I dunno when I will find the will to implement it&hellip;)</p>
+</div>
+<hr>
+<div class="header">
+<p>
+Next: <a href="March-20.html#March-20" accesskey="n" rel="next">March 20</a>, Previous: <a href="April-18.html#April-18" accesskey="p" rel="prev">April 18</a>, Up: <a href="index.html#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="concept-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

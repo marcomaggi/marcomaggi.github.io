@@ -1,0 +1,271 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- Copyright (C) 2015, 2016, 2017 by Marco Maggi marco.maggi-ipsu@poste.it
+
+Permission is granted to copy, distribute and/or modify this document under the terms
+of the GNU Free Documentation License, Version 1.3 or any later version published
+by the Free Software Foundation; with Invariant Sections being "GNU Free
+Documentation License" and "GNU General Public License", no Front-Cover Texts,
+and no Back-Cover Texts.  A copy of the license is included in the section entitled
+"GNU Free Documentation License". -->
+<!-- Created by GNU Texinfo 6.5, http://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<title>September 12 (Marco&rsquo;s 2015 Weblog)</title>
+
+<meta name="description" content="September 12 (Marco&rsquo;s 2015 Weblog)">
+<meta name="keywords" content="September 12 (Marco&rsquo;s 2015 Weblog)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="concept-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="index.html#Top" rel="up" title="Top">
+<link href="September-10.html#September-10" rel="next" title="September 10">
+<link href="September-13.html#September-13" rel="prev" title="September 13">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="weblog.css">
+
+
+</head>
+
+<body lang="en">
+<a name="September-12"></a>
+<div class="header">
+<p>
+Next: <a href="September-10.html#September-10" accesskey="n" rel="next">September 10</a>, Previous: <a href="September-13.html#September-13" accesskey="p" rel="prev">September 13</a>, Up: <a href="index.html#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="concept-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Record-methods-and-dot-notation"></a>
+<h2 class="unnumbered">Record methods and dot notation</h2>
+
+
+<div align="center">Posted on September 12, 2015
+</div>
+
+<p>More <a href="References.html#References">Vicare</a>&rsquo;s expander development for the internal representation of <acronym>R6RS</acronym>
+record types (see <a href="September-10.html#September-10">On records</a>).  All the changes discussed here
+are in the <a href="References.html#References">master</a> branch.
+</p>
+
+<a name="Methods-for-records"></a>
+<h3 class="unnumberedsec">Methods for records</h3>
+
+<p>As experimental (and still undocumented) feature, I have started support for methods
+in the definitions of <acronym>R6RS</acronym> record types.  Three new keyword syntactic bindings
+are now exported by the library <code>(vicare)</code>: <code>method</code>,
+<code>case-method</code> and <code>method-call</code>.
+</p>
+<p>The clause <code>method</code> can be put multiple times in the body of a
+<code>define-record-type</code> use, to define a method for the record&ndash;type:
+</p>
+<div class="lisp">
+<pre class="lisp">(define-record-type duo
+  (fields one two)
+  (method (sum-them self)
+    (+ (duo-one self)
+       (duo-two self)))
+  (method (mul-them self)
+    (* (duo-one self)
+       (duo-two self)))
+  (method (display self port)
+    (display self port)))
+</pre></div>
+
+<p>we can think of <code>method</code> as acting like <code>define</code> with regard to the
+syntax of arguments to function; the first argument to a method is the record itself.
+The syntax <code>method-call</code> is then used to call a record&rsquo;s methods:
+</p>
+<div class="lisp">
+<pre class="lisp">(define {O duo}
+  (make-duo 3 4))
+
+(method-call sum-them O)        &rArr; 7
+(method-call mul-them O)        &rArr; 12
+
+(method-call display O (current-error-port))
+(newline (current-error-port))  -| #[record duo one=3 two=4]
+</pre></div>
+
+<p>The clause <code>case-method</code> is similar, we can think of it as acting like
+<code>case-define</code>:
+</p>
+<div class="lisp">
+<pre class="lisp">(define-record-type alpha
+  (fields a)
+  (case-method on-a
+    ((self)
+     (alpha-a self))
+    ((self new-val)
+     (alpha-a-set! self new-val))))
+
+(define {O alpha}
+  (make-alpha 1))
+
+(method-call on-a O)            &rArr; 1
+(method-call on-a O 2)
+(method-call on-a O)            &rArr; 2
+</pre></div>
+
+<p>The syntax <code>method-call</code> searches for a record&ndash;type&rsquo;s methods by comparing
+the symbols with <code>eq?</code> (<strong>not</strong> the syntactic identifiers with
+<code>free-identifier=?</code>).
+</p>
+<p>If a method with the given name is not found: the syntax searches for a field with
+the given name, but only if the number of arguments is right.  The syntax of
+<code>method-call</code> is:
+</p>
+<div class="example">
+<pre class="example">(method-call <var>?name</var> <var>?subject-expr</var> <var>?arg</var> ...)
+</pre></div>
+
+<ul>
+<li> If there are <strong>no</strong> arguments <var>?arg</var>, then a field with name <var>?name</var> is
+searched and, if found, the form is expanded to an application of the field&rsquo;s
+accessor:
+
+<div class="example">
+<pre class="example">(<var>?accessor</var> <var>?subject-expr</var>)
+</pre></div>
+
+</li><li> If there is <strong>only one</strong> argument <var>?arg</var>, then a field with name <var>?name</var>
+is searched and, if found, the form is expanded to an application of the field&rsquo;s
+mutator:
+
+<div class="example">
+<pre class="example">(<var>?mutator</var> <var>?subject-expr</var> <var>?arg</var>)
+</pre></div>
+</li></ul>
+
+<p>The clauses <code>method</code> and <code>case-method</code> are accepted by
+<code>define-record-type</code> only when the language is non&ndash;strict <acronym>R6RS</acronym>.  The
+syntax <code>method-call</code> is able to retrieve the type of its second argument only
+when the tagged language is enabled (at present, only with a few expressions given
+that the tagged language is only half&ndash;written).
+</p>
+
+<a name="Dot-notation"></a>
+<h3 class="unnumberedsec">Dot notation</h3>
+
+<p>Some time ago I reconsidered dot notation to call a type&rsquo;s methods (see <a href="March-24.html#March-24">Reconsidering dot quoting</a>).  I do not know the language Clojure, but I read
+stuff through Reddit; recently a post made me skim through the syntax table of this
+language and I found that they use the dot notation I have in mind to call Java
+methods (see <a href="http://clojure.org/java_interop">Clojure &mdash;
+java_interop</a><a name="DOCF1" href="#FOOT1"><sup>1</sup></a>): I am not completely crazy!
+</p>
+<p>Encouraged by this, I have implemented the reader syntax transformation:
+</p>
+<div class="example">
+<pre class="example">(.<var>?symbol</var> <var>?arg</var> ...) &rarr; (method-call <var>?symbol</var> <var>?arg</var> ...)
+</pre></div>
+
+<p>that is, when the reader&rsquo;s textual input port is configured in &lsquo;<samp>#!vicare</samp>&rsquo; mode:
+if a list starts with a symbol; the name of the symbol is a string of length at least
+<em>2</em>; the first character of the string is a dot; the second character of the
+string is <strong>not</strong> a dot, then a <code>method-call</code> symbol is inserted and the
+symbol stripped of the dot.
+</p>
+<p>We can try it at the <acronym>REPL</acronym>:
+</p>
+<div class="example">
+<pre class="example">vicare&gt; '(.ciao)
+$1 = (method-call ciao)
+</pre></div>
+
+<p>Notice that <acronym>R6RS</acronym> forbids symbols starting with a dot, with the exception of the
+ellipsis; so everything that was possible before, with the reader, is still possible
+now.
+</p>
+<p>So we can use this syntax to call a record&rsquo;s methods as in the following program:
+</p>
+<div class="lisp">
+<pre class="lisp">#!vicare
+(program (demo)
+  (options tagged-language)
+  (import (vicare))
+
+  (define-record-type duo
+    (fields one two)
+    (method (sum-them O)
+      (+ (duo-one O)
+         (duo-two O)))
+    (method (mul-them O)
+      (* (duo-one O)
+         (duo-two O)))
+    (method (display O port)
+      (display O port)))
+
+  (define {O duo}
+    (make-duo 3 4))
+
+  (pretty-print (.sum-them O)
+                (current-error-port))
+
+  (pretty-print (.mul-them O)
+                (current-error-port))
+
+  (.display O (current-error-port))
+  (newline (current-error-port))
+
+  #| end of program |# )
+</pre></div>
+
+<p>which compiled and run will print:
+</p>
+<div class="example">
+<pre class="example">$ vicare --compile-program demo.sps --output demo
+$ vicare --binary-program ./demo
+7
+12
+#[record duo one=3 two=4]
+</pre></div>
+
+<p>This dot notation still looks weird to my eyes, will I get used to it?
+</p>
+<p>This feature of the reader is still undocumented: it is experimental.
+</p>
+<div class="footnote">
+<hr>
+<h4 class="footnotes-heading">Footnotes</h4>
+
+<h3><a name="FOOT1" href="#DOCF1">(1)</a></h3>
+<p>By the way: Clojure has some very weird syntax, weirder than
+the ones I have imagined!</p>
+</div>
+<hr>
+<div class="header">
+<p>
+Next: <a href="September-10.html#September-10" accesskey="n" rel="next">September 10</a>, Previous: <a href="September-13.html#September-13" accesskey="p" rel="prev">September 13</a>, Up: <a href="index.html#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="concept-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

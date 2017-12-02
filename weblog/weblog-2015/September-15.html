@@ -1,0 +1,175 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- Copyright (C) 2015, 2016, 2017 by Marco Maggi marco.maggi-ipsu@poste.it
+
+Permission is granted to copy, distribute and/or modify this document under the terms
+of the GNU Free Documentation License, Version 1.3 or any later version published
+by the Free Software Foundation; with Invariant Sections being "GNU Free
+Documentation License" and "GNU General Public License", no Front-Cover Texts,
+and no Back-Cover Texts.  A copy of the license is included in the section entitled
+"GNU Free Documentation License". -->
+<!-- Created by GNU Texinfo 6.5, http://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<title>September 15 (Marco&rsquo;s 2015 Weblog)</title>
+
+<meta name="description" content="September 15 (Marco&rsquo;s 2015 Weblog)">
+<meta name="keywords" content="September 15 (Marco&rsquo;s 2015 Weblog)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="concept-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="index.html#Top" rel="up" title="Top">
+<link href="September-13.html#September-13" rel="next" title="September 13">
+<link href="October-23.html#October-23" rel="prev" title="October 23">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="weblog.css">
+
+
+</head>
+
+<body lang="en">
+<a name="September-15"></a>
+<div class="header">
+<p>
+Next: <a href="September-13.html#September-13" accesskey="n" rel="next">September 13</a>, Previous: <a href="October-23.html#October-23" accesskey="p" rel="prev">October 23</a>, Up: <a href="index.html#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="concept-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Late-binding-for-record_002d_002dtype-methods"></a>
+<h2 class="unnumbered">Late binding for record&ndash;type methods</h2>
+
+
+<div align="center">Posted on September 15, 2015
+</div>
+<p>&ldquo;Late binding&rdquo;... how elegant, how mysterious.  When you call it &ldquo;run&ndash;time
+dispatching&rdquo;, which is the same at some level of abstract reasoning, it does not
+sound as elegant; it sounds vulgar, it tastes of look&ndash;up tables.  I have implemented
+late binding for record&ndash;type methods in <a href="References.html#References">Vicare</a>; the code is in the current
+head of the <a href="References.html#References">master</a> branch.
+</p>
+<p>Here is how it works.  First, let&rsquo;s create a file containing this library:
+</p>
+<div class="lisp">
+<pre class="lisp">#!vicare
+(library (subdemo)
+  (options tagged-language)
+  (export greetings)
+  (import (vicare))
+  (define (greetings lang)
+    (display (.greetings lang))
+    (newline)))
+</pre></div>
+
+<p>and compile it:
+</p>
+<div class="example">
+<pre class="example">$ vicare --compile ./subdemo.sls --output ./subdemo.fasl
+</pre></div>
+
+<p>the form:
+</p>
+<div class="lisp">
+<pre class="lisp">(.greetings lang)
+</pre></div>
+
+<p>is transformed by the Scheme reader into:
+</p>
+<div class="lisp">
+<pre class="lisp">(method-call greetings lang)
+</pre></div>
+
+<p>the expander does not know the type of the <var>lang</var> argument to function; so the
+syntax <code>method-call</code> will expand to an application of the function
+<code>method-call-late-binding</code>:
+</p>
+<div class="lisp">
+<pre class="lisp">(method-call-late-binding 'greetings lang)
+</pre></div>
+
+<p>Now let&rsquo;s create a file containing this program, which imports the <code>(subdemo)</code>
+library and calls the <code>greetings</code> function:
+</p>
+<div class="lisp">
+<pre class="lisp">#!vicare
+(program (demo)
+  (options tagged-language)
+  (import (vicare)
+    (subdemo))
+
+  (define-record-type &lt;lang&gt;
+    (fields greetings))
+
+  (define {it &lt;lang&gt;}
+    (new &lt;lang&gt; &quot;ciao&quot;))
+
+  (define {en &lt;lang&gt;}
+    (new &lt;lang&gt; &quot;hello&quot;))
+
+  (define {jp &lt;lang&gt;}
+    (new &lt;lang&gt; &quot;ohayo&quot;))
+
+  (greetings it)
+  (greetings en)
+  (greetings jp)
+
+  (flush-output-port (current-output-port))
+
+  #| end of program |# )
+</pre></div>
+
+<p>and compile it:
+</p>
+<div class="example">
+<pre class="example">$ vicare -L . --compile ./demo.sps --output ./demo
+</pre></div>
+
+<p>this program defines the record&ndash;type <code>&lt;lang&gt;</code> that was non&ndash;existent when the
+library was compiled.  The expansion of the <code>define-record-type</code> syntax use
+automatically creates methods to access and mutate record&ndash;type fields; in this case:
+an accessor method for the field &lsquo;<samp>greetings</samp>&rsquo; is defined.  Let&rsquo;s run the program:
+</p>
+<div class="example">
+<pre class="example">$ vicare -L . --binary-program ./demo
+ciao
+hello
+ohayo
+</pre></div>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="September-13.html#September-13" accesskey="n" rel="next">September 13</a>, Previous: <a href="October-23.html#October-23" accesskey="p" rel="prev">October 23</a>, Up: <a href="index.html#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="concept-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>
