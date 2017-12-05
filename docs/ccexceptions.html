@@ -1,6 +1,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
-<!-- This document describes version 0.6.2-devel.0 of CCExceptions, a C11 Standard language library;
+<!-- This document describes version 0.6.2-devel.3 of CCExceptions, a C11 Standard language library;
 it implements an interface to non-local exits, which is somewhat similar to exceptions handling.
 The library targets POSIX systems.
 
@@ -256,7 +256,7 @@ Next: <a href="#overview" accesskey="n" rel="next">overview</a>, Up: <a href="di
 <a name="CCExceptions"></a>
 <h1 class="top">CCExceptions</h1>
 
-<p>This document describes version 0.6.2-devel.0 of CCExceptions, a C11 Standard language library;
+<p>This document describes version 0.6.2-devel.3 of CCExceptions, a C11 Standard language library;
 it implements an interface to non&ndash;local exits, which is somewhat similar to exceptions handling.
 The library targets <acronym>POSIX</acronym> systems.
 </p>
@@ -338,7 +338,7 @@ Next: <a href="#version" accesskey="n" rel="next">version</a>, Previous: <a href
 <h2 class="chapter">1 Overview of the package</h2>
 
 
-<p>This document describes version 0.6.2-devel.0 of CCExceptions, a C11 language library; it
+<p>This document describes version 0.6.2-devel.3 of CCExceptions, a C11 language library; it
 implements an interface to non&ndash;local exits, which is somewhat similar to exceptions handling.  The
 library targets <acronym>POSIX</acronym> systems but supports some <acronym>GNU</acronym> C Library functions and some Linux
 functions.
@@ -1816,14 +1816,46 @@ with such a property.
 <dl>
 <dt><a name="index-cce_005fdescriptor_005froot_005ft"></a>Struct Typedef: <strong>cce_descriptor_root_t</strong></dt>
 <dd><p>Type of the exceptional condition descriptor representing the root of the conditions hierarchy tree.
-This descriptor has a single instance built into the library.
-</p></dd></dl>
+This descriptor has a single instance built into the library.  It has the following public fields:
+</p>
+<dl compact="compact">
+<dt><code>cce_descriptor_t descriptor</code></dt>
+<dd><p>The descriptor of the condition&ndash;object type.
+</p></dd>
+</dl>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-cce_005fcondition_005froot_005ft"></a>Struct Typedef: <strong>cce_condition_root_t</strong></dt>
+<dd><p>Structure type representing the <em>root</em> condition object.  It has the following public fields:
+</p>
+<dl compact="compact">
+<dt><code>cce_condition_t condition</code></dt>
+<dd><p>The condition&ndash;object base values.
+</p></dd>
+</dl>
+</dd></dl>
 
 
 <dl>
 <dt><a name="index-cce_005fdescriptor_005fset_005froot_005fparent"></a>Function: <em>void</em> <strong>cce_descriptor_set_root_parent</strong> <em>(cce_descriptor_t * <var>D</var>)</em></dt>
 <dd><p>Configure the descriptor <var>D</var> so that its parent is the unique <em>root</em> condition descriptor.
 </p></dd></dl>
+
+
+<dl>
+<dt><a name="index-cce_005fcondition_005finit_005froot"></a>Function: <em>void</em> <strong>cce_condition_init_root</strong> <em>(cce_condition_root_t * <var>C</var>)</em></dt>
+<dd><p>Initialisation function for the condition object.  This function must be called by all the
+initialisation function of condition object types derived from <code>cce_condition_root_t</code>.
+</p>
+<blockquote>
+<p><strong>NOTE</strong> At present this function does nothing, but still we must call it.  We need to remember
+that the true initialisation of the field <code>condition</code> is performed by
+<code>cce_condition_init()</code>, which must be always called by the &ldquo;condition_new&rdquo; function of the
+condition&ndash;object type being instantiated.
+</p></blockquote>
+</dd></dl>
 
 
 <dl>
@@ -1834,38 +1866,28 @@ returns <code>true</code>.
 </p></dd></dl>
 
 
-<p>To define an exceptional condition type <code>my_descriptor_error_t</code> whose parent is the <em>root</em>
-condition, we must write initialisation code as follows:
+<dl>
+<dt><a name="index-cce_005fdescriptor_005froot_005fptr"></a>Dynamic Constant: <em>cce_descriptor_root_t const * const</em> <strong>cce_descriptor_root_ptr</strong></dt>
+<dd><p>Pointer to a statically allocated structure representing the <em>root</em> condition descriptor for
+<em>root</em> condition objects.
+</p></dd></dl>
+
+
+
+<a name="Sub_002d_002dtyping-example"></a>
+<h4 class="subsubheading">Sub&ndash;typing example</h4>
+
+
+<p>To define a sub&ndash;type of <code>cce_condition_root_t</code> we can copy the code in the files:
 </p>
 <div class="example">
-<pre class="example">typedef struct my_descr_error_t  my_descr_error_t;
-
-struct my_descr_error_t {
-  cce_descriptor_t     descriptor;
-};
-
-static char const *
-my_error_static_message (cce_condition_t const * C CCE_UNUSED)
-{
-  return &quot;my error message&quot;;
-}
-
-my_descr_error_t my_descr_error_stru = {
-  .descriptor.parent          = NULL,
-  .descriptor.delete          = NULL,
-  .descriptor.final           = NULL,
-  .descriptor.static_message  = my_error_static_message
-};
-
-void
-condition_descriptors_initialisation (void)
-{
-  cce_descriptor_set_root_parent(&amp;my_descr_error.descriptor);
-}
+<pre class="example">root-subtype.c
+root-subtype-headear.h
+root-subtype-body.c
 </pre></div>
 
-<p>and the function <code>condition_descriptors_initialisation()</code> must be called prior to using the
-conditions system.
+<p>under the <samp>tests</samp> directory of the source distribution; the code defines a new
+condition&ndash;object type <code>my_condition_root_subtype_t</code>.
 </p>
 <hr>
 <a name="conditions-unknown"></a>
@@ -1988,13 +2010,6 @@ the <em>root</em> descriptor as parent.
 
 
 <dl>
-<dt><a name="index-cce_005fcondition_005ffinal_005fbreak"></a>Function: <em>void</em> <strong>cce_condition_final_break</strong> <em>(cce_condition_t * <var>C</var>)</em></dt>
-<dd><p>Finalise a condition object.  This function exists to allow sub&ndash;typing from
-<code>cce_condition_break_t</code>.
-</p></dd></dl>
-
-
-<dl>
 <dt><a name="index-cce_005fcondition_005fnew_005fbreak"></a>Function: <em>cce_condition_t const *</em> <strong>cce_condition_new_break</strong> <em>(void)</em></dt>
 <dd><p>Return a pointer to the statically allocated structure representing the single <em>break</em>
 condition object.
@@ -2036,155 +2051,21 @@ the single <em>break</em> condition object.  The parent of this descriptor is th
 </p></dd></dl>
 
 
-<a name="Sub_002d_002dtyping-example"></a>
+<a name="Sub_002d_002dtyping-example-1"></a>
 <h4 class="subsubheading">Sub&ndash;typing example</h4>
 
 
-<p>To define a sub&ndash;type of <code>cce_condition_break_t</code> we can use the following code, which
-defines a new condition object type <code>my_condition_break_subtype_t</code>.  The code is meant to be
-split into header and body parts; we can find the code in the test suite of the source distribution.
-</p>
-<p>In the header file <samp>break-subtype-header.c</samp> we put:
-</p>
-<div class="smallexample">
-<pre class="smallexample">#ifndef BREAK_SUBTYPING_HEADER_H
-#define BREAK_SUBTYPING_HEADER_H 1
-
-#include &lt;ccexceptions.h&gt;
-#include &lt;stdio.h&gt;
-#include &lt;stdlib.h&gt;
-
-typedef struct my_descriptor_break_subtype_t    my_descriptor_break_subtype_t;
-typedef struct my_condition_break_subtype_t     my_condition_break_subtype_t;
-
-struct my_descriptor_break_subtype_t {
-  cce_descriptor_t      descriptor;
-};
-
-struct my_condition_break_subtype_t {
-  cce_condition_break_t parent;
-  int *                 data;
-};
-
-extern my_descriptor_break_subtype_t const * const my_descriptor_break_subtype_ptr;
-
-extern void my_condition_init_break_subtype (my_condition_break_subtype_t * C, int the_data)
-  __attribute__((__nonnull__(1)));
-
-extern cce_condition_t const * my_condition_new_break_subtype (cce_destination_t L, int the_data)
-  __attribute__((__nonnull__(1)));
-
-__attribute__((__pure__,__nonnull__(1),__always_inline__))
-static inline bool
-my_condition_is_break_subtype (cce_condition_t const * C)
-{
-  return cce_is_condition(C, &amp;(my_descriptor_break_subtype_ptr-&gt;descriptor));
-}
-
-extern void break_subtyping_init_module (void);
-
-#endif /* BREAK_SUBTYPING_HEADER_H */
-</pre></div>
-
-<p>in the body file <samp>break-subtype-body.c</samp> we put:
-</p>
-<div class="smallexample">
-<pre class="smallexample">#include &lt;ccexceptions.h&gt;
-#include &quot;break-subtyping-header.h&quot;
-#include &lt;stdio.h&gt;
-#include &lt;stdlib.h&gt;
-
-static void
-my_condition_final_break_subtype (cce_condition_t * _C)
-/* Here we  finalise only  the fields  of this type
-   leaving untouched the fields of the parent type. */
-{
-  my_condition_break_subtype_t * C = (my_condition_break_subtype_t *) _C;
-  *(C-&gt;data) = 0;
-}
-
-static void
-my_condition_delete_break_subtype (cce_condition_t * _C)
-{
-  my_condition_break_subtype_t * C = (my_condition_break_subtype_t *) _C;
-
-  free(C-&gt;data);
-  free(C);
-}
-
-static char const *
-my_condition_static_message_break_subtype (cce_condition_t const * C CCE_UNUSED)
-{
-  return &quot;Break subtype exceptional condition&quot;;
-}
-
-static my_descriptor_break_subtype_t my_descriptor_break_subtype_stru = {
-  /* This field is set below by the module initialisation function. */
-  .descriptor.parent            = NULL,
-  .descriptor.delete            = my_condition_delete_break_subtype,
-  .descriptor.final             = my_condition_final_break_subtype,
-  .descriptor.static_message    = my_condition_static_message_break_subtype
-};
-
-my_descriptor_break_subtype_t const * const my_descriptor_break_subtype_ptr = &amp;my_descriptor_break_subtype_stru;
-
-void
-my_condition_init_break_subtype (my_condition_break_subtype_t * C, int the_data)
-/* Here we call the parent's initialisation function; then we initialise
-   the fields of this type. */
-{
-  cce_condition_init_break(&amp;(C-&gt;parent));
-  *(C-&gt;data) = the_data;
-}
-
-cce_condition_t const *
-my_condition_new_break_subtype (cce_destination_t L, int the_data)
-/* Here  we  allocate  the  asynchronous resources  and  initialise  the
-   descriptor field; then we call the initialisation function. */
-{
-  my_condition_break_subtype_t * C = cce_sys_malloc(L, sizeof(my_condition_break_subtype_t));
-  C-&gt;data = cce_sys_malloc(L, sizeof(int));
-  cce_condition_init((cce_condition_t *) C, &amp;(my_descriptor_break_subtype_ptr-&gt;descriptor));
-  my_condition_init_break_subtype(C, the_data);
-  return (cce_condition_t const *) C;
-}
-
-void
-break_subtyping_init_module (void)
-{
-  my_descriptor_break_subtype_stru.descriptor.parent = &amp;(cce_descriptor_break_ptr-&gt;descriptor);
-}
-</pre></div>
-
-<p>and we can use the definition as follows in the program <samp>break-subtype.c</samp>:
+<p>To define a sub&ndash;type of <code>cce_condition_break_t</code> we can copy the code in the files:
 </p>
 <div class="example">
-<pre class="example">#include &lt;ccexceptions.h&gt;
-#include &lt;stdio.h&gt;
-#include &lt;stdlib.h&gt;
-#include &quot;break-subtyping-header.h&quot;
-
-int
-main (void)
-{
-  break_subtyping_init_module();
-
-  {
-    cce_location_t      L[1];
-
-    if (cce_location(L)) {
-      fprintf(stderr, &quot;%s: %s\n&quot;, __func__, cce_condition_static_message(cce_condition(L)));
-      cce_run_error_handlers_final(L);
-    } else {
-      cce_raise(L, my_condition_new_break_subtype(L, 123));
-      cce_run_cleanup_handlers(L);
-    }
-  }
-
-  exit(EXIT_SUCCESS);
-}
+<pre class="example">break-subtype.c
+break-subtype-headear.h
+break-subtype-body.c
 </pre></div>
 
+<p>under the <samp>tests</samp> directory of the source distribution; the code defines a new
+condition&ndash;object type <code>my_condition_break_subtype_t</code>.
+</p>
 <hr>
 <a name="conditions-error"></a>
 <div class="header">
@@ -2220,13 +2101,6 @@ the <em>root</em> descriptor as parent.
 <dl>
 <dt><a name="index-cce_005fcondition_005finit_005ferror"></a>Function: <em>void</em> <strong>cce_condition_init_error</strong> <em>(cce_condition_error_t * <var>C</var>)</em></dt>
 <dd><p>Initialise an already allocated condition object.  This function exists to allow sub&ndash;typing from
-<code>cce_condition_error_t</code>.
-</p></dd></dl>
-
-
-<dl>
-<dt><a name="index-cce_005fcondition_005ffinal_005ferror"></a>Function: <em>void</em> <strong>cce_condition_final_error</strong> <em>(cce_condition_t * <var>C</var>)</em></dt>
-<dd><p>Finalise a condition object.  This function exists to allow sub&ndash;typing from
 <code>cce_condition_error_t</code>.
 </p></dd></dl>
 
@@ -2270,155 +2144,21 @@ descriptor for the single <em>error</em> condition object.
 </p></dd></dl>
 
 
-<a name="Sub_002d_002dtyping-example-1"></a>
+<a name="Sub_002d_002dtyping-example-2"></a>
 <h4 class="subsubheading">Sub&ndash;typing example</h4>
 
 
-<p>To define a sub&ndash;type of <code>cce_condition_error_t</code> we can use the following code, which
-defines a new condition object type <code>my_condition_error_subtype_t</code>.  The code is meant to be
-split into header and body parts; we can find the code in the test suite of the source distribution.
-</p>
-<p>In the header file <samp>error-subtype-header.c</samp> we put:
-</p>
-<div class="smallexample">
-<pre class="smallexample">#ifndef ERROR_SUBTYPING_HEADER_H
-#define ERROR_SUBTYPING_HEADER_H 1
-
-#include &lt;ccexceptions.h&gt;
-#include &lt;stdio.h&gt;
-#include &lt;stdlib.h&gt;
-
-typedef struct my_descriptor_error_subtype_t    my_descriptor_error_subtype_t;
-typedef struct my_condition_error_subtype_t     my_condition_error_subtype_t;
-
-struct my_descriptor_error_subtype_t {
-  cce_descriptor_t      descriptor;
-};
-
-struct my_condition_error_subtype_t {
-  cce_condition_error_t parent;
-  int *                 data;
-};
-
-extern my_descriptor_error_subtype_t const * const my_descriptor_error_subtype_ptr;
-
-extern void my_condition_init_error_subtype (my_condition_error_subtype_t * C, int the_data)
-  __attribute__((__nonnull__(1)));
-
-extern cce_condition_t const * my_condition_new_error_subtype (cce_destination_t L, int the_data)
-  __attribute__((__nonnull__(1)));
-
-__attribute__((__pure__,__nonnull__(1),__always_inline__))
-static inline bool
-my_condition_is_error_subtype (cce_condition_t const * C)
-{
-  return cce_is_condition(C, &amp;(my_descriptor_error_subtype_ptr-&gt;descriptor));
-}
-
-extern void error_subtyping_init_module (void);
-
-#endif /* ERROR_SUBTYPING_HEADER_H */
-</pre></div>
-
-<p>in the body file <samp>error-subtype-body.c</samp> we put:
-</p>
-<div class="smallexample">
-<pre class="smallexample">#include &lt;ccexceptions.h&gt;
-#include &quot;error-subtyping-header.h&quot;
-#include &lt;stdio.h&gt;
-#include &lt;stdlib.h&gt;
-
-static void
-my_condition_final_error_subtype (cce_condition_t * _C)
-/* Here we  finalise only  the fields  of this type
-   leaving untouched the fields of the parent type. */
-{
-  my_condition_error_subtype_t * C = (my_condition_error_subtype_t *) _C;
-  *(C-&gt;data) = 0;
-}
-
-static void
-my_condition_delete_error_subtype (cce_condition_t * _C)
-{
-  my_condition_error_subtype_t * C = (my_condition_error_subtype_t *) _C;
-
-  free(C-&gt;data);
-  free(C);
-}
-
-static char const *
-my_condition_static_message_error_subtype (cce_condition_t const * C CCE_UNUSED)
-{
-  return &quot;Error subtype exceptional condition&quot;;
-}
-
-static my_descriptor_error_subtype_t my_descriptor_error_subtype_stru = {
-  /* This field is set below by the module initialisation function. */
-  .descriptor.parent            = NULL,
-  .descriptor.delete            = my_condition_delete_error_subtype,
-  .descriptor.final             = my_condition_final_error_subtype,
-  .descriptor.static_message    = my_condition_static_message_error_subtype
-};
-
-my_descriptor_error_subtype_t const * const my_descriptor_error_subtype_ptr = &amp;my_descriptor_error_subtype_stru;
-
-void
-my_condition_init_error_subtype (my_condition_error_subtype_t * C, int the_data)
-/* Here we call the parent's initialisation function; then we initialise
-   the fields of this type. */
-{
-  cce_condition_init_error(&amp;(C-&gt;parent));
-  *(C-&gt;data) = the_data;
-}
-
-cce_condition_t const *
-my_condition_new_error_subtype (cce_destination_t L, int the_data)
-/* Here  we  allocate  the  asynchronous resources  and  initialise  the
-   descriptor field; then we call the initialisation function. */
-{
-  my_condition_error_subtype_t * C = cce_sys_malloc(L, sizeof(my_condition_error_subtype_t));
-  C-&gt;data = cce_sys_malloc(L, sizeof(int));
-  cce_condition_init((cce_condition_t *) C, &amp;(my_descriptor_error_subtype_ptr-&gt;descriptor));
-  my_condition_init_error_subtype(C, the_data);
-  return (cce_condition_t const *) C;
-}
-
-void
-error_subtyping_init_module (void)
-{
-  my_descriptor_error_subtype_stru.descriptor.parent = &amp;(cce_descriptor_error_ptr-&gt;descriptor);
-}
-</pre></div>
-
-<p>and we can use the definition as follows in the program <samp>error-subtype.c</samp>:
+<p>To define a sub&ndash;type of <code>cce_condition_error_t</code> we can copy the code in the files:
 </p>
 <div class="example">
-<pre class="example">#include &lt;ccexceptions.h&gt;
-#include &lt;stdio.h&gt;
-#include &lt;stdlib.h&gt;
-#include &quot;error-subtyping-header.h&quot;
-
-int
-main (void)
-{
-  error_subtyping_init_module();
-
-  {
-    cce_location_t      L[1];
-
-    if (cce_location(L)) {
-      fprintf(stderr, &quot;%s: %s\n&quot;, __func__, cce_condition_static_message(cce_condition(L)));
-      cce_run_error_handlers_final(L);
-    } else {
-      cce_raise(L, my_condition_new_error_subtype(L, 123));
-      cce_run_cleanup_handlers(L);
-    }
-  }
-
-  exit(EXIT_SUCCESS);
-}
+<pre class="example">error-subtype.c
+error-subtype-headear.h
+error-subtype-body.c
 </pre></div>
 
+<p>under the <samp>tests</samp> directory of the source distribution; the code defines a new
+condition&ndash;object type <code>my_condition_error_subtype_t</code>.
+</p>
 <hr>
 <a name="conditions-run_002dtime-error"></a>
 <div class="header">
@@ -2454,13 +2194,6 @@ has the <em>error</em> descriptor as parent.
 <dl>
 <dt><a name="index-cce_005fcondition_005finit_005fruntime_005ferror"></a>Function: <em>void</em> <strong>cce_condition_init_runtime_error</strong> <em>(cce_condition_runtime_error_t * <var>C</var>)</em></dt>
 <dd><p>Initialise an already allocated condition object.  This function exists to allow sub&ndash;typing from
-<code>cce_condition_runtime_error_t</code>.
-</p></dd></dl>
-
-
-<dl>
-<dt><a name="index-cce_005fcondition_005ffinal_005fruntime_005ferror"></a>Function: <em>void</em> <strong>cce_condition_final_runtime_error</strong> <em>(cce_condition_t * <var>C</var>)</em></dt>
-<dd><p>Finalise a condition object.  This function exists to allow sub&ndash;typing from
 <code>cce_condition_runtime_error_t</code>.
 </p></dd></dl>
 
@@ -2504,156 +2237,21 @@ descriptor for the single <em>run&ndash;time</em> condition object.
 </p></dd></dl>
 
 
-<a name="Sub_002d_002dtyping-example-2"></a>
+<a name="Sub_002d_002dtyping-example-3"></a>
 <h4 class="subsubheading">Sub&ndash;typing example</h4>
 
 
-<p>To define a sub&ndash;type of <code>cce_condition_runtime_error_t</code> we can use the following code,
-which defines a new condition object type <code>my_condition_runtime_error_subtype_t</code>.  The code
-is meant to be split into header and body parts; we can find the code in the test suite of the
-source distribution.
-</p>
-<p>In the header file <samp>runtime-error-subtype-header.c</samp> we put:
-</p>
-<div class="smallexample">
-<pre class="smallexample">#ifndef RUNTIME_ERROR_SUBTYPING_HEADER_H
-#define RUNTIME_ERROR_SUBTYPING_HEADER_H 1
-
-#include &lt;ccexceptions.h&gt;
-#include &lt;stdio.h&gt;
-#include &lt;stdlib.h&gt;
-
-typedef struct my_descriptor_runtime_error_subtype_t    my_descriptor_runtime_error_subtype_t;
-typedef struct my_condition_runtime_error_subtype_t     my_condition_runtime_error_subtype_t;
-
-struct my_descriptor_runtime_error_subtype_t {
-  cce_descriptor_t      descriptor;
-};
-
-struct my_condition_runtime_error_subtype_t {
-  cce_condition_runtime_error_t parent;
-  int *                 data;
-};
-
-extern my_descriptor_runtime_error_subtype_t const * const my_descriptor_runtime_error_subtype_ptr;
-
-extern void my_condition_init_runtime_error_subtype (my_condition_runtime_error_subtype_t * C, int the_data)
-  __attribute__((__nonnull__(1)));
-
-extern cce_condition_t const * my_condition_new_runtime_error_subtype (cce_destination_t L, int the_data)
-  __attribute__((__nonnull__(1)));
-
-__attribute__((__pure__,__nonnull__(1),__always_inline__))
-static inline bool
-my_condition_is_runtime_error_subtype (cce_condition_t const * C)
-{
-  return cce_is_condition(C, &amp;(my_descriptor_runtime_error_subtype_ptr-&gt;descriptor));
-}
-
-extern void runtime_error_subtyping_init_module (void);
-
-#endif /* RUNTIME_ERROR_SUBTYPING_HEADER_H */
-</pre></div>
-
-<p>in the body file <samp>runtime-error-subtype-body.c</samp> we put:
-</p>
-<div class="smallexample">
-<pre class="smallexample">#include &lt;ccexceptions.h&gt;
-#include &quot;runtime-error-subtyping-header.h&quot;
-#include &lt;stdio.h&gt;
-#include &lt;stdlib.h&gt;
-
-static void
-my_condition_final_runtime_error_subtype (cce_condition_t * _C)
-/* Here we  finalise only  the fields  of this type
-   leaving untouched the fields of the parent type. */
-{
-  my_condition_runtime_error_subtype_t * C = (my_condition_runtime_error_subtype_t *) _C;
-  *(C-&gt;data) = 0;
-}
-
-static void
-my_condition_delete_runtime_error_subtype (cce_condition_t * _C)
-{
-  my_condition_runtime_error_subtype_t * C = (my_condition_runtime_error_subtype_t *) _C;
-
-  free(C-&gt;data);
-  free(C);
-}
-
-static char const *
-my_condition_static_message_runtime_error_subtype (cce_condition_t const * C CCE_UNUSED)
-{
-  return &quot;Error subtype exceptional condition&quot;;
-}
-
-static my_descriptor_runtime_error_subtype_t my_descriptor_runtime_error_subtype_stru = {
-  /* This field is set below by the module initialisation function. */
-  .descriptor.parent            = NULL,
-  .descriptor.delete            = my_condition_delete_runtime_error_subtype,
-  .descriptor.final             = my_condition_final_runtime_error_subtype,
-  .descriptor.static_message    = my_condition_static_message_runtime_error_subtype
-};
-
-my_descriptor_runtime_error_subtype_t const * const my_descriptor_runtime_error_subtype_ptr = &amp;my_descriptor_runtime_error_subtype_stru;
-
-void
-my_condition_init_runtime_error_subtype (my_condition_runtime_error_subtype_t * C, int the_data)
-/* Here we call the parent's initialisation function; then we initialise
-   the fields of this type. */
-{
-  cce_condition_init_runtime_error(&amp;(C-&gt;parent));
-  *(C-&gt;data) = the_data;
-}
-
-cce_condition_t const *
-my_condition_new_runtime_error_subtype (cce_destination_t L, int the_data)
-/* Here  we  allocate  the  asynchronous resources  and  initialise  the
-   descriptor field; then we call the initialisation function. */
-{
-  my_condition_runtime_error_subtype_t * C = cce_sys_malloc(L, sizeof(my_condition_runtime_error_subtype_t));
-  C-&gt;data = cce_sys_malloc(L, sizeof(int));
-  cce_condition_init((cce_condition_t *) C, &amp;(my_descriptor_runtime_error_subtype_ptr-&gt;descriptor));
-  my_condition_init_runtime_error_subtype(C, the_data);
-  return (cce_condition_t const *) C;
-}
-
-void
-runtime_error_subtyping_init_module (void)
-{
-  my_descriptor_runtime_error_subtype_stru.descriptor.parent = &amp;(cce_descriptor_runtime_error_ptr-&gt;descriptor);
-}
-</pre></div>
-
-<p>and we can use the definition as follows in the program <samp>runtime-error-subtype.c</samp>:
+<p>To define a sub&ndash;type of <code>cce_condition_runtime_error_t</code> we can copy the code in the files:
 </p>
 <div class="example">
-<pre class="example">#include &lt;ccexceptions.h&gt;
-#include &lt;stdio.h&gt;
-#include &lt;stdlib.h&gt;
-#include &quot;runtime-error-subtyping-header.h&quot;
-
-int
-main (void)
-{
-  runtime_error_subtyping_init_module();
-
-  {
-    cce_location_t      L[1];
-
-    if (cce_location(L)) {
-      fprintf(stderr, &quot;%s: %s\n&quot;, __func__, cce_condition_static_message(cce_condition(L)));
-      cce_run_runtime_error_handlers_final(L);
-    } else {
-      cce_raise(L, my_condition_new_runtime_error_subtype(L, 123));
-      cce_run_cleanup_handlers(L);
-    }
-  }
-
-  exit(EXIT_SUCCESS);
-}
+<pre class="example">runtime-error-subtype.c
+runtime-error-subtype-headear.h
+runtime-error-subtype-body.c
 </pre></div>
 
+<p>under the <samp>tests</samp> directory of the source distribution; the code defines a new
+condition&ndash;object type <code>my_condition_runtime_error_subtype_t</code>.
+</p>
 <hr>
 <a name="conditions-logic-error"></a>
 <div class="header">
@@ -2690,13 +2288,6 @@ the <em>error</em> descriptor as parent.
 <dl>
 <dt><a name="index-cce_005fcondition_005finit_005flogic_005ferror"></a>Function: <em>void</em> <strong>cce_condition_init_logic_error</strong> <em>(cce_condition_logic_error_t * <var>C</var>)</em></dt>
 <dd><p>Initialise an already allocated condition object.  This function exists to allow sub&ndash;typing from
-<code>cce_condition_logic_error_t</code>.
-</p></dd></dl>
-
-
-<dl>
-<dt><a name="index-cce_005fcondition_005ffinal_005flogic_005ferror"></a>Function: <em>void</em> <strong>cce_condition_final_logic_error</strong> <em>(cce_condition_t * <var>C</var>)</em></dt>
-<dd><p>Finalise a condition object.  This function exists to allow sub&ndash;typing from
 <code>cce_condition_logic_error_t</code>.
 </p></dd></dl>
 
@@ -2740,156 +2331,21 @@ descriptor for the single <em>logic</em> condition object.
 </p></dd></dl>
 
 
-<a name="Sub_002d_002dtyping-example-3"></a>
+<a name="Sub_002d_002dtyping-example-4"></a>
 <h4 class="subsubheading">Sub&ndash;typing example</h4>
 
 
-<p>To define a sub&ndash;type of <code>cce_condition_logic_error_t</code> we can use the following code,
-which defines a new condition object type <code>my_condition_logic_error_subtype_t</code>.  The code
-is meant to be split into header and body parts; we can find the code in the test suite of the
-source distribution.
-</p>
-<p>In the header file <samp>logic-error-subtype-header.c</samp> we put:
-</p>
-<div class="smallexample">
-<pre class="smallexample">#ifndef LOGIC_ERROR_SUBTYPING_HEADER_H
-#define LOGIC_ERROR_SUBTYPING_HEADER_H 1
-
-#include &lt;ccexceptions.h&gt;
-#include &lt;stdio.h&gt;
-#include &lt;stdlib.h&gt;
-
-typedef struct my_descriptor_logic_error_subtype_t    my_descriptor_logic_error_subtype_t;
-typedef struct my_condition_logic_error_subtype_t     my_condition_logic_error_subtype_t;
-
-struct my_descriptor_logic_error_subtype_t {
-  cce_descriptor_t      descriptor;
-};
-
-struct my_condition_logic_error_subtype_t {
-  cce_condition_logic_error_t parent;
-  int *                 data;
-};
-
-extern my_descriptor_logic_error_subtype_t const * const my_descriptor_logic_error_subtype_ptr;
-
-extern void my_condition_init_logic_error_subtype (my_condition_logic_error_subtype_t * C, int the_data)
-  __attribute__((__nonnull__(1)));
-
-extern cce_condition_t const * my_condition_new_logic_error_subtype (cce_destination_t L, int the_data)
-  __attribute__((__nonnull__(1)));
-
-__attribute__((__pure__,__nonnull__(1),__always_inline__))
-static inline bool
-my_condition_is_logic_error_subtype (cce_condition_t const * C)
-{
-  return cce_is_condition(C, &amp;(my_descriptor_logic_error_subtype_ptr-&gt;descriptor));
-}
-
-extern void logic_error_subtyping_init_module (void);
-
-#endif /* LOGIC_ERROR_SUBTYPING_HEADER_H */
-</pre></div>
-
-<p>in the body file <samp>logic-error-subtype-body.c</samp> we put:
-</p>
-<div class="smallexample">
-<pre class="smallexample">#include &lt;ccexceptions.h&gt;
-#include &quot;logic-error-subtyping-header.h&quot;
-#include &lt;stdio.h&gt;
-#include &lt;stdlib.h&gt;
-
-static void
-my_condition_final_logic_error_subtype (cce_condition_t * _C)
-/* Here we  finalise only  the fields  of this type
-   leaving untouched the fields of the parent type. */
-{
-  my_condition_logic_error_subtype_t * C = (my_condition_logic_error_subtype_t *) _C;
-  *(C-&gt;data) = 0;
-}
-
-static void
-my_condition_delete_logic_error_subtype (cce_condition_t * _C)
-{
-  my_condition_logic_error_subtype_t * C = (my_condition_logic_error_subtype_t *) _C;
-
-  free(C-&gt;data);
-  free(C);
-}
-
-static char const *
-my_condition_static_message_logic_error_subtype (cce_condition_t const * C CCE_UNUSED)
-{
-  return &quot;Error subtype exceptional condition&quot;;
-}
-
-static my_descriptor_logic_error_subtype_t my_descriptor_logic_error_subtype_stru = {
-  /* This field is set below by the module initialisation function. */
-  .descriptor.parent            = NULL,
-  .descriptor.delete            = my_condition_delete_logic_error_subtype,
-  .descriptor.final             = my_condition_final_logic_error_subtype,
-  .descriptor.static_message    = my_condition_static_message_logic_error_subtype
-};
-
-my_descriptor_logic_error_subtype_t const * const my_descriptor_logic_error_subtype_ptr = &amp;my_descriptor_logic_error_subtype_stru;
-
-void
-my_condition_init_logic_error_subtype (my_condition_logic_error_subtype_t * C, int the_data)
-/* Here we call the parent's initialisation function; then we initialise
-   the fields of this type. */
-{
-  cce_condition_init_logic_error(&amp;(C-&gt;parent));
-  *(C-&gt;data) = the_data;
-}
-
-cce_condition_t const *
-my_condition_new_logic_error_subtype (cce_destination_t L, int the_data)
-/* Here  we  allocate  the  asynchronous resources  and  initialise  the
-   descriptor field; then we call the initialisation function. */
-{
-  my_condition_logic_error_subtype_t * C = cce_sys_malloc(L, sizeof(my_condition_logic_error_subtype_t));
-  C-&gt;data = cce_sys_malloc(L, sizeof(int));
-  cce_condition_init((cce_condition_t *) C, &amp;(my_descriptor_logic_error_subtype_ptr-&gt;descriptor));
-  my_condition_init_logic_error_subtype(C, the_data);
-  return (cce_condition_t const *) C;
-}
-
-void
-logic_error_subtyping_init_module (void)
-{
-  my_descriptor_logic_error_subtype_stru.descriptor.parent = &amp;(cce_descriptor_logic_error_ptr-&gt;descriptor);
-}
-</pre></div>
-
-<p>and we can use the definition as follows in the program <samp>logic-error-subtype.c</samp>:
+<p>To define a sub&ndash;type of <code>cce_condition_logic_error_t</code> we can copy the code in the files:
 </p>
 <div class="example">
-<pre class="example">#include &lt;ccexceptions.h&gt;
-#include &lt;stdio.h&gt;
-#include &lt;stdlib.h&gt;
-#include &quot;logic-error-subtyping-header.h&quot;
-
-int
-main (void)
-{
-  logic_error_subtyping_init_module();
-
-  {
-    cce_location_t      L[1];
-
-    if (cce_location(L)) {
-      fprintf(stderr, &quot;%s: %s\n&quot;, __func__, cce_condition_static_message(cce_condition(L)));
-      cce_run_logic_error_handlers_final(L);
-    } else {
-      cce_raise(L, my_condition_new_logic_error_subtype(L, 123));
-      cce_run_cleanup_handlers(L);
-    }
-  }
-
-  exit(EXIT_SUCCESS);
-}
+<pre class="example">logic-error-subtype.c
+logic-error-subtype-headear.h
+logic-error-subtype-body.c
 </pre></div>
 
+<p>under the <samp>tests</samp> directory of the source distribution; the code defines a new
+condition&ndash;object type <code>my_condition_logic_error_subtype_t</code>.
+</p>
 <hr>
 <a name="conditions-unimplemented"></a>
 <div class="header">
@@ -2927,13 +2383,6 @@ descriptor has the <em>logic error</em> descriptor as parent.
 <dl>
 <dt><a name="index-cce_005fcondition_005finit_005funimplemented"></a>Function: <em>void</em> <strong>cce_condition_init_unimplemented</strong> <em>(cce_condition_unimplemented_t * <var>C</var>)</em></dt>
 <dd><p>Initialise an already allocated condition object.  This function exists to allow sub&ndash;typing from
-<code>cce_condition_unimplemented_t</code>.
-</p></dd></dl>
-
-
-<dl>
-<dt><a name="index-cce_005fcondition_005ffinal_005funimplemented"></a>Function: <em>void</em> <strong>cce_condition_final_unimplemented</strong> <em>(cce_condition_t * <var>C</var>)</em></dt>
-<dd><p>Finalise a condition object.  This function exists to allow sub&ndash;typing from
 <code>cce_condition_unimplemented_t</code>.
 </p></dd></dl>
 
@@ -2977,156 +2426,21 @@ descriptor for the single <em>unimplemented</em> condition object.
 </p></dd></dl>
 
 
-<a name="Sub_002d_002dtyping-example-4"></a>
+<a name="Sub_002d_002dtyping-example-5"></a>
 <h4 class="subsubheading">Sub&ndash;typing example</h4>
 
 
-<p>To define a sub&ndash;type of <code>cce_condition_unimplemented_t</code> we can use the following code,
-which defines a new condition object type <code>my_condition_unimplemented_subtype_t</code>.  The code
-is meant to be split into header and body parts; we can find the code in the test suite of the
-source distribution.
-</p>
-<p>In the header file <samp>unimplemented-subtype-header.c</samp> we put:
-</p>
-<div class="smallexample">
-<pre class="smallexample">#ifndef UNIMPLEMENTED_SUBTYPING_HEADER_H
-#define UNIMPLEMENTED_SUBTYPING_HEADER_H 1
-
-#include &lt;ccexceptions.h&gt;
-#include &lt;stdio.h&gt;
-#include &lt;stdlib.h&gt;
-
-typedef struct my_descriptor_unimplemented_subtype_t    my_descriptor_unimplemented_subtype_t;
-typedef struct my_condition_unimplemented_subtype_t     my_condition_unimplemented_subtype_t;
-
-struct my_descriptor_unimplemented_subtype_t {
-  cce_descriptor_t      descriptor;
-};
-
-struct my_condition_unimplemented_subtype_t {
-  cce_condition_unimplemented_t parent;
-  int *                 data;
-};
-
-extern my_descriptor_unimplemented_subtype_t const * const my_descriptor_unimplemented_subtype_ptr;
-
-extern void my_condition_init_unimplemented_subtype (my_condition_unimplemented_subtype_t * C, int the_data)
-  __attribute__((__nonnull__(1)));
-
-extern cce_condition_t const * my_condition_new_unimplemented_subtype (cce_destination_t L, int the_data)
-  __attribute__((__nonnull__(1)));
-
-__attribute__((__pure__,__nonnull__(1),__always_inline__))
-static inline bool
-my_condition_is_unimplemented_subtype (cce_condition_t const * C)
-{
-  return cce_is_condition(C, &amp;(my_descriptor_unimplemented_subtype_ptr-&gt;descriptor));
-}
-
-extern void unimplemented_subtyping_init_module (void);
-
-#endif /* UNIMPLEMENTED_SUBTYPING_HEADER_H */
-</pre></div>
-
-<p>in the body file <samp>unimplemented-subtype-body.c</samp> we put:
-</p>
-<div class="smallexample">
-<pre class="smallexample">#include &lt;ccexceptions.h&gt;
-#include &quot;unimplemented-subtyping-header.h&quot;
-#include &lt;stdio.h&gt;
-#include &lt;stdlib.h&gt;
-
-static void
-my_condition_final_unimplemented_subtype (cce_condition_t * _C)
-/* Here we  finalise only  the fields  of this type
-   leaving untouched the fields of the parent type. */
-{
-  my_condition_unimplemented_subtype_t * C = (my_condition_unimplemented_subtype_t *) _C;
-  *(C-&gt;data) = 0;
-}
-
-static void
-my_condition_delete_unimplemented_subtype (cce_condition_t * _C)
-{
-  my_condition_unimplemented_subtype_t * C = (my_condition_unimplemented_subtype_t *) _C;
-
-  free(C-&gt;data);
-  free(C);
-}
-
-static char const *
-my_condition_static_message_unimplemented_subtype (cce_condition_t const * C CCE_UNUSED)
-{
-  return &quot;Unimplemented subtype exceptional condition&quot;;
-}
-
-static my_descriptor_unimplemented_subtype_t my_descriptor_unimplemented_subtype_stru = {
-  /* This field is set below by the module initialisation function. */
-  .descriptor.parent            = NULL,
-  .descriptor.delete            = my_condition_delete_unimplemented_subtype,
-  .descriptor.final             = my_condition_final_unimplemented_subtype,
-  .descriptor.static_message    = my_condition_static_message_unimplemented_subtype
-};
-
-my_descriptor_unimplemented_subtype_t const * const my_descriptor_unimplemented_subtype_ptr = &amp;my_descriptor_unimplemented_subtype_stru;
-
-void
-my_condition_init_unimplemented_subtype (my_condition_unimplemented_subtype_t * C, int the_data)
-/* Here we call the parent's initialisation function; then we initialise
-   the fields of this type. */
-{
-  cce_condition_init_unimplemented(&amp;(C-&gt;parent));
-  *(C-&gt;data) = the_data;
-}
-
-cce_condition_t const *
-my_condition_new_unimplemented_subtype (cce_destination_t L, int the_data)
-/* Here  we  allocate  the  asynchronous resources  and  initialise  the
-   descriptor field; then we call the initialisation function. */
-{
-  my_condition_unimplemented_subtype_t * C = cce_sys_malloc(L, sizeof(my_condition_unimplemented_subtype_t));
-  C-&gt;data = cce_sys_malloc(L, sizeof(int));
-  cce_condition_init((cce_condition_t *) C, &amp;(my_descriptor_unimplemented_subtype_ptr-&gt;descriptor));
-  my_condition_init_unimplemented_subtype(C, the_data);
-  return (cce_condition_t const *) C;
-}
-
-void
-unimplemented_subtyping_init_module (void)
-{
-  my_descriptor_unimplemented_subtype_stru.descriptor.parent = &amp;(cce_descriptor_unimplemented_ptr-&gt;descriptor);
-}
-</pre></div>
-
-<p>and we can use the definition as follows in the program <samp>unimplemented-subtype.c</samp>:
+<p>To define a sub&ndash;type of <code>cce_condition_unimplemented_t</code> we can copy the code in the files:
 </p>
 <div class="example">
-<pre class="example">#include &lt;ccexceptions.h&gt;
-#include &lt;stdio.h&gt;
-#include &lt;stdlib.h&gt;
-#include &quot;unimplemented-subtyping-header.h&quot;
-
-int
-main (void)
-{
-  unimplemented_subtyping_init_module();
-
-  {
-    cce_location_t      L[1];
-
-    if (cce_location(L)) {
-      fprintf(stderr, &quot;%s: %s\n&quot;, __func__, cce_condition_static_message(cce_condition(L)));
-      cce_run_error_handlers_final(L);
-    } else {
-      cce_raise(L, my_condition_new_unimplemented_subtype(L, 123));
-      cce_run_cleanup_handlers(L);
-    }
-  }
-
-  exit(EXIT_SUCCESS);
-}
+<pre class="example">unimplemented-subtype.c
+unimplemented-subtype-headear.h
+unimplemented-subtype-body.c
 </pre></div>
 
+<p>under the <samp>tests</samp> directory of the source distribution; the code defines a new
+condition&ndash;object type <code>my_condition_unimplemented_subtype_t</code>.
+</p>
 <hr>
 <a name="conditions-invalid-arg"></a>
 <div class="header">
@@ -3190,7 +2504,13 @@ the exception.  It is usually generated with <code>__func__</code>.
 
 
 <dl>
-<dt><a name="index-cce_005fcondition_005fnew_005finvalid_005fargument"></a>Function: <em>cce_condition_invalid_argument_t *</em> <strong>cce_condition_new_invalid_argument</strong> <em>(cce_location_t * <var>L</var>, char const * <var>func</var>, unsigned <var>index</var>)</em></dt>
+<dt><a name="index-cce_005fcondition_005finit_005finvalid_005fargument"></a>Function: <em>void</em> <strong>cce_condition_init_invalid_argument</strong> <em>(cce_condition_invalid_argument_t * <var>C</var>, char const * <var>func</var>, unsigned <var>index</var>)</em></dt>
+<dd><p>Initialisation function for the condition object.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-cce_005fcondition_005fnew_005finvalid_005fargument"></a>Function: <em>cce_condition_t const *</em> <strong>cce_condition_new_invalid_argument</strong> <em>(cce_location_t * <var>L</var>, char const * <var>func</var>, unsigned <var>index</var>)</em></dt>
 <dd><p>Build and return a new condition object.  If building the object fails: raise an exception to the
 location <var>L</var>.
 </p></dd></dl>
@@ -3222,6 +2542,23 @@ CCExceptions for which it makes sense.
 <dd><p>Pointer to a statically allocated structure representing the condition descriptor.
 </p></dd></dl>
 
+
+<a name="Sub_002d_002dtyping-example-6"></a>
+<h4 class="subsubheading">Sub&ndash;typing example</h4>
+
+
+<p>To define a sub&ndash;type of <code>cce_condition_invalid_argument_t</code> we can copy the code in the
+files:
+</p>
+<div class="example">
+<pre class="example">invalid-arg-subtype.c
+invalid-arg-subtype-headear.h
+invalid-arg-subtype-body.c
+</pre></div>
+
+<p>under the <samp>tests</samp> directory of the source distribution; the code defines a new
+condition&ndash;object type <code>my_condition_invalid_argument_subtype_t</code>.
+</p>
 <hr>
 <a name="conditions-errno"></a>
 <div class="header">
@@ -3233,7 +2570,8 @@ Next: <a href="#conditions-custom" accesskey="n" rel="next">conditions custom</a
 
 
 <p>The <em>errno exceptional&ndash;condition object</em> has the purpose of describing an exceptional condition
-caused by a system function setting <code>errno</code>.
+caused by a system function setting <code>errno</code>.  Condition objects of this type are <strong>not</strong>
+meant to be sub&ndash;typed.
 </p>
 <p>All the following definitions are accessible from the header file <samp>ccexceptions.h</samp>.
 </p>
@@ -3263,7 +2601,7 @@ function by setting <code>errno</code> to a non&ndash;zero value.  It has the fo
 
 
 <dl>
-<dt><a name="index-cce_005fcondition_005fnew_005ferrno"></a>Function: <em>cce_condition_errno_t const *</em> <strong>cce_condition_new_errno</strong> <em>(int <var>errnum</var>)</em></dt>
+<dt><a name="index-cce_005fcondition_005fnew_005ferrno"></a>Function: <em>cce_condition_t const *</em> <strong>cce_condition_new_errno</strong> <em>(int <var>errnum</var>)</em></dt>
 <dd><p>Given the <code>errno</code> code <var>errnum</var>, return the pointer to the condition object associated to
 it.
 </p>
@@ -3274,7 +2612,7 @@ condition object representing an invalid code.
 
 
 <dl>
-<dt><a name="index-cce_005fcondition_005fnew_005ferrno_005fclear"></a>Function: <em>cce_condition_errno_t const *</em> <strong>cce_condition_new_errno_clear</strong> <em>(void)</em></dt>
+<dt><a name="index-cce_005fcondition_005fnew_005ferrno_005fclear"></a>Function: <em>cce_condition_t const *</em> <strong>cce_condition_new_errno_clear</strong> <em>(void)</em></dt>
 <dd><p>Consume the current value of <code>errno</code> and return the return value of
 <code>cce_condition_new_errno()</code> applied to it.  Before returning: <code>errno</code> is reset to zero.
 </p></dd></dl>
@@ -3317,322 +2655,9 @@ Previous: <a href="#conditions-errno" accesskey="p" rel="prev">conditions errno<
 <h3 class="section">6.13 Defining custom condition objects</h3>
 
 
-<p>Let&rsquo;s say we want to define the following condition descriptors hierarchy:
+<p>The source distribution of CCExceptions comes with coding examples under the <samp>examples</samp>
+directory of the source tree; we can take that code and use it as a starting point.
 </p>
-<div class="example">
-<pre class="example"> ------       -------       ------       -------
-| root | &lt;-- | alpha | &lt;-- | beta | &lt;-- | gamma |
- ------       -------       ------       -------
-</pre></div>
-
-<p>where the condition objects of type <em>alpha</em>, <em>beta</em> and <em>gamma</em> have custom data
-structures.  As client code example: we show a possible implementation.
-</p>
-<p>We start with this preamble:
-</p>
-<div class="example">
-<pre class="example">#include &lt;ccexceptions.h&gt;
-#include &lt;stdlib.h&gt;
-#include &lt;assert.h&gt;
-</pre></div>
-
-<p>The exceptional condition <em>alpha</em> has <em>root</em> as parent type; we define it as follows:
-</p>
-<div class="smallexample">
-<pre class="smallexample">typedef struct descriptor_alpha_t {
-  cce_descriptor_t      descriptor;
-} descriptor_alpha_t;
-
-typedef struct condition_alpha_t {
-  cce_condition_root_t  root;
-  int                   alpha;
-} condition_alpha_t;
-
-cce_condition_t * condition_new_alpha (cce_location_t * L, int alpha);
-void condition_init_alpha (condition_alpha_t * C, int alpha);
-bool condition_is_alpha (cce_condition_t const * condition);
-
-static void condition_delete_alpha (cce_condition_t * C);
-static void condition_final_alpha (cce_condition_t * C);
-static char const * condition_static_message_alpha (cce_condition_t const * C);
-
-/* Instance of condition descriptor.   The &quot;parent&quot; field is initialised
-   to  NULL   here  and  reinitialised   to  the  &quot;root&quot;  later   by  an
-   initialisation function. */
-static descriptor_alpha_t descriptor_alpha = {
-  .descriptor.parent            = NULL,
-  .descriptor.delete            = condition_delete_alpha,
-  .descriptor.final             = condition_final_alpha,
-  .descriptor.static_message    = condition_static_message_alpha
-};
-
-cce_condition_t *
-condition_new_alpha (cce_location_t * L, int alpha)
-/* Allocate a condition object and initialise it. */
-{
-  condition_alpha_t *   C = cce_sys_malloc(L, sizeof(condition_alpha_t));
-  cce_condition_init((cce_condition_t *)C, &amp;descriptor_alpha.descriptor);
-  condition_init_alpha(C, alpha);
-  return (cce_condition_t *) C;
-}
-
-void
-condition_delete_alpha (cce_condition_t * C)
-/* Release the condition object memory. */
-{
-  fprintf(stderr, &quot;%s\n\n&quot;, __func__);
-  free(C);
-}
-
-void
-condition_init_alpha (condition_alpha_t * C, int alpha)
-/* Initialise an already allocated condition object. */
-{
-  C-&gt;alpha = alpha;
-}
-
-void
-condition_final_alpha (cce_condition_t * C CCE_UNUSED)
-/* Finalise a condition object; do not release memory. */
-{
-  fprintf(stderr, &quot;%s\n&quot;, __func__);
-}
-
-static char const *
-condition_static_message_alpha (cce_condition_t const * C CCE_UNUSED)
-{
-  return &quot;exceptional condition A&quot;;
-}
-
-bool
-condition_is_alpha (cce_condition_t const * condition)
-{
-  return cce_is_condition(condition, &amp;descriptor_alpha.descriptor);
-}
-
-#define condition_alpha(S)                                              \
-  _Generic((S),                                                         \
-           cce_condition_t              *: (condition_alpha_t *)(S),    \
-           condition_alpha_t            *: (condition_alpha_t *)(S),    \
-           condition_beta_t             *: (condition_alpha_t *)(S),    \
-           condition_gamma_t            *: (condition_alpha_t *)(S),    \
-           cce_condition_t const        *: (condition_alpha_t *)(S),    \
-           const condition_alpha_t      *: (condition_alpha_t *)(S),    \
-           const condition_beta_t       *: (condition_alpha_t *)(S),    \
-           const condition_gamma_t      *: (condition_alpha_t *)(S))
-</pre></div>
-
-<p>For this type we need the following initialisation code.
-</p>
-<div class="example">
-<pre class="example">cce_descriptor_set_root_parent(&amp;descriptor_alpha.descriptor);
-</pre></div>
-
-
-<p>The exceptional condition <em>beta</em> has <em>alpha</em> as parent type; we define it as follows:
-</p>
-<div class="smallexample">
-<pre class="smallexample">typedef struct descriptor_beta_t {
-  cce_descriptor_t      descriptor;
-} descriptor_beta_t;
-
-typedef struct condition_beta_t {
-  condition_alpha_t     alpha;
-  int                   beta;
-} condition_beta_t;
-
-cce_condition_t * condition_new_beta (cce_location_t * L, int alpha, int beta);
-void condition_init_beta (condition_beta_t * C, int alpha, int beta);
-bool condition_is_beta (cce_condition_t const * condition);
-
-static void condition_delete_beta  (cce_condition_t * C);
-static void condition_final_beta (cce_condition_t * C);
-static char const * condition_static_message_beta (cce_condition_t const * C);
-
-/* Instance of condition descriptor.   The &quot;parent&quot; field is initialised
-   to  NULL   here  and  reinitialised   to  the  &quot;root&quot;  later   by  an
-   initialisation function. */
-static descriptor_beta_t descriptor_beta = {
-  .descriptor.parent            = &amp;descriptor_alpha.descriptor,
-  .descriptor.delete            = condition_delete_beta,
-  .descriptor.final             = condition_final_beta,
-  .descriptor.static_message    = condition_static_message_beta
-};
-
-cce_condition_t *
-condition_new_beta (cce_location_t * L, int alpha, int beta)
-/* Allocate a condition object and initialise it. */
-{
-  condition_beta_t *    C = cce_sys_malloc(L, sizeof(condition_beta_t));
-  cce_condition_init((cce_condition_t *)C, &amp;descriptor_beta.descriptor);
-  condition_init_beta(C, alpha, beta);
-  return (cce_condition_t *) C;
-}
-
-void
-condition_delete_beta (cce_condition_t * C)
-/* Release the condition object memory. */
-{
-  fprintf(stderr, &quot;%s\n\n&quot;, __func__);
-  free(C);
-}
-
-void
-condition_init_beta (condition_beta_t * C, int alpha, int beta)
-/* Initialise an already allocated condition object. */
-{
-  condition_init_alpha(&amp;(C-&gt;alpha),  alpha);
-  C-&gt;beta = beta;
-}
-
-void
-condition_final_beta (cce_condition_t * C CCE_UNUSED)
-/* Finalise a condition object; do not release memory. */
-{
-  fprintf(stderr, &quot;%s\n&quot;, __func__);
-}
-
-static char const *
-condition_static_message_beta (cce_condition_t const * C CCE_UNUSED)
-{
-  return &quot;exceptional condition A&quot;;
-}
-
-bool
-condition_is_beta (cce_condition_t const * condition)
-{
-  return cce_is_condition(condition, &amp;descriptor_beta.descriptor);
-}
-
-#define condition_beta(S)                                               \
-  _Generic((S),                                                         \
-           cce_condition_t              *: (condition_beta_t *)(S),     \
-           condition_alpha_t            *: (condition_beta_t *)(S),     \
-           condition_beta_t             *: (condition_beta_t *)(S),     \
-           condition_gamma_t            *: (condition_beta_t *)(S),     \
-           cce_condition_t const        *: (condition_beta_t *)(S),     \
-           const condition_alpha_t      *: (condition_beta_t *)(S),     \
-           const condition_beta_t       *: (condition_beta_t *)(S),     \
-           const condition_gamma_t      *: (condition_beta_t *)(S))
-</pre></div>
-
-
-<p>The exceptional condition <em>gamma</em> has <em>beta</em> as parent type; we define it as follows:
-</p>
-<div class="smallexample">
-<pre class="smallexample">typedef struct descriptor_gamma_t {
-  cce_descriptor_t      descriptor;
-} descriptor_gamma_t;
-
-typedef struct condition_gamma_t {
-  condition_beta_t      beta;
-  int                   gamma;
-} condition_gamma_t;
-
-cce_condition_t * condition_new_gamma (cce_location_t * L, int alpha, int beta, int gamma);
-void condition_init_gamma (condition_gamma_t * C, int alpha, int beta, int gamma);
-bool condition_is_gamma (cce_condition_t const * condition);
-
-static void condition_delete_gamma  (cce_condition_t * C);
-static void condition_final_gamma (cce_condition_t * C);
-static char const * condition_static_message_gamma (cce_condition_t const * C);
-
-/* Instance of condition descriptor.   The &quot;parent&quot; field is initialised
-   to  NULL   here  and  reinitialised   to  the  &quot;root&quot;  later   by  an
-   initialisation function. */
-static descriptor_gamma_t descriptor_gamma = {
-  .descriptor.parent            = &amp;descriptor_beta.descriptor,
-  .descriptor.delete            = condition_delete_gamma,
-  .descriptor.final             = condition_final_gamma,
-  .descriptor.static_message    = condition_static_message_gamma
-};
-
-cce_condition_t *
-condition_new_gamma (cce_location_t * L, int alpha, int beta, int gamma)
-/* Allocate a condition object and initialise it. */
-{
-  condition_gamma_t *   C = cce_sys_malloc(L, sizeof(condition_gamma_t));
-  cce_condition_init((cce_condition_t *)C, &amp;descriptor_gamma.descriptor);
-  condition_init_gamma(C, alpha, beta, gamma);
-  return (cce_condition_t *) C;
-}
-
-void
-condition_delete_gamma (cce_condition_t * C)
-/* Release the condition object memory. */
-{
-  fprintf(stderr, &quot;%s\n\n&quot;, __func__);
-  free(C);
-}
-
-void
-condition_init_gamma (condition_gamma_t * C, int alpha, int beta, int gamma)
-/* Initialise an already allocated condition object. */
-{
-  condition_init_beta(&amp;(C-&gt;beta), alpha, beta);
-  C-&gt;gamma = gamma;
-}
-
-void
-condition_final_gamma (cce_condition_t * C CCE_UNUSED)
-/* Finalise a condition object; do not release memory. */
-{
-  fprintf(stderr, &quot;%s\n&quot;, __func__);
-}
-
-static char const *
-condition_static_message_gamma (cce_condition_t const * C CCE_UNUSED)
-{
-  return &quot;exceptional condition A&quot;;
-}
-
-bool
-condition_is_gamma (cce_condition_t const * condition)
-{
-  return cce_is_condition(condition, &amp;descriptor_gamma.descriptor);
-}
-
-#define condition_gamma(S)                                              \
-  _Generic((S),                                                         \
-           cce_condition_t              *: (condition_gamma_t *)(S),    \
-           condition_alpha_t            *: (condition_gamma_t *)(S),    \
-           condition_beta_t             *: (condition_gamma_t *)(S),    \
-           condition_gamma_t            *: (condition_gamma_t *)(S),    \
-           cce_condition_t const        *: (condition_gamma_t *)(S),    \
-           const condition_alpha_t      *: (condition_gamma_t *)(S),    \
-           const condition_beta_t       *: (condition_gamma_t *)(S),    \
-           const condition_gamma_t      *: (condition_gamma_t *)(S))
-</pre></div>
-
-
-<p>Now we can use the code as in the following example:
-</p>
-<div class="smallexample">
-<pre class="smallexample">{
-  cce_location_t        L[1];
-  int                   flag;
-
-  if (cce_location(L)) {
-    if (condition_is_gamma(cce_condition(L))) {
-      condition_gamma_t * C = condition_gamma(cce_condition(L));
-      flag = C-&gt;gamma;
-    } else if (condition_is_beta(cce_condition(L))) {
-      condition_beta_t  * C = condition_beta(cce_condition(L));
-      flag = C-&gt;beta;
-    } else if (condition_is_alpha(cce_condition(L))) {
-      condition_alpha_t * C = condition_alpha(cce_condition(L));
-      flag = C-&gt;alpha;
-    } else {
-      flag = 0;
-    }
-    cce_run_error_handlers_final(L);
-  } else {
-    cce_raise(L, condition_new_beta(L, 1, 2));
-    cce_run_cleanup_handlers(L);
-  }
-}
-</pre></div>
-
 <hr>
 <a name="syscalls"></a>
 <div class="header">
@@ -4531,16 +3556,13 @@ Next: <a href="#variable-index" accesskey="n" rel="next">variable index</a>, Pre
 <tr><td></td><td valign="top"><a href="#index-cce_005fcondition_005ferror-1"><code>cce_condition_error</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-error">conditions error</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fcondition_005ferror-2"><code>cce_condition_error</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-error">conditions error</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fcondition_005ffinal"><code>cce_condition_final</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-objects">conditions objects</a></td></tr>
-<tr><td></td><td valign="top"><a href="#index-cce_005fcondition_005ffinal_005fbreak"><code>cce_condition_final_break</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-break">conditions break</a></td></tr>
-<tr><td></td><td valign="top"><a href="#index-cce_005fcondition_005ffinal_005ferror"><code>cce_condition_final_error</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-error">conditions error</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fcondition_005ffinal_005ffun_005ft"><code>cce_condition_final_fun_t</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-descriptors">conditions descriptors</a></td></tr>
-<tr><td></td><td valign="top"><a href="#index-cce_005fcondition_005ffinal_005flogic_005ferror"><code>cce_condition_final_logic_error</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-logic-error">conditions logic error</a></td></tr>
-<tr><td></td><td valign="top"><a href="#index-cce_005fcondition_005ffinal_005fruntime_005ferror"><code>cce_condition_final_runtime_error</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-run_002dtime-error">conditions run-time error</a></td></tr>
-<tr><td></td><td valign="top"><a href="#index-cce_005fcondition_005ffinal_005funimplemented"><code>cce_condition_final_unimplemented</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-unimplemented">conditions unimplemented</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fcondition_005finit"><code>cce_condition_init</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-objects">conditions objects</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fcondition_005finit_005fbreak"><code>cce_condition_init_break</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-break">conditions break</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fcondition_005finit_005ferror"><code>cce_condition_init_error</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-error">conditions error</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-cce_005fcondition_005finit_005finvalid_005fargument"><code>cce_condition_init_invalid_argument</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-invalid-arg">conditions invalid arg</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fcondition_005finit_005flogic_005ferror"><code>cce_condition_init_logic_error</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-logic-error">conditions logic error</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-cce_005fcondition_005finit_005froot"><code>cce_condition_init_root</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-root">conditions root</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fcondition_005finit_005fruntime_005ferror"><code>cce_condition_init_runtime_error</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-run_002dtime-error">conditions run-time error</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fcondition_005finit_005funimplemented"><code>cce_condition_init_unimplemented</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-unimplemented">conditions unimplemented</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fcondition_005finvalid_005fargument"><code>cce_condition_invalid_argument</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-invalid-arg">conditions invalid arg</a></td></tr>
@@ -4642,6 +3664,7 @@ Next: <a href="#type-index" accesskey="n" rel="next">type index</a>, Previous: <
 <tr><td></td><td valign="top"><a href="#index-cce_005fdescriptor_005ferror_005fptr"><code>cce_descriptor_error_ptr</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-error">conditions error</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fdescriptor_005finvalid_005fargument"><code>cce_descriptor_invalid_argument</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-invalid-arg">conditions invalid arg</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fdescriptor_005flogic_005ferror_005fptr"><code>cce_descriptor_logic_error_ptr</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-logic-error">conditions logic error</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-cce_005fdescriptor_005froot_005fptr"><code>cce_descriptor_root_ptr</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-root">conditions root</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fdescriptor_005fruntime_005ferror_005fptr"><code>cce_descriptor_runtime_error_ptr</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-run_002dtime-error">conditions run-time error</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fdescriptor_005funimplemented_005fptr"><code>cce_descriptor_unimplemented_ptr</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-unimplemented">conditions unimplemented</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fdescriptor_005funknown_005fptr"><code>cce_descriptor_unknown_ptr</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-unknown">conditions unknown</a></td></tr>
@@ -4677,6 +3700,7 @@ Previous: <a href="#variable-index" accesskey="p" rel="prev">variable index</a>,
 <tr><td></td><td valign="top"><a href="#index-cce_005fcondition_005ferror_005ft"><code>cce_condition_error_t</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-error">conditions error</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fcondition_005finvalid_005fargument_005ft"><code>cce_condition_invalid_argument_t</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-invalid-arg">conditions invalid arg</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fcondition_005flogic_005ferror_005ft"><code>cce_condition_logic_error_t</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-logic-error">conditions logic error</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-cce_005fcondition_005froot_005ft"><code>cce_condition_root_t</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-root">conditions root</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fcondition_005fruntime_005ferror_005ft"><code>cce_condition_runtime_error_t</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-run_002dtime-error">conditions run-time error</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fcondition_005ft"><code>cce_condition_t</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-objects">conditions objects</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fcondition_005funimplemented_005ft"><code>cce_condition_unimplemented_t</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-unimplemented">conditions unimplemented</a></td></tr>
