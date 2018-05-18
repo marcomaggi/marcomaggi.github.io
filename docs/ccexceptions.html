@@ -1,6 +1,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
-<!-- This document describes version 0.7.2-beta.0 of CCExceptions, a C11 Standard language library;
+<!-- This document describes version 0.8.0-devel.0 of CCExceptions, a C11 Standard language library;
 it implements an interface to non-local exits, which is somewhat similar to exceptions handling.
 The library targets POSIX systems.
 
@@ -248,6 +248,9 @@ ul.no-bullet {list-style: none}
 
 
 
+
+
+
 <a name="Top"></a>
 <div class="header">
 <p>
@@ -256,7 +259,7 @@ Next: <a href="#overview" accesskey="n" rel="next">overview</a>, Up: <a href="di
 <a name="CCExceptions"></a>
 <h1 class="top">CCExceptions</h1>
 
-<p>This document describes version 0.7.2-beta.0 of CCExceptions, a C11 Standard language library;
+<p>This document describes version 0.8.0-devel.0 of CCExceptions, a C11 Standard language library;
 it implements an interface to non&ndash;local exits, which is somewhat similar to exceptions handling.
 The library targets <acronym>POSIX</acronym> systems.
 </p>
@@ -338,7 +341,7 @@ Next: <a href="#version" accesskey="n" rel="next">version</a>, Previous: <a href
 <h2 class="chapter">1 Overview of the package</h2>
 
 
-<p>This document describes version 0.7.2-beta.0 of CCExceptions, a C11 language library; it
+<p>This document describes version 0.8.0-devel.0 of CCExceptions, a C11 language library; it
 implements an interface to non&ndash;local exits, which is somewhat similar to exceptions handling.  The
 library targets <acronym>POSIX</acronym> systems.
 </p>
@@ -439,7 +442,7 @@ system</a> in <cite>Shared library support for <acronym>GNU</acronym></cite>.
 </p>
 
 <dl>
-<dt><a name="index-cce_005fversion_005fstring"></a>Function: <em>const char *</em> <strong>cce_version_string</strong> <em>(void)</em></dt>
+<dt><a name="index-cce_005fversion_005fstring"></a>Function: <em>char const *</em> <strong>cce_version_string</strong> <em>(void)</em></dt>
 <dd><p>Return a pointer to a statically allocated <acronym>ASCIIZ</acronym> string representing
 the interface version number.
 </p></dd></dl>
@@ -692,7 +695,7 @@ by retrieving a pointer to it with <code>cce_condition()</code> and releasing it
 <p>Before terminating the use of instances of this type we must always call
 <code>cce_run_error_handlers()</code> or <code>cce_run_clean_handlers()</code>.  We must assume that the handlers
 might access the <code>cce_condition_t</code> object, so: first we call the handlers, then we release
-the condition object.
+the exceptional&ndash;condition object.
 </p></dd></dl>
 
 
@@ -740,13 +743,13 @@ return value of <code>cce_location()</code> when a non&ndash;local exit is perfo
 
 <dl>
 <dt><a name="index-cce_005fraise"></a>Function: <em>void</em> <strong>cce_raise</strong> <em>(cce_destination_t <var>L</var>, cce_condition_t const * <var>C</var>)</em></dt>
-<dd><p>Raise an exception associated to the location <var>L</var>, with exceptional condition object <var>C</var>.
-This function performs the call to <code>siglongjmp()</code> with code <code>CCE_EXCEPT</code>.
+<dd><p>Raise an exception associated to the location <var>L</var>, with exceptional&ndash;condition object referenced
+by <var>C</var>.  This function performs the call to <code>siglongjmp()</code> with code <code>CCE_EXCEPT</code>.
 </p>
 <p>With a call to this function: the client code is put in charge of releasing resources associated to
-<var>C</var>.  If <var>C</var> is <code>NULL</code>: an internal, statically allocated, exceptional condition object is
-selected to represent an &ldquo;unknown exceptional condition&rdquo;; we can transparently apply the function
-<code>cce_condition_delete()</code> to this object.
+<var>C</var>.  If <var>C</var> is <code>NULL</code>: an internal, statically allocated, exceptional&ndash;condition object
+is selected to represent an &ldquo;unknown exceptional condition&rdquo;; we can transparently apply the
+function <code>cce_condition_delete()</code> to this object.
 </p></dd></dl>
 
 
@@ -758,13 +761,13 @@ selected to represent an &ldquo;unknown exceptional condition&rdquo;; we can tra
 
 <dl>
 <dt><a name="index-cce_005fcondition"></a>Generic Macro: <em>cce_condition_t *</em> <strong>cce_condition</strong> <em>(cce_destination_t <var>L</var>)</em></dt>
-<dd><p>Return the condition object associated to the location <var>L</var>; this value is <strong>never</strong>
-<code>NULL</code>.
+<dd><p>Return the exceptional&ndash;condition object associated to the location <var>L</var>; this value is
+<strong>never</strong> <code>NULL</code>.
 </p>
 <p>If we apply this function to a location without calling <code>cce_raise()</code>: the returned pointer
-references an internal, statically allocated, exceptional condition object representing an &ldquo;unknown
-exceptional condition&rdquo;; we can transparently apply the function <code>cce_condition_delete()</code> to
-this object.
+references an internal, statically allocated, exceptional&ndash;condition object representing an
+&ldquo;unknown exceptional condition&rdquo;; we can transparently apply the function
+<code>cce_condition_delete()</code> to this object.
 </p></dd></dl>
 
 
@@ -883,7 +886,6 @@ calling one of the functions <code>cce_run_*_handlers()</code>; before terminati
 
 <dl>
 <dt><a name="index-cce_005fclean_005fhandler_005ft"></a>Struct Typedef: <strong>cce_clean_handler_t</strong></dt>
-<dt><a name="index-cce_005fcleanup_005fhandler_005ft"></a>Struct Typedef: <strong>cce_cleanup_handler_t</strong></dt>
 <dd><p>Structure representing a clean handler.  It has the following public fields:
 </p>
 <dl compact="compact">
@@ -922,7 +924,6 @@ to release its memory.
 
 <dl>
 <dt><a name="index-cce_005fregister_005fclean_005fhandler"></a>Function: <em>void</em> <strong>cce_register_clean_handler</strong> <em>(cce_destination_t <var>L</var>, cce_handler_t * <var>H</var>)</em></dt>
-<dt><a name="index-cce_005fregister_005fcleanup_005fhandler"></a>Function: <em>void</em> <strong>cce_register_cleanup_handler</strong> <em>(cce_destination_t <var>L</var>, cce_handler_t * <var>H</var>)</em></dt>
 <dd><p>Register the clean handler referenced by <var>H</var> in the list of handlers associated to the location
 <var>L</var>.  The pointer <var>H</var> must reference an instance of structure whose first field is a
 structure of type <code>cce_handler_t</code>; such structure can either be allocated on the same stack
@@ -957,7 +958,6 @@ in <var>L</var>: nothing happens.
 
 <dl>
 <dt><a name="index-cce_005frun_005fclean_005fhandlers"></a>Function: <em>void</em> <strong>cce_run_clean_handlers</strong> <em>(cce_destination_t <var>L</var>)</em></dt>
-<dt><a name="index-cce_005frun_005fcleanup_005fhandlers"></a>Function: <em>void</em> <strong>cce_run_cleanup_handlers</strong> <em>(cce_destination_t <var>L</var>)</em></dt>
 <dd><p>Run all the clean handlers associated to the location <var>L</var>.  Each handler must return to its
 caller, taking care of itself regarding internal error handling and asynchronous resources
 allocation.  Handlers are called starting from the last registered one.
@@ -978,7 +978,7 @@ allocation.  Handlers are called starting from the last registered one.
 handler function is applied to the handler structure: the handler structure is completely detached
 from the context of <var>L</var>, so it can be finalised and its memory released.
 </p>
-<p><strong>NOTE</strong> It must assume that an error handler might access the exceptional condition object
+<p><strong>NOTE</strong> It must assume that an error handler might access the exceptional&ndash;condition object
 associated to <var>L</var>, so this function should always be called <strong>before</strong> applying
 <code>cce_condition_delete()</code> to the return value of <code>cce_condition()</code>.
 </p></dd></dl>
@@ -997,7 +997,6 @@ cce_condition_delete(cce_condition(L));
 
 <dl>
 <dt><a name="index-cce_005frun_005fclean_005fhandlers_005ffinal"></a>Function: <em>void</em> <strong>cce_run_clean_handlers_final</strong> <em>(cce_destination_t <var>L</var>)</em></dt>
-<dt><a name="index-cce_005frun_005fcleanup_005fhandlers_005ffinal"></a>Function: <em>void</em> <strong>cce_run_cleanup_handlers_final</strong> <em>(cce_destination_t <var>L</var>)</em></dt>
 <dd><p>Equivalent to calling:
 </p>
 <div class="example">
@@ -1020,7 +1019,6 @@ cce_raise(upper_L, cce_condition(L));
 
 <dl>
 <dt><a name="index-cce_005frun_005fclean_005fhandlers_005fraise"></a>Function: <em>void</em> <strong>cce_run_clean_handlers_raise</strong> <em>(cce_destination_t <var>L</var>, cce_location_t * <var>upper_L</var>)</em></dt>
-<dt><a name="index-cce_005frun_005fcleanup_005fhandlers_005fraise"></a>Function: <em>void</em> <strong>cce_run_cleanup_handlers_raise</strong> <em>(cce_destination_t <var>L</var>, cce_location_t * <var>upper_L</var>)</em></dt>
 <dd><p>Equivalent to calling:
 </p>
 <div class="example">
@@ -1207,35 +1205,41 @@ hierarchy of data structures; this way it is possible to react to a raised excep
 run&ndash;time according to the type of raised structure.
 </p>
 <table class="menu" border="0" cellspacing="0">
-<tr><td align="left" valign="top">&bull; <a href="#conditions-intro" accesskey="1">conditions intro</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Introduction to condition objects.
+<tr><td align="left" valign="top">&bull; <a href="#conditions-intro" accesskey="1">conditions intro</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Introduction to exceptional-condition objects.
 </td></tr>
-<tr><td align="left" valign="top">&bull; <a href="#conditions-descriptors" accesskey="2">conditions descriptors</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Condition descriptor type.
+<tr><td align="left" valign="top">&bull; <a href="#conditions-descriptors" accesskey="2">conditions descriptors</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Exceptional-condition object-type descriptors.
 </td></tr>
-<tr><td align="left" valign="top">&bull; <a href="#conditions-objects" accesskey="3">conditions objects</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Condition object type.
+<tr><td align="left" valign="top">&bull; <a href="#conditions-objects" accesskey="3">conditions objects</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Exceptional-condition objects.
 </td></tr>
-<tr><td align="left" valign="top">&bull; <a href="#conditions-root" accesskey="4">conditions root</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Predefined root condition descriptor.
+<tr><td align="left" valign="top">&bull; <a href="#conditions-root" accesskey="4">conditions root</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">The <em>root</em> exceptional-condition object.
 </td></tr>
-<tr><td align="left" valign="top">&bull; <a href="#conditions-unknown" accesskey="5">conditions unknown</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Predefined unknown condition object.
+<tr><td align="left" valign="top">&bull; <a href="#conditions-unknown" accesskey="5">conditions unknown</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">The <em>unknown</em> exceptional-condition object.
 </td></tr>
-<tr><td align="left" valign="top">&bull; <a href="#conditions-break" accesskey="6">conditions break</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Predefined break condition object.
+<tr><td align="left" valign="top">&bull; <a href="#conditions-break" accesskey="6">conditions break</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">The <em>break</em> exceptional-condition object.
 </td></tr>
-<tr><td align="left" valign="top">&bull; <a href="#conditions-error" accesskey="7">conditions error</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Predefined error condition object.
+<tr><td align="left" valign="top">&bull; <a href="#conditions-error" accesskey="7">conditions error</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">The <em>error</em> exceptional-condition object.
 </td></tr>
-<tr><td align="left" valign="top">&bull; <a href="#conditions-run_002dtime-error" accesskey="8">conditions run-time error</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Predefined run-time error condition object.
+<tr><td align="left" valign="top">&bull; <a href="#conditions-run_002dtime-error" accesskey="8">conditions run-time error</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">The <em>run-time error</em> exceptional-condition
+                                object.
 </td></tr>
-<tr><td align="left" valign="top">&bull; <a href="#conditions-logic-error" accesskey="9">conditions logic error</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Predefined logic error condition object.
+<tr><td align="left" valign="top">&bull; <a href="#conditions-logic-error" accesskey="9">conditions logic error</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">The <em>logic error</em> exceptional-condition
+                                object.
 </td></tr>
-<tr><td align="left" valign="top">&bull; <a href="#conditions-unimplemented">conditions unimplemented</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Predefined unimplemented condition object.
+<tr><td align="left" valign="top">&bull; <a href="#conditions-unimplemented">conditions unimplemented</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">The <em>unimplemented</em> exceptional-condition
+                                object.
 </td></tr>
-<tr><td align="left" valign="top">&bull; <a href="#conditions-invalid-arg">conditions invalid arg</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Predefined invalid argument conditions.
+<tr><td align="left" valign="top">&bull; <a href="#conditions-invalid-arg">conditions invalid arg</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">The <em>invalid argument</em> exceptional-condition
+                                object.
 </td></tr>
-<tr><td align="left" valign="top">&bull; <a href="#conditions-unreachable">conditions unreachable</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Predefined unreachable code conditions.
+<tr><td align="left" valign="top">&bull; <a href="#conditions-unreachable">conditions unreachable</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">The <em>unreachable code</em> exceptional-condition
+                                object.
 </td></tr>
-<tr><td align="left" valign="top">&bull; <a href="#conditions-errno">conditions errno</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Predefined <code>errno</code> conditions.
+<tr><td align="left" valign="top">&bull; <a href="#conditions-errno">conditions errno</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">The <code>errno</code> exceptional-condition object.
 </td></tr>
-<tr><td align="left" valign="top">&bull; <a href="#conditions-math">conditions math</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Predefined mathematical conditions.
+<tr><td align="left" valign="top">&bull; <a href="#conditions-math">conditions math</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">The mathematical exceptional-condition objects.
 </td></tr>
-<tr><td align="left" valign="top">&bull; <a href="#conditions-custom">conditions custom</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Defining custom condition objects.
+<tr><td align="left" valign="top">&bull; <a href="#conditions-custom">conditions custom</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Defining custom exceptional-condition
+                                object-types.
 </td></tr>
 </table>
 
@@ -1245,14 +1249,17 @@ run&ndash;time according to the type of raised structure.
 <p>
 Next: <a href="#conditions-descriptors" accesskey="n" rel="next">conditions descriptors</a>, Up: <a href="#conditions" accesskey="u" rel="up">conditions</a> &nbsp; [<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="#concept-index" title="Index" rel="index">Index</a>]</p>
 </div>
-<a name="Introduction-to-condition-objects"></a>
-<h3 class="section">6.1 Introduction to condition objects</h3>
+<a name="Introduction-to-exceptional_002d_002dcondition-objects"></a>
+<h3 class="section">6.1 Introduction to exceptional&ndash;condition objects</h3>
 
 
-<p>The purpose of CCExceptions&rsquo;s condition objects module is to allow us to write code like this:
+<p>The purpose of CCExceptions&rsquo;s exceptional&ndash;condition objects module is to allow us to write code
+like this:
 </p>
 <div class="example">
-<pre class="example">if (cce_location(L)) {
+<pre class="example">cce_location_t  L[1];
+
+if (cce_location(L)) {
   // handle the exceptional condition
   if (my_condition_is_alpha(cce_condition(L)))
     {
@@ -1273,40 +1280,78 @@ Next: <a href="#conditions-descriptors" accesskey="n" rel="next">conditions desc
 }
 </pre></div>
 
-<p>in which we use some, previously defined, conditional exception types &lsquo;<samp>alpha</samp>&rsquo; and &lsquo;<samp>beta</samp>&rsquo;.
-From the point of view of our ability to react to an exception at run&ndash;time: a flexible situation is
-the one in which the conditional exception types are organised in a tree hierarchy.  It allows us to
-select the level of granularity we desire in the branching logic.
+<p>in which we use some, previously defined, exceptional&ndash;condition object&ndash;types &lsquo;<samp>alpha</samp>&rsquo; and
+&lsquo;<samp>beta</samp>&rsquo;.
 </p>
-<p>The tree hierarchy implemented by CCExceptions uses single inheritance; multiple inheritance
-would be more general, but also more complex.
+<p>If we need to hand the exceptional&ndash;condition object to an upper level location we can do it as
+follows:
+</p>
+<div class="example">
+<pre class="example">void
+upper_function (void)
+{
+  cce_location_t        L[1];
+
+  if (cce_location(L)) {
+    fprintf(stderr, &quot;log: %s\n&quot;, \
+        cce_condition_static_message(cce_condition(L)));
+    cce_run_error_handlers_final(L);
+  } else {
+    lower_function(L);
+    cce_run_clean_handlers(L);
+  }
+}
+
+void
+lower_function (cce_location_t * upper_L)
+{
+  cce_location_t        L[1];
+
+  if (cce_location(L)) {
+    cce_run_error_handlers_raise(L, upper_L);
+  } else {
+    do_something();
+    if (an_error_occurred()) {
+      cce_raise(L, select_condition_object());
+    }
+   cce_run_clean_handlers(L);
+  }
+}
+</pre></div>
+
+<p>From the point of view of our ability to react to an exception at run&ndash;time: a flexible situation is
+the one in which the exceptional&ndash;condition object&ndash;types are organised in a tree hierarchy.  It
+allows us to select the level of granularity we desire in the branching logic.  The tree hierarchy
+implemented by CCExceptions uses single inheritance; multiple inheritance would be more general,
+but also more complex.
 </p>
 
 <a name="How-the-hierarchy-is-implemented"></a>
 <h4 class="subsubheading">How the hierarchy is implemented</h4>
 
-<p>Exceptional condition objects are C language structures referencing a type descriptor, which is also
-a C language structure.  Type descriptors are usually statically allocated and mostly have a
-hard&ndash;coded initialisation.  Condition object instances are either dynamically allocated and
+<p>Exceptional&ndash;condition objects are C language structures referencing a type descriptor, which is
+also a C language structure.  Type descriptors are usually statically allocated and mostly have a
+hard&ndash;coded initialisation.  Exceptional&ndash;condition objects are either dynamically allocated and
 initialised or statically allocated with hard&ndash;coded initialisation.
 </p>
 <p>Every type descriptor data structure encloses a data structure of type <code>cce_descriptor_t</code>,
 which must be its first field.  The instances of <code>cce_descriptor_t</code> hold the pointers that
-define the tree hierarchy; every type descriptor can be referenced by multiple condition objects: it
-can represent the type of multiple objects; every type descriptor has a single parent and can have
-zero, one or more children.  Each pointer to <code>cce_descriptor_t</code> is a unique run&ndash;time value
-identifying the type of condition objects.
+define the tree hierarchy; every type descriptor can be referenced by multiple
+exceptional&ndash;condition objects: it can represent the type of multiple objects; every type descriptor
+has a single parent and can have zero, one or more children.  Each pointer to
+<code>cce_descriptor_t</code> is a unique run&ndash;time value identifying the type of
+exceptional&ndash;condition objects.
 </p>
-<p>Every exceptional condition object data structure encloses a data structure of type
-<code>cce_condition_t</code>, which must be its first field.  The condition object holds a pointer to
-the associated type descriptor.
+<p>Every exceptional&ndash;condition object&rsquo;s data structure encloses a data structure of type
+<code>cce_condition_t</code>, which must be its first field.  The exceptional&ndash;condition object holds a
+pointer to the associated type descriptor.
 </p>
-<p>The root of the tree is represented by the type descriptor <code>cce_descriptor_root_t</code> and
-condition objects of descriptor have type <code>cce_condition_root_t</code>.  We can think of the root
-structure types as follows:
+<p>The root of the tree is represented by the object&ndash;type descriptor <code>cce_descriptor_root_t</code>
+and objects of such type are <code>struct</code> of type <code>cce_condition_root_t</code>.  We can think of
+the root structure types as follows:
 </p>
-<div class="example">
-<pre class="example">typedef struct cce_condition_root_t     cce_descriptor_root_t;
+<div class="smallexample">
+<pre class="smallexample">typedef struct cce_condition_root_t     cce_descriptor_root_t;
 typedef struct cce_condition_root_t     cce_condition_root_t;
 
 struct cce_descriptor_root_t {
@@ -1317,65 +1362,62 @@ struct cce_condition_root_t {
   cce_condition_t	condition;
 };
 
-/* Pointer to the predefined root type descriptor. */
-extern cce_condition_root_t const * const cce_condition_root_ptr;
+extern cce_descriptor_root_t const * const cce_descriptor_root_ptr;
 </pre></div>
 
-<p>We define a new condition object type, child of the root type, as follows (more code is needed for
-full initialisation of data structures):
+<p>We declare the <code>struct</code> types needed to define a new exceptional&ndash;condition object&ndash;type, child
+of the <em>root</em> type, as follows:
 </p>
-<div class="example">
-<pre class="example">typedef struct my_descriptor_error_t  my_descriptor_error_t;
+<div class="smallexample">
+<pre class="smallexample">typedef struct my_descriptor_error_t  my_descriptor_error_t;
 typedef struct my_condition_error_t   my_condition_error_t;
 
 struct my_descriptor_error_t {
-  cce_descriptor_t     descriptor;
+  cce_descriptor_t  descriptor;
   /* Put some custom fields here. */
 };
 
-struct my_error_C_t {
+struct my_condition_error_t {
   cce_condition_root_t  root;
   /* Put some custom fields here. */
 };
 
-my_descriptor_error_t my_error_descriptor;
-
-void
-initialisation_function (void)
-{
-  cce_descriptor_set_root_parent(&amp;my_descriptor_error.condition);
-}
+extern my_descriptor_error_t const * const my_descriptor_error_ptr;
 </pre></div>
 
-<p>the field of type <code>cce_descriptor_t</code> is the first in its data structure; the field of type
-<code>cce_condition_root_t</code> is the first in its data structure.  The initialisation function
-links the new type descriptor to the root type descriptor.
+<p>the field of type <code>cce_descriptor_t</code> is the first in its data structure type; the field of
+type <code>cce_condition_root_t</code> is the first in its data structure type.
 </p>
-<p>In the following picture: the type descriptor &lsquo;<samp>alpha</samp>&rsquo; is a child of the root descriptor; the
-type descriptor &lsquo;<samp>beta</samp>&rsquo; is a child of the type descriptor &lsquo;<samp>alpha</samp>&rsquo;.  We can say that: a
-condition object of type &lsquo;<samp>alpha</samp>&rsquo; is also of type root; a condition object of type &lsquo;<samp>beta</samp>&rsquo;
-is also of type &lsquo;<samp>alpha</samp>&rsquo; and of type root.
+<p>In the following picture: the <em>alpha</em> descriptor is a child of the <em>root</em> descriptor; the
+<em>beta</em> descriptor is a child of the type &lsquo;<samp>alpha</samp>&rsquo; descriptor.  We can say that:
 </p>
+<ul>
+<li> An exceptional&ndash;condition object of type <em>alpha</em> is also of type <em>root</em>.
+
+</li><li> An exceptional&ndash;condition object of type <em>beta</em> is also of type <em>alpha</em> and of type
+<em>root</em>.
+</li></ul>
+
 <div class="example">
-<pre class="example"> ---------------------------
-| condition descriptor root |
- ---------------------------
-              ^
-              |
- ----------------------------       ------------------------
-| condition descriptor alpha | &lt;-- | condition object alpha |
- ----------------------------       ------------------------
-              ^
-              |
- ---------------------------        -----------------------
-| condition descriptor beta | &lt;--- | condition object beta |
- ---------------------------        -----------------------
+<pre class="example"> -----------------
+| descriptor root |
+ -----------------
+         ^
+         |
+ ------------------       --------------
+| descriptor alpha | &lt;-- | object alpha |
+ ------------------       --------------
+         ^
+         |
+ -----------------        -------------
+| descriptor beta | &lt;--- | object beta |
+ -----------------        -------------
 </pre></div>
 
 <p>The data types that represent such hierarchy look as follows:
 </p>
-<div class="example">
-<pre class="example">typedef struct my_descriptor_alpha_t my_descriptor_alpha_t;
+<div class="smallexample">
+<pre class="smallexample">typedef struct my_descriptor_alpha_t my_descriptor_alpha_t;
 typedef struct my_descriptor_beta_t  my_descriptor_beta_t;
 typedef struct my_condition_alpha_t  my_condition_alpha_t;
 typedef struct my_condition_beta_t   my_condition_beta_t;
@@ -1383,11 +1425,11 @@ typedef struct my_condition_beta_t   my_condition_beta_t;
 /*** Descriptors types. ***/
 
 struct my_descriptor_alpha_t {
-  cce_descriptor_t     condition;
+  cce_descriptor_t  descriptor;
 };
 
 struct my_descriptor_beta_t {
-  cce_descriptor_t     condition;
+  cce_descriptor_t  descriptor;
 };
 
 /*** Object types. ***/
@@ -1403,19 +1445,19 @@ struct my_condition_beta_t {
 
 <p>we can statically allocate and initialise the type descriptors as follows:
 </p>
-<div class="example">
-<pre class="example">my_descriptor_alpha_t my_descriptor_alpha = {
-  .parent = NULL
+<div class="smallexample">
+<pre class="smallexample">my_descriptor_alpha_t my_descriptor_alpha = {
+  .descriptor.parent = NULL
 };
 
-my_descriptor_beta_t  my_descriptor_beta = {
-  .parent = &amp;my_descriptor_alpha.condition
+my_descriptor_beta_t  my_descriptor_beta  = {
+  .descriptor.parent = &amp;my_descriptor_alpha.descriptor
 };
 
 void
 initialisation_function (void)
 {
-  cce_condition_set_root_parent(&amp;my_descriptor_alpha.condition));
+  cce_descriptor_set_root_parent(&amp;my_descriptor_alpha.descriptor));
 }
 </pre></div>
 
@@ -1425,17 +1467,47 @@ initialisation_function (void)
 <p>
 Next: <a href="#conditions-objects" accesskey="n" rel="next">conditions objects</a>, Previous: <a href="#conditions-intro" accesskey="p" rel="prev">conditions intro</a>, Up: <a href="#conditions" accesskey="u" rel="up">conditions</a> &nbsp; [<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="#concept-index" title="Index" rel="index">Index</a>]</p>
 </div>
-<a name="Condition-descriptor-type"></a>
-<h3 class="section">6.2 Condition descriptor type</h3>
+<a name="Exceptional_002d_002dcondition-object_002d_002dtype-descriptors"></a>
+<h3 class="section">6.2 Exceptional&ndash;condition object&ndash;type descriptors</h3>
 
 
 <p>All the following definitions are accessible from the header file <samp>ccexceptions.h</samp>.
 </p>
 
 <dl>
+<dt><a name="index-cce_005fdescriptor_005ft"></a>Struct Typedef: <strong>cce_descriptor_t</strong></dt>
+<dd><p>Structure type representing exceptional&ndash;condition object&ndash;type descriptors; it holds a table
+of function pointers to handle exceptional&ndash;condition objects.  It has the following fields:
+</p>
+<dl compact="compact">
+<dt><code>cce_descriptor_t const * parent</code></dt>
+<dd><p>Pointer to the descriptor that is parent of this one in the tree hierarchy.  This pointer is set to
+<code>NULL</code> only for the root condition descriptor, See <a href="#conditions-root">Predefined root condition
+descriptor</a>.
+</p>
+</dd>
+<dt><code>cce_condition_final_fun_t * delete</code></dt>
+<dd><p>Pointer to function releasing the exceptional&ndash;condition object&rsquo;s memory block itself.  This pointer
+can be <code>NULL</code>, meaning that: the object is statically allocated.
+</p>
+</dd>
+<dt><code>cce_condition_final_fun_t * final</code></dt>
+<dd><p>Pointer to function releasing all the dynamic resources associated to the exceptional&ndash;condition
+object.  This pointer can be <code>NULL</code>, meaning that: there are no dynamic resources.
+</p>
+</dd>
+<dt><code>cce_condition_static_message_fun_t * static_message</code></dt>
+<dd><p>Pointer to function returning a statically allocated <acronym>ASCIIZ</acronym> string describing the
+exceptional&ndash;condition.
+</p></dd>
+</dl>
+</dd></dl>
+
+
+<dl>
 <dt><a name="index-cce_005fcondition_005ffinal_005ffun_005ft"></a>Function Prototype: <em>void</em> <strong>cce_condition_final_fun_t</strong> <em>(cce_condition_t * <var>C</var>)</em></dt>
-<dd><p>Release all the dynamic resources associated to the fields of the condition object referenced by
-<var>C</var>; leave untouched the condition object itself.
+<dd><p>Release all the dynamic resources associated to <var>C</var>; leave untouched the memory block holding
+the <code>cce_condition_t</code> instance itself.
 </p></dd></dl>
 
 
@@ -1455,9 +1527,9 @@ my_condition_delete_stuff (my_condition_stuff_t * C)
 
 
 <dl>
-<dt><a name="index-cce_005fcondition_005fstatic_005fmessage_005ffun_005ft"></a>Function Prototype: <em>const char *</em> <strong>cce_condition_static_message_fun_t</strong> <em>(cce_condition_t const * <var>C</var>)</em></dt>
-<dd><p>Return a statically allocated <acronym>ASCIIZ</acronym> string describing the exceptional condition <var>C</var>.  A
-static message must always be defined; another client&ndash;defined function can build a dynamic and more
+<dt><a name="index-cce_005fcondition_005fstatic_005fmessage_005ffun_005ft"></a>Function Prototype: <em>char const *</em> <strong>cce_condition_static_message_fun_t</strong> <em>(cce_condition_t const * <var>C</var>)</em></dt>
+<dd><p>Return a statically allocated <acronym>ASCIIZ</acronym> string describing the exceptional&ndash;condition.  A static
+message must always be defined; another client&ndash;defined function can build a dynamic and more
 descriptive message.
 </p>
 <p>For example, an instance of this function can be:
@@ -1469,37 +1541,6 @@ my_condition_static_message_stuff (my_condition_stuff_t const * C)
   return &quot;error doing stuff&quot;;
 }
 </pre></div>
-</dd></dl>
-
-
-<dl>
-<dt><a name="index-cce_005fdescriptor_005ft"></a>Struct Typedef: <strong>cce_descriptor_t</strong></dt>
-<dd><p>Type of structures holding a table of function pointers to handle exceptional condition objects.  It
-has the following fields:
-</p>
-<dl compact="compact">
-<dt><code>cce_descriptor_t const * parent</code></dt>
-<dd><p>Pointer to the condition descriptor that is parent of this one in the tree hierarchy.  This pointer
-is set to <code>NULL</code> only for the root condition descriptor, See <a href="#conditions-root">Predefined root
-condition descriptor</a>.
-</p>
-</dd>
-<dt><code>cce_condition_final_fun_t * delete</code></dt>
-<dd><p>Pointer to function releasing the condition object&rsquo;s memory block itself.  This pointer can be
-<code>NULL</code>, meaning that: the condition object is statically allocated.
-</p>
-</dd>
-<dt><code>cce_condition_final_fun_t * final</code></dt>
-<dd><p>Pointer to function releasing all the dynamic resources associated to the fields in the condition
-object.  This pointer can be <code>NULL</code>, meaning that: there are no dynamic resources in the condition
-object fields.
-</p>
-</dd>
-<dt><code>cce_condition_static_message_fun_t * static_message</code></dt>
-<dd><p>Pointer to function returning a statically allocated <acronym>ASCIIZ</acronym> string describing the exceptional
-condition.
-</p></dd>
-</dl>
 </dd></dl>
 
 
@@ -1533,8 +1574,8 @@ CCExceptions for which it makes sense.
 <p>
 Next: <a href="#conditions-root" accesskey="n" rel="next">conditions root</a>, Previous: <a href="#conditions-descriptors" accesskey="p" rel="prev">conditions descriptors</a>, Up: <a href="#conditions" accesskey="u" rel="up">conditions</a> &nbsp; [<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="#concept-index" title="Index" rel="index">Index</a>]</p>
 </div>
-<a name="Condition-object-type"></a>
-<h3 class="section">6.3 Condition object type</h3>
+<a name="Exceptional_002dcondition-objects"></a>
+<h3 class="section">6.3 Exceptional-condition objects</h3>
 
 
 <p>All the following definitions are accessible from the header file <samp>ccexceptions.h</samp>.
@@ -1542,11 +1583,12 @@ Next: <a href="#conditions-root" accesskey="n" rel="next">conditions root</a>, P
 
 <dl>
 <dt><a name="index-cce_005fcondition_005ft"></a>Struct Typedef: <strong>cce_condition_t</strong></dt>
-<dd><p>Type of structure representing an exceptional condition object.  It has the following public fields:
+<dd><p>Type of structure representing an exceptional&ndash;condition object.  It has the following public
+fields:
 </p>
 <dl compact="compact">
 <dt><code>cce_descriptor_t const * descriptor</code></dt>
-<dd><p>Pointer to the condition descriptor associated to this condition object.
+<dd><p>Pointer to the descriptor of the exceptional&ndash;condition object&ndash;type.
 </p></dd>
 </dl>
 </dd></dl>
@@ -1555,8 +1597,8 @@ Next: <a href="#conditions-root" accesskey="n" rel="next">conditions root</a>, P
 <dl>
 <dt><a name="index-cce_005fcondition_005finit"></a>Function: <em>void</em> <strong>cce_condition_init</strong> <em>(cce_condition_t * <var>C</var>, cce_descriptor_t const * <var>D</var>)</em></dt>
 <dd><p>Initialise the core fields of an already allocated condition object.  The argument <var>D</var> must be a
-pointer to the condition descriptor: it is stored in the condition object referenced by <var>C</var>.
-This function is usually called from a type&ndash;specific constructor function.
+pointer to the descriptor: it is stored in the object referenced by <var>C</var>.  This function is
+usually called from a type&ndash;specific constructor function.
 </p></dd></dl>
 
 
@@ -1565,9 +1607,9 @@ This function is usually called from a type&ndash;specific constructor function.
 <dd><p><strong>Usually we do not need to call this function directly; rather, we should use
 <code>cce_condition_delete()</code>.</strong>
 </p>
-<p>Traverse, from leave to root, the hierarchy of descriptors for the condition object in <var>C</var> and
-apply to <var>C</var> the <code>final</code> functions referenced by the descriptors&rsquo; functions tables.  The
-finalisation functions are applied from leave to root.
+<p>Traverse, from leaf to root, the hierarchy of descriptors for the type of the exceptional&ndash;condition
+object referenced by <var>C</var>: apply to <var>C</var> the <code>final</code> functions referenced by the
+descriptors&rsquo; functions tables.  The finalisation functions are applied from leaf to root.
 </p></dd></dl>
 
 
@@ -1579,7 +1621,7 @@ referenced by the descriptor&rsquo;s functions table.
 
 
 <dl>
-<dt><a name="index-cce_005fcondition_005fstatic_005fmessage"></a>Function: <em>const char *</em> <strong>cce_condition_static_message</strong> <em>(cce_condition_t const * <var>C</var>)</em></dt>
+<dt><a name="index-cce_005fcondition_005fstatic_005fmessage"></a>Function: <em>char const *</em> <strong>cce_condition_static_message</strong> <em>(cce_condition_t const * <var>C</var>)</em></dt>
 <dd><p>Apply to <var>C</var> the <code>static_message</code> function referenced by its descriptor&rsquo;s functions
 table.
 </p></dd></dl>
@@ -1587,8 +1629,9 @@ table.
 
 <dl>
 <dt><a name="index-cce_005fis_005fcondition"></a>Function: <em>bool</em> <strong>cce_is_condition</strong> <em>(cce_condition_t const * <var>C</var>, cce_descriptor_t const * <var>D</var>)</em></dt>
-<dd><p>Establish if a condition object is of a selected type.  Return <code>true</code> if <var>C</var> is an instance of
-type <var>D</var>, or an instance of a type that is ancestor of <var>D</var>; otherwise return <code>false</code>.
+<dd><p>Determine if an object is of a selected object&ndash;type.  Return <code>true</code> if the object referenced by
+<var>C</var> is an instance of the type whose descriptor is referenced by <var>D</var>, or an instance of a
+type that is an ancestor of such descriptor; otherwise return <code>false</code>.
 </p></dd></dl>
 
 
@@ -1621,119 +1664,37 @@ cce_condition(A) == cce_condition(B);
 </pre></div>
 </dd></dl>
 
-
-<p>The basic usage pattern of condition objects is as follows:
-</p>
-<div class="example">
-<pre class="example">cce_location_t      L[1];
-
-if (cce_location(L)) {
-  fprintf(stderr, &quot;log: %s\n&quot;, \
-      cce_condition_static_message(cce_condition(L)));
-  cce_run_error_handlers(L);
-  cce_condition_delete(cce_condition(L));
-} else {
-  do_something();
-  if (an_error_occurred()) {
-    cce_raise(L, select_condition_object());
-  }
-  cce_run_clean_handlers(L);
-}
-</pre></div>
-
-<p>If we need to hand the condition object to an upper level location we can do it as follows:
-</p>
-<div class="example">
-<pre class="example">void
-upper_function (void)
-{
-  cce_location_t        L[1];
-
-  if (cce_location(L)) {
-    fprintf(stderr, &quot;log: %s\n&quot;, \
-        cce_condition_static_message(cce_condition(L)));
-    cce_run_error_handlers(L);
-    cce_condition_delete(cce_condition(L));
-  } else {
-    lower_function(L);
-    cce_run_clean_handlers(L);
-  }
-}
-
-void
-lower_function (cce_location_t * upper_L)
-{
-  cce_location_t        L[1];
-
-  if (cce_location(L)) {
-    cce_run_error_handlers(L);
-    cce_raise(upper_L, cce_condition(L));
-  } else {
-    do_something();
-    if (an_error_occurred()) {
-      cce_raise(L, select_condition_object());
-    }
-   cce_run_clean_handlers(L);
-  }
-}
-</pre></div>
-
-<p>If we need to branch according to a condition object&rsquo;s type, we can do it as follows using wrappers
-for <code>cce_is_condition()</code>:
-</p>
-<div class="example">
-<pre class="example">cce_location_t      L[1];
-
-if (cce_location(L)) {
-  if (cce_condition_is_unknown(cce_condition(L)))
-    {
-      do_something();
-    }
-  else if (cce_condition_is_errno(cce_condition(L)))
-    {
-      do_something();
-    }
-  else
-    {
-      do_something();
-    }
-  cce_run_error_handlers(L);
-  cce_condition_delete(cce_condition(L));
-} else {
-  do_something();
-  if (an_exception_occurred()) {
-    cce_raise(L, select_condition_object());
-  }
-  cce_run_clean_handlers(L);
-}
-</pre></div>
-
 <hr>
 <a name="conditions-root"></a>
 <div class="header">
 <p>
 Next: <a href="#conditions-unknown" accesskey="n" rel="next">conditions unknown</a>, Previous: <a href="#conditions-objects" accesskey="p" rel="prev">conditions objects</a>, Up: <a href="#conditions" accesskey="u" rel="up">conditions</a> &nbsp; [<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="#concept-index" title="Index" rel="index">Index</a>]</p>
 </div>
-<a name="Predefined-root-condition-descriptor"></a>
-<h3 class="section">6.4 Predefined root condition descriptor</h3>
+<a name="The-root-exceptional_002d_002dcondition-object"></a>
+<h3 class="section">6.4 The <em>root</em> exceptional&ndash;condition object</h3>
 
 
-<p>The <em>root exceptional&ndash;condition descriptor</em> has the only purpose of being the root of the
-condition descriptors tree; there should be no condition objects having this descriptor.  The
-<em>root</em> descriptor has <code>parent</code> field set to <code>NULL</code>; this should be the only descriptor
-with such a property.
+<a name="index-root_002c-exceptional-condition"></a>
+<a name="index-Exceptional-conditions_002c-root"></a>
+
+
+<p>The <em>root</em> exceptional&ndash;condition object&ndash;type descriptor has the only purpose of being the root
+of the descriptors tree; there should be no exceptional&ndash;condition objects having this as
+descriptor.  The <em>root</em> descriptor has <code>parent</code> field set to <code>NULL</code>; this must be the
+only descriptor with such a property.
 </p>
 <p>All the following definitions are accessible from the header file <samp>ccexceptions.h</samp>.
 </p>
 
 <dl>
 <dt><a name="index-cce_005fdescriptor_005froot_005ft"></a>Struct Typedef: <strong>cce_descriptor_root_t</strong></dt>
-<dd><p>Type of the exceptional condition descriptor representing the root of the conditions hierarchy tree.
-This descriptor has a single instance built into the library.  It has the following public fields:
+<dd><p>Structure type representing the <em>root</em> exceptional&ndash;condition object&ndash;type descriptor,
+the root of the descriptors hierarchy tree.  This descriptor has a single instance built into the
+library.  It has the following public fields:
 </p>
 <dl compact="compact">
 <dt><code>cce_descriptor_t descriptor</code></dt>
-<dd><p>The descriptor of the condition&ndash;object type.
+<dd><p>Core values of the exceptional&ndash;condition object&ndash;type descriptor.
 </p></dd>
 </dl>
 </dd></dl>
@@ -1741,11 +1702,12 @@ This descriptor has a single instance built into the library.  It has the follow
 
 <dl>
 <dt><a name="index-cce_005fcondition_005froot_005ft"></a>Struct Typedef: <strong>cce_condition_root_t</strong></dt>
-<dd><p>Structure type representing the <em>root</em> condition object.  It has the following public fields:
+<dd><p>Structure type representing the <em>root</em> exceptional&ndash;condition object; this <code>struct</code>
+type must never be instantiated.  It has the following public fields:
 </p>
 <dl compact="compact">
 <dt><code>cce_condition_t condition</code></dt>
-<dd><p>The condition&ndash;object base values.
+<dd><p>Core values of the exceptional&ndash;condition object.
 </p></dd>
 </dl>
 </dd></dl>
@@ -1753,54 +1715,45 @@ This descriptor has a single instance built into the library.  It has the follow
 
 <dl>
 <dt><a name="index-cce_005fdescriptor_005fset_005froot_005fparent"></a>Function: <em>void</em> <strong>cce_descriptor_set_root_parent</strong> <em>(cce_descriptor_t * <var>D</var>)</em></dt>
-<dd><p>Configure the descriptor <var>D</var> so that its parent is the unique <em>root</em> condition descriptor.
+<dd><p>Configure the descriptor <var>D</var> so that its parent is the unique <em>root</em> descriptor.
 </p></dd></dl>
 
 
 <dl>
 <dt><a name="index-cce_005fcondition_005finit_005froot"></a>Function: <em>void</em> <strong>cce_condition_init_root</strong> <em>(cce_condition_root_t * <var>C</var>)</em></dt>
-<dd><p>Initialisation function for the condition object.  This function must be called by all the
-initialisation function of condition object types derived from <code>cce_condition_root_t</code>.
-</p>
-<blockquote>
-<p><strong>NOTE</strong> At present this function does nothing, but still we must call it.  We need to remember
-that the true initialisation of the field <code>condition</code> is performed by
-<code>cce_condition_init()</code>, which must be always called by the &ldquo;condition_new&rdquo; function of the
-condition&ndash;object type being instantiated.
-</p></blockquote>
-</dd></dl>
+<dd><p>Initialisation function for the object referenced by <var>C</var>.  This function must be called by all
+the initialisation functions of exceptional&ndash;condition object&ndash;types derived from
+<code>cce_condition_root_t</code>.
+</p></dd></dl>
 
 
 <dl>
 <dt><a name="index-cce_005fcondition_005fis_005froot"></a>Function: <em>bool</em> <strong>cce_condition_is_root</strong> <em>(cce_condition_t const * <var>C</var>)</em></dt>
-<dd><p>Return <code>true</code> if the condition object <var>C</var> is derived from the <em>root</em> condition type;
-otherwise return <code>false</code>.  With a correctly built conditions hierarchy: this function always
-returns <code>true</code>.
+<dd><p>Return <code>true</code> if the object referenced by <var>C</var> is derived from the <em>root</em> type; otherwise
+return <code>false</code>.  With a correctly built conditions hierarchy: this function always returns
+<code>true</code>.
 </p></dd></dl>
 
 
 <dl>
 <dt><a name="index-cce_005fdescriptor_005froot_005fptr"></a>Dynamic Constant: <em>cce_descriptor_root_t const * const</em> <strong>cce_descriptor_root_ptr</strong></dt>
-<dd><p>Pointer to a statically allocated structure representing the <em>root</em> condition descriptor for
-<em>root</em> condition objects.
+<dd><p>Pointer to the statically allocated structure representing the <em>root</em> descriptor.
 </p></dd></dl>
 
 
+<a name="Subtyping-example"></a>
+<h4 class="subsubheading">Subtyping example</h4>
 
-<a name="Sub_002d_002dtyping-example"></a>
-<h4 class="subsubheading">Sub&ndash;typing example</h4>
-
-
-<p>To define a sub&ndash;type of <code>cce_condition_root_t</code> we can copy the code in the files:
+<p>To define a subtype of <code>cce_condition_root_t</code> we can copy the code in the files:
 </p>
 <div class="example">
-<pre class="example">root-subtype.c
-root-subtype-headear.h
-root-subtype-body.c
+<pre class="example">condition-subtyping-root.c
+condition-subtyping-root-header.h
+condition-subtyping-root-body.c
 </pre></div>
 
 <p>under the <samp>tests</samp> directory of the source distribution; the code defines a new
-condition&ndash;object type <code>my_condition_root_subtype_t</code>.
+exceptional&ndash;condition object&ndash;type <code>my_condition_root_subtype_t</code>.
 </p>
 <hr>
 <a name="conditions-unknown"></a>
@@ -1808,44 +1761,63 @@ condition&ndash;object type <code>my_condition_root_subtype_t</code>.
 <p>
 Next: <a href="#conditions-break" accesskey="n" rel="next">conditions break</a>, Previous: <a href="#conditions-root" accesskey="p" rel="prev">conditions root</a>, Up: <a href="#conditions" accesskey="u" rel="up">conditions</a> &nbsp; [<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="#concept-index" title="Index" rel="index">Index</a>]</p>
 </div>
-<a name="Predefined-unknown-condition-object"></a>
-<h3 class="section">6.5 Predefined unknown condition object</h3>
+<a name="The-unknown-exceptional_002d_002dcondition-object"></a>
+<h3 class="section">6.5 The <em>unknown</em> exceptional&ndash;condition object</h3>
 
 
-<p>The <em>unknown exceptional&ndash;condition object</em> has the purpose of describing an exceptional
-condition with unknown cause; it should be used only by the function <code>cce_raise()</code> when the
-condition object argument is set to <code>NULL</code>.
+<a name="index-unknown_002c-exceptional-condition"></a>
+<a name="index-Exceptional-conditions_002c-unknown"></a>
+
+
+<p>The <em>unknown</em> exceptional&ndash;condition object&ndash;type has the purpose of describing an
+exceptional&ndash;condition with unknown cause; it should be used only by the function <code>cce_raise()</code>
+when the condition object argument is set to <code>NULL</code>.
 </p>
-<p>There should be only one <em>unknown</em> condition object: the one predefined by CCExceptions and
-built into the library as statically allocated structure.  Sub&ndash;typing from the unknown type is
-discouraged.
+<p>There should be only one <em>unknown</em> exceptional&ndash;condition object: the one predefined by
+CCExceptions and built into the library as statically allocated structure.  Subtyping from the
+<em>unknown</em> type is discouraged.
 </p>
 <p>All the following definitions are accessible from the header file <samp>ccexceptions.h</samp>.
 </p>
 
 <dl>
 <dt><a name="index-cce_005fdescriptor_005funknown_005ft"></a>Struct Typedef: <strong>cce_descriptor_unknown_t</strong></dt>
-<dd><p>Structure type representing the descriptor for <em>unknown</em> condition objects.  This descriptor
-has the <em>root</em> descriptor as parent.
-</p></dd></dl>
+<dd><p>Structure type representing the <em>unknown</em> exceptional&ndash;condition object&ndash;type
+descriptor.  This descriptor has the <em>root</em> descriptor as parent.  It has the following public
+fields:
+</p>
+<dl compact="compact">
+<dt><code>cce_descriptor_t descriptor</code></dt>
+<dd><p>Core values of the exceptional&ndash;condition object&ndash;type descriptor.
+</p></dd>
+</dl>
+</dd></dl>
 
 
 <dl>
 <dt><a name="index-cce_005fcondition_005funknown_005ft"></a>Struct Typedef: <strong>cce_condition_unknown_t</strong></dt>
-<dd><p>Structure type representing an <em>unknown</em> condition object.
-</p></dd></dl>
+<dd><p>Structure type representing the <em>unknown</em> exceptional&ndash;condition object.  It has the
+following public fields:
+</p>
+<dl compact="compact">
+<dt><code>cce_condition_root_t root</code></dt>
+<dd><p>Core values of the exceptional&ndash;condition object.
+</p></dd>
+</dl>
+</dd></dl>
 
 
 <dl>
 <dt><a name="index-cce_005fcondition_005fnew_005funknown"></a>Function: <em>cce_condition_t const *</em> <strong>cce_condition_new_unknown</strong> <em>(void)</em></dt>
-<dd><p>Return a pointer to the statically allocated structure representing the single <em>unknown</em>
-condition object.
+<dd><p>Return a pointer to the statically allocated structure representing the predefined <em>unknown</em>
+exceptional&ndash;condition object.
 </p></dd></dl>
 
 
 <dl>
 <dt><a name="index-cce_005fcondition_005fis_005funknown"></a>Inline Function: <em>bool</em> <strong>cce_condition_is_unknown</strong> <em>(cce_condition_t const * <var>C</var>)</em></dt>
-<dd><p>Return <code>true</code> if <var>C</var> is an <em>unknown</em> condition object; otherwise return <code>false</code>.
+<dd><p>Return <code>true</code> if <var>C</var> references an <em>unknown</em> exceptional&ndash;condition object; otherwise return
+<code>false</code>.
 </p></dd></dl>
 
 
@@ -1866,15 +1838,15 @@ CCExceptions for which it makes sense.
 
 <dl>
 <dt><a name="index-cce_005fdescriptor_005funknown_005fptr"></a>Dynamic Constant: <em>cce_descriptor_unknown_t const * const</em> <strong>cce_descriptor_unknown_ptr</strong></dt>
-<dd><p>Pointer to a statically allocated structure representing the <em>unknown</em> condition descriptor for
-the single <em>unknown</em> condition object.  The parent of this descriptor is the root descriptor,
-<a href="#conditions-root">conditions root</a>.
+<dd><p>Pointer to a statically allocated structure representing the <em>unknown</em>
+exceptional&ndash;condition object&ndash;type descriptor.
 </p></dd></dl>
 
 
 <dl>
 <dt><a name="index-cce_005fcondition_005funknown_005fptr"></a>Dynamic Constant: <em>cce_condition_unknown_t const * const</em> <strong>cce_condition_unknown_ptr</strong></dt>
-<dd><p>Pointer to a statically allocated structure representing the <em>unknown</em> condition object.
+<dd><p>Pointer to a statically allocated structure representing the <em>unknown</em>
+exceptional&ndash;condition object.
 </p></dd></dl>
 
 <hr>
@@ -1883,50 +1855,69 @@ the single <em>unknown</em> condition object.  The parent of this descriptor is 
 <p>
 Next: <a href="#conditions-error" accesskey="n" rel="next">conditions error</a>, Previous: <a href="#conditions-unknown" accesskey="p" rel="prev">conditions unknown</a>, Up: <a href="#conditions" accesskey="u" rel="up">conditions</a> &nbsp; [<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="#concept-index" title="Index" rel="index">Index</a>]</p>
 </div>
-<a name="Predefined-break-condition-object"></a>
-<h3 class="section">6.6 Predefined break condition object</h3>
+<a name="The-break-exceptional_002d_002dcondition-object"></a>
+<h3 class="section">6.6 The <em>break</em> exceptional&ndash;condition object</h3>
 
 
-<p>The <em>break exceptional&ndash;condition object</em> has the purpose of describing an exceptional condition
-used to break out of a loop or a function call; this condition object type does <strong>not</strong>
+<a name="index-break_002c-exceptional-condition"></a>
+<a name="index-Exceptional-conditions_002c-break"></a>
+
+
+<p>The <em>break</em> exceptional&ndash;condition object&ndash;type has the purpose of describing an exceptional
+condition used to break out of a loop or a function call; this object&ndash;type does <strong>not</strong>
 represent an error of any kind.
 </p>
-<p>There should be only one <em>break</em> condition object: the one predefined by CCExceptions and
-built into the library as statically allocated structure.
+<p>There should be only one <em>break</em> exceptional&ndash;condition object: the one predefined by
+CCExceptions and built into the library as statically allocated structure.  Subtyping from this
+object&ndash;type is fine to represent different reasons for escaping.
 </p>
 <p>All the following definitions are accessible from the header file <samp>ccexceptions.h</samp>.
 </p>
 
 <dl>
 <dt><a name="index-cce_005fdescriptor_005fbreak_005ft"></a>Struct Typedef: <strong>cce_descriptor_break_t</strong></dt>
-<dd><p>Structure type representing the descriptor for <em>break</em> condition objects.  This descriptor has
-the <em>root</em> descriptor as parent.
-</p></dd></dl>
+<dd><p>Structure type representing the <em>break</em> exceptional&ndash;condition object&ndash;type descriptor.
+This descriptor has the <em>root</em> descriptor as parent.  It has the following public fields:
+</p>
+<dl compact="compact">
+<dt><code>cce_descriptor_t descriptor</code></dt>
+<dd><p>Core values of the exceptional&ndash;condition object&ndash;type descriptor.
+</p></dd>
+</dl>
+</dd></dl>
 
 
 <dl>
 <dt><a name="index-cce_005fcondition_005fbreak_005ft"></a>Struct Typedef: <strong>cce_condition_break_t</strong></dt>
-<dd><p>Structure type representing an <em>break</em> condition object.
-</p></dd></dl>
+<dd><p>Structure type representing the <em>break</em> exceptional&ndash;condition object.  It has the following
+public fields:
+</p>
+<dl compact="compact">
+<dt><code>cce_condition_root_t root</code></dt>
+<dd><p>Core values of the exceptional&ndash;condition object.
+</p></dd>
+</dl>
+</dd></dl>
 
 
 <dl>
 <dt><a name="index-cce_005fcondition_005finit_005fbreak"></a>Function: <em>void</em> <strong>cce_condition_init_break</strong> <em>(cce_condition_break_t * <var>C</var>)</em></dt>
-<dd><p>Initialise an already allocated condition object.  This function exists to allow sub&ndash;typing from
-<code>cce_condition_break_t</code>.
+<dd><p>Initialise an already allocated exceptional&ndash;condition object.  This function exists to allow
+subtyping from <code>cce_condition_break_t</code>.
 </p></dd></dl>
 
 
 <dl>
 <dt><a name="index-cce_005fcondition_005fnew_005fbreak"></a>Function: <em>cce_condition_t const *</em> <strong>cce_condition_new_break</strong> <em>(void)</em></dt>
-<dd><p>Return a pointer to the statically allocated structure representing the single <em>break</em>
-condition object.
+<dd><p>Return a pointer to the statically allocated structure representing the predefined <em>break</em>
+exceptional&ndash;condition object.
 </p></dd></dl>
 
 
 <dl>
 <dt><a name="index-cce_005fcondition_005fis_005fbreak"></a>Inline Function: <em>bool</em> <strong>cce_condition_is_break</strong> <em>(cce_condition_t const * <var>C</var>)</em></dt>
-<dd><p>Return <code>true</code> if <var>C</var> is an <em>break</em> condition object; otherwise return <code>false</code>.
+<dd><p>Return <code>true</code> if <var>C</var> references a <em>break</em> exceptional&ndash;condition object; otherwise return
+<code>false</code>.
 </p></dd></dl>
 
 
@@ -1947,32 +1938,31 @@ CCExceptions for which it makes sense.
 
 <dl>
 <dt><a name="index-cce_005fdescriptor_005fbreak_005fptr"></a>Dynamic Constant: <em>cce_descriptor_break_t const * const</em> <strong>cce_descriptor_break_ptr</strong></dt>
-<dd><p>Pointer to a statically allocated structure representing the <em>break</em> condition descriptor for
-the single <em>break</em> condition object.  The parent of this descriptor is the root descriptor,
-<a href="#conditions-root">conditions root</a>.
+<dd><p>Pointer to a statically allocated structure representing the <em>break</em> exceptional&ndash;condition
+object&ndash;type descriptor.
 </p></dd></dl>
 
 
 <dl>
 <dt><a name="index-cce_005fcondition_005fbreak_005fptr"></a>Dynamic Constant: <em>cce_condition_break_t const * const</em> <strong>cce_condition_break_ptr</strong></dt>
-<dd><p>Pointer to a statically allocated structure representing the <em>break</em> condition object.
+<dd><p>Pointer to a statically allocated structure representing the <em>break</em> exceptional&ndash;condition
+object.
 </p></dd></dl>
 
 
-<a name="Sub_002d_002dtyping-example-1"></a>
-<h4 class="subsubheading">Sub&ndash;typing example</h4>
+<a name="Subtyping-example-1"></a>
+<h4 class="subsubheading">Subtyping example</h4>
 
-
-<p>To define a sub&ndash;type of <code>cce_condition_break_t</code> we can copy the code in the files:
+<p>To define a subtype of <code>cce_condition_break_t</code> we can copy the code in the files:
 </p>
 <div class="example">
-<pre class="example">break-subtype.c
-break-subtype-headear.h
-break-subtype-body.c
+<pre class="example">condition-subtyping-break.c
+condition-subtyping-break-header.h
+condition-subtyping-break-body.c
 </pre></div>
 
 <p>under the <samp>tests</samp> directory of the source distribution; the code defines a new
-condition&ndash;object type <code>my_condition_break_subtype_t</code>.
+exceptional&ndash;condition object&ndash;type <code>my_condition_break_subtype_t</code>.
 </p>
 <hr>
 <a name="conditions-error"></a>
@@ -1980,49 +1970,69 @@ condition&ndash;object type <code>my_condition_break_subtype_t</code>.
 <p>
 Next: <a href="#conditions-run_002dtime-error" accesskey="n" rel="next">conditions run-time error</a>, Previous: <a href="#conditions-break" accesskey="p" rel="prev">conditions break</a>, Up: <a href="#conditions" accesskey="u" rel="up">conditions</a> &nbsp; [<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="#concept-index" title="Index" rel="index">Index</a>]</p>
 </div>
-<a name="Predefined-error-condition-object"></a>
-<h3 class="section">6.7 Predefined error condition object</h3>
+<a name="The-error-exceptional_002d_002dcondition-object"></a>
+<h3 class="section">6.7 The <em>error</em> exceptional&ndash;condition object</h3>
 
 
-<p>The <em>error exceptional&ndash;condition object</em> has the purpose of describing an exceptional condition
-caused by an unspecified error; this condition type is meant to be the base of more specialised
-condition types.
+<a name="index-error_002c-exceptional-condition"></a>
+<a name="index-Exceptional-conditions_002c-error"></a>
+
+
+<p>The <em>error</em> exceptional&ndash;condition object&ndash;type has the purpose of describing an exceptional
+condition caused by an unspecified error; this condition type is meant to be the base of more
+specialised object&ndash;types.
 </p>
-<p>There should be only one <em>error</em> condition object: the one predefined by CCExceptions.
+<p>There should be only one <em>error</em> exceptional&ndash;condition object: the one predefined by
+CCExceptions and built into the library as statically allocated structure.  Subtyping from this
+object&ndash;type is fine.
 </p>
 <p>All the following definitions are accessible from the header file <samp>ccexceptions.h</samp>.
 </p>
 
 <dl>
 <dt><a name="index-cce_005fdescriptor_005ferror_005ft"></a>Struct Typedef: <strong>cce_descriptor_error_t</strong></dt>
-<dd><p>Structure type representing the descriptor for <em>error</em> condition objects.  This descriptor has
-the <em>root</em> descriptor as parent.
-</p></dd></dl>
+<dd><p>Structure type representing the <em>error</em> exceptional&ndash;condition object&ndash;type descriptor.  This
+descriptor has the <em>root</em> descriptor as parent.  It has the following public fields:
+</p>
+<dl compact="compact">
+<dt><code>cce_descriptor_t descriptor</code></dt>
+<dd><p>Core values of the exceptional&ndash;condition object&ndash;type descriptor.
+</p></dd>
+</dl>
+</dd></dl>
 
 
 <dl>
 <dt><a name="index-cce_005fcondition_005ferror_005ft"></a>Struct Typedef: <strong>cce_condition_error_t</strong></dt>
-<dd><p>Structure type representing a <em>error</em> condition object.
-</p></dd></dl>
+<dd><p>Structure type representing a <em>error</em> exceptional&ndash;condition object.  It has the following
+public fields:
+</p>
+<dl compact="compact">
+<dt><code>cce_condition_root_t root</code></dt>
+<dd><p>Core values of the exceptional&ndash;condition object.
+</p></dd>
+</dl>
+</dd></dl>
 
 
 <dl>
 <dt><a name="index-cce_005fcondition_005finit_005ferror"></a>Function: <em>void</em> <strong>cce_condition_init_error</strong> <em>(cce_condition_error_t * <var>C</var>)</em></dt>
-<dd><p>Initialise an already allocated condition object.  This function exists to allow sub&ndash;typing from
-<code>cce_condition_error_t</code>.
+<dd><p>Initialise an already allocated exceptional&ndash;condition object.  This function exists to allow
+subtyping from <code>cce_condition_error_t</code>.
 </p></dd></dl>
 
 
 <dl>
 <dt><a name="index-cce_005fcondition_005fnew_005ferror"></a>Function: <em>cce_condition_t const *</em> <strong>cce_condition_new_error</strong> <em>(void)</em></dt>
-<dd><p>Return a pointer to the statically allocated structure representing the single <em>error</em>
-condition object.
+<dd><p>Return a pointer to the statically allocated structure representing the predefined <em>error</em>
+exceptional&ndash;condition object.
 </p></dd></dl>
 
 
 <dl>
 <dt><a name="index-cce_005fis_005fcondition_005ferror"></a>Function: <em>bool</em> <strong>cce_is_condition_error</strong> <em>(cce_condition_t const * <var>C</var>)</em></dt>
-<dd><p>Return <code>true</code> if <var>C</var> is a <em>error</em> condition object; otherwise return <code>false</code>.
+<dd><p>Return <code>true</code> if <var>C</var> references an <em>error</em> exceptional&ndash;condition object; otherwise return
+<code>false</code>.
 </p></dd></dl>
 
 
@@ -2041,31 +2051,31 @@ CCExceptions for which it makes sense.
 
 <dl>
 <dt><a name="index-cce_005fdescriptor_005ferror_005fptr"></a>Dynamic Constant: <em>cce_descriptor_error_t const * const</em> <strong>cce_descriptor_error_ptr</strong></dt>
-<dd><p>Pointer to a statically allocated structure representing the <em>error</em> condition
-descriptor for the single <em>error</em> condition object.
+<dd><p>Pointer to a statically allocated structure representing the <em>error</em> exceptional&ndash;condition
+object&ndash;type descriptor.
 </p></dd></dl>
 
 
 <dl>
 <dt><a name="index-cce_005fcondition_005ferror_005fptr"></a>Dynamic Constant: <em>cce_condition_error_t const * const</em> <strong>cce_condition_error_ptr</strong></dt>
-<dd><p>Pointer to a statically allocated structure representing the <em>error</em> condition object.
+<dd><p>Pointer to a statically allocated structure representing the <em>error</em> exceptional&ndash;condition
+object.
 </p></dd></dl>
 
 
-<a name="Sub_002d_002dtyping-example-2"></a>
-<h4 class="subsubheading">Sub&ndash;typing example</h4>
+<a name="Subtyping-example-2"></a>
+<h4 class="subsubheading">Subtyping example</h4>
 
-
-<p>To define a sub&ndash;type of <code>cce_condition_error_t</code> we can copy the code in the files:
+<p>To define a subtype of <code>cce_condition_error_t</code> we can copy the code in the files:
 </p>
 <div class="example">
-<pre class="example">error-subtype.c
-error-subtype-headear.h
-error-subtype-body.c
+<pre class="example">condition-subtyping-error.c
+condition-subtyping-error-header.h
+condition-subtyping-error-body.c
 </pre></div>
 
 <p>under the <samp>tests</samp> directory of the source distribution; the code defines a new
-condition&ndash;object type <code>my_condition_error_subtype_t</code>.
+exceptional&ndash;condition object&ndash;type <code>my_condition_error_subtype_t</code>.
 </p>
 <hr>
 <a name="conditions-run_002dtime-error"></a>
@@ -2073,49 +2083,70 @@ condition&ndash;object type <code>my_condition_error_subtype_t</code>.
 <p>
 Next: <a href="#conditions-logic-error" accesskey="n" rel="next">conditions logic error</a>, Previous: <a href="#conditions-error" accesskey="p" rel="prev">conditions error</a>, Up: <a href="#conditions" accesskey="u" rel="up">conditions</a> &nbsp; [<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="#concept-index" title="Index" rel="index">Index</a>]</p>
 </div>
-<a name="Predefined-run_002d_002dtime-error-condition-object"></a>
-<h3 class="section">6.8 Predefined run&ndash;time error condition object</h3>
+<a name="The-run_002d_002dtime-error-exceptional_002d_002dcondition-object"></a>
+<h3 class="section">6.8 The <em>run&ndash;time error</em> exceptional&ndash;condition object</h3>
 
 
-<p>The <em>run&ndash;time exceptional&ndash;condition object</em> has the purpose of describing an exceptional
-condition caused by a run&ndash;time error; these are mostly synchronisation errors like failures to open
-a file or allocate memory.
+<a name="index-run_002d_002dtime-error_002c-exceptional-condition"></a>
+<a name="index-Exceptional-conditions_002c-run_002d_002dtime-error"></a>
+
+
+<p>The <em>run&ndash;time error</em> exceptional&ndash;condition object&ndash;type has the purpose of describing an
+exceptional condition caused by a run&ndash;time error; these are mostly synchronisation errors like
+failures to open a file or allocate memory.
 </p>
-<p>There should be only one <em>run&ndash;time</em> condition object: the one predefined by CCExceptions.
+<p>There should be only one <em>run&ndash;time error</em> exceptional&ndash;condition object: the one predefined by
+CCExceptions and built into the library as statically allocated structure.  Subtyping from this
+object&ndash;type is fine.
 </p>
 <p>All the following definitions are accessible from the header file <samp>ccexceptions.h</samp>.
 </p>
 
 <dl>
 <dt><a name="index-cce_005fdescriptor_005fruntime_005ferror_005ft"></a>Struct Typedef: <strong>cce_descriptor_runtime_error_t</strong></dt>
-<dd><p>Structure type representing the descriptor for <em>run&ndash;time</em> condition objects.  This descriptor
-has the <em>error</em> descriptor as parent.
-</p></dd></dl>
+<dd><p>Structure type representing the <em>run&ndash;time error</em> exceptional&ndash;condition object&ndash;type
+descriptor.  This descriptor has the <em>error</em> descriptor as parent.  It has the following public
+fields:
+</p>
+<dl compact="compact">
+<dt><code>cce_descriptor_t descriptor</code></dt>
+<dd><p>Core values of the exceptional&ndash;condition object&ndash;type descriptor.
+</p></dd>
+</dl>
+</dd></dl>
 
 
 <dl>
 <dt><a name="index-cce_005fcondition_005fruntime_005ferror_005ft"></a>Struct Typedef: <strong>cce_condition_runtime_error_t</strong></dt>
-<dd><p>Structure type representing a <em>run&ndash;time</em> condition object.
-</p></dd></dl>
+<dd><p>Structure type representing a <em>run&ndash;time error</em> exceptional&ndash;condition object.  It has the
+following public fields:
+</p>
+<dl compact="compact">
+<dt><code>cce_condition_error_t error</code></dt>
+<dd><p>Core values of the exceptional&ndash;condition object.
+</p></dd>
+</dl>
+</dd></dl>
 
 
 <dl>
 <dt><a name="index-cce_005fcondition_005finit_005fruntime_005ferror"></a>Function: <em>void</em> <strong>cce_condition_init_runtime_error</strong> <em>(cce_condition_runtime_error_t * <var>C</var>)</em></dt>
-<dd><p>Initialise an already allocated condition object.  This function exists to allow sub&ndash;typing from
+<dd><p>Initialise an already allocated condition object.  This function exists to allow subtyping from
 <code>cce_condition_runtime_error_t</code>.
 </p></dd></dl>
 
 
 <dl>
 <dt><a name="index-cce_005fcondition_005fnew_005fruntime_005ferror"></a>Function: <em>cce_condition_t const *</em> <strong>cce_condition_new_runtime_error</strong> <em>(void)</em></dt>
-<dd><p>Return a pointer to the statically allocated structure representing the single <em>run&ndash;time</em>
-condition object.
+<dd><p>Return a pointer to the statically allocated structure representing the predefined <em>run&ndash;time
+error</em> exceptional&ndash;condition object.
 </p></dd></dl>
 
 
 <dl>
 <dt><a name="index-cce_005fis_005fcondition_005fruntime_005ferror"></a>Function: <em>bool</em> <strong>cce_is_condition_runtime_error</strong> <em>(cce_condition_t const * <var>C</var>)</em></dt>
-<dd><p>Return <code>true</code> if <var>C</var> is a <em>run&ndash;time</em> condition object; otherwise return <code>false</code>.
+<dd><p>Return <code>true</code> if <var>C</var> references a <em>run&ndash;time error</em> exceptional&ndash;condition object; otherwise
+return <code>false</code>.
 </p></dd></dl>
 
 
@@ -2134,31 +2165,31 @@ CCExceptions for which it makes sense.
 
 <dl>
 <dt><a name="index-cce_005fdescriptor_005fruntime_005ferror_005fptr"></a>Dynamic Constant: <em>cce_descriptor_runtime_error_t const * const</em> <strong>cce_descriptor_runtime_error_ptr</strong></dt>
-<dd><p>Pointer to a statically allocated structure representing the <em>run&ndash;time</em> condition
-descriptor for the single <em>run&ndash;time</em> condition object.
+<dd><p>Pointer to a statically allocated structure representing the <em>run&ndash;time error</em>
+exceptional&ndash;condition object&ndash;type descriptor.
 </p></dd></dl>
 
 
 <dl>
 <dt><a name="index-cce_005fcondition_005fruntime_005ferror_005fptr"></a>Dynamic Constant: <em>cce_condition_runtime_error_t const * const</em> <strong>cce_condition_runtime_error_ptr</strong></dt>
-<dd><p>Pointer to a statically allocated structure representing the <em>run&ndash;time</em> condition object.
+<dd><p>Pointer to a statically allocated structure representing the <em>run&ndash;time error</em>
+exceptional&ndash;condition object.
 </p></dd></dl>
 
 
-<a name="Sub_002d_002dtyping-example-3"></a>
-<h4 class="subsubheading">Sub&ndash;typing example</h4>
+<a name="Subtyping-example-3"></a>
+<h4 class="subsubheading">Subtyping example</h4>
 
-
-<p>To define a sub&ndash;type of <code>cce_condition_runtime_error_t</code> we can copy the code in the files:
+<p>To define a subtype of <code>cce_condition_runtime_error_t</code> we can copy the code in the files:
 </p>
 <div class="example">
-<pre class="example">runtime-error-subtype.c
-runtime-error-subtype-headear.h
-runtime-error-subtype-body.c
+<pre class="example">condition-subtyping-runtime-error.c
+condition-subtyping-runtime-error-header.h
+condition-subtyping-runtime-error-body.c
 </pre></div>
 
 <p>under the <samp>tests</samp> directory of the source distribution; the code defines a new
-condition&ndash;object type <code>my_condition_runtime_error_subtype_t</code>.
+exceptional&ndash;condition object&ndash;type <code>my_condition_runtime_error_subtype_t</code>.
 </p>
 <hr>
 <a name="conditions-logic-error"></a>
@@ -2166,50 +2197,69 @@ condition&ndash;object type <code>my_condition_runtime_error_subtype_t</code>.
 <p>
 Next: <a href="#conditions-unimplemented" accesskey="n" rel="next">conditions unimplemented</a>, Previous: <a href="#conditions-run_002dtime-error" accesskey="p" rel="prev">conditions run-time error</a>, Up: <a href="#conditions" accesskey="u" rel="up">conditions</a> &nbsp; [<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="#concept-index" title="Index" rel="index">Index</a>]</p>
 </div>
-<a name="Predefined-logic-error-condition-object"></a>
-<h3 class="section">6.9 Predefined logic error condition object</h3>
+<a name="The-logic-error-exceptional_002d_002dcondition-object"></a>
+<h3 class="section">6.9 The <em>logic error</em> exceptional&ndash;condition object</h3>
 
 
-<p>The <em>logic exceptional&ndash;condition object</em> has the purpose of describing an exceptional condition
-caused by an implementation logic error; these are programming errors that should not be present in
-a correct program.  Examples of logic errors are: applying a function to an invalid operand; using
-the <code>switch</code> syntax on an <code>enum</code> value without handling all the possible cases.
+<a name="index-logic-error_002c-exceptional-condition"></a>
+<a name="index-Exceptional-conditions_002c-logic-error"></a>
+
+
+<p>The <em>logic error</em> exceptional&ndash;condition object&ndash;type has the purpose of describing an
+exceptional condition caused by a logic error; these are mostly synchronisation errors like failures
+to open a file or allocate memory.
 </p>
-<p>There should be only one <em>logic</em> condition object: the one predefined by CCExceptions.
+<p>There should be only one <em>logic error</em> exceptional&ndash;condition object: the one predefined by
+CCExceptions and built into the library as statically allocated structure.  Subtyping from this
+object&ndash;type is fine.
 </p>
 <p>All the following definitions are accessible from the header file <samp>ccexceptions.h</samp>.
 </p>
 
 <dl>
 <dt><a name="index-cce_005fdescriptor_005flogic_005ferror_005ft"></a>Struct Typedef: <strong>cce_descriptor_logic_error_t</strong></dt>
-<dd><p>Structure type representing the descriptor for <em>logic</em> condition objects.  This descriptor has
-the <em>error</em> descriptor as parent.
-</p></dd></dl>
+<dd><p>Structure type representing the <em>logic error</em> exceptional&ndash;condition object&ndash;type descriptor.
+This descriptor has the <em>error</em> descriptor as parent.  It has the following public fields:
+</p>
+<dl compact="compact">
+<dt><code>cce_descriptor_t descriptor</code></dt>
+<dd><p>Core values of the exceptional&ndash;condition object&ndash;type descriptor.
+</p></dd>
+</dl>
+</dd></dl>
 
 
 <dl>
 <dt><a name="index-cce_005fcondition_005flogic_005ferror_005ft"></a>Struct Typedef: <strong>cce_condition_logic_error_t</strong></dt>
-<dd><p>Structure type representing a <em>logic</em> condition object.
-</p></dd></dl>
+<dd><p>Structure type representing a <em>logic error</em> exceptional&ndash;condition object.  It has the
+following public fields:
+</p>
+<dl compact="compact">
+<dt><code>cce_condition_error_t error</code></dt>
+<dd><p>Core values of the exceptional&ndash;condition object.
+</p></dd>
+</dl>
+</dd></dl>
 
 
 <dl>
 <dt><a name="index-cce_005fcondition_005finit_005flogic_005ferror"></a>Function: <em>void</em> <strong>cce_condition_init_logic_error</strong> <em>(cce_condition_logic_error_t * <var>C</var>)</em></dt>
-<dd><p>Initialise an already allocated condition object.  This function exists to allow sub&ndash;typing from
+<dd><p>Initialise an already allocated condition object.  This function exists to allow subtyping from
 <code>cce_condition_logic_error_t</code>.
 </p></dd></dl>
 
 
 <dl>
 <dt><a name="index-cce_005fcondition_005fnew_005flogic_005ferror"></a>Function: <em>cce_condition_t const *</em> <strong>cce_condition_new_logic_error</strong> <em>(void)</em></dt>
-<dd><p>Return a pointer to the statically allocated structure representing the single <em>logic</em>
-condition object.
+<dd><p>Return a pointer to the statically allocated structure representing the predefined <em>logic
+error</em> exceptional&ndash;condition object.
 </p></dd></dl>
 
 
 <dl>
 <dt><a name="index-cce_005fis_005fcondition_005flogic_005ferror"></a>Function: <em>bool</em> <strong>cce_is_condition_logic_error</strong> <em>(cce_condition_t const * <var>C</var>)</em></dt>
-<dd><p>Return <code>true</code> if <var>C</var> is a <em>logic</em> condition object; otherwise return <code>false</code>.
+<dd><p>Return <code>true</code> if <var>C</var> references a <em>logic error</em> exceptional&ndash;condition object; otherwise return
+<code>false</code>.
 </p></dd></dl>
 
 
@@ -2228,31 +2278,31 @@ CCExceptions for which it makes sense.
 
 <dl>
 <dt><a name="index-cce_005fdescriptor_005flogic_005ferror_005fptr"></a>Dynamic Constant: <em>cce_descriptor_logic_error_t const * const</em> <strong>cce_descriptor_logic_error_ptr</strong></dt>
-<dd><p>Pointer to a statically allocated structure representing the <em>logic</em> condition
-descriptor for the single <em>logic</em> condition object.
+<dd><p>Pointer to a statically allocated structure representing the <em>logic error</em>
+exceptional&ndash;condition object&ndash;type descriptor.
 </p></dd></dl>
 
 
 <dl>
 <dt><a name="index-cce_005fcondition_005flogic_005ferror_005fptr"></a>Dynamic Constant: <em>cce_condition_logic_error_t const * const</em> <strong>cce_condition_logic_error_ptr</strong></dt>
-<dd><p>Pointer to a statically allocated structure representing the <em>logic</em> condition object.
+<dd><p>Pointer to a statically allocated structure representing the <em>logic error</em>
+exceptional&ndash;condition object.
 </p></dd></dl>
 
 
-<a name="Sub_002d_002dtyping-example-4"></a>
-<h4 class="subsubheading">Sub&ndash;typing example</h4>
+<a name="Subtyping-example-4"></a>
+<h4 class="subsubheading">Subtyping example</h4>
 
-
-<p>To define a sub&ndash;type of <code>cce_condition_logic_error_t</code> we can copy the code in the files:
+<p>To define a subtype of <code>cce_condition_logic_error_t</code> we can copy the code in the files:
 </p>
 <div class="example">
-<pre class="example">logic-error-subtype.c
-logic-error-subtype-headear.h
-logic-error-subtype-body.c
+<pre class="example">condition-subtyping-logic-error.c
+condition-subtyping-logic-error-header.h
+condition-subtyping-logic-error-body.c
 </pre></div>
 
 <p>under the <samp>tests</samp> directory of the source distribution; the code defines a new
-condition&ndash;object type <code>my_condition_logic_error_subtype_t</code>.
+exceptional&ndash;condition object&ndash;type <code>my_condition_logic_error_subtype_t</code>.
 </p>
 <hr>
 <a name="conditions-unimplemented"></a>
@@ -2260,51 +2310,71 @@ condition&ndash;object type <code>my_condition_logic_error_subtype_t</code>.
 <p>
 Next: <a href="#conditions-invalid-arg" accesskey="n" rel="next">conditions invalid arg</a>, Previous: <a href="#conditions-logic-error" accesskey="p" rel="prev">conditions logic error</a>, Up: <a href="#conditions" accesskey="u" rel="up">conditions</a> &nbsp; [<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="#concept-index" title="Index" rel="index">Index</a>]</p>
 </div>
-<a name="Predefined-unimplemented-condition-object"></a>
-<h3 class="section">6.10 Predefined unimplemented condition object</h3>
+<a name="The-unimplemented-exceptional_002d_002dcondition-object"></a>
+<h3 class="section">6.10 The <em>unimplemented</em> exceptional&ndash;condition object</h3>
 
 
-<p>The <em>unimplemented exceptional&ndash;condition object</em> has the purpose of describing an exceptional
-condition caused by attempting to use an unimplemented feature.  For example: attempting to call a
-system function adapter for which the underlying function is not available on the current platform
-(see <a href="#system">system</a>).
+<a name="index-unimplemented_002c-exceptional-condition"></a>
+<a name="index-Exceptional-conditions_002c-unimplemented"></a>
+
+
+<p>The <em>unimplemented</em> exceptional&ndash;condition object&ndash;type has the purpose of describing an
+exceptional condition caused by attempting to use an unimplemented feature.  For example: attempting
+to call a system function adapter for which the underlying function is not available on the current
+platform.
 </p>
-<p>There should be only one <em>unimplemented</em> condition object: the one predefined by
-CCExceptions.
+<p>There should be only one <em>unimplemented</em> exceptional&ndash;condition object: the one predefined by
+CCExceptions and built into the library as statically allocated structure.  Subtyping from this
+object&ndash;type is fine.
 </p>
 <p>All the following definitions are accessible from the header file <samp>ccexceptions.h</samp>.
 </p>
 
 <dl>
 <dt><a name="index-cce_005fdescriptor_005funimplemented_005ft"></a>Struct Typedef: <strong>cce_descriptor_unimplemented_t</strong></dt>
-<dd><p>Structure type representing the descriptor for <em>unimplemented</em> condition objects.  This
-descriptor has the <em>logic error</em> descriptor as parent.
-</p></dd></dl>
+<dd><p>Structure type representing the <em>unimplemented</em> exceptional&ndash;condition object&ndash;type descriptor.
+This descriptor has the <em>logic error</em> descriptor as parent.  It has the following public
+fields:
+</p>
+<dl compact="compact">
+<dt><code>cce_descriptor_t descriptor</code></dt>
+<dd><p>Core values of the exceptional&ndash;condition object&ndash;type descriptor.
+</p></dd>
+</dl>
+</dd></dl>
 
 
 <dl>
 <dt><a name="index-cce_005fcondition_005funimplemented_005ft"></a>Struct Typedef: <strong>cce_condition_unimplemented_t</strong></dt>
-<dd><p>Structure type representing an <em>unimplemented</em> condition object.
-</p></dd></dl>
+<dd><p>Structure type representing an <em>unimplemented</em> exceptional&ndash;condition object.  It has the
+following public fields:
+</p>
+<dl compact="compact">
+<dt><code>cce_condition_logic_error_t logic_error</code></dt>
+<dd><p>Core values of the exceptional&ndash;condition object.
+</p></dd>
+</dl>
+</dd></dl>
 
 
 <dl>
 <dt><a name="index-cce_005fcondition_005finit_005funimplemented"></a>Function: <em>void</em> <strong>cce_condition_init_unimplemented</strong> <em>(cce_condition_unimplemented_t * <var>C</var>)</em></dt>
-<dd><p>Initialise an already allocated condition object.  This function exists to allow sub&ndash;typing from
-<code>cce_condition_unimplemented_t</code>.
+<dd><p>Initialise an already allocated exceptional&ndash;condition object.  This function exists to allow
+subtyping from <code>cce_condition_unimplemented_t</code>.
 </p></dd></dl>
 
 
 <dl>
 <dt><a name="index-cce_005fcondition_005fnew_005funimplemented"></a>Function: <em>cce_condition_t const *</em> <strong>cce_condition_new_unimplemented</strong> <em>(void)</em></dt>
-<dd><p>Return a pointer to the statically allocated structure representing the single <em>unimplemented</em>
-condition object.
+<dd><p>Return a pointer to the statically allocated structure representing the predefined
+<em>unimplemented</em> exceptional&ndash;condition object.
 </p></dd></dl>
 
 
 <dl>
 <dt><a name="index-cce_005fis_005fcondition_005funimplemented"></a>Function: <em>bool</em> <strong>cce_is_condition_unimplemented</strong> <em>(cce_condition_t const * <var>C</var>)</em></dt>
-<dd><p>Return <code>true</code> if <var>C</var> is an <em>unimplemented</em> condition object; otherwise return <code>false</code>.
+<dd><p>Return <code>true</code> if <var>C</var> references an <em>unimplemented</em> exceptional&ndash;condition object; otherwise
+return <code>false</code>.
 </p></dd></dl>
 
 
@@ -2323,31 +2393,31 @@ CCExceptions for which it makes sense.
 
 <dl>
 <dt><a name="index-cce_005fdescriptor_005funimplemented_005fptr"></a>Dynamic Constant: <em>cce_descriptor_unimplemented_t const * const</em> <strong>cce_descriptor_unimplemented_ptr</strong></dt>
-<dd><p>Pointer to a statically allocated structure representing the <em>unimplemented</em> condition
-descriptor for the single <em>unimplemented</em> condition object.
+<dd><p>Pointer to a statically allocated structure representing the <em>unimplemented</em>
+exceptional&ndash;condition object&ndash;type descriptor.
 </p></dd></dl>
 
 
 <dl>
 <dt><a name="index-cce_005fcondition_005funimplemented_005fptr"></a>Dynamic Constant: <em>cce_condition_unimplemented_t const * const</em> <strong>cce_condition_unimplemented_ptr</strong></dt>
-<dd><p>Pointer to a statically allocated structure representing the <em>unimplemented</em> condition object.
+<dd><p>Pointer to a statically allocated structure representing the <em>unimplemented</em>
+exceptional&ndash;condition object.
 </p></dd></dl>
 
 
-<a name="Sub_002d_002dtyping-example-5"></a>
-<h4 class="subsubheading">Sub&ndash;typing example</h4>
+<a name="Subtyping-example-5"></a>
+<h4 class="subsubheading">Subtyping example</h4>
 
-
-<p>To define a sub&ndash;type of <code>cce_condition_unimplemented_t</code> we can copy the code in the files:
+<p>To define a subtype of <code>cce_condition_unimplemented_t</code> we can copy the code in the files:
 </p>
 <div class="example">
-<pre class="example">unimplemented-subtype.c
-unimplemented-subtype-headear.h
-unimplemented-subtype-body.c
+<pre class="example">condition-subtyping-unimplemented.c
+condition-subtyping-unimplemented-header.h
+condition-subtyping-unimplemented-body.c
 </pre></div>
 
 <p>under the <samp>tests</samp> directory of the source distribution; the code defines a new
-condition&ndash;object type <code>my_condition_unimplemented_subtype_t</code>.
+exceptional&ndash;condition object&ndash;type <code>my_condition_unimplemented_subtype_t</code>.
 </p>
 <hr>
 <a name="conditions-invalid-arg"></a>
@@ -2355,11 +2425,15 @@ condition&ndash;object type <code>my_condition_unimplemented_subtype_t</code>.
 <p>
 Next: <a href="#conditions-unreachable" accesskey="n" rel="next">conditions unreachable</a>, Previous: <a href="#conditions-unimplemented" accesskey="p" rel="prev">conditions unimplemented</a>, Up: <a href="#conditions" accesskey="u" rel="up">conditions</a> &nbsp; [<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="#concept-index" title="Index" rel="index">Index</a>]</p>
 </div>
-<a name="Predefined-invalid-argument-conditions"></a>
-<h3 class="section">6.11 Predefined invalid argument conditions</h3>
+<a name="The-invalid-argument-exceptional_002d_002dcondition-object"></a>
+<h3 class="section">6.11 The <em>invalid argument</em> exceptional&ndash;condition object</h3>
 
 
-<p>The <em>invalid argument exceptional&ndash;condition object</em> has the purpose of describing an
+<a name="index-invalid-argument_002c-exceptional-condition"></a>
+<a name="index-Exceptional-conditions_002c-invalid-argument"></a>
+
+
+<p>The <em>invalid argument</em> exceptional&ndash;condition object&ndash;type has the purpose of describing an
 exceptional condition caused by a wrong function argument.  This condition object is meant to be
 used to describe unexpected exceptions: we do not really expect the argument to be invalid, but we
 want a fall&ndash;back just in case.
@@ -2370,17 +2444,12 @@ want a fall&ndash;back just in case.
 <pre class="example">void
 do_something (unsigned N)
 {
-  cce_location_t        L[1];
-
-  if (cce_location(L)) {
-    cce_run_error_handlers_final(L);
-  } else {
-    if (0 == N) {
-      cce_raise(L,
-          cce_condition_new_invalid_argument(L, __func__, 1));
-    }
-    cce_run_clean_handlers(L);
+  if (0 == N) {
+    cce_raise(L,
+      cce_condition_new_invalid_argument(L, __func__, 1));
   }
+
+  /* do something with N */
 }
 </pre></div>
 
@@ -2389,19 +2458,29 @@ do_something (unsigned N)
 
 <dl>
 <dt><a name="index-cce_005fdescriptor_005finvalid_005fargument_005ft"></a>Struct Typedef: <strong>cce_descriptor_invalid_argument_t</strong></dt>
-<dd><p>Structure type representing the descriptor of the condition objects.  This descriptor has the
-<em>logic error</em> descriptor as parent.
-</p></dd></dl>
+<dd><p>Structure type representing the exceptional&ndash;condition object&ndash;type descriptor.  This descriptor has
+the <em>logic error</em> descriptor as parent.  It has the following public fields:
+</p>
+<dl compact="compact">
+<dt><code>cce_descriptor_t descriptor</code></dt>
+<dd><p>Core values of the exceptional&ndash;condition object&ndash;type descriptor.
+</p></dd>
+</dl>
+</dd></dl>
 
 
 <dl>
 <dt><a name="index-cce_005fcondition_005finvalid_005fargument_005ft"></a>Struct Typedef: <strong>cce_condition_invalid_argument_t</strong></dt>
-<dd><p>Structure type representing the condition object.  It has the following public fields:
+<dd><p>Structure type representing the exceptional&ndash;condition object.  It has the following public fields:
 </p>
 <dl compact="compact">
+<dt><code>cce_condition_logic_error_t logic_error</code></dt>
+<dd><p>Core values of the exceptional&ndash;condition object.
+</p>
+</dd>
 <dt><code>char const * funcname</code></dt>
 <dd><p>Pointer to a statically allocated <acronym>ASCIIZ</acronym> string representing the name of the function that raised
-the exception.  It is usually generated with <code>__func__</code>.
+the exception.  It is usually generated with the preprocessor symbol <code>__func__</code>.
 </p>
 </dd>
 <dt><code>unsigned index</code></dt>
@@ -2413,20 +2492,37 @@ the exception.  It is usually generated with <code>__func__</code>.
 
 <dl>
 <dt><a name="index-cce_005fcondition_005finit_005finvalid_005fargument"></a>Function: <em>void</em> <strong>cce_condition_init_invalid_argument</strong> <em>(cce_condition_invalid_argument_t * <var>C</var>, char const * <var>func</var>, unsigned <var>index</var>)</em></dt>
-<dd><p>Initialisation function for the condition object.
+<dd><p>Initialise an already allocated exceptional&ndash;condition object.  This function exists to allow
+subtyping from <code>cce_condition_invalid_argument_t</code>.
 </p></dd></dl>
 
 
 <dl>
 <dt><a name="index-cce_005fcondition_005fnew_005finvalid_005fargument"></a>Function: <em>cce_condition_t const *</em> <strong>cce_condition_new_invalid_argument</strong> <em>(cce_destination_t <var>L</var>, char const * <var>func</var>, unsigned <var>index</var>)</em></dt>
-<dd><p>Build and return a new condition object.  If building the object fails: raise an exception to the
-location <var>L</var>.
+<dd><p>Build and return a new exceptional&ndash;condition object.  If building the object fails: raise an
+exception by jumping to <var>L</var>.
 </p></dd></dl>
 
 
 <dl>
 <dt><a name="index-cce_005fcondition_005fis_005finvalid_005fargument"></a>Inline Function: <em>bool</em> <strong>cce_condition_is_invalid_argument</strong> <em>(cce_condition_t const * <var>C</var>)</em></dt>
-<dd><p>Return <code>true</code> if <var>C</var> is a condition object of the specified type; otherwise return <code>false</code>.
+<dd><p>Return <code>true</code> if <var>C</var> references an <em>invalid argument</em> exceptional&ndash;condition object;
+otherwise return <code>false</code>.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-cce_005fcheck_005fargument"></a>Preprocessor Macro: <em>void</em> <strong>cce_check_argument</strong> <em>(cce_destination_t <var>L</var>, bool <var>expr</var>, unsigned <var>argnum</var>)</em></dt>
+<dd><p>Expand to the following:
+</p>
+<div class="example">
+<pre class="example">if (! (<var>expr</var>)) {
+  cce_raise((<var>L</var>),
+    cce_condition_new_invalid_argument((<var>L</var>), __func__, (<var>argnum</var>)));
+}
+</pre></div>
+
+<p>where <var>expr</var> is an expression evaluating to <code>true</code> if the argument is <strong>valid</strong>.
 </p></dd></dl>
 
 
@@ -2447,25 +2543,24 @@ CCExceptions for which it makes sense.
 
 <dl>
 <dt><a name="index-cce_005fdescriptor_005finvalid_005fargument"></a>Dynamic Constant: <em>cce_descriptor_invalid_argument_t const * const</em> <strong>cce_descriptor_invalid_argument</strong></dt>
-<dd><p>Pointer to a statically allocated structure representing the condition descriptor.
+<dd><p>Pointer to a statically allocated structure representing the <em>invalid argument</em>
+exceptional&ndash;condition object&ndash;type descriptor.
 </p></dd></dl>
 
 
-<a name="Sub_002d_002dtyping-example-6"></a>
-<h4 class="subsubheading">Sub&ndash;typing example</h4>
+<a name="Subtyping-example-6"></a>
+<h4 class="subsubheading">Subtyping example</h4>
 
-
-<p>To define a sub&ndash;type of <code>cce_condition_invalid_argument_t</code> we can copy the code in the
-files:
+<p>To define a subtype of <code>cce_condition_invalid_argument_t</code> we can copy the code in the files:
 </p>
 <div class="example">
-<pre class="example">invalid-arg-subtype.c
-invalid-arg-subtype-headear.h
-invalid-arg-subtype-body.c
+<pre class="example">condition-subtyping-invalid-arg.c
+condition-subtyping-invalid-arg-header.h
+condition-subtyping-invalid-arg-body.c
 </pre></div>
 
 <p>under the <samp>tests</samp> directory of the source distribution; the code defines a new
-condition&ndash;object type <code>my_condition_invalid_argument_subtype_t</code>.
+exceptional&ndash;condition object&ndash;type <code>my_condition_invalid_argument_subtype_t</code>.
 </p>
 <hr>
 <a name="conditions-unreachable"></a>
@@ -2473,58 +2568,41 @@ condition&ndash;object type <code>my_condition_invalid_argument_subtype_t</code>
 <p>
 Next: <a href="#conditions-errno" accesskey="n" rel="next">conditions errno</a>, Previous: <a href="#conditions-invalid-arg" accesskey="p" rel="prev">conditions invalid arg</a>, Up: <a href="#conditions" accesskey="u" rel="up">conditions</a> &nbsp; [<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="#concept-index" title="Index" rel="index">Index</a>]</p>
 </div>
-<a name="Predefined-unreachable-code-conditions"></a>
-<h3 class="section">6.12 Predefined unreachable code conditions</h3>
+<a name="The-unreachable-code-exceptional_002d_002dcondition-object"></a>
+<h3 class="section">6.12 The <em>unreachable code</em> exceptional&ndash;condition object</h3>
 
 
-<a name="index-Unreachable-code_002c-exceptional-condition"></a>
-<a name="index-Exceptional-conditions_002c-Unreachable-code"></a>
+<a name="index-unreachable-code_002c-exceptional-condition"></a>
+<a name="index-Exceptional-conditions_002c-unreachable-code"></a>
 
 
-<p>We can use the <em>unreachable code exceptional&ndash;condition object&ndash;type</em> to signal the execution of
-unreachable code.  We can instantiate this type and also derive new types from it.  To catch this
-exceptional condition we can do:
+<p>We can use the <em>unreachable code</em> exceptional&ndash;condition object&ndash;type to signal the execution of
+unreachable code.
 </p>
-<div class="smallexample">
-<pre class="smallexample">cce_location_t        L[1];
-
-if (cce_location(L)) {
-  if (cce_condition_is_unreachable(cce_condition(L))) {
-    CCE_PC(cce_condition_unreachable_t, C, cce_condition(L));
-    do_something_with(C);
-  }
-  cce_run_error_handlers_final(L);
-} else {
-  do_something(L);
-  cce_run_clean_handlers(L);
-}
-</pre></div>
-
+<p>All the following definitions are accessible from the header file <samp>ccexceptions.h</samp>.
+</p>
 
 <dl>
 <dt><a name="index-cce_005fdescriptor_005funreachable_005ft"></a>Struct Typedef: <strong>cce_descriptor_unreachable_t</strong></dt>
-<dd><p>Type of data structure representing the exceptional&ndash;condition descriptor.  It has the following
-public fields:
+<dd><p>Structure type <em>unreachable code</em> exceptional&ndash;condition object&ndash;type descriptor.  This
+descriptor has the <em>logic error</em> descriptor as parent.  It has the following public fields:
 </p>
 <dl compact="compact">
 <dt><code>cce_descriptor_t descriptor</code></dt>
-<dd><p>The condition descriptor&rsquo;s base values.
+<dd><p>Core values of the exceptional&ndash;condition object&ndash;type descriptor.
 </p></dd>
 </dl>
-
-<p>The parent of this type descriptor is the one referenced by <code>cce_descriptor_logic_error_ptr</code>,
-<a href="#conditions-logic-error">Predefined logic error condition object</a>.
-</p></dd></dl>
+</dd></dl>
 
 
 <dl>
 <dt><a name="index-cce_005fcondition_005funreachable_005ft"></a>Struct Typedef: <strong>cce_condition_unreachable_t</strong></dt>
-<dd><p>Type of data structure representing the exceptional&ndash;condition object.  It has the following public
-fields:
+<dd><p>Structure type representing the <em>unreachable code</em> exceptional&ndash;condition object.  It has the
+following public fields:
 </p>
 <dl compact="compact">
 <dt><code>cce_condition_logic_error_t logic_error</code></dt>
-<dd><p>The condition object&rsquo;s base values.
+<dd><p>Core values of the exceptional&ndash;condition object&ndash;type descriptor.
 </p>
 </dd>
 <dt><code>char const * filename</code></dt>
@@ -2548,29 +2626,23 @@ be generated with the preprocessor macro <code>__LINE__</code>.
 
 
 <dl>
-<dt><a name="index-cce_005fdescriptor_005funreachable_005fptr"></a>Dynamic Constant: <em>cce_descriptor_unreachable_t const * const</em> <strong>cce_descriptor_unreachable_ptr</strong></dt>
-<dd><p>Pointer to a statically allocated exceptional condition descriptor.
-</p></dd></dl>
-
-
-<dl>
 <dt><a name="index-cce_005fcondition_005finit_005funreachable"></a>Function: <em>void</em> <strong>cce_condition_init_unreachable</strong> <em>(cce_condition_unreachable_t * <var>C</var>, char const * <var>filename</var>, char const * <var>funcname</var>, int <var>linenum</var>)</em></dt>
-<dd><p>Initialisation function for the condition object.  This function is meant to be called from the
-initialisation function of sub&ndash;types of <code>cce_condition_unreachable_t</code>.
+<dd><p>Initialise an already allocated exceptional&ndash;condition object.  This function exists to allow
+subtyping from <code>cce_condition_unreachable_t</code>.
 </p></dd></dl>
 
 
 <dl>
 <dt><a name="index-cce_005fcondition_005fnew_005funreachable"></a>Function: <em>cce_condition_t const *</em> <strong>cce_condition_new_unreachable</strong> <em>(cce_destination_t <var>L</var>, char const * <var>filename</var>, char const * <var>funcname</var>, int <var>linenum</var>)</em></dt>
-<dd><p>Return a pointer to exceptional condition object.  If an error occurs building the instance: raise
-an exception by performing a non&ndash;local exit to <var>L</var>.
+<dd><p>Build and return a new exceptional&ndash;condition object.  If building the object fails: raise an
+exception by jumping to <var>L</var>.
 </p></dd></dl>
 
 
 <dl>
 <dt><a name="index-cce_005fcondition_005fis_005funreachable"></a>Function: <em>bool</em> <strong>cce_condition_is_unreachable</strong> <em>(cce_condition_t const * <var>C</var>)</em></dt>
-<dd><p>Return <code>true</code> if <var>C</var> if of type <code>cce_condition_unreachable_t</code>; otherwise return
-<code>false</code>.
+<dd><p>Return <code>true</code> if <var>C</var> references an <em>unreachable code</em> exceptional&ndash;condition object;
+otherwise return <code>false</code>.
 </p></dd></dl>
 
 
@@ -2591,21 +2663,26 @@ nothing.  By default <code>CCEXCEPTIONS_EXCLUDE_UNREACHABLE</code> is not define
 </p></dd></dl>
 
 
-<a name="Sub_002d_002dtyping-example-7"></a>
-<h4 class="subsubheading">Sub&ndash;typing example</h4>
+<dl>
+<dt><a name="index-cce_005fdescriptor_005funreachable_005fptr"></a>Dynamic Constant: <em>cce_descriptor_unreachable_t const * const</em> <strong>cce_descriptor_unreachable_ptr</strong></dt>
+<dd><p>Pointer to a statically allocated structure representing the <em>unreachable code</em>
+exceptional&ndash;condition object&ndash;type descriptor.
+</p></dd></dl>
 
 
-<p>To define a sub&ndash;type of <code>cce_condition_unreachable_t</code> we can copy the code in the
-files:
+<a name="Subtyping-example-7"></a>
+<h4 class="subsubheading">Subtyping example</h4>
+
+<p>To define a subtype of <code>cce_condition_unreachable_t</code> we can copy the code in the files:
 </p>
 <div class="example">
-<pre class="example">condition-unreachable-subtype.c
-condition-unreachable-subtype-headear.h
-condition-unreachable-subtype-body.c
+<pre class="example">condition-subtyping-unreachable.c
+condition-subtyping-unreachable-header.h
+condition-subtyping-unreachable-body.c
 </pre></div>
 
 <p>under the <samp>tests</samp> directory of the source distribution; the code defines a new
-condition&ndash;object type <code>my_condition_unreachable_subtype_t</code>.
+exceptional&ndash;condition object&ndash;type <code>my_condition_unreachable_subtype_t</code>.
 </p>
 <hr>
 <a name="conditions-errno"></a>
@@ -2613,36 +2690,50 @@ condition&ndash;object type <code>my_condition_unreachable_subtype_t</code>.
 <p>
 Next: <a href="#conditions-math" accesskey="n" rel="next">conditions math</a>, Previous: <a href="#conditions-unreachable" accesskey="p" rel="prev">conditions unreachable</a>, Up: <a href="#conditions" accesskey="u" rel="up">conditions</a> &nbsp; [<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="#concept-index" title="Index" rel="index">Index</a>]</p>
 </div>
-<a name="Predefined-errno-conditions"></a>
-<h3 class="section">6.13 Predefined <code>errno</code> conditions</h3>
+<a name="The-errno-exceptional_002d_002dcondition-object"></a>
+<h3 class="section">6.13 The <code>errno</code> exceptional&ndash;condition object</h3>
 
 
-<p>The <em>errno exceptional&ndash;condition object</em> has the purpose of describing an exceptional condition
-caused by a system function setting <code>errno</code>.  Condition objects of this type are <strong>not</strong>
-meant to be sub&ndash;typed.
+<a name="index-errno_002c-exceptional-condition"></a>
+<a name="index-Exceptional-conditions_002c-errno"></a>
+
+
+<p>The <code>errno</code> exceptional&ndash;condition object&ndash;type has the purpose of describing an exceptional
+condition caused by a system function setting <code>errno</code>.  This exceptional&ndash;condition
+object&ndash;type is <strong>not</strong> meant to be subtyped.
 </p>
 <p>All the following definitions are accessible from the header file <samp>ccexceptions.h</samp>.
 </p>
 
 <dl>
 <dt><a name="index-cce_005fdescriptor_005ferrno_005ft"></a>Struct Typedef: <strong>cce_descriptor_errno_t</strong></dt>
-<dd><p>Structure type representing the descriptor for <em>errno</em> condition objects.  This descriptor has
-the <em>run&ndash;time error</em> descriptor as parent.
-</p></dd></dl>
+<dd><p>Structure type representing the <em>errno</em> exceptional&ndash;condition object&ndash;type descriptor.  This
+descriptor has the <em>run&ndash;time error</em> descriptor as parent.  It has the following public fields:
+</p>
+<dl compact="compact">
+<dt><code>cce_descriptor_t descriptor</code></dt>
+<dd><p>Core values of the exceptional&ndash;condition object&ndash;type descriptor.
+</p></dd>
+</dl>
+</dd></dl>
 
 
 <dl>
 <dt><a name="index-cce_005fcondition_005ferrno_005ft"></a>Struct Typedef: <strong>cce_condition_errno_t</strong></dt>
-<dd><p>Structure type representing an <em>errno</em> exceptional condition object, signalled by a system
+<dd><p>Structure type representing an <em>errno</em> exceptional&ndash;condition object, signalled by a system
 function by setting <code>errno</code> to a non&ndash;zero value.  It has the following public fields:
 </p>
 <dl compact="compact">
+<dt><code>cce_condition_runtime_error_t runtime_error</code></dt>
+<dd><p>Core values of the exceptional&ndash;condition object&ndash;type descriptor.
+</p>
+</dd>
 <dt><code>int errnum</code></dt>
 <dd><p>The value of <code>errno</code>.
 </p>
 </dd>
 <dt><code>char const * message</code></dt>
-<dd><p>A statically allocated string describing the error.
+<dd><p>A statically allocated <acronym>ASCIIZ</acronym> string describing the error.
 </p></dd>
 </dl>
 </dd></dl>
@@ -2650,12 +2741,12 @@ function by setting <code>errno</code> to a non&ndash;zero value.  It has the fo
 
 <dl>
 <dt><a name="index-cce_005fcondition_005fnew_005ferrno"></a>Function: <em>cce_condition_t const *</em> <strong>cce_condition_new_errno</strong> <em>(int <var>errnum</var>)</em></dt>
-<dd><p>Given the <code>errno</code> code <var>errnum</var>, return the pointer to the condition object associated to
-it.
+<dd><p>Given the <code>errno</code> code <var>errnum</var>, return a pointer to the exceptional&ndash;condition object
+associated to it.
 </p>
-<p>If <var>errnum</var> is zero: return a pointer to condition object representing a successful operation.
-If <var>errnum</var> is not a valid <code>errno</code> code for the underlying platform: return a pointer to
-condition object representing an invalid code.
+<p>If <var>errnum</var> is zero: return a pointer to an exceptional&ndash;condition object representing a
+successful operation.  If <var>errnum</var> is not a valid <code>errno</code> code for the underlying platform:
+return a pointer to an exceptional&ndash;condition object representing an invalid code.
 </p></dd></dl>
 
 
@@ -2668,7 +2759,8 @@ condition object representing an invalid code.
 
 <dl>
 <dt><a name="index-cce_005fcondition_005fis_005ferrno"></a>Inline Function: <em>bool</em> <strong>cce_condition_is_errno</strong> <em>(cce_condition_t const * <var>C</var>)</em></dt>
-<dd><p>Return <code>true</code> if <var>C</var> is a condition object of type <em>errno</em>; otherwise return <code>false</code>.
+<dd><p>Return <code>true</code> if <var>C</var> references an <code>errno</code> exceptional&ndash;condition object; otherwise
+return <code>false</code>.
 </p></dd></dl>
 
 
@@ -2689,22 +2781,26 @@ CCExceptions for which it makes sense.
 
 <dl>
 <dt><a name="index-cce_005fdescriptor_005ferrno_005fptr"></a>Dynamic Constant: <em>cce_descriptor_errno_t const * const</em> <strong>cce_descriptor_errno_ptr</strong></dt>
-<dd><p>Pointer to a statically allocated structure representing the condition descriptor of all the
-<em>errno</em> condition objects.
+<dd><p>Pointer to a statically allocated structure representing the <code>errno</code> exceptional&ndash;condition
+object&ndash;type descriptor.
+</p></dd></dl>
+
+
+<a name="Structure-field-getters"></a>
+<h4 class="subsubheading">Structure field getters</h4>
+
+
+<dl>
+<dt><a name="index-cce_005fcondition_005fref_005ferrno_005ferrnum"></a>Function: <em>int</em> <strong>cce_condition_ref_errno_errnum</strong> <em>(cce_condition_t const * <var>C</var>)</em></dt>
+<dd><p>Return the value of the field <code>errnum</code> in the exceptional&ndash;condition object referenced by
+<var>C</var>, which must be of type <code>cce_condition_errno_t</code>
 </p></dd></dl>
 
 
 <dl>
-<dt><a name="index-cce_005fref_005fcondition_005ferrno_005ferrnum"></a>Function: <em>int</em> <strong>cce_ref_condition_errno_errnum</strong> <em>(cce_condition_t const * <var>C</var>)</em></dt>
-<dd><p>Return the value of the field <code>errnum</code> in the condition object <var>C</var> of type
-<code>cce_condition_errno_t</code>
-</p></dd></dl>
-
-
-<dl>
-<dt><a name="index-cce_005fref_005fcondition_005ferrno_005fmessage"></a>Function: <em>char const *</em> <strong>cce_ref_condition_errno_message</strong> <em>(cce_condition_t const * <var>C</var>)</em></dt>
-<dd><p>Return the value of the field <code>message</code> in the condition object <var>C</var> of type
-<code>cce_condition_errno_t</code>
+<dt><a name="index-cce_005fcondition_005fref_005ferrno_005fmessage"></a>Function: <em>char const *</em> <strong>cce_condition_ref_errno_message</strong> <em>(cce_condition_t const * <var>C</var>)</em></dt>
+<dd><p>Return the value of the field <code>message</code> in the exceptional&ndash;condition object referenced by
+<var>C</var>, which must be of type <code>cce_condition_errno_t</code>
 </p></dd></dl>
 
 <hr>
@@ -2740,46 +2836,65 @@ Next: <a href="#conditions-math-nan" accesskey="n" rel="next">conditions math na
 <h4 class="subsection">6.14.1 Error computing a mathematical expression</h4>
 
 
-<p>The <em>mathematical error exceptional&ndash;condition object</em> has the purpose of describing an
+<a name="index-mathematical-error_002c-exceptional-condition"></a>
+<a name="index-Exceptional-conditions_002c-mathematical-error"></a>
+
+
+<p>The <em>mathematical error</em> exceptional&ndash;condition object&ndash;type has the purpose of describing an
 exceptional condition caused by attempting to compute an invalid mathematical expression.
 </p>
-<p>There should be only one <em>mathematical error</em> condition object: the one predefined by
-CCExceptions.
+<p>There should be only one <em>mathematical error</em> exceptional&ndash;condition object: the one predefined
+by CCExceptions and built into the library as statically allocated structure.  Subtyping from
+this object&ndash;type is fine.
 </p>
 <p>All the following definitions are accessible from the header file <samp>ccexceptions.h</samp>.
 </p>
 
 <dl>
 <dt><a name="index-cce_005fdescriptor_005fmath_005ferror_005ft"></a>Struct Typedef: <strong>cce_descriptor_math_error_t</strong></dt>
-<dd><p>Structure type representing the descriptor for <em>mathematical error</em> condition objects.  This
-descriptor has the <em>runtime error</em> descriptor as parent.
-</p></dd></dl>
+<dd><p>Structure type representing the <em>mathematical error</em> exceptional&ndash;condition object&ndash;type
+descriptor.  This descriptor has the <em>runtime error</em> descriptor as parent.  It has the
+following public fields:
+</p>
+<dl compact="compact">
+<dt><code>cce_descriptor_t descriptor</code></dt>
+<dd><p>Core values of the exceptional&ndash;condition object&ndash;type descriptor.
+</p></dd>
+</dl>
+</dd></dl>
 
 
 <dl>
 <dt><a name="index-cce_005fcondition_005fmath_005ferror_005ft"></a>Struct Typedef: <strong>cce_condition_math_error_t</strong></dt>
-<dd><p>Structure type representing an <em>mathematical error</em> condition object.
-</p></dd></dl>
+<dd><p>Structure type representing a <em>mathematical error</em> exceptional&ndash;condition object.  It has the
+following public fields:
+</p>
+<dl compact="compact">
+<dt><code>cce_condition_runtime_error_t runtime_error</code></dt>
+<dd><p>Core values of the exceptional&ndash;condition object&ndash;type descriptor.
+</p></dd>
+</dl>
+</dd></dl>
 
 
 <dl>
 <dt><a name="index-cce_005fcondition_005finit_005fmath_005ferror"></a>Function: <em>void</em> <strong>cce_condition_init_math_error</strong> <em>(cce_condition_math_error_t * <var>C</var>)</em></dt>
-<dd><p>Initialise an already allocated condition object.  This function exists to allow sub&ndash;typing from
-<code>cce_condition_math_error_t</code>.
+<dd><p>Initialise an already allocated exceptional&ndash;condition object.  This function exists to allow
+subtyping from <code>cce_condition_math_error_t</code>.
 </p></dd></dl>
 
 
 <dl>
 <dt><a name="index-cce_005fcondition_005fnew_005fmath_005ferror"></a>Function: <em>cce_condition_t const *</em> <strong>cce_condition_new_math_error</strong> <em>(void)</em></dt>
-<dd><p>Return a pointer to the statically allocated structure representing the single <em>mathematical
-error</em> condition object.
+<dd><p>Return a pointer to the statically allocated structure representing the predefined
+<em>mathematical error</em> exceptional&ndash;condition object.
 </p></dd></dl>
 
 
 <dl>
 <dt><a name="index-cce_005fis_005fcondition_005fmath_005ferror"></a>Function: <em>bool</em> <strong>cce_is_condition_math_error</strong> <em>(cce_condition_t const * <var>C</var>)</em></dt>
-<dd><p>Return <code>true</code> if <var>C</var> is an <em>mathematical error</em> condition object; otherwise return
-<code>false</code>.
+<dd><p>Return <code>true</code> if <var>C</var> references a <em>mathematical error</em> exceptional&ndash;condition object;
+otherwise return <code>false</code>.
 </p></dd></dl>
 
 
@@ -2798,14 +2913,15 @@ CCExceptions for which it makes sense.
 
 <dl>
 <dt><a name="index-cce_005fdescriptor_005fmath_005ferror_005fptr"></a>Dynamic Constant: <em>cce_descriptor_math_error_t const * const</em> <strong>cce_descriptor_math_error_ptr</strong></dt>
-<dd><p>Pointer to a statically allocated structure representing the <em>mathematical error</em> condition
-descriptor for the single <em>mathematical error</em> condition object.
+<dd><p>Pointer to a statically allocated structure representing the <em>mathematical error</em>
+exceptional&ndash;condition object&ndash;type descriptor.
 </p></dd></dl>
 
 
 <dl>
 <dt><a name="index-cce_005fcondition_005fmath_005ferror_005fptr"></a>Dynamic Constant: <em>cce_condition_math_error_t const * const</em> <strong>cce_condition_math_error_ptr</strong></dt>
-<dd><p>Pointer to a statically allocated structure representing the <em>mathematical error</em> condition object.
+<dd><p>Pointer to a statically allocated structure representing the <em>mathematical error</em>
+exceptional&ndash;condition object.
 </p></dd></dl>
 
 <hr>
@@ -2814,50 +2930,72 @@ descriptor for the single <em>mathematical error</em> condition object.
 <p>
 Next: <a href="#conditions-math-infinity" accesskey="n" rel="next">conditions math infinity</a>, Previous: <a href="#conditions-math-error" accesskey="p" rel="prev">conditions math error</a>, Up: <a href="#conditions-math" accesskey="u" rel="up">conditions math</a> &nbsp; [<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="#concept-index" title="Index" rel="index">Index</a>]</p>
 </div>
-<a name="Mathematical-not_002da_002dnumber-error"></a>
-<h4 class="subsection">6.14.2 Mathematical not-a-number error</h4>
+<a name="Mathematical-not_002d_002da_002d_002dnumber-error"></a>
+<h4 class="subsection">6.14.2 Mathematical not&ndash;a&ndash;number error</h4>
 
 
-<p>The <em>mathematical not&ndash;a&ndash;number exceptional&ndash;condition object</em> has the purpose of describing an
-exceptional condition caused by not&ndash;a&ndash;number result while computing a mathematical expression.
+<a name="index-mathematical-not_002da_002dnumber-error_002c-exceptional-condition"></a>
+<a name="index-Exceptional-conditions_002c-mathematical-not_002da_002dnumber-error"></a>
+<a name="index-not_002da_002dnumber-error_002c-exceptional-condition"></a>
+<a name="index-Exceptional-conditions_002c-not_002da_002dnumber-error"></a>
+
+
+<p>The <em>mathematical not&ndash;a&ndash;number</em> exceptional&ndash;condition object&ndash;type has the purpose of
+describing an exceptional condition caused by a not&ndash;a&ndash;number result while computing a mathematical
+expression.
 </p>
-<p>There should be only one <em>mathematical not&ndash;a&ndash;number</em> condition object: the one predefined by
-CCExceptions.
+<p>There should be only one <em>mathematical not&ndash;a&ndash;number</em> exceptional&ndash;condition object: the one
+predefined by CCExceptions and built into the library as statically allocated structure.
+Subtyping from this object&ndash;type is fine.
 </p>
 <p>All the following definitions are accessible from the header file <samp>ccexceptions.h</samp>.
 </p>
 
 <dl>
 <dt><a name="index-cce_005fdescriptor_005fmath_005fnan_005ft"></a>Struct Typedef: <strong>cce_descriptor_math_nan_t</strong></dt>
-<dd><p>Structure type representing the descriptor for <em>mathematical not&ndash;a&ndash;number</em> condition objects.
-This descriptor has the <em>mathematical error</em> descriptor as parent.
-</p></dd></dl>
+<dd><p>Structure type representing the <em>mathematical not&ndash;a&ndash;number</em> exceptional&ndash;condition
+object&ndash;type descriptor.  This descriptor has the <em>mathematical error</em> descriptor as parent.
+It has the following public fields:
+</p>
+<dl compact="compact">
+<dt><code>cce_descriptor_t descriptor</code></dt>
+<dd><p>Core values of the exceptional&ndash;condition object&ndash;type descriptor.
+</p></dd>
+</dl>
+</dd></dl>
 
 
 <dl>
 <dt><a name="index-cce_005fcondition_005fmath_005fnan_005ft"></a>Struct Typedef: <strong>cce_condition_math_nan_t</strong></dt>
-<dd><p>Structure type representing an <em>mathematical not&ndash;a&ndash;number</em> condition object.
-</p></dd></dl>
+<dd><p>Structure type representing a <em>mathematical not&ndash;a&ndash;number</em> exceptional&ndash;condition object.  It
+has the following public fields:
+</p>
+<dl compact="compact">
+<dt><code>cce_condition_math_error_t math_error</code></dt>
+<dd><p>Core values of the exceptional&ndash;condition object&ndash;type descriptor.
+</p></dd>
+</dl>
+</dd></dl>
 
 
 <dl>
 <dt><a name="index-cce_005fcondition_005finit_005fmath_005fnan"></a>Function: <em>void</em> <strong>cce_condition_init_math_nan</strong> <em>(cce_condition_math_nan_t * <var>C</var>)</em></dt>
-<dd><p>Initialise an already allocated condition object.  This function exists to allow sub&ndash;typing from
-<code>cce_condition_math_nan_t</code>.
+<dd><p>Initialise an already allocated exceptional&ndash;condition object.  This function exists to allow
+subtyping from <code>cce_condition_math_nan_t</code>.
 </p></dd></dl>
 
 
 <dl>
 <dt><a name="index-cce_005fcondition_005fnew_005fmath_005fnan"></a>Function: <em>cce_condition_t const *</em> <strong>cce_condition_new_math_nan</strong> <em>(void)</em></dt>
-<dd><p>Return a pointer to the statically allocated structure representing the single <em>mathematical
-not&ndash;a&ndash;number</em> condition object.
+<dd><p>Return a pointer to the statically allocated structure representing the predefined
+<em>mathematical not&ndash;a&ndash;number</em> exceptional&ndash;condition object.
 </p></dd></dl>
 
 
 <dl>
 <dt><a name="index-cce_005fis_005fcondition_005fmath_005fnan"></a>Function: <em>bool</em> <strong>cce_is_condition_math_nan</strong> <em>(cce_condition_t const * <var>C</var>)</em></dt>
-<dd><p>Return <code>true</code> if <var>C</var> is an <em>mathematical not&ndash;a&ndash;number</em> condition object; otherwise
-return <code>false</code>.
+<dd><p>Return <code>true</code> if <var>C</var> references a <em>mathematical not&ndash;a&ndash;number</em> exceptional&ndash;condition
+object; otherwise return <code>false</code>.
 </p></dd></dl>
 
 
@@ -2876,14 +3014,15 @@ CCExceptions for which it makes sense.
 
 <dl>
 <dt><a name="index-cce_005fdescriptor_005fmath_005fnan_005fptr"></a>Dynamic Constant: <em>cce_descriptor_math_nan_t const * const</em> <strong>cce_descriptor_math_nan_ptr</strong></dt>
-<dd><p>Pointer to a statically allocated structure representing the <em>mathematical not&ndash;a&ndash;number</em> condition
-descriptor for the single <em>mathematical not&ndash;a&ndash;number</em> condition object.
+<dd><p>Pointer to a statically allocated structure representing the <em>mathematical not&ndash;a&ndash;number</em>
+exceptional&ndash;condition object&ndash;type descriptor.
 </p></dd></dl>
 
 
 <dl>
 <dt><a name="index-cce_005fcondition_005fmath_005fnan_005fptr"></a>Dynamic Constant: <em>cce_condition_math_nan_t const * const</em> <strong>cce_condition_math_nan_ptr</strong></dt>
-<dd><p>Pointer to a statically allocated structure representing the <em>mathematical not&ndash;a&ndash;number</em> condition object.
+<dd><p>Pointer to a statically allocated structure representing the <em>mathematical not&ndash;a&ndash;number</em>
+exceptional&ndash;condition object.
 </p></dd></dl>
 
 <hr>
@@ -2896,46 +3035,67 @@ Next: <a href="#conditions-math-overflow" accesskey="n" rel="next">conditions ma
 <h4 class="subsection">6.14.3 Mathematical infinity error</h4>
 
 
-<p>The <em>mathematical infinity exceptional&ndash;condition object</em> has the purpose of describing an
+<a name="index-mathematical-infinity-error_002c-exceptional-condition"></a>
+<a name="index-Exceptional-conditions_002c-mathematical-infinity-error"></a>
+<a name="index-infinity-error_002c-exceptional-condition"></a>
+<a name="index-Exceptional-conditions_002c-infinity-error"></a>
+
+
+<p>The <em>mathematical infinity</em> exceptional&ndash;condition object&ndash;type has the purpose of describing an
 exceptional condition caused by an infinite result while computing a mathematical expression.
 </p>
-<p>There should be only one <em>mathematical infinity</em> condition object: the one predefined by
-CCExceptions.
+<p>There should be only one <em>mathematical infinity</em> exceptional&ndash;condition object: the one
+predefined by CCExceptions and built into the library as statically allocated structure.
+Subtyping from this object&ndash;type is fine.
 </p>
 <p>All the following definitions are accessible from the header file <samp>ccexceptions.h</samp>.
 </p>
 
 <dl>
 <dt><a name="index-cce_005fdescriptor_005fmath_005finfinity_005ft"></a>Struct Typedef: <strong>cce_descriptor_math_infinity_t</strong></dt>
-<dd><p>Structure type representing the descriptor for <em>mathematical infinity</em> condition objects.  This
-descriptor has the <em>mathematical error</em> descriptor as parent.
-</p></dd></dl>
+<dd><p>Structure type representing the <em>mathematical infinity</em> exceptional&ndash;condition object&ndash;type
+descriptor.  This descriptor has the <em>mathematical error</em> descriptor as parent.  It has the
+following public fields:
+</p>
+<dl compact="compact">
+<dt><code>cce_descriptor_t descriptor</code></dt>
+<dd><p>Core values of the exceptional&ndash;condition object&ndash;type descriptor.
+</p></dd>
+</dl>
+</dd></dl>
 
 
 <dl>
 <dt><a name="index-cce_005fcondition_005fmath_005finfinity_005ft"></a>Struct Typedef: <strong>cce_condition_math_infinity_t</strong></dt>
-<dd><p>Structure type representing an <em>mathematical infinity</em> condition object.
-</p></dd></dl>
+<dd><p>Structure type representing a <em>mathematical infinity</em> exceptional&ndash;condition object.  It has
+the following public fields:
+</p>
+<dl compact="compact">
+<dt><code>cce_condition_math_error_t math_error</code></dt>
+<dd><p>Core values of the exceptional&ndash;condition object&ndash;type descriptor.
+</p></dd>
+</dl>
+</dd></dl>
 
 
 <dl>
 <dt><a name="index-cce_005fcondition_005finit_005fmath_005finfinity"></a>Function: <em>void</em> <strong>cce_condition_init_math_infinity</strong> <em>(cce_condition_math_infinity_t * <var>C</var>)</em></dt>
-<dd><p>Initialise an already allocated condition object.  This function exists to allow sub&ndash;typing from
-<code>cce_condition_math_infinity_t</code>.
+<dd><p>Initialise an already allocated exceptional&ndash;condition object.  This function exists to allow
+subtyping from <code>cce_condition_math_infinity_t</code>.
 </p></dd></dl>
 
 
 <dl>
 <dt><a name="index-cce_005fcondition_005fnew_005fmath_005finfinity"></a>Function: <em>cce_condition_t const *</em> <strong>cce_condition_new_math_infinity</strong> <em>(void)</em></dt>
-<dd><p>Return a pointer to the statically allocated structure representing the single <em>mathematical
-infinity</em> condition object.
+<dd><p>Return a pointer to the statically allocated structure representing the predefined
+<em>mathematical infinity</em> exceptional&ndash;condition object.
 </p></dd></dl>
 
 
 <dl>
 <dt><a name="index-cce_005fis_005fcondition_005fmath_005finfinity"></a>Function: <em>bool</em> <strong>cce_is_condition_math_infinity</strong> <em>(cce_condition_t const * <var>C</var>)</em></dt>
-<dd><p>Return <code>true</code> if <var>C</var> is an <em>mathematical infinity</em> condition object; otherwise return
-<code>false</code>.
+<dd><p>Return <code>true</code> if <var>C</var> references a <em>mathematical infinity</em> exceptional&ndash;condition object;
+otherwise return <code>false</code>.
 </p></dd></dl>
 
 
@@ -2954,15 +3114,15 @@ CCExceptions for which it makes sense.
 
 <dl>
 <dt><a name="index-cce_005fdescriptor_005fmath_005finfinity_005fptr"></a>Dynamic Constant: <em>cce_descriptor_math_infinity_t const * const</em> <strong>cce_descriptor_math_infinity_ptr</strong></dt>
-<dd><p>Pointer to a statically allocated structure representing the <em>mathematical infinity</em> condition
-descriptor for the single <em>mathematical infinity</em> condition object.
+<dd><p>Pointer to a statically allocated structure representing the <em>mathematical infinity</em>
+exceptional&ndash;condition object&ndash;type descriptor.
 </p></dd></dl>
 
 
 <dl>
 <dt><a name="index-cce_005fcondition_005fmath_005finfinity_005fptr"></a>Dynamic Constant: <em>cce_condition_math_infinity_t const * const</em> <strong>cce_condition_math_infinity_ptr</strong></dt>
-<dd><p>Pointer to a statically allocated structure representing the <em>mathematical infinity</em> condition
-object.
+<dd><p>Pointer to a statically allocated structure representing the <em>mathematical infinity</em>
+exceptional&ndash;condition object.
 </p></dd></dl>
 
 <hr>
@@ -2975,46 +3135,67 @@ Next: <a href="#conditions-math-underflow" accesskey="n" rel="next">conditions m
 <h4 class="subsection">6.14.4 Mathematical overflow error</h4>
 
 
-<p>The <em>mathematical overflow exceptional&ndash;condition object</em> has the purpose of describing an
+<a name="index-mathematical-overflow-error_002c-exceptional-condition"></a>
+<a name="index-Exceptional-conditions_002c-mathematical-overflow-error"></a>
+<a name="index-overflow-error_002c-exceptional-condition"></a>
+<a name="index-Exceptional-conditions_002c-overflow-error"></a>
+
+
+<p>The <em>mathematical overflow</em> exceptional&ndash;condition object&ndash;type has the purpose of describing an
 exceptional condition caused by an overflow while computing a mathematical expression.
 </p>
-<p>There should be only one <em>mathematical overflow</em> condition object: the one predefined by
-CCExceptions.
+<p>There should be only one <em>mathematical overflow</em> exceptional&ndash;condition object: the one
+predefined by CCExceptions and built into the library as statically allocated structure.
+Subtyping from this object&ndash;type is fine.
 </p>
 <p>All the following definitions are accessible from the header file <samp>ccexceptions.h</samp>.
 </p>
 
 <dl>
 <dt><a name="index-cce_005fdescriptor_005fmath_005foverflow_005ft"></a>Struct Typedef: <strong>cce_descriptor_math_overflow_t</strong></dt>
-<dd><p>Structure type representing the descriptor for <em>mathematical overflow</em> condition objects.  This
-descriptor has the <em>mathematical error</em> descriptor as parent.
-</p></dd></dl>
+<dd><p>Structure type representing the <em>mathematical overflow</em> exceptional&ndash;condition object&ndash;type
+descriptor.  This descriptor has the <em>mathematical error</em> descriptor as parent.  It has the
+following public fields:
+</p>
+<dl compact="compact">
+<dt><code>cce_descriptor_t descriptor</code></dt>
+<dd><p>Core values of the exceptional&ndash;condition object&ndash;type descriptor.
+</p></dd>
+</dl>
+</dd></dl>
 
 
 <dl>
 <dt><a name="index-cce_005fcondition_005fmath_005foverflow_005ft"></a>Struct Typedef: <strong>cce_condition_math_overflow_t</strong></dt>
-<dd><p>Structure type representing an <em>mathematical overflow</em> condition object.
-</p></dd></dl>
+<dd><p>Structure type representing a <em>mathematical overflow</em> exceptional&ndash;condition object.  It has
+the following public fields:
+</p>
+<dl compact="compact">
+<dt><code>cce_condition_math_error_t math_error</code></dt>
+<dd><p>Core values of the exceptional&ndash;condition object&ndash;type descriptor.
+</p></dd>
+</dl>
+</dd></dl>
 
 
 <dl>
 <dt><a name="index-cce_005fcondition_005finit_005fmath_005foverflow"></a>Function: <em>void</em> <strong>cce_condition_init_math_overflow</strong> <em>(cce_condition_math_overflow_t * <var>C</var>)</em></dt>
-<dd><p>Initialise an already allocated condition object.  This function exists to allow sub&ndash;typing from
-<code>cce_condition_math_overflow_t</code>.
+<dd><p>Initialise an already allocated exceptional&ndash;condition object.  This function exists to allow
+subtyping from <code>cce_condition_math_overflow_t</code>.
 </p></dd></dl>
 
 
 <dl>
 <dt><a name="index-cce_005fcondition_005fnew_005fmath_005foverflow"></a>Function: <em>cce_condition_t const *</em> <strong>cce_condition_new_math_overflow</strong> <em>(void)</em></dt>
-<dd><p>Return a pointer to the statically allocated structure representing the single <em>mathematical
-overflow</em> condition object.
+<dd><p>Return a pointer to the statically allocated structure representing the predefined
+<em>mathematical overflow</em> exceptional&ndash;condition object.
 </p></dd></dl>
 
 
 <dl>
 <dt><a name="index-cce_005fis_005fcondition_005fmath_005foverflow"></a>Function: <em>bool</em> <strong>cce_is_condition_math_overflow</strong> <em>(cce_condition_t const * <var>C</var>)</em></dt>
-<dd><p>Return <code>true</code> if <var>C</var> is an <em>mathematical overflow</em> condition object; otherwise return
-<code>false</code>.
+<dd><p>Return <code>true</code> if <var>C</var> references a <em>mathematical overflow</em> exceptional&ndash;condition object;
+otherwise return <code>false</code>.
 </p></dd></dl>
 
 
@@ -3033,14 +3214,15 @@ CCExceptions for which it makes sense.
 
 <dl>
 <dt><a name="index-cce_005fdescriptor_005fmath_005foverflow_005fptr"></a>Dynamic Constant: <em>cce_descriptor_math_overflow_t const * const</em> <strong>cce_descriptor_math_overflow_ptr</strong></dt>
-<dd><p>Pointer to a statically allocated structure representing the <em>mathematical overflow</em> condition
-descriptor for the single <em>mathematical overflow</em> condition object.
+<dd><p>Pointer to a statically allocated structure representing the <em>mathematical overflow</em>
+exceptional&ndash;condition object&ndash;type descriptor.
 </p></dd></dl>
 
 
 <dl>
 <dt><a name="index-cce_005fcondition_005fmath_005foverflow_005fptr"></a>Dynamic Constant: <em>cce_condition_math_overflow_t const * const</em> <strong>cce_condition_math_overflow_ptr</strong></dt>
-<dd><p>Pointer to a statically allocated structure representing the <em>mathematical overflow</em> condition object.
+<dd><p>Pointer to a statically allocated structure representing the <em>mathematical overflow</em>
+exceptional&ndash;condition object.
 </p></dd></dl>
 
 <hr>
@@ -3053,46 +3235,67 @@ Previous: <a href="#conditions-math-overflow" accesskey="p" rel="prev">condition
 <h4 class="subsection">6.14.5 Mathematical underflow error</h4>
 
 
-<p>The <em>mathematical underflow exceptional&ndash;condition object</em> has the purpose of describing an
+<a name="index-mathematical-underflow-error_002c-exceptional-condition"></a>
+<a name="index-Exceptional-conditions_002c-mathematical-underflow-error"></a>
+<a name="index-underflow-error_002c-exceptional-condition"></a>
+<a name="index-Exceptional-conditions_002c-underflow-error"></a>
+
+
+<p>The <em>mathematical underflow</em> exceptional&ndash;condition object&ndash;type has the purpose of describing an
 exceptional condition caused by an underflow while computing a mathematical expression.
 </p>
-<p>There should be only one <em>mathematical underflow</em> condition object: the one predefined by
-CCExceptions.
+<p>There should be only one <em>mathematical underflow</em> exceptional&ndash;condition object: the one
+predefined by CCExceptions and built into the library as statically allocated structure.
+Subtyping from this object&ndash;type is fine.
 </p>
 <p>All the following definitions are accessible from the header file <samp>ccexceptions.h</samp>.
 </p>
 
 <dl>
 <dt><a name="index-cce_005fdescriptor_005fmath_005funderflow_005ft"></a>Struct Typedef: <strong>cce_descriptor_math_underflow_t</strong></dt>
-<dd><p>Structure type representing the descriptor for <em>mathematical underflow</em> condition objects.
-This descriptor has the <em>mathematical error</em> descriptor as parent.
-</p></dd></dl>
+<dd><p>Structure type representing the <em>mathematical underflow</em> exceptional&ndash;condition object&ndash;type
+descriptor.  This descriptor has the <em>mathematical error</em> descriptor as parent.  It has the
+following public fields:
+</p>
+<dl compact="compact">
+<dt><code>cce_descriptor_t descriptor</code></dt>
+<dd><p>Core values of the exceptional&ndash;condition object&ndash;type descriptor.
+</p></dd>
+</dl>
+</dd></dl>
 
 
 <dl>
 <dt><a name="index-cce_005fcondition_005fmath_005funderflow_005ft"></a>Struct Typedef: <strong>cce_condition_math_underflow_t</strong></dt>
-<dd><p>Structure type representing an <em>mathematical underflow</em> condition object.
-</p></dd></dl>
+<dd><p>Structure type representing a <em>mathematical underflow</em> exceptional&ndash;condition object.  It has
+the following public fields:
+</p>
+<dl compact="compact">
+<dt><code>cce_condition_math_error_t math_error</code></dt>
+<dd><p>Core values of the exceptional&ndash;condition object&ndash;type descriptor.
+</p></dd>
+</dl>
+</dd></dl>
 
 
 <dl>
 <dt><a name="index-cce_005fcondition_005finit_005fmath_005funderflow"></a>Function: <em>void</em> <strong>cce_condition_init_math_underflow</strong> <em>(cce_condition_math_underflow_t * <var>C</var>)</em></dt>
-<dd><p>Initialise an already allocated condition object.  This function exists to allow sub&ndash;typing from
-<code>cce_condition_math_underflow_t</code>.
+<dd><p>Initialise an already allocated exceptional&ndash;condition object.  This function exists to allow
+subtyping from <code>cce_condition_math_underflow_t</code>.
 </p></dd></dl>
 
 
 <dl>
 <dt><a name="index-cce_005fcondition_005fnew_005fmath_005funderflow"></a>Function: <em>cce_condition_t const *</em> <strong>cce_condition_new_math_underflow</strong> <em>(void)</em></dt>
-<dd><p>Return a pointer to the statically allocated structure representing the single <em>mathematical
-underflow</em> condition object.
+<dd><p>Return a pointer to the statically allocated structure representing the predefined
+<em>mathematical underflow</em> exceptional&ndash;condition object.
 </p></dd></dl>
 
 
 <dl>
 <dt><a name="index-cce_005fis_005fcondition_005fmath_005funderflow"></a>Function: <em>bool</em> <strong>cce_is_condition_math_underflow</strong> <em>(cce_condition_t const * <var>C</var>)</em></dt>
-<dd><p>Return <code>true</code> if <var>C</var> is an <em>mathematical underflow</em> condition object; otherwise return
-<code>false</code>.
+<dd><p>Return <code>true</code> if <var>C</var> references a <em>mathematical underflow</em> exceptional&ndash;condition object;
+otherwise return <code>false</code>.
 </p></dd></dl>
 
 
@@ -3111,15 +3314,15 @@ CCExceptions for which it makes sense.
 
 <dl>
 <dt><a name="index-cce_005fdescriptor_005fmath_005funderflow_005fptr"></a>Dynamic Constant: <em>cce_descriptor_math_underflow_t const * const</em> <strong>cce_descriptor_math_underflow_ptr</strong></dt>
-<dd><p>Pointer to a statically allocated structure representing the <em>mathematical underflow</em> condition
-descriptor for the single <em>mathematical underflow</em> condition object.
+<dd><p>Pointer to a statically allocated structure representing the <em>mathematical underflow</em>
+exceptional&ndash;condition object&ndash;type descriptor.
 </p></dd></dl>
 
 
 <dl>
 <dt><a name="index-cce_005fcondition_005fmath_005funderflow_005fptr"></a>Dynamic Constant: <em>cce_condition_math_underflow_t const * const</em> <strong>cce_condition_math_underflow_ptr</strong></dt>
-<dd><p>Pointer to a statically allocated structure representing the <em>mathematical underflow</em> condition
-object.
+<dd><p>Pointer to a statically allocated structure representing the <em>mathematical underflow</em>
+exceptional&ndash;condition object.
 </p></dd></dl>
 
 <hr>
@@ -3242,7 +3445,6 @@ if (cce_location(L)) {
 
 <dl>
 <dt><a name="index-cce_005fclean_005fhandler_005fmalloc_005finit"></a>Function: <em>void</em> <strong>cce_clean_handler_malloc_init</strong> <em>(cce_destination_t <var>L</var>, cce_handler_t * <var>H</var>, void * <var>P</var>)</em></dt>
-<dt><a name="index-cce_005fcleanup_005fhandler_005fmalloc_005finit"></a>Function: <em>void</em> <strong>cce_cleanup_handler_malloc_init</strong> <em>(cce_destination_t <var>L</var>, cce_handler_t * <var>H</var>, void * <var>P</var>)</em></dt>
 <dt><a name="index-cce_005ferror_005fhandler_005fmalloc_005finit"></a>Function: <em>void</em> <strong>cce_error_handler_malloc_init</strong> <em>(cce_destination_t <var>L</var>, cce_handler_t * <var>H</var>, void * <var>P</var>)</em></dt>
 <dd><p>Register <var>H</var> as clean or error handler in the context of <var>L</var>.  The handler function will
 release the memory block referenced by <var>P</var> using the standard function <code>free()</code>.
@@ -3311,7 +3513,6 @@ if (cce_location(L)) {
 
 <dl>
 <dt><a name="index-cce_005fsys_005fmalloc_005fguarded_005fclean"></a>Function: <em>void *</em> <strong>cce_sys_malloc_guarded_clean</strong> <em>(cce_destination_t <var>L</var>, cce_clean_handler_t * <var>P_H</var>, size_t <var>size</var>)</em></dt>
-<dt><a name="index-cce_005fsys_005fmalloc_005fguarded_005fcleanup"></a>Function: <em>void *</em> <strong>cce_sys_malloc_guarded_cleanup</strong> <em>(cce_destination_t <var>L</var>, cce_clean_handler_t * <var>P_H</var>, size_t <var>size</var>)</em></dt>
 <dd><p>Like <code>cce_sys_malloc()</code>, but register the resulting pointer in the handler referenced by
 <var>P_H</var>.
 </p></dd></dl>
@@ -3353,7 +3554,6 @@ Next: <a href="#system-memory-grealloc" accesskey="n" rel="next">system memory g
 
 <dl>
 <dt><a name="index-cce_005fsys_005fcalloc_005fguarded_005fclean"></a>Function: <em>void *</em> <strong>cce_sys_calloc_guarded_clean</strong> <em>(cce_destination_t <var>L</var>, cce_clean_handler_t * <var>P_H</var>, size_t <var>count</var>, size_t <var>eltsize</var>)</em></dt>
-<dt><a name="index-cce_005fsys_005fcalloc_005fguarded_005fcleanup"></a>Function: <em>void *</em> <strong>cce_sys_calloc_guarded_cleanup</strong> <em>(cce_destination_t <var>L</var>, cce_clean_handler_t * <var>P_H</var>, size_t <var>count</var>, size_t <var>eltsize</var>)</em></dt>
 <dd><p>Like <code>cce_sys_calloc()</code>, but register the resulting pointer in the handler referenced by
 <var>P_H</var>.
 </p></dd></dl>
@@ -3395,7 +3595,6 @@ Previous: <a href="#system-memory-gcalloc" accesskey="p" rel="prev">system memor
 
 <dl>
 <dt><a name="index-cce_005fsys_005frealloc_005fguarded_005fclean"></a>Function: <em>void *</em> <strong>cce_sys_realloc_guarded_clean</strong> <em>(cce_destination_t <var>L</var>, cce_clean_handler_t * <var>P_H</var>, void * <var>old_P</var>, size_t <var>newsize</var>)</em></dt>
-<dt><a name="index-cce_005fsys_005frealloc_005fguarded_005fcleanup"></a>Function: <em>void *</em> <strong>cce_sys_realloc_guarded_cleanup</strong> <em>(cce_destination_t <var>L</var>, cce_clean_handler_t * <var>P_H</var>, void * <var>old_P</var>, size_t <var>newsize</var>)</em></dt>
 <dd><p>Like <code>cce_sys_realloc()</code>, but register the resulting pointer in the handler referenced by
 <var>P_H</var>.  The handler is updated to reference the new memory pointer.  If, upon entering this
 function, the handler <var>P_H</var> does not reference the pointer <var>old_P</var>: raise an exception by
@@ -4294,15 +4493,27 @@ Next: <a href="#function-index" accesskey="n" rel="next">function index</a>, Pre
 <a name="An-entry-for-each-concept"></a>
 <h2 class="appendix">Appendix D An entry for each concept</h2>
 
-<table><tr><th valign="top">Jump to: &nbsp; </th><td><a class="summary-letter" href="#concept-index_cp_letter-C"><b>C</b></a>
+<table><tr><th valign="top">Jump to: &nbsp; </th><td><a class="summary-letter" href="#concept-index_cp_letter-B"><b>B</b></a>
+ &nbsp; 
+<a class="summary-letter" href="#concept-index_cp_letter-C"><b>C</b></a>
  &nbsp; 
 <a class="summary-letter" href="#concept-index_cp_letter-E"><b>E</b></a>
  &nbsp; 
 <a class="summary-letter" href="#concept-index_cp_letter-F"><b>F</b></a>
  &nbsp; 
+<a class="summary-letter" href="#concept-index_cp_letter-I"><b>I</b></a>
+ &nbsp; 
 <a class="summary-letter" href="#concept-index_cp_letter-L"><b>L</b></a>
  &nbsp; 
+<a class="summary-letter" href="#concept-index_cp_letter-M"><b>M</b></a>
+ &nbsp; 
+<a class="summary-letter" href="#concept-index_cp_letter-N"><b>N</b></a>
+ &nbsp; 
+<a class="summary-letter" href="#concept-index_cp_letter-O"><b>O</b></a>
+ &nbsp; 
 <a class="summary-letter" href="#concept-index_cp_letter-P"><b>P</b></a>
+ &nbsp; 
+<a class="summary-letter" href="#concept-index_cp_letter-R"><b>R</b></a>
  &nbsp; 
 <a class="summary-letter" href="#concept-index_cp_letter-U"><b>U</b></a>
  &nbsp; 
@@ -4310,34 +4521,94 @@ Next: <a href="#function-index" accesskey="n" rel="next">function index</a>, Pre
 <table class="index-cp" border="0">
 <tr><td></td><th align="left">Index Entry</th><td>&nbsp;</td><th align="left"> Section</th></tr>
 <tr><td colspan="4"> <hr></td></tr>
+<tr><th><a name="concept-index_cp_letter-B">B</a></th><td></td><td></td></tr>
+<tr><td></td><td valign="top"><a href="#index-break_002c-exceptional-condition">break, exceptional condition</a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-break">conditions break</a></td></tr>
+<tr><td colspan="4"> <hr></td></tr>
 <tr><th><a name="concept-index_cp_letter-C">C</a></th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-CCEXCEPTIONS_005fEXCLUDE_005fUNREACHABLE_002c-preprocessor-symbol"><code>CCEXCEPTIONS_EXCLUDE_UNREACHABLE</code>, preprocessor symbol</a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-unreachable">conditions unreachable</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th><a name="concept-index_cp_letter-E">E</a></th><td></td><td></td></tr>
-<tr><td></td><td valign="top"><a href="#index-Exceptional-conditions_002c-Unreachable-code">Exceptional conditions, Unreachable code</a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-unreachable">conditions unreachable</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-errno_002c-exceptional-condition"><code>errno</code>, exceptional condition</a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-errno">conditions errno</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-error_002c-exceptional-condition">error, exceptional condition</a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-error">conditions error</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-Exceptional-conditions_002c-break">Exceptional conditions, break</a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-break">conditions break</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-Exceptional-conditions_002c-errno">Exceptional conditions, <code>errno</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-errno">conditions errno</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-Exceptional-conditions_002c-error">Exceptional conditions, error</a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-error">conditions error</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-Exceptional-conditions_002c-infinity-error">Exceptional conditions, infinity error</a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-math-infinity">conditions math infinity</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-Exceptional-conditions_002c-invalid-argument">Exceptional conditions, invalid argument</a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-invalid-arg">conditions invalid arg</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-Exceptional-conditions_002c-logic-error">Exceptional conditions, logic error</a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-logic-error">conditions logic error</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-Exceptional-conditions_002c-mathematical-error">Exceptional conditions, mathematical error</a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-math-error">conditions math error</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-Exceptional-conditions_002c-mathematical-infinity-error">Exceptional conditions, mathematical infinity error</a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-math-infinity">conditions math infinity</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-Exceptional-conditions_002c-mathematical-not_002da_002dnumber-error">Exceptional conditions, mathematical not-a-number error</a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-math-nan">conditions math nan</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-Exceptional-conditions_002c-mathematical-overflow-error">Exceptional conditions, mathematical overflow error</a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-math-overflow">conditions math overflow</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-Exceptional-conditions_002c-mathematical-underflow-error">Exceptional conditions, mathematical underflow error</a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-math-underflow">conditions math underflow</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-Exceptional-conditions_002c-not_002da_002dnumber-error">Exceptional conditions, not-a-number error</a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-math-nan">conditions math nan</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-Exceptional-conditions_002c-overflow-error">Exceptional conditions, overflow error</a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-math-overflow">conditions math overflow</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-Exceptional-conditions_002c-root">Exceptional conditions, root</a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-root">conditions root</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-Exceptional-conditions_002c-run_002d_002dtime-error">Exceptional conditions, run&ndash;time error</a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-run_002dtime-error">conditions run-time error</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-Exceptional-conditions_002c-underflow-error">Exceptional conditions, underflow error</a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-math-underflow">conditions math underflow</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-Exceptional-conditions_002c-unimplemented">Exceptional conditions, unimplemented</a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-unimplemented">conditions unimplemented</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-Exceptional-conditions_002c-unknown">Exceptional conditions, unknown</a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-unknown">conditions unknown</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-Exceptional-conditions_002c-unreachable-code">Exceptional conditions, unreachable code</a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-unreachable">conditions unreachable</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th><a name="concept-index_cp_letter-F">F</a></th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-FDL_002c-GNU-Free-Documentation-License">FDL, GNU Free Documentation License</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Documentation-License">Documentation License</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
+<tr><th><a name="concept-index_cp_letter-I">I</a></th><td></td><td></td></tr>
+<tr><td></td><td valign="top"><a href="#index-infinity-error_002c-exceptional-condition">infinity error, exceptional condition</a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-math-infinity">conditions math infinity</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-invalid-argument_002c-exceptional-condition">invalid argument, exceptional condition</a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-invalid-arg">conditions invalid arg</a></td></tr>
+<tr><td colspan="4"> <hr></td></tr>
 <tr><th><a name="concept-index_cp_letter-L">L</a></th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-LGPL_002c-Lesser-General-Public-License">LGPL, Lesser General Public License</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Package-License">Package License</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-logic-error_002c-exceptional-condition">logic error, exceptional condition</a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-logic-error">conditions logic error</a></td></tr>
+<tr><td colspan="4"> <hr></td></tr>
+<tr><th><a name="concept-index_cp_letter-M">M</a></th><td></td><td></td></tr>
+<tr><td></td><td valign="top"><a href="#index-mathematical-error_002c-exceptional-condition">mathematical error, exceptional condition</a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-math-error">conditions math error</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-mathematical-infinity-error_002c-exceptional-condition">mathematical infinity error, exceptional condition</a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-math-infinity">conditions math infinity</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-mathematical-not_002da_002dnumber-error_002c-exceptional-condition">mathematical not-a-number error, exceptional condition</a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-math-nan">conditions math nan</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-mathematical-overflow-error_002c-exceptional-condition">mathematical overflow error, exceptional condition</a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-math-overflow">conditions math overflow</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-mathematical-underflow-error_002c-exceptional-condition">mathematical underflow error, exceptional condition</a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-math-underflow">conditions math underflow</a></td></tr>
+<tr><td colspan="4"> <hr></td></tr>
+<tr><th><a name="concept-index_cp_letter-N">N</a></th><td></td><td></td></tr>
+<tr><td></td><td valign="top"><a href="#index-not_002da_002dnumber-error_002c-exceptional-condition">not-a-number error, exceptional condition</a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-math-nan">conditions math nan</a></td></tr>
+<tr><td colspan="4"> <hr></td></tr>
+<tr><th><a name="concept-index_cp_letter-O">O</a></th><td></td><td></td></tr>
+<tr><td></td><td valign="top"><a href="#index-overflow-error_002c-exceptional-condition">overflow error, exceptional condition</a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-math-overflow">conditions math overflow</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th><a name="concept-index_cp_letter-P">P</a></th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-Preprocessor-symbol-CCEXCEPTIONS_005fEXCLUDE_005fUNREACHABLE">Preprocessor symbol <code>CCEXCEPTIONS_EXCLUDE_UNREACHABLE</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-unreachable">conditions unreachable</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
+<tr><th><a name="concept-index_cp_letter-R">R</a></th><td></td><td></td></tr>
+<tr><td></td><td valign="top"><a href="#index-root_002c-exceptional-condition">root, exceptional condition</a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-root">conditions root</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-run_002d_002dtime-error_002c-exceptional-condition">run&ndash;time error, exceptional condition</a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-run_002dtime-error">conditions run-time error</a></td></tr>
+<tr><td colspan="4"> <hr></td></tr>
 <tr><th><a name="concept-index_cp_letter-U">U</a></th><td></td><td></td></tr>
-<tr><td></td><td valign="top"><a href="#index-Unreachable-code_002c-exceptional-condition">Unreachable code, exceptional condition</a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-unreachable">conditions unreachable</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-underflow-error_002c-exceptional-condition">underflow error, exceptional condition</a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-math-underflow">conditions math underflow</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-unimplemented_002c-exceptional-condition">unimplemented, exceptional condition</a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-unimplemented">conditions unimplemented</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-unknown_002c-exceptional-condition">unknown, exceptional condition</a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-unknown">conditions unknown</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-unreachable-code_002c-exceptional-condition">unreachable code, exceptional condition</a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-unreachable">conditions unreachable</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 </table>
-<table><tr><th valign="top">Jump to: &nbsp; </th><td><a class="summary-letter" href="#concept-index_cp_letter-C"><b>C</b></a>
+<table><tr><th valign="top">Jump to: &nbsp; </th><td><a class="summary-letter" href="#concept-index_cp_letter-B"><b>B</b></a>
+ &nbsp; 
+<a class="summary-letter" href="#concept-index_cp_letter-C"><b>C</b></a>
  &nbsp; 
 <a class="summary-letter" href="#concept-index_cp_letter-E"><b>E</b></a>
  &nbsp; 
 <a class="summary-letter" href="#concept-index_cp_letter-F"><b>F</b></a>
  &nbsp; 
+<a class="summary-letter" href="#concept-index_cp_letter-I"><b>I</b></a>
+ &nbsp; 
 <a class="summary-letter" href="#concept-index_cp_letter-L"><b>L</b></a>
  &nbsp; 
+<a class="summary-letter" href="#concept-index_cp_letter-M"><b>M</b></a>
+ &nbsp; 
+<a class="summary-letter" href="#concept-index_cp_letter-N"><b>N</b></a>
+ &nbsp; 
+<a class="summary-letter" href="#concept-index_cp_letter-O"><b>O</b></a>
+ &nbsp; 
 <a class="summary-letter" href="#concept-index_cp_letter-P"><b>P</b></a>
+ &nbsp; 
+<a class="summary-letter" href="#concept-index_cp_letter-R"><b>R</b></a>
  &nbsp; 
 <a class="summary-letter" href="#concept-index_cp_letter-U"><b>U</b></a>
  &nbsp; 
@@ -4359,7 +4630,7 @@ Next: <a href="#variable-index" accesskey="n" rel="next">variable index</a>, Pre
 <tr><td></td><th align="left">Index Entry</th><td>&nbsp;</td><th align="left"> Section</th></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th><a name="function-index_fn_letter-C">C</a></th><td></td><td></td></tr>
-<tr><td></td><td valign="top"><a href="#index-cce_005fcleanup_005fhandler_005fmalloc_005finit"><code>cce_cleanup_handler_malloc_init</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#system-memory-handlers">system memory handlers</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-cce_005fcheck_005fargument"><code>cce_check_argument</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-invalid-arg">conditions invalid arg</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fclean_005fhandler_005fmalloc_005finit"><code>cce_clean_handler_malloc_init</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#system-memory-handlers">system memory handlers</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fcondition"><code>cce_condition</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#locations">locations</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fcondition-1"><code>cce_condition</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-objects">conditions objects</a></td></tr>
@@ -4438,6 +4709,8 @@ Next: <a href="#variable-index" accesskey="n" rel="next">variable index</a>, Pre
 <tr><td></td><td valign="top"><a href="#index-cce_005fcondition_005fnew_005funimplemented"><code>cce_condition_new_unimplemented</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-unimplemented">conditions unimplemented</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fcondition_005fnew_005funknown"><code>cce_condition_new_unknown</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-unknown">conditions unknown</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fcondition_005fnew_005funreachable"><code>cce_condition_new_unreachable</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-unreachable">conditions unreachable</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-cce_005fcondition_005fref_005ferrno_005ferrnum"><code>cce_condition_ref_errno_errnum</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-errno">conditions errno</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-cce_005fcondition_005fref_005ferrno_005fmessage"><code>cce_condition_ref_errno_message</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-errno">conditions errno</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fcondition_005fruntime_005ferror"><code>cce_condition_runtime_error</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-run_002dtime-error">conditions run-time error</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fcondition_005fruntime_005ferror-1"><code>cce_condition_runtime_error</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-run_002dtime-error">conditions run-time error</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fcondition_005fruntime_005ferror-2"><code>cce_condition_runtime_error</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-run_002dtime-error">conditions run-time error</a></td></tr>
@@ -4474,15 +4747,9 @@ Next: <a href="#variable-index" accesskey="n" rel="next">variable index</a>, Pre
 <tr><td></td><td valign="top"><a href="#index-CCE_005fPC"><code>CCE_PC</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#helpers">helpers</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fraise"><code>cce_raise</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#locations">locations</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fraise_005funreachable"><code>cce_raise_unreachable</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-unreachable">conditions unreachable</a></td></tr>
-<tr><td></td><td valign="top"><a href="#index-cce_005fref_005fcondition_005ferrno_005ferrnum"><code>cce_ref_condition_errno_errnum</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-errno">conditions errno</a></td></tr>
-<tr><td></td><td valign="top"><a href="#index-cce_005fref_005fcondition_005ferrno_005fmessage"><code>cce_ref_condition_errno_message</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-errno">conditions errno</a></td></tr>
-<tr><td></td><td valign="top"><a href="#index-cce_005fregister_005fcleanup_005fhandler"><code>cce_register_cleanup_handler</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#handlers">handlers</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fregister_005fclean_005fhandler"><code>cce_register_clean_handler</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#handlers">handlers</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fregister_005ferror_005fhandler"><code>cce_register_error_handler</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#handlers">handlers</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fretry"><code>cce_retry</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#locations">locations</a></td></tr>
-<tr><td></td><td valign="top"><a href="#index-cce_005frun_005fcleanup_005fhandlers"><code>cce_run_cleanup_handlers</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#handlers">handlers</a></td></tr>
-<tr><td></td><td valign="top"><a href="#index-cce_005frun_005fcleanup_005fhandlers_005ffinal"><code>cce_run_cleanup_handlers_final</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#handlers">handlers</a></td></tr>
-<tr><td></td><td valign="top"><a href="#index-cce_005frun_005fcleanup_005fhandlers_005fraise"><code>cce_run_cleanup_handlers_raise</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#handlers">handlers</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005frun_005fclean_005fhandlers"><code>cce_run_clean_handlers</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#handlers">handlers</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005frun_005fclean_005fhandlers_005ffinal"><code>cce_run_clean_handlers_final</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#handlers">handlers</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005frun_005fclean_005fhandlers_005fraise"><code>cce_run_clean_handlers_raise</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#handlers">handlers</a></td></tr>
@@ -4493,19 +4760,16 @@ Next: <a href="#variable-index" accesskey="n" rel="next">variable index</a>, Pre
 <tr><td></td><td valign="top"><a href="#index-cce_005fsys_005fcalloc_005fguarded"><code>cce_sys_calloc_guarded</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#system-memory-gcalloc">system memory gcalloc</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fsys_005fcalloc_005fguarded-1"><code>cce_sys_calloc_guarded</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#system-memory-gcalloc">system memory gcalloc</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fsys_005fcalloc_005fguarded_005fclean"><code>cce_sys_calloc_guarded_clean</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#system-memory-gcalloc">system memory gcalloc</a></td></tr>
-<tr><td></td><td valign="top"><a href="#index-cce_005fsys_005fcalloc_005fguarded_005fcleanup"><code>cce_sys_calloc_guarded_cleanup</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#system-memory-gcalloc">system memory gcalloc</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fsys_005fcalloc_005fguarded_005ferror"><code>cce_sys_calloc_guarded_error</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#system-memory-gcalloc">system memory gcalloc</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fsys_005fmalloc"><code>cce_sys_malloc</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#system-memory-core">system memory core</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fsys_005fmalloc_005fguarded"><code>cce_sys_malloc_guarded</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#system-memory-gmalloc">system memory gmalloc</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fsys_005fmalloc_005fguarded-1"><code>cce_sys_malloc_guarded</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#system-memory-gmalloc">system memory gmalloc</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fsys_005fmalloc_005fguarded_005fclean"><code>cce_sys_malloc_guarded_clean</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#system-memory-gmalloc">system memory gmalloc</a></td></tr>
-<tr><td></td><td valign="top"><a href="#index-cce_005fsys_005fmalloc_005fguarded_005fcleanup"><code>cce_sys_malloc_guarded_cleanup</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#system-memory-gmalloc">system memory gmalloc</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fsys_005fmalloc_005fguarded_005ferror"><code>cce_sys_malloc_guarded_error</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#system-memory-gmalloc">system memory gmalloc</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fsys_005frealloc"><code>cce_sys_realloc</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#system-memory-core">system memory core</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fsys_005frealloc_005fguarded"><code>cce_sys_realloc_guarded</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#system-memory-grealloc">system memory grealloc</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fsys_005frealloc_005fguarded-1"><code>cce_sys_realloc_guarded</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#system-memory-grealloc">system memory grealloc</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fsys_005frealloc_005fguarded_005fclean"><code>cce_sys_realloc_guarded_clean</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#system-memory-grealloc">system memory grealloc</a></td></tr>
-<tr><td></td><td valign="top"><a href="#index-cce_005fsys_005frealloc_005fguarded_005fcleanup"><code>cce_sys_realloc_guarded_cleanup</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#system-memory-grealloc">system memory grealloc</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fsys_005frealloc_005fguarded_005ferror"><code>cce_sys_realloc_guarded_error</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#system-memory-grealloc">system memory grealloc</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-CCE_005fUNUSED"><code>CCE_UNUSED</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#helpers">helpers</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fversion_005finterface_005fage"><code>cce_version_interface_age</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#version">version</a></td></tr>
@@ -4587,7 +4851,6 @@ Previous: <a href="#variable-index" accesskey="p" rel="prev">variable index</a>,
 <tr><td></td><th align="left">Index Entry</th><td>&nbsp;</td><th align="left"> Section</th></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th><a name="type-index_tp_letter-C">C</a></th><td></td><td></td></tr>
-<tr><td></td><td valign="top"><a href="#index-cce_005fcleanup_005fhandler_005ft"><code>cce_cleanup_handler_t</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#handlers">handlers</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fclean_005fhandler_005ft"><code>cce_clean_handler_t</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#handlers">handlers</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fcondition_005fbreak_005ft"><code>cce_condition_break_t</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-break">conditions break</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fcondition_005ferrno_005ft"><code>cce_condition_errno_t</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-errno">conditions errno</a></td></tr>
@@ -4647,23 +4910,23 @@ Previous: <a href="#variable-index" accesskey="p" rel="prev">variable index</a>,
   <li><a name="toc-The-handlers-API" href="#handlers">5 The handlers <acronym>API</acronym></a></li>
   <li><a name="toc-Exceptional-condition-descriptors" href="#conditions">6 Exceptional condition descriptors</a>
   <ul class="no-bullet">
-    <li><a name="toc-Introduction-to-condition-objects" href="#conditions-intro">6.1 Introduction to condition objects</a></li>
-    <li><a name="toc-Condition-descriptor-type" href="#conditions-descriptors">6.2 Condition descriptor type</a></li>
-    <li><a name="toc-Condition-object-type" href="#conditions-objects">6.3 Condition object type</a></li>
-    <li><a name="toc-Predefined-root-condition-descriptor" href="#conditions-root">6.4 Predefined root condition descriptor</a></li>
-    <li><a name="toc-Predefined-unknown-condition-object" href="#conditions-unknown">6.5 Predefined unknown condition object</a></li>
-    <li><a name="toc-Predefined-break-condition-object" href="#conditions-break">6.6 Predefined break condition object</a></li>
-    <li><a name="toc-Predefined-error-condition-object" href="#conditions-error">6.7 Predefined error condition object</a></li>
-    <li><a name="toc-Predefined-run_002d_002dtime-error-condition-object" href="#conditions-run_002dtime-error">6.8 Predefined run&ndash;time error condition object</a></li>
-    <li><a name="toc-Predefined-logic-error-condition-object" href="#conditions-logic-error">6.9 Predefined logic error condition object</a></li>
-    <li><a name="toc-Predefined-unimplemented-condition-object" href="#conditions-unimplemented">6.10 Predefined unimplemented condition object</a></li>
-    <li><a name="toc-Predefined-invalid-argument-conditions" href="#conditions-invalid-arg">6.11 Predefined invalid argument conditions</a></li>
-    <li><a name="toc-Predefined-unreachable-code-conditions" href="#conditions-unreachable">6.12 Predefined unreachable code conditions</a></li>
-    <li><a name="toc-Predefined-errno-conditions" href="#conditions-errno">6.13 Predefined <code>errno</code> conditions</a></li>
+    <li><a name="toc-Introduction-to-exceptional_002d_002dcondition-objects" href="#conditions-intro">6.1 Introduction to exceptional&ndash;condition objects</a></li>
+    <li><a name="toc-Exceptional_002d_002dcondition-object_002d_002dtype-descriptors" href="#conditions-descriptors">6.2 Exceptional&ndash;condition object&ndash;type descriptors</a></li>
+    <li><a name="toc-Exceptional_002dcondition-objects" href="#conditions-objects">6.3 Exceptional-condition objects</a></li>
+    <li><a name="toc-The-root-exceptional_002d_002dcondition-object" href="#conditions-root">6.4 The <em>root</em> exceptional&ndash;condition object</a></li>
+    <li><a name="toc-The-unknown-exceptional_002d_002dcondition-object" href="#conditions-unknown">6.5 The <em>unknown</em> exceptional&ndash;condition object</a></li>
+    <li><a name="toc-The-break-exceptional_002d_002dcondition-object" href="#conditions-break">6.6 The <em>break</em> exceptional&ndash;condition object</a></li>
+    <li><a name="toc-The-error-exceptional_002d_002dcondition-object" href="#conditions-error">6.7 The <em>error</em> exceptional&ndash;condition object</a></li>
+    <li><a name="toc-The-run_002d_002dtime-error-exceptional_002d_002dcondition-object" href="#conditions-run_002dtime-error">6.8 The <em>run&ndash;time error</em> exceptional&ndash;condition object</a></li>
+    <li><a name="toc-The-logic-error-exceptional_002d_002dcondition-object" href="#conditions-logic-error">6.9 The <em>logic error</em> exceptional&ndash;condition object</a></li>
+    <li><a name="toc-The-unimplemented-exceptional_002d_002dcondition-object" href="#conditions-unimplemented">6.10 The <em>unimplemented</em> exceptional&ndash;condition object</a></li>
+    <li><a name="toc-The-invalid-argument-exceptional_002d_002dcondition-object" href="#conditions-invalid-arg">6.11 The <em>invalid argument</em> exceptional&ndash;condition object</a></li>
+    <li><a name="toc-The-unreachable-code-exceptional_002d_002dcondition-object" href="#conditions-unreachable">6.12 The <em>unreachable code</em> exceptional&ndash;condition object</a></li>
+    <li><a name="toc-The-errno-exceptional_002d_002dcondition-object" href="#conditions-errno">6.13 The <code>errno</code> exceptional&ndash;condition object</a></li>
     <li><a name="toc-Predefined-mathematical-conditions" href="#conditions-math">6.14 Predefined mathematical conditions</a>
     <ul class="no-bullet">
       <li><a name="toc-Error-computing-a-mathematical-expression" href="#conditions-math-error">6.14.1 Error computing a mathematical expression</a></li>
-      <li><a name="toc-Mathematical-not_002da_002dnumber-error" href="#conditions-math-nan">6.14.2 Mathematical not-a-number error</a></li>
+      <li><a name="toc-Mathematical-not_002d_002da_002d_002dnumber-error" href="#conditions-math-nan">6.14.2 Mathematical not&ndash;a&ndash;number error</a></li>
       <li><a name="toc-Mathematical-infinity-error" href="#conditions-math-infinity">6.14.3 Mathematical infinity error</a></li>
       <li><a name="toc-Mathematical-overflow-error" href="#conditions-math-overflow">6.14.4 Mathematical overflow error</a></li>
       <li><a name="toc-Mathematical-underflow-error" href="#conditions-math-underflow">6.14.5 Mathematical underflow error</a></li>
