@@ -1,6 +1,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
-<!-- This document describes version 0.8.0-devel.1 of CCExceptions, a C11 Standard language library;
+<!-- This document describes version 0.8.0-devel.2 of CCExceptions, a C11 Standard language library;
 it implements an interface to non-local exits, which is somewhat similar to exceptions handling.
 The library targets POSIX systems.
 
@@ -259,7 +259,7 @@ Next: <a href="#overview" accesskey="n" rel="next">overview</a>, Up: <a href="di
 <a name="CCExceptions"></a>
 <h1 class="top">CCExceptions</h1>
 
-<p>This document describes version 0.8.0-devel.1 of CCExceptions, a C11 Standard language library;
+<p>This document describes version 0.8.0-devel.2 of CCExceptions, a C11 Standard language library;
 it implements an interface to non&ndash;local exits, which is somewhat similar to exceptions handling.
 The library targets <acronym>POSIX</acronym> systems.
 </p>
@@ -341,7 +341,7 @@ Next: <a href="#version" accesskey="n" rel="next">version</a>, Previous: <a href
 <h2 class="chapter">1 Overview of the package</h2>
 
 
-<p>This document describes version 0.8.0-devel.1 of CCExceptions, a C11 language library; it
+<p>This document describes version 0.8.0-devel.2 of CCExceptions, a C11 language library; it
 implements an interface to non&ndash;local exits, which is somewhat similar to exceptions handling.  The
 library targets <acronym>POSIX</acronym> systems.
 </p>
@@ -623,7 +623,7 @@ CCExceptions uses the <acronym>POSIX</acronym> variants <code>sigsetjmp()</code>
 
 if (CCE_ENTER == cce_location(L)) {
   /* do something useful here */
-  cce_run_clean_handlers(L);
+  cce_run_body_handlers(L);
 } else {
   /* handle the exception here */
   cce_run_catch_handlers(L);
@@ -642,7 +642,7 @@ if (cce_location(L)) {
   cce_condition_delete(cce_condition(L));
 } else {
   /* do something useful here */
-  cce_run_clean_handlers(L);
+  cce_run_body_handlers(L);
 }
 </pre></div>
 
@@ -653,7 +653,7 @@ if (cce_location(L)) {
 
 if (CCE_ENTER == cce_location(L)) {
   /* do something useful here */
-  cce_run_clean_handlers(L);
+  cce_run_body_handlers(L);
 } else {
   /* handle the exception here */
   cce_run_catch_handlers_final(L);
@@ -670,7 +670,7 @@ if (cce_location(L)) {
   cce_run_catch_handlers_final(L);
 } else {
   /* do something useful here */
-  cce_run_clean_handlers(L);
+  cce_run_body_handlers(L);
 }
 </pre></div>
 
@@ -693,7 +693,7 @@ by retrieving a pointer to it with <code>cce_condition()</code> and releasing it
 <code>cce_condition_delete()</code>.
 </p>
 <p>Before terminating the use of instances of this type we must always call
-<code>cce_run_catch_handlers()</code> or <code>cce_run_clean_handlers()</code>.  We must assume that the handlers
+<code>cce_run_catch_handlers()</code> or <code>cce_run_body_handlers()</code>.  We must assume that the handlers
 might access the <code>cce_condition_t</code> object, so: first we call the handlers, then we release
 the exceptional&ndash;condition object.
 </p></dd></dl>
@@ -785,7 +785,7 @@ if (cce_location(L)) {
   cce_run_catch_handlers_final(L);
 } else {
   /* do something useful here */
-  cce_run_clean_handlers(L);
+  cce_run_body_handlers(L);
 }
 </pre></div>
 
@@ -803,7 +803,7 @@ outer (void)
     cce_run_catch_handlers_final(L);
   } else {
     inner(L);
-    cce_run_clean_handlers(L);
+    cce_run_body_handlers(L);
   }
 }
 
@@ -817,7 +817,7 @@ inner (cce_location_t * there)
     cce_raise(there, cce_condition(L));
   } else {
     /* do something useful here */
-    cce_run_clean_handlers(L);
+    cce_run_body_handlers(L);
   }
 }
 </pre></div>
@@ -835,8 +835,8 @@ Next: <a href="#conditions" accesskey="n" rel="next">conditions</a>, Previous: <
 
 <p>Location handlers allow us to execute callback functions whenever we exit a location context, either
 by normal execution or by raising an exception.  Normal&ndash;execution handlers are run by calling the
-function <code>cce_run_clean_handlers()</code>; exception&ndash;reaction handlers are run by calling the
-function <code>cce_run_catch_handlers()</code>, but we should use the more useful functions
+function <code>cce_run_body_handlers()</code>; exception&ndash;reaction handlers are run by calling the function
+<code>cce_run_catch_handlers()</code>, but we should use the more useful functions
 <code>cce_run_catch_handlers_final()</code> and <code>cce_run_catch_handlers_raise()</code>.
 </p>
 <p>The basic code template is the following:
@@ -849,7 +849,7 @@ if (cce_location(L)) {
   cce_run_catch_handlers_final(L);
 } else {
   /* location body */
-  cce_run_clean_handlers(L);
+  cce_run_body_handlers(L);
 }
 </pre></div>
 
@@ -888,8 +888,8 @@ Next: <a href="#handlers-registering" accesskey="n" rel="next">handlers register
 <dd><p>Structure type representing an exception handler, either a clean handler or an error handler.
 Instances of this type are associated to a location by calling one of the functions:
 <code>cce_register_clean_handler()</code>, <code>cce_register_error_handler()</code>.  Handlers are invoked by
-calling one of the functions: <code>cce_run_clean_handlers()</code>, <code>cce_run_catch_handlers()</code>.
-Before terminating the use of a <code>cce_location_t</code> instance we must always call the handlers.
+calling one of the functions: <code>cce_run_body_handlers()</code>, <code>cce_run_catch_handlers()</code>.  Before
+terminating the use of a <code>cce_location_t</code> instance we must always call the handlers.
 </p>
 <p>The structure has the following public fields:
 </p>
@@ -1053,6 +1053,7 @@ Next: <a href="#handlers-handlers" accesskey="n" rel="next">handlers handlers</a
 </p>
 
 <dl>
+<dt><a name="index-cce_005frun_005fbody_005fhandlers"></a>Function: <em>void</em> <strong>cce_run_body_handlers</strong> <em>(cce_destination_t <var>L</var>)</em></dt>
 <dt><a name="index-cce_005frun_005fclean_005fhandlers"></a>Function: <em>void</em> <strong>cce_run_clean_handlers</strong> <em>(cce_destination_t <var>L</var>)</em></dt>
 <dd><p>Run all the clean handlers associated to the location <var>L</var>.  Each handler must return to its
 caller, taking care of itself regarding internal error handling and asynchronous resources
@@ -1095,11 +1096,12 @@ cce_condition_delete(cce_condition(L));
 
 
 <dl>
+<dt><a name="index-cce_005frun_005fbody_005fhandlers_005ffinal"></a>Function: <em>void</em> <strong>cce_run_body_handlers_final</strong> <em>(cce_destination_t <var>L</var>)</em></dt>
 <dt><a name="index-cce_005frun_005fclean_005fhandlers_005ffinal"></a>Function: <em>void</em> <strong>cce_run_clean_handlers_final</strong> <em>(cce_destination_t <var>L</var>)</em></dt>
 <dd><p>Equivalent to calling:
 </p>
 <div class="example">
-<pre class="example">cce_run_clean_handlers(L);
+<pre class="example">cce_run_body_handlers(L);
 cce_condition_delete(cce_condition(L));
 </pre></div>
 </dd></dl>
@@ -1118,11 +1120,12 @@ cce_raise(upper_L, cce_condition(L));
 
 
 <dl>
+<dt><a name="index-cce_005frun_005fbody_005fhandlers_005fraise"></a>Function: <em>void</em> <strong>cce_run_body_handlers_raise</strong> <em>(cce_destination_t <var>L</var>, cce_location_t * <var>upper_L</var>)</em></dt>
 <dt><a name="index-cce_005frun_005fclean_005fhandlers_005fraise"></a>Function: <em>void</em> <strong>cce_run_clean_handlers_raise</strong> <em>(cce_destination_t <var>L</var>, cce_location_t * <var>upper_L</var>)</em></dt>
 <dd><p>Equivalent to calling:
 </p>
 <div class="example">
-<pre class="example">cce_run_clean_handlers(L);
+<pre class="example">cce_run_body_handlers(L);
 cce_raise(upper_L, cce_condition(L));
 </pre></div>
 </dd></dl>
@@ -1156,11 +1159,11 @@ if (cce_location(outer_L)) {
     cce_run_catch_handlers_final(inner_L);
   } else {
     /* inner body */
-    cce_run_clean_handlers(inner_L);
+    cce_run_body_handlers(inner_L);
   }
 } else {
   /* outer body */
-  cce_run_clean_handlers(outer_L);
+  cce_run_body_handlers(outer_L);
 }
 </pre></div>
 
@@ -1186,7 +1189,7 @@ Next: <a href="#handlers-handlers-ce" accesskey="n" rel="next">handlers handlers
 
 
 <dl>
-<dt><a name="index-cce_005fregister_005fclean_005fhandler_005fto_005frun_005fclean_005fhandlers"></a>Function: <em>void</em> <strong>cce_register_clean_handler_to_run_clean_handlers</strong> <em>(cce_destination_t <var>inner_L</var>, cce_clean_handler_t * <var>inner_H</var>, cce_destination_t <var>outer_L</var>)</em></dt>
+<dt><a name="index-cce_005fregister_005fclean_005fhandler_005fto_005frun_005fbody_005fhandlers"></a>Function: <em>void</em> <strong>cce_register_clean_handler_to_run_body_handlers</strong> <em>(cce_destination_t <var>inner_L</var>, cce_clean_handler_t * <var>inner_H</var>, cce_destination_t <var>outer_L</var>)</em></dt>
 <dd><p>Register the clean handler <var>inner_H</var>, in the context of the location <var>inner_L</var>, so that it
 will run the clean handlers registered for the location <var>outer_L</var>.  The exceptional&ndash;condition
 object associated to <var>outer_L</var> will be deleted by the handler.
@@ -1207,14 +1210,14 @@ if (cce_location(outer_L)) {
     /* inner exception handler */
     cce_run_catch_handlers_final(inner_L);
   } else {
-    cce_register_clean_handler_to_run_clean_handlers
+    cce_register_clean_handler_to_run_body_handlers
        (inner_L, inner_H, outer_L);
     /* inner body */
-    cce_run_clean_handlers(inner_L);
+    cce_run_body_handlers(inner_L);
   }
 } else {
   /* outer body */
-  cce_run_clean_handlers(outer_L);
+  cce_run_body_handlers(outer_L);
 }
 </pre></div>
 
@@ -1253,11 +1256,11 @@ if (cce_location(outer_L)) {
     cce_register_clean_handler_to_run_catch_handlers
        (inner_L, inner_H, outer_L);
     /* inner body */
-    cce_run_clean_handlers(inner_L);
+    cce_run_body_handlers(inner_L);
   }
 } else {
   /* outer body */
-  cce_run_clean_handlers(outer_L);
+  cce_run_body_handlers(outer_L);
 }
 </pre></div>
 
@@ -1272,7 +1275,7 @@ Next: <a href="#handlers-handlers-ee" accesskey="n" rel="next">handlers handlers
 
 
 <dl>
-<dt><a name="index-cce_005fregister_005ferror_005fhandler_005fto_005frun_005fclean_005fhandlers"></a>Function: <em>void</em> <strong>cce_register_error_handler_to_run_clean_handlers</strong> <em>(cce_destination_t <var>inner_L</var>, cce_error_handler_t * <var>inner_H</var>, cce_destination_t <var>outer_L</var>)</em></dt>
+<dt><a name="index-cce_005fregister_005ferror_005fhandler_005fto_005frun_005fbody_005fhandlers"></a>Function: <em>void</em> <strong>cce_register_error_handler_to_run_body_handlers</strong> <em>(cce_destination_t <var>inner_L</var>, cce_error_handler_t * <var>inner_H</var>, cce_destination_t <var>outer_L</var>)</em></dt>
 <dd><p>Register the error handler <var>inner_H</var>, in the context of the location <var>inner_L</var>, so that it
 will run the clean handlers registered for the location <var>outer_L</var>.  The exceptional&ndash;condition
 object associated to <var>outer_L</var> will be deleted by the handler.
@@ -1293,14 +1296,14 @@ if (cce_location(outer_L)) {
     /* inner exception handler */
     cce_run_catch_handlers_final(inner_L);
   } else {
-    cce_register_error_handler_to_run_clean_handlers
+    cce_register_error_handler_to_run_body_handlers
        (inner_L, inner_H, outer_L);
     /* inner body */
-    cce_run_clean_handlers(inner_L);
+    cce_run_body_handlers(inner_L);
   }
 } else {
   /* outer body */
-  cce_run_clean_handlers(outer_L);
+  cce_run_body_handlers(outer_L);
 }
 </pre></div>
 
@@ -1339,11 +1342,11 @@ if (cce_location(outer_L)) {
     cce_register_error_handler_to_run_catch_handlers
        (inner_L, inner_H, outer_L);
     /* inner body */
-    cce_run_clean_handlers(inner_L);
+    cce_run_body_handlers(inner_L);
   }
 } else {
   /* outer body */
-  cce_run_clean_handlers(outer_L);
+  cce_run_body_handlers(outer_L);
 }
 </pre></div>
 
@@ -1408,7 +1411,7 @@ func (void)
   cce_register_clean_handler(L, &amp;H1);
   cce_register_clean_handler(L, &amp;H2);
   cce_register_clean_handler(L, &amp;H3);
-  cce_run_clean_handlers(L);
+  cce_run_body_handlers(L);
 }
 </pre></div>
 
@@ -1490,7 +1493,7 @@ func (void)
       cce_raise(L, cce_condition_new_errno_clear(errno));
     }
     do_something(L, P);
-    cce_run_clean_handlers(L);
+    cce_run_body_handlers(L);
   }
 }
 </pre></div>
@@ -1551,7 +1554,7 @@ constructor (cce_destination_t upper_L)
        handler releases the memory. */
     do_some_initialisation(L, P);
 
-    cce_run_clean_handlers(L);
+    cce_run_body_handlers(L);
   }
   return P;
 }
@@ -1573,7 +1576,7 @@ void caller (void)
       cce_register_clean_handler(L, &amp;P_H);
     }
     do_something_with(P);
-    cce_run_clean_handlers(L);
+    cce_run_body_handlers(L);
   }
 }
 </pre></div>
@@ -1664,7 +1667,7 @@ if (cce_location(L)) {
   cce_run_catch_handlers_final(L);
 } else {
   // do something useful
-  cce_run_clean_handlers(L);
+  cce_run_body_handlers(L);
 }
 </pre></div>
 
@@ -1686,7 +1689,7 @@ upper_function (void)
     cce_run_catch_handlers_final(L);
   } else {
     lower_function(L);
-    cce_run_clean_handlers(L);
+    cce_run_body_handlers(L);
   }
 }
 
@@ -1702,7 +1705,7 @@ lower_function (cce_location_t * upper_L)
     if (an_error_occurred()) {
       cce_raise(L, select_condition_object());
     }
-   cce_run_clean_handlers(L);
+   cce_run_body_handlers(L);
   }
 }
 </pre></div>
@@ -3826,7 +3829,7 @@ if (cce_location(L)) {
 } else {
   void *        P = cce_sys_malloc(L, 4096);
   cce_clean_handler_malloc_init(L, P_H, P);
-  cce_run_clean_handlers(L);
+  cce_run_body_handlers(L);
 }
 </pre></div>
 
@@ -3878,7 +3881,7 @@ if (cce_location(L)) {
   void *  P = cce_sys_malloc_guarded(L, P_H, 1024);
 
   /* Do something with P. */
-  cce_run_clean_handlers(L);
+  cce_run_body_handlers(L);
 }
 </pre></div>
 
@@ -3894,7 +3897,7 @@ if (cce_location(L)) {
   void *  P = cce_sys_malloc_guarded(L, P_H, 1024);
 
   /* Do something with P. */
-  cce_run_clean_handlers(L);
+  cce_run_body_handlers(L);
 }
 </pre></div>
 
@@ -4038,8 +4041,8 @@ errors.  The affected functions and macros are:
 cce_raise
 cce_run_catch_handlers_raise
 cce_run_catch_handlers_final
-cce_run_clean_handlers_raise
-cce_run_clean_handlers_final
+cce_run_body_handlers_raise
+cce_run_body_handlers_final
 </pre></div>
 
 <p>Tracing features are completely transparent to the client code: we must do nothing different when
@@ -4062,7 +4065,7 @@ test_tracing_sub_sub_sub (cce_destination_t upper_L)
     cce_run_catch_handlers_raise(L, upper_L);
   } else {
     cce_raise(L, cce_condition_new_unknown());
-    cce_run_clean_handlers(L);
+    cce_run_body_handlers(L);
   }
 }
 
@@ -4075,7 +4078,7 @@ test_tracing_sub_sub (cce_destination_t upper_L)
     cce_run_catch_handlers_raise(L, upper_L);
   } else {
     test_tracing_sub_sub_sub(L);
-    cce_run_clean_handlers(L);
+    cce_run_body_handlers(L);
   }
 }
 
@@ -4088,7 +4091,7 @@ test_tracing_sub (cce_destination_t upper_L)
     cce_run_catch_handlers_raise(L, upper_L);
   } else {
     test_tracing_sub_sub(L);
-    cce_run_clean_handlers(L);
+    cce_run_body_handlers(L);
   }
 }
 
@@ -4101,7 +4104,7 @@ test_tracing (void)
     cce_run_catch_handlers_final(L);
   } else {
     test_tracing_sub(L);
-    cce_run_clean_handlers(L);
+    cce_run_body_handlers(L);
   }
 }
 
@@ -5136,14 +5139,17 @@ Next: <a href="#variable-index" accesskey="n" rel="next">variable index</a>, Pre
 <tr><td></td><td valign="top"><a href="#index-cce_005fraise"><code>cce_raise</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#locations">locations</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fraise_005funreachable"><code>cce_raise_unreachable</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-unreachable">conditions unreachable</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fregister_005fclean_005fhandler"><code>cce_register_clean_handler</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#handlers-registering">handlers registering</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-cce_005fregister_005fclean_005fhandler_005fto_005frun_005fbody_005fhandlers"><code>cce_register_clean_handler_to_run_body_handlers</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#handlers-handlers-cc">handlers handlers cc</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fregister_005fclean_005fhandler_005fto_005frun_005fcatch_005fhandlers"><code>cce_register_clean_handler_to_run_catch_handlers</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#handlers-handlers-ce">handlers handlers ce</a></td></tr>
-<tr><td></td><td valign="top"><a href="#index-cce_005fregister_005fclean_005fhandler_005fto_005frun_005fclean_005fhandlers"><code>cce_register_clean_handler_to_run_clean_handlers</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#handlers-handlers-cc">handlers handlers cc</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fregister_005ferror_005fhandler"><code>cce_register_error_handler</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#handlers-registering">handlers registering</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-cce_005fregister_005ferror_005fhandler_005fto_005frun_005fbody_005fhandlers"><code>cce_register_error_handler_to_run_body_handlers</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#handlers-handlers-ec">handlers handlers ec</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fregister_005ferror_005fhandler_005fto_005frun_005fcatch_005fhandlers"><code>cce_register_error_handler_to_run_catch_handlers</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#handlers-handlers-ee">handlers handlers ee</a></td></tr>
-<tr><td></td><td valign="top"><a href="#index-cce_005fregister_005ferror_005fhandler_005fto_005frun_005fclean_005fhandlers"><code>cce_register_error_handler_to_run_clean_handlers</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#handlers-handlers-ec">handlers handlers ec</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fregister_005fhandler"><code>cce_register_handler</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#handlers-registering">handlers registering</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fregister_005fhandler-1"><code>cce_register_handler</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#handlers-registering">handlers registering</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fretry"><code>cce_retry</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#locations">locations</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-cce_005frun_005fbody_005fhandlers"><code>cce_run_body_handlers</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#handlers-running">handlers running</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-cce_005frun_005fbody_005fhandlers_005ffinal"><code>cce_run_body_handlers_final</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#handlers-running">handlers running</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-cce_005frun_005fbody_005fhandlers_005fraise"><code>cce_run_body_handlers_raise</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#handlers-running">handlers running</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005frun_005fcatch_005fhandlers"><code>cce_run_catch_handlers</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#handlers-running">handlers running</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005frun_005fcatch_005fhandlers_005ffinal"><code>cce_run_catch_handlers_final</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#handlers-running">handlers running</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005frun_005fcatch_005fhandlers_005fraise"><code>cce_run_catch_handlers_raise</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#handlers-running">handlers running</a></td></tr>
