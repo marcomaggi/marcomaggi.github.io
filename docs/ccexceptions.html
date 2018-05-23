@@ -1,6 +1,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
-<!-- This document describes version 0.8.0-devel.0 of CCExceptions, a C11 Standard language library;
+<!-- This document describes version 0.8.0-devel.1 of CCExceptions, a C11 Standard language library;
 it implements an interface to non-local exits, which is somewhat similar to exceptions handling.
 The library targets POSIX systems.
 
@@ -259,7 +259,7 @@ Next: <a href="#overview" accesskey="n" rel="next">overview</a>, Up: <a href="di
 <a name="CCExceptions"></a>
 <h1 class="top">CCExceptions</h1>
 
-<p>This document describes version 0.8.0-devel.0 of CCExceptions, a C11 Standard language library;
+<p>This document describes version 0.8.0-devel.1 of CCExceptions, a C11 Standard language library;
 it implements an interface to non&ndash;local exits, which is somewhat similar to exceptions handling.
 The library targets <acronym>POSIX</acronym> systems.
 </p>
@@ -297,7 +297,7 @@ included in the section entitled &ldquo;<acronym>GNU</acronym> Free Documentatio
 </td></tr>
 <tr><td align="left" valign="top">&bull; <a href="#locations" accesskey="4">locations</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">The locations <acronym>API</acronym>.
 </td></tr>
-<tr><td align="left" valign="top">&bull; <a href="#handlers" accesskey="5">handlers</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">The handlers <acronym>API</acronym>.
+<tr><td align="left" valign="top">&bull; <a href="#handlers" accesskey="5">handlers</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">The location handlers <acronym>API</acronym>.
 </td></tr>
 <tr><td align="left" valign="top">&bull; <a href="#conditions" accesskey="6">conditions</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Exceptional condition descriptors.
 </td></tr>
@@ -341,7 +341,7 @@ Next: <a href="#version" accesskey="n" rel="next">version</a>, Previous: <a href
 <h2 class="chapter">1 Overview of the package</h2>
 
 
-<p>This document describes version 0.8.0-devel.0 of CCExceptions, a C11 language library; it
+<p>This document describes version 0.8.0-devel.1 of CCExceptions, a C11 language library; it
 implements an interface to non&ndash;local exits, which is somewhat similar to exceptions handling.  The
 library targets <acronym>POSIX</acronym> systems.
 </p>
@@ -626,7 +626,7 @@ if (CCE_ENTER == cce_location(L)) {
   cce_run_clean_handlers(L);
 } else {
   /* handle the exception here */
-  cce_run_error_handlers(L);
+  cce_run_catch_handlers(L);
   cce_condition_delete(cce_condition(L));
 }
 </pre></div>
@@ -638,7 +638,7 @@ if (CCE_ENTER == cce_location(L)) {
 
 if (cce_location(L)) {
   /* handle the exception here */
-  cce_run_error_handlers(L);
+  cce_run_catch_handlers(L);
   cce_condition_delete(cce_condition(L));
 } else {
   /* do something useful here */
@@ -656,7 +656,7 @@ if (CCE_ENTER == cce_location(L)) {
   cce_run_clean_handlers(L);
 } else {
   /* handle the exception here */
-  cce_run_error_handlers_final(L);
+  cce_run_catch_handlers_final(L);
 }
 </pre></div>
 
@@ -667,7 +667,7 @@ if (CCE_ENTER == cce_location(L)) {
 
 if (cce_location(L)) {
   /* handle the exception here */
-  cce_run_error_handlers_final(L);
+  cce_run_catch_handlers_final(L);
 } else {
   /* do something useful here */
   cce_run_clean_handlers(L);
@@ -693,7 +693,7 @@ by retrieving a pointer to it with <code>cce_condition()</code> and releasing it
 <code>cce_condition_delete()</code>.
 </p>
 <p>Before terminating the use of instances of this type we must always call
-<code>cce_run_error_handlers()</code> or <code>cce_run_clean_handlers()</code>.  We must assume that the handlers
+<code>cce_run_catch_handlers()</code> or <code>cce_run_clean_handlers()</code>.  We must assume that the handlers
 might access the <code>cce_condition_t</code> object, so: first we call the handlers, then we release
 the exceptional&ndash;condition object.
 </p></dd></dl>
@@ -782,7 +782,7 @@ following template code:
 
 if (cce_location(L)) {
   /* handle the exception here */
-  cce_run_error_handlers_final(L);
+  cce_run_catch_handlers_final(L);
 } else {
   /* do something useful here */
   cce_run_clean_handlers(L);
@@ -800,7 +800,7 @@ outer (void)
 
   if (cce_location(L)) {
     /* handle the exception here */
-    cce_run_error_handlers_final(L);
+    cce_run_catch_handlers_final(L);
   } else {
     inner(L);
     cce_run_clean_handlers(L);
@@ -813,7 +813,7 @@ inner (cce_location_t * there)
   cce_location_t  L[1];
 
   if (cce_location(L)) {
-    cce_run_error_handlers(L);
+    cce_run_catch_handlers(L);
     cce_raise(there, cce_condition(L));
   } else {
     /* do something useful here */
@@ -829,8 +829,55 @@ inner (cce_location_t * there)
 <p>
 Next: <a href="#conditions" accesskey="n" rel="next">conditions</a>, Previous: <a href="#locations" accesskey="p" rel="prev">locations</a>, Up: <a href="#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="#concept-index" title="Index" rel="index">Index</a>]</p>
 </div>
-<a name="The-handlers-API"></a>
-<h2 class="chapter">5 The handlers <acronym>API</acronym></h2>
+<a name="The-location-handlers-API"></a>
+<h2 class="chapter">5 The location handlers <acronym>API</acronym></h2>
+
+
+<p>Location handlers allow us to execute callback functions whenever we exit a location context, either
+by normal execution or by raising an exception.  Normal&ndash;execution handlers are run by calling the
+function <code>cce_run_clean_handlers()</code>; exception&ndash;reaction handlers are run by calling the
+function <code>cce_run_catch_handlers()</code>, but we should use the more useful functions
+<code>cce_run_catch_handlers_final()</code> and <code>cce_run_catch_handlers_raise()</code>.
+</p>
+<p>The basic code template is the following:
+</p>
+<div class="example">
+<pre class="example">cce_location_t  L[1];
+
+if (cce_location(L)) {
+  /* location handler */
+  cce_run_catch_handlers_final(L);
+} else {
+  /* location body */
+  cce_run_clean_handlers(L);
+}
+</pre></div>
+
+<p>CCExceptions defines <em>clean handlers</em>, which are run as both normal&ndash;execution and
+exception-reaction handlers; it also defines <em>error handlers</em>, which are run only as
+exception-reaction handlers.
+</p>
+<table class="menu" border="0" cellspacing="0">
+<tr><td align="left" valign="top">&bull; <a href="#handlers-typedefs" accesskey="1">handlers typedefs</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Handlers type definitions.
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="#handlers-registering" accesskey="2">handlers registering</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Registering location handlers.
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="#handlers-running" accesskey="3">handlers running</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Running location handlers.
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="#handlers-handlers" accesskey="4">handlers handlers</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Running handlers from handlers.
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="#handlers-examples" accesskey="5">handlers examples</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Examples of location handlers usage.
+</td></tr>
+</table>
+
+<hr>
+<a name="handlers-typedefs"></a>
+<div class="header">
+<p>
+Next: <a href="#handlers-registering" accesskey="n" rel="next">handlers registering</a>, Up: <a href="#handlers" accesskey="u" rel="up">handlers</a> &nbsp; [<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<a name="Handlers-type-definitions"></a>
+<h3 class="section">5.1 Handlers type definitions</h3>
 
 
 <p>All the following definitions are accessible from the header file <samp>ccexceptions.h</samp>.
@@ -838,27 +885,17 @@ Next: <a href="#conditions" accesskey="n" rel="next">conditions</a>, Previous: <
 
 <dl>
 <dt><a name="index-cce_005fhandler_005ft"></a>Struct Typedef: <strong>cce_handler_t</strong></dt>
-<dd><p>Structure type representing a clean or error handler.  Instances of this type are associated to a
-location by calling one of the functions <code>cce_register_*_handler()</code>.  Handlers are invoked by
-calling one of the functions <code>cce_run_*_handlers()</code>; before terminating the use of a
-<code>cce_location_t</code> instance we must always call the handlers.
-</p>
-<p>We are meant to wrap instances of this type into an enclosing struct definition as follows:
-</p>
-<div class="example">
-<pre class="example">struct resource_handler_t {
-  cce_handler_t 	handler;
-  void *		resourcep;
-};
-</pre></div>
-
-<p>in which the instance of <code>cce_handler_t</code> is the first field.
+<dd><p>Structure type representing an exception handler, either a clean handler or an error handler.
+Instances of this type are associated to a location by calling one of the functions:
+<code>cce_register_clean_handler()</code>, <code>cce_register_error_handler()</code>.  Handlers are invoked by
+calling one of the functions: <code>cce_run_clean_handlers()</code>, <code>cce_run_catch_handlers()</code>.
+Before terminating the use of a <code>cce_location_t</code> instance we must always call the handlers.
 </p>
 <p>The structure has the following public fields:
 </p>
 <dl compact="compact">
 <dt><code>cce_handler_fun_t * function</code></dt>
-<dd><p>Pointer to the function implementing the handler.
+<dd><p>Pointer to the callback function implementing the exception handler.
 </p></dd>
 </dl>
 
@@ -873,15 +910,31 @@ calling one of the functions <code>cce_run_*_handlers()</code>; before terminati
 <dd><p>Pointer available to the client code.
 </p>
 </dd>
+<dt><code>cce_destination_t location</code></dt>
+<dd><p>Pointer available to the client code.
+</p>
+</dd>
 <dt><code>int filedes</code></dt>
-<dd><p>An integer meant to be used for file descriptors.
+<dd><p>An integer meant to be used for <acronym>POSIX</acronym> file descriptors.
 </p>
 </dd>
 <dt><code>int pipedes[2]</code></dt>
-<dd><p>Integers meant to be used for pipe descriptors.
+<dd><p>Integers meant to be used for <acronym>POSIX</acronym> pipe descriptors.
 </p></dd>
 </dl>
-</dd></dl>
+
+<p>When needed, we are meant to wrap instances of this type into an enclosing struct definition as
+follows:
+</p>
+<div class="example">
+<pre class="example">struct resource_handler_t {
+  cce_handler_t 	handler;
+  void *		resourcep;
+};
+</pre></div>
+
+<p>in which the instance of <code>cce_handler_t</code> is the first field.
+</p></dd></dl>
 
 
 <dl>
@@ -898,7 +951,7 @@ calling one of the functions <code>cce_run_*_handlers()</code>; before terminati
 
 <dl>
 <dt><a name="index-cce_005ferror_005fhandler_005ft"></a>Struct Typedef: <strong>cce_error_handler_t</strong></dt>
-<dd><p>Structure representing a error handler.  It has the following public fields:
+<dd><p>Structure representing an error handler.  It has the following public fields:
 </p>
 <dl compact="compact">
 <dt><code>cce_handler_t handler</code></dt>
@@ -910,9 +963,10 @@ calling one of the functions <code>cce_run_*_handlers()</code>; before terminati
 
 <dl>
 <dt><a name="index-cce_005fhandler_005ffun_005ft"></a>Function Typedef: <em>void</em> <strong>cce_handler_fun_t</strong> <em>(cce_condition_t const * <var>C</var>, cce_handler_t * <var>H</var>)</em></dt>
-<dd><p>Type of handler functions meant to release some asynchronous resource.  The argument <var>C</var>
-references the object representing the exceptional condition; the handler must leave it untouched,
-it must <strong>not</strong> mutate or release it.  The argument <var>H</var> references the handler context.
+<dd><p>Type of exception handler functions meant to release some asynchronous resource.  The argument
+<var>C</var> references a structure representing the raised exceptional&ndash;condition object; the handler
+must leave it untouched, it must <strong>not</strong> mutate or release it.  The argument <var>H</var> references
+the handler context.
 </p>
 <p>If an error occurs: the handler function must take care of itself and return to the caller, it must
 <strong>not</strong> raise an exceptional condition and jump to a remote location.
@@ -921,6 +975,18 @@ it must <strong>not</strong> mutate or release it.  The argument <var>H</var> re
 to release its memory.
 </p></dd></dl>
 
+<hr>
+<a name="handlers-registering"></a>
+<div class="header">
+<p>
+Next: <a href="#handlers-running" accesskey="n" rel="next">handlers running</a>, Previous: <a href="#handlers-typedefs" accesskey="p" rel="prev">handlers typedefs</a>, Up: <a href="#handlers" accesskey="u" rel="up">handlers</a> &nbsp; [<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<a name="Registering-location-handlers"></a>
+<h3 class="section">5.2 Registering location handlers</h3>
+
+
+<p>All the following definitions are accessible from the header file <samp>ccexceptions.h</samp>.
+</p>
 
 <dl>
 <dt><a name="index-cce_005fregister_005fclean_005fhandler"></a>Function: <em>void</em> <strong>cce_register_clean_handler</strong> <em>(cce_destination_t <var>L</var>, cce_handler_t * <var>H</var>)</em></dt>
@@ -950,11 +1016,41 @@ successful execution path.
 
 
 <dl>
+<dt><a name="index-cce_005fregister_005fhandler"></a>Preprocessor Macro: <em>void</em> <strong>cce_register_handler</strong> <em>(cce_destination_t <var>L</var>, cce_clean_handler_t * <var>H</var>)</em></dt>
+<dt><a name="index-cce_005fregister_005fhandler-1"></a>Preprocessor Macro: <em>void</em> <strong>cce_register_handler</strong> <em>(cce_destination_t <var>L</var>, cce_error_handler_t * <var>H</var>)</em></dt>
+<dd><p>Generic macro which using <code>_Generic</code> to dispatch its expansion depending on the type of the
+argument <var>H</var>.  If the type of structure referenced by <var>H</var> is:
+</p>
+<dl compact="compact">
+<dt><code>cce_clean_handler_t</code></dt>
+<dd><p>The macro expands into a call to <code>cce_register_clean_handler()</code>.
+</p>
+</dd>
+<dt><code>cce_error_handler_t</code></dt>
+<dd><p>The macro expands into a call to <code>cce_register_error_handler()</code>.
+</p></dd>
+</dl>
+</dd></dl>
+
+
+<dl>
 <dt><a name="index-cce_005fforget_005fhandler"></a>Function: <em>void</em> <strong>cce_forget_handler</strong> <em>(cce_destination_t <var>L</var>, cce_handler_t * <var>H</var>)</em></dt>
 <dd><p>Remove the handler <var>H</var> from the context of the location <var>L</var>.  If <var>H</var> is not registered
 in <var>L</var>: nothing happens.
 </p></dd></dl>
 
+<hr>
+<a name="handlers-running"></a>
+<div class="header">
+<p>
+Next: <a href="#handlers-handlers" accesskey="n" rel="next">handlers handlers</a>, Previous: <a href="#handlers-registering" accesskey="p" rel="prev">handlers registering</a>, Up: <a href="#handlers" accesskey="u" rel="up">handlers</a> &nbsp; [<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<a name="Running-location-handlers"></a>
+<h3 class="section">5.3 Running location handlers</h3>
+
+
+<p>All the following definitions are accessible from the header file <samp>ccexceptions.h</samp>.
+</p>
 
 <dl>
 <dt><a name="index-cce_005frun_005fclean_005fhandlers"></a>Function: <em>void</em> <strong>cce_run_clean_handlers</strong> <em>(cce_destination_t <var>L</var>)</em></dt>
@@ -969,6 +1065,7 @@ from the context of <var>L</var>, so it can be finalised and its memory released
 
 
 <dl>
+<dt><a name="index-cce_005frun_005fcatch_005fhandlers"></a>Function: <em>void</em> <strong>cce_run_catch_handlers</strong> <em>(cce_destination_t <var>L</var>)</em></dt>
 <dt><a name="index-cce_005frun_005ferror_005fhandlers"></a>Function: <em>void</em> <strong>cce_run_error_handlers</strong> <em>(cce_destination_t <var>L</var>)</em></dt>
 <dd><p>Run all the clean and error handlers associated to the location <var>L</var>.  Each handler must return
 to its caller, taking care of itself regarding internal error handling and asynchronous resources
@@ -978,18 +1075,20 @@ allocation.  Handlers are called starting from the last registered one.
 handler function is applied to the handler structure: the handler structure is completely detached
 from the context of <var>L</var>, so it can be finalised and its memory released.
 </p>
-<p><strong>NOTE</strong> It must assume that an error handler might access the exceptional&ndash;condition object
-associated to <var>L</var>, so this function should always be called <strong>before</strong> applying
-<code>cce_condition_delete()</code> to the return value of <code>cce_condition()</code>.
+<p><strong>NOTE</strong> This function must assume that an error handler might access the
+exceptional&ndash;condition object associated to <var>L</var> upon raising the exception, so this function
+should always be called <strong>before</strong> applying <code>cce_condition_delete()</code> to the return value of
+<code>cce_condition(<var>L</var>)</code>.
 </p></dd></dl>
 
 
 <dl>
+<dt><a name="index-cce_005frun_005fcatch_005fhandlers_005ffinal"></a>Function: <em>void</em> <strong>cce_run_catch_handlers_final</strong> <em>(cce_destination_t <var>L</var>)</em></dt>
 <dt><a name="index-cce_005frun_005ferror_005fhandlers_005ffinal"></a>Function: <em>void</em> <strong>cce_run_error_handlers_final</strong> <em>(cce_destination_t <var>L</var>)</em></dt>
 <dd><p>Equivalent to calling:
 </p>
 <div class="example">
-<pre class="example">cce_run_error_handlers(L);
+<pre class="example">cce_run_catch_handlers(L);
 cce_condition_delete(cce_condition(L));
 </pre></div>
 </dd></dl>
@@ -1007,11 +1106,12 @@ cce_condition_delete(cce_condition(L));
 
 
 <dl>
+<dt><a name="index-cce_005frun_005fcatch_005fhandlers_005fraise"></a>Function: <em>void</em> <strong>cce_run_catch_handlers_raise</strong> <em>(cce_destination_t <var>L</var>, cce_location_t * <var>upper_L</var>)</em></dt>
 <dt><a name="index-cce_005frun_005ferror_005fhandlers_005fraise"></a>Function: <em>void</em> <strong>cce_run_error_handlers_raise</strong> <em>(cce_destination_t <var>L</var>, cce_location_t * <var>upper_L</var>)</em></dt>
 <dd><p>Equivalent to calling:
 </p>
 <div class="example">
-<pre class="example">cce_run_error_handlers(L);
+<pre class="example">cce_run_catch_handlers(L);
 cce_raise(upper_L, cce_condition(L));
 </pre></div>
 </dd></dl>
@@ -1027,20 +1127,277 @@ cce_raise(upper_L, cce_condition(L));
 </pre></div>
 </dd></dl>
 
+<hr>
+<a name="handlers-handlers"></a>
+<div class="header">
+<p>
+Next: <a href="#handlers-examples" accesskey="n" rel="next">handlers examples</a>, Previous: <a href="#handlers-running" accesskey="p" rel="prev">handlers running</a>, Up: <a href="#handlers" accesskey="u" rel="up">handlers</a> &nbsp; [<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<a name="Running-handlers-from-handlers"></a>
+<h3 class="section">5.4 Running handlers from handlers</h3>
+
+
+<p>It is sometimes useful to execute complex code in an exception&ndash;handler code block; for example we
+may need to map a set of exceptional&ndash;condition objects into another set.  Whenever an
+exception&ndash;handler code block needs to handle exceptions itself, we must register the outer handlers
+as inner handlers; CCExceptions offers functions to do this with ease.
+</p>
+<p>The basic code template is this:
+</p>
+<div class="example">
+<pre class="example">cce_location_t  outer_L[1];
+
+if (cce_location(outer_L)) {
+  /* outer exception handler */
+  cce_location_t  inner_L[1];
+
+  if (cce_location(inner_L)) }
+    /* inner exception handler */
+    cce_run_catch_handlers_final(inner_L);
+  } else {
+    /* inner body */
+    cce_run_clean_handlers(inner_L);
+  }
+} else {
+  /* outer body */
+  cce_run_clean_handlers(outer_L);
+}
+</pre></div>
+
+<table class="menu" border="0" cellspacing="0">
+<tr><td align="left" valign="top">&bull; <a href="#handlers-handlers-cc" accesskey="1">handlers handlers cc</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Using a clean handler to run clean handlers.
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="#handlers-handlers-ce" accesskey="2">handlers handlers ce</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Using a clean handler to run error handlers.
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="#handlers-handlers-ec" accesskey="3">handlers handlers ec</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Using an error handler to run clean handlers.
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="#handlers-handlers-ee" accesskey="4">handlers handlers ee</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Using an error handler to run error handlers.
+</td></tr>
+</table>
+
+<hr>
+<a name="handlers-handlers-cc"></a>
+<div class="header">
+<p>
+Next: <a href="#handlers-handlers-ce" accesskey="n" rel="next">handlers handlers ce</a>, Up: <a href="#handlers-handlers" accesskey="u" rel="up">handlers handlers</a> &nbsp; [<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<a name="Using-a-clean-handler-to-run-clean-handlers"></a>
+<h4 class="subsection">5.4.1 Using a clean handler to run clean handlers</h4>
+
+
+<dl>
+<dt><a name="index-cce_005fregister_005fclean_005fhandler_005fto_005frun_005fclean_005fhandlers"></a>Function: <em>void</em> <strong>cce_register_clean_handler_to_run_clean_handlers</strong> <em>(cce_destination_t <var>inner_L</var>, cce_clean_handler_t * <var>inner_H</var>, cce_destination_t <var>outer_L</var>)</em></dt>
+<dd><p>Register the clean handler <var>inner_H</var>, in the context of the location <var>inner_L</var>, so that it
+will run the clean handlers registered for the location <var>outer_L</var>.  The exceptional&ndash;condition
+object associated to <var>outer_L</var> will be deleted by the handler.
+</p></dd></dl>
+
+
+<p>We can use this function as follows:
+</p>
+<div class="example">
+<pre class="example">cce_location_t  outer_L[1];
+
+if (cce_location(outer_L)) {
+  /* outer exception handler */
+  cce_location_t       inner_L[1];
+  cce_clean_handler_t  inner_H[1];
+
+  if (cce_location(inner_L)) }
+    /* inner exception handler */
+    cce_run_catch_handlers_final(inner_L);
+  } else {
+    cce_register_clean_handler_to_run_clean_handlers
+       (inner_L, inner_H, outer_L);
+    /* inner body */
+    cce_run_clean_handlers(inner_L);
+  }
+} else {
+  /* outer body */
+  cce_run_clean_handlers(outer_L);
+}
+</pre></div>
+
+<hr>
+<a name="handlers-handlers-ce"></a>
+<div class="header">
+<p>
+Next: <a href="#handlers-handlers-ec" accesskey="n" rel="next">handlers handlers ec</a>, Previous: <a href="#handlers-handlers-cc" accesskey="p" rel="prev">handlers handlers cc</a>, Up: <a href="#handlers-handlers" accesskey="u" rel="up">handlers handlers</a> &nbsp; [<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<a name="Using-a-clean-handler-to-run-error-handlers"></a>
+<h4 class="subsection">5.4.2 Using a clean handler to run error handlers</h4>
+
+
+<dl>
+<dt><a name="index-cce_005fregister_005fclean_005fhandler_005fto_005frun_005fcatch_005fhandlers"></a>Function: <em>void</em> <strong>cce_register_clean_handler_to_run_catch_handlers</strong> <em>(cce_destination_t <var>inner_L</var>, cce_clean_handler_t * <var>inner_H</var>, cce_destination_t <var>outer_L</var>)</em></dt>
+<dd><p>Register the clean handler <var>inner_H</var>, in the context of the location <var>inner_L</var>, so that it
+will run the error handlers registered for the location <var>outer_L</var>.  The exceptional&ndash;condition
+object associated to <var>outer_L</var> will be deleted by the handler.
+</p></dd></dl>
+
+
+<p>We can use this function as follows:
+</p>
+<div class="example">
+<pre class="example">cce_location_t  outer_L[1];
+
+if (cce_location(outer_L)) {
+  /* outer exception handler */
+  cce_location_t       inner_L[1];
+  cce_clean_handler_t  inner_H[1];
+
+  if (cce_location(inner_L)) }
+    /* inner exception handler */
+    cce_run_catch_handlers_final(inner_L);
+  } else {
+    cce_register_clean_handler_to_run_catch_handlers
+       (inner_L, inner_H, outer_L);
+    /* inner body */
+    cce_run_clean_handlers(inner_L);
+  }
+} else {
+  /* outer body */
+  cce_run_clean_handlers(outer_L);
+}
+</pre></div>
+
+<hr>
+<a name="handlers-handlers-ec"></a>
+<div class="header">
+<p>
+Next: <a href="#handlers-handlers-ee" accesskey="n" rel="next">handlers handlers ee</a>, Previous: <a href="#handlers-handlers-ce" accesskey="p" rel="prev">handlers handlers ce</a>, Up: <a href="#handlers-handlers" accesskey="u" rel="up">handlers handlers</a> &nbsp; [<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<a name="Using-an-error-handler-to-run-clean-handlers"></a>
+<h4 class="subsection">5.4.3 Using an error handler to run clean handlers</h4>
+
+
+<dl>
+<dt><a name="index-cce_005fregister_005ferror_005fhandler_005fto_005frun_005fclean_005fhandlers"></a>Function: <em>void</em> <strong>cce_register_error_handler_to_run_clean_handlers</strong> <em>(cce_destination_t <var>inner_L</var>, cce_error_handler_t * <var>inner_H</var>, cce_destination_t <var>outer_L</var>)</em></dt>
+<dd><p>Register the error handler <var>inner_H</var>, in the context of the location <var>inner_L</var>, so that it
+will run the clean handlers registered for the location <var>outer_L</var>.  The exceptional&ndash;condition
+object associated to <var>outer_L</var> will be deleted by the handler.
+</p></dd></dl>
+
+
+<p>We can use this function as follows:
+</p>
+<div class="example">
+<pre class="example">cce_location_t  outer_L[1];
+
+if (cce_location(outer_L)) {
+  /* outer exception handler */
+  cce_location_t       inner_L[1];
+  cce_error_handler_t  inner_H[1];
+
+  if (cce_location(inner_L)) }
+    /* inner exception handler */
+    cce_run_catch_handlers_final(inner_L);
+  } else {
+    cce_register_error_handler_to_run_clean_handlers
+       (inner_L, inner_H, outer_L);
+    /* inner body */
+    cce_run_clean_handlers(inner_L);
+  }
+} else {
+  /* outer body */
+  cce_run_clean_handlers(outer_L);
+}
+</pre></div>
+
+<hr>
+<a name="handlers-handlers-ee"></a>
+<div class="header">
+<p>
+Previous: <a href="#handlers-handlers-ec" accesskey="p" rel="prev">handlers handlers ec</a>, Up: <a href="#handlers-handlers" accesskey="u" rel="up">handlers handlers</a> &nbsp; [<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<a name="Using-an-error-handler-to-run-error-handlers"></a>
+<h4 class="subsection">5.4.4 Using an error handler to run error handlers</h4>
+
+
+<dl>
+<dt><a name="index-cce_005fregister_005ferror_005fhandler_005fto_005frun_005fcatch_005fhandlers"></a>Function: <em>void</em> <strong>cce_register_error_handler_to_run_catch_handlers</strong> <em>(cce_destination_t <var>inner_L</var>, cce_error_handler_t * <var>inner_H</var>, cce_destination_t <var>outer_L</var>)</em></dt>
+<dd><p>Register the error handler <var>inner_H</var>, in the context of the location <var>inner_L</var>, so that it
+will run the error handlers registered for the location <var>outer_L</var>.  The exceptional&ndash;condition
+object associated to <var>outer_L</var> will be deleted by the handler.
+</p></dd></dl>
+
+
+<p>We can use this function as follows:
+</p>
+<div class="example">
+<pre class="example">cce_location_t  outer_L[1];
+
+if (cce_location(outer_L)) {
+  /* outer exception handler */
+  cce_location_t       inner_L[1];
+  cce_error_handler_t  inner_H[1];
+
+  if (cce_location(inner_L)) }
+    /* inner exception handler */
+    cce_run_catch_handlers_final(inner_L);
+  } else {
+    cce_register_error_handler_to_run_catch_handlers
+       (inner_L, inner_H, outer_L);
+    /* inner body */
+    cce_run_clean_handlers(inner_L);
+  }
+} else {
+  /* outer body */
+  cce_run_clean_handlers(outer_L);
+}
+</pre></div>
+
+<hr>
+<a name="handlers-examples"></a>
+<div class="header">
+<p>
+Previous: <a href="#handlers-handlers" accesskey="p" rel="prev">handlers handlers</a>, Up: <a href="#handlers" accesskey="u" rel="up">handlers</a> &nbsp; [<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<a name="Examples-of-location-handlers-usage"></a>
+<h3 class="section">5.5 Examples of location handlers usage</h3>
+
+<table class="menu" border="0" cellspacing="0">
+<tr><td align="left" valign="top">&bull; <a href="#handlers-examples-mech" accesskey="1">handlers examples mech</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Examples of basic mechanisms.
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="#handlers-examples-clean" accesskey="2">handlers examples clean</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Example of asynchronous resource handling
+                                using a clean handler.
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="#handlers-examples-error" accesskey="3">handlers examples error</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Example of asynchronous resource handling
+                                using an error handler.
+</td></tr>
+</table>
+
+<hr>
+<a name="handlers-examples-mech"></a>
+<div class="header">
+<p>
+Next: <a href="#handlers-examples-clean" accesskey="n" rel="next">handlers examples clean</a>, Up: <a href="#handlers-examples" accesskey="u" rel="up">handlers examples</a> &nbsp; [<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<a name="Examples-of-basic-mechanisms"></a>
+<h4 class="subsection">5.5.1 Examples of basic mechanisms</h4>
+
 
 <p>We could define and call a list of clean handlers as follows:
 </p>
 <div class="example">
-<pre class="example">void handler1 (cce_condition_t const * C, cce_handler_t * H) {
+<pre class="example">void
+handler1 (cce_condition_t const * C, cce_handler_t * H)
+{
   do_some_cleanup();
 }
-void handler2 (cce_condition_t const * C, cce_handler_t * H) {
+void
+handler2 (cce_condition_t const * C, cce_handler_t * H)
+{
   do_some_cleanup();
 }
-void handler3 (cce_condition_t const * C, cce_handler_t * H) {
+void
+handler3 (cce_condition_t const * C, cce_handler_t * H)
+{
   do_some_cleanup();
 }
 
+void
+func (void)
 {
   cce_location_t L[1];
   cce_handler_t  H1 = { .function = handler1 };
@@ -1058,16 +1415,24 @@ void handler3 (cce_condition_t const * C, cce_handler_t * H) {
 <p>and we could define and call a list of error handlers as follows:
 </p>
 <div class="example">
-<pre class="example">void handler1 (cce_condition_t const * C, cce_handler_t * H) {
+<pre class="example">void
+handler1 (cce_condition_t const * C, cce_handler_t * H)
+{
   do_some_error_handling();
 }
-void handler2 (cce_condition_t const * C, cce_handler_t * H) {
+void
+handler2 (cce_condition_t const * C, cce_handler_t * H)
+{
   do_some_error_handling();
 }
-void handler3 (cce_condition_t const * C, cce_handler_t * H) {
+void
+handler3 (cce_condition_t const * C, cce_handler_t * H)
+{
   do_some_error_handling();
 }
 
+void
+func (void)
 {
   cce_location_t L[1];
   cce_handler_t  H1 = { .function = handler1 };
@@ -1078,44 +1443,51 @@ void handler3 (cce_condition_t const * C, cce_handler_t * H) {
   cce_register_error_handler(L, &amp;H1);
   cce_register_error_handler(L, &amp;H2);
   cce_register_error_handler(L, &amp;H3);
-  cce_run_error_handlers(L);
+  cce_run_catch_handlers(L);
 }
 </pre></div>
 
+<hr>
+<a name="handlers-examples-clean"></a>
+<div class="header">
+<p>
+Next: <a href="#handlers-examples-error" accesskey="n" rel="next">handlers examples error</a>, Previous: <a href="#handlers-examples-mech" accesskey="p" rel="prev">handlers examples mech</a>, Up: <a href="#handlers-examples" accesskey="u" rel="up">handlers examples</a> &nbsp; [<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<a name="Example-of-asynchronous-resource-handling-using-a-clean-handler"></a>
+<h4 class="subsection">5.5.2 Example of asynchronous resource handling using a clean handler</h4>
+
+
 <p>Let&rsquo;s say we need to allocate memory with <code>malloc()</code>, and to release it with <code>free()</code>
 whenever the dynamic extent of the local function terminates; we can use built&ndash;in functions for
-this, <a href="#system-memory">system memory</a>.  To show the mechanism, in the following example: we implement a handler
-explicitly.
+this, <a href="#system-memory">system memory</a> for details.  To show the mechanism, in the following example: we
+implement a handler explicitly.
 </p>
 <div class="example">
-<pre class="example">typedef struct handler_t {
-  cce_handler_t handler;
-  void *        pointer;
-} handler_t;
-
-static void
-P_handler (cce_condition_t const * C, cce_handler_t * _H)
+<pre class="example">void
+P_handler (cce_condition_t const * C, cce_handler_t * H)
 {
-  handler_t * H = (handler_t *)_H;
   free(H-&gt;pointer);
 }
 
+void
+func (void)
 {
-  cce_location_t        L[1];
-  handler_t             H;
-  void *                P;
-
-  H.handler.function = P_handler;
+  cce_location_t  L[1];
+  cce_handler_t   P_H;
 
   if (cce_location(L)) {
-    cce_run_error_handlers_final(L);
+    cce_run_catch_handlers_final(L);
   } else {
+    void *  P;
+
     errno = 0;
     P = malloc(4096);
     if (P) {
-      cce_register_clean_handler(L, &amp;H.handler);
+      P_H.function = P_handler;
+      P_H.pointer  = P;
+      cce_register_clean_handler(L, &amp;P_H);
     } else {
-      cce_raise(L, cce_condition_new_errno(errno));
+      cce_raise(L, cce_condition_new_errno_clear(errno));
     }
     do_something(L, P);
     cce_run_clean_handlers(L);
@@ -1126,45 +1498,59 @@ P_handler (cce_condition_t const * C, cce_handler_t * _H)
 <p>whether <code>do_something()</code> raises an exception or not: the clean handler is invoked and the memory
 is released.
 </p>
-<p>Let&rsquo;s say we are writing a constructor and we need to allocate memory, do something and, if
-successful, return the memory to the caller; to better show the mechanism: we do not use the field
-<code>pointer</code> of <code>cce_handler_t</code>; we can organise the code as follows, using an error
-handler in the constructor and a clean handler in the caller:
+<hr>
+<a name="handlers-examples-error"></a>
+<div class="header">
+<p>
+Previous: <a href="#handlers-examples-clean" accesskey="p" rel="prev">handlers examples clean</a>, Up: <a href="#handlers-examples" accesskey="u" rel="up">handlers examples</a> &nbsp; [<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<a name="Example-of-asynchronous-resource-handling-using-an-error-handler"></a>
+<h4 class="subsection">5.5.3 Example of asynchronous resource handling using an error handler</h4>
+
+
+<p>Let&rsquo;s say we are writing a constructor function and we need to allocate memory, do something and:
+</p>
+<ul>
+<li> If successful: return the memory to the caller.
+
+</li><li> If an error occurs: release the memory locally.
+</li></ul>
+
+<p>We can organise the code as follows, using an error handler in the constructor and a clean handler
+in the caller:
 </p>
 <div class="example">
-<pre class="example">typedef struct handler_t {
-  cce_handler_t handler;
-  void *        pointer;
-} handler_t;
-
-static void
-P_handler (cce_condition_t const * C, cce_handler_t * _H)
+<pre class="example">void
+P_handler (cce_condition_t const * C, cce_handler_t * H)
 {
-  handler_t * H = (handler_t *)_H;
   free(H-&gt;pointer);
 }
 
 void *
-constructor (cce_location_t * there)
+constructor (cce_destination_t upper_L)
 {
-  cce_location_t    L;
-  handler_t         H;
-  void *            P;
-
-  H.handler.function = P_handler;
+  cce_location_t  L;
+  cce_handler_t   P_H;
 
   if (cce_location(L)) {
-    cce_run_error_handlers_raise(L, there);
+    cce_run_catch_handlers_raise(L, upper_L);
   } else {
+    void *  P;
+
     errno = 0;
     P = malloc(4096);
     if (P) {
-      H.pointer = P;
-      cce_register_error_handler(L, &amp;H.handler);
+      P_H.function = P_handler;
+      P_H.pointer  = P;
+      cce_register_error_handler(L, &amp;P_H);
     } else {
-      cce_raise(L, cce_condition_new_errno(errno));
+      cce_raise(L, cce_condition_new_errno_clear(errno));
     }
-    do_some_initialisation_in(P);
+
+    /* If this function raises an exception: the error
+       handler releases the memory. */
+    do_some_initialisation(L, P);
+
     cce_run_clean_handlers(L);
   }
   return P;
@@ -1173,17 +1559,19 @@ constructor (cce_location_t * there)
 void caller (void)
 {
   cce_location_t    L[1];
-  handler_t         H;
-  void *            P;
-
-  H.handler.function = P_handler;
+  cce_handler_t     P_H;
 
   if (cce_location(L)) {
-    cce_run_error_handlers_final(L);
+    cce_run_catch_handlers_final(L);
   } else {
+    void *  P;
+
     P = constructor(L);
-    H.pointer = P;
-    cce_register_clean_handler(L, &amp;H.handler);
+    {
+      P_H.function = P_handler;
+      P_H.pointer  = P;
+      cce_register_clean_handler(L, &amp;P_H);
+    }
     do_something_with(P);
     cce_run_clean_handlers(L);
   }
@@ -1273,7 +1661,7 @@ if (cce_location(L)) {
     {
       // default reaction to any exception
     }
-  cce_run_error_handlers_final(L);
+  cce_run_catch_handlers_final(L);
 } else {
   // do something useful
   cce_run_clean_handlers(L);
@@ -1295,7 +1683,7 @@ upper_function (void)
   if (cce_location(L)) {
     fprintf(stderr, &quot;log: %s\n&quot;, \
         cce_condition_static_message(cce_condition(L)));
-    cce_run_error_handlers_final(L);
+    cce_run_catch_handlers_final(L);
   } else {
     lower_function(L);
     cce_run_clean_handlers(L);
@@ -1308,7 +1696,7 @@ lower_function (cce_location_t * upper_L)
   cce_location_t        L[1];
 
   if (cce_location(L)) {
-    cce_run_error_handlers_raise(L, upper_L);
+    cce_run_catch_handlers_raise(L, upper_L);
   } else {
     do_something();
     if (an_error_occurred()) {
@@ -3434,7 +3822,7 @@ Next: <a href="#system-memory-gmalloc" accesskey="n" rel="next">system memory gm
 cce_handler_t   P_H[1];
 
 if (cce_location(L)) {
-  cce_run_error_handlers_final(L);
+  cce_run_catch_handlers_final(L);
 } else {
   void *        P = cce_sys_malloc(L, 4096);
   cce_clean_handler_malloc_init(L, P_H, P);
@@ -3485,7 +3873,7 @@ Next: <a href="#system-memory-gcalloc" accesskey="n" rel="next">system memory gc
 cce_clean_handler_t     P_H[1];
 
 if (cce_location(L)) {
-  cce_run_error_handlers_final(L);
+  cce_run_catch_handlers_final(L);
 } else {
   void *  P = cce_sys_malloc_guarded(L, P_H, 1024);
 
@@ -3501,7 +3889,7 @@ if (cce_location(L)) {
 cce_error_handler_t     P_H[1];
 
 if (cce_location(L)) {
-  cce_run_error_handlers_final(L);
+  cce_run_catch_handlers_final(L);
 } else {
   void *  P = cce_sys_malloc_guarded(L, P_H, 1024);
 
@@ -3648,8 +4036,8 @@ errors.  The affected functions and macros are:
 <div class="example">
 <pre class="example">cce_location
 cce_raise
-cce_run_error_handlers_raise
-cce_run_error_handlers_final
+cce_run_catch_handlers_raise
+cce_run_catch_handlers_final
 cce_run_clean_handlers_raise
 cce_run_clean_handlers_final
 </pre></div>
@@ -3671,7 +4059,7 @@ test_tracing_sub_sub_sub (cce_destination_t upper_L)
   cce_location_t        L[1];
 
   if (cce_location(L)) {
-    cce_run_error_handlers_raise(L, upper_L);
+    cce_run_catch_handlers_raise(L, upper_L);
   } else {
     cce_raise(L, cce_condition_new_unknown());
     cce_run_clean_handlers(L);
@@ -3684,7 +4072,7 @@ test_tracing_sub_sub (cce_destination_t upper_L)
   cce_location_t        L[1];
 
   if (cce_location(L)) {
-    cce_run_error_handlers_raise(L, upper_L);
+    cce_run_catch_handlers_raise(L, upper_L);
   } else {
     test_tracing_sub_sub_sub(L);
     cce_run_clean_handlers(L);
@@ -3697,7 +4085,7 @@ test_tracing_sub (cce_destination_t upper_L)
   cce_location_t        L[1];
 
   if (cce_location(L)) {
-    cce_run_error_handlers_raise(L, upper_L);
+    cce_run_catch_handlers_raise(L, upper_L);
   } else {
     test_tracing_sub_sub(L);
     cce_run_clean_handlers(L);
@@ -3710,7 +4098,7 @@ test_tracing (void)
   cce_location_t        L[1];
 
   if (cce_location(L)) {
-    cce_run_error_handlers_final(L);
+    cce_run_catch_handlers_final(L);
   } else {
     test_tracing_sub(L);
     cce_run_clean_handlers(L);
@@ -4728,8 +5116,8 @@ Next: <a href="#variable-index" accesskey="n" rel="next">variable index</a>, Pre
 <tr><td></td><td valign="top"><a href="#index-cce_005fdescriptor_005fchild_005fand_005fancestor"><code>cce_descriptor_child_and_ancestor</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-descriptors">conditions descriptors</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fdescriptor_005fset_005froot_005fparent"><code>cce_descriptor_set_root_parent</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-root">conditions root</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005ferror_005fhandler_005fmalloc_005finit"><code>cce_error_handler_malloc_init</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#system-memory-handlers">system memory handlers</a></td></tr>
-<tr><td></td><td valign="top"><a href="#index-cce_005fforget_005fhandler"><code>cce_forget_handler</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#handlers">handlers</a></td></tr>
-<tr><td></td><td valign="top"><a href="#index-cce_005fhandler_005ffun_005ft"><code>cce_handler_fun_t</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#handlers">handlers</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-cce_005fforget_005fhandler"><code>cce_forget_handler</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#handlers-registering">handlers registering</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-cce_005fhandler_005ffun_005ft"><code>cce_handler_fun_t</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#handlers-typedefs">handlers typedefs</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fhandler_005fmalloc_005finit"><code>cce_handler_malloc_init</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#system-memory-handlers">system memory handlers</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fhandler_005fmalloc_005finit-1"><code>cce_handler_malloc_init</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#system-memory-handlers">system memory handlers</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fis_005fcondition"><code>cce_is_condition</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-objects">conditions objects</a></td></tr>
@@ -4747,15 +5135,24 @@ Next: <a href="#variable-index" accesskey="n" rel="next">variable index</a>, Pre
 <tr><td></td><td valign="top"><a href="#index-CCE_005fPC"><code>CCE_PC</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#helpers">helpers</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fraise"><code>cce_raise</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#locations">locations</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fraise_005funreachable"><code>cce_raise_unreachable</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-unreachable">conditions unreachable</a></td></tr>
-<tr><td></td><td valign="top"><a href="#index-cce_005fregister_005fclean_005fhandler"><code>cce_register_clean_handler</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#handlers">handlers</a></td></tr>
-<tr><td></td><td valign="top"><a href="#index-cce_005fregister_005ferror_005fhandler"><code>cce_register_error_handler</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#handlers">handlers</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-cce_005fregister_005fclean_005fhandler"><code>cce_register_clean_handler</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#handlers-registering">handlers registering</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-cce_005fregister_005fclean_005fhandler_005fto_005frun_005fcatch_005fhandlers"><code>cce_register_clean_handler_to_run_catch_handlers</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#handlers-handlers-ce">handlers handlers ce</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-cce_005fregister_005fclean_005fhandler_005fto_005frun_005fclean_005fhandlers"><code>cce_register_clean_handler_to_run_clean_handlers</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#handlers-handlers-cc">handlers handlers cc</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-cce_005fregister_005ferror_005fhandler"><code>cce_register_error_handler</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#handlers-registering">handlers registering</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-cce_005fregister_005ferror_005fhandler_005fto_005frun_005fcatch_005fhandlers"><code>cce_register_error_handler_to_run_catch_handlers</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#handlers-handlers-ee">handlers handlers ee</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-cce_005fregister_005ferror_005fhandler_005fto_005frun_005fclean_005fhandlers"><code>cce_register_error_handler_to_run_clean_handlers</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#handlers-handlers-ec">handlers handlers ec</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-cce_005fregister_005fhandler"><code>cce_register_handler</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#handlers-registering">handlers registering</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-cce_005fregister_005fhandler-1"><code>cce_register_handler</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#handlers-registering">handlers registering</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fretry"><code>cce_retry</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#locations">locations</a></td></tr>
-<tr><td></td><td valign="top"><a href="#index-cce_005frun_005fclean_005fhandlers"><code>cce_run_clean_handlers</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#handlers">handlers</a></td></tr>
-<tr><td></td><td valign="top"><a href="#index-cce_005frun_005fclean_005fhandlers_005ffinal"><code>cce_run_clean_handlers_final</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#handlers">handlers</a></td></tr>
-<tr><td></td><td valign="top"><a href="#index-cce_005frun_005fclean_005fhandlers_005fraise"><code>cce_run_clean_handlers_raise</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#handlers">handlers</a></td></tr>
-<tr><td></td><td valign="top"><a href="#index-cce_005frun_005ferror_005fhandlers"><code>cce_run_error_handlers</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#handlers">handlers</a></td></tr>
-<tr><td></td><td valign="top"><a href="#index-cce_005frun_005ferror_005fhandlers_005ffinal"><code>cce_run_error_handlers_final</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#handlers">handlers</a></td></tr>
-<tr><td></td><td valign="top"><a href="#index-cce_005frun_005ferror_005fhandlers_005fraise"><code>cce_run_error_handlers_raise</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#handlers">handlers</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-cce_005frun_005fcatch_005fhandlers"><code>cce_run_catch_handlers</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#handlers-running">handlers running</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-cce_005frun_005fcatch_005fhandlers_005ffinal"><code>cce_run_catch_handlers_final</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#handlers-running">handlers running</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-cce_005frun_005fcatch_005fhandlers_005fraise"><code>cce_run_catch_handlers_raise</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#handlers-running">handlers running</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-cce_005frun_005fclean_005fhandlers"><code>cce_run_clean_handlers</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#handlers-running">handlers running</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-cce_005frun_005fclean_005fhandlers_005ffinal"><code>cce_run_clean_handlers_final</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#handlers-running">handlers running</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-cce_005frun_005fclean_005fhandlers_005fraise"><code>cce_run_clean_handlers_raise</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#handlers-running">handlers running</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-cce_005frun_005ferror_005fhandlers"><code>cce_run_error_handlers</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#handlers-running">handlers running</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-cce_005frun_005ferror_005fhandlers_005ffinal"><code>cce_run_error_handlers_final</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#handlers-running">handlers running</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-cce_005frun_005ferror_005fhandlers_005fraise"><code>cce_run_error_handlers_raise</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#handlers-running">handlers running</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fsys_005fcalloc"><code>cce_sys_calloc</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#system-memory-core">system memory core</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fsys_005fcalloc_005fguarded"><code>cce_sys_calloc_guarded</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#system-memory-gcalloc">system memory gcalloc</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fsys_005fcalloc_005fguarded-1"><code>cce_sys_calloc_guarded</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#system-memory-gcalloc">system memory gcalloc</a></td></tr>
@@ -4851,7 +5248,7 @@ Previous: <a href="#variable-index" accesskey="p" rel="prev">variable index</a>,
 <tr><td></td><th align="left">Index Entry</th><td>&nbsp;</td><th align="left"> Section</th></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th><a name="type-index_tp_letter-C">C</a></th><td></td><td></td></tr>
-<tr><td></td><td valign="top"><a href="#index-cce_005fclean_005fhandler_005ft"><code>cce_clean_handler_t</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#handlers">handlers</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-cce_005fclean_005fhandler_005ft"><code>cce_clean_handler_t</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#handlers-typedefs">handlers typedefs</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fcondition_005fbreak_005ft"><code>cce_condition_break_t</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-break">conditions break</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fcondition_005ferrno_005ft"><code>cce_condition_errno_t</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-errno">conditions errno</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fcondition_005ferror_005ft"><code>cce_condition_error_t</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-error">conditions error</a></td></tr>
@@ -4885,8 +5282,8 @@ Previous: <a href="#variable-index" accesskey="p" rel="prev">variable index</a>,
 <tr><td></td><td valign="top"><a href="#index-cce_005fdescriptor_005funknown_005ft"><code>cce_descriptor_unknown_t</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-unknown">conditions unknown</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fdescriptor_005funreachable_005ft"><code>cce_descriptor_unreachable_t</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-unreachable">conditions unreachable</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005fdestination_005ft"><code>cce_destination_t</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#locations">locations</a></td></tr>
-<tr><td></td><td valign="top"><a href="#index-cce_005ferror_005fhandler_005ft"><code>cce_error_handler_t</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#handlers">handlers</a></td></tr>
-<tr><td></td><td valign="top"><a href="#index-cce_005fhandler_005ft"><code>cce_handler_t</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#handlers">handlers</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-cce_005ferror_005fhandler_005ft"><code>cce_error_handler_t</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#handlers-typedefs">handlers typedefs</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-cce_005fhandler_005ft"><code>cce_handler_t</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#handlers-typedefs">handlers typedefs</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cce_005flocation_005ft"><code>cce_location_t</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#locations">locations</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 </table>
@@ -4907,7 +5304,25 @@ Previous: <a href="#variable-index" accesskey="p" rel="prev">variable index</a>,
   <li><a name="toc-Version-functions" href="#version">2 Version functions</a></li>
   <li><a name="toc-Brief-introduction-to-non_002d_002dlocal-exits" href="#setjmp">3 Brief introduction to non&ndash;local exits</a></li>
   <li><a name="toc-The-locations-API" href="#locations">4 The locations <acronym>API</acronym></a></li>
-  <li><a name="toc-The-handlers-API" href="#handlers">5 The handlers <acronym>API</acronym></a></li>
+  <li><a name="toc-The-location-handlers-API" href="#handlers">5 The location handlers <acronym>API</acronym></a>
+  <ul class="no-bullet">
+    <li><a name="toc-Handlers-type-definitions" href="#handlers-typedefs">5.1 Handlers type definitions</a></li>
+    <li><a name="toc-Registering-location-handlers" href="#handlers-registering">5.2 Registering location handlers</a></li>
+    <li><a name="toc-Running-location-handlers" href="#handlers-running">5.3 Running location handlers</a></li>
+    <li><a name="toc-Running-handlers-from-handlers" href="#handlers-handlers">5.4 Running handlers from handlers</a>
+    <ul class="no-bullet">
+      <li><a name="toc-Using-a-clean-handler-to-run-clean-handlers" href="#handlers-handlers-cc">5.4.1 Using a clean handler to run clean handlers</a></li>
+      <li><a name="toc-Using-a-clean-handler-to-run-error-handlers" href="#handlers-handlers-ce">5.4.2 Using a clean handler to run error handlers</a></li>
+      <li><a name="toc-Using-an-error-handler-to-run-clean-handlers" href="#handlers-handlers-ec">5.4.3 Using an error handler to run clean handlers</a></li>
+      <li><a name="toc-Using-an-error-handler-to-run-error-handlers" href="#handlers-handlers-ee">5.4.4 Using an error handler to run error handlers</a></li>
+    </ul></li>
+    <li><a name="toc-Examples-of-location-handlers-usage" href="#handlers-examples">5.5 Examples of location handlers usage</a>
+    <ul class="no-bullet">
+      <li><a name="toc-Examples-of-basic-mechanisms" href="#handlers-examples-mech">5.5.1 Examples of basic mechanisms</a></li>
+      <li><a name="toc-Example-of-asynchronous-resource-handling-using-a-clean-handler" href="#handlers-examples-clean">5.5.2 Example of asynchronous resource handling using a clean handler</a></li>
+      <li><a name="toc-Example-of-asynchronous-resource-handling-using-an-error-handler" href="#handlers-examples-error">5.5.3 Example of asynchronous resource handling using an error handler</a></li>
+    </ul></li>
+  </ul></li>
   <li><a name="toc-Exceptional-condition-descriptors" href="#conditions">6 Exceptional condition descriptors</a>
   <ul class="no-bullet">
     <li><a name="toc-Introduction-to-exceptional_002d_002dcondition-objects" href="#conditions-intro">6.1 Introduction to exceptional&ndash;condition objects</a></li>
