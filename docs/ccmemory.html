@@ -1,11 +1,11 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
-<!-- This document describes version 0.1.0-devel.0 of CCMemory, a C11 language library
+<!-- This document describes version 0.2.0-devel.0 of CCMemory, a C11 language library
 implementing an interface to custom memory allocators.
 
 This package supports POSIX platforms.  This package depends on the package CCExceptions, at
 least version 0.8.0.  To run the test suite: this package depends upon the
-package CCTests, at least version 0.2.0.
+package CCTests, at least version 0.3.0.
 
 The package is distributed under the terms of the GNU Lesser General Public License (LGPL).
 
@@ -199,12 +199,12 @@ Next: <a href="#overview" accesskey="n" rel="next">overview</a>, Up: <a href="di
 <a name="CCMemory"></a>
 <h1 class="top">CCMemory</h1>
 
-<p>This document describes version 0.1.0-devel.0 of CCMemory, a C11 language library
+<p>This document describes version 0.2.0-devel.0 of CCMemory, a C11 language library
 implementing an interface to custom memory allocators.
 </p>
 <p>This package supports <acronym>POSIX</acronym> platforms.  This package depends on the package CCExceptions, at
 least version 0.8.0.  To run the test suite: this package depends upon the
-package CCTests, at least version 0.2.0.
+package CCTests, at least version 0.3.0.
 </p>
 <p>The package is distributed under the terms of the <acronym>GNU</acronym> Lesser General Public License (<acronym>LGPL</acronym>).
 </p>
@@ -278,12 +278,12 @@ Next: <a href="#version" accesskey="n" rel="next">version</a>, Previous: <a href
 <h2 class="chapter">1 Overview of the package</h2>
 
 
-<p>This document describes version 0.1.0-devel.0 of CCMemory, a C11 language library
+<p>This document describes version 0.2.0-devel.0 of CCMemory, a C11 language library
 implementing an interface to custom memory allocators.
 </p>
 <p>This package supports <acronym>POSIX</acronym> platforms.  This package depends on the package CCExceptions, at
 least version 0.8.0.  To run the test suite: this package depends upon the
-package CCTests, at least version 0.2.0.
+package CCTests, at least version 0.3.0.
 </p>
 <p>CCMemory installs the single header file <samp>ccmemory.h</samp>.  All the function names in the
 <acronym>API</acronym> are prefixed with <code>ccmem_</code>; all the constant names are prefixed with <code>CCMEM_</code>; all
@@ -479,10 +479,13 @@ location <var>L</var>.  Functions of this type never return <code>NULL</code>.
 
 
 <dl>
-<dt><a name="index-ccmem_005ffree_005ffun_005ft"></a>Function: <em>void</em> <strong>ccmem_free_fun_t</strong> <em>(cce_destination_t <var>L</var>, ccmem_allocator_t const * const <var>A</var>, void * <var>ptr</var>)</em></dt>
+<dt><a name="index-ccmem_005ffree_005ffun_005ft"></a>Function: <em>void</em> <strong>ccmem_free_fun_t</strong> <em>(ccmem_allocator_t const * const <var>A</var>, void * <var>ptr</var>)</em></dt>
 <dd><p>Type of function that releases memory in a way similar to the standard <code>free()</code>.  The function
 uses the allocator <var>A</var>.  Only memory allocated using the allocator <var>A</var> can be released with
-this function.  If an error occurs: an exception is raised by jumping to the location <var>L</var>.
+this function.
+</p>
+<p>Functions of this type <strong>must not</strong> raise exceptions.  If an allocator fails to release memory:
+it should mark itself as &ldquo;in invalid state&rdquo; and fail to further allocate memory.
 </p></dd></dl>
 
 <hr>
@@ -520,9 +523,8 @@ returns <code>NULL</code>.
 
 
 <dl>
-<dt><a name="index-ccmem_005ffree"></a>Function: <em>void</em> <strong>ccmem_free</strong> <em>(cce_destination_t <var>L</var>, ccmem_allocator_t const * const <var>A</var>, void * <var>ptr</var>)</em></dt>
-<dd><p>Release memory in a way similar to the standard <code>free()</code>, using the allocator <var>A</var>.  If an
-error occurs: an exception is raised by jumping to the location <var>L</var>.
+<dt><a name="index-ccmem_005ffree"></a>Function: <em>void</em> <strong>ccmem_free</strong> <em>(ccmem_allocator_t const * const <var>A</var>, void * <var>ptr</var>)</em></dt>
+<dd><p>Release memory in a way similar to the standard <code>free()</code>, using the allocator <var>A</var>.
 </p></dd></dl>
 
 <hr>
@@ -568,9 +570,8 @@ returns <code>NULL</code>.
 
 
 <dl>
-<dt><a name="index-ccmem_005fstd_005ffree"></a>Function: <em>void</em> <strong>ccmem_std_free</strong> <em>(cce_destination_t <var>L</var>, void * <var>ptr</var>)</em></dt>
-<dd><p>Release memory in a way similar to the standard <code>free()</code>, using the standard allocator.  If an
-error occurs: an exception is raised by jumping to the location <var>L</var>.
+<dt><a name="index-ccmem_005fstd_005ffree"></a>Function: <em>void</em> <strong>ccmem_std_free</strong> <em>(void * <var>ptr</var>)</em></dt>
+<dd><p>Release memory in a way similar to the standard <code>free()</code>, using the standard allocator.
 </p></dd></dl>
 
 <hr>
@@ -647,7 +648,7 @@ if (cce_location(L)) {
    ccmem_block_t  B =
      ccmem_block_new(L, ccmem_standard_allocator, 4096);
 
-  ccmem_block_delete(L, ccmem_standard_allocator, B);
+  ccmem_block_delete(ccmem_standard_allocator, B);
   cce_run_clean_handlers(L);
 }
 </pre></div>
@@ -661,9 +662,8 @@ exception by jumping to the location <var>L</var>.
 
 
 <dl>
-<dt><a name="index-ccmem_005fblock_005fdelete"></a>Function: <em>void</em> <strong>ccmem_block_delete</strong> <em>(cce_destination_t <var>L</var>, ccmem_allocator_t const * <var>A</var>, ccmem_block_t <var>B</var>)</em></dt>
-<dd><p>Release memory using <var>A</var>.  Only blocks allocated by <var>A</var> can be released by <var>A</var>.  If an
-error occurs: raise an exception by jumping to the location <var>L</var>.
+<dt><a name="index-ccmem_005fblock_005fdelete"></a>Function: <em>void</em> <strong>ccmem_block_delete</strong> <em>(ccmem_allocator_t const * <var>A</var>, ccmem_block_t <var>B</var>)</em></dt>
+<dd><p>Release memory using <var>A</var>.  Only blocks allocated by <var>A</var> can be released by <var>A</var>.
 </p></dd></dl>
 
 <hr>
@@ -710,9 +710,6 @@ local context.  These types are wrappers for <code>cce_clean_handler_t</code> an
 <dt><a name="index-ccmem_005fblock_005fregister_005ferror_005fhandler"></a>Function: <em>void</em> <strong>ccmem_block_register_error_handler</strong> <em>(cce_destination_t <var>L</var>, ccmem_block_error_handler_t * <var>H</var>, ccmem_allocator_t const * <var>A</var>, ccmem_block_t <var>B</var>)</em></dt>
 <dd><p>Register the allocator <var>A</var> and the block <var>B</var> in the handler <var>H</var> in the context of
 <var>L</var>.  The block is released using the allocator in case of cleaning or error.
-</p>
-<p><strong>NOTE</strong> If an error occurs releasing memory: the registered handler will <strong>discard</strong> the
-raised exception.
 </p></dd></dl>
 
 <hr>
@@ -748,9 +745,6 @@ if (cce_location(L)) {
 <dd><p>Allocate memory using <var>A</var>, then build and return a new block.  If an error occurs: raise an
 exception by jumping to the location <var>L</var>.  The allocator and the block are registered in the
 exception handler <var>H</var>, so that the block is released in case of cleaning.
-</p>
-<p><strong>NOTE</strong> If an error occurs releasing memory: the registered handler will <strong>discard</strong> the
-raised exception.
 </p></dd></dl>
 
 
@@ -759,9 +753,6 @@ raised exception.
 <dd><p>Allocate memory using <var>A</var>, then build and return a new block.  If an error occurs: raise an
 exception by jumping to the location <var>L</var>.  The allocator and the block are registered in the
 exception handler <var>H</var>, so that the block is released in case of error.
-</p>
-<p><strong>NOTE</strong> If an error occurs releasing memory: the registered handler will <strong>discard</strong> the
-raised exception.
 </p></dd></dl>
 
 
@@ -770,15 +761,15 @@ raised exception.
 <dt><a name="index-ccmem_005fblock_005fnew_005fguarded-1"></a>Preprocessor Macro: <em>ccmem_block_t</em> <strong>ccmem_block_new_guarded</strong> <em>(cce_destination_t <var>L</var>, ccmem_block_error_handler_t * <var>H</var>, ccmem_allocator_t const * <var>A</var>, size_t <var>len</var>)</em></dt>
 <dd><p>This macro uses <code>_Generic</code> to dispatch the expansion according to the type of <var>H</var>.
 Allocate memory using <var>A</var>, then build and return a new block.  If an error occurs: raise an
-exception by jumping to the location <var>L</var>.  If the argument <var>H</var> is of type:
+exception by jumping to the location <var>L</var>.  If the argument <var>H</var> is a pointer of type:
 </p>
 <dl compact="compact">
-<dt><code>ccmem_block_clean_handler_t *</code></dt>
+<dt><code>ccmem_block_clean_handler_t</code></dt>
 <dd><p>The allocator and the block are registered in the exception handler <var>H</var>, so that the block is
 released in case of cleaning.
 </p>
 </dd>
-<dt><code>ccmem_block_error_handler_t *</code></dt>
+<dt><code>ccmem_block_error_handler_t</code></dt>
 <dd><p>The allocator and the block are registered in the exception handler <var>H</var>, so that the block is
 released in case of error.
 </p></dd>
@@ -1611,6 +1602,18 @@ Next: <a href="#concept-index" accesskey="n" rel="next">concept index</a>, Previ
 <p>and as backup at:
 </p>
 <div align="center"><a href="https://bitbucket.org/marcomaggi/ccmemory">https://bitbucket.org/marcomaggi/ccmemory</a>
+</div>
+<p>the package CCExceptions is available at:
+</p>
+<div align="center"><a href="https://github.com/marcomaggi/ccexceptions/">https://github.com/marcomaggi/ccexceptions/</a>
+</div>
+<p>the package CCMemory is available at:
+</p>
+<div align="center"><a href="https://github.com/marcomaggi/ccmemory/">https://github.com/marcomaggi/ccmemory/</a>
+</div>
+<p>the package CCTests is available at:
+</p>
+<div align="center"><a href="https://github.com/marcomaggi/cctests/">https://github.com/marcomaggi/cctests/</a>
 </div>
 <hr>
 <a name="concept-index"></a>
