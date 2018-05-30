@@ -1,6 +1,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
-<!-- This document describes version 0.2.0-devel.3 of CCTests, a C11 language library
+<!-- This document describes version 0.3.0-devel.1 of CCTests, a C11 language library
 implementing a framework to organise test suites.  The library targets POSIX platforms.
 
 This package depends upon the external packages: CCExceptions at least version
@@ -289,7 +289,7 @@ Next: <a href="#overview" accesskey="n" rel="next">overview</a>, Up: <a href="di
 <a name="CCTests"></a>
 <h1 class="top">CCTests</h1>
 
-<p>This document describes version 0.2.0-devel.3 of CCTests, a C11 language library
+<p>This document describes version 0.3.0-devel.1 of CCTests, a C11 language library
 implementing a framework to organise test suites.  The library targets <acronym>POSIX</acronym> platforms.
 </p>
 <p>This package depends upon the external packages: CCExceptions at least version
@@ -338,9 +338,7 @@ included in the section entitled &ldquo;<acronym>GNU</acronym> Free Documentatio
 </td></tr>
 <tr><td align="left" valign="top">&bull; <a href="#conditions" accesskey="8">conditions</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Condition object types.
 </td></tr>
-<tr><td align="left" valign="top">&bull; <a href="#system" accesskey="9">system</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">System interface.
-</td></tr>
-<tr><td align="left" valign="top">&bull; <a href="#utils">utils</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Utility definitions.
+<tr><td align="left" valign="top">&bull; <a href="#utils" accesskey="9">utils</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Utility definitions.
 </td></tr>
 <tr><td align="left" valign="top">&bull; <a href="#constants">constants</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Useful constants.
 </td></tr>
@@ -380,7 +378,7 @@ Next: <a href="#version" accesskey="n" rel="next">version</a>, Previous: <a href
 <h2 class="chapter">1 Overview of the package</h2>
 
 
-<p>This document describes version 0.2.0-devel.3 of CCTests, a C11 language library
+<p>This document describes version 0.3.0-devel.1 of CCTests, a C11 language library
 implementing a framework to organise test suites.  The library targets <acronym>POSIX</acronym> platforms.
 </p>
 <p>This package depends upon the external packages: CCExceptions at least version
@@ -546,7 +544,7 @@ parts we may not want (because they make it more complex to compose a regular ex
 matches).
 </p></blockquote>
 
-<p>The test program name is used as follows:
+<p>The test file name is used as follows:
 </p>
 <ul>
 <li> <a name="index-cctests_005ffile_002c-environment-variable"></a>
@@ -802,17 +800,18 @@ test_1_4 (cce_destination_t L)
 void
 test_1_5 (cce_destination_t upper_L)
 {
-  cce_location_t  L[1];
-  cce_handler_t   P_H[1];
+  cce_location_t       L[1];
+  cce_clean_handler_t  P_H[1];
 
   if (cce_location(L)) {
-    cce_run_error_handlers_raise(L, upper_L);
+    cce_run_catch_handlers_raise(L, upper_L);
   } else {
-    void *      P = cctests_sys_malloc(1024);
-    cctests_cleanup_handler_malloc_init(L, P_H, P);
+    void *      P = cce_sys_malloc_guarded(L, P_H, 1024);
 
     /* do something with P, then: */
     cctests_assert(L, some_predicate(P));
+
+    cce_run_body_handlers(L);
   }
 }
 </pre></div>
@@ -1415,7 +1414,7 @@ process terminated successfully; assert that the parent function returned succes
 <a name="conditions"></a>
 <div class="header">
 <p>
-Next: <a href="#system" accesskey="n" rel="next">system</a>, Previous: <a href="#process" accesskey="p" rel="prev">process</a>, Up: <a href="#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="#concept-index" title="Index" rel="index">Index</a>]</p>
+Next: <a href="#utils" accesskey="n" rel="next">utils</a>, Previous: <a href="#process" accesskey="p" rel="prev">process</a>, Up: <a href="#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="#concept-index" title="Index" rel="index">Index</a>]</p>
 </div>
 <a name="Condition-object-types"></a>
 <h2 class="chapter">8 Condition object types</h2>
@@ -1434,10 +1433,10 @@ cce_location_t  L[1];
 
 if (cce_location(L)) {
   /* Handle errors here. */
-  cce_run_error_handlers_final(L);
+  cce_run_catch_handlers_final(L);
 } else {
   /* Do something useful here. */
-  cce_run_cleanup_handlers(L);
+  cce_run_body_handlers(L);
 }
 </pre></div>
 
@@ -1505,10 +1504,10 @@ if (cce_location(L)) {
     CCTESTS_PC(cctests_condition_base_t, C, cce_condition(L));
     do_something_with(C);
   }
-  cce_run_error_handlers_final(L);
+  cce_run_catch_handlers_final(L);
 } else {
   do_something(L);
-  cce_run_cleanup_handlers(L);
+  cce_run_body_handlers(L);
 }
 </pre></div>
 
@@ -1602,13 +1601,13 @@ if (cce_location(L)) {
   if (cctests_condition_is_success(cce_condition(L))) {
     CCTESTS_PC(cctests_condition_success_t, C, cce_condition(L));
     do_something_with(C);
-    cce_run_cleanup_handlers_final(L);
+    cce_run_body_handlers_final(L);
   } else {
-    cce_run_error_handlers_final(L);
+    cce_run_catch_handlers_final(L);
   }
 } else {
   do_something(L);
-  cce_run_cleanup_handlers(L);
+  cce_run_body_handlers(L);
 }
 </pre></div>
 
@@ -1707,13 +1706,13 @@ if (cce_location(L)) {
   if (cctests_condition_is_skipped(cce_condition(L))) {
     CCTESTS_PC(cctests_condition_skipped_t, C, cce_condition(L));
     do_something_with(C);
-    cce_run_cleanup_handlers_final(L);
+    cce_run_body_handlers_final(L);
   } else {
-    cce_run_error_handlers_final(L);
+    cce_run_catch_handlers_final(L);
   }
 } else {
   do_something(L);
-  cce_run_cleanup_handlers(L);
+  cce_run_body_handlers(L);
 }
 </pre></div>
 
@@ -1814,10 +1813,10 @@ if (cce_location(L)) {
     CCTESTS_PC(cctests_condition_failure_t, C, cce_condition(L));
     do_something_with(C);
   }
-  cce_run_error_handlers_final(L);
+  cce_run_catch_handlers_final(L);
 } else {
   do_something(L);
-  cce_run_cleanup_handlers(L);
+  cce_run_body_handlers(L);
 }
 </pre></div>
 
@@ -1917,10 +1916,10 @@ if (cce_location(L)) {
     CCTESTS_PC(cctests_condition_expected_failure_t, C, cce_condition(L));
     do_something_with(C);
   }
-  cce_run_error_handlers_final(L);
+  cce_run_catch_handlers_final(L);
 } else {
   do_something(L);
-  cce_run_cleanup_handlers(L);
+  cce_run_body_handlers(L);
 }
 </pre></div>
 
@@ -2104,10 +2103,10 @@ if (cce_location(L)) {
     CCTESTS_PC(cctests_condition_assertion_t, C, cce_condition(L));
     do_something_with(C);
   }
-  cce_run_error_handlers_final(L);
+  cce_run_catch_handlers_final(L);
 } else {
   do_something(L);
-  cce_run_cleanup_handlers(L);
+  cce_run_body_handlers(L);
 }
 </pre></div>
 
@@ -2235,10 +2234,10 @@ if (cce_location(L)) {
     CCTESTS_PC(cctests_condition_assertion_expected_value_t, C, cce_condition(L));
     do_something_with(C);
   }
-  cce_run_error_handlers_final(L);
+  cce_run_catch_handlers_final(L);
 } else {
   do_something(L);
-  cce_run_cleanup_handlers(L);
+  cce_run_body_handlers(L);
 }
 </pre></div>
 
@@ -2321,10 +2320,10 @@ if (cce_location(L)) {
     CCTESTS_PC(cctests_condition_assertion_expected_asciiz_t, C, cce_condition(L));
     do_something_with(C);
   }
-  cce_run_error_handlers_final(L);
+  cce_run_catch_handlers_final(L);
 } else {
   do_something(L);
-  cce_run_cleanup_handlers(L);
+  cce_run_body_handlers(L);
 }
 </pre></div>
 
@@ -2430,10 +2429,10 @@ if (cce_location(L)) {
     CCTESTS_PC(cctests_condition_assertion_expected_ascii_t, C, cce_condition(L));
     do_something_with(C);
   }
-  cce_run_error_handlers_final(L);
+  cce_run_catch_handlers_final(L);
 } else {
   do_something(L);
-  cce_run_cleanup_handlers(L);
+  cce_run_body_handlers(L);
 }
 </pre></div>
 
@@ -2543,10 +2542,10 @@ if (cce_location(L)) {
     CCTESTS_PC(cctests_condition_assertion_expected_char_t, C, cce_condition(L));
     do_something_with(C);
   }
-  cce_run_error_handlers_final(L);
+  cce_run_catch_handlers_final(L);
 } else {
   do_something(L);
-  cce_run_cleanup_handlers(L);
+  cce_run_body_handlers(L);
 }
 </pre></div>
 
@@ -2649,10 +2648,10 @@ if (cce_location(L)) {
     CCTESTS_PC(cctests_condition_assertion_expected_uchar_t, C, cce_condition(L));
     do_something_with(C);
   }
-  cce_run_error_handlers_final(L);
+  cce_run_catch_handlers_final(L);
 } else {
   do_something(L);
-  cce_run_cleanup_handlers(L);
+  cce_run_body_handlers(L);
 }
 </pre></div>
 
@@ -2755,10 +2754,10 @@ if (cce_location(L)) {
     CCTESTS_PC(cctests_condition_assertion_expected_short_t, C, cce_condition(L));
     do_something_with(C);
   }
-  cce_run_error_handlers_final(L);
+  cce_run_catch_handlers_final(L);
 } else {
   do_something(L);
-  cce_run_cleanup_handlers(L);
+  cce_run_body_handlers(L);
 }
 </pre></div>
 
@@ -2861,10 +2860,10 @@ if (cce_location(L)) {
     CCTESTS_PC(cctests_condition_assertion_expected_ushort_t, C, cce_condition(L));
     do_something_with(C);
   }
-  cce_run_error_handlers_final(L);
+  cce_run_catch_handlers_final(L);
 } else {
   do_something(L);
-  cce_run_cleanup_handlers(L);
+  cce_run_body_handlers(L);
 }
 </pre></div>
 
@@ -2967,10 +2966,10 @@ if (cce_location(L)) {
     CCTESTS_PC(cctests_condition_assertion_expected_int_t, C, cce_condition(L));
     do_something_with(C);
   }
-  cce_run_error_handlers_final(L);
+  cce_run_catch_handlers_final(L);
 } else {
   do_something(L);
-  cce_run_cleanup_handlers(L);
+  cce_run_body_handlers(L);
 }
 </pre></div>
 
@@ -3073,10 +3072,10 @@ if (cce_location(L)) {
     CCTESTS_PC(cctests_condition_assertion_expected_uint_t, C, cce_condition(L));
     do_something_with(C);
   }
-  cce_run_error_handlers_final(L);
+  cce_run_catch_handlers_final(L);
 } else {
   do_something(L);
-  cce_run_cleanup_handlers(L);
+  cce_run_body_handlers(L);
 }
 </pre></div>
 
@@ -3179,10 +3178,10 @@ if (cce_location(L)) {
     CCTESTS_PC(cctests_condition_assertion_expected_long_t, C, cce_condition(L));
     do_something_with(C);
   }
-  cce_run_error_handlers_final(L);
+  cce_run_catch_handlers_final(L);
 } else {
   do_something(L);
-  cce_run_cleanup_handlers(L);
+  cce_run_body_handlers(L);
 }
 </pre></div>
 
@@ -3285,10 +3284,10 @@ if (cce_location(L)) {
     CCTESTS_PC(cctests_condition_assertion_expected_ulong_t, C, cce_condition(L));
     do_something_with(C);
   }
-  cce_run_error_handlers_final(L);
+  cce_run_catch_handlers_final(L);
 } else {
   do_something(L);
-  cce_run_cleanup_handlers(L);
+  cce_run_body_handlers(L);
 }
 </pre></div>
 
@@ -3391,10 +3390,10 @@ if (cce_location(L)) {
     CCTESTS_PC(cctests_condition_assertion_expected_llong_t, C, cce_condition(L));
     do_something_with(C);
   }
-  cce_run_error_handlers_final(L);
+  cce_run_catch_handlers_final(L);
 } else {
   do_something(L);
-  cce_run_cleanup_handlers(L);
+  cce_run_body_handlers(L);
 }
 </pre></div>
 
@@ -3497,10 +3496,10 @@ if (cce_location(L)) {
     CCTESTS_PC(cctests_condition_assertion_expected_ullong_t, C, cce_condition(L));
     do_something_with(C);
   }
-  cce_run_error_handlers_final(L);
+  cce_run_catch_handlers_final(L);
 } else {
   do_something(L);
-  cce_run_cleanup_handlers(L);
+  cce_run_body_handlers(L);
 }
 </pre></div>
 
@@ -3603,10 +3602,10 @@ if (cce_location(L)) {
     CCTESTS_PC(cctests_condition_assertion_expected_int8_t, C, cce_condition(L));
     do_something_with(C);
   }
-  cce_run_error_handlers_final(L);
+  cce_run_catch_handlers_final(L);
 } else {
   do_something(L);
-  cce_run_cleanup_handlers(L);
+  cce_run_body_handlers(L);
 }
 </pre></div>
 
@@ -3709,10 +3708,10 @@ if (cce_location(L)) {
     CCTESTS_PC(cctests_condition_assertion_expected_uint8_t, C, cce_condition(L));
     do_something_with(C);
   }
-  cce_run_error_handlers_final(L);
+  cce_run_catch_handlers_final(L);
 } else {
   do_something(L);
-  cce_run_cleanup_handlers(L);
+  cce_run_body_handlers(L);
 }
 </pre></div>
 
@@ -3815,10 +3814,10 @@ if (cce_location(L)) {
     CCTESTS_PC(cctests_condition_assertion_expected_int16_t, C, cce_condition(L));
     do_something_with(C);
   }
-  cce_run_error_handlers_final(L);
+  cce_run_catch_handlers_final(L);
 } else {
   do_something(L);
-  cce_run_cleanup_handlers(L);
+  cce_run_body_handlers(L);
 }
 </pre></div>
 
@@ -3921,10 +3920,10 @@ if (cce_location(L)) {
     CCTESTS_PC(cctests_condition_assertion_expected_uint16_t, C, cce_condition(L));
     do_something_with(C);
   }
-  cce_run_error_handlers_final(L);
+  cce_run_catch_handlers_final(L);
 } else {
   do_something(L);
-  cce_run_cleanup_handlers(L);
+  cce_run_body_handlers(L);
 }
 </pre></div>
 
@@ -4027,10 +4026,10 @@ if (cce_location(L)) {
     CCTESTS_PC(cctests_condition_assertion_expected_int32_t, C, cce_condition(L));
     do_something_with(C);
   }
-  cce_run_error_handlers_final(L);
+  cce_run_catch_handlers_final(L);
 } else {
   do_something(L);
-  cce_run_cleanup_handlers(L);
+  cce_run_body_handlers(L);
 }
 </pre></div>
 
@@ -4133,10 +4132,10 @@ if (cce_location(L)) {
     CCTESTS_PC(cctests_condition_assertion_expected_uint32_t, C, cce_condition(L));
     do_something_with(C);
   }
-  cce_run_error_handlers_final(L);
+  cce_run_catch_handlers_final(L);
 } else {
   do_something(L);
-  cce_run_cleanup_handlers(L);
+  cce_run_body_handlers(L);
 }
 </pre></div>
 
@@ -4239,10 +4238,10 @@ if (cce_location(L)) {
     CCTESTS_PC(cctests_condition_assertion_expected_int64_t, C, cce_condition(L));
     do_something_with(C);
   }
-  cce_run_error_handlers_final(L);
+  cce_run_catch_handlers_final(L);
 } else {
   do_something(L);
-  cce_run_cleanup_handlers(L);
+  cce_run_body_handlers(L);
 }
 </pre></div>
 
@@ -4345,10 +4344,10 @@ if (cce_location(L)) {
     CCTESTS_PC(cctests_condition_assertion_expected_uint64_t, C, cce_condition(L));
     do_something_with(C);
   }
-  cce_run_error_handlers_final(L);
+  cce_run_catch_handlers_final(L);
 } else {
   do_something(L);
-  cce_run_cleanup_handlers(L);
+  cce_run_body_handlers(L);
 }
 </pre></div>
 
@@ -4451,10 +4450,10 @@ if (cce_location(L)) {
     CCTESTS_PC(cctests_condition_assertion_expected_float_t, C, cce_condition(L));
     do_something_with(C);
   }
-  cce_run_error_handlers_final(L);
+  cce_run_catch_handlers_final(L);
 } else {
   do_something(L);
-  cce_run_cleanup_handlers(L);
+  cce_run_body_handlers(L);
 }
 </pre></div>
 
@@ -4557,10 +4556,10 @@ if (cce_location(L)) {
     CCTESTS_PC(cctests_condition_assertion_expected_double_t, C, cce_condition(L));
     do_something_with(C);
   }
-  cce_run_error_handlers_final(L);
+  cce_run_catch_handlers_final(L);
 } else {
   do_something(L);
-  cce_run_cleanup_handlers(L);
+  cce_run_body_handlers(L);
 }
 </pre></div>
 
@@ -4662,10 +4661,10 @@ if (cce_location(L)) {
     CCTESTS_PC(cctests_condition_assertion_expected_ssize_t, C, cce_condition(L));
     do_something_with(C);
   }
-  cce_run_error_handlers_final(L);
+  cce_run_catch_handlers_final(L);
 } else {
   do_something(L);
-  cce_run_cleanup_handlers(L);
+  cce_run_body_handlers(L);
 }
 </pre></div>
 
@@ -4767,10 +4766,10 @@ if (cce_location(L)) {
     CCTESTS_PC(cctests_condition_assertion_expected_size_t, C, cce_condition(L));
     do_something_with(C);
   }
-  cce_run_error_handlers_final(L);
+  cce_run_catch_handlers_final(L);
 } else {
   do_something(L);
-  cce_run_cleanup_handlers(L);
+  cce_run_body_handlers(L);
 }
 </pre></div>
 
@@ -4872,10 +4871,10 @@ if (cce_location(L)) {
     CCTESTS_PC(cctests_condition_assertion_expected_pointer_t, C, cce_condition(L));
     do_something_with(C);
   }
-  cce_run_error_handlers_final(L);
+  cce_run_catch_handlers_final(L);
 } else {
   do_something(L);
-  cce_run_cleanup_handlers(L);
+  cce_run_body_handlers(L);
 }
 </pre></div>
 
@@ -4977,10 +4976,10 @@ if (cce_location(L)) {
     CCTESTS_PC(cctests_condition_assertion_expected_ptrdiff_t, C, cce_condition(L));
     do_something_with(C);
   }
-  cce_run_error_handlers_final(L);
+  cce_run_catch_handlers_final(L);
 } else {
   do_something(L);
-  cce_run_cleanup_handlers(L);
+  cce_run_body_handlers(L);
 }
 </pre></div>
 
@@ -5082,10 +5081,10 @@ if (cce_location(L)) {
     CCTESTS_PC(cctests_condition_assertion_expected_intptr_t, C, cce_condition(L));
     do_something_with(C);
   }
-  cce_run_error_handlers_final(L);
+  cce_run_catch_handlers_final(L);
 } else {
   do_something(L);
-  cce_run_cleanup_handlers(L);
+  cce_run_body_handlers(L);
 }
 </pre></div>
 
@@ -5187,10 +5186,10 @@ if (cce_location(L)) {
     CCTESTS_PC(cctests_condition_assertion_expected_uintptr_t, C, cce_condition(L));
     do_something_with(C);
   }
-  cce_run_error_handlers_final(L);
+  cce_run_catch_handlers_final(L);
 } else {
   do_something(L);
-  cce_run_cleanup_handlers(L);
+  cce_run_body_handlers(L);
 }
 </pre></div>
 
@@ -5292,10 +5291,10 @@ if (cce_location(L)) {
     CCTESTS_PC(cctests_condition_unreachable_t, C, cce_condition(L));
     do_something_with(C);
   }
-  cce_run_error_handlers_final(L);
+  cce_run_catch_handlers_final(L);
 } else {
   do_something(L);
-  cce_run_cleanup_handlers(L);
+  cce_run_body_handlers(L);
 }
 </pre></div>
 
@@ -5447,10 +5446,10 @@ if (cce_location(L)) {
     CCTESTS_PC(cctests_condition_regex_error_t, C, cce_condition(L));
     do_something_with(C);
   }
-  cce_run_error_handlers_final(L);
+  cce_run_catch_handlers_final(L);
 } else {
   do_something(L);
-  cce_run_cleanup_handlers(L);
+  cce_run_body_handlers(L);
 }
 </pre></div>
 
@@ -5563,10 +5562,10 @@ if (cce_location(L)) {
     CCTESTS_PC(cctests_condition_regex_compilation_error_t, C, cce_condition(L));
     do_something_with(C);
   }
-  cce_run_error_handlers_final(L);
+  cce_run_catch_handlers_final(L);
 } else {
   do_something(L);
-  cce_run_cleanup_handlers(L);
+  cce_run_body_handlers(L);
 }
 </pre></div>
 
@@ -5689,10 +5688,10 @@ if (cce_location(L)) {
     CCTESTS_PC(cctests_condition_child_failure_t, C, cce_condition(L));
     do_something_with(C);
   }
-  cce_run_error_handlers_final(L);
+  cce_run_catch_handlers_final(L);
 } else {
   do_something(L);
-  cce_run_cleanup_handlers(L);
+  cce_run_body_handlers(L);
 }
 </pre></div>
 
@@ -5780,10 +5779,10 @@ if (cce_location(L)) {
     CCTESTS_PC(cctests_condition_child_abnormal_termination_t, C, cce_condition(L));
     do_something_with(C);
   }
-  cce_run_error_handlers_final(L);
+  cce_run_catch_handlers_final(L);
 } else {
   do_something(L);
-  cce_run_cleanup_handlers(L);
+  cce_run_body_handlers(L);
 }
 </pre></div>
 
@@ -5871,10 +5870,10 @@ if (cce_location(L)) {
     CCTESTS_PC(cctests_condition_child_failure_exit_status_t, C, cce_condition(L));
     do_something_with(C);
   }
-  cce_run_error_handlers_final(L);
+  cce_run_catch_handlers_final(L);
 } else {
   do_something(L);
-  cce_run_cleanup_handlers(L);
+  cce_run_body_handlers(L);
 }
 </pre></div>
 
@@ -5960,10 +5959,10 @@ if (cce_location(L)) {
     CCTESTS_PC(cctests_condition_signal_t, C, cce_condition(L));
     do_something_with(C);
   }
-  cce_run_error_handlers_final(L);
+  cce_run_catch_handlers_final(L);
 } else {
   do_something(L);
-  cce_run_cleanup_handlers(L);
+  cce_run_body_handlers(L);
 }
 </pre></div>
 
@@ -6068,10 +6067,10 @@ if (cce_location(L)) {
     CCTESTS_PC(cctests_condition_signal_1_t, C, cce_condition(L));
     do_something_with(C);
   }
-  cce_run_error_handlers_final(L);
+  cce_run_catch_handlers_final(L);
 } else {
   do_something(L);
-  cce_run_cleanup_handlers(L);
+  cce_run_body_handlers(L);
 }
 </pre></div>
 
@@ -6172,10 +6171,10 @@ if (cce_location(L)) {
     CCTESTS_PC(cctests_condition_signal_2_t, C, cce_condition(L));
     do_something_with(C);
   }
-  cce_run_error_handlers_final(L);
+  cce_run_catch_handlers_final(L);
 } else {
   do_something(L);
-  cce_run_cleanup_handlers(L);
+  cce_run_body_handlers(L);
 }
 </pre></div>
 
@@ -6276,10 +6275,10 @@ if (cce_location(L)) {
     CCTESTS_PC(cctests_condition_signal_3_t, C, cce_condition(L));
     do_something_with(C);
   }
-  cce_run_error_handlers_final(L);
+  cce_run_catch_handlers_final(L);
 } else {
   do_something(L);
-  cce_run_cleanup_handlers(L);
+  cce_run_body_handlers(L);
 }
 </pre></div>
 
@@ -6355,94 +6354,13 @@ condition-signal-3-subtype-body.c
 condition&ndash;object type <code>my_condition_signal_3_subtype_t</code>.
 </p>
 <hr>
-<a name="system"></a>
-<div class="header">
-<p>
-Next: <a href="#utils" accesskey="n" rel="next">utils</a>, Previous: <a href="#conditions" accesskey="p" rel="prev">conditions</a>, Up: <a href="#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="#concept-index" title="Index" rel="index">Index</a>]</p>
-</div>
-<a name="System-interface"></a>
-<h2 class="chapter">9 System interface</h2>
-
-
-<p>CCTests provides interfaces to some system primitives to facilitate writing tests without
-using external libraries; the interfaces are wrappers for some basic <acronym>POSIX</acronym> system calls.  Each
-wrapper accepts a pointer to <code>cce_location_t</code> as argument and, in case of error, it will
-perform a non&ndash;local exit by jumping to the selected location.
-</p>
-<p>The wrapper functions accept the same arguments of the system calls and return the same return value
-of the system calls (if they complete successfully).
-</p>
-<p>All the wrappers reset <code>errno</code> to zero before performing the system call and reset it to zero
-before returning.  In case of error: the raised exceptional condition objects are of type
-<code>cce_condition_errno_t</code>.
-</p>
-<table class="menu" border="0" cellspacing="0">
-<tr><td align="left" valign="top">&bull; <a href="#system-memory" accesskey="1">system memory</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Memory allocation interface.
-</td></tr>
-</table>
-
-<hr>
-<a name="system-memory"></a>
-<div class="header">
-<p>
-Up: <a href="#system" accesskey="u" rel="up">system</a> &nbsp; [<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="#concept-index" title="Index" rel="index">Index</a>]</p>
-</div>
-<a name="Memory-allocation-interface"></a>
-<h3 class="section">9.1 Memory allocation interface</h3>
-
-
-<dl>
-<dt><a name="index-cctests_005fsys_005fmalloc"></a>Function: <em>void *</em> <strong>cctests_sys_malloc</strong> <em>(cce_destination_t  <var>L</var>, size_t <var>size</var>)</em></dt>
-<dd><p>Wrapper for <code>malloc()</code>.  This function never returns <code>NULL</code>.
-</p></dd></dl>
-
-
-<dl>
-<dt><a name="index-cctests_005fsys_005frealloc"></a>Function: <em>void *</em> <strong>cctests_sys_realloc</strong> <em>(cce_destination_t  <var>L</var>, void * <var>ptr</var>, size_t <var>newsize</var>)</em></dt>
-<dd><p>Wrapper for <code>realloc()</code>.  This function never returns <code>NULL</code>.
-</p></dd></dl>
-
-
-<dl>
-<dt><a name="index-cctests_005fsys_005fcalloc"></a>Function: <em>void *</em> <strong>cctests_sys_calloc</strong> <em>(cce_destination_t  <var>L</var>, size_t <var>count</var>, size_t <var>eltsize</var>)</em></dt>
-<dd><p>Wrapper for <code>calloc()</code>.  This function never returns <code>NULL</code>.
-</p></dd></dl>
-
-
-<a name="Handler-for-allocated-memory"></a>
-<h4 class="subsubheading">Handler for allocated memory</h4>
-
-<p>We can handle memory that must be released with the standard function <code>free()</code> as follows:
-</p>
-<div class="example">
-<pre class="example">cce_location_t  L[1];
-cce_handler_t   H[1];
-
-if (cce_location(L)) {
-  cce_run_error_handlers_final(L);
-} else {
-  void *  P = cctests_sys_malloc(L, 4096);
-  cctests_cleanup_handler_malloc_init(L, H, P);
-  cce_run_cleanup_handlers(L);
-}
-</pre></div>
-
-
-<dl>
-<dt><a name="index-cctests_005fcleanup_005fhandler_005fmalloc_005finit"></a>Function: <em>void</em> <strong>cctests_cleanup_handler_malloc_init</strong> <em>(cce_destination_t  <var>L</var>, cce_handler_t * <var>H</var>, void * <var>P</var>)</em></dt>
-<dt><a name="index-cctests_005ferror_005fhandler_005fmalloc_005finit"></a>Function: <em>void</em> <strong>cctests_error_handler_malloc_init</strong> <em>(cce_destination_t  <var>L</var>, cce_handler_t * <var>H</var>, void * <var>P</var>)</em></dt>
-<dd><p>Register <var>H</var> as cleanup or error handler in the context of <var>L</var>.  The handler function will
-release the memory block referenced by <var>P</var> using the standard function <code>free()</code>.
-</p></dd></dl>
-
-<hr>
 <a name="utils"></a>
 <div class="header">
 <p>
-Next: <a href="#constants" accesskey="n" rel="next">constants</a>, Previous: <a href="#system" accesskey="p" rel="prev">system</a>, Up: <a href="#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="#concept-index" title="Index" rel="index">Index</a>]</p>
+Next: <a href="#constants" accesskey="n" rel="next">constants</a>, Previous: <a href="#conditions" accesskey="p" rel="prev">conditions</a>, Up: <a href="#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="#concept-index" title="Index" rel="index">Index</a>]</p>
 </div>
 <a name="Utility-definitions"></a>
-<h2 class="chapter">10 Utility definitions</h2>
+<h2 class="chapter">9 Utility definitions</h2>
 
 
 <dl>
@@ -6488,7 +6406,7 @@ to:
 Next: <a href="#automake" accesskey="n" rel="next">automake</a>, Previous: <a href="#utils" accesskey="p" rel="prev">utils</a>, Up: <a href="#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="#concept-index" title="Index" rel="index">Index</a>]</p>
 </div>
 <a name="Useful-constants_002e"></a>
-<h2 class="chapter">11 Useful constants.</h2>
+<h2 class="chapter">10 Useful constants.</h2>
 
 
 <table class="menu" border="0" cellspacing="0">
@@ -6503,7 +6421,7 @@ Next: <a href="#automake" accesskey="n" rel="next">automake</a>, Previous: <a hr
 Up: <a href="#constants" accesskey="u" rel="up">constants</a> &nbsp; [<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="#concept-index" title="Index" rel="index">Index</a>]</p>
 </div>
 <a name="Limits-of-known-integer-types"></a>
-<h3 class="section">11.1 Limits of known integer types</h3>
+<h3 class="section">10.1 Limits of known integer types</h3>
 
 
 <table class="menu" border="0" cellspacing="0">
@@ -6544,7 +6462,7 @@ Up: <a href="#constants" accesskey="u" rel="up">constants</a> &nbsp; [<a href="#
 Next: <a href="#constants-limits-shorts" accesskey="n" rel="next">constants limits shorts</a>, Up: <a href="#constants-limits" accesskey="u" rel="up">constants limits</a> &nbsp; [<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="#concept-index" title="Index" rel="index">Index</a>]</p>
 </div>
 <a name="Character-limits"></a>
-<h4 class="subsection">11.1.1 Character limits</h4>
+<h4 class="subsection">10.1.1 Character limits</h4>
 
 
 <dl>
@@ -6577,7 +6495,7 @@ Next: <a href="#constants-limits-shorts" accesskey="n" rel="next">constants limi
 Next: <a href="#constants-limits-ints" accesskey="n" rel="next">constants limits ints</a>, Previous: <a href="#constants-limits-chars" accesskey="p" rel="prev">constants limits chars</a>, Up: <a href="#constants-limits" accesskey="u" rel="up">constants limits</a> &nbsp; [<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="#concept-index" title="Index" rel="index">Index</a>]</p>
 </div>
 <a name="Short-integers-limits"></a>
-<h4 class="subsection">11.1.2 Short integers limits</h4>
+<h4 class="subsection">10.1.2 Short integers limits</h4>
 
 
 <dl>
@@ -6610,7 +6528,7 @@ Next: <a href="#constants-limits-ints" accesskey="n" rel="next">constants limits
 Next: <a href="#constants-limits-long" accesskey="n" rel="next">constants limits long</a>, Previous: <a href="#constants-limits-shorts" accesskey="p" rel="prev">constants limits shorts</a>, Up: <a href="#constants-limits" accesskey="u" rel="up">constants limits</a> &nbsp; [<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="#concept-index" title="Index" rel="index">Index</a>]</p>
 </div>
 <a name="Integers-limits"></a>
-<h4 class="subsection">11.1.3 Integers limits</h4>
+<h4 class="subsection">10.1.3 Integers limits</h4>
 
 
 <dl>
@@ -6643,7 +6561,7 @@ Next: <a href="#constants-limits-long" accesskey="n" rel="next">constants limits
 Next: <a href="#constants-limits-llong" accesskey="n" rel="next">constants limits llong</a>, Previous: <a href="#constants-limits-ints" accesskey="p" rel="prev">constants limits ints</a>, Up: <a href="#constants-limits" accesskey="u" rel="up">constants limits</a> &nbsp; [<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="#concept-index" title="Index" rel="index">Index</a>]</p>
 </div>
 <a name="Long-limits"></a>
-<h4 class="subsection">11.1.4 Long limits</h4>
+<h4 class="subsection">10.1.4 Long limits</h4>
 
 
 <dl>
@@ -6676,7 +6594,7 @@ Next: <a href="#constants-limits-llong" accesskey="n" rel="next">constants limit
 Next: <a href="#constants-limits-int8" accesskey="n" rel="next">constants limits int8</a>, Previous: <a href="#constants-limits-long" accesskey="p" rel="prev">constants limits long</a>, Up: <a href="#constants-limits" accesskey="u" rel="up">constants limits</a> &nbsp; [<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="#concept-index" title="Index" rel="index">Index</a>]</p>
 </div>
 <a name="Long-long-limits"></a>
-<h4 class="subsection">11.1.5 Long long limits</h4>
+<h4 class="subsection">10.1.5 Long long limits</h4>
 
 
 <dl>
@@ -6709,7 +6627,7 @@ Next: <a href="#constants-limits-int8" accesskey="n" rel="next">constants limits
 Next: <a href="#constants-limits-int16" accesskey="n" rel="next">constants limits int16</a>, Previous: <a href="#constants-limits-llong" accesskey="p" rel="prev">constants limits llong</a>, Up: <a href="#constants-limits" accesskey="u" rel="up">constants limits</a> &nbsp; [<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="#concept-index" title="Index" rel="index">Index</a>]</p>
 </div>
 <a name="g_t8_002dbit-integers-limits"></a>
-<h4 class="subsection">11.1.6 8-bit integers limits</h4>
+<h4 class="subsection">10.1.6 8-bit integers limits</h4>
 
 
 <dl>
@@ -6742,7 +6660,7 @@ Next: <a href="#constants-limits-int16" accesskey="n" rel="next">constants limit
 Next: <a href="#constants-limits-int32" accesskey="n" rel="next">constants limits int32</a>, Previous: <a href="#constants-limits-int8" accesskey="p" rel="prev">constants limits int8</a>, Up: <a href="#constants-limits" accesskey="u" rel="up">constants limits</a> &nbsp; [<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="#concept-index" title="Index" rel="index">Index</a>]</p>
 </div>
 <a name="g_t16_002dbit-integers-limits"></a>
-<h4 class="subsection">11.1.7 16-bit integers limits</h4>
+<h4 class="subsection">10.1.7 16-bit integers limits</h4>
 
 
 <dl>
@@ -6775,7 +6693,7 @@ Next: <a href="#constants-limits-int32" accesskey="n" rel="next">constants limit
 Next: <a href="#constants-limits-int64" accesskey="n" rel="next">constants limits int64</a>, Previous: <a href="#constants-limits-int16" accesskey="p" rel="prev">constants limits int16</a>, Up: <a href="#constants-limits" accesskey="u" rel="up">constants limits</a> &nbsp; [<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="#concept-index" title="Index" rel="index">Index</a>]</p>
 </div>
 <a name="g_t32_002dbit-integers-limits"></a>
-<h4 class="subsection">11.1.8 32-bit integers limits</h4>
+<h4 class="subsection">10.1.8 32-bit integers limits</h4>
 
 
 <dl>
@@ -6808,7 +6726,7 @@ Next: <a href="#constants-limits-int64" accesskey="n" rel="next">constants limit
 Next: <a href="#constants-limits-ssize" accesskey="n" rel="next">constants limits ssize</a>, Previous: <a href="#constants-limits-int32" accesskey="p" rel="prev">constants limits int32</a>, Up: <a href="#constants-limits" accesskey="u" rel="up">constants limits</a> &nbsp; [<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="#concept-index" title="Index" rel="index">Index</a>]</p>
 </div>
 <a name="g_t64_002dbit-integers-limits"></a>
-<h4 class="subsection">11.1.9 64-bit integers limits</h4>
+<h4 class="subsection">10.1.9 64-bit integers limits</h4>
 
 
 <dl>
@@ -6841,7 +6759,7 @@ Next: <a href="#constants-limits-ssize" accesskey="n" rel="next">constants limit
 Next: <a href="#constants-limits-usize" accesskey="n" rel="next">constants limits usize</a>, Previous: <a href="#constants-limits-int64" accesskey="p" rel="prev">constants limits int64</a>, Up: <a href="#constants-limits" accesskey="u" rel="up">constants limits</a> &nbsp; [<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="#concept-index" title="Index" rel="index">Index</a>]</p>
 </div>
 <a name="Signed-integer-size-limits"></a>
-<h4 class="subsection">11.1.10 Signed integer size limits</h4>
+<h4 class="subsection">10.1.10 Signed integer size limits</h4>
 
 
 <dl>
@@ -6862,7 +6780,7 @@ Next: <a href="#constants-limits-usize" accesskey="n" rel="next">constants limit
 Next: <a href="#constants-limits-ptrdiff" accesskey="n" rel="next">constants limits ptrdiff</a>, Previous: <a href="#constants-limits-ssize" accesskey="p" rel="prev">constants limits ssize</a>, Up: <a href="#constants-limits" accesskey="u" rel="up">constants limits</a> &nbsp; [<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="#concept-index" title="Index" rel="index">Index</a>]</p>
 </div>
 <a name="Unsigned-integer-size-limits"></a>
-<h4 class="subsection">11.1.11 Unsigned integer size limits</h4>
+<h4 class="subsection">10.1.11 Unsigned integer size limits</h4>
 
 
 <dl>
@@ -6883,7 +6801,7 @@ Next: <a href="#constants-limits-ptrdiff" accesskey="n" rel="next">constants lim
 Next: <a href="#constants-limits-intptr" accesskey="n" rel="next">constants limits intptr</a>, Previous: <a href="#constants-limits-usize" accesskey="p" rel="prev">constants limits usize</a>, Up: <a href="#constants-limits" accesskey="u" rel="up">constants limits</a> &nbsp; [<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="#concept-index" title="Index" rel="index">Index</a>]</p>
 </div>
 <a name="Pointer-difference-integers-limits"></a>
-<h4 class="subsection">11.1.12 Pointer difference integers limits</h4>
+<h4 class="subsection">10.1.12 Pointer difference integers limits</h4>
 
 
 <dl>
@@ -6904,7 +6822,7 @@ Next: <a href="#constants-limits-intptr" accesskey="n" rel="next">constants limi
 Next: <a href="#constants-limits-uintptr" accesskey="n" rel="next">constants limits uintptr</a>, Previous: <a href="#constants-limits-ptrdiff" accesskey="p" rel="prev">constants limits ptrdiff</a>, Up: <a href="#constants-limits" accesskey="u" rel="up">constants limits</a> &nbsp; [<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="#concept-index" title="Index" rel="index">Index</a>]</p>
 </div>
 <a name="Pointer-signed-integer-limits"></a>
-<h4 class="subsection">11.1.13 Pointer signed integer limits</h4>
+<h4 class="subsection">10.1.13 Pointer signed integer limits</h4>
 
 
 <dl>
@@ -6925,7 +6843,7 @@ Next: <a href="#constants-limits-uintptr" accesskey="n" rel="next">constants lim
 Previous: <a href="#constants-limits-intptr" accesskey="p" rel="prev">constants limits intptr</a>, Up: <a href="#constants-limits" accesskey="u" rel="up">constants limits</a> &nbsp; [<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="#concept-index" title="Index" rel="index">Index</a>]</p>
 </div>
 <a name="Pointer-unsigned-integer-limits"></a>
-<h4 class="subsection">11.1.14 Pointer unsigned integer limits</h4>
+<h4 class="subsection">10.1.14 Pointer unsigned integer limits</h4>
 
 
 <dl>
@@ -6946,7 +6864,7 @@ Previous: <a href="#constants-limits-intptr" accesskey="p" rel="prev">constants 
 Next: <a href="#Package-License" accesskey="n" rel="next">Package License</a>, Previous: <a href="#constants" accesskey="p" rel="prev">constants</a>, Up: <a href="#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="#concept-index" title="Index" rel="index">Index</a>]</p>
 </div>
 <a name="Interfacing-with-GNU-Automake"></a>
-<h2 class="chapter">12 Interfacing with <acronym>GNU</acronym> Automake</h2>
+<h2 class="chapter">11 Interfacing with <acronym>GNU</acronym> Automake</h2>
 
 
 <p>CCTests is primarily meant to interface with the parallel test harness of <acronym>GNU</acronym> Automake,
@@ -7958,7 +7876,6 @@ Next: <a href="#variable-index" accesskey="n" rel="next">variable index</a>, Pre
 <tr><td></td><td valign="top"><a href="#index-cctests_005fcall_005fin_005fforked_005fprocess"><code>cctests_call_in_forked_process</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#process-child-only">process child only</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cctests_005fchild_005fprocess_005ffunction_005ft"><code>cctests_child_process_function_t</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#process-child-only">process child only</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cctests_005fchild_005fprocess_005ffunction_005ft-1"><code>cctests_child_process_function_t</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#process-parent-child">process parent child</a></td></tr>
-<tr><td></td><td valign="top"><a href="#index-cctests_005fcleanup_005fhandler_005fmalloc_005finit"><code>cctests_cleanup_handler_malloc_init</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#system-memory">system memory</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cctests_005fcondition_005finit_005fassertion"><code>cctests_condition_init_assertion</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-assertion-base">conditions assertion base</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cctests_005fcondition_005finit_005fassertion_005fexpected_005fascii"><code>cctests_condition_init_assertion_expected_ascii</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-assertion-ascii">conditions assertion ascii</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cctests_005fcondition_005finit_005fassertion_005fexpected_005fasciiz"><code>cctests_condition_init_assertion_expected_asciiz</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-assertion-asciiz">conditions assertion asciiz</a></td></tr>
@@ -8093,7 +8010,6 @@ Next: <a href="#variable-index" accesskey="n" rel="next">variable index</a>, Pre
 <tr><td></td><td valign="top"><a href="#index-cctests_005fcondition_005fnew_005fsuccess"><code>cctests_condition_new_success</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-success">conditions success</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cctests_005fcondition_005fnew_005funreachable"><code>cctests_condition_new_unreachable</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#conditions-unreachable">conditions unreachable</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cctests_005fend_005fgroup"><code>cctests_end_group</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#groups">groups</a></td></tr>
-<tr><td></td><td valign="top"><a href="#index-cctests_005ferror_005fhandler_005fmalloc_005finit"><code>cctests_error_handler_malloc_init</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#system-memory">system memory</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cctests_005ffinal"><code>cctests_final</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#init">init</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cctests_005ffun_005ft"><code>cctests_fun_t</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#funcs">funcs</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cctests_005finit"><code>cctests_init</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#init">init</a></td></tr>
@@ -8103,9 +8019,6 @@ Next: <a href="#variable-index" accesskey="n" rel="next">variable index</a>, Pre
 <tr><td></td><td valign="top"><a href="#index-CCTESTS_005fPC"><code>CCTESTS_PC</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#utils">utils</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cctests_005frun"><code>cctests_run</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#funcs">funcs</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cctests_005fskip"><code>cctests_skip</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#funcs">funcs</a></td></tr>
-<tr><td></td><td valign="top"><a href="#index-cctests_005fsys_005fcalloc"><code>cctests_sys_calloc</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#system-memory">system memory</a></td></tr>
-<tr><td></td><td valign="top"><a href="#index-cctests_005fsys_005fmalloc"><code>cctests_sys_malloc</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#system-memory">system memory</a></td></tr>
-<tr><td></td><td valign="top"><a href="#index-cctests_005fsys_005frealloc"><code>cctests_sys_realloc</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#system-memory">system memory</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-CCTESTS_005fUNUSED"><code>CCTESTS_UNUSED</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#utils">utils</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cctests_005fversion_005finterface_005fage"><code>cctests_version_interface_age</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#version">version</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cctests_005fversion_005finterface_005fcurrent"><code>cctests_version_interface_current</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#version">version</a></td></tr>
@@ -8449,32 +8362,28 @@ Previous: <a href="#variable-index" accesskey="p" rel="prev">variable index</a>,
     <li><a name="toc-Convenience-signal-two" href="#conditions-signal-two">8.12 Convenience signal two</a></li>
     <li><a name="toc-Convenience-signal-three" href="#conditions-signal-three">8.13 Convenience signal three</a></li>
   </ul></li>
-  <li><a name="toc-System-interface" href="#system">9 System interface</a>
+  <li><a name="toc-Utility-definitions" href="#utils">9 Utility definitions</a></li>
+  <li><a name="toc-Useful-constants_002e" href="#constants">10 Useful constants.</a>
   <ul class="no-bullet">
-    <li><a name="toc-Memory-allocation-interface" href="#system-memory">9.1 Memory allocation interface</a></li>
-  </ul></li>
-  <li><a name="toc-Utility-definitions" href="#utils">10 Utility definitions</a></li>
-  <li><a name="toc-Useful-constants_002e" href="#constants">11 Useful constants.</a>
-  <ul class="no-bullet">
-    <li><a name="toc-Limits-of-known-integer-types" href="#constants-limits">11.1 Limits of known integer types</a>
+    <li><a name="toc-Limits-of-known-integer-types" href="#constants-limits">10.1 Limits of known integer types</a>
     <ul class="no-bullet">
-      <li><a name="toc-Character-limits" href="#constants-limits-chars">11.1.1 Character limits</a></li>
-      <li><a name="toc-Short-integers-limits" href="#constants-limits-shorts">11.1.2 Short integers limits</a></li>
-      <li><a name="toc-Integers-limits" href="#constants-limits-ints">11.1.3 Integers limits</a></li>
-      <li><a name="toc-Long-limits" href="#constants-limits-long">11.1.4 Long limits</a></li>
-      <li><a name="toc-Long-long-limits" href="#constants-limits-llong">11.1.5 Long long limits</a></li>
-      <li><a name="toc-8_002dbit-integers-limits" href="#constants-limits-int8">11.1.6 8-bit integers limits</a></li>
-      <li><a name="toc-16_002dbit-integers-limits" href="#constants-limits-int16">11.1.7 16-bit integers limits</a></li>
-      <li><a name="toc-32_002dbit-integers-limits" href="#constants-limits-int32">11.1.8 32-bit integers limits</a></li>
-      <li><a name="toc-64_002dbit-integers-limits" href="#constants-limits-int64">11.1.9 64-bit integers limits</a></li>
-      <li><a name="toc-Signed-integer-size-limits" href="#constants-limits-ssize">11.1.10 Signed integer size limits</a></li>
-      <li><a name="toc-Unsigned-integer-size-limits" href="#constants-limits-usize">11.1.11 Unsigned integer size limits</a></li>
-      <li><a name="toc-Pointer-difference-integers-limits" href="#constants-limits-ptrdiff">11.1.12 Pointer difference integers limits</a></li>
-      <li><a name="toc-Pointer-signed-integer-limits" href="#constants-limits-intptr">11.1.13 Pointer signed integer limits</a></li>
-      <li><a name="toc-Pointer-unsigned-integer-limits" href="#constants-limits-uintptr">11.1.14 Pointer unsigned integer limits</a></li>
+      <li><a name="toc-Character-limits" href="#constants-limits-chars">10.1.1 Character limits</a></li>
+      <li><a name="toc-Short-integers-limits" href="#constants-limits-shorts">10.1.2 Short integers limits</a></li>
+      <li><a name="toc-Integers-limits" href="#constants-limits-ints">10.1.3 Integers limits</a></li>
+      <li><a name="toc-Long-limits" href="#constants-limits-long">10.1.4 Long limits</a></li>
+      <li><a name="toc-Long-long-limits" href="#constants-limits-llong">10.1.5 Long long limits</a></li>
+      <li><a name="toc-8_002dbit-integers-limits" href="#constants-limits-int8">10.1.6 8-bit integers limits</a></li>
+      <li><a name="toc-16_002dbit-integers-limits" href="#constants-limits-int16">10.1.7 16-bit integers limits</a></li>
+      <li><a name="toc-32_002dbit-integers-limits" href="#constants-limits-int32">10.1.8 32-bit integers limits</a></li>
+      <li><a name="toc-64_002dbit-integers-limits" href="#constants-limits-int64">10.1.9 64-bit integers limits</a></li>
+      <li><a name="toc-Signed-integer-size-limits" href="#constants-limits-ssize">10.1.10 Signed integer size limits</a></li>
+      <li><a name="toc-Unsigned-integer-size-limits" href="#constants-limits-usize">10.1.11 Unsigned integer size limits</a></li>
+      <li><a name="toc-Pointer-difference-integers-limits" href="#constants-limits-ptrdiff">10.1.12 Pointer difference integers limits</a></li>
+      <li><a name="toc-Pointer-signed-integer-limits" href="#constants-limits-intptr">10.1.13 Pointer signed integer limits</a></li>
+      <li><a name="toc-Pointer-unsigned-integer-limits" href="#constants-limits-uintptr">10.1.14 Pointer unsigned integer limits</a></li>
     </ul></li>
   </ul></li>
-  <li><a name="toc-Interfacing-with-GNU-Automake" href="#automake">12 Interfacing with <acronym>GNU</acronym> Automake</a></li>
+  <li><a name="toc-Interfacing-with-GNU-Automake" href="#automake">11 Interfacing with <acronym>GNU</acronym> Automake</a></li>
   <li><a name="toc-GNU-LESSER-GENERAL-PUBLIC-LICENSE" href="#Package-License">Appendix A GNU LESSER GENERAL PUBLIC LICENSE</a></li>
   <li><a name="toc-GNU-Free-Documentation-License" href="#Documentation-License">Appendix B GNU Free Documentation License</a></li>
   <li><a name="toc-Bibliography-and-references" href="#references">Appendix C Bibliography and references</a></li>
