@@ -1,0 +1,368 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- Copyright (C) 2018 by Marco Maggi marco.maggi-ipsu@poste.it
+
+Permission is granted to copy, distribute and/or modify this document under the terms
+of the GNU Free Documentation License, Version 1.3 or any later version published
+by the Free Software Foundation; with Invariant Sections being "GNU Free
+Documentation License" and "GNU General Public License", no Front-Cover Texts,
+and no Back-Cover Texts.  A copy of the license is included in the section entitled
+"GNU Free Documentation License". -->
+<!-- Created by GNU Texinfo 6.5, http://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<title>Dec 10 (Marco&rsquo;s 2018 Weblog)</title>
+
+<meta name="description" content="Dec 10 (Marco&rsquo;s 2018 Weblog)">
+<meta name="keywords" content="Dec 10 (Marco&rsquo;s 2018 Weblog)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="concept-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="index.html#Top" rel="up" title="Top">
+<link href="Oct-26.html#Oct-26" rel="next" title="Oct 26">
+<link href="index.html#Top" rel="prev" title="Top">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="weblog.css">
+
+
+</head>
+
+<body lang="en">
+<a name="Dec-10"></a>
+<div class="header">
+<p>
+Next: <a href="Oct-26.html#Oct-26" accesskey="n" rel="next">Oct 26</a>, Previous: <a href="index.html#Top" accesskey="p" rel="prev">Top</a>, Up: <a href="index.html#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="concept-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Am-I-going-too-far-with-GNU-Bash_003f"></a>
+<h2 class="unnumbered">Am I going too far with <acronym>GNU</acronym> Bash?</h2>
+
+
+<p><em>Posted on Mon Dec 10, 2018</em>
+</p>
+
+<p>Years ago I stopped to significantly develop my <a href="https://github.com/marcomaggi/mbfl"><acronym>MBFL</acronym></a> project; it is a
+library of functions for the Unix shell <acronym>GNU</acronym> Bash.  First reason: I perceived it had enough
+features (I already had a script that sends email); second reason: it had become dog slow to run
+<acronym>MBFL</acronym> scripts with my old computer.
+</p>
+<p>Lately, I found that the library does not have enough features, after all; so I launched a restyling
+and development project for this library.  It&rsquo;s been a while since I upgraded to a really faster
+machine, so speed is no more a problem.
+</p>
+
+<a name="About-the-syntax"></a>
+<h3 class="unnumberedsec">About the syntax</h3>
+
+
+<p>When I was younger, I found really fun to use programming languages with peculiar syntaxes; in a
+very immature way, I felt that it was already an achievement to be able to code with them.  Today I
+am old.  So I&rsquo;m replacing most of the uses of:
+</p>
+<div class="example">
+<pre class="example">test -n &quot;$STRING&quot;
+test -z &quot;$STRING&quot;
+test -f &quot;$PATHNAME&quot;
+</pre></div>
+
+<p>with <acronym>MBFL</acronym> function calls:
+</p>
+<div class="example">
+<pre class="example">mbfl_string_is_not_empty &quot;$STRING&quot;
+mbfl_string_is_empty &quot;$STRING&quot;
+mbfl_file_is_file &quot;$PATHNAME&quot;
+</pre></div>
+
+<p>Good bye weird syntaxes!  Welcome descriptive function names!
+</p>
+<p>I&rsquo;m also getting rid of most logic operator uses like:
+</p>
+<div class="example">
+<pre class="example">some_predicate &amp;&amp; {
+  consequent_action
+}
+
+some_predicate || {
+  alternate_action
+}
+</pre></div>
+
+<p>for the more descriptive:
+</p>
+<div class="example">
+<pre class="example">if some_predicate
+then consequent_action
+fi
+
+if ! some_predicate
+then alternate_action
+fi
+</pre></div>
+
+<p>Less symbols, more words.  The sign of old age&hellip;
+</p>
+<p>I know that I should not touch code that already works, but I do have some obsessive compulsive
+behaviour.
+</p>
+
+<a name="Variable-references"></a>
+<h3 class="unnumberedsec">Variable references</h3>
+
+
+<p>A typical idiom in Bash programming is running a command or function and collecting the textual
+output in a variable as follows:
+</p>
+<div class="example">
+<pre class="example">RESULT=$(some_command --with --options)
+RESULT=$(some_function with argu ments)
+</pre></div>
+
+<p>this syntax runs a subshell to execute the command.  I assume that running subshells is expensive;
+for sure it may cause unexpected behaviour when a called function attempts to mutate uplevel
+variables (side effects are unavoidable).
+</p>
+<p>This is not the only way to return a result from a function call: we can also use variables with the
+NAMEREF attribute.  So I am adding a number of function variants that use variable references to
+return values; for example, now the function <code>mbfl_file_extension_var</code> exists, it does the same
+of <code>mbfl_file_extension</code> but, rather than printing the result on <code>stdout</code>, it mutates a
+variable in the scope of the caller.
+</p>
+
+<a name="Dangers-of-result-variables"></a>
+<h4 class="unnumberedsubsec">Dangers of result variables</h4>
+
+<p>We must be careful when using this feature!  Let&rsquo;s consider this script:
+</p>
+<div class="example">
+<pre class="example">function main () {
+    local -i X=0
+    mbfl_func X
+    printf 'X=%d\n' $X
+}
+
+function mbfl_func () {
+    local -n Y=${1:?}
+    Y=1
+}
+
+main
+</pre></div>
+
+<p>everything is fine: the script will print <code>X=1</code> because the call to <code>mbfl_func</code> will
+mutate the variable <code>X</code> in its execution environment, and such variable happens to be defined
+in the scope of <code>main</code>.
+</p>
+<p>Now let&rsquo;s consider this script:
+</p>
+<div class="example">
+<pre class="example">function main () {
+    local -i X=0
+    mbfl_func X
+    printf 'X=%d\n' $X
+}
+
+function mbfl_func () {
+    local -n Y=${1:?}
+    local X
+    Y=1
+}
+
+main
+</pre></div>
+
+<p>it will print <code>X=0</code> because <code>mbfl_func</code> accesses the variable <code>X</code> in its execution
+environment, and such variable is defined by <code>mbfl_func</code> itself; the local definition of
+<code>X</code> shadows the upper level definition.
+</p>
+<p>There is no true escape from this problem!  There is no definitive way to avoid &ldquo;fishing&rdquo; a local
+variable in a lower function from an upper function.  <acronym>MBFL</acronym> attempts to mitigate the problem by
+prefixing its variables with <code>mbfl_</code> when a function uses reference variables.  We must never
+use a variable name with the prefix <code>mbfl_</code> to avoid name conflicts.
+</p>
+<p>So we should write the script as follows:
+</p>
+<div class="example">
+<pre class="example">function main () {
+    local -i X=0
+    mbfl_func X
+    printf 'X=%d\n' $X
+}
+
+function mbfl_func () {
+    local -n mbfl_Y=${1:?}
+    local mbfl_X
+    mbfl_Y=1
+}
+
+main
+</pre></div>
+
+<p>Problem solved?  No.
+</p>
+
+<a name="Using-the-preprocessor"></a>
+<h4 class="unnumberedsubsec">Using the preprocessor</h4>
+
+
+<p><acronym>MBFL</acronym>&rsquo;s preprocessor (<acronym>GNU</acronym> m4 plus a library of macros) has facilities to help us create
+variables with unique names that we can safely use as arguments to functions.  With these
+facilities, we can write the demo script as:
+</p>
+<div class="example">
+<pre class="example">function main () {
+    mbfl_local_varref(X, 0, -i)
+    mbfl_func mbfl_varname(X)
+    printf 'X=%d\n' $X
+}
+
+function mbfl_func () {
+    local -n Y=${1:?}
+    Y=1
+}
+
+main
+</pre></div>
+
+<p>the preprocessor transforms the input script into (edited with added comments):
+</p>
+<div class="example">
+<pre class="example">function main () {
+    # Declare a local variable.
+    local mbfl_a_varname_X
+
+    # Allocate a unique variable name and store it into &quot;mbfl_a_varname_X&quot;.
+    mbfl_variable_alloc mbfl_a_varname_X
+
+    # Declare a new variable using the unique name.  Initialise it.
+    local -i $mbfl_a_varname_X=0
+
+    # Make &quot;X&quot; an alias for the unique name.
+    local -n X=$mbfl_a_varname_X
+
+    # Hand the unique name to the function as argument.
+    mbfl_func $mbfl_a_varname_X
+
+    printf 'X=%d\n' $X
+}
+
+function mbfl_func () {
+    local -n Y=${1:?}
+    Y=1
+}
+
+main
+</pre></div>
+
+<p>The use of unique names removes the problem of names collision.
+</p>
+<p>Using such preprocessor facilities consumes some computation time; they should be used when we do
+not care about execution time and when such time is significantly less than running a subshell.
+Otherwise we should just run the functions in a subshell.
+</p>
+
+<a name="Location-handlers-and-atexit-commands"></a>
+<h3 class="unnumberedsec">Location handlers and atexit commands</h3>
+
+
+<p>I have added a very simple infrastructure to register atexit commands to be run when <code>trap
+... EXIT</code> fires.  Obviously, scripts using this <acronym>API</acronym> must not set the <code>EXIT</code> trap by
+themselves.
+</p>
+<p>Also, location handlers are now available.  In the following script the call to <code>main</code> prints
+&lsquo;<samp>0342516</samp>&rsquo;:
+</p>
+<div class="example">
+<pre class="example">function handler_append () {
+    local THING=${1:?}
+    RESULT+=$THING
+}
+
+function main () {
+    local RESULT
+
+    handler_append 0
+    mbfl_location_enter
+    {
+        mbfl_location_handler &quot;handler_append 1&quot;
+        mbfl_location_enter
+        {
+            mbfl_location_handler &quot;handler_append 2&quot;
+            mbfl_location_enter
+            {
+                mbfl_location_handler &quot;handler_append 3&quot;
+            }
+            mbfl_location_leave
+            mbfl_location_handler &quot;handler_append 4&quot;
+        }
+        mbfl_location_leave
+        mbfl_location_handler &quot;handler_append 5&quot;
+    }
+    mbfl_location_leave
+    handler_append 6
+
+    echo &quot;$RESULT&quot;
+}
+
+main
+</pre></div>
+
+<p>every call to <code>mbfl_location_enter</code> initialises a new location; every call to
+<code>mbfl_location_handler</code> registers a handler in the current location; every call to
+<code>mbfl_location_leave</code> finalises a location by running its handlers.
+</p>
+<p>It is possible to register a special &ldquo;run all handlers&rdquo; function as atexit command: when we exit a
+script from a nested location, all the handlers are executed.
+</p>
+
+<a name="What-for_003f"></a>
+<h3 class="unnumberedsec">What for?</h3>
+
+
+<p>I&rsquo;ve been using <acronym>MBFL</acronym> scripts for years for my personal automation needs: backup procedures,
+system administration, user operations (my window manager is Fvwm, but I do not use the &ldquo;system
+menu&rdquo; to launch programs and do stuff: I run a <acronym>MBFL</acronym> script from an X terminal).
+</p>
+<p>Now I have more needs, as a terminal die harder.  I started the development of a personal message
+notifier (it&rsquo;s working but horrible, right now), I want a contacts book (on top of SQLite) and some
+automation for my personal finance bookkeeping (also on top of SQLite).  More scripts!  More
+scripts!
+</p>
+<hr>
+<div class="header">
+<p>
+Next: <a href="Oct-26.html#Oct-26" accesskey="n" rel="next">Oct 26</a>, Previous: <a href="index.html#Top" accesskey="p" rel="prev">Top</a>, Up: <a href="index.html#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="concept-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>
