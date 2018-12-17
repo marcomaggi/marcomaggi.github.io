@@ -1,0 +1,398 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 3.0.0-devel.0 of MBFL, a library of functions for the
+GNU Bash shell.  It requires Bash at least version 4.3.  The package is
+distributed under the terms of the GNU Lesser General Public License (LGPL).
+
+The latest release can be downloaded from:
+
+https://bitbucket.org/marcomaggi/mbfl/downloads
+
+development takes place at:
+
+https://github.com/marcomaggi/mbfl
+
+and as backup at:
+
+https://bitbucket.org/marcomaggi/mbfl
+
+Copyright (C) 2003-2005, 2009-2010, 2012-2015, 2017-2018 by Marco Maggi marco.maggi-ipsu@poste.it
+
+Permission is granted to copy, distribute and/or modify this document under the terms of the GNU
+Free Documentation License, Version 1.3 or any later version published by the Free Software
+Foundation; with Invariant Sections being "GNU Free Documentation License" and "GNU Lesser
+General Public License", no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license is
+included in the section entitled "GNU Free Documentation License". -->
+<!-- Created by GNU Texinfo 6.5, http://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>getopts options (Marco&rsquo;s Bash Functions Library)</title>
+
+<meta name="description" content="getopts options (Marco&rsquo;s Bash Functions Library)">
+<meta name="keywords" content="getopts options (Marco&rsquo;s Bash Functions Library)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="variable-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="getopts.html#getopts" rel="up" title="getopts">
+<link href="getopts-interface.html#getopts-interface" rel="next" title="getopts interface">
+<link href="getopts-usage.html#getopts-usage" rel="prev" title="getopts usage">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="getopts-options"></a>
+<div class="header">
+<p>
+Next: <a href="getopts-interface.html#getopts-interface" accesskey="n" rel="next">getopts interface</a>, Previous: <a href="getopts-usage.html#getopts-usage" accesskey="p" rel="prev">getopts usage</a>, Up: <a href="getopts.html#getopts" accesskey="u" rel="up">getopts</a> &nbsp; [<a href="variable-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Predefined-options"></a>
+<h3 class="section">9.3 Predefined options</h3>
+
+
+<p>A set of predefined options is recognised by the library and not handed
+to the user defined functions.
+</p>
+<dl compact="compact">
+<dt><samp>--tmpdir=DIR</samp></dt>
+<dd><a name="index-_002d_002dtmpdir_002c-predefined-option"></a>
+<a name="index-Predefined-option-_002d_002dtmpdir"></a>
+<p>Selects a directory for temporary files.  The default value is the one in
+the environment variable <code>TMPDIR</code>, or <samp>/tmp/$USER</samp> if that
+variable is not set.  The value is stored in the variable
+<code>mbfl_option_TMPDIR</code>.
+</p>
+</dd>
+<dt><samp>--encoded-args</samp></dt>
+<dd><a name="index-_002d_002dencoded_002dargs_002c-predefined-option"></a>
+<a name="index-Predefined-option-_002d_002dencoded_002dargs"></a>
+<p>Signals to the library that the non&ndash;option arguments and the option
+values are encoded in hexadecimal strings.  Encoding is useful to avoid
+quoting problems when invoking a script from another one.
+</p>
+<p>If this option is used: the values are decoded by
+<code>mbfl_getopts_parse()</code> before storing them in the <code>ARGV</code>
+array and before being stored in the option&rsquo;s specific global variables.
+</p>
+</dd>
+<dt><samp>-v</samp></dt>
+<dt><samp>--verbose</samp></dt>
+<dd><a name="index-_002dv_002c-predefined-option"></a>
+<a name="index-Predefined-option-_002dv"></a>
+<a name="index-_002d_002dverbose_002c-predefined-option"></a>
+<a name="index-Predefined-option-_002d_002dverbose"></a>
+<p>Turns on verbose messages.  If this option is used: The function
+<code>mbfl_option_verbose()</code> returns true.  <a href="message.html#message">Printing
+messages to the console</a>.
+</p>
+</dd>
+<dt><samp>--silent</samp></dt>
+<dd><a name="index-_002d_002dsilent_002c-predefined-option"></a>
+<a name="index-Predefined-option-_002d_002dsilent"></a>
+<p>Turns off verbose messages.  If this option is used: The function
+<code>mbfl_option_verbose()</code> returns false.
+</p>
+</dd>
+<dt><samp>--verbose-program</samp></dt>
+<dd><a name="index-_002d_002dverbose_002dprogram_002c-predefined-option"></a>
+<a name="index-Predefined-option-_002d_002dverbose_002dprogram"></a>
+<p>If used: The <samp>--verbose</samp> option is added to the command line of
+external programs that support it.  The function
+<code>mbfl_option_verbose_program()</code> returns true or false depending on
+the state of this option.
+</p>
+</dd>
+<dt><samp>--show-program</samp></dt>
+<dt><samp>--show-programs</samp></dt>
+<dd><a name="index-_002d_002dshow_002dprogram_002c-predefined-option"></a>
+<a name="index-Predefined-option-_002d_002dshow_002dprogram"></a>
+<a name="index-_002d_002dshow_002dprograms_002c-predefined-option"></a>
+<a name="index-Predefined-option-_002d_002dshow_002dprograms"></a>
+<p>Prints the command line of executed external programs.
+</p>
+</dd>
+<dt><samp>--debug</samp></dt>
+<dd><a name="index-_002d_002ddebug_002c-predefined-option"></a>
+<a name="index-Predefined-option-_002d_002ddebug"></a>
+<p>Turns on debugging messages.  Automatically turns on verbose messages
+and program showing.  <a href="message.html#message">Printing messages to the console</a>.
+</p>
+</dd>
+<dt><samp>--test</samp></dt>
+<dd><a name="index-_002d_002dtest_002c-predefined-option"></a>
+<a name="index-Predefined-option-_002d_002dtest"></a>
+<p>Turns on test execution.  <a href="program-testing.html#program-testing">Testing a script and
+external programs</a>.
+</p>
+</dd>
+<dt><samp>--null</samp></dt>
+<dd><a name="index-_002d_002dnull_002c-predefined-option"></a>
+<a name="index-Predefined-option-_002d_002dnull"></a>
+<p>Signals to the script that it has to use the null character to separate
+values, instead of the common newline.  The global variable
+<code>mbfl_option_NULL</code> is set to <code>yes</code>.
+</p>
+</dd>
+<dt><samp>-f</samp></dt>
+<dt><samp>--force</samp></dt>
+<dd><a name="index-_002df_002c-predefined-option"></a>
+<a name="index-Predefined-option-_002df"></a>
+<a name="index-_002d_002dforce_002c-predefined-option"></a>
+<a name="index-Predefined-option-_002d_002dforce"></a>
+<p>Signals to the script that it does <strong>not</strong> have to query the user
+before doing dangerous operations, like overwriting files.  The global
+variable <code>mbfl_option_INTERACTIVE</code> is set to <code>no</code>.
+</p>
+</dd>
+<dt><samp>-i</samp></dt>
+<dt><samp>--interactive</samp></dt>
+<dd><a name="index-_002di_002c-predefined-option"></a>
+<a name="index-Predefined-option-_002di"></a>
+<a name="index-_002d_002dinteractive_002c-predefined-option"></a>
+<a name="index-Predefined-option-_002d_002dinteractive"></a>
+<p>Signals to the script that it <strong>does</strong> have to query the user
+before doing dangerous operations, like overwriting files.  The global
+variable <code>mbfl_option_INTERACTIVE</code> is set to <code>yes</code>.
+</p>
+</dd>
+<dt><samp>--validate-programs</samp></dt>
+<dd><a name="index-_002d_002dvalidate_002dprograms_002c-predefined-option"></a>
+<a name="index-Predefined-option-_002d_002dvalidate_002dprograms"></a>
+<p>Validates the existence of all the programs needed by the script; then
+exits.  The exit code is zero if all the programs were found, one
+otherwise.
+</p>
+</dd>
+<dt><samp>--list-exit-codes</samp></dt>
+<dd><a name="index-_002d_002dlist_002dexit_002dcodes_002c-predefined-option"></a>
+<a name="index-Predefined-option-_002d_002dlist_002dexit_002dcodes"></a>
+<p>Prints a list of numerical exit codes and their associated names, as
+declared in the script.  <a href="main-exit.html#main-exit">Declaring exit codes</a>.
+</p>
+</dd>
+<dt><samp>--print-exit-code=NAME</samp></dt>
+<dd><a name="index-_002d_002dprint_002dexit_002dcode_002c-predefined-option"></a>
+<a name="index-Predefined-option-_002d_002dprint_002dexit_002dcode"></a>
+<p>Prints the numerical exit code associated to <code>NAME</code>.
+</p>
+</dd>
+<dt><samp>--print-exit-code-names=CODE</samp></dt>
+<dd><a name="index-_002d_002dprint_002dexit_002dcode_002dnames_002c-predefined-option"></a>
+<a name="index-Predefined-option-_002d_002dprint_002dexit_002dcode_002dnames"></a>
+<p>Prints the list of names associated to the numerical exit <code>CODE</code>.
+</p>
+</dd>
+<dt><samp>--version</samp></dt>
+<dd><a name="index-_002d_002dversion_002c-predefined-option"></a>
+<a name="index-Predefined-option-_002d_002dversion"></a>
+<p>Prints to the standard output of the script the contents of the global
+variable <code>mbfl_message_VERSION</code>, then exits with code zero.  The
+variable makes use of the service variables.  <a href="service-variables.html#service-variables">Required user defined variables</a>.
+</p>
+</dd>
+<dt><samp>--version-only</samp></dt>
+<dd><a name="index-_002d_002dversion_002donly_002c-predefined-option"></a>
+<a name="index-Predefined-option-_002d_002dversion_002donly"></a>
+<p>Prints to the standard output of the script the contents of the global
+variable <code>script_VERSION</code>, then exits with code zero.  <a href="service-variables.html#service-variables">Required user defined variables</a>.
+</p>
+</dd>
+<dt><samp>--license</samp></dt>
+<dd><a name="index-_002d_002dlicense_002c-predefined-option"></a>
+<a name="index-Predefined-option-_002d_002dlicense"></a>
+<p>Prints to the standard output of the script the contents of one of the
+global variables <code>mbfl_message_LICENSE_*</code>, then exits with code
+zero.  The variable makes use of the service variables.  <a href="service-variables.html#service-variables">Required user defined variables</a>.
+</p>
+</dd>
+<dt><samp>-h</samp></dt>
+<dt><samp>--help</samp></dt>
+<dt><samp>--usage</samp></dt>
+<dd><a name="index-_002dh_002c-predefined-option"></a>
+<a name="index-Predefined-option-_002dh"></a>
+<a name="index-_002d_002dhelp_002c-predefined-option"></a>
+<a name="index-Predefined-option-_002d_002dhelp"></a>
+<a name="index-_002d_002dusage_002c-predefined-option"></a>
+<a name="index-Predefined-option-_002d_002dusage"></a>
+<p>Prints to the standard output of the script: the contents of the global
+variable <code>script_USAGE</code>; a newline; the string <code>options:</code>; a
+newline; an automatically generated string describing the options
+declared with <code>mbfl_declare_option()</code>; a string describing the
+<acronym>MBFL</acronym> default options; the contents of the global variable
+<code>script_EXAMPLES</code>.  Then exits with code zero.  <a href="service-variables.html#service-variables">Required user defined variables</a>.
+</p>
+</dd>
+<dt><samp>-H</samp></dt>
+<dt><samp>--brief-help</samp></dt>
+<dt><samp>--brief-usage</samp></dt>
+<dd><a name="index-_002dH_002c-predefined-option"></a>
+<a name="index-Predefined-option-_002dH"></a>
+<a name="index-_002d_002dbrief_002dhelp_002c-predefined-option"></a>
+<a name="index-Predefined-option-_002d_002dbrief_002dhelp"></a>
+<a name="index-_002d_002dbrief_002dusage_002c-predefined-option"></a>
+<a name="index-Predefined-option-_002d_002dbrief_002dusage"></a>
+<p>Prints to the standard output of the script: the contents of the global
+variable <code>script_USAGE</code>; a newline; the string <code>options:</code>; a
+newline; an automatically generated string describing the options
+declared with <code>mbfl_declare_option()</code>.  Then exits with code zero.
+</p>
+<p>The difference with <samp>--help</samp> is that predefined options and usage
+examples are not displayed.
+</p>
+</dd>
+<dt><samp>--print-options</samp></dt>
+<dd><a name="index-_002d_002dprint_002doptions_002c-predefined-option"></a>
+<a name="index-Predefined-option-_002d_002dprint_002doptions"></a>
+<p>Print all the long options with
+<code>mbfl_getopts_print_long_switches()</code>, then exit the script with code
+zero.
+</p></dd>
+</dl>
+
+
+<p>The following functions may be used to set, unset and query the state of
+the predefined options.
+</p>
+
+<dl>
+<dt><a name="index-mbfl_005foption_005fencoded_005fargs"></a>Function: <strong>mbfl_option_encoded_args</strong></dt>
+<dt><a name="index-mbfl_005fset_005foption_005fencoded_005fargs"></a>Function: <strong>mbfl_set_option_encoded_args</strong></dt>
+<dt><a name="index-mbfl_005funset_005foption_005fencoded_005fargs"></a>Function: <strong>mbfl_unset_option_encoded_args</strong></dt>
+<dd><p>Query/set/unset the encoded arguments option.
+</p>
+<p><code>mbfl_option_encoded_args()</code> returns true if the option
+<samp>--encoded-args</samp> was used on the command line.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-mbfl_005foption_005fverbose"></a>Function: <strong>mbfl_option_verbose</strong></dt>
+<dt><a name="index-mbfl_005fset_005foption_005fverbose"></a>Function: <strong>mbfl_set_option_verbose</strong></dt>
+<dt><a name="index-mbfl_005funset_005foption_005fverbose"></a>Function: <strong>mbfl_unset_option_verbose</strong></dt>
+<dd><p>Query/set/unset the verbose messages option.
+</p>
+<p><code>mbfl_option_verbose()</code> returns true if the option
+<samp>--verbose</samp> was used on the command line after all the
+occurrences of <samp>--silent</samp>; it returns false if the option
+<samp>--silent</samp> was used on the command line after all the occurrences
+of <samp>--verbose</samp>.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-mbfl_005foption_005fverbose_005fprogram"></a>Function: <strong>mbfl_option_verbose_program</strong></dt>
+<dt><a name="index-mbfl_005fset_005foption_005fverbose_005fprogram"></a>Function: <strong>mbfl_set_option_verbose_program</strong></dt>
+<dt><a name="index-mbfl_005funset_005foption_005fverbose_005fprogram"></a>Function: <strong>mbfl_unset_option_verbose_program</strong></dt>
+<dd><p>Query/set/unset verbose execution for external programs.
+</p>
+<p>This option, of course, is supported only for programs that are known by
+<acronym>MBFL</acronym> (like <code>rm</code>): if a program is executed with
+<code>mbfl_program_exec()</code>, it is responsibility of the caller to use
+the option.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-mbfl_005foption_005fshow_005fprogram"></a>Function: <strong>mbfl_option_show_program</strong></dt>
+<dt><a name="index-mbfl_005fset_005foption_005fshow_005fprogram"></a>Function: <strong>mbfl_set_option_show_program</strong></dt>
+<dt><a name="index-mbfl_005funset_005foption_005fshow_005fprogram"></a>Function: <strong>mbfl_unset_option_show_program</strong></dt>
+<dd><p>Print the command line of executed external program.  This does not
+disable program execution, it just prints the command line before
+executing it.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-mbfl_005foption_005ftest"></a>Function: <strong>mbfl_option_test</strong></dt>
+<dt><a name="index-mbfl_005fset_005foption_005ftest"></a>Function: <strong>mbfl_set_option_test</strong></dt>
+<dt><a name="index-mbfl_005funset_005foption_005ftest"></a>Function: <strong>mbfl_unset_option_test</strong></dt>
+<dd><p>Query/set/unset the test execution option.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-mbfl_005foption_005fdebug"></a>Function: <strong>mbfl_option_debug</strong></dt>
+<dt><a name="index-mbfl_005fset_005foption_005fdebug"></a>Function: <strong>mbfl_set_option_debug</strong></dt>
+<dt><a name="index-mbfl_005funset_005foption_005fdebug"></a>Function: <strong>mbfl_unset_option_debug</strong></dt>
+<dd><p>Query/set/unset the debug messages option.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-mbfl_005foption_005fnull"></a>Function: <strong>mbfl_option_null</strong></dt>
+<dt><a name="index-mbfl_005fset_005foption_005fnull"></a>Function: <strong>mbfl_set_option_null</strong></dt>
+<dt><a name="index-mbfl_005funset_005foption_005fnull"></a>Function: <strong>mbfl_unset_option_null</strong></dt>
+<dd><p>Query/set/unset the null list separator option.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-mbfl_005foption_005finteractive"></a>Function: <strong>mbfl_option_interactive</strong></dt>
+<dt><a name="index-mbfl_005fset_005foption_005finteractive"></a>Function: <strong>mbfl_set_option_interactive</strong></dt>
+<dt><a name="index-mbfl_005funset_005foption_005finteractive"></a>Function: <strong>mbfl_unset_option_interactive</strong></dt>
+<dd><p>Query/set/unset the interactive execution option.
+</p>
+<p><code>mbfl_option_interactive()</code> returns true if the option
+<samp>--interactive</samp> was used on the command line after all the
+occurrences of <samp>--force</samp>; it returns false if the option
+<samp>--force</samp> was used on the command line after all the occurrences
+of <samp>--interactive</samp>.
+</p></dd></dl>
+
+
+<p>The following are special option functions.
+</p>
+
+<dl>
+<dt><a name="index-mbfl_005foption_005ftest_005fsave"></a>Function: <strong>mbfl_option_test_save</strong></dt>
+<dd><p>Save the current state of the test option then invokes
+<code>mbfl_unset_option_test()</code>.
+</p></dd></dl>
+
+<dl>
+<dt><a name="index-mbfl_005foption_005ftest_005frestore"></a>Function: <strong>mbfl_option_test_restore</strong></dt>
+<dd><p>Restore the state of the test option to the one before the invocation to
+<code>mbfl_option_test_save()</code>.
+</p></dd></dl>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="getopts-interface.html#getopts-interface" accesskey="n" rel="next">getopts interface</a>, Previous: <a href="getopts-usage.html#getopts-usage" accesskey="p" rel="prev">getopts usage</a>, Up: <a href="getopts.html#getopts" accesskey="u" rel="up">getopts</a> &nbsp; [<a href="variable-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+<p class="customfooter12345">This document describes version <tt>3.0.0-devel.0</tt> of <em>Marcos Bash Functions Library</em>.</p></body>
+</html>

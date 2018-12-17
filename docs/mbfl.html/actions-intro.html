@@ -1,0 +1,377 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 3.0.0-devel.0 of MBFL, a library of functions for the
+GNU Bash shell.  It requires Bash at least version 4.3.  The package is
+distributed under the terms of the GNU Lesser General Public License (LGPL).
+
+The latest release can be downloaded from:
+
+https://bitbucket.org/marcomaggi/mbfl/downloads
+
+development takes place at:
+
+https://github.com/marcomaggi/mbfl
+
+and as backup at:
+
+https://bitbucket.org/marcomaggi/mbfl
+
+Copyright (C) 2003-2005, 2009-2010, 2012-2015, 2017-2018 by Marco Maggi marco.maggi-ipsu@poste.it
+
+Permission is granted to copy, distribute and/or modify this document under the terms of the GNU
+Free Documentation License, Version 1.3 or any later version published by the Free Software
+Foundation; with Invariant Sections being "GNU Free Documentation License" and "GNU Lesser
+General Public License", no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license is
+included in the section entitled "GNU Free Documentation License". -->
+<!-- Created by GNU Texinfo 6.5, http://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>actions intro (Marco&rsquo;s Bash Functions Library)</title>
+
+<meta name="description" content="actions intro (Marco&rsquo;s Bash Functions Library)">
+<meta name="keywords" content="actions intro (Marco&rsquo;s Bash Functions Library)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="variable-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="actions.html#actions" rel="up" title="actions">
+<link href="actions-declare.html#actions-declare" rel="next" title="actions declare">
+<link href="actions.html#actions" rel="prev" title="actions">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="actions-intro"></a>
+<div class="header">
+<p>
+Next: <a href="actions-declare.html#actions-declare" accesskey="n" rel="next">actions declare</a>, Up: <a href="actions.html#actions" accesskey="u" rel="up">actions</a> &nbsp; [<a href="variable-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Introduction-to-action-trees"></a>
+<h3 class="section">8.1 Introduction to action trees</h3>
+
+
+<p>Traditional Unix&ndash;style command line programs perform a single action, with behaviour variants
+selected by command line dash and double&ndash;dash options.  For example <code>ls</code> prints a list of
+directory entries and the format of the output can be custommised with options like <samp>-1</samp> and
+<samp>--color</samp>.  <acronym>MBFL</acronym> implements this behaviour by default when the <code>actions</code> module is
+<strong>not</strong> used.
+</p>
+<p>Other Unix&ndash;style command line programs offer a set of possible actions and allow the executor to
+select one by specifying command line options.  For example <code>tar</code> acts on archive files and
+it can pack, unpack, validate them along with other actions selected with by the double&ndash;dash
+options <samp>--create</samp>, <samp>--extract</samp>, <samp>--validate</samp> and others.  <acronym>MBFL</acronym> implements
+this behaviour through &ldquo;action options&rdquo; provided by the <code>getopts</code> module; action options are
+available also when using the <code>actions</code> module.
+</p>
+<p>Other command line programs break this Unix&ndash;style to offer action selection throuh &ldquo;action
+arguments&rdquo;.  For example <code>git</code> acts upon revision control repositories offering a big set
+of actions selected with its first argument: &lsquo;<samp>commit</samp>&rsquo;, &lsquo;<samp>log</samp>&rsquo;, &lsquo;<samp>merge</samp>&rsquo; and many
+others; the behaviour of each &ldquo;subcommand&rdquo; can be customised with a specific set of dash and
+double&ndash;dash options.  <acronym>MBFL</acronym> implements this behaviour through the <code>actions</code> module.
+</p>
+
+<a name="One_002d_002dlevel-actions"></a>
+<h4 class="subsubheading">One&ndash;level actions</h4>
+
+
+<p>The script below (<samp>one-level-actions.sh</samp>, available in the <samp>doc/</samp> directory of the source
+distribution) shows how to implement one&ndash;level actions.  It implements the following behaviour:
+</p>
+<dl compact="compact">
+<dt><code>one-level-actions.sh</code></dt>
+<dd><p>With no action argument: print a generic help screen and exit.
+</p>
+</dd>
+<dt><code>one-level-actions.sh one</code></dt>
+<dd><p>With the action argument <code>one</code>: perform the action &lsquo;<samp>ONE</samp>&rsquo;, possibly with the options
+<samp>-a</samp> and <samp>-b</samp>.
+</p>
+</dd>
+<dt><code>one-level-actions.sh one -H</code></dt>
+<dd><p>With the action argument <code>one</code> and the option <samp>-H</samp>: print the brief help screen for the
+action &lsquo;<samp>ONE</samp>&rsquo; and exit.
+</p>
+</dd>
+<dt><code>one-level-actions.sh two</code></dt>
+<dd><p>With the action argument <code>two</code>: perform the action &lsquo;<samp>TWO</samp>&rsquo;, possibly with the options
+<samp>-d</samp> and <samp>-g</samp>.
+</p>
+</dd>
+<dt><code>one-level-actions.sh two -H</code></dt>
+<dd><p>With the action argument <code>two</code> and the option <samp>-H</samp>: print the brief help screen for the
+action &lsquo;<samp>TWO</samp>&rsquo; and exit.
+</p>
+</dd>
+<dt><code>one-level-actions.sh help</code></dt>
+<dd><p>With the action argument <code>help</code>: print a generic help screen and exit.  Notice how the
+&lsquo;<samp>HELP</samp>&rsquo; action function makes use of <code>mbfl_actions_fake_action_set()</code> to print the same help
+screen of the main action.
+</p></dd>
+</dl>
+
+<div class="smallexample">
+<pre class="verbatim"># one-level-actions.sh --
+
+script_PROGNAME=one-level-actions.sh
+script_VERSION=1.0
+script_COPYRIGHT_YEARS='2013'
+script_AUTHOR='Marco Maggi'
+script_LICENSE=BSD
+script_USAGE=&quot;usage: ${script_PROGNAME} [action] [options]&quot;
+script_DESCRIPTION='Example script showing action arguments.'
+script_EXAMPLES=
+
+source &quot;${MBFL_LIBRARY:=$(mbfl-config)}&quot;
+
+mbfl_declare_action_set MAIN
+mbfl_declare_action MAIN ONE  NONE one  'Do main action one.'
+mbfl_declare_action MAIN TWO  NONE two  'Do main action two.'
+mbfl_declare_action MAIN HELP NONE help 'Do main action help.'
+
+function script_before_parsing_options_ONE () {
+    script_USAGE=&quot;usage: ${script_PROGNAME} one [options]&quot;
+    script_DESCRIPTION='Example action tree: one.'
+    mbfl_declare_option ALPHA no a alpha noarg 'Enable option alpha.'
+    mbfl_declare_option BETA  '' b beta  witharg 'Set option beta.'
+}
+function script_before_parsing_options_TWO () {
+    script_USAGE=&quot;usage: ${script_PROGNAME} two [options]&quot;
+    script_DESCRIPTION='Example action tree: two.'
+    mbfl_declare_option DELTA no d delta noarg 'Enable option delta.'
+    mbfl_declare_option GAMMA '' g gamma witharg 'Set option gamma.'
+}
+function main () {
+    mbfl_main_print_usage_screen_brief
+}
+function script_action_HELP () {
+    mbfl_actions_fake_action_set MAIN
+    mbfl_main_print_usage_screen_brief
+}
+function script_action_ONE () {
+    printf 'performing action one: alpha=%s, beta=%s\n' \
+        &quot;$script_option_ALPHA&quot; &quot;$script_option_beta&quot;
+}
+function script_action_TWO () {
+    printf 'performing action two: delta=%s, gamma=%s\n' \
+        &quot;$script_option_DELTA&quot; &quot;$script_option_GAMMA&quot;
+}
+mbfl_main
+
+### end of file
+# Local Variables:
+# mode: sh
+# End:
+</pre></div>
+
+
+<a name="Two_002d_002dlevels-actions"></a>
+<h4 class="subsubheading">Two&ndash;levels actions</h4>
+
+
+<p>The script below (<samp>two-levels-actions.sh</samp>, available in the <samp>doc/</samp> directory of the source
+distribution) shows how to implement two&ndash;levels actions.  It implements the following behaviour:
+</p>
+<dl compact="compact">
+<dt><code>two-levels-actions.sh</code></dt>
+<dd><p>With no action argument: print a generic help screen and exit.
+</p>
+</dd>
+<dt><code>two-levels-actions.sh help</code></dt>
+<dd><p>With the action argument <code>help</code>: print a generic help screen and exit.  Notice how the
+&lsquo;<samp>HELP</samp>&rsquo; action function makes use of <code>mbfl_actions_fake_action_set()</code> to print the same help
+screen of the main action.
+</p>
+</dd>
+<dt><code>two-levels-actions.sh one</code></dt>
+<dd><p>With the non&ndash;leaf action argument <code>one</code>: print the help screen of the action &lsquo;<samp>ONE</samp>&rsquo;.
+</p>
+</dd>
+<dt><code>two-levels-actions.sh two</code></dt>
+<dd><p>With the non&ndash;leaf action argument <code>two</code>: print the help screen of the action &lsquo;<samp>TWO</samp>&rsquo;.
+</p>
+</dd>
+<dt><code>two-levels-actions.sh one red</code></dt>
+<dd><p>With the action arguments <code>one red</code>: perform the action &lsquo;<samp>RED</samp>&rsquo;, possibly with the options
+<samp>-a</samp> and <samp>-b</samp>.
+</p>
+</dd>
+<dt><code>two-levels-actions.sh one red -H</code></dt>
+<dd><p>With the action argument <code>one red</code> and the option <samp>-H</samp>: print the brief help screen for
+the action &lsquo;<samp>RED</samp>&rsquo; and exit.
+</p>
+</dd>
+<dt><code>two-levels-actions.sh one blue</code></dt>
+<dd><p>With the action arguments <code>one blue</code>: perform the action &lsquo;<samp>BLUE</samp>&rsquo;, possibly with the options
+<samp>-a</samp> and <samp>-b</samp>.
+</p>
+</dd>
+<dt><code>two-levels-actions.sh one blue -H</code></dt>
+<dd><p>With the action argument <code>one blue</code> and the option <samp>-H</samp>: print the brief help screen for
+the action &lsquo;<samp>BLUE</samp>&rsquo; and exit.
+</p>
+</dd>
+<dt><code>two-levels-actions.sh two green</code></dt>
+<dd><p>With the action arguments <code>two green</code>: perform the action &lsquo;<samp>GREEN</samp>&rsquo;, possibly with the
+options <samp>-d</samp> and <samp>-g</samp>.
+</p>
+</dd>
+<dt><code>two-levels-actions.sh two green -H</code></dt>
+<dd><p>With the action argument <code>two green</code> and the option <samp>-H</samp>: print the brief help screen
+for the action &lsquo;<samp>GREEN</samp>&rsquo; exit.
+</p>
+</dd>
+<dt><code>two-levels-actions.sh two cyan</code></dt>
+<dd><p>With the action arguments <code>two cyan</code>: perform the action &lsquo;<samp>CYAN</samp>&rsquo;, possibly with the options
+<samp>-d</samp> and <samp>-g</samp>.
+</p>
+</dd>
+<dt><code>two-levels-actions.sh two cyan -H</code></dt>
+<dd><p>With the action argument <code>two cyan</code> and the option <samp>-H</samp>: print the brief help screen for
+the action &lsquo;<samp>CYAN</samp>&rsquo; exit.
+</p></dd>
+</dl>
+
+<p>notice how the action functions of the non&ndash;leaf nodes print the help screen describing the
+subactions.
+</p>
+<div class="smallexample">
+<pre class="verbatim"># two-level-actions.sh --
+
+script_PROGNAME=two-levels-actions.sh
+script_VERSION=1.0
+script_COPYRIGHT_YEARS='2013'
+script_AUTHOR='Marco Maggi'
+script_LICENSE=BSD
+script_USAGE=&quot;usage: ${script_PROGNAME} [action] [subaction] [options]&quot;
+script_DESCRIPTION='Example script showing action arguments.'
+script_EXAMPLES=
+
+source &quot;${MBFL_LIBRARY:=$(mbfl-config)}&quot;
+
+mbfl_declare_action_set ONE
+mbfl_declare_action ONE RED  NONE red  'Do main action one red.'
+mbfl_declare_action ONE BLUE NONE blue 'Do main action one blue.'
+
+mbfl_declare_action_set TWO
+mbfl_declare_action TWO GREEN NONE green 'Do main action one green.'
+mbfl_declare_action TWO CYAN  NONE cyan  'Do main action one cyan.'
+
+mbfl_declare_action_set MAIN
+mbfl_declare_action MAIN ONE  ONE  one  'Do main action one.'
+mbfl_declare_action MAIN TWO  TWO  two  'Do main action two.'
+mbfl_declare_action MAIN HELP NONE help 'Do main action help.'
+
+function script_before_parsing_options_ONE () {
+    script_USAGE=&quot;usage: ${script_PROGNAME} one [action] [options]&quot;
+    script_DESCRIPTION='Example action tree: one.'
+}
+function script_before_parsing_options_TWO () {
+    script_USAGE=&quot;usage: ${script_PROGNAME} two [action] [options]&quot;
+    script_DESCRIPTION='Example action tree: two.'
+}
+
+function script_before_parsing_options_RED () {
+    script_USAGE=&quot;usage: ${script_PROGNAME} one red [options]&quot;
+    script_DESCRIPTION='Example action tree: one red.'
+    mbfl_declare_option ALPHA no a alpha noarg 'Enable option alpha.'
+    mbfl_declare_option BETA  '' b beta  witharg 'Set option beta.'
+}
+function script_before_parsing_options_BLUE () {
+    script_USAGE=&quot;usage: ${script_PROGNAME} one blue [options]&quot;
+    script_DESCRIPTION='Example action tree: one blue.'
+    mbfl_declare_option DELTA no d delta noarg 'Enable option delta.'
+    mbfl_declare_option GAMMA '' g gamma witharg 'Set option gamma.'
+}
+function script_before_parsing_options_GREEN () {
+    script_USAGE=&quot;usage: ${script_PROGNAME} two green [options]&quot;
+    script_DESCRIPTION='Example action tree: two green.'
+    mbfl_declare_option ALPHA no a alpha noarg 'Enable option alpha.'
+    mbfl_declare_option BETA  '' b beta  witharg 'Set option beta.'
+}
+function script_before_parsing_options_CYAN () {
+    script_USAGE=&quot;usage: ${script_PROGNAME} two cyan [options]&quot;
+    script_DESCRIPTION='Example action tree: two cyan.'
+    mbfl_declare_option DELTA no d delta noarg 'Enable option delta.'
+    mbfl_declare_option GAMMA '' g gamma witharg 'Set option gamma.'
+}
+
+function main () {
+    mbfl_main_print_usage_screen_brief
+}
+function script_action_ONE () {
+    mbfl_main_print_usage_screen_brief
+}
+function script_action_TWO () {
+    mbfl_main_print_usage_screen_brief
+}
+function script_action_HELP () {
+    mbfl_actions_fake_action_set MAIN
+    mbfl_main_print_usage_screen_brief
+}
+
+function script_action_RED () {
+    printf 'performing action red: alpha=%s, beta=%s\n' \
+        &quot;$script_option_ALPHA&quot; &quot;$script_option_BETA&quot;
+}
+function script_action_BLUE () {
+    printf 'performing action blue: delta=%s, gamma=%s\n' \
+        &quot;$script_option_DELTA&quot; &quot;$script_option_GAMMA&quot;
+}
+function script_action_GREEN () {
+    printf 'performing action green: alpha=%s, beta=%s\n' \
+        &quot;$script_option_ALPHA&quot; &quot;$script_option_BETA&quot;
+}
+function script_action_CYAN () {
+    printf 'performing action cyan: delta=%s, gamma=%s\n' \
+        &quot;$script_option_DELTA&quot; &quot;$script_option_GAMMA&quot;
+}
+
+mbfl_main
+
+### end of file
+# Local Variables:
+# mode: sh
+# End:
+</pre></div>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="actions-declare.html#actions-declare" accesskey="n" rel="next">actions declare</a>, Up: <a href="actions.html#actions" accesskey="u" rel="up">actions</a> &nbsp; [<a href="variable-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+<p class="customfooter12345">This document describes version <tt>3.0.0-devel.0</tt> of <em>Marcos Bash Functions Library</em>.</p></body>
+</html>

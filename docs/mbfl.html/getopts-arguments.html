@@ -1,0 +1,144 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 3.0.0-devel.0 of MBFL, a library of functions for the
+GNU Bash shell.  It requires Bash at least version 4.3.  The package is
+distributed under the terms of the GNU Lesser General Public License (LGPL).
+
+The latest release can be downloaded from:
+
+https://bitbucket.org/marcomaggi/mbfl/downloads
+
+development takes place at:
+
+https://github.com/marcomaggi/mbfl
+
+and as backup at:
+
+https://bitbucket.org/marcomaggi/mbfl
+
+Copyright (C) 2003-2005, 2009-2010, 2012-2015, 2017-2018 by Marco Maggi marco.maggi-ipsu@poste.it
+
+Permission is granted to copy, distribute and/or modify this document under the terms of the GNU
+Free Documentation License, Version 1.3 or any later version published by the Free Software
+Foundation; with Invariant Sections being "GNU Free Documentation License" and "GNU Lesser
+General Public License", no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license is
+included in the section entitled "GNU Free Documentation License". -->
+<!-- Created by GNU Texinfo 6.5, http://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>getopts arguments (Marco&rsquo;s Bash Functions Library)</title>
+
+<meta name="description" content="getopts arguments (Marco&rsquo;s Bash Functions Library)">
+<meta name="keywords" content="getopts arguments (Marco&rsquo;s Bash Functions Library)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="variable-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="getopts.html#getopts" rel="up" title="getopts">
+<link href="getopts-usage.html#getopts-usage" rel="next" title="getopts usage">
+<link href="getopts.html#getopts" rel="prev" title="getopts">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="getopts-arguments"></a>
+<div class="header">
+<p>
+Next: <a href="getopts-usage.html#getopts-usage" accesskey="n" rel="next">getopts usage</a>, Up: <a href="getopts.html#getopts" accesskey="u" rel="up">getopts</a> &nbsp; [<a href="variable-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Arguments"></a>
+<h3 class="section">9.1 Arguments</h3>
+
+
+<p>The <code>main</code> module contains, at the root level, a block of code like
+the following:
+</p>
+<div class="example">
+<pre class="example">declare -i ARGC=0 ARGC1=0 ARG1ST=0
+declare -a ARGV ARGV1
+
+for ((ARGC1=0; $# &gt; 0; ++ARGC1))
+do
+    ARGV1[$ARGC1]=$1
+    shift
+done
+</pre></div>
+
+<p>this block is executed when <acronym>MBFL</acronym> (and the script that loads it) is
+evaluated.  Its purpose is to store command line arguments in the global
+array <code>ARGV1</code> and the number of command line arguments in the
+global variable <code>ARGC1</code>; the variable <code>ARG1ST</code> references the
+next argument in <code>ARGV1</code> that must be processed.
+</p>
+<p>The global array <code>ARGV</code> and the global variable <code>ARGC</code> are
+predefined and should be used by the <code>mbfl_getopts_*</code> functions to
+store non&ndash;option command line arguments.  Processing performed by the
+<code>getopts</code> module must happen after processing performed by the
+<code>actions</code> module.
+</p>
+<p>Example:
+</p>
+<div class="example">
+<pre class="example">$ script --gulp wo --gasp=123 wa
+</pre></div>
+
+<p>if the script makes use of <acronym>MBFL</acronym>, the strings <code>wo</code> and <code>wa</code>
+will go into <code>ARGV</code> and <code>ARGC</code> will be set to 2.  The option
+arguments are processed and some action is performed to register them.
+</p>
+<p>We can access the non&ndash;option arguments with the following code:
+</p>
+<div class="example">
+<pre class="example">for ((i=0; $i &lt; $ARGC; ++i))
+do
+    # do something with ${ARGV[$i]}
+done
+</pre></div>
+
+<p>When using the <code>actions</code> module: the first arguments can be
+interpreted as special values that select an action to be performed by
+the script; in such case the first argument is removed from the
+<code>ARGV</code> array, so that processing the other arguments is not
+affected.  <a href="actions-intro.html#actions-intro">Introduction to action trees</a>.
+</p>
+<hr>
+<div class="header">
+<p>
+Next: <a href="getopts-usage.html#getopts-usage" accesskey="n" rel="next">getopts usage</a>, Up: <a href="getopts.html#getopts" accesskey="u" rel="up">getopts</a> &nbsp; [<a href="variable-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+<p class="customfooter12345">This document describes version <tt>3.0.0-devel.0</tt> of <em>Marcos Bash Functions Library</em>.</p></body>
+</html>

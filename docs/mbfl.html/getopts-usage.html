@@ -1,0 +1,219 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 3.0.0-devel.0 of MBFL, a library of functions for the
+GNU Bash shell.  It requires Bash at least version 4.3.  The package is
+distributed under the terms of the GNU Lesser General Public License (LGPL).
+
+The latest release can be downloaded from:
+
+https://bitbucket.org/marcomaggi/mbfl/downloads
+
+development takes place at:
+
+https://github.com/marcomaggi/mbfl
+
+and as backup at:
+
+https://bitbucket.org/marcomaggi/mbfl
+
+Copyright (C) 2003-2005, 2009-2010, 2012-2015, 2017-2018 by Marco Maggi marco.maggi-ipsu@poste.it
+
+Permission is granted to copy, distribute and/or modify this document under the terms of the GNU
+Free Documentation License, Version 1.3 or any later version published by the Free Software
+Foundation; with Invariant Sections being "GNU Free Documentation License" and "GNU Lesser
+General Public License", no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license is
+included in the section entitled "GNU Free Documentation License". -->
+<!-- Created by GNU Texinfo 6.5, http://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>getopts usage (Marco&rsquo;s Bash Functions Library)</title>
+
+<meta name="description" content="getopts usage (Marco&rsquo;s Bash Functions Library)">
+<meta name="keywords" content="getopts usage (Marco&rsquo;s Bash Functions Library)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="variable-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="getopts.html#getopts" rel="up" title="getopts">
+<link href="getopts-options.html#getopts-options" rel="next" title="getopts options">
+<link href="getopts-arguments.html#getopts-arguments" rel="prev" title="getopts arguments">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="getopts-usage"></a>
+<div class="header">
+<p>
+Next: <a href="getopts-options.html#getopts-options" accesskey="n" rel="next">getopts options</a>, Previous: <a href="getopts-arguments.html#getopts-arguments" accesskey="p" rel="prev">getopts arguments</a>, Up: <a href="getopts.html#getopts" accesskey="u" rel="up">getopts</a> &nbsp; [<a href="variable-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Using-the-module"></a>
+<h3 class="section">9.2 Using the module</h3>
+
+
+<p>To use this module we have to declare a set of script options with the
+function <code>mbfl_declare_option()</code>.  Options declarations should be
+done at the beginning of the script, before doing anything else, or in
+the &ldquo;before parsing options&rdquo; functions.
+</p>
+<p>In the main block of the script, options are parsed by invoking
+<code>mbfl_getopts_parse()</code>: this function will update global variables
+and invoke a script function for each option on the command line.  It
+can also select a function to be invoked as the main action of the
+script.
+</p>
+
+<a name="Option-with-no-argument"></a>
+<h4 class="subsubheading">Option with no argument</h4>
+
+<p>Example of option declaration:
+</p>
+<div class="example">
+<pre class="example">mbfl_declare_option ALPHA no a alpha noarg &quot;enable alpha option&quot;
+</pre></div>
+
+<p>this code declares an option with no argument having properties:
+</p>
+<ul>
+<li> Global variable <code>script_option_ALPHA</code>, which will be set to
+<code>no</code> by default and to <code>yes</code> if the option is used.
+
+</li><li> Brief switch <samp>-a</samp>.
+
+</li><li> Long switch <samp>--alpha</samp>.
+
+</li><li> Description <code>enable alpha option</code>, to be shown in the usage help
+screen.
+</li></ul>
+
+<p>If the option is used: the function <code>script_option_update_alpha</code> is invoked (if it exists) with
+no arguments, after the variable <code>script_option_ALPHA</code> has been set to <code>yes</code>; in the
+function name: <code>alpha</code> is the lower case variant of the keyword <code>ALPHA</code>.  Valid option
+uses are:
+</p>
+<div class="example">
+<pre class="example">$ script.sh -a
+$ script.sh --alpha
+</pre></div>
+
+
+<a name="Option-with-argument"></a>
+<h4 class="subsubheading">Option with argument</h4>
+
+<p>Example of option declaration:
+</p>
+<div class="example">
+<pre class="example">mbfl_declare_option BETA 123 b beta witharg &quot;select beta value&quot;
+</pre></div>
+
+<p>this code declares an option with argument having properties:
+</p>
+<ul>
+<li> Global variable <code>script_option_BETA</code>, which will be set to
+<code>123</code> by default and to the value selected on the command line if
+the option is used.
+
+</li><li> Brief switch <samp>-b</samp>.
+
+</li><li> Long switch <samp>--beta</samp>.
+
+</li><li> Description <code>select beta value</code>, to be shown in the usage output.
+</li></ul>
+
+<p>If the option is used: the function <code>script_option_update_beta</code> is invoked (if it exists) with
+no arguments, after the variable <code>script_option_BETA</code> has been set to the selected value; in
+the function name: <code>beta</code> is the lower case variant of the keyword <code>BETA</code>.  Valid option
+uses are:
+</p>
+<div class="example">
+<pre class="example">$ script.sh -b456
+$ script.sh --beta=456
+</pre></div>
+
+<p>it is an error to use the switch <samp>-b</samp> or  <samp>--beta</samp> with
+no argument (that is: with an empty string as argument).
+</p>
+
+<a name="Action-options"></a>
+<h4 class="subsubheading">Action options</h4>
+
+<p>A special option example:
+</p>
+<div class="example">
+<pre class="example">mbfl_declare_option ACTION_GAMMA \
+   no g gamma noarg &quot;do gamma action&quot;
+mbfl_declare_option ACTION_DELTA \
+   yes d delta noarg &quot;do delta action&quot;
+</pre></div>
+
+<p>this code declares two options with no arguments; the difference from
+the other declarations is that the keywords are prefixed with
+<code>ACTION_</code>: this prefix is recognised by the module and causes, if
+the option is used on the command line, the following code to be
+evaluated at arguments parsing time:
+</p>
+<div class="example">
+<pre class="example">mbfl_main_set_main script_action_gamma
+</pre></div>
+
+<p>or:
+</p>
+<div class="example">
+<pre class="example">mbfl_main_set_main script_action_delta
+</pre></div>
+
+<p>where the argument <code>script_action_gamma</code> is built by prefixing the
+lower case version of the keyword with <code>script_</code>.  The code selects
+a function as main function for the script.  <a href="main-function.html#main-function">Driving
+script execution</a>.
+</p>
+<p>Additionally, if the default value is <code>yes</code>: the main function is
+selected at declaration time (that is by <code>mbfl_declare_option()</code>);
+this is useful to declare an action option and select automatically the
+action function.  In the example: the function
+<code>script_action_delta()</code> is selected as main action function.
+</p>
+<p>It is an error to declare a keyword prefixed with <code>ACTION_</code> with an
+option with argument (<code>witharg</code> as argument to
+<code>mbfl_declare_option()</code>).
+</p>
+<hr>
+<div class="header">
+<p>
+Next: <a href="getopts-options.html#getopts-options" accesskey="n" rel="next">getopts options</a>, Previous: <a href="getopts-arguments.html#getopts-arguments" accesskey="p" rel="prev">getopts arguments</a>, Up: <a href="getopts.html#getopts" accesskey="u" rel="up">getopts</a> &nbsp; [<a href="variable-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+<p class="customfooter12345">This document describes version <tt>3.0.0-devel.0</tt> of <em>Marcos Bash Functions Library</em>.</p></body>
+</html>

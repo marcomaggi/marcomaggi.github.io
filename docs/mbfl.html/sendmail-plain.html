@@ -1,0 +1,311 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 3.0.0-devel.0 of MBFL, a library of functions for the
+GNU Bash shell.  It requires Bash at least version 4.3.  The package is
+distributed under the terms of the GNU Lesser General Public License (LGPL).
+
+The latest release can be downloaded from:
+
+https://bitbucket.org/marcomaggi/mbfl/downloads
+
+development takes place at:
+
+https://github.com/marcomaggi/mbfl
+
+and as backup at:
+
+https://bitbucket.org/marcomaggi/mbfl
+
+Copyright (C) 2003-2005, 2009-2010, 2012-2015, 2017-2018 by Marco Maggi marco.maggi-ipsu@poste.it
+
+Permission is granted to copy, distribute and/or modify this document under the terms of the GNU
+Free Documentation License, Version 1.3 or any later version published by the Free Software
+Foundation; with Invariant Sections being "GNU Free Documentation License" and "GNU Lesser
+General Public License", no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license is
+included in the section entitled "GNU Free Documentation License". -->
+<!-- Created by GNU Texinfo 6.5, http://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>sendmail plain (Marco&rsquo;s Bash Functions Library)</title>
+
+<meta name="description" content="sendmail plain (Marco&rsquo;s Bash Functions Library)">
+<meta name="keywords" content="sendmail plain (Marco&rsquo;s Bash Functions Library)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="variable-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="sendmail.html#sendmail" rel="up" title="sendmail">
+<link href="sendmail-connector.html#sendmail-connector" rel="next" title="sendmail connector">
+<link href="sendmail-message.html#sendmail-message" rel="prev" title="sendmail message">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="sendmail-plain"></a>
+<div class="header">
+<p>
+Next: <a href="sendmail-connector.html#sendmail-connector" accesskey="n" rel="next">sendmail connector</a>, Previous: <a href="sendmail-message.html#sendmail-message" accesskey="p" rel="prev">sendmail message</a>, Up: <a href="sendmail.html#sendmail" accesskey="u" rel="up">sendmail</a> &nbsp; [<a href="variable-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Just-send-an-email-message"></a>
+<h3 class="appendixsec">A.2 Just send an email message</h3>
+
+
+<p>The script below can be found in <samp>examples/sendmail-plain.sh</samp>.  It just sends a hard&ndash;coded
+email message, from a hard&ndash;coded address to a hard&ndash;coded address.  It makes no use of <acronym>MBFL</acronym>.
+</p>
+
+<dl>
+<dt><a name="index-main"></a>Function: <strong>main</strong></dt>
+<dd><p>Drive the script controlling the <acronym>SMTP</acronym> protocol.  It should be obvious what it does once we
+understand the following functions.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-open_005fsession"></a>Function: <strong>open_session</strong> <em><var>hostname</var></em></dt>
+<dd><p>Open a connection to the <acronym>SMTP</acronym> server using a fake device that Bash gives us as interface to the
+network.  For the <code>localhost</code>, it ends up being:
+</p>
+<div class="example">
+<pre class="example">/dev/tcp/localhost/25
+</pre></div>
+
+<p>where 25 is the <acronym>TCP</acronym> port which is officially assigned to the <acronym>SMTP</acronym> service.  To open the
+connection we use the idiom:
+</p>
+<div class="example">
+<pre class="example">exec 3&lt;&gt;/dev/tcp/localhost/25
+</pre></div>
+
+<p>which means: open a read and write connection to the selected hostname, using file descriptor number
+3.  There is nothing special in number 3, it is just the first free file descriptor number after 0
+(standard input), 1 (standard output) and 2 (standard error).
+</p>
+<p>The line:
+</p>
+<div class="example">
+<pre class="example">trap 'exec 3&lt;&amp;-' EXIT
+</pre></div>
+
+<p>means: close file descriptor 3 whenever the script terminates.  This is redundant in such a simple
+script, it is there for completeness.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-send"></a>Function: <strong>send</strong> <em><var>string</var></em></dt>
+<dt><a name="index-send-1"></a>Function: <strong>send</strong> <em><var>template</var> [<var>opt</var> &hellip;]</em></dt>
+<dd><p>Send a string to the <acronym>SMTP</acronym> server.  Use <code>printf()</code> to format the string <var>template</var> with
+the optional arguments, then write the resulting string to file descriptor 3.  The string written
+out is terminated with the sequence <code>\r\n</code> as mandated by the <acronym>SMTP</acronym> protocol.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-read_005fand_005fsend_005fmessage"></a>Function: <strong>read_and_send_message</strong></dt>
+<dd><p>Read an email message from stdin line by line (newline terminator), and rewrite it to file
+descriptor 3 terminating each line with the sequence carriage return/line feed.  With the exception
+of the terminating sequence, the lines are left unchanged.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-recv"></a>Function: <strong>recv</strong> <em><var>expected_code</var></em></dt>
+<dd><p>Read a line (a sequence of characters up until the first <code>\n</code>) from file descriptor 3.  The
+line is interpreted as a message from the <acronym>SMTP</acronym> server: the first three characters are a numeric
+code.  If the code is different from <var>expected_code</var>, raise an error.
+</p></dd></dl>
+
+<div class="smallexample">
+<pre class="verbatim">#! /bin/bash
+#
+# Part of: Marco's Bash Functions Library
+# Contents: example script to send email
+# Date: Thu Apr 23, 2009
+#
+# Abstract
+#
+#       This  script  just  sends  a  hardcoded  email  message  from  a
+#       hardcoded address  to a hardcoded  address.  It makes no  use of
+#       MBFL.
+#
+#         The purpose of this script is  to understand how to handle the
+#       SMTP protocol.
+#
+# Copyright (c) 2009, 2010, 2018 Marco Maggi &lt;marco.maggi-ipsu@poste.it&gt;
+#
+# The author hereby grants  permission to use, copy, modify, distribute,
+# and  license this  software  and its  documentation  for any  purpose,
+# provided that  existing copyright notices  are retained in  all copies
+# and that  this notice  is included verbatim in any  distributions.  No
+# written agreement, license, or royalty  fee is required for any of the
+# authorized uses.  Modifications to this software may be copyrighted by
+# their authors and need not  follow the licensing terms described here,
+# provided that the new terms are clearly indicated on the first page of
+# each file where they apply.
+#
+# IN NO  EVENT SHALL THE AUTHOR  OR DISTRIBUTORS BE LIABLE  TO ANY PARTY
+# FOR  DIRECT, INDIRECT, SPECIAL,  INCIDENTAL, OR  CONSEQUENTIAL DAMAGES
+# ARISING OUT  OF THE  USE OF THIS  SOFTWARE, ITS DOCUMENTATION,  OR ANY
+# DERIVATIVES  THEREOF, EVEN  IF THE  AUTHOR  HAVE BEEN  ADVISED OF  THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+# THE  AUTHOR  AND DISTRIBUTORS  SPECIFICALLY  DISCLAIM ANY  WARRANTIES,
+# INCLUDING,   BUT   NOT  LIMITED   TO,   THE   IMPLIED  WARRANTIES   OF
+# MERCHANTABILITY,    FITNESS   FOR    A    PARTICULAR   PURPOSE,    AND
+# NON-INFRINGEMENT.  THIS  SOFTWARE IS PROVIDED  ON AN &quot;AS  IS&quot; BASIS,
+# AND  THE  AUTHOR  AND  DISTRIBUTORS  HAVE  NO  OBLIGATION  TO  PROVIDE
+# MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+#
+
+PROGNAME=${0##*/}
+
+function main () {
+    local HOSTNAME=localhost
+    local SMTP_PORT=25
+    local FROM_ADDRESS=marco@localhost
+    local TO_ADDRESS=root@localhost
+    local LOGGING_TO_STDERR=yes
+
+    open_session &quot;$HOSTNAME&quot;
+    recv 220
+    send 'HELO %s' 127.0.0.1
+    recv 250
+    send 'MAIL FROM:&lt;%s&gt;' &quot;$FROM_ADDRESS&quot;
+    recv 250
+    send 'RCPT TO:&lt;%s&gt;' &quot;$TO_ADDRESS&quot;
+    recv 250
+    send %s DATA
+    recv 354
+    print_message | read_and_send_message
+    send %s .
+    recv 250
+    send %s QUIT
+    recv 221
+}
+function print_message () {
+    local LOCAL_HOSTNAME DATE MESSAGE_ID MESSAGE
+    LOCAL_HOSTNAME=$(hostname --fqdn) || exit 2
+    DATE=$(date --rfc-2822) || exit 2
+    printf -v MESSAGE_ID '%d-%d-%d@%s' \
+        $RANDOM $RANDOM $RANDOM &quot;$LOCAL_HOSTNAME&quot;
+    MESSAGE=&quot;Sender: $FROM_ADDRESS
+From: $FROM_ADDRESS
+To: $TO_ADDRESS
+Subject: demo from $PROGNAME
+Message-ID: &lt;$MESSAGE_ID&gt;
+Date: $DATE
+
+This is a text demo from the $PROGNAME script.
+--\x20
+Marco
+&quot;
+    printf &quot;$MESSAGE&quot;
+}
+function open_session () {
+    local HOSTNAME=${1:?}
+    local DEVICE
+    printf -v DEVICE '/dev/tcp/%s/%d' &quot;$HOSTNAME&quot; $SMTP_PORT
+    exec 3&lt;&gt;&quot;$DEVICE&quot;
+    trap 'exec 3&lt;&amp;-' EXIT
+}
+function recv () {
+    local EXPECTED_CODE=${1:?}
+    local line=
+    IFS= read -t 5 line &lt;&amp;3
+    if ((127 &lt; $?))
+    then
+        printf '%s: connection timed out\n' &quot;$PROGNAME&quot; &gt;&amp;2
+        exit 2
+    fi
+    if test &quot;$LOGGING_TO_STDERR&quot; = yes
+    then printf '%s log: recv: %s\n' &quot;$PROGNAME&quot; &quot;$line&quot;
+    fi
+    if test &quot;${line:0:3}&quot; != &quot;$EXPECTED_CODE&quot;
+    then
+        send '%s' QUIT
+        # It is cleaner to wait for the reply from the server.
+        IFS= read -t 5 line &lt;&amp;3
+	if ((127 &lt; $?))
+	then
+            printf '%s: connection timed out\n' &quot;$PROGNAME&quot; &gt;&amp;2
+            exit 2
+        fi
+        if test &quot;$LOGGING_TO_STDERR&quot; = yes
+	then printf '%s log: recv: %s\n' &quot;$PROGNAME&quot; &quot;$line&quot;
+	fi
+        exit 2
+    fi
+}
+function send () {
+    local template=${1:?}
+    shift
+    local line
+    printf -v line &quot;$template&quot; &quot;$@&quot;
+    printf '%s\r\n' &quot;$line&quot; &gt;&amp;3
+    if test &quot;$LOGGING_TO_STDERR&quot; = yes
+    then printf '%s log: sent: %s\n' &quot;$PROGNAME&quot; &quot;$line&quot;
+    fi
+}
+function read_and_send_message () {
+    local line
+    local -i count=0
+    while IFS= read line
+    do
+        if test &quot;${line:0:1}&quot; = '.'
+        then printf '.%s\r\n' &quot;$line&quot; &gt;&amp;3
+        else printf  '%s\r\n' &quot;$line&quot; &gt;&amp;3
+        fi
+        let ++count
+    done
+    if test &quot;$LOGGING_TO_STDERR&quot; = yes
+    then printf '%s log: sent message (%d lines)\n' &quot;$PROGNAME&quot; $count
+    fi
+}
+
+main
+
+### end of file
+</pre></div>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="sendmail-connector.html#sendmail-connector" accesskey="n" rel="next">sendmail connector</a>, Previous: <a href="sendmail-message.html#sendmail-message" accesskey="p" rel="prev">sendmail message</a>, Up: <a href="sendmail.html#sendmail" accesskey="u" rel="up">sendmail</a> &nbsp; [<a href="variable-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+<p class="customfooter12345">This document describes version <tt>3.0.0-devel.0</tt> of <em>Marcos Bash Functions Library</em>.</p></body>
+</html>

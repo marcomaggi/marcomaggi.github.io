@@ -1,0 +1,211 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 3.0.0-devel.0 of MBFL, a library of functions for the
+GNU Bash shell.  It requires Bash at least version 4.3.  The package is
+distributed under the terms of the GNU Lesser General Public License (LGPL).
+
+The latest release can be downloaded from:
+
+https://bitbucket.org/marcomaggi/mbfl/downloads
+
+development takes place at:
+
+https://github.com/marcomaggi/mbfl
+
+and as backup at:
+
+https://bitbucket.org/marcomaggi/mbfl
+
+Copyright (C) 2003-2005, 2009-2010, 2012-2015, 2017-2018 by Marco Maggi marco.maggi-ipsu@poste.it
+
+Permission is granted to copy, distribute and/or modify this document under the terms of the GNU
+Free Documentation License, Version 1.3 or any later version published by the Free Software
+Foundation; with Invariant Sections being "GNU Free Documentation License" and "GNU Lesser
+General Public License", no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license is
+included in the section entitled "GNU Free Documentation License". -->
+<!-- Created by GNU Texinfo 6.5, http://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>sendmail gnutls delay (Marco&rsquo;s Bash Functions Library)</title>
+
+<meta name="description" content="sendmail gnutls delay (Marco&rsquo;s Bash Functions Library)">
+<meta name="keywords" content="sendmail gnutls delay (Marco&rsquo;s Bash Functions Library)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="variable-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="sendmail-gnutls.html#sendmail-gnutls" rel="up" title="sendmail gnutls">
+<link href="sendmail-openssl.html#sendmail-openssl" rel="next" title="sendmail openssl">
+<link href="sendmail-gnutls-now.html#sendmail-gnutls-now" rel="prev" title="sendmail gnutls now">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="sendmail-gnutls-delay"></a>
+<div class="header">
+<p>
+Previous: <a href="sendmail-gnutls-now.html#sendmail-gnutls-now" accesskey="p" rel="prev">sendmail gnutls now</a>, Up: <a href="sendmail-gnutls.html#sendmail-gnutls" accesskey="u" rel="up">sendmail gnutls</a> &nbsp; [<a href="variable-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Delayed-encrypted-bridge"></a>
+<h4 class="appendixsubsec">A.4.2 Delayed encrypted bridge</h4>
+
+
+<p>We use as example the server <code>smtp.gmail.com</code>, port <code>587</code>.  You have to have an account
+there to use it; do not bomb this server with fake connections.  This server requests us to start an
+<code>ESMTP</code> dialogue, then issue the <code>STARTTLS</code> command and build the encrypted bridge; once
+the bridge is set up, we restart an <code>ESMTP</code> dialogue and do the authentication and the message
+delivery.
+</p>
+<p>We start the connector like this:
+</p>
+<div class="example">
+<pre class="example">$ gnutls-cli --starttls --port 587 smtp.gmail.com
+</pre></div>
+
+<p>if the connection succeeds: <code>gnutls-cli</code> prints message lines on its standard output
+explaining what is going on; at last comes the line of greetings from the server, which begins with
+code <code>220</code>.
+</p>
+<p>The <samp>--starttls</samp> option tells <code>gnutls-cli</code> <strong>not</strong> to build the encrypted bridge
+immediately; rather, it waits for a <code>SIGALRM</code> signal, which we must deliver to it when we are
+ready.  The quickest way to send such a signal, when there is only one <code>gnutls-cli</code> process
+running, is:
+</p>
+<div class="example">
+<pre class="example">$ kill -SIGALRM $(/sbin/pidof gnutls-cli)
+</pre></div>
+
+<p>beware that <code>pidof</code> may be installed in other places on your system.
+</p>
+<p>The server supports the <code>AUTH PLAIN</code> authentication mechanism, which requires the base64
+encoding of the user name and password stored in a special record; we can do it with the external
+program <code>base64</code> (which comes with <acronym>GNU</acronym> Coreutils) like this:
+</p>
+<div class="example">
+<pre class="example">SECRETS=$(printf &quot;\x00%s\x00%s&quot; \
+   &quot;${LOGIN_NAME}&quot; &quot;${PASSWORD}&quot; | base64)
+</pre></div>
+
+<p><acronym>GNU</acronym> Emacs users can do it with:
+</p>
+<div class="example">
+<pre class="example">(setq my-auth (base64-encode-string
+   (format &quot;%c%s%c%s&quot; 0 &quot;the-user-name&quot; 0 &quot;the-pass-word&quot;)))
+</pre></div>
+
+<p>The authentication dialogue goes like this:
+</p>
+<ol>
+<li> We send <code>AUTH PLAIN</code> followed by the encoded credentials.
+
+</li><li> It checks the user name and password and, if correct, it replies with code <code>235</code>.
+</li></ol>
+
+<p>So, we can do the <acronym>SMTP</acronym> dialogue reported below by hand (which is an edited log of a session under
+Emacs&rsquo; eshell); lines starting with <code>recv&gt;</code> are the ones received from the server, lines
+starting with <code>send&gt;</code> are the ones we send to the server, the ellipses <code>...</code>  are
+replacements for server text we are not interested in.
+</p>
+<div class="smallexample">
+<pre class="smallexample">$ gnutls-cli --crlf --starttls --port 587 smtp.gmail.com
+
+recv&gt; 220 ... ESMTP ...
+send&gt; ehlo localhost.localdomain
+recv&gt; 250-...
+recv&gt; 250-SIZE 35651584
+recv&gt; 250-8BITMIME
+recv&gt; 250-STARTTLS
+send&gt; 250-ENHANCEDSTATUSCODES
+recv&gt; 250 PIPELINING
+send&gt; starttls
+recv&gt; 220 2.0.0 Ready to start TLS
+
+=== here we deliver SIGALRM to the gnutls-cli process
+
+recv&gt; *** Starting TLS handshake
+recv&gt; - Certificate type: X.509
+recv&gt;  - Got a certificate list of 1 certificates.
+recv&gt;
+recv&gt;  - Certificate[0] info:
+recv&gt;  # The hostname in the certificate matches 'smtp.gmail.com'.
+recv&gt;  # valid since: ..
+recv&gt;  # expires at: ...
+recv&gt;  # fingerprint: ...
+recv&gt;  # Subject's DN: ...
+recv&gt;  # Issuer's DN: ...
+recv&gt;
+recv&gt;
+recv&gt; - Peer's certificate issuer is unknown
+recv&gt; - Peer's certificate is NOT trusted
+recv&gt; - Version: TLS1.0
+recv&gt; - Key Exchange: RSA
+recv&gt; - Cipher: ARCFOUR-128
+recv&gt; - MAC: MD5
+recv&gt; - Compression: NULL
+send&gt; ehlo localhost.localdomain
+recv&gt; 250-...
+recv&gt; 250-SIZE 35651584
+recv&gt; 250-8BITMIME
+recv&gt; 250-AUTH LOGIN PLAIN
+recv&gt; 250-ENHANCEDSTATUSCODES
+recv&gt; 250 PIPELINING
+send&gt; auth plain &lt;the-encoded-auth-credentials&gt;
+recv&gt; 235 2.7.0 Accepted
+send&gt; mail from:&lt;from-address@gmail.com&gt;
+recv&gt; 250 2.1.0 OK ...
+send&gt; rcpt to:&lt;to-address@poste.it&gt;
+recv&gt; 250 2.1.5 OK ...
+send&gt; data
+recv&gt; 354  Go ahead ...
+send&gt; From: from-address@gmail.com
+send&gt; To: to-address@poste.it
+send&gt; Subject: interactive demo from gmail
+send&gt;
+send&gt; demo
+send&gt; .
+recv&gt; 250 2.0.0 OK ...
+send&gt; quit
+recv&gt; 221 2.0.0 closing connection ...
+</pre></div>
+
+<hr>
+<div class="header">
+<p>
+Previous: <a href="sendmail-gnutls-now.html#sendmail-gnutls-now" accesskey="p" rel="prev">sendmail gnutls now</a>, Up: <a href="sendmail-gnutls.html#sendmail-gnutls" accesskey="u" rel="up">sendmail gnutls</a> &nbsp; [<a href="variable-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+<p class="customfooter12345">This document describes version <tt>3.0.0-devel.0</tt> of <em>Marcos Bash Functions Library</em>.</p></body>
+</html>

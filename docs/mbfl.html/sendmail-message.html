@@ -1,0 +1,218 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 3.0.0-devel.0 of MBFL, a library of functions for the
+GNU Bash shell.  It requires Bash at least version 4.3.  The package is
+distributed under the terms of the GNU Lesser General Public License (LGPL).
+
+The latest release can be downloaded from:
+
+https://bitbucket.org/marcomaggi/mbfl/downloads
+
+development takes place at:
+
+https://github.com/marcomaggi/mbfl
+
+and as backup at:
+
+https://bitbucket.org/marcomaggi/mbfl
+
+Copyright (C) 2003-2005, 2009-2010, 2012-2015, 2017-2018 by Marco Maggi marco.maggi-ipsu@poste.it
+
+Permission is granted to copy, distribute and/or modify this document under the terms of the GNU
+Free Documentation License, Version 1.3 or any later version published by the Free Software
+Foundation; with Invariant Sections being "GNU Free Documentation License" and "GNU Lesser
+General Public License", no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license is
+included in the section entitled "GNU Free Documentation License". -->
+<!-- Created by GNU Texinfo 6.5, http://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>sendmail message (Marco&rsquo;s Bash Functions Library)</title>
+
+<meta name="description" content="sendmail message (Marco&rsquo;s Bash Functions Library)">
+<meta name="keywords" content="sendmail message (Marco&rsquo;s Bash Functions Library)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="variable-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="sendmail.html#sendmail" rel="up" title="sendmail">
+<link href="sendmail-plain.html#sendmail-plain" rel="next" title="sendmail plain">
+<link href="sendmail.html#sendmail" rel="prev" title="sendmail">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="sendmail-message"></a>
+<div class="header">
+<p>
+Next: <a href="sendmail-plain.html#sendmail-plain" accesskey="n" rel="next">sendmail plain</a>, Up: <a href="sendmail.html#sendmail" accesskey="u" rel="up">sendmail</a> &nbsp; [<a href="variable-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="How-to-compose-a-test-email-message"></a>
+<h3 class="appendixsec">A.1 How to compose a test email message</h3>
+
+
+<p>Here we discuss how to programmatically compose a minimal email message to be used in testing email
+scripts.  Basically a message should look like this:
+</p>
+<div class="example">
+<pre class="example">Sender: marco@localhost
+From: marco@localhost
+To: root@localhost
+Subject: demo from sendmail-plain.sh
+Message-ID: &lt;15704-6692-23464@this.hostname&gt;
+Date: Tue, 28 Apr 2009 06:16:01 +0200
+
+This is a text demo from the sendmail-plain.sh script.
+--
+Marco
+</pre></div>
+
+<p>We have to remember that the <acronym>SMTP</acronym> server receiving the message may rewrite the addresses, for
+example: replacing <code>localhost</code> with the fully qualified local host name (the output of the
+command <code>hostname --fqdn</code>); so, when reading the delivered message, we do not have to be
+surprised to find changed addresses.
+</p>
+<p>We want to notice the following:
+</p>
+<ul>
+<li> The fully qualified local host name is useful to build header values.  We can acquire it with the
+<code>hostname</code> command like this:
+
+<div class="example">
+<pre class="example">LOCAL_HOSTNAME=$(hostname --fqdn)
+</pre></div>
+
+<p>do not confuse this value with the host name of the <acronym>SMTP</acronym> server!
+</p>
+</li><li> The value of the <code>Message-ID</code> header must be enclosed in angular parentheses, and it must
+contain an address&ndash;like string with random characters in the name part.  We can generate it with:
+
+<div class="example">
+<pre class="example">printf -v MESSAGE_ID '%d-%d-%d@%s' \
+    $RANDOM $RANDOM $RANDOM &quot;$LOCAL_HOSTNAME&quot;
+</pre></div>
+
+<p>or with:
+</p>
+<div class="example">
+<pre class="example">printf -v MESSAGE_ID '%s@%s'                   \
+    $({ IFS= read -n 15 line &lt;/dev/random      \
+         echo &quot;$line&quot; ; } |                    \
+         md5sum --binary | cut -f1 -d' ')      \
+    &quot;$LOCAL_HOSTNAME&quot;
+</pre></div>
+
+</li><li> The value of the <code>Date</code> header must be the current date in a specified format.  We can generate
+it using the <acronym>GNU</acronym> Date program like this:
+
+<div class="example">
+<pre class="example">DATE=$(date --rfc-2822) || exit 2
+</pre></div>
+
+</li><li> In the body of the message: the string that separates the text from the signature is the three
+characters string <code>-- </code> (dash, dash, white space).  When composing the message we have to be
+careful to use commands that <strong>do not</strong> drop white spaces.
+</li></ul>
+
+<p>In the end, we can use the following chunk of code to compose an email message:
+</p>
+<div class="example">
+<pre class="example">PROGNAME=${0##*/}
+FROM_ADDRESS=marco@localhost
+TO_ADDRESS=root@localhost
+
+function print_message () {
+    local LOCAL_HOSTNAME DATE MESSAGE_ID MESSAGE
+    LOCAL_HOSTNAME=$(hostname --fqdn) || exit 2
+    DATE=$(date --rfc-2822) || exit 2
+    printf -v MESSAGE_ID '%d-%d-%d@%s' \
+        $RANDOM $RANDOM $RANDOM &quot;$LOCAL_HOSTNAME&quot;
+    MESSAGE=&quot;Sender: $FROM_ADDRESS
+From: $FROM_ADDRESS
+To: $TO_ADDRESS
+Subject: demo from $PROGNAME
+Message-ID: &lt;$MESSAGE_ID&gt;
+Date: $DATE
+
+This is a text demo from the $PROGNAME script.
+--\x20
+Marco
+&quot;
+    printf &quot;$MESSAGE&quot;
+}
+</pre></div>
+
+<p>notice that to put the required single white space character in the text/signature separator we use
+the escape sequence <code>\x20</code> (where 20 is the hexadecimal value of the white space character in
+the <acronym>ASCII</acronym> encoding) and print the message with <code>printf</code>, which expands the escape sequences.
+</p>
+<p>When sending the message to the <acronym>SMTP</acronym> server we have to:
+</p>
+<ul>
+<li> Be careful in not to wrongly modify it.
+
+</li><li> Send it one line at a time, terminating each line with a carriage return, line feed sequence
+(<code>\r\n</code>).
+
+</li><li> Quote with a dot lines starting with a dot.
+</li></ul>
+
+<p>So we can use an equivalent of the following chunk of code, assuming <code>3</code> is the file descriptor
+connected to the remote <acronym>SMTP</acronym> server:
+</p>
+<div class="example">
+<pre class="example">print_message | while IFS= read line
+do
+    if test &quot;${line:0:1}&quot; = '.'
+    then printf '.%s\r\n' &quot;$line&quot; &gt;&amp;3
+    else printf  '%s\r\n' &quot;$line&quot; &gt;&amp;3
+    fi
+done
+</pre></div>
+
+<p>notice that <code>read</code> is executed in an environment in which <code>IFS</code> is set to the empty
+string, this is to prevent unwanted modification of the message text.  <code>read</code> splits the string
+it reads into words according to the current value of <code>IFS</code>, and this may lead to mutation of
+the input string; word splitting happens when there is a single output variable, too.  To prevent
+word splitting, we set <code>IFS</code> to the empty string.
+</p>
+<hr>
+<div class="header">
+<p>
+Next: <a href="sendmail-plain.html#sendmail-plain" accesskey="n" rel="next">sendmail plain</a>, Up: <a href="sendmail.html#sendmail" accesskey="u" rel="up">sendmail</a> &nbsp; [<a href="variable-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+<p class="customfooter12345">This document describes version <tt>3.0.0-devel.0</tt> of <em>Marcos Bash Functions Library</em>.</p></body>
+</html>

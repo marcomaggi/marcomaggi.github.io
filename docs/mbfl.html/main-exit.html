@@ -1,0 +1,202 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 3.0.0-devel.0 of MBFL, a library of functions for the
+GNU Bash shell.  It requires Bash at least version 4.3.  The package is
+distributed under the terms of the GNU Lesser General Public License (LGPL).
+
+The latest release can be downloaded from:
+
+https://bitbucket.org/marcomaggi/mbfl/downloads
+
+development takes place at:
+
+https://github.com/marcomaggi/mbfl
+
+and as backup at:
+
+https://bitbucket.org/marcomaggi/mbfl
+
+Copyright (C) 2003-2005, 2009-2010, 2012-2015, 2017-2018 by Marco Maggi marco.maggi-ipsu@poste.it
+
+Permission is granted to copy, distribute and/or modify this document under the terms of the GNU
+Free Documentation License, Version 1.3 or any later version published by the Free Software
+Foundation; with Invariant Sections being "GNU Free Documentation License" and "GNU Lesser
+General Public License", no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license is
+included in the section entitled "GNU Free Documentation License". -->
+<!-- Created by GNU Texinfo 6.5, http://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>main exit (Marco&rsquo;s Bash Functions Library)</title>
+
+<meta name="description" content="main exit (Marco&rsquo;s Bash Functions Library)">
+<meta name="keywords" content="main exit (Marco&rsquo;s Bash Functions Library)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="variable-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="main.html#main" rel="up" title="main">
+<link href="main-misc.html#main-misc" rel="next" title="main misc">
+<link href="main-function.html#main-function" rel="prev" title="main function">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="main-exit"></a>
+<div class="header">
+<p>
+Next: <a href="main-misc.html#main-misc" accesskey="n" rel="next">main misc</a>, Previous: <a href="main-function.html#main-function" accesskey="p" rel="prev">main function</a>, Up: <a href="main.html#main" accesskey="u" rel="up">main</a> &nbsp; [<a href="variable-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Declaring-exit-codes"></a>
+<h3 class="section">22.3 Declaring exit codes</h3>
+
+
+<p>Some functions and global variables are provided to declare script&rsquo;s exit codes.  The <acronym>MBFL</acronym>
+declares its own exit codes starting from <code>100</code> and decreasing; we should declare our exit
+codes starting from <code>3</code> and increasing.  The exit codes <code>0</code> and <code>1</code> are reserved for
+the functions <code>exit_because_success()</code> and <code>exit_because_failure()</code>.
+</p>
+
+<dl>
+<dt><a name="index-mbfl_005fexit"></a>Function: <strong>mbfl_exit</strong></dt>
+<dd><p>Wrapper for the <code>exit</code> command that updates the internal state.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-mbfl_005fmain_005fpending_005fEXIT_005fCODE"></a>Variable: <strong>mbfl_main_pending_EXIT_CODE</strong></dt>
+<dd><p>Set by <code>mbfl_exit()</code> to the exit code this script is using.  This variable might be accessed by
+atexit commands to appropriately react to an error condition.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-mbfl_005fmain_005fis_005fexiting"></a>Function: <strong>mbfl_main_is_exiting</strong></dt>
+<dd><p>Return true if the script is exiting.  This function might be called by a location command being run
+by an atexit command.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-mbfl_005fmain_005fdeclare_005fexit_005fcode"></a>Function: <strong>mbfl_main_declare_exit_code</strong> <em><var>code</var> <var>name</var></em></dt>
+<dd><p>Declare an exit code with value <var>code</var> and identifier <var>name</var>.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-mbfl_005fmain_005fcreate_005fexit_005ffunctions"></a>Function: <strong>mbfl_main_create_exit_functions</strong></dt>
+<dd><p>For each of the codes declared with <code>mbfl_main_declare_exit_code()</code>: create a function for the
+<code>exit</code> command using the numerical code; create an alias for the <code>return</code> command using
+the numerical code.  For example, if a code is declared as:
+</p>
+<div class="example">
+<pre class="example">mbfl_main_declare_exit_code 4 unexistent_file
+</pre></div>
+
+<p>a function is created with:
+</p>
+<div class="example">
+<pre class="example">function exit_because_unexistent_file () { mbfl_exit 4; }
+</pre></div>
+
+<p>and an alias is created with:
+</p>
+<div class="example">
+<pre class="example">alias return_because_unexistent_file='return 4'
+</pre></div>
+
+<p>the name of the function is the string <code>exit_because_</code> followed by the exit code name; the name
+of the alias is the string <code>return_because_</code> followed by the exit code name.  The function may
+be used in the script to exit the process.
+</p></dd></dl>
+
+
+<p>By default the exit code <code>0</code> is associated to the name <code>success</code> and the exit code
+<code>1</code> is associated to the name <code>failure</code>; so the following functions exist.
+</p>
+
+<dl>
+<dt><a name="index-exit_005fbecause_005fsuccess"></a>Function: <strong>exit_because_success</strong></dt>
+<dt><a name="index-exit_005fsuccess"></a>Function: <strong>exit_success</strong></dt>
+<dd><p>Exit the script with code <code>0</code>.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-return_005fbecause_005fsuccess"></a>Function: <strong>return_because_success</strong></dt>
+<dt><a name="index-return_005fsuccess"></a>Function: <strong>return_success</strong></dt>
+<dd><p>Return with code <code>0</code>.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-exit_005fbecause_005ffailure"></a>Function: <strong>exit_because_failure</strong></dt>
+<dt><a name="index-exit_005ffailure"></a>Function: <strong>exit_failure</strong></dt>
+<dd><p>Exit the script with code <code>1</code>.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-return_005fbecause_005ffailure"></a>Function: <strong>return_because_failure</strong></dt>
+<dt><a name="index-return_005ffailure"></a>Function: <strong>return_failure</strong></dt>
+<dd><p>Return with code <code>1</code>.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-exit_005fbecause_005ferror_005floading_005flibrary"></a>Function: <strong>exit_because_error_loading_library</strong></dt>
+<dd><p>Exit the script with code <code>100</code>.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-return_005fbecause_005ferror_005floading_005flibrary"></a>Function: <strong>return_because_error_loading_library</strong></dt>
+<dd><p>Return with code <code>100</code>.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-mbfl_005fmain_005fprint_005fexit_005fcode"></a>Function: <strong>mbfl_main_print_exit_code</strong> <em><var>name</var></em></dt>
+<dd><p>Print the code associated to <var>name</var>.
+</p></dd></dl>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="main-misc.html#main-misc" accesskey="n" rel="next">main misc</a>, Previous: <a href="main-function.html#main-function" accesskey="p" rel="prev">main function</a>, Up: <a href="main.html#main" accesskey="u" rel="up">main</a> &nbsp; [<a href="variable-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+<p class="customfooter12345">This document describes version <tt>3.0.0-devel.0</tt> of <em>Marcos Bash Functions Library</em>.</p></body>
+</html>
