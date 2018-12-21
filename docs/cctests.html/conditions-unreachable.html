@@ -1,0 +1,222 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.3.0-devel.4 of CCTests, a C11 language library
+implementing a framework to organise test suites.  The library targets POSIX platforms.
+
+This package depends upon the external packages: CCExceptions at least version
+0.8.0; This package relies on pkg-config to find the
+dependency packages installed on the system.
+
+The package is distributed under the terms of the GNU Lesser General Public License (LGPL).
+
+The latest release can be downloaded from:
+
+https://bitbucket.org/marcomaggi/cctests/downloads
+
+development takes place at:
+
+https://github.com/marcomaggi/cctests
+
+and as backup at:
+
+https://bitbucket.org/marcomaggi/cctests
+
+Copyright (C) 2017, 2018 by Marco Maggi marco.maggi-ipsu@poste.it
+
+Permission is granted to copy, distribute and/or modify this document under the terms of the GNU
+Free Documentation License, Version 1.3 or any later version published by the Free Software
+Foundation; with Invariant Sections being "GNU Free Documentation License" and "GNU General
+Public License", no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license is
+included in the section entitled "GNU Free Documentation License". -->
+<!-- Created by GNU Texinfo 6.5, http://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>conditions unreachable (CCTests)</title>
+
+<meta name="description" content="conditions unreachable (CCTests)">
+<meta name="keywords" content="conditions unreachable (CCTests)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="type-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="conditions.html#conditions" rel="up" title="conditions">
+<link href="conditions-regex.html#conditions-regex" rel="next" title="conditions regex">
+<link href="conditions-assertion-uintptr.html#conditions-assertion-uintptr" rel="prev" title="conditions assertion uintptr">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="conditions-unreachable"></a>
+<div class="header">
+<p>
+Next: <a href="conditions-regex.html#conditions-regex" accesskey="n" rel="next">conditions regex</a>, Previous: <a href="conditions-assertion.html#conditions-assertion" accesskey="p" rel="prev">conditions assertion</a>, Up: <a href="conditions.html#conditions" accesskey="u" rel="up">conditions</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Signalling-execution-of-unreachable-code"></a>
+<h3 class="section">8.7 Signalling execution of unreachable code</h3>
+
+
+<a name="index-Unreachable-code_002c-exceptional-condition"></a>
+<a name="index-Exceptional-conditions_002c-Unreachable-code"></a>
+
+
+<p>We can use the <em>unreachable code exceptional&ndash;condition object&ndash;type</em> to signal the execution of
+unreachable code; this happens when we know that a function call must raise an exception, but it for
+some erroneous reason it does not.  We can instantiate this type and also derive new types from it.
+To catch this exceptional condition we can do:
+</p>
+<div class="smallexample">
+<pre class="smallexample">cce_location_t        L[1];
+
+if (cce_location(L)) {
+  if (cctests_condition_is_unreachable(cce_condition(L))) {
+    CCTESTS_PC(cctests_condition_unreachable_t, C, cce_condition(L));
+    do_something_with(C);
+  }
+  cce_run_catch_handlers_final(L);
+} else {
+  do_something(L);
+  cce_run_body_handlers(L);
+}
+</pre></div>
+
+
+<dl>
+<dt><a name="index-cctests_005fdescriptor_005funreachable_005ft"></a>Struct Typedef: <strong>cctests_descriptor_unreachable_t</strong></dt>
+<dd><p>Type of data structure representing the exceptional&ndash;condition descriptor.  It has the following
+public fields:
+</p>
+<dl compact="compact">
+<dt><code>cce_descriptor_t descriptor</code></dt>
+<dd><p>The condition descriptor&rsquo;s base values.
+</p></dd>
+</dl>
+
+<p>The parent of this type descriptor is the one referenced by <code>cctests_descriptor_failure_ptr</code>,
+<a href="conditions-failure.html#conditions-failure">Signalling test failure</a>.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-cctests_005fcondition_005funreachable_005ft"></a>Struct Typedef: <strong>cctests_condition_unreachable_t</strong></dt>
+<dd><p>Type of data structure representing the exceptional&ndash;condition object.  It has the following public
+fields:
+</p>
+<dl compact="compact">
+<dt><code>cctests_condition_failure_t failure</code></dt>
+<dd><p>The condition object&rsquo;s base values.
+</p>
+</dd>
+<dt><code>char const * filename</code></dt>
+<dd><p>Pointer to a statically allocated <acronym>ASCIIZ</acronym> string representing the pathname of the source file in
+which the unreachable code is located.  This value is meant to be generated with the preprocessor
+macro <code>__FILE__</code>.
+</p>
+</dd>
+<dt><code>char const * funcname</code></dt>
+<dd><p>Pointer to a statically allocated <acronym>ASCIIZ</acronym> string representing the name of the function in which
+the unreachable code is located.  This value is meant to be generated with the preprocessor macro
+<code>__func__</code>.
+</p>
+</dd>
+<dt><code>int linenum</code></dt>
+<dd><p>The line number in the source file in which the unreachable code is located.  This value is meant to
+be generated with the preprocessor macro <code>__LINE__</code>.
+</p></dd>
+</dl>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-cctests_005fdescriptor_005funreachable_005fptr"></a>Dynamic Constant: <em>cctests_descriptor_unreachable_t const * const</em> <strong>cctests_descriptor_unreachable_ptr</strong></dt>
+<dd><p>Pointer to a statically allocated exceptional condition descriptor.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-cctests_005fcondition_005finit_005funreachable"></a>Function: <em>void</em> <strong>cctests_condition_init_unreachable</strong> <em>(cctests_condition_unreachable_t * <var>C</var>, char const * <var>filename</var>, char const * <var>funcname</var>, int <var>linenum</var>)</em></dt>
+<dd><p>Initialisation function for the condition object.  This function is meant to be called from the
+initialisation function of sub&ndash;types of <code>cctests_condition_unreachable_t</code>.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-cctests_005fcondition_005fnew_005funreachable"></a>Function: <em>cce_condition_t const *</em> <strong>cctests_condition_new_unreachable</strong> <em>(cce_destination_t <var>L</var>, char const * <var>filename</var>, char const * <var>funcname</var>, int <var>linenum</var>)</em></dt>
+<dd><p>Return a pointer to exceptional condition object.  If an error occurs building the instance: raise
+an exception by performing a non&ndash;local exit to <var>L</var>.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-cctests_005fcondition_005fis_005funreachable"></a>Function: <em>bool</em> <strong>cctests_condition_is_unreachable</strong> <em>(cce_condition_t const * <var>C</var>)</em></dt>
+<dd><p>Return <code>true</code> if <var>C</var> if of type <code>cctests_condition_unreachable_t</code>; otherwise return
+<code>false</code>.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-_0028cce_005fdestination_005ft"></a>Preprocessor Macro: <em>cctests_raise_unreachable</em> <strong>(cce_destination_t</strong> <em><var>L</var>)</em></dt>
+<dd><p>Raise an exceptional condition of type <code>cctests_condition_unreachable_t</code> by expanding into:
+</p>
+<div class="example">
+<pre class="example">cce_raise((L), cctests_condition_new_unreachable((L), __FILE__, __func__, __LINE__))
+</pre></div>
+</dd></dl>
+
+
+<a name="Sub_002d_002dtyping-example-6"></a>
+<h4 class="subsubheading">Sub&ndash;typing example</h4>
+
+
+<p>To define a sub&ndash;type of <code>cctests_condition_unreachable_t</code> we can copy the code in the
+files:
+</p>
+<div class="example">
+<pre class="example">condition-unreachable-subtype.c
+condition-unreachable-subtype-headear.h
+condition-unreachable-subtype-body.c
+</pre></div>
+
+<p>under the <samp>tests</samp> directory of the source distribution; the code defines a new
+condition&ndash;object type <code>my_condition_unreachable_subtype_t</code>.
+</p>
+<hr>
+<div class="header">
+<p>
+Next: <a href="conditions-regex.html#conditions-regex" accesskey="n" rel="next">conditions regex</a>, Previous: <a href="conditions-assertion.html#conditions-assertion" accesskey="p" rel="prev">conditions assertion</a>, Up: <a href="conditions.html#conditions" accesskey="u" rel="up">conditions</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+<p>This document describes version <tt>0.3.0-devel.4</tt> of <em>CCTests</em>.</p>
+</body>
+</html>

@@ -1,0 +1,198 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.3.0-devel.4 of CCTests, a C11 language library
+implementing a framework to organise test suites.  The library targets POSIX platforms.
+
+This package depends upon the external packages: CCExceptions at least version
+0.8.0; This package relies on pkg-config to find the
+dependency packages installed on the system.
+
+The package is distributed under the terms of the GNU Lesser General Public License (LGPL).
+
+The latest release can be downloaded from:
+
+https://bitbucket.org/marcomaggi/cctests/downloads
+
+development takes place at:
+
+https://github.com/marcomaggi/cctests
+
+and as backup at:
+
+https://bitbucket.org/marcomaggi/cctests
+
+Copyright (C) 2017, 2018 by Marco Maggi marco.maggi-ipsu@poste.it
+
+Permission is granted to copy, distribute and/or modify this document under the terms of the GNU
+Free Documentation License, Version 1.3 or any later version published by the Free Software
+Foundation; with Invariant Sections being "GNU Free Documentation License" and "GNU General
+Public License", no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license is
+included in the section entitled "GNU Free Documentation License". -->
+<!-- Created by GNU Texinfo 6.5, http://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>init (CCTests)</title>
+
+<meta name="description" content="init (CCTests)">
+<meta name="keywords" content="init (CCTests)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="type-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="index.html#Top" rel="up" title="Top">
+<link href="groups.html#groups" rel="next" title="groups">
+<link href="version.html#version" rel="prev" title="version">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="init"></a>
+<div class="header">
+<p>
+Next: <a href="groups.html#groups" accesskey="n" rel="next">groups</a>, Previous: <a href="version.html#version" accesskey="p" rel="prev">version</a>, Up: <a href="index.html#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Library-initialisation"></a>
+<h2 class="chapter">3 Library initialisation</h2>
+
+
+<p>A test suite under the management of CCTests is a collection of test programs.  Each test
+program should have the following structure:
+</p>
+<div class="example">
+<pre class="example">#include &lt;cctests.h&gt;
+
+cctests_fun_t   test_1_1;
+cctests_fun_t   test_1_2;
+cctests_fun_t   test_2_1;
+cctests_fun_t   test_2_2;
+
+int
+main (void)
+{
+  cctests_init(&quot;demo&quot;);
+  {
+    cctests_begin_group(&quot;one&quot;);
+    {
+      cctests_run(test_1_1);
+      cctests_run(test_1_2);
+    }
+    cctests_end_group();
+
+    cctests_begin_group(&quot;two&quot;);
+    {
+      cctests_run(test_2_1);
+      cctests_run(test_2_2);
+    }
+    cctests_end_group();
+  }
+  cctests_final();
+}
+
+void test_1_1 (cce_destination_t L) { ... }
+void test_1_2 (cce_destination_t L) { ... }
+void test_2_1 (cce_destination_t L) { ... }
+void test_2_2 (cce_destination_t L) { ... }
+</pre></div>
+
+<p>notice that first of all we must call the initialisation function <code>cctests_init()</code>.  We are free
+to put the test groups in subordinate functions.
+</p>
+
+<dl>
+<dt><a name="index-cctests_005finit"></a>Function: <em>void</em> <strong>cctests_init</strong> <em>(char const * <var>test_file_name</var>)</em></dt>
+<dd><p>Initialise the internal structures of the library; this function must be called before doing
+everything else in a test program.  It is fine to call this function multiple times.
+</p>
+<p>The argument <var>test_file_name</var> must reference an <acronym>ASCIIZ</acronym> string representing the name of the
+test program.
+</p>
+<blockquote>
+<p><strong>NOTE</strong> We could generate the value of the argument <var>test_file_name</var> with the preprocessor
+macro <code>__FILE__</code>, but we must be ware that such value includes directory and file extension
+parts we may not want (because they make it more complex to compose a regular expression that
+matches).
+</p></blockquote>
+
+<p>The test file name is used as follows:
+</p>
+<ul>
+<li> <a name="index-cctests_005ffile_002c-environment-variable"></a>
+<a name="index-Environment-variable-cctests_005ffile"></a>
+If the string matches the <acronym>POSIX</acronym> regular expression in the environment variable
+<code>cctests_file</code>: this function initialises the library and returns.  This way the test program is
+executed.  If <code>cctests_file</code> is unset or set to the empty string: the test program name matches
+and the tests are executed.
+
+</li><li> Otherwise this function terminates the current process by calling:
+
+<div class="example">
+<pre class="example">exit(77);
+</pre></div>
+
+<p>effectively skipping this test program.  The exit status <code>77</code> is recognised by <acronym>GNU</acronym>
+Automake&rsquo;s test harness as the code signalling a skipped test.
+</p></li></ul>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-cctests_005ffinal"></a>Function: <em>void</em> <strong>cctests_final</strong> <em>(void)</em></dt>
+<dd><p>Finalise a test program.  This function calls <code>exit()</code> to terminate the current process.  The
+main purpose of this function is to select the correct exit status to interface, for example, to
+<acronym>GNU</acronym> Automake&rsquo;s test harness.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-ctests_005freset_005fglobal_005fstate"></a>Function: <em>void</em> <strong>ctests_reset_global_state</strong> <em>(void)</em></dt>
+<dd><p>Reset the internal state to represent an all&ndash;successful execution so far.  We can use this function
+if we want <code>cctests_final()</code> to exit successfully the current process.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-cctests_005flog_005fstream"></a>Variable: <em>FILE *</em> <strong>cctests_log_stream</strong></dt>
+<dd><p>An output stream used to log messages.  It is initialised to <code>stderr</code>.
+</p></dd></dl>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="groups.html#groups" accesskey="n" rel="next">groups</a>, Previous: <a href="version.html#version" accesskey="p" rel="prev">version</a>, Up: <a href="index.html#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+<p>This document describes version <tt>0.3.0-devel.4</tt> of <em>CCTests</em>.</p>
+</body>
+</html>
