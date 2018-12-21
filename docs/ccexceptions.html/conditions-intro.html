@@ -1,0 +1,303 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.8.0-devel.7 of CCExceptions, a C11 Standard language library;
+it implements an interface to non-local exits, which is somewhat similar to exceptions handling.
+The library targets POSIX systems.
+
+The package is distributed under the terms of the GNU Lesser General Public License (LGPL).
+
+The latest release can be downloaded from:
+
+https://bitbucket.org/marcomaggi/ccexceptions/downloads
+
+development takes place at:
+
+http://github.com/marcomaggi/ccexceptions
+
+and as backup at:
+
+https://bitbucket.org/marcomaggi/ccexceptions
+
+Copyright (C) 2016-2018 by Marco Maggi marco.maggi-ipsu@poste.it
+
+Permission is granted to copy, distribute and/or modify this document under the terms of the GNU
+Free Documentation License, Version 1.3 or any later version published by the Free Software
+Foundation; with Invariant Sections being "GNU Free Documentation License" and "GNU General
+Public License", no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license is
+included in the section entitled "GNU Free Documentation License". -->
+<!-- Created by GNU Texinfo 6.5, http://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>conditions intro (CCExceptions)</title>
+
+<meta name="description" content="conditions intro (CCExceptions)">
+<meta name="keywords" content="conditions intro (CCExceptions)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="type-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="conditions.html#conditions" rel="up" title="conditions">
+<link href="conditions-descriptors.html#conditions-descriptors" rel="next" title="conditions descriptors">
+<link href="conditions.html#conditions" rel="prev" title="conditions">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="conditions-intro"></a>
+<div class="header">
+<p>
+Next: <a href="conditions-descriptors.html#conditions-descriptors" accesskey="n" rel="next">conditions descriptors</a>, Up: <a href="conditions.html#conditions" accesskey="u" rel="up">conditions</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Introduction-to-exceptional_002d_002dcondition-objects"></a>
+<h3 class="section">6.1 Introduction to exceptional&ndash;condition objects</h3>
+
+
+<p>The purpose of CCExceptions&rsquo;s exceptional&ndash;condition objects module is to allow us to write code
+like this:
+</p>
+<div class="example">
+<pre class="example">cce_location_t  L[1];
+
+if (cce_location(L)) {
+  // handle the exceptional condition
+  if (my_condition_is_alpha(cce_condition(L)))
+    {
+      // react to exception &quot;alpha&quot;
+    }
+  else if (my_condition_is_beta(cce_condition(L)))
+    {
+      // react to exception &quot;beta&quot;
+    }
+  else
+    {
+      // default reaction to any exception
+    }
+  cce_run_catch_handlers_final(L);
+} else {
+  // do something useful
+  cce_run_body_handlers(L);
+}
+</pre></div>
+
+<p>in which we use some, previously defined, exceptional&ndash;condition object&ndash;types &lsquo;<samp>alpha</samp>&rsquo; and
+&lsquo;<samp>beta</samp>&rsquo;.
+</p>
+<p>If we need to hand the exceptional&ndash;condition object to an upper level location we can do it as
+follows:
+</p>
+<div class="example">
+<pre class="example">void
+upper_function (void)
+{
+  cce_location_t        L[1];
+
+  if (cce_location(L)) {
+    fprintf(stderr, &quot;log: %s\n&quot;, \
+        cce_condition_static_message(cce_condition(L)));
+    cce_run_catch_handlers_final(L);
+  } else {
+    lower_function(L);
+    cce_run_body_handlers(L);
+  }
+}
+
+void
+lower_function (cce_location_t * upper_L)
+{
+  cce_location_t        L[1];
+
+  if (cce_location(L)) {
+    cce_run_catch_handlers_raise(L, upper_L);
+  } else {
+    do_something();
+    if (an_error_occurred()) {
+      cce_raise(L, select_condition_object());
+    }
+   cce_run_body_handlers(L);
+  }
+}
+</pre></div>
+
+<p>From the point of view of our ability to react to an exception at run&ndash;time: a flexible situation is
+the one in which the exceptional&ndash;condition object&ndash;types are organised in a tree hierarchy.  It
+allows us to select the level of granularity we desire in the branching logic.  The tree hierarchy
+implemented by CCExceptions uses single inheritance; multiple inheritance would be more general,
+but also more complex.
+</p>
+
+<a name="How-the-hierarchy-is-implemented"></a>
+<h4 class="subsubheading">How the hierarchy is implemented</h4>
+
+<p>Exceptional&ndash;condition objects are C language structures referencing a type descriptor, which is
+also a C language structure.  Type descriptors are usually statically allocated and mostly have a
+hard&ndash;coded initialisation.  Exceptional&ndash;condition objects are either dynamically allocated and
+initialised or statically allocated with hard&ndash;coded initialisation.
+</p>
+<p>Every type descriptor data structure encloses a data structure of type <code>cce_descriptor_t</code>,
+which must be its first field.  The instances of <code>cce_descriptor_t</code> hold the pointers that
+define the tree hierarchy; every type descriptor can be referenced by multiple
+exceptional&ndash;condition objects: it can represent the type of multiple objects; every type descriptor
+has a single parent and can have zero, one or more children.  Each pointer to
+<code>cce_descriptor_t</code> is a unique run&ndash;time value identifying the type of
+exceptional&ndash;condition objects.
+</p>
+<p>Every exceptional&ndash;condition object&rsquo;s data structure encloses a data structure of type
+<code>cce_condition_t</code>, which must be its first field.  The exceptional&ndash;condition object holds a
+pointer to the associated type descriptor.
+</p>
+<p>The root of the tree is represented by the object&ndash;type descriptor <code>cce_descriptor_root_t</code>
+and objects of such type are <code>struct</code> of type <code>cce_condition_root_t</code>.  We can think of
+the root structure types as follows:
+</p>
+<div class="smallexample">
+<pre class="smallexample">typedef struct cce_condition_root_t     cce_descriptor_root_t;
+typedef struct cce_condition_root_t     cce_condition_root_t;
+
+struct cce_descriptor_root_t {
+  cce_descriptor_t	descriptor;
+};
+
+struct cce_condition_root_t {
+  cce_condition_t	condition;
+};
+
+extern cce_descriptor_root_t const * const cce_descriptor_root_ptr;
+</pre></div>
+
+<p>We declare the <code>struct</code> types needed to define a new exceptional&ndash;condition object&ndash;type, child
+of the <em>root</em> type, as follows:
+</p>
+<div class="smallexample">
+<pre class="smallexample">typedef struct my_descriptor_error_t  my_descriptor_error_t;
+typedef struct my_condition_error_t   my_condition_error_t;
+
+struct my_descriptor_error_t {
+  cce_descriptor_t  descriptor;
+  /* Put some custom fields here. */
+};
+
+struct my_condition_error_t {
+  cce_condition_root_t  root;
+  /* Put some custom fields here. */
+};
+
+extern my_descriptor_error_t const * const my_descriptor_error_ptr;
+</pre></div>
+
+<p>the field of type <code>cce_descriptor_t</code> is the first in its data structure type; the field of
+type <code>cce_condition_root_t</code> is the first in its data structure type.
+</p>
+<p>In the following picture: the <em>alpha</em> descriptor is a child of the <em>root</em> descriptor; the
+<em>beta</em> descriptor is a child of the type &lsquo;<samp>alpha</samp>&rsquo; descriptor.  We can say that:
+</p>
+<ul>
+<li> An exceptional&ndash;condition object of type <em>alpha</em> is also of type <em>root</em>.
+
+</li><li> An exceptional&ndash;condition object of type <em>beta</em> is also of type <em>alpha</em> and of type
+<em>root</em>.
+</li></ul>
+
+<div class="example">
+<pre class="example"> -----------------
+| descriptor root |
+ -----------------
+         ^
+         |
+ ------------------       --------------
+| descriptor alpha | &lt;-- | object alpha |
+ ------------------       --------------
+         ^
+         |
+ -----------------        -------------
+| descriptor beta | &lt;--- | object beta |
+ -----------------        -------------
+</pre></div>
+
+<p>The data types that represent such hierarchy look as follows:
+</p>
+<div class="smallexample">
+<pre class="smallexample">typedef struct my_descriptor_alpha_t my_descriptor_alpha_t;
+typedef struct my_descriptor_beta_t  my_descriptor_beta_t;
+typedef struct my_condition_alpha_t  my_condition_alpha_t;
+typedef struct my_condition_beta_t   my_condition_beta_t;
+
+/*** Descriptors types. ***/
+
+struct my_descriptor_alpha_t {
+  cce_descriptor_t  descriptor;
+};
+
+struct my_descriptor_beta_t {
+  cce_descriptor_t  descriptor;
+};
+
+/*** Object types. ***/
+
+struct my_condition_alpha_t {
+  cce_condition_root_t  root;
+};
+
+struct my_condition_beta_t {
+  my_condition_alpha_t  alpha;
+};
+</pre></div>
+
+<p>we can statically allocate and initialise the type descriptors as follows:
+</p>
+<div class="smallexample">
+<pre class="smallexample">my_descriptor_alpha_t my_descriptor_alpha = {
+  .descriptor.parent = NULL
+};
+
+my_descriptor_beta_t  my_descriptor_beta  = {
+  .descriptor.parent = &amp;my_descriptor_alpha.descriptor
+};
+
+void
+initialisation_function (void)
+{
+  cce_descriptor_set_root_parent(&amp;my_descriptor_alpha.descriptor));
+}
+</pre></div>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="conditions-descriptors.html#conditions-descriptors" accesskey="n" rel="next">conditions descriptors</a>, Up: <a href="conditions.html#conditions" accesskey="u" rel="up">conditions</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+<p>This document describes version <tt>0.8.0-devel.7</tt> of <em>CCExceptions</em>.</p>
+</body>
+</html>

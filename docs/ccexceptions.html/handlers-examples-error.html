@@ -1,0 +1,165 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.8.0-devel.7 of CCExceptions, a C11 Standard language library;
+it implements an interface to non-local exits, which is somewhat similar to exceptions handling.
+The library targets POSIX systems.
+
+The package is distributed under the terms of the GNU Lesser General Public License (LGPL).
+
+The latest release can be downloaded from:
+
+https://bitbucket.org/marcomaggi/ccexceptions/downloads
+
+development takes place at:
+
+http://github.com/marcomaggi/ccexceptions
+
+and as backup at:
+
+https://bitbucket.org/marcomaggi/ccexceptions
+
+Copyright (C) 2016-2018 by Marco Maggi marco.maggi-ipsu@poste.it
+
+Permission is granted to copy, distribute and/or modify this document under the terms of the GNU
+Free Documentation License, Version 1.3 or any later version published by the Free Software
+Foundation; with Invariant Sections being "GNU Free Documentation License" and "GNU General
+Public License", no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license is
+included in the section entitled "GNU Free Documentation License". -->
+<!-- Created by GNU Texinfo 6.5, http://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>handlers examples error (CCExceptions)</title>
+
+<meta name="description" content="handlers examples error (CCExceptions)">
+<meta name="keywords" content="handlers examples error (CCExceptions)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="type-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="handlers-examples.html#handlers-examples" rel="up" title="handlers examples">
+<link href="conditions.html#conditions" rel="next" title="conditions">
+<link href="handlers-examples-clean.html#handlers-examples-clean" rel="prev" title="handlers examples clean">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="handlers-examples-error"></a>
+<div class="header">
+<p>
+Previous: <a href="handlers-examples-clean.html#handlers-examples-clean" accesskey="p" rel="prev">handlers examples clean</a>, Up: <a href="handlers-examples.html#handlers-examples" accesskey="u" rel="up">handlers examples</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Example-of-asynchronous-resource-handling-using-an-error-handler"></a>
+<h4 class="subsection">5.5.3 Example of asynchronous resource handling using an error handler</h4>
+
+
+<p>Let&rsquo;s say we are writing a constructor function and we need to allocate memory, do something and:
+</p>
+<ul>
+<li> If successful: return the memory to the caller.
+
+</li><li> If an error occurs: release the memory locally.
+</li></ul>
+
+<p>We can organise the code as follows, using an error handler in the constructor and a clean handler
+in the caller:
+</p>
+<div class="example">
+<pre class="example">void
+P_handler (cce_condition_t const * C, cce_handler_t * H)
+{
+  free(H-&gt;pointer);
+}
+
+void *
+constructor (cce_destination_t upper_L)
+{
+  cce_location_t       L[1];
+  cce_error_handler_t  P_H;
+
+  if (cce_location(L)) {
+    cce_run_catch_handlers_raise(L, upper_L);
+  } else {
+    void *  P;
+
+    errno = 0;
+    P = malloc(4096);
+    if (P) {
+      P_H.handler.function = P_handler;
+      P_H.handler.pointer  = P;
+      cce_register_error_handler(L, &amp;P_H);
+    } else {
+      cce_raise(L, cce_condition_new_errno_clear(errno));
+    }
+
+    /* If this function raises an exception: the error
+       handler releases the memory. */
+    do_some_initialisation(L, P);
+
+    cce_run_body_handlers(L);
+  }
+  return P;
+}
+
+void caller (void)
+{
+  cce_location_t       L[1];
+  cce_clean-handler_t  P_H;
+
+  if (cce_location(L)) {
+    cce_run_catch_handlers_final(L);
+  } else {
+    void *  P;
+
+    P = constructor(L);
+    {
+      P_H.handler.function = P_handler;
+      P_H.handler.pointer  = P;
+      cce_register_clean_handler(L, &amp;P_H);
+    }
+    do_something_with(P);
+    cce_run_body_handlers(L);
+  }
+}
+</pre></div>
+
+<hr>
+<div class="header">
+<p>
+Previous: <a href="handlers-examples-clean.html#handlers-examples-clean" accesskey="p" rel="prev">handlers examples clean</a>, Up: <a href="handlers-examples.html#handlers-examples" accesskey="u" rel="up">handlers examples</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+<p>This document describes version <tt>0.8.0-devel.7</tt> of <em>CCExceptions</em>.</p>
+</body>
+</html>

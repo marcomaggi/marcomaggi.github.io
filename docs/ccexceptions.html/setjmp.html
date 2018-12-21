@@ -1,0 +1,220 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.8.0-devel.7 of CCExceptions, a C11 Standard language library;
+it implements an interface to non-local exits, which is somewhat similar to exceptions handling.
+The library targets POSIX systems.
+
+The package is distributed under the terms of the GNU Lesser General Public License (LGPL).
+
+The latest release can be downloaded from:
+
+https://bitbucket.org/marcomaggi/ccexceptions/downloads
+
+development takes place at:
+
+http://github.com/marcomaggi/ccexceptions
+
+and as backup at:
+
+https://bitbucket.org/marcomaggi/ccexceptions
+
+Copyright (C) 2016-2018 by Marco Maggi marco.maggi-ipsu@poste.it
+
+Permission is granted to copy, distribute and/or modify this document under the terms of the GNU
+Free Documentation License, Version 1.3 or any later version published by the Free Software
+Foundation; with Invariant Sections being "GNU Free Documentation License" and "GNU General
+Public License", no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license is
+included in the section entitled "GNU Free Documentation License". -->
+<!-- Created by GNU Texinfo 6.5, http://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>setjmp (CCExceptions)</title>
+
+<meta name="description" content="setjmp (CCExceptions)">
+<meta name="keywords" content="setjmp (CCExceptions)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="type-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="index.html#Top" rel="up" title="Top">
+<link href="locations.html#locations" rel="next" title="locations">
+<link href="version.html#version" rel="prev" title="version">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="setjmp"></a>
+<div class="header">
+<p>
+Next: <a href="locations.html#locations" accesskey="n" rel="next">locations</a>, Previous: <a href="version.html#version" accesskey="p" rel="prev">version</a>, Up: <a href="index.html#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Brief-introduction-to-non_002d_002dlocal-exits"></a>
+<h2 class="chapter">3 Brief introduction to non&ndash;local exits</h2>
+
+
+<p>Let&rsquo;s recall briefly how the standard, C language, non&ndash;local exits mechanism works; for the full
+documentation refer to the C Library.  <a href="http://www.gnu.org/software/libc/manual/html_node/Non_002dLocal-Exits.html#Non_002dLocal-Exits">(libc)Non-Local Exits</a>.
+</p>
+<p>To use <code>setjmp()</code> and <code>longjmp()</code> we write chunks of code like the following:
+</p>
+<div class="example">
+<pre class="example">#define JMP_ERROR_CODE          1
+
+jmp_buf  here;
+
+if (setjmp(here))
+  {
+    handle_the_error();
+  }
+else
+  {
+    do_something();
+    if (an_error_occurred()) {
+      longjmp(here, JMP_ERROR_CODE);
+    }
+    do_something_else();
+  }
+</pre></div>
+
+<p>this is what happens:
+</p>
+<ul>
+<li> When <code>setjmp()</code> is invoked: it saves the current &ldquo;location&rdquo; in <var>here</var>, then it returns
+zero.
+
+</li><li> If <code>longjmp()</code> is not applied to <var>here</var>, nothing strange happens and the execution flow goes
+on as usual.
+
+</li><li> If <code>longjmp()</code> is applied to <var>here</var>: the execution jumps back to the call to <code>setjmp()</code>
+with <code>JMP_ERROR_CODE</code> as return value.
+</li></ul>
+
+<p>This mechanism allows us to separate the exception handling code from the main code.  By using
+<var>here</var> as argument to nested function calls: we can perform non&ndash;local exits across functions;
+something that is not possible with <code>goto</code> statements.
+</p>
+<p>As always, care must be taken when the body allocates asynchronous resources.  For each resource:
+the exception handler must detect if the allocation took place and execute release code.  For
+example:
+</p>
+<div class="example">
+<pre class="example">jmp_buf         here;
+volatile void * P = NULL;
+
+if (setjmp(here))
+  {
+    if (P)
+      free(P);
+  }
+else
+  {
+    ...
+    P = malloc(4096);
+    ...
+  }
+</pre></div>
+
+<p>Let&rsquo;s see some logic example; we will assume the following preamble:
+</p>
+<div class="example">
+<pre class="example">#include &lt;assert.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;setjmp.h&gt;
+
+#define JUMP_TO_ERROR           2
+</pre></div>
+
+<p>In the following code no jump is performed; we just call <code>setjmp()</code> once and never call
+<code>longjmp()</code>:
+</p>
+<div class="example">
+<pre class="example">jmp_buf         L;
+int             flag = 0, code;
+
+code = setjmp(L);
+if (code) {
+  flag = 2;
+} else {
+  flag = 1;
+}
+assert(0 == code);
+assert(1 == flag);
+</pre></div>
+
+<p>In the following code we perform a jump and handle the logic with an <code>if</code> statement:
+</p>
+<div class="example">
+<pre class="example">jmp_buf         L;
+int             flag = 0, code;
+
+code = setjmp(L);
+if (JUMP_TO_ERROR == code) {
+  flag = 2;
+} else {
+  flag = 1;
+  longjmp(L, JUMP_TO_ERROR);
+}
+assert(JUMP_TO_ERROR == code);
+assert(2 == flag);
+</pre></div>
+
+<p>In the following code we perform a jump and handle the logic with a <code>switch</code> statement:
+</p>
+<div class="example">
+<pre class="example">jmp_buf         L;
+int             flag = 0, code;
+
+code = setjmp(L);
+switch (code) {
+case JUMP_TO_ERROR:
+  flag = 2;
+  break;
+default:
+  flag = 1;
+  longjmp(L, JUMP_TO_ERROR);
+}
+assert(JUMP_TO_ERROR == code);
+assert(2 == flag);
+</pre></div>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="locations.html#locations" accesskey="n" rel="next">locations</a>, Previous: <a href="version.html#version" accesskey="p" rel="prev">version</a>, Up: <a href="index.html#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+<p>This document describes version <tt>0.8.0-devel.7</tt> of <em>CCExceptions</em>.</p>
+</body>
+</html>

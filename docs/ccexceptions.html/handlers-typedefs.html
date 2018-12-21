@@ -1,0 +1,201 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.8.0-devel.7 of CCExceptions, a C11 Standard language library;
+it implements an interface to non-local exits, which is somewhat similar to exceptions handling.
+The library targets POSIX systems.
+
+The package is distributed under the terms of the GNU Lesser General Public License (LGPL).
+
+The latest release can be downloaded from:
+
+https://bitbucket.org/marcomaggi/ccexceptions/downloads
+
+development takes place at:
+
+http://github.com/marcomaggi/ccexceptions
+
+and as backup at:
+
+https://bitbucket.org/marcomaggi/ccexceptions
+
+Copyright (C) 2016-2018 by Marco Maggi marco.maggi-ipsu@poste.it
+
+Permission is granted to copy, distribute and/or modify this document under the terms of the GNU
+Free Documentation License, Version 1.3 or any later version published by the Free Software
+Foundation; with Invariant Sections being "GNU Free Documentation License" and "GNU General
+Public License", no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license is
+included in the section entitled "GNU Free Documentation License". -->
+<!-- Created by GNU Texinfo 6.5, http://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>handlers typedefs (CCExceptions)</title>
+
+<meta name="description" content="handlers typedefs (CCExceptions)">
+<meta name="keywords" content="handlers typedefs (CCExceptions)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="type-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="handlers.html#handlers" rel="up" title="handlers">
+<link href="handlers-registering.html#handlers-registering" rel="next" title="handlers registering">
+<link href="handlers.html#handlers" rel="prev" title="handlers">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="handlers-typedefs"></a>
+<div class="header">
+<p>
+Next: <a href="handlers-registering.html#handlers-registering" accesskey="n" rel="next">handlers registering</a>, Up: <a href="handlers.html#handlers" accesskey="u" rel="up">handlers</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Handlers-type-definitions"></a>
+<h3 class="section">5.1 Handlers type definitions</h3>
+
+
+<p>All the following definitions are accessible from the header file <samp>ccexceptions.h</samp>.
+</p>
+
+<dl>
+<dt><a name="index-cce_005fhandler_005ft"></a>Struct Typedef: <strong>cce_handler_t</strong></dt>
+<dd><p>Core structure type representing an exception handler, either a clean handler or an error handler.
+We should <strong>never</strong> use this type directly, rather we should use the wrapper types
+<code>cce_clean_handler_t</code> and <code>cce_error_handler_t</code>.
+</p>
+<p>The structure has the following public fields:
+</p>
+<dl compact="compact">
+<dt><code>cce_handler_fun_t * function</code></dt>
+<dd><p>Pointer to the callback function implementing the exception handler.
+</p></dd>
+</dl>
+
+<p>the following fields are members of an anonymous union:
+</p>
+<dl compact="compact">
+<dt><code>void * pointer</code></dt>
+<dd><p>Pointer available to the client code.
+</p>
+</dd>
+<dt><code>char * pathname</code></dt>
+<dd><p>Pointer available to the client code.
+</p>
+</dd>
+<dt><code>cce_destination_t location</code></dt>
+<dd><p>Pointer available to the client code.
+</p>
+</dd>
+<dt><code>int filedes</code></dt>
+<dd><p>An integer meant to be used for <acronym>POSIX</acronym> file descriptors.
+</p>
+</dd>
+<dt><code>int pipedes[2]</code></dt>
+<dd><p>Integers meant to be used for <acronym>POSIX</acronym> pipe descriptors.
+</p></dd>
+</dl>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-cce_005fclean_005fhandler_005ft"></a>Struct Typedef: <strong>cce_clean_handler_t</strong></dt>
+<dd><p>Structure representing a clean handler.  Instances of this type are associated to a location by
+calling the function <code>cce_register_clean_handler()</code>.  Clean handlers are invoked by calling one
+of the functions: <code>cce_run_body_handlers()</code>, <code>cce_run_catch_handlers()</code> and its variants.
+Before terminating the use of a <code>cce_location_t</code> instance: we must always call the handlers,
+whether or not an exception was raised.
+</p>
+<p>It has the following public fields:
+</p>
+<dl compact="compact">
+<dt><code>cce_handler_t handler</code></dt>
+<dd><p>The handler structure.
+</p></dd>
+</dl>
+</dd></dl>
+
+
+<dl>
+<dt><a name="index-cce_005ferror_005fhandler_005ft"></a>Struct Typedef: <strong>cce_error_handler_t</strong></dt>
+<dd><p>Structure representing an error handler.  Instances of this type are associated to a location by
+calling the function <code>cce_register_error_handler()</code>.  Error handlers are invoked by calling the
+function <code>cce_run_catch_handlers()</code> or one of its variants.  Before terminating the use of a
+<code>cce_location_t</code> instance: after an exception is raised we must always call the error
+handlers.
+</p>
+<p>It has the following public fields:
+</p>
+<dl compact="compact">
+<dt><code>cce_handler_t handler</code></dt>
+<dd><p>The handler structure.
+</p></dd>
+</dl>
+</dd></dl>
+
+
+<p>When needed, we are meant to wrap instances of <code>cce_clean_handler_t</code> and
+<code>cce_error_handler_t</code> into an enclosing struct definition as follows:
+</p>
+<div class="example">
+<pre class="example">struct resource_clean_handler_t {
+  cce_clean_handler_t 	handler;
+  void *		resourcep;
+};
+</pre></div>
+
+<p>in which the instance of <code>cce_clean_handler_t</code> is the first field.
+</p>
+
+<dl>
+<dt><a name="index-cce_005fhandler_005ffun_005ft"></a>Function Typedef: <em>void</em> <strong>cce_handler_fun_t</strong> <em>(cce_condition_t const * <var>C</var>, cce_handler_t * <var>H</var>)</em></dt>
+<dd><p>Type of exception handler functions meant to release some asynchronous resource.  The argument
+<var>C</var> references a structure representing the raised exceptional&ndash;condition object; the handler
+must leave it untouched, it must <strong>not</strong> mutate or release it.  The argument <var>H</var> references
+the handler context.
+</p>
+<p>If an error occurs: the handler function must take care of itself and return to the caller, it must
+<strong>not</strong> raise an exceptional condition and jump to a remote location.
+</p>
+<p>If the structure referenced by <var>H</var> is dynamically allocated: the handler function is responsible
+to release its memory.
+</p></dd></dl>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="handlers-registering.html#handlers-registering" accesskey="n" rel="next">handlers registering</a>, Up: <a href="handlers.html#handlers" accesskey="u" rel="up">handlers</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+<p>This document describes version <tt>0.8.0-devel.7</tt> of <em>CCExceptions</em>.</p>
+</body>
+</html>
