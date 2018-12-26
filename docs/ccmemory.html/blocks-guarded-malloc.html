@@ -1,0 +1,143 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.2.1-devel.2 of CCMemory, a C11 language library
+implementing an interface to custom memory allocators.
+
+This package supports POSIX platforms.  This package depends on the package CCExceptions, at
+least version 0.8.0.  To run the test suite: this package depends upon the
+package CCTests, at least version 0.3.0.
+
+The package is distributed under the terms of the GNU Lesser General Public License (LGPL).
+
+The latest release can be downloaded from:
+
+https://bitbucket.org/marcomaggi/ccmemory/downloads
+
+development takes place at:
+
+http://github.com/marcomaggi/ccmemory
+
+and as backup at:
+
+https://bitbucket.org/marcomaggi/ccmemory
+
+Copyright (C) 2016, 2018 by Marco Maggi marco.maggi-ipsu@poste.it
+
+Permission is granted to copy, distribute and/or modify this document under the terms of the GNU
+Free Documentation License, Version 1.3 or any later version published by the Free Software
+Foundation; with Invariant Sections being "GNU Free Documentation License" and "GNU General
+Public License", no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license is
+included in the section entitled "GNU Free Documentation License". -->
+<!-- Created by GNU Texinfo 6.5, http://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>blocks guarded malloc (CCMemory)</title>
+
+<meta name="description" content="blocks guarded malloc (CCMemory)">
+<meta name="keywords" content="blocks guarded malloc (CCMemory)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="type-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="blocks-guarded.html#blocks-guarded" rel="up" title="blocks guarded">
+<link href="blocks-guarded-realloc.html#blocks-guarded-realloc" rel="next" title="blocks guarded realloc">
+<link href="blocks-guarded.html#blocks-guarded" rel="prev" title="blocks guarded">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<a name="blocks-guarded-malloc"></a>
+<div class="header">
+<p>
+Next: <a href="blocks-guarded-realloc.html#blocks-guarded-realloc" accesskey="n" rel="next">blocks guarded realloc</a>, Up: <a href="blocks-guarded.html#blocks-guarded" accesskey="u" rel="up">blocks guarded</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="Guarding-memory-allocated-with-malloc"></a>
+<h4 class="subsection">6.6.1 Guarding memory allocated with <code>malloc</code></h4>
+
+
+<p>Usage example:
+</p>
+<div class="example">
+<pre class="example">cce_location_t        L[1];
+ccmem_clean_handler_t S_H[1];
+
+if (cce_location(L)) {
+  cce_run_catch_handlers_raise(L, upper_L);
+} else {
+  ccmem_block_t  S = ccmem_block_malloc_guarded(L, S_H,
+                       ccmem_standard_allocator, 4);
+
+  ...
+  cce_run_body_handlers(L);
+}
+</pre></div>
+
+
+<dl>
+<dt><a name="index-ccmem_005fblock_005fmalloc_005fguarded_005fclean"></a>Function: <em>ccmem_block_t</em> <strong>ccmem_block_malloc_guarded_clean</strong> <em>(cce_destination_t <var>L</var>, ccmem_clean_handler_t * <var>S_H</var>, ccmem_allocator_t const * <var>A</var>, size_t <var>len</var>)</em></dt>
+<dd><p>Adapter for <code>ccmem_malloc_guarded_clean()</code> that builds and returns a new blocks.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-ccmem_005fblock_005fmalloc_005fguarded_005ferror"></a>Function: <em>ccmem_block_t</em> <strong>ccmem_block_malloc_guarded_error</strong> <em>(cce_destination_t <var>L</var>, ccmem_error_handler_t * <var>S_H</var>, ccmem_allocator_t const * <var>A</var>, size_t <var>len</var>)</em></dt>
+<dd><p>Adapter for <code>ccmem_malloc_guarded_error()</code> that builds and returns a new blocks.
+</p></dd></dl>
+
+
+<dl>
+<dt><a name="index-ccmem_005fblock_005fmalloc_005fguarded"></a>Preprocessor Macro: <em>ccmem_block_t</em> <strong>ccmem_block_malloc_guarded</strong> <em>(cce_destination_t <var>L</var>, <var>S_H</var>, ccmem_allocator_t const * <var>A</var>, size_t <var>len</var>)</em></dt>
+<dd><p>Preprocessor macro that builds and returns a new block.  If the argument <var>S_H</var> is a pointer to:
+</p>
+<dl compact="compact">
+<dt><code>ccmem_clean_handler_t</code></dt>
+<dd><p>The macro use expands into a call to <code>ccmem_block_malloc_guarded_clean()</code>.
+</p>
+</dd>
+<dt><code>ccmem_error_handler_t</code></dt>
+<dd><p>The macro use expands into a call to <code>ccmem_block_malloc_guarded_error()</code>.
+</p></dd>
+</dl>
+</dd></dl>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="blocks-guarded-realloc.html#blocks-guarded-realloc" accesskey="n" rel="next">blocks guarded realloc</a>, Up: <a href="blocks-guarded.html#blocks-guarded" accesskey="u" rel="up">blocks guarded</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+<p>This document describes version <tt>0.2.1-devel.2</tt> of <em>CCMemory</em>.</p>
+</body>
+</html>
