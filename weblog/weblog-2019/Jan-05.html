@@ -1,0 +1,465 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- Copyright (C) 2019 by Marco Maggi marco.maggi-ipsu@poste.it
+
+Permission is granted to copy, distribute and/or modify this document under the terms of the GNU
+Free Documentation License, Version 1.3 or any later version published by the Free Software
+Foundation; with Invariant Sections being "GNU Free Documentation License" and "GNU General
+Public License", no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license is
+included in the section entitled "GNU Free Documentation License". -->
+<!-- Created by GNU Texinfo 6.5, http://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<title>Jan 05 (Marco&rsquo;s 2019 Weblog)</title>
+
+<meta name="description" content="Jan 05 (Marco&rsquo;s 2019 Weblog)">
+<meta name="keywords" content="Jan 05 (Marco&rsquo;s 2019 Weblog)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="function-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="index.html#Top" rel="up" title="Top">
+<link href="Documentation-License.html#Documentation-License" rel="next" title="Documentation License">
+<link href="index.html#Top" rel="prev" title="Top">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="weblog.css">
+
+
+</head>
+
+<body lang="en">
+<a name="Jan-05"></a>
+<div class="header">
+<p>
+Next: <a href="Documentation-License.html#Documentation-License" accesskey="n" rel="next">Documentation License</a>, Previous: <a href="index.html#Top" accesskey="p" rel="prev">Top</a>, Up: <a href="index.html#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="function-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<a name="More-experiments-with-the-C-language_003a-CCNames"></a>
+<h2 class="unnumbered">More experiments with the C language: CCNames</h2>
+
+
+<p><em>Posted on Sat Jan  5, 2019</em>
+</p>
+
+<p>It is established that my brain is getting old&hellip; sigh!  I need to adapt: I need some new scheme
+to organise ideas and complexity; I need some new abstraction; I need some new notation.  In these
+situations: I am in danger of valuating positively what is <em>new</em> over what is <em>more
+effective</em>; I know, so I will be careful&hellip; right?!
+</p>
+<p>Most likely this experiment will result in failure.  But failure is&hellip; failure!  So&hellip; I do
+it because I feel like it.  Life is hard&hellip;
+</p>
+<p>I started experimenting something new with my <em>CCLibraries</em> projects.  I do not want to fight
+the language: I do not want to introduce syntaxes that are out&ndash;of&ndash;place in a C language source
+base.  I will just abuse a little the preprocessor (it is my understanding that some people abuse it
+much more than what I want to do&hellip;).  I want everything to be standard C11.
+</p>
+
+<a name="g_t_0060_0060Well-known_0027_0027-functions-and-variables"></a>
+<h3 class="unnumberedsec">&ldquo;Well known&rdquo; functions and variables</h3>
+
+
+<p>I want every <code>struct</code> type to have one or more of the following functions:
+</p>
+<dl compact="compact">
+<dt><code>init()</code></dt>
+<dd><p>Constructor function.  Initialises an already allocated <code>struct</code> instance: it can be on the stack
+or embedded into another, enclosing, <code>struct</code>.  Acquires all the asynchronous resources associated
+to the fields of the <code>struct</code>.
+</p>
+</dd>
+<dt><code>final()</code></dt>
+<dd><p>Destructor function.  Finalises a <code>struct</code> instance allocated on the stack or embedded into
+another, enclosing, <code>struct</code>.  Releases all the asynchronous resources associated to the fields of
+the <code>struct</code>.
+</p>
+</dd>
+<dt><code>new()</code></dt>
+<dd><p>Constructor function.  Allocates a block of memory on the heap to hold a new <code>struct</code> instance.
+Acquires all the asynchronous resources associated to the fields of the <code>struct</code>, usually by
+calling the <code>init()</code> function.
+</p>
+</dd>
+<dt><code>delete()</code></dt>
+<dd><p>Destructor function.  Finalises a <code>struct</code> instance allocated on the heap.  Releases all the
+asynchronous resources associated to the fields of the <code>struct</code>, usually by calling the
+<code>final()</code> function.  Releases the allocated block of memory.
+</p></dd>
+</dl>
+
+<p>I have in mind more &ldquo;well known&rdquo; functions, with defined behaviour and defined type signature.
+There are also some &ldquo;well known&rdquo; variables, mostly tables of pointers to functions.
+</p>
+
+<a name="Naming-_0060_0060well-known_0027_0027-stuff"></a>
+<h3 class="unnumberedsec">Naming &ldquo;well known&rdquo; stuff</h3>
+
+
+<p>How do I name these functions and variables?  Let&rsquo;s say that a library&rsquo;s namespace is <code>my</code> and
+a <code>struct</code> is called <code>coords</code>; the full type name is <code>my_coords_t</code>.  What&rsquo;s the name of
+the <code>init()</code> function?  One among:
+</p>
+<div class="example">
+<pre class="example">my_coords_init
+my_init_coords
+init_my_coords
+my_coords_t_init
+</pre></div>
+
+<p>or another variant.  I want a way to define such a function name that is both descriptive and easy
+to replicate in different code repositories: every <code>struct</code> in every code base I author must follow
+the same naming convention, easily and recognisably.  The fact that I cannot decide between the
+first 3 of these alternatives, and just stick with it, is a sure sign of impending senility.
+</p>
+<p>My ageing mind has thought of defining a preprocessor macro that is used as follows:
+</p>
+<div class="example">
+<pre class="example">ccname_init(my_coords_t)
+</pre></div>
+
+<p>the result of expanding such macro use is a function name, for example:
+</p>
+<div class="example">
+<pre class="example">my_coords_t__init
+</pre></div>
+
+<p>I will never see the actual name in the source code, I will always write the macro use.  The actual
+function name will show itself in compiler messages: I will try to live with it.
+</p>
+<p>Now let&rsquo;s say we need two <code>init()</code> constructors with different arguments: we have a <code>rec</code>
+variant and a <code>pol</code> variant; how do we generate the names for the <code>init()</code> constructors?
+Here:
+</p>
+<div class="example">
+<pre class="example">ccname_init(my_coords_t, rec)
+ccname_init(my_coords_t, pol)
+</pre></div>
+
+<p>the first operand of the macro use is the <code>struct</code> type name, the second operand is the name of the
+constructor variant.  Notice that, when appropriate, the <code>ccname_</code> macros are variadic.
+</p>
+<p>Let&rsquo;s look at an actual definition and use:
+</p>
+<div class="example">
+<pre class="example">typedef struct my_coords_t       my_coords_t;
+
+struct my_coords_t {
+  double        X;
+  double        Y;
+};
+
+void
+ccname_init(my_coords_t, rec) (my_coords_t * self, double x, double y)
+{
+  self-&gt;X = x;
+  self-&gt;Y = y;
+}
+
+void
+ccname_init(my_coords_t, pol) (my_coords_t * self, double rho, double theta)
+{
+  self-&gt;X = rho * cos(theta);
+  self-&gt;Y = rho * sin(theta);
+}
+
+int
+main (void)
+{
+  my_coords_t    A[1];
+  my_coords_t    B[1];
+
+  ccname_init(my_coords_t, rec)(A, 1.0, 2.0);
+  ccname_init(my_coords_t, pol)(B, 2.0, 1.0);
+
+  exit(0);
+}
+</pre></div>
+
+
+<a name="A-more-complex-example"></a>
+<h3 class="unnumberedsec">A more complex example</h3>
+
+
+<p>I want to define <code>struct</code> types that act as &ldquo;interfaces&rdquo; for the <code>struct</code> types representing
+data.  So an instance of <code>my_serialisable_I</code> implements a serialisation <acronym>API</acronym> for a
+specific instance of type <code>my_coords_t</code>.  An interface <code>struct</code> is little more than a table
+of pointers to function implementing the specialised <acronym>API</acronym>.
+</p>
+<p>What is the name of the &ldquo;well known&rdquo; constructor for <code>my_serialisable_I</code> acting upon an
+instance of <code>my_coords_t</code>?
+</p>
+<div class="example">
+<pre class="example">ccname_iface_new(my_serialisable_I, my_coords_t)
+</pre></div>
+
+<p>If the interface has a <code>write()</code> &ldquo;method&rdquo;: what is its name?
+</p>
+<div class="example">
+<pre class="example">ccname_iface_method(my_serialisable_I, my_coords_t, write)
+</pre></div>
+
+<p>An the name of the <code>struct</code> representing the table of pointers?
+</p>
+<div class="example">
+<pre class="example">ccname_iface_table(my_serialisable_I, my_coords_t)
+</pre></div>
+
+<p>And if there are multiple variants of serialisable interface for the same <code>my_coords_t</code>?
+</p>
+<div class="example">
+<pre class="example">ccname_iface_new(my_serialisable_I, my_coords_t, rec)
+ccname_iface_new(my_serialisable_I, my_coords_t, pol)
+</pre></div>
+
+
+<a name="Achievement_003a-the-role-of-function-names-is-explicitly-stated-in-the-code"></a>
+<h3 class="unnumberedsec">Achievement: the role of function names is explicitly stated in the code</h3>
+
+
+<p>Given that a <code>struct</code>&rsquo;s <acronym>API</acronym> is partly composed by functions with a well defined role: building
+names with macros tells us directly which role a given function has.  The definition:
+</p>
+<div class="example">
+<pre class="example">my_coords_t const *
+ccname_new(my_coords_t, rec) (cce_destination_t L, double X, double Y)
+{
+  ...
+}
+</pre></div>
+
+<p>tells us that the function is the <code>rec</code> variant of a constructor for the type
+<code>my_coords_t</code>; the function call in:
+</p>
+<div class="example">
+<pre class="example">cce_location_t          L[1];
+my_coords_t const *      A;
+
+...
+A = ccname_new(my_coords_t, rec)(L, 1.0, 2.0);
+...
+</pre></div>
+
+<p>tells us that we are calling the <code>rec</code> variant of the constructor for the type
+<code>my_coords_t</code>.
+</p>
+
+<a name="Achievement_003a-automatically-replacing-the-type-name_002c-replaces-the-function-names"></a>
+<h3 class="unnumberedsec">Achievement: automatically replacing the type name, replaces the function names</h3>
+
+
+<p>Let&rsquo;s say we rename the type <code>my_coords_t</code> to <code>your_coords_t</code>; by just using the
+editor&rsquo;s facilities to replace strings we automatically change:
+</p>
+<div class="example">
+<pre class="example">ccname_init(my_coords_t)
+</pre></div>
+
+<p>into:
+</p>
+<div class="example">
+<pre class="example">ccname_init(your_coords_t)
+</pre></div>
+
+<p>there is no need to perform another pass to replace <code>my_coords_init()</code> into
+<code>your_coords_init()</code>, and so on for the other functions in the <acronym>API</acronym>.
+</p>
+
+<a name="Problem_003a-how-do-I-document-such-an-API_003f"></a>
+<h3 class="unnumberedsec">Problem: how do I document such an <acronym>API</acronym>?</h3>
+
+
+<p>I use <em><acronym>GNU</acronym> Texinfo</em> for my documentation needs.  How do I document a function whose name is
+hidden and accessible only as the output form of a macro use?  Given a function name that is built
+with:
+</p>
+<div class="example">
+<pre class="example">ccname_init(my_coords_t, rec)
+ccname_init(my_coords_t, pol)
+</pre></div>
+
+<p>here is an attempt using Texinfo&rsquo;s <code>@deftypefun</code> environment (wrapping the macro use between
+braces in the source file):
+</p>
+
+<dl>
+<dt><a name="index-ccname_005finit_0028my_005fcoords_005ft_002c-rec_0029"></a>Function: <em>void</em> <strong>ccname_init(my_coords_t, rec)</strong> <em>(my_coords_t * <var>SELF</var>, double <var>X</var>, double <var>Y</var>)</em></dt>
+<dt><a name="index-ccname_005finit_0028my_005fcoords_005ft_002c-pol_0029"></a>Function: <em>void</em> <strong>ccname_init(my_coords_t, pol)</strong> <em>(my_coords_t * <var>SELF</var>, double <var>RHO</var>, double <var>THETA</var>)</em></dt>
+<dd><p>Initialise an already allocated <code>struct</code> instance using rectangular or polar coordinates.
+</p></dd></dl>
+
+<p>Technologically it works; index search when browsing the documentation on the terminal with the
+<em>Info</em> reader also works (which is of paramount importance for me).  How does it appear in the
+documentation browser?  Long and stuffy, which makes it a pain for the eyes to scan the page; but
+descriptive and readable function names are also long and stuffy (raise your hand if you find
+<em>LAPACK</em> function names to be readable, easy to type without mistakes, easy to remember).
+</p>
+
+<a name="Problem_003a-how-do-I-complete-a-name-or-search-for-a-definition-using-tags_003f"></a>
+<h3 class="unnumberedsec">Problem: how do I complete a name or search for a definition using tags?</h3>
+
+
+<p>I use <em><acronym>GNU</acronym> Emacs</em> for my editing needs and the <em><acronym>GNU</acronym> Autotools</em> to manage building
+projects.  How do I customise a feature like <code>complete-symbol</code> to auto&ndash;complete a macro&ndash;built
+name?  How do I customise a feature like <code>xref-find-definitions</code> to search the definition point
+of a function whose name is macro&ndash;built?
+</p>
+<p><acronym>GNU</acronym> Automake has built&ndash;in support for creating a <samp>TAGS</samp> file that we can use from Emacs
+with <code>complete-symbol</code> and <code>xref-find-definitions</code>; these features work fine with
+identifiers defined in C language code.  But the following are not identifiers:
+</p>
+<div class="example">
+<pre class="example">ccname_init(my_coords_t, rec)
+ccname_init(my_coords_t, pol)
+</pre></div>
+
+<p>the symbols <code>ccname_init</code> and <code>my_coords_t</code> are automatically picked up by the tags
+infrastructure, but the whole macro&ndash;use needs customisation.
+</p>
+<p>Using <acronym>GNU</acronym> Automake&rsquo;s support for tags, we can add the following variable definition in
+<samp>Makefile.am</samp>:
+</p>
+<div class="example">
+<pre class="example">AM_ETAGSFLAGS = --regex='{c}/&quot;\\_&lt;\\(ccname_\\(?:alloc\\|delete\\|final\\|i\\(?:face_\\(?:method\\(?:_type\\)?\\|new\\|table\\(?:_type\\)?\\)\\|nit\\)\\|method\\(?:_type\\)?\\|new\\|\\(?:releas\\|tabl\\(?:e_typ\\)?\\)e\\)\\)\\_&gt;&quot;/'
+</pre></div>
+
+<p>where the regular expression was generated under Emacs with:
+</p>
+<div class="example">
+<pre class="example">(regexp-opt
+     '(&quot;ccname_alloc&quot;
+       &quot;ccname_delete&quot;
+       &quot;ccname_final&quot;
+       &quot;ccname_iface_method&quot;
+       &quot;ccname_iface_method_type&quot;
+       &quot;ccname_iface_new&quot;
+       &quot;ccname_iface_table&quot;
+       &quot;ccname_iface_table_type&quot;
+       &quot;ccname_init&quot;
+       &quot;ccname_method&quot;
+       &quot;ccname_method_type&quot;
+       &quot;ccname_new&quot;
+       &quot;ccname_release&quot;
+       &quot;ccname_table&quot;
+       &quot;ccname_table_type&quot;)
+     'symbols)
+</pre></div>
+
+<p><em>Et voil&agrave;!</em>  Everything works!  Most likely, in future, I will further develop and refine
+this regular expression.
+</p>
+
+<a name="Problem_003a-how-do-I-configure-syntax-highlighting_003f"></a>
+<h3 class="unnumberedsec">Problem: how do I configure syntax highlighting?</h3>
+
+
+<p>Nowadays every source code editor has features for <em>syntax highlighting</em>, or <em>font
+locking</em> in <em><acronym>GNU</acronym> Emacs</em> jargon.  My current, imperfect, setup, loaded from <samp>.emacs</samp>, is
+this:
+</p>
+<div class="example">
+<pre class="example">(defconst my-ccnames-macros
+  (eval-when-compile
+    (regexp-opt
+     '(&quot;ccname_alloc&quot;
+       &quot;ccname_delete&quot;
+       &quot;ccname_final&quot;
+       &quot;ccname_iface_method&quot;
+       &quot;ccname_iface_method_type&quot;
+       &quot;ccname_iface_new&quot;
+       &quot;ccname_iface_table&quot;
+       &quot;ccname_iface_table_type&quot;
+       &quot;ccname_init&quot;
+       &quot;ccname_method&quot;
+       &quot;ccname_method_type&quot;
+       &quot;ccname_new&quot;
+       &quot;ccname_release&quot;
+       &quot;ccname_table&quot;
+       &quot;ccname_table_type&quot;)
+     'symbols)))
+
+;;We perform this call to  `font-lock-add-keywords' at the top-level, so
+;;the configuration is done only once at file-loading time.
+;;
+(font-lock-add-keywords
+    ;;This  argument  MODE is  set  to  `c-mode'  because this  call  is
+    ;;performed   at   the   top-level.   See   the   documentation   of
+    ;;`font-lock-add-keywords' for details.
+    'c-mode
+
+  ;;Here we need  to remember that &quot;(regexp-opt  ... 'symbols)&quot; encloses
+  ;;the generated regular expression between  '\_&lt;\(' and '\)\_&gt;' so the
+  ;;SUBEXP number must be 1 to match the actual symbol.
+  ;;
+  `(...
+    ;;Abuse the keyword face to fontify some CCNames macro names.
+    ;;
+    ;;We  use t  as OVERRIDE  argument to  override an  already existent
+    ;;fontification with this specification.
+    (,my-ccnames-macros 1 font-lock-keyword-face t)
+    ...)
+
+  ;;This  true value  as HOW  argument causes  this specification  to be
+  ;;appended to the value of `font-lock-keywords'.
+  ;;
+  ;;We need it  to allow correct fontification of  known function names,
+  ;;which must happen after the fontification built into `c-mode'.
+  t)
+</pre></div>
+
+<p>This needs further development, and coordination with other fontification specifications I use for C
+mode.
+</p>
+
+<a name="Problem_003a-error-messages-become-very-messy"></a>
+<h3 class="unnumberedsec">Problem: error messages become very messy</h3>
+
+
+<p>There is really nothing we can do about this!
+</p>
+
+<a name="Achievement_003a-less-identifiers-to-remember_002e-Problem_003a-more-positional-arguments-to-remember"></a>
+<h3 class="unnumberedsec">Achievement: less identifiers to remember.  Problem: more positional arguments to remember</h3>
+
+
+<p>What is the cognitive load required to write an read code like this?  Less or more than plain C?  I
+have no answer yet.
+</p>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="Documentation-License.html#Documentation-License" accesskey="n" rel="next">Documentation License</a>, Previous: <a href="index.html#Top" accesskey="p" rel="prev">Top</a>, Up: <a href="index.html#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="function-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>
