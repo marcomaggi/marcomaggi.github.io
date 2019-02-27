@@ -1,0 +1,166 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.2.0-devel.0 of CCPathnames, a C11 language library
+implementing Unix file system pathnames manipulation functions.
+
+This package supports POSIX platforms.  This package depends on the packages: CCExceptions, at
+least version 0.8.0; CCMemory, at least version 0.2.1;
+CCStructs, at least version 0.2.0.  To run the test suite: this package depends
+upon the package CCTests, at least version 0.3.0.
+
+This package is distributed under the terms of the GNU Lesser General Public License (LGPL).
+
+The latest release can be downloaded from:
+
+https://bitbucket.org/marcomaggi/ccpathnames/downloads
+
+development takes place at:
+
+https://github.com/marcomaggi/ccpathnames
+
+and as backup at:
+
+https://bitbucket.org/marcomaggi/ccpathnames
+
+Copyright (C) 2018-2019 by Marco Maggi marco.maggi-ipsu@poste.it
+
+Permission is granted to copy, distribute and/or modify this document under the terms of the GNU
+Free Documentation License, Version 1.3 or any later version published by the Free Software
+Foundation; with Invariant Sections being "GNU Free Documentation License" and "GNU General
+Public License", no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license is
+included in the section entitled "GNU Free Documentation License". -->
+<!-- Created by GNU Texinfo 6.6, http://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>components extensions (CCPathnames)</title>
+
+<meta name="description" content="components extensions (CCPathnames)">
+<meta name="keywords" content="components extensions (CCPathnames)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="type-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="components.html#components" rel="up" title="components">
+<link href="components-rootnames.html#components-rootnames" rel="next" title="components rootnames">
+<link href="components.html#components" rel="prev" title="components">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<span id="components-extensions"></span><div class="header">
+<p>
+Next: <a href="components-rootnames.html#components-rootnames" accesskey="n" rel="next">components rootnames</a>, Up: <a href="components.html#components" accesskey="u" rel="up">components</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<span id="Extracting-pathname-extensions"></span><h3 class="section">11.1 Extracting pathname extensions</h3>
+
+
+<p>An <em>extension</em> is the last portion of the last segment in an input pathname following the last
+dot, but only if it is not the whole segment.  Examples:
+</p>
+<div class="example">
+<pre class="example">&quot;/path/to/file.ext&quot;     &rArr; &quot;.ext&quot;
+&quot;/path/to/file&quot;         &rArr; &quot;&quot;
+&quot;/path/to/dir/&quot;         &rArr; &quot;&quot;
+&quot;/path/to/dir.ext/&quot;     &rArr; &quot;.ext&quot;
+&quot;file.ext&quot;              &rArr; &quot;.ext&quot;
+&quot;.fvwmrc&quot;               &rArr; &quot;&quot;
+&quot;.&quot;                     &rArr; &quot;&quot;
+&quot;..&quot;                    &rArr; &quot;&quot;
+&quot;/&quot;                     &rArr; &quot;&quot;
+</pre></div>
+
+<p>Extension extraction is possible only for an input pathname that has been previously normalised; if
+the input is not normalised: the functions below will raise an exception of type
+<code>ccptn_condition_normalised_pathname_t</code>.
+</p>
+
+<dl>
+<dt id="index-ccptn_005fextension_005ft">Struct Typedef: <strong>ccptn_extension_t</strong></dt>
+<dd><p>Type of <code>struct</code> representing the extension of a segment in a pathname; this <code>struct</code> does
+<strong>not</strong> own the referenced memory.  Given the pathname:
+</p>
+<div class="example">
+<pre class="example">/path/to/file.ext
+</pre></div>
+
+<p>the last segment is the string &lsquo;<samp>file.ext</samp>&rsquo; and its extension is the string &lsquo;<samp>.ext</samp>&rsquo;,
+<strong>including</strong> the leading dot.
+</p>
+<p>This type has the following fields:
+</p>
+<dl compact="compact">
+<dt><code>size_t len</code></dt>
+<dd><p>The number of octets in the <code>ptr</code> array representing the extension in a pathname&rsquo;s segment.
+</p>
+</dd>
+<dt><code>char const * ptr</code></dt>
+<dd><p>Pointer to the first octet in an <acronym>ASCII</acronym> string representing a pathname&rsquo;s segment&rsquo;s extension.  In
+general this string is <strong>not</strong> zero terminated.
+</p></dd>
+</dl>
+</dd></dl>
+
+
+<dl>
+<dt id="index-ccptn_005fextension">Function: <em>ccptn_extension_t</em> <strong>ccptn_extension</strong> <em>(cce_destination_t <var>L</var>, ccptn_t const * <var>P</var>)</em></dt>
+<dd><p>Find the extension of the last segment in the input pathname referenced by <var>P</var> and return an
+instance of <code>ccptn_extension_t</code> representing it; the returned value references the section
+of data in the input pathname and so it is valid data only while the input pathname exists.  If an
+error occurs: raise an exception by performing a non&ndash;local exit to <var>L</var>.
+</p>
+<p>If the input pathname has no extension: the returned value represents the empty string by having the
+length field to zero, while the pointer field references the terminating zero in the <acronym>ASCIIZ</acronym>
+representation of the input pathname.
+</p></dd></dl>
+
+
+<dl>
+<dt id="index-ccptn_005fextension_005fis_005fempty">Function: <em>bool</em> <strong>ccptn_extension_is_empty</strong> <em>(ccptn_extension_t <var>E</var>)</em></dt>
+<dd><p>Return <code>true</code> if <var>E</var> is empty; otherwise return <code>false</code>.
+</p></dd></dl>
+
+
+<dl>
+<dt id="index-ccptn_005fextension_005fequal">Function: <em>bool</em> <strong>ccptn_extension_equal</strong> <em>(ccptn_extension_t <var>E1</var>, ccptn_extension_t <var>E2</var>)</em></dt>
+<dd><p>Return <code>true</code> if the extensions are equal octet by octet; otherwise return <code>false</code>.
+</p></dd></dl>
+
+
+<dl>
+<dt id="index-ccptn_005fextension_005ffwrite">Function: <em>void</em> <strong>ccptn_extension_fwrite</strong> <em>(cce_destination_t <var>L</var>, FILE * <var>stream</var>, ccptn_extension_t <var>E</var>)</em></dt>
+<dd><p>Print the extension to <var>stream</var>; do not flush the stream.  If an error occurs: raise an
+exception by performing a non&ndash;local exit to <var>L</var>.
+</p></dd></dl>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="components-rootnames.html#components-rootnames" accesskey="n" rel="next">components rootnames</a>, Up: <a href="components.html#components" accesskey="u" rel="up">components</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+<p>This document describes version <tt>0.2.0-devel.0</tt> of <em>CCPathnames</em>.</p>
+</body>
+</html>
