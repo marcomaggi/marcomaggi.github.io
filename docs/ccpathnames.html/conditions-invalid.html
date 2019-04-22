@@ -1,12 +1,12 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
-<!-- This document describes version 0.2.0-devel.0 of CCPathnames, a C11 language library
+<!-- This document describes version 0.3.0-devel.1 of CCPathnames, a C11 language library
 implementing Unix file system pathnames manipulation functions.
 
 This package supports POSIX platforms.  This package depends on the packages: CCExceptions, at
-least version 0.8.0; CCMemory, at least version 0.2.1;
-CCStructs, at least version 0.2.0.  To run the test suite: this package depends
-upon the package CCTests, at least version 0.3.0.
+least version 0.9.0; CCMemory, at least version 0.2.1;
+CCStructs, at least version 0.3.0.  To run the test suite: this package depends
+upon the package CCTests, at least version 0.4.1.
 
 This package is distributed under the terms of the GNU Lesser General Public License (LGPL).
 
@@ -79,21 +79,17 @@ Next: <a href="conditions-length.html#conditions-length" accesskey="n" rel="next
 <p>The <em>invalid pathname exceptional&ndash;condition object&ndash;type</em> has the purpose of describing an
 exceptional condition caused by attempting to use an invalid pathname.
 </p>
-<p>There should be only one <em>invalid pathname</em> exceptional&ndash;condition object: the one predefined
-by CCPathnames.  Subtyping from this object&ndash;type is allowed.
-</p>
 <p>All the following definitions are accessible from the header file <samp>ccpathnames.h</samp>.
 </p>
 
 <dl>
 <dt id="index-ccptn_005fdescriptor_005finvalid_005fpathname_005ft">Struct Typedef: <strong>ccptn_descriptor_invalid_pathname_t</strong></dt>
-<dd><p>Structure type representing the descriptor for <em>invalid pathname</em> exceptional&ndash;condition
-objects.  This descriptor has <code>cce_descriptor_runtime_error_t</code> as parent descriptor.  It has
-the following public fields:
+<dd><p>Structure type representing the exceptional&ndash;condition object&ndash;type descriptor.  This descriptor has
+the descriptor <code>cce_descriptor_runtime_error_t</code> as parent.  It has the following public fields:
 </p>
 <dl compact="compact">
 <dt><code>cce_descriptor_t descriptor</code></dt>
-<dd><p>Core values for the exceptional&ndash;condition object&ndash;type.
+<dd><p>Core values of the exceptional&ndash;condition object&ndash;type descriptor.
 </p></dd>
 </dl>
 </dd></dl>
@@ -101,8 +97,8 @@ the following public fields:
 
 <dl>
 <dt id="index-ccptn_005fcondition_005finvalid_005fpathname_005ft">Struct Typedef: <strong>ccptn_condition_invalid_pathname_t</strong></dt>
-<dd><p>Structure type representing an <em>invalid pathname</em> exceptional&ndash;condition object.  It has the
-following public fields:
+<dd><p>Type of data structure representing an exceptional&ndash;condition object.  It has the following public
+fields:
 </p>
 <dl compact="compact">
 <dt><code>cce_condition_runtime_error_t runtime_error</code></dt>
@@ -113,23 +109,39 @@ following public fields:
 
 
 <dl>
-<dt id="index-ccptn_005fcondition_005finit_005finvalid_005fpathname">Function: <em>void</em> <strong>ccptn_condition_init_invalid_pathname</strong> <em>(ccptn_condition_invalid_pathname_t * <var>C</var>)</em></dt>
-<dd><p>Initialise an already allocated exceptional&ndash;condition object.  This function exists to allow
-sub&ndash;typing from <code>ccptn_condition_invalid_pathname_t</code>.
-</p></dd></dl>
-
-
-<dl>
 <dt id="index-ccptn_005fcondition_005fnew_005finvalid_005fpathname">Function: <em>cce_condition_t const *</em> <strong>ccptn_condition_new_invalid_pathname</strong> <em>(void)</em></dt>
-<dd><p>Return a pointer to the statically allocated structure representing the single <em>invalid
-pathname</em> exceptional&ndash;condition object.
+<dd><p>Return a pointer to a newly built exceptional&ndash;condition object of type
+<code>ccptn_condition_invalid_pathname_t</code>.
 </p></dd></dl>
 
 
 <dl>
 <dt id="index-ccptn_005fcondition_005fis_005finvalid_005fpathname">Function: <em>bool</em> <strong>ccptn_condition_is_invalid_pathname</strong> <em>(cce_condition_t const * <var>C</var>)</em></dt>
-<dd><p>Return <code>true</code> if <var>C</var> is an <em>invalid pathname</em> exceptional&ndash;condition object; otherwise
-return <code>false</code>.
+<dd><p>Return <code>true</code> if the exceptional&ndash;condition object referenced by <var>C</var> is of type
+<code>ccptn_condition_invalid_pathname_t</code> or it is derived from it; otherwise return
+<code>false</code>.
+</p></dd></dl>
+
+
+<span id="Facilities-to-derive-an-exceptional_002d_002dcondition-object-subtype"></span><h4 class="subsubheading">Facilities to derive an exceptional&ndash;condition object subtype</h4>
+
+<p>When deriving a subtype from <code>ccptn_condition_invalid_pathname_t</code> we need the
+following functions.
+</p>
+
+<dl>
+<dt id="index-cce_005fdescriptor_005fset_005fparent_005fto_0028ccptn_005fdescriptor_005finvalid_005fpathname_005ft_0029">Function: <em>void</em> <strong>cce_descriptor_set_parent_to(ccptn_descriptor_invalid_pathname_t)</strong> <em>(cce_descriptor_t * <var>D</var>)</em></dt>
+<dd><p>Mutate the exceptional&ndash;condition object&ndash;type descriptor referenced by <var>D</var> so that its parent
+is the descriptor of <code>ccptn_descriptor_invalid_pathname_t</code>.  We should call this function
+in the initialisation module of the derived type.
+</p></dd></dl>
+
+
+<dl>
+<dt id="index-ccptn_005fcondition_005finit_005finvalid_005fpathname">Function: <em>void</em> <strong>ccptn_condition_init_invalid_pathname</strong> <em>(cce_destination_t <var>L</var>, ccptn_condition_invalid_pathname_t * <var>C</var>)</em></dt>
+<dd><p>Initialise an already allocated exceptional&ndash;condition object.  We should call this function from
+the initialisation function of the derived type.  If an error occurs: raise an exception by
+performing a non&ndash;local exit to <var>L</var>.
 </p></dd></dl>
 
 <hr>
@@ -139,6 +151,6 @@ Next: <a href="conditions-length.html#conditions-length" accesskey="n" rel="next
 </div>
 
 
-<p>This document describes version <tt>0.2.0-devel.0</tt> of <em>CCPathnames</em>.</p>
+<p>This document describes version <tt>0.3.0-devel.1</tt> of <em>CCPathnames</em>.</p>
 </body>
 </html>
