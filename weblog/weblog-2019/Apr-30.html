@@ -1,0 +1,196 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- Copyright (C) 2019 by Marco Maggi marco.maggi-ipsu@poste.it
+
+Permission is granted to copy, distribute and/or modify this document under the terms of the gnu
+Free Documentation License, Version 1.3 or any later version published by the Free Software
+Foundation; with Invariant Sections being "gnu Free Documentation License" and "gnu General
+Public License", no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license is
+included in the section entitled "gnu Free Documentation License". -->
+<!-- Created by GNU Texinfo 6.6, http://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<title>Apr 30 (Marco&rsquo;s 2019 Weblog)</title>
+
+<meta name="description" content="Apr 30 (Marco&rsquo;s 2019 Weblog)">
+<meta name="keywords" content="Apr 30 (Marco&rsquo;s 2019 Weblog)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="function-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="index.html#Top" rel="up" title="Top">
+<link href="Apr-08.html#Apr-08" rel="next" title="Apr 08">
+<link href="index.html#Top" rel="prev" title="Top">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="weblog.css">
+
+
+</head>
+
+<body lang="en">
+<span id="Apr-30"></span><div class="header">
+<p>
+Next: <a href="Apr-08.html#Apr-08" accesskey="n" rel="next">Apr 08</a>, Previous: <a href="index.html#Top" accesskey="p" rel="prev">Top</a>, Up: <a href="index.html#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="function-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<span id="Musings-on-Scheme_002c-CHICKEN_002c-and-a-hypothetical-language"></span><h2 class="unnumbered">Musings on Scheme, <small>CHICKEN</small>, and a hypothetical language</h2>
+
+
+<p><em>Posted on Tue Apr 30, 2019</em>
+</p>
+
+<p>I have ported some old Scheme code under <a href="http://www.call-cc.org/"><small>CHICKEN</small></a>.  The result is
+a small set of packages: <a href="https://github.com/marcomaggi/mmck-checks"><small>MMCK</small> Checks</a>;
+<a href="https://github.com/marcomaggi/mmck-fectors"><small>MMCK</small> Fectors</a>;
+<a href="https://github.com/marcomaggi/mmck-pfds"><small>MMCK</small> PFDS</a>, which is still under development.  It
+was somewhat fun; I still enjoy reorganising code.
+</p>
+<p>I&rsquo;m making little progress understanding <small>CHICKEN</small>&rsquo;s programming features and ecosystem.  Native
+executables and shared libraries are good, but I notice that they are somewhat bigger in file size
+that I thought; not really a problem (being that I am used to the huge files of
+<a href="https://github.com/marcomaggi/vicare/">Vicare</a>), but still I wonder what&rsquo;s in there to make
+binary code so big.
+</p>
+<p>I&rsquo;m starting to get the hang of exceptional&ndash;condition handling and exceptional&ndash;condition objects;
+I can confirm my first impression: I do not like it.  The handlers and condition objects defined by
+<a href="http://www.r6rs.org/"><acronym>r6rs</acronym></a> are better in my humble opinion; and maybe I&rsquo;m not the only
+one.  In the small amount of <small>CHICKEN</small> code I have seen so far, written by people with much more
+experience than myself, there is very little design of exceptional&ndash;condition object&ndash;types; mostly,
+there is just a raw <code>error</code> call in which the exception description is the message string: not
+an object we can use programmatically to react differently to different error kinds.
+</p>
+<p>So far, the one <small>CHICKEN</small> <a href="http://wiki.call-cc.org/chicken-projects/egg-index-5.html">egg</a> I
+cannot live without is <small>COOPS</small>: a library implementing <small>CLOS</small>&ndash;like language extensions.  It
+is incomplete, more metaobject protocol must be implemented.  Its documentation is ugly and
+incomplete.  It is based upon <a href="http://www.ccs.neu.edu/home/dorai/scmobj/scmobj.html">ScmObj</a> by
+Dorai Sitaram, a code base I know because I, too, have used it as base to implement extensions for
+Vicare.
+</p>
+<p>In the past, when approaching new Scheme implementations, I built a library of language extensions
+to adapt the programming environment to my needs; I will try the same with <small>CHICKEN</small> and see what
+will happen.
+</p>
+
+<span id="How-a-statically-typed-Scheme-language-could-look"></span><h4 class="subsubheading">How a statically typed Scheme language could look</h4>
+
+
+<p>Lately I&rsquo;ve been thinking about how a statically typed Scheme language could be implemented to suit
+my taste.  Would it still be a &ldquo;Scheme&rdquo; language, or would it be a non&ndash;Scheme dialect of Lisp?
+Maybe the latter.
+</p>
+<p>Let&rsquo;s consider the function <code>string-&gt;number</code> as defined by <acronym>r6rs</acronym>:
+</p>
+<div class="lisp">
+<pre class="lisp">(string-&gt;number &quot;123&quot;)  &rArr; 123
+(string-&gt;number &quot;ciao&quot;) &rArr; #f
+</pre></div>
+
+<p>this behaviour allows us to write a typical Scheme idiom:
+</p>
+<div class="lisp">
+<pre class="lisp">(or (string-&gt;number arg)
+    (raise-an-error))
+</pre></div>
+
+<p>A type signature for this function would be something like:
+</p>
+<div class="lisp">
+<pre class="lisp">(&lt;string&gt;) -&gt; (or &lt;number&gt; &lt;false&gt;)
+</pre></div>
+
+<p>no exception is raised if the argument is not a number.  I do not like this complex type signature:
+I want a single, known, type for each argument and each return value.  But then the typical Scheme
+idiom above would not be possible.
+</p>
+<p>How would one implement <code>string-&gt;number</code> then?  The simpler way would be to raise an exception:
+</p>
+<div class="lisp">
+<pre class="lisp">(try
+   (let* ((arg (do-this-thing))
+          (num (string-&gt;number arg)))
+     (do-that-thing))
+  (catch E
+    ((&amp;string-does-not-represent-a-number)
+     (react-this-way))
+    (else
+     (react-that-way))))
+</pre></div>
+
+<p>nowadays every programmer can understand this code, even if he/she is not a Scheme adept.  A problem
+with raising exceptions is that it is hard to distinguish the form that raised the exception: which
+chunk of code inside the body raised <code>&amp;string-does-not-represent-a-number</code>?
+</p>
+<p>A more general design is to hand an escape function as second argument: if the input string cannot
+be converted to a string, <code>string-&gt;number</code> calls the escape function, let&rsquo;s say with no
+arguments:
+</p>
+<div class="lisp">
+<pre class="lisp">(with-escape-handlers
+   (let* ((arg (do-this-thing))
+          (num (string-&gt;number arg escape-string-conversion)))
+     (do-that-thing))
+  ((escape-string-conversion)
+   (react-this-way)))
+</pre></div>
+
+<p>we can imagine the syntax <code>with-escape-handlers</code> to expand into something like (untested):
+</p>
+<div class="lisp">
+<pre class="lisp">(call/cc
+    (lambda (return)
+      (call/cc
+          (lambda (escape-string-conversion)
+            (let* ((arg (do-this-thing))
+                   (num (string-&gt;number arg escape-string-conversion)))
+              (return (do-that-thing)))))
+      (react-this-way)))
+</pre></div>
+
+<p>not easy to understand if you are not into Scheme; somewhat messy, when multiple functions can call
+multiple escape functions; very general because each form inside the body of
+<code>with-escape-handlers</code> can cause the execution flow to branch into a different execution
+path, but still multiple forms can call the same escape function.
+</p>
+<p>An even more general design is to hand a continuation function as second argument:
+</p>
+<div class="lisp">
+<pre class="lisp">(let* ((arg (do-this-thing))
+       (num (string-&gt;number arg (lambda (exception-object)
+                                  (react-this-way)))))
+  (do-that-thing))
+</pre></div>
+
+<p>and <code>string-&gt;number</code> should tail&ndash;call its continuation if a conversion error occurs.
+Weird&hellip;
+</p>
+<p>Enough for today.
+</p>
+<hr>
+<div class="header">
+<p>
+Next: <a href="Apr-08.html#Apr-08" accesskey="n" rel="next">Apr 08</a>, Previous: <a href="index.html#Top" accesskey="p" rel="prev">Top</a>, Up: <a href="index.html#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="function-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>
