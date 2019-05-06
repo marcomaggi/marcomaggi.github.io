@@ -1,0 +1,267 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.4.0-devel.0 of CRE2, a C
+language wrapper for the C++ library RE2: a fast, safe, thread-friendly
+alternative to backtracking regular expression engines like those used
+in PCRE, Perl, and Python.
+
+The latest release can be downloaded from:
+
+https://bitbucket.org/marcomaggi/cre2/downloads
+
+development takes place at:
+
+https://github.com/marcomaggi/cre2
+
+and as backup at:
+
+https://bitbucket.org/marcomaggi/cre2
+
+Copyright (C) 2012, 2013, 2015, 2016, 2017 by Marco Maggi http://github.com/marcomaggi
+
+Copyright (C) 2011 by Keegan McAllister http://github.com/kmcallister/
+
+Portions of this document come from the source code of RE2 itself, see
+the file LICENSE.re2 for the license notice.
+
+Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.3 or
+any later version published by the Free Software Foundation; with
+Invariant Sections being "GNU Free Documentation License" and
+"GNU General Public License", no Front-Cover Texts, and no
+Back-Cover Texts.  A copy of the license is included in the section
+entitled "GNU Free Documentation License". -->
+<!-- Created by GNU Texinfo 6.6, http://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>regexps groups (C wrapper for RE2)</title>
+
+<meta name="description" content="regexps groups (C wrapper for RE2)">
+<meta name="keywords" content="regexps groups (C wrapper for RE2)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="type-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="regexps.html#regexps" rel="up" title="regexps">
+<link href="regexps-errors.html#regexps-errors" rel="next" title="regexps errors">
+<link href="regexps-inspection.html#regexps-inspection" rel="prev" title="regexps inspection">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<span id="regexps-groups"></span><div class="header">
+<p>
+Next: <a href="regexps-errors.html#regexps-errors" accesskey="n" rel="next">regexps errors</a>, Previous: <a href="regexps-inspection.html#regexps-inspection" accesskey="p" rel="prev">regexps inspection</a>, Up: <a href="regexps.html#regexps" accesskey="u" rel="up">regexps</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<span id="Inspecting-named-capturing-groups"></span><h3 class="section">3.4 Inspecting named capturing groups</h3>
+
+
+<dl>
+<dt id="index-cre2_005fnum_005fcapturing_005fgroups">Function: <em>int</em> <strong>cre2_num_capturing_groups</strong> <em>(const cre2_regexp_t * <var>rex</var>)</em></dt>
+<dd><p>If <var>rex</var> is a successfully built regular expression object: return a
+non&ndash;negative integer representing the number of capturing groups
+(parenthetical subexpressions) in the pattern.  If an error occurred
+while building <var>rex</var>: return <code>-1</code>.
+</p></dd></dl>
+
+
+<dl>
+<dt id="index-cre2_005ffind_005fnamed_005fcapturing_005fgroups">Function: <em>int</em> <strong>cre2_find_named_capturing_groups</strong> <em>(const cre2_regexp_t * <var>rex</var>, const char * <var>name</var>)</em></dt>
+<dd><p>If <var>rex</var> is a successfully built regular expression object: return a non&ndash;negative integer
+representing the index of the named capturing group whose name is <var>name</var>.  If an error occurred
+while building <var>rex</var> or the name is invalid: return <code>-1</code>.
+</p>
+<div class="example">
+<pre class="example">const char *      pattern = &quot;from (?P&lt;S&gt;.*) to (?P&lt;D&gt;.*)&quot;;
+cre2_options_t *  opt     = cre2_opt_new();
+cre2_regexp_t *   rex     = cre2_new(pattern, strlen(pattern),
+                                     opt);
+{
+  if (cre2_error_code(rex))
+    { /* handle the error */ }
+  int nmatch = cre2_num_capturing_groups(rex) + 1;
+  cre2_string_t strings[nmatch];
+  int e, SIndex, DIndex;
+
+  const char * text = \
+     &quot;from Montreal, Canada to Lausanne, Switzerland&quot;;
+  int text_len = strlen(text);
+
+  e = cre2_match(rex, text, text_len, 0, text_len,
+                 CRE2_UNANCHORED, strings, nmatch);
+  if (0 == e)
+    { /* handle the error */ }
+
+  SIndex = cre2_find_named_capturing_groups(rex, &quot;S&quot;);
+  if (0 != strncmp(&quot;Montreal, Canada&quot;,
+                   strings[SIndex].data, strings[SIndex].length))
+    { /* handle the error */ }
+
+  DIndex = cre2_find_named_capturing_groups(rex, &quot;D&quot;);
+  if (0 != strncmp(&quot;Lausanne, Switzerland&quot;,
+                   strings[DIndex].data, strings[DIndex].length))
+    { /* handle the error */ }
+}
+cre2_delete(rex);
+cre2_opt_delete(opt);
+</pre></div>
+</dd></dl>
+
+
+<span id="Iterating-over-named-capturing-groups"></span><h4 class="subsubheading">Iterating over named capturing groups</h4>
+
+
+<dl>
+<dt id="index-cre2_005fnamed_005fgroups_005fiter_005fnew">Function: <em>cre2_named_groups_iter_t *</em> <strong>cre2_named_groups_iter_new</strong> <em>(const cre2_regexp_t * <var>re</var>)</em></dt>
+<dd><p>Build and return a new named capturing groups iterator.
+</p></dd></dl>
+
+
+<dl>
+<dt id="index-cre2_005fnamed_005fgroups_005fiter_005fdelete">Function: <em>void</em> <strong>cre2_named_groups_iter_delete</strong> <em>(cre2_named_groups_iter_t * <var>iter</var>)</em></dt>
+<dd><p>Finalise and delete a named capturing groups iterator.
+</p></dd></dl>
+
+
+<dl>
+<dt id="index-cre2_005fnamed_005fgroups_005fiter_005fnext">Function: <em>bool</em> <strong>cre2_named_groups_iter_next</strong> <em>(cre2_named_groups_iter_t * <var>iter</var>, const char ** <var>namep</var>, int * <var>indexp</var>)</em></dt>
+<dd><p>Search the next named capturing group.
+</p>
+<p>When a group is found: return <code>true</code>; store in the variable referenced by <var>namep</var> a pointer to
+the string representing the name; store in the variable referenced by <var>indexp</var> an integer
+representing the index of the capturing group.
+</p>
+<p>When no more groups are present: return <code>false</code>; store <code>NULL</code> in the variable referenced by
+<var>namep</var>; store &lsquo;<samp>-1</samp>&rsquo; in the variable referenced by <var>indexp</var>.
+</p></dd></dl>
+
+
+<p>As example, let&rsquo;s see this:
+</p>
+<div class="example">
+<pre class="example">cre2_regexp_t               * rex  = NULL;
+cre2_named_groups_iter_t    * iter = NULL;
+
+const char rex_pattern[] = &quot;\
+January:[[:blank:]]+(?P&lt;january&gt;[[:digit:]]+)\n\
+February:[[:blank:]]+(?P&lt;january&gt;[[:digit:]]+)\n\
+March:[[:blank:]]+(?P&lt;march&gt;[[:digit:]]+)\n\
+April:[[:blank:]]+(?P&lt;april&gt;[[:digit:]]+)\n\
+May:[[:blank:]]+(?P&lt;may&gt;[[:digit:]]+)\n\
+June:[[:blank:]]+(?P&lt;june&gt;[[:digit:]]+)\n\
+July:[[:blank:]]+(?P&lt;july&gt;[[:digit:]]+)\n\
+August:[[:blank:]]+(?P&lt;august&gt;[[:digit:]]+)\n\
+September:[[:blank:]]+(?P&lt;september&gt;[[:digit:]]+)\n\
+October:[[:blank:]]+(?P&lt;october&gt;[[:digit:]]+)\n\
+November:[[:blank:]]+(?P&lt;november&gt;[[:digit:]]+)\n\
+December:[[:blank:]]+(?P&lt;december&gt;[[:digit:]]+)\n&quot;;
+
+const char *   text     = &quot;\
+January: 8\n\
+February: 3\n\
+March: 3\n\
+April: 4\n\
+May: 9\n\
+June: 4\n\
+July: 7\n\
+August: 5\n\
+September: 9\n\
+October: 2\n\
+November: 1\n\
+December: 6\n&quot;;
+int            text_len = strlen(text);
+
+int            rv;
+int            nmatch = 20;
+cre2_string_t  match[nmatch];
+
+/* Let's build the regular expression. */
+rex  = cre2_new(rex_pattern, strlen(rex_pattern), NULL);
+if (!rex) {
+  goto done;
+}
+if (cre2_error_code(rex)) {
+  goto done;
+}
+
+/* Now match the pattern. */
+rv = cre2_match(rex, text, text_len, 0, text_len,
+                CRE2_ANCHOR_BOTH, match, nmatch);
+if (! rv) {
+  goto done;
+}
+
+/* Build the named groups iterator. */
+iter = cre2_named_groups_iter_new(rex);
+if (!iter) {
+  goto done;
+}
+
+/* Perform the iteration. */
+{
+  char const *name;
+  int        index;
+
+  while (cre2_named_groups_iter_next(iter, &amp;name, &amp;index)) {
+    printf(&quot;group: %d, %s\n&quot;, index, name);
+  }
+}
+
+/* Final cleanup. */
+done:
+if (iter) {
+  cre2_named_groups_iter_delete(iter);
+}
+if (rex) {
+  cre2_delete(rex);
+}
+</pre></div>
+
+<p>this code prints:
+</p>
+<div class="example">
+<pre class="example">group: 4, april
+group: 8, august
+group: 12, december
+group: 1, january
+group: 7, july
+group: 6, june
+group: 3, march
+group: 5, may
+group: 11, november
+group: 10, october
+group: 9, september
+</pre></div>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="regexps-errors.html#regexps-errors" accesskey="n" rel="next">regexps errors</a>, Previous: <a href="regexps-inspection.html#regexps-inspection" accesskey="p" rel="prev">regexps inspection</a>, Up: <a href="regexps.html#regexps" accesskey="u" rel="up">regexps</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+<p>This document describes version <tt>0.4.0-devel.0</tt> of <em>CRE2</em>.</p>
+</body>
+</html>

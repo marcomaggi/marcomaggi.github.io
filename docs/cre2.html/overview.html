@@ -1,0 +1,166 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.4.0-devel.0 of CRE2, a C
+language wrapper for the C++ library RE2: a fast, safe, thread-friendly
+alternative to backtracking regular expression engines like those used
+in PCRE, Perl, and Python.
+
+The latest release can be downloaded from:
+
+https://bitbucket.org/marcomaggi/cre2/downloads
+
+development takes place at:
+
+https://github.com/marcomaggi/cre2
+
+and as backup at:
+
+https://bitbucket.org/marcomaggi/cre2
+
+Copyright (C) 2012, 2013, 2015, 2016, 2017 by Marco Maggi http://github.com/marcomaggi
+
+Copyright (C) 2011 by Keegan McAllister http://github.com/kmcallister/
+
+Portions of this document come from the source code of RE2 itself, see
+the file LICENSE.re2 for the license notice.
+
+Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.3 or
+any later version published by the Free Software Foundation; with
+Invariant Sections being "GNU Free Documentation License" and
+"GNU General Public License", no Front-Cover Texts, and no
+Back-Cover Texts.  A copy of the license is included in the section
+entitled "GNU Free Documentation License". -->
+<!-- Created by GNU Texinfo 6.6, http://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>overview (C wrapper for RE2)</title>
+
+<meta name="description" content="overview (C wrapper for RE2)">
+<meta name="keywords" content="overview (C wrapper for RE2)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="type-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="index.html#Top" rel="up" title="Top">
+<link href="overview-linking.html#overview-linking" rel="next" title="overview linking">
+<link href="index.html#Top" rel="prev" title="Top">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<span id="overview"></span><div class="header">
+<p>
+Next: <a href="version.html#version" accesskey="n" rel="next">version</a>, Previous: <a href="index.html#Top" accesskey="p" rel="prev">Top</a>, Up: <a href="index.html#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<span id="Overview-of-the-package"></span><h2 class="chapter">1 Overview of the package</h2>
+
+
+<p>CRE2 is a C language wrapper for the C++ library RE2: a fast,
+safe, thread&ndash;friendly alternative to backtracking regular expression
+engines like those used in PCRE, Perl, and Python.  CRE2 is
+based on code by Keegan McAllister for the <code>haskell-re2</code> binding:
+</p>
+<div align="center"><a href="http://github.com/kmcallister/haskell-re2">http://github.com/kmcallister/haskell-re2</a>
+</div>
+<p>For the supported regular expressions syntax we should refer to the
+original documentation:
+</p>
+<div align="center"><a href="https://github.com/google/re2/wiki/Syntax">https://github.com/google/re2/wiki/Syntax</a>
+</div>
+<p>The C wrapper is meant to make it easier to interface RE2 with other
+languages.  The exposed <acronym>API</acronym> allows searching for substrings of text
+matching regular expressions and reporting portions of text matching
+parenthetical subexpressions.
+</p>
+<p>CRE2 installs the single header file <samp>cre2.h</samp>.  All the
+function names in the <acronym>API</acronym> are prefixed with <code>cre2_</code>; all the
+constant names are prefixed with <code>CRE2_</code>; all the type names are
+prefixed with <code>cre2_</code> and suffixed with <code>_t</code>.
+</p>
+<p>It is customary for regular expression engines to provide methods to
+replace backslash sequences like <code>\1</code>, <code>\2</code>, &hellip; in a
+given string with portions of text that matched the first, second,
+&hellip; parenthetical subexpression; CRE2 does <strong>not</strong>
+provide such methods in its public <acronym>API</acronym>, because they require
+interacting with the storage mechanism in the client code.  However, it
+is not difficult to implement such substitutions given the results of a
+regular expression matching operation.
+</p>
+<p>Some functions and methods from RE2 requiring memory allocation handling
+are unofficially wrapped by CRE2 with unsafe code (execution
+will succeed when no memory allocation errors happen).  These
+&ldquo;problematic&rdquo; functions are documented in the header file
+<samp>cre2.h</samp> and, at present, are not considered part of the public
+<acronym>API</acronym> of CRE2.
+</p>
+<p>It is sometimes useful to try a program in the original C++ to verify if
+a problem is caused by CRE2 or is in the original RE2 code;
+we may want to start by customising this program:
+</p>
+<div class="example">
+<pre class="example">/* compile and run with:
+
+   $ g++ -pthread -Wall -o proof proof.cpp -lre2 &amp;&amp; ./proof
+*/
+
+#include &lt;re2/re2.h&gt;
+#include &lt;assert.h&gt;
+
+static void try_match (RE2::Options&amp; opt, const char * text);
+
+int
+main (void)
+{
+  RE2::Options opt;
+  opt.set_never_nl(true);
+  try_match(opt, &quot;abcdef&quot;);
+  return 0;
+}
+void
+try_match (RE2::Options&amp; opt, const char * text)
+{
+  RE2 re(&quot;abcdef&quot;, opt);
+  assert(re.ok());
+  assert(RE2::FullMatch(text, re));
+  assert(RE2::PartialMatch(text, re));
+}
+</pre></div>
+
+<table class="menu" border="0" cellspacing="0">
+<tr><td align="left" valign="top">&bull; <a href="overview-linking.html#overview-linking" accesskey="1">overview linking</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Linking code with the library.
+</td></tr>
+</table>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="version.html#version" accesskey="n" rel="next">version</a>, Previous: <a href="index.html#Top" accesskey="p" rel="prev">Top</a>, Up: <a href="index.html#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+<p>This document describes version <tt>0.4.0-devel.0</tt> of <em>CRE2</em>.</p>
+</body>
+</html>

@@ -1,0 +1,209 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.4.0-devel.0 of CRE2, a C
+language wrapper for the C++ library RE2: a fast, safe, thread-friendly
+alternative to backtracking regular expression engines like those used
+in PCRE, Perl, and Python.
+
+The latest release can be downloaded from:
+
+https://bitbucket.org/marcomaggi/cre2/downloads
+
+development takes place at:
+
+https://github.com/marcomaggi/cre2
+
+and as backup at:
+
+https://bitbucket.org/marcomaggi/cre2
+
+Copyright (C) 2012, 2013, 2015, 2016, 2017 by Marco Maggi http://github.com/marcomaggi
+
+Copyright (C) 2011 by Keegan McAllister http://github.com/kmcallister/
+
+Portions of this document come from the source code of RE2 itself, see
+the file LICENSE.re2 for the license notice.
+
+Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.3 or
+any later version published by the Free Software Foundation; with
+Invariant Sections being "GNU Free Documentation License" and
+"GNU General Public License", no Front-Cover Texts, and no
+Back-Cover Texts.  A copy of the license is included in the section
+entitled "GNU Free Documentation License". -->
+<!-- Created by GNU Texinfo 6.6, http://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>matching (C wrapper for RE2)</title>
+
+<meta name="description" content="matching (C wrapper for RE2)">
+<meta name="keywords" content="matching (C wrapper for RE2)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="type-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="index.html#Top" rel="up" title="Top">
+<link href="other.html#other" rel="next" title="other">
+<link href="options.html#options" rel="prev" title="options">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<span id="matching"></span><div class="header">
+<p>
+Next: <a href="other.html#other" accesskey="n" rel="next">other</a>, Previous: <a href="options.html#options" accesskey="p" rel="prev">options</a>, Up: <a href="index.html#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<span id="Matching-regular-expressions"></span><h2 class="chapter">5 Matching regular expressions</h2>
+
+
+<p>Basic pattern matching goes as follows (with error checking omitted):
+</p>
+<div class="example">
+<pre class="example">cre2_regexp_t *   rex;
+cre2_options_t *  opt;
+const char *      pattern = &quot;(ciao) (hello)&quot;;
+
+opt = cre2_opt_new();
+cre2_opt_set_posix_syntax(opt, 1);
+
+rex = cre2_new(pattern, strlen(pattern), opt);
+{
+  const char *   text     = &quot;ciao hello&quot;;
+  int            text_len = strlen(text);
+  int            nmatch   = 3;
+  cre2_string_t  match[nmatch];
+
+  cre2_match(rex, text, text_len, 0, text_len, CRE2_UNANCHORED,
+             match, nmatch);
+
+  /* prints: full match: ciao hello */
+  printf(&quot;full match: &quot;);
+  fwrite(match[0].data, match[0].length, 1, stdout);
+  printf(&quot;\n&quot;);
+
+  /* prints: first group: ciao */
+  printf(&quot;first group: &quot;);
+  fwrite(match[1].data, match[1].length, 1, stdout);
+  printf(&quot;\n&quot;);
+
+  /* prints: second group: hello */
+  printf(&quot;second group: &quot;);
+  fwrite(match[2].data, match[2].length, 1, stdout);
+  printf(&quot;\n&quot;);
+}
+cre2_delete(rex);
+cre2_opt_delete(opt);
+</pre></div>
+
+
+<dl>
+<dt id="index-cre2_005fanchor_005ft">Enumeration Typedef: <strong>cre2_anchor_t</strong></dt>
+<dd><span id="index-CRE2_005fUNANCHORED"></span>
+<span id="index-CRE2_005fANCHOR_005fSTART"></span>
+<span id="index-CRE2_005fANCHOR_005fBOTH"></span>
+<p>Enumeration type for the anchor point of matching operations.  It
+contains the following constants:
+</p>
+<div class="example">
+<pre class="example">CRE2_UNANCHORED
+CRE2_ANCHOR_START
+CRE2_ANCHOR_BOTH
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt id="index-cre2_005fmatch">Function: <em>int</em> <strong>cre2_match</strong> <em>(const cre2_regexp_t * <var>rex</var>, const char * <var>text</var>, int <var>text_len</var>, int <var>start_pos</var>, int <var>end_pos</var>, cre2_anchor_t <var>anchor</var>, cre2_string_t * <var>match</var>, int <var>nmatch</var>)</em></dt>
+<dd><p>Match a substring of the text referenced by <var>text</var> and holding
+<var>text_len</var> bytes against the regular expression object <var>rex</var>.
+Return true if the text matched, false otherwise.
+</p>
+<p>The zero&ndash;based indices <var>start_pos</var> (inclusive) and <var>end_pos</var>
+(exclusive) select the substring of <var>text</var> to be examined.
+<var>anchor</var> selects the anchor point for the matching operation.
+</p>
+<p>Data about the matching groups is stored in the array <var>match</var>, which
+must have at least <var>nmatch</var> entries; the referenced substrings are
+portions of the <var>text</var> buffer.  If we are only interested in
+verifying if the text matches or not (ignoring the matching portions of
+text): we can use <code>NULL</code> as <var>match</var> argument and <em>0</em> as
+<var>nmatch</var> argument.
+</p>
+<p>The first element of <var>match</var> (index <em>0</em>) references the full
+portion of the substring of <var>text</var> matching the pattern; the second
+element of <var>match</var> (index <em>1</em>) references the portion of text
+matching the first parenthetical subexpression, the third element of
+<var>match</var> (index <em>2</em>) references the portion of text matching the
+second parenthetical subexpression; and so on.
+</p></dd></dl>
+
+
+<dl>
+<dt id="index-cre2_005feasy_005fmatch">Function: <em>int</em> <strong>cre2_easy_match</strong> <em>(const char * <var>pattern</var>, int <var>pattern_len</var>, const char * <var>text</var>, int <var>text_len</var>, cre2_string_t * <var>match</var>, int <var>nmatch</var>)</em></dt>
+<dd><p>Like <code>cre2_match()</code> but the pattern is specified as string
+<var>pattern</var> holding <var>pattern_len</var> bytes.  Also the text is fully
+matched without anchoring.
+</p>
+<p>If the text matches the pattern: the return value is <em>1</em>.  If the
+text does not match the pattern: the return value is <em>0</em>.  If the
+pattern is invalid: the return value is <em>2</em>.
+</p></dd></dl>
+
+
+<dl>
+<dt id="index-cre2_005frange_005ft">Struct Typedef: <strong>cre2_range_t</strong></dt>
+<dd><p>Structure type used to represent a substring of the text to be matched
+as starting and ending indices.  It has the following fields:
+</p>
+<dl compact="compact">
+<dt><code>long start</code></dt>
+<dd><p>Inclusive start byte index.
+</p>
+</dd>
+<dt><code>long past</code></dt>
+<dd><p>Exclusive end byte index.
+</p></dd>
+</dl>
+</dd></dl>
+
+
+<dl>
+<dt id="index-cre2_005fstrings_005fto_005franges">Function: <em>void</em> <strong>cre2_strings_to_ranges</strong> <em>(const char * <var>text</var>, cre2_range_t * <var>ranges</var>, cre2_string_t * <var>strings</var>, int <var>nmatch</var>)</em></dt>
+<dd><p>Given an array of <var>strings</var> with <var>nmatch</var> elements being the
+result of matching <var>text</var> against a regular expression: fill the
+array of <var>ranges</var> with the index intervals in the <var>text</var> buffer
+representing the same results.
+</p></dd></dl>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="other.html#other" accesskey="n" rel="next">other</a>, Previous: <a href="options.html#options" accesskey="p" rel="prev">options</a>, Up: <a href="index.html#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+<p>This document describes version <tt>0.4.0-devel.0</tt> of <em>CRE2</em>.</p>
+</body>
+</html>
