@@ -1,0 +1,217 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes the internals of CHICKEN version 5.0.0, it was last
+updated 15 May 2019; this document is part of MMCK CHICKEN Docs, a collection of unofficial
+documentation about the CHICKEN compiler and its development environment.  CHICKEN is a
+Scheme-to-C compiler supporting the language features as defined in the "Revised^5 Report on
+Scheme".
+
+This package is distributed under the terms of the http://creativecommons.org/licenses/by/3.0/ (Creative Commons Attribution 3.0 License).  All code fragments in this document are hereby put in
+the public domain.
+
+The latest release can be downloaded from:
+
+https://bitbucket.org/marcomaggi/chicken-internals/downloads
+
+development takes place at:
+
+https://github.com/marcomaggi/chicken-internals
+
+and as backup at:
+
+https://bitbucket.org/marcomaggi/chicken-internals -->
+<!-- Created by GNU Texinfo 6.6, http://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>layout blocks (MMCK CHICKEN Internals)</title>
+
+<meta name="description" content="layout blocks (MMCK CHICKEN Internals)">
+<meta name="keywords" content="layout blocks (MMCK CHICKEN Internals)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="type-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="layout.html#layout" rel="up" title="layout">
+<link href="slots.html#slots" rel="next" title="slots">
+<link href="layout-bitfid-immediate-specials.html#layout-bitfid-immediate-specials" rel="prev" title="layout bitfid immediate specials">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<span id="layout-blocks"></span><div class="header">
+<p>
+Previous: <a href="layout-bitfid.html#layout-bitfid" accesskey="p" rel="prev">layout bitfid</a>, Up: <a href="layout.html#layout" accesskey="u" rel="up">layout</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<span id="Block-objects"></span><h3 class="section">2.3 Block objects</h3>
+
+
+<p>Block objects are represented by a pointer to a C language structure with a header and a data block;
+slightly simplified, it looks like this:
+</p>
+<div class="example">
+<pre class="example">#define C_uword  unsigned C_word
+#define C_header C_uword
+
+typedef struct
+{
+  C_header header;
+  C_word data[];    /* Variable-length array: header determines length */
+} C_SCHEME_BLOCK;
+</pre></div>
+
+<p>The header&rsquo;s bit pattern is broken up into three parts:
+</p>
+<p>The representation in machine words uses the least significant byte:
+</p>
+<div class="example">
+<pre class="example">XXXXYYYY ZZZZZZZZ ZZZZZZZZ ZZZZZZZZ
+ GC type size of object (slot or byte count)
+</pre></div>
+
+<p>this is the meaning of the bit groups:
+</p>
+<ul>
+<li> The bottom 24 bits encode the size of the object.  On 64-bit machines, the bottom 56 bits are used
+for the size.
+
+</li><li> The middle 4 bits encode the type of the object.
+
+</li><li> The top 4 bits encode special properties to make the garbage collector&rsquo;s work easier:
+
+<dl compact="compact">
+<dt><code>C_GC_FORWARDING_BIT</code></dt>
+<dd><span id="index-C_005fGC_005fFORWARDING_005fBIT_002c-preprocessor-constant"></span>
+<span id="index-Preprocessor-constant-C_005fGC_005fFORWARDING_005fBIT"></span>
+<p>Indicates this object has been forwarded elsewhere.  To find the object at its new location, the
+entire header is shifted to the left (which shifts out this bit).  Then, the value is reinterpreted
+as a pointer.  Remember, the lowest two bits of word pointers are always zero, so we can do this
+with impunity!
+</p>
+</dd>
+<dt><code>C_BYTEBLOCK_BIT</code></dt>
+<dd><span id="index-C_005fBYTEBLOCK_005fBIT_002c-preprocessor-constant"></span>
+<span id="index-Preprocessor-constant-C_005fBYTEBLOCK_005fBIT"></span>
+<p>Indicates this is a byte blob (size bits are interpreted in bytes, not words).
+</p>
+</dd>
+<dt><code>C_SPECIALBLOCK_BIT</code></dt>
+<dd><span id="index-C_005fBYTEBLOCK_005fBIT_002c-preprocessor-constant-1"></span>
+<span id="index-Preprocessor-constant-C_005fBYTEBLOCK_005fBIT-1"></span>
+<p>Indicates that the first slot is special and should be skipped by the garbage collector.
+</p>
+</dd>
+<dt><code>C_8ALIGN_BIT</code></dt>
+<dd><span id="index-C_005fBYTEBLOCK_005fBIT_002c-preprocessor-constant-2"></span>
+<span id="index-Preprocessor-constant-C_005fBYTEBLOCK_005fBIT-2"></span>
+<p>Indicates that for this object, alignment must be maintained at an 8-byte boundary.
+</p></dd>
+</dl>
+</li></ul>
+
+<p>The type bits are assigned incrementally.  There is room for 16 types, only 2 of which are currently
+unused.  Let&rsquo;s look at the definitions, which should also help to explain the practical use of the
+latter 3 GC bits:
+</p>
+<div class="example">
+<pre class="example">#define C_SYMBOL_TYPE            (0x01000000L)
+#define C_STRING_TYPE            (0x02000000L | C_BYTEBLOCK_BIT)
+#define C_PAIR_TYPE              (0x03000000L)
+#define C_CLOSURE_TYPE           (0x04000000L | C_SPECIALBLOCK_BIT)
+#define C_FLONUM_TYPE            (0x05000000L | C_BYTEBLOCK_BIT | C_8ALIGN_BIT)
+/*      unused                   (0x06000000L ...) */
+#define C_PORT_TYPE              (0x07000000L | C_SPECIALBLOCK_BIT)
+#define C_STRUCTURE_TYPE         (0x08000000L)
+#define C_POINTER_TYPE           (0x09000000L | C_SPECIALBLOCK_BIT)
+#define C_LOCATIVE_TYPE          (0x0a000000L | C_SPECIALBLOCK_BIT)
+#define C_TAGGED_POINTER_TYPE    (0x0b000000L | C_SPECIALBLOCK_BIT)
+#define C_LAMBDA_INFO_TYPE       (0x0d000000L | C_BYTEBLOCK_BIT)
+/*      unused                   (0x0e000000L ...) */
+#define C_BUCKET_TYPE            (0x0f000000L)
+</pre></div>
+
+<p>Most of the types should be self&ndash;explanatory to a seasoned Schemer, but a few things deserve
+further explanation.
+</p>
+<ul>
+<li> In the STRING type tag, <code>C_BYTEBLOCK_BIT</code> is also set, for obvious reasons: strings do not
+consist of slots containing Scheme values, but of bytes, which are opaque.  Because the header&rsquo;s
+size bits store the length in bytes instead of in words, we can spot a very important limitation:
+<small>CHICKEN</small> strings can only hold 16 MiB of data on a 32-bit machine (on a 64-bit machine, strings
+are &ldquo;limited&rdquo; to 65536 TiB).
+
+</li><li> The <code>CLOSURE</code> type uses <code>C_SPECIALBLOCK_BIT</code>.  This indicates to the garbage collector
+that the first slot contains a raw non&ndash;Scheme value.  In the case of a closure, it contains a
+pointer to a C function.  The other slots contain free variables that were closed over
+(&ldquo;captured&rdquo;) by the lambda, which are normal Scheme objects.  The compiled C function &ldquo;knows&rdquo;
+which variable lives in which slot.
+
+</li><li> The <code>FLONUM</code> type uses <code>C_BYTEBLOCK_BIT</code>, because an unboxed C <code>double</code> value is not
+a Scheme object: we want to treat the data as an opaque blob.  On a 32-bit system, the <code>double</code>
+will take up two machine words, so we can&rsquo;t use <code>C_SPECIALBLOCK_BIT</code>.  The header will
+therefore hold the value 8 as its size.  It also has another GC bit: <code>C_8ALIGN_BIT</code>.  This
+ensures that the 64-bit <code>double</code> is aligned on a 8-byte boundary, to avoid unaligned access on
+32-bit systems.  This adds some complexity to garbage collection and memory allocation.
+
+</li><li> The <code>STRUCTURE</code> type refers to a <acronym>SRFI</acronym>-9 type of record object.  Its slots hold the record&rsquo;s
+fields, and the accessors and constructors &ldquo;know&rdquo; which field is stored at which index.
+
+</li><li> The <code>POINTER</code> type holds a raw C pointer inside a Scheme object.  Again, because C pointers are
+not Scheme objects, the object&rsquo;s first (and only) slot is treated specially, via <code>C_SPECIALBLOCK_BIT</code>.
+
+</li><li> The <code>LOCATIVE</code> type represents a rather complicated object.  It acts a bit like a pointer into
+a slab of memory.  You can use it as a single value which represents a location inside another block
+object.  This can then be used as an argument to a foreign function that expects a pointer.  Its
+first slot holds a raw pointer.  The other slots hold the offset, the type of pointer (encoded as
+fixnum) and the original object, unless it is a weak reference.
+
+</li><li> The <code>TAGGED_POINTER</code> type is exactly like <code>POINTER</code>, but it has an extra user&ndash;defined
+tag.  This can make it easier for code to identify the pointer&rsquo;s type.  The tag is a Scheme value
+held in its second slot.
+
+</li><li> The <code>LAMBDA_INFO</code> type stores procedure introspection information (mostly for debugging).
+
+</li><li> The <code>BUCKET</code> type is a special internal pair&ndash;like object which is used in the linked list of
+symbols under a hash table bucket in the symbol table.  It does not count as a reference, so that
+symbols can be garbage collected when only the symbol table still refers to them.
+</li></ul>
+
+<p>So far, the only numeric types we&rsquo;ve seen are fixnums and flonums.  What about the other numeric
+types?  After all, <small>CHICKEN</small> 5 has a full numeric tower!
+</p>
+<p>In <small>CHICKEN</small> 5, rational and complex numbers are viewed as two simpler numbers stuck together.
+They&rsquo;re stored as records with a special tag, which the runtime system recognises.  Bignums are also
+represented as a record with a special tag and a slot that refers to the byte blob containing the
+actual bignum value.
+</p>
+<hr>
+<div class="header">
+<p>
+Previous: <a href="layout-bitfid.html#layout-bitfid" accesskey="p" rel="prev">layout bitfid</a>, Up: <a href="layout.html#layout" accesskey="u" rel="up">layout</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+<p>This document describes version <tt>0.1.0-devel.0</tt> of <em>MMCK CHICKEN Docs</em>.</p>
+</body>
+</html>

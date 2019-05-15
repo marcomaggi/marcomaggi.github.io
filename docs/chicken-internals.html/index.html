@@ -1,0 +1,368 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes the internals of CHICKEN version 5.0.0, it was last
+updated 15 May 2019; this document is part of MMCK CHICKEN Docs, a collection of unofficial
+documentation about the CHICKEN compiler and its development environment.  CHICKEN is a
+Scheme-to-C compiler supporting the language features as defined in the "Revised^5 Report on
+Scheme".
+
+This package is distributed under the terms of the http://creativecommons.org/licenses/by/3.0/ (Creative Commons Attribution 3.0 License).  All code fragments in this document are hereby put in
+the public domain.
+
+The latest release can be downloaded from:
+
+https://bitbucket.org/marcomaggi/chicken-internals/downloads
+
+development takes place at:
+
+https://github.com/marcomaggi/chicken-internals
+
+and as backup at:
+
+https://bitbucket.org/marcomaggi/chicken-internals -->
+<!-- Created by GNU Texinfo 6.6, http://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Top (MMCK CHICKEN Internals)</title>
+
+<meta name="description" content="Top (MMCK CHICKEN Internals)">
+<meta name="keywords" content="Top (MMCK CHICKEN Internals)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<link href="#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="type-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="../dir/index.html" rel="up" title="(dir)">
+<link href="overview.html#overview" rel="next" title="overview">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<h1 class="settitle" align="center"><small>MMCK</small> <small>CHICKEN</small> Internals</h1>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<span id="Top"></span><div class="header">
+<p>
+Next: <a href="overview.html#overview" accesskey="n" rel="next">overview</a>, Up: <a href="../dir/index.html" accesskey="u" rel="up">(dir)</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<span id="MMCK-CHICKEN-Internals"></span><h1 class="top"><small>MMCK</small> <small>CHICKEN</small> Internals</h1>
+
+<p>This document describes the internals of <small>CHICKEN</small> version 5.0.0, it was last
+updated 15 May 2019; this document is part of <small>MMCK</small> <small>CHICKEN</small> Docs, a collection of unofficial
+documentation about the <small>CHICKEN</small> compiler and its development environment.  <small>CHICKEN</small> is a
+Scheme&ndash;to&ndash;C compiler supporting the language features as defined in the &ldquo;Revised^5 Report on
+Scheme&rdquo;.
+</p>
+<p>This package is distributed under the terms of the <a href="http://creativecommons.org/licenses/by/3.0/">Creative Commons Attribution 3.0 License</a>.  All code fragments in this document are hereby put in
+the public domain.
+</p>
+<p>The latest release can be downloaded from:
+</p>
+<div align="center"><a href="https://bitbucket.org/marcomaggi/chicken-internals/downloads">https://bitbucket.org/marcomaggi/chicken-internals/downloads</a>
+</div>
+<p>development takes place at:
+</p>
+<div align="center"><a href="https://github.com/marcomaggi/chicken-internals">https://github.com/marcomaggi/chicken-internals</a>
+</div>
+<p>and as backup at:
+</p>
+<div align="center"><a href="https://bitbucket.org/marcomaggi/chicken-internals">https://bitbucket.org/marcomaggi/chicken-internals</a>
+</div>
+<table class="menu" border="0" cellspacing="0">
+<tr><td align="left" valign="top">&bull; <a href="overview.html#overview" accesskey="1">overview</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Overview of the document.
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="layout.html#layout" accesskey="2">layout</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Representation of Scheme values.
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="slots.html#slots" accesskey="3">slots</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Slots operations.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+
+Appendices
+
+</pre></th></tr><tr><td align="left" valign="top">&bull; <a href="credits.html#credits" accesskey="4">credits</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Document authors and source material.
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="references.html#references" accesskey="5">references</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Bibliography and references.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+
+Indexes
+
+</pre></th></tr><tr><td align="left" valign="top">&bull; <a href="concept-index.html#concept-index" accesskey="6">concept index</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">An entry for each concept.
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="function-index.html#function-index" accesskey="7">function index</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">An entry for each function.
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="variable-index.html#variable-index" accesskey="8">variable index</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">An entry for each variable.
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="type-index.html#type-index" accesskey="9">type index</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">An entry for each type.
+</td></tr>
+</table>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="overview.html#overview" accesskey="n" rel="next">overview</a>, Up: <a href="../dir/index.html" accesskey="u" rel="up">(dir)</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+<p>This document describes version <tt>0.1.0-devel.0</tt> of <em>MMCK CHICKEN Docs</em>.</p>
+</body>
+</html>

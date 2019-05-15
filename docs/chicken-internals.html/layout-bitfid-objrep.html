@@ -1,0 +1,114 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes the internals of CHICKEN version 5.0.0, it was last
+updated 15 May 2019; this document is part of MMCK CHICKEN Docs, a collection of unofficial
+documentation about the CHICKEN compiler and its development environment.  CHICKEN is a
+Scheme-to-C compiler supporting the language features as defined in the "Revised^5 Report on
+Scheme".
+
+This package is distributed under the terms of the http://creativecommons.org/licenses/by/3.0/ (Creative Commons Attribution 3.0 License).  All code fragments in this document are hereby put in
+the public domain.
+
+The latest release can be downloaded from:
+
+https://bitbucket.org/marcomaggi/chicken-internals/downloads
+
+development takes place at:
+
+https://github.com/marcomaggi/chicken-internals
+
+and as backup at:
+
+https://bitbucket.org/marcomaggi/chicken-internals -->
+<!-- Created by GNU Texinfo 6.6, http://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>layout bitfid objrep (MMCK CHICKEN Internals)</title>
+
+<meta name="description" content="layout bitfid objrep (MMCK CHICKEN Internals)">
+<meta name="keywords" content="layout bitfid objrep (MMCK CHICKEN Internals)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="type-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="layout-bitfid.html#layout-bitfid" rel="up" title="layout bitfid">
+<link href="layout-bitfid-immediate.html#layout-bitfid-immediate" rel="next" title="layout bitfid immediate">
+<link href="layout-bitfid.html#layout-bitfid" rel="prev" title="layout bitfid">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<span id="layout-bitfid-objrep"></span><div class="header">
+<p>
+Next: <a href="layout-bitfid-immediate.html#layout-bitfid-immediate" accesskey="n" rel="next">layout bitfid immediate</a>, Up: <a href="layout-bitfid.html#layout-bitfid" accesskey="u" rel="up">layout bitfid</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<span id="Representation-of-objects"></span><h4 class="subsection">2.2.1 Representation of objects</h4>
+
+
+<p>We&rsquo;ve learned how <small>CHICKEN</small> distinguishes between pointers to (block) objects and immediate values.
+Now we will look into the nitty&ndash;gritty details of the object representation.
+</p>
+<p>We can make the following breakdown of bit patterns (assuming a 32-bit platform):
+</p>
+<div class="example">
+<pre class="example">XXXXXXXX XXXXXXXX XXXXXXXX XXXXXX00 Pointer to block object
+XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXX1 Fixnum (small integer)
+XXXXXXXX XXXXXXXX XXXXXXXX XXXXYY10 Other immediate object
+</pre></div>
+
+<p>This shows that the lower two bits can be used to distinguish between block objects (zero) and
+immediate objects (nonzero).  For immediate objects, the low bit can be used to distinguish between
+fixnum objects and other kinds of immediate objects.  Notice that for non&ndash;fixnum immediate objects:
+the 4 least significant bits &lsquo;<samp>YY10</samp>&rsquo; are used for tagging the value as object of a specific
+kind.
+</p>
+<p>Fixnums are distinguished from &ldquo;other immediate&rdquo; values because fixnums are so incredibly common:
+they are used for indexing into strings, loop counters and many calculations.  These have to be
+represented as efficiently as possible while storing the widest possible range of values.  Run time
+type checking for fixnums should use as few CPU instructions as possible.
+</p>
+<p>The &ldquo;other immediate&rdquo; types are further differentiated through the top two bits of the lower
+nibble:
+</p>
+<div class="example">
+<pre class="example">XXXXXXXX XXXXXXXX XXXXXXXX XXXX0110 Boolean
+XXXXXXXX XXXXXXXX XXXXXXXX XXXX1010 Character
+XXXXXXXX XXXXXXXX XXXXXXXX XXXX1110 Special object
+</pre></div>
+
+<p>The unused &ldquo;other immediate&rdquo; type of <code>0010</code> is reserved for future use.  To get a good feel
+for the representation of immediates, let us look at a few example bit patterns.  We&rsquo;ll also see how
+to construct them in C.
+</p>
+<hr>
+<div class="header">
+<p>
+Next: <a href="layout-bitfid-immediate.html#layout-bitfid-immediate" accesskey="n" rel="next">layout bitfid immediate</a>, Up: <a href="layout-bitfid.html#layout-bitfid" accesskey="u" rel="up">layout bitfid</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+<p>This document describes version <tt>0.1.0-devel.0</tt> of <em>MMCK CHICKEN Docs</em>.</p>
+</body>
+</html>
