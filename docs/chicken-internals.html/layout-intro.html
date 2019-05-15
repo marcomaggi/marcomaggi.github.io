@@ -34,7 +34,7 @@ https://bitbucket.org/marcomaggi/chicken-internals -->
 <link href="concept-index.html#concept-index" rel="index" title="concept index">
 <link href="type-index.html#SEC_Contents" rel="contents" title="Table of Contents">
 <link href="layout.html#layout" rel="up" title="layout">
-<link href="layout-bitfid.html#layout-bitfid" rel="next" title="layout bitfid">
+<link href="layout-intro-immediate.html#layout-intro-immediate" rel="next" title="layout intro immediate">
 <link href="layout.html#layout" rel="prev" title="layout">
 <style type="text/css">
 <!--
@@ -78,104 +78,13 @@ depending on the platform.  By the way, the &lsquo;<samp>C_</samp>&rsquo; prefix
 language.  Every Scheme value is represented as a &lsquo;<samp>C_word</samp>&rsquo; internally.  To understand how this
 can work, we need to know that there are roughly two kinds of objects.
 </p>
+<table class="menu" border="0" cellspacing="0">
+<tr><td align="left" valign="top">&bull; <a href="layout-intro-immediate.html#layout-intro-immediate" accesskey="1">layout intro immediate</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Immediate values.
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="layout-intro-block.html#layout-intro-block" accesskey="2">layout intro block</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Block values.
+</td></tr>
+</table>
 
-<span id="Immediate-values"></span><h4 class="subsubheading">Immediate values</h4>
-
-<p>These are the typical &ldquo;atomic&rdquo; values that come up a lot in computations.  It is important to
-represent these as efficiently as possible, so they are packed directly in a &lsquo;<samp>C_word</samp>&rsquo;.  This
-includes booleans, the empty list, small integers (these are called fixnums), characters and a few
-other special values.
-</p>
-<p>Because these values are represented directly by a &lsquo;<samp>C_word</samp>&rsquo;, they can be compared in one
-instruction: <code>eq?</code> in Scheme.  These values do not need to be heap&ndash;allocated: they fit
-directly in a register, and can be passed around &ldquo;by value&rdquo; in C.  This also means they don&rsquo;t need
-to be tracked by the garbage collector!
-</p>
-<p>At a high enough level, these values simply look like this:
-</p>
-<div class="example">
-<pre class="example">#t #f () 42 #\x
-</pre></div>
-
-
-<span id="Block-objects-1"></span><h4 class="subsubheading">Block objects</h4>
-
-<p>They are values represented pointers to a structure that contains a header and a variable&ndash;length
-data block.
-</p>
-<p>The data block is a pointer which can conceptually be one of two types.  In case of a string or
-<acronym>SRFI</acronym>-4 object, the data block is simply an opaque &ldquo;blob&rdquo; or bytevector.  In most other cases,
-the block is a compound value consisting of other Scheme objects.  Typical examples are pairs,
-vectors and records.
-</p>
-<p>Because these values are heap&ndash;allocated, two distinct objects are not stored at the same memory
-address, even if they store the same value.  That&rsquo;s why comparing their values is a complex
-operation.  This operation is either <code>equal?</code> for deep structural comparison, or <code>eqv?</code>
-for value comparisons of numbers and symbols.
-</p>
-<p>The <acronym>R5RS</acronym> specification explains that the difference between <code>eq?</code> and <code>eqv?</code> is not
-necessarily the same across Scheme implementations.  For example, in <small>CHICKEN</small>, <code>eq?</code> can be
-used to compare characters and fixnums, because they are stored as immediate values.  Portable
-programs should not rely on that.  If we use <code>eq?</code> on block objects, their pointers will be
-compared: <code>eq?</code> checks whether they are one and the same object.  This can be a useful
-operation in its own right.
-</p>
-<p>Objects represented by data blocks also have to be tracked by the garbage collector: if there are
-still references to the block, its data must be copied (recursively) to keep it alive across garbage
-collection events.
-</p>
-<p>Here are some &ldquo;high level&rdquo; examples of block objects:
-</p>
-<div class="example">
-<pre class="example"> --------------------------
-| pair 2 slots | #\a | #\b |
- --------------------------
-
- -------------------------------------------
-| vector 5 slots | #f | 123 | 456 | #f | 42 |
- -------------------------------------------
-
- --------------------------    -----------------------
-| string 5 bytes | &quot;hello&quot; |  | flonum 8 bytes | 12.5 |
- --------------------------    -----------------------
-        ^                           ^
-        |                           |
-         ---------                   ---------
-                  |                           |
- -----------------+-----     -----------------+------
-| pair 2 slots |  O | O-|--&gt;| pair 2 slots |  O | () |
- -----------------------     ------------------------
-</pre></div>
-
-<p>every block object starts with a header which indicates the type of object and the object&rsquo;s size.
-It also determines whether the object&rsquo;s data block is a byte block or a block containing Scheme
-objects: if it contains Scheme objects, the header tells us how many slots (locations for storing
-Scheme objects) the object has.  Byte blocks, on the other hand, are opaque and can contain any
-data.  Their size is stored as a byte count.
-</p>
-<p>From top to bottom, left to right, these represent the following values:
-</p>
-<ul>
-<li> <code>(#\a . #\b)</code> is a pair containing the character <code>a</code> in its car and <code>b</code> in its cdr.
-
-</li><li> <code>#(#f 123 456 #f 42)</code> is a regular Scheme vector containing fixnums and false values.
-
-</li><li> <code>&quot;hello&quot;</code> is a string consisting of 5 characters (strings are treated as byte vectors in
-<small>CHICKEN</small>).
-
-</li><li> <code>12.5</code> is an inexact representation of the number twelve and a half (a &ldquo;flonum&rdquo;).  This is a
-byte block storing the raw byte value of a C <code>double</code>.
-
-</li><li> <code>(&quot;hello&quot; . (12.5 . ()))</code> is the first pair of a proper list which contains a string and a
-flonum.
-
-</li><li> <code>(12.5 . ())</code> is the cdr of that list; a pair containing a number and the end&ndash;of&ndash;list marker.
-</li></ul>
-
-<p>The final two pair objects show that slots (like any <code>C_word</code>) can hold not only immediate
-values, but also pointers to block objects.  This leads us to the question: how to differentiate
-between a pointer to an object and an immediate object?
-</p>
 <hr>
 <div class="header">
 <p>

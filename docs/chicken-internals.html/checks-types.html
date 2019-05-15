@@ -1,0 +1,275 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes the internals of CHICKEN version 5.0.0, it was last
+updated 15 May 2019; this document is part of MMCK CHICKEN Docs, a collection of unofficial
+documentation about the CHICKEN compiler and its development environment.  CHICKEN is a
+Scheme-to-C compiler supporting the language features as defined in the "Revised^5 Report on
+Scheme".
+
+This package is distributed under the terms of the http://creativecommons.org/licenses/by/3.0/ (Creative Commons Attribution 3.0 License).  All code fragments in this document are hereby put in
+the public domain.
+
+The latest release can be downloaded from:
+
+https://bitbucket.org/marcomaggi/chicken-internals/downloads
+
+development takes place at:
+
+https://github.com/marcomaggi/chicken-internals
+
+and as backup at:
+
+https://bitbucket.org/marcomaggi/chicken-internals -->
+<!-- Created by GNU Texinfo 6.6, http://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>checks types (MMCK CHICKEN Internals)</title>
+
+<meta name="description" content="checks types (MMCK CHICKEN Internals)">
+<meta name="keywords" content="checks types (MMCK CHICKEN Internals)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="type-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="checks.html#checks" rel="up" title="checks">
+<link href="checks-unsafe.html#checks-unsafe" rel="next" title="checks unsafe">
+<link href="checks.html#checks" rel="prev" title="checks">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="mmck-chicken-docs.css">
+
+
+</head>
+
+<body lang="en">
+<span id="checks-types"></span><div class="header">
+<p>
+Next: <a href="checks-unsafe.html#checks-unsafe" accesskey="n" rel="next">checks unsafe</a>, Up: <a href="checks.html#checks" accesskey="u" rel="up">checks</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<span id="Checking-value-types"></span><h3 class="section">3.1 Checking value types</h3>
+
+
+
+
+<dl>
+<dt id="index-_0023_0023sys_0023check_002dblob">System Operation: <strong>##sys#check-blob</strong> <em><var>?OBJ</var></em></dt>
+<dt id="index-_0023_0023sys_0023check_002dblob-1">System Operation: <strong>##sys#check-blob</strong> <em><var>?OBJ</var> <var>?LOC</var></em></dt>
+<dd><p>Check if <var>?OBJ</var> is a blob.  When successful: just return unspecified values.  Otherwise
+raise an exception of kind <code>(exn type)</code> using the optional argument <var>?LOC</var> as
+exceptional&ndash;condition <code>location</code> property.
+</p></dd></dl>
+
+
+<dl>
+<dt id="index-_0023_0023sys_0023check_002dbyte_002dvector">System Operation: <strong>##sys#check-byte-vector</strong> <em><var>?OBJ</var></em></dt>
+<dt id="index-_0023_0023sys_0023check_002dbyte_002dvector-1">System Operation: <strong>##sys#check-byte-vector</strong> <em><var>?OBJ</var> <var>?LOC</var></em></dt>
+<dd><p>Check if <var>?OBJ</var> is a bytevector.  When successful: just return unspecified values.  Otherwise
+raise an exception of kind <code>(exn type)</code> using the optional argument <var>?LOC</var> as
+exceptional&ndash;condition <code>location</code> property.
+</p></dd></dl>
+
+
+<dl>
+<dt id="index-_0023_0023sys_0023check_002dpair">System Operation: <strong>##sys#check-pair</strong> <em><var>?OBJ</var></em></dt>
+<dt id="index-_0023_0023sys_0023check_002dpair-1">System Operation: <strong>##sys#check-pair</strong> <em><var>?OBJ</var> <var>?LOC</var></em></dt>
+<dd><p>Check if <var>?OBJ</var> is a pair.  When successful: just return unspecified values.  Otherwise
+raise an exception of kind <code>(exn type)</code> using the optional argument <var>?LOC</var> as
+exceptional&ndash;condition <code>location</code> property.
+</p></dd></dl>
+
+
+<dl>
+<dt id="index-_0023_0023sys_0023check_002dlist">System Operation: <strong>##sys#check-list</strong> <em><var>?OBJ</var></em></dt>
+<dt id="index-_0023_0023sys_0023check_002dlist-1">System Operation: <strong>##sys#check-list</strong> <em><var>?OBJ</var> <var>?LOC</var></em></dt>
+<dd><p>Check if <var>?OBJ</var> is a list.  When successful: just return unspecified values.  Otherwise
+raise an exception of kind <code>(exn type)</code> using the optional argument <var>?LOC</var> as
+exceptional&ndash;condition <code>location</code> property.
+</p></dd></dl>
+
+
+<dl>
+<dt id="index-_0023_0023sys_0023check_002dstring">System Operation: <strong>##sys#check-string</strong> <em><var>?OBJ</var></em></dt>
+<dt id="index-_0023_0023sys_0023check_002dstring-1">System Operation: <strong>##sys#check-string</strong> <em><var>?OBJ</var> <var>?LOC</var></em></dt>
+<dd><p>Check if <var>?OBJ</var> is a string.  When successful: just return unspecified values.  Otherwise
+raise an exception of kind <code>(exn type)</code> using the optional argument <var>?LOC</var> as
+exceptional&ndash;condition <code>location</code> property.
+</p></dd></dl>
+
+
+<dl>
+<dt id="index-_0023_0023sys_0023check_002dnumber">System Operation: <strong>##sys#check-number</strong> <em><var>?OBJ</var></em></dt>
+<dt id="index-_0023_0023sys_0023check_002dnumber-1">System Operation: <strong>##sys#check-number</strong> <em><var>?OBJ</var> <var>?LOC</var></em></dt>
+<dd><p>Check if <var>?OBJ</var> is a number.  When successful: just return unspecified values.  Otherwise
+raise an exception of kind <code>(exn type)</code> using the optional argument <var>?LOC</var> as
+exceptional&ndash;condition <code>location</code> property.
+</p></dd></dl>
+
+
+<dl>
+<dt id="index-_0023_0023sys_0023check_002dfixnum">System Operation: <strong>##sys#check-fixnum</strong> <em><var>?OBJ</var></em></dt>
+<dt id="index-_0023_0023sys_0023check_002dfixnum-1">System Operation: <strong>##sys#check-fixnum</strong> <em><var>?OBJ</var> <var>?LOC</var></em></dt>
+<dd><p>Check if <var>?OBJ</var> is a fixnum.  When successful: just return unspecified values.  Otherwise
+raise an exception of kind <code>(exn type)</code> using the optional argument <var>?LOC</var> as
+exceptional&ndash;condition <code>location</code> property.
+</p></dd></dl>
+
+
+<dl>
+<dt id="index-_0023_0023sys_0023check_002dexact">System Operation: <strong>##sys#check-exact</strong> <em><var>?OBJ</var></em></dt>
+<dt id="index-_0023_0023sys_0023check_002dexact-1">System Operation: <strong>##sys#check-exact</strong> <em><var>?OBJ</var> <var>?LOC</var></em></dt>
+<dd><p>Check if <var>?OBJ</var> is a exact number.  When successful: just return unspecified values.  Otherwise
+raise an exception of kind <code>(exn type)</code> using the optional argument <var>?LOC</var> as
+exceptional&ndash;condition <code>location</code> property.
+</p></dd></dl>
+
+
+<dl>
+<dt id="index-_0023_0023sys_0023check_002dinexact">System Operation: <strong>##sys#check-inexact</strong> <em><var>?OBJ</var></em></dt>
+<dt id="index-_0023_0023sys_0023check_002dinexact-1">System Operation: <strong>##sys#check-inexact</strong> <em><var>?OBJ</var> <var>?LOC</var></em></dt>
+<dd><p>Check if <var>?OBJ</var> is a inexact number.  When successful: just return unspecified values.  Otherwise
+raise an exception of kind <code>(exn type)</code> using the optional argument <var>?LOC</var> as
+exceptional&ndash;condition <code>location</code> property.
+</p></dd></dl>
+
+
+<dl>
+<dt id="index-_0023_0023sys_0023check_002dsymbol">System Operation: <strong>##sys#check-symbol</strong> <em><var>?OBJ</var></em></dt>
+<dt id="index-_0023_0023sys_0023check_002dsymbol-1">System Operation: <strong>##sys#check-symbol</strong> <em><var>?OBJ</var> <var>?LOC</var></em></dt>
+<dd><p>Check if <var>?OBJ</var> is a symbol.  When successful: just return unspecified values.  Otherwise
+raise an exception of kind <code>(exn type)</code> using the optional argument <var>?LOC</var> as
+exceptional&ndash;condition <code>location</code> property.
+</p></dd></dl>
+
+
+<dl>
+<dt id="index-_0023_0023sys_0023check_002dvector">System Operation: <strong>##sys#check-vector</strong> <em><var>?OBJ</var></em></dt>
+<dt id="index-_0023_0023sys_0023check_002dvector-1">System Operation: <strong>##sys#check-vector</strong> <em><var>?OBJ</var> <var>?LOC</var></em></dt>
+<dd><p>Check if <var>?OBJ</var> is a vector.  When successful: just return unspecified values.  Otherwise
+raise an exception of kind <code>(exn type)</code> using the optional argument <var>?LOC</var> as
+exceptional&ndash;condition <code>location</code> property.
+</p></dd></dl>
+
+
+<dl>
+<dt id="index-_0023_0023sys_0023check_002dchar">System Operation: <strong>##sys#check-char</strong> <em><var>?OBJ</var></em></dt>
+<dt id="index-_0023_0023sys_0023check_002dchar-1">System Operation: <strong>##sys#check-char</strong> <em><var>?OBJ</var> <var>?LOC</var></em></dt>
+<dd><p>Check if <var>?OBJ</var> is a character.  When successful: just return unspecified values.  Otherwise
+raise an exception of kind <code>(exn type)</code> using the optional argument <var>?LOC</var> as
+exceptional&ndash;condition <code>location</code> property.
+</p></dd></dl>
+
+
+<dl>
+<dt id="index-_0023_0023sys_0023check_002dboolean">System Operation: <strong>##sys#check-boolean</strong> <em><var>?OBJ</var></em></dt>
+<dt id="index-_0023_0023sys_0023check_002dboolean-1">System Operation: <strong>##sys#check-boolean</strong> <em><var>?OBJ</var> <var>?LOC</var></em></dt>
+<dd><p>Check if <var>?OBJ</var> is a boolean.  When successful: just return unspecified values.  Otherwise
+raise an exception of kind <code>(exn type)</code> using the optional argument <var>?LOC</var> as
+exceptional&ndash;condition <code>location</code> property.
+</p></dd></dl>
+
+
+<dl>
+<dt id="index-_0023_0023sys_0023check_002dlocative">System Operation: <strong>##sys#check-locative</strong> <em><var>?OBJ</var></em></dt>
+<dt id="index-_0023_0023sys_0023check_002dlocative-1">System Operation: <strong>##sys#check-locative</strong> <em><var>?OBJ</var> <var>?LOC</var></em></dt>
+<dd><p>Check if <var>?OBJ</var> is a locative.  When successful: just return unspecified values.  Otherwise
+raise an exception of kind <code>(exn type)</code> using the optional argument <var>?LOC</var> as
+exceptional&ndash;condition <code>location</code> property.
+</p></dd></dl>
+
+
+<dl>
+<dt id="index-_0023_0023sys_0023check_002dinteger">System Operation: <strong>##sys#check-integer</strong> <em><var>?OBJ</var></em></dt>
+<dt id="index-_0023_0023sys_0023check_002dinteger-1">System Operation: <strong>##sys#check-integer</strong> <em><var>?OBJ</var> <var>?LOC</var></em></dt>
+<dd><p>Check if <var>?OBJ</var> is a integer.  When successful: just return unspecified values.  Otherwise
+raise an exception of kind <code>(exn type)</code> using the optional argument <var>?LOC</var> as
+exceptional&ndash;condition <code>location</code> property.
+</p></dd></dl>
+
+
+<dl>
+<dt id="index-_0023_0023sys_0023check_002dexact_002dinteger">System Operation: <strong>##sys#check-exact-integer</strong> <em><var>?OBJ</var></em></dt>
+<dt id="index-_0023_0023sys_0023check_002dexact_002dinteger-1">System Operation: <strong>##sys#check-exact-integer</strong> <em><var>?OBJ</var> <var>?LOC</var></em></dt>
+<dd><p>Check if <var>?OBJ</var> is a exact integer.  When successful: just return unspecified values.  Otherwise
+raise an exception of kind <code>(exn type)</code> using the optional argument <var>?LOC</var> as
+exceptional&ndash;condition <code>location</code> property.
+</p></dd></dl>
+
+
+<dl>
+<dt id="index-_0023_0023sys_0023check_002dexact_002duinteger">System Operation: <strong>##sys#check-exact-uinteger</strong> <em><var>?OBJ</var></em></dt>
+<dt id="index-_0023_0023sys_0023check_002dexact_002duinteger-1">System Operation: <strong>##sys#check-exact-uinteger</strong> <em><var>?OBJ</var> <var>?LOC</var></em></dt>
+<dd><p>Check if <var>?OBJ</var> is a exact unsigned integer.  When successful: just return unspecified values.  Otherwise
+raise an exception of kind <code>(exn type)</code> using the optional argument <var>?LOC</var> as
+exceptional&ndash;condition <code>location</code> property.
+</p></dd></dl>
+
+
+<dl>
+<dt id="index-_0023_0023sys_0023check_002dreal">System Operation: <strong>##sys#check-real</strong> <em><var>?OBJ</var></em></dt>
+<dt id="index-_0023_0023sys_0023check_002dreal-1">System Operation: <strong>##sys#check-real</strong> <em><var>?OBJ</var> <var>?LOC</var></em></dt>
+<dd><p>Check if <var>?OBJ</var> is a real number.  When successful: just return unspecified values.  Otherwise
+raise an exception of kind <code>(exn type)</code> using the optional argument <var>?LOC</var> as
+exceptional&ndash;condition <code>location</code> property.
+</p></dd></dl>
+
+
+
+
+<dl>
+<dt id="index-_0023_0023sys_0023check_002dclosure">System Operation: <strong>##sys#check-closure</strong> <em><var>?OBJ</var></em></dt>
+<dt id="index-_0023_0023sys_0023check_002dclosure-1">System Operation: <strong>##sys#check-closure</strong> <em><var>?OBJ</var> <var>?LOC</var></em></dt>
+<dd><p>Check if <var>?OBJ</var> is a closure.  When successful: just return unspecified values.  Otherwise
+raise an exception of kind <code>(exn type)</code> using the optional argument <var>?LOC</var> as
+exceptional&ndash;condition <code>location</code> property.
+</p></dd></dl>
+
+
+<dl>
+<dt id="index-_0023_0023sys_0023check_002dstructure">System Operation: <strong>##sys#check-structure</strong> <em><var>?OBJ</var> <var>?NAME</var> <var>?LOC</var></em></dt>
+<dd><p>Check if <var>?OBJ</var> is a structure with name <code>eq?</code> to <var>?NAME</var>; <a href="structs.html#structs">Low&ndash;level
+structures</a>.  When successful: just return unspecified values.  Otherwise raise an exception with
+kind <code>(exn type)</code> using the value <var>?LOC</var> as exceptional&ndash;condition <code>location</code>
+property.
+</p></dd></dl>
+
+
+<dl>
+<dt id="index-_0023_0023sys_0023check_002drange">System Operation: <strong>##sys#check-range</strong> <em><var>?IDX</var> <var>?FROM</var> <var>?TO</var> <var>?LOC</var></em></dt>
+<dd><p>Check that <var>?IDX</var> is a fixnum; if it is not: raise an exception with kind <code>(exn type)</code>
+using the value <var>?LOC</var> as exceptional&ndash;condition <code>location</code> property.
+</p>
+<p>Then check if the fixnum <var>?IDX</var> is: greater than or equal to <var>FROM</var> and less than <var>TO</var>;
+the arguments <var>?FROM</var> and <var>?TO</var> must be fixnums.  When successful: just return unspecified
+values.  Otherwise raise an exception of kind <code>(exn bounds)</code> using the value <var>?LOC</var> as
+exceptional&ndash;condition <code>location</code> property.
+</p></dd></dl>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="checks-unsafe.html#checks-unsafe" accesskey="n" rel="next">checks unsafe</a>, Up: <a href="checks.html#checks" accesskey="u" rel="up">checks</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

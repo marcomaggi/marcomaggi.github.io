@@ -34,8 +34,8 @@ https://bitbucket.org/marcomaggi/chicken-internals -->
 <link href="concept-index.html#concept-index" rel="index" title="concept index">
 <link href="type-index.html#SEC_Contents" rel="contents" title="Table of Contents">
 <link href="index.html#Top" rel="up" title="Top">
-<link href="credits.html#credits" rel="next" title="credits">
-<link href="layout-blocks.html#layout-blocks" rel="prev" title="layout blocks">
+<link href="slots-sysops.html#slots-sysops" rel="next" title="slots sysops">
+<link href="checks-unsafe.html#checks-unsafe" rel="prev" title="checks unsafe">
 <style type="text/css">
 <!--
 a.summary-letter {text-decoration: none}
@@ -62,116 +62,31 @@ ul.no-bullet {list-style: none}
 <body lang="en">
 <span id="slots"></span><div class="header">
 <p>
-Next: <a href="credits.html#credits" accesskey="n" rel="next">credits</a>, Previous: <a href="layout.html#layout" accesskey="p" rel="prev">layout</a>, Up: <a href="index.html#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+Next: <a href="structs.html#structs" accesskey="n" rel="next">structs</a>, Previous: <a href="checks.html#checks" accesskey="p" rel="prev">checks</a>, Up: <a href="index.html#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
 </div>
 <hr>
-<span id="Slots-operations"></span><h2 class="chapter">3 Slots operations</h2>
+<span id="Slots-operations"></span><h2 class="chapter">4 Slots operations</h2>
 
 
-<p>We can access the internal representation of all the compound Scheme values implemented as
-&ldquo;blocks&rdquo; with the following system operations.
+<p>A <em>slot</em> is a machine word in a Scheme value represented as block, whose value is either an
+immediate Scheme value or a reference to a block Scheme value; <a href="layout-intro-block.html#layout-intro-block">Block
+values</a>.
 </p>
-
-<dl>
-<dt id="index-_0023_0023sys_0023slot">System Operation: <strong>##sys#slot</strong> <em><var>?block-value</var> <var>?slot-index</var></em></dt>
-<dd><p>Unsafe slot getter.  We can use it when we know that: <var>?block-value</var> is a reference to a block
-value; <var>?slot-index</var> is a valid slot index for <var>?block-value</var>.  Return the undefined value.
-</p></dd></dl>
-
-
-<dl>
-<dt id="index-_0023_0023sys_0023setslot">System Operation: <strong>##sys#setslot</strong> <em><var>?block-value</var> <var>?slot-index</var> <var>?new-value</var></em></dt>
-<dd><p>Unsafe slot setter.  We can use it when we know that: <var>?block-value</var> is a reference to a block
-value; <var>?slot-index</var> is a valid slot index for <var>?block-value</var>.  Return the undefined value.
-</p></dd></dl>
-
-
-<dl>
-<dt id="index-_0023_0023sys_0023setislot">System Operation: <strong>##sys#setislot</strong> <em><var>?block-value</var> <var>?slot-index</var> <var>?new-immediate-value</var></em></dt>
-<dd><p>Like <code>##sys#setslot</code>, it is an unsafe slot setter with an additional constraint on the new
-value.  We can use it when we know that: <var>?block-value</var> is a reference to a block value;
-<var>?slot-index</var> is a valid slot index for <var>?block-value</var>; <var>?new-immediate-value</var> is any
-immediate Scheme value (examples: a fixnum, a boolean).  Return the undefined value.
-</p>
-<p><strong>NOTE</strong> No validation is performed against <var>?new-immediate-value</var> to check that it is
-actually an immediate value.
-</p></dd></dl>
-
-
-<dl>
-<dt id="index-_0023_0023sys_0023size">System Operation: <strong>##sys#size</strong> <em><var>?block-value</var></em></dt>
-<dd><p>Unsafe block length getter: return a fixnum representing the number of slots.  We can use it when we
-know that: <var>?block-value</var> is a reference to a block value.
-</p></dd></dl>
-
-
-<p>When the block value is a Scheme vector, we could make a more descriptive use of the above
-operations with the following macros:
-</p>
-<div class="lisp">
-<pre class="lisp">(define-syntax-rule ($vector-ref ?vector ?slot-index)
-  (##sys#slot ?vector ?slot-index))
-
-(define-syntax-rule ($vector-set! ?vector ?slot-index ?new-value)
-  (##sys#setslot ?vector ?slot-index ?new-value))
-
-(define-syntax-rule ($vector-set-immediate! ?vector ?slot-index ?new-value)
-  (##sys#setislot ?vector ?slot-index ?new-value))
-
-(define-syntax-rule ($vector-length ?vector)
-  (##sys#size ?vector))
-
-(define V
-  (vector 'a 'b 'c))
-
-($vector-set! vec 0 'x)
-($vector-set! vec 1 'y)
-($vector-set! vec 2 'z)
-
-($vector-ref vec 0)     &rArr; x
-($vector-ref vec 1)     &rArr; y
-($vector-ref vec 2)     &rArr; z
-</pre></div>
-
-<p>When the block value is a Scheme record, we could make a more descriptive use of the above
-operations with the following macros:
-</p>
-<div class="lisp">
-<pre class="lisp">(define-syntax-rule ($struct-size ?stru)
-  (##sys#size ?stru))
-
-(define-syntax-rule ($struct-slot ?stru ?slot-index)
-  (##sys#slot ?stru ?slot-index))
-
-(define-syntax-rule ($struct-slot-set! ?stru ?slot-index ?new-value)
-  (##sys#setslot ?stru ?slot-index ?new-value))
-
-(define-syntax-rule ($struct-slot-set-immediate! ?stru ?slot-index ?new-value)
-  (##sys#setislot ?stru ?slot-index ?new-value))
-
-(define-record &lt;spiffy&gt;
-  one two)
-
-(define instance
-  (make-&lt;spiffy&gt; 'a 'b))
-
-($struct-size instance)         &rArr; 3
-
-($struct-slot instance 0)       &rArr; current-module-name#&lt;spiffy&gt;
-($struct-slot instance 1)       &rArr; a
-($struct-slot instance 2)       &rArr; b
-
-($struct-slot-set! instance 1 'x)
-($struct-slot-set! instance 2 'y)
-
-($struct-slot instance 1)       &rArr; x
-($struct-slot instance 2)       &rArr; y
-</pre></div>
+<table class="menu" border="0" cellspacing="0">
+<tr><td align="left" valign="top">&bull; <a href="slots-sysops.html#slots-sysops" accesskey="1">slots sysops</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">System operations on slots.
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="slots-pairs.html#slots-pairs" accesskey="2">slots pairs</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Slots operations for pairs.
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="slots-vectors.html#slots-vectors" accesskey="3">slots vectors</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Slots operations for vectors.
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="slots-records.html#slots-records" accesskey="4">slots records</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Slots operations for records.
+</td></tr>
+</table>
 
 <hr>
 <div class="header">
 <p>
-Next: <a href="credits.html#credits" accesskey="n" rel="next">credits</a>, Previous: <a href="layout.html#layout" accesskey="p" rel="prev">layout</a>, Up: <a href="index.html#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+Next: <a href="structs.html#structs" accesskey="n" rel="next">structs</a>, Previous: <a href="checks.html#checks" accesskey="p" rel="prev">checks</a>, Up: <a href="index.html#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
 </div>
 
 

@@ -1,0 +1,145 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes the internals of CHICKEN version 5.0.0, it was last
+updated 15 May 2019; this document is part of MMCK CHICKEN Docs, a collection of unofficial
+documentation about the CHICKEN compiler and its development environment.  CHICKEN is a
+Scheme-to-C compiler supporting the language features as defined in the "Revised^5 Report on
+Scheme".
+
+This package is distributed under the terms of the http://creativecommons.org/licenses/by/3.0/ (Creative Commons Attribution 3.0 License).  All code fragments in this document are hereby put in
+the public domain.
+
+The latest release can be downloaded from:
+
+https://bitbucket.org/marcomaggi/chicken-internals/downloads
+
+development takes place at:
+
+https://github.com/marcomaggi/chicken-internals
+
+and as backup at:
+
+https://bitbucket.org/marcomaggi/chicken-internals -->
+<!-- Created by GNU Texinfo 6.6, http://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>structs sample (MMCK CHICKEN Internals)</title>
+
+<meta name="description" content="structs sample (MMCK CHICKEN Internals)">
+<meta name="keywords" content="structs sample (MMCK CHICKEN Internals)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="type-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="structs.html#structs" rel="up" title="structs">
+<link href="credits.html#credits" rel="next" title="credits">
+<link href="structs-sysops.html#structs-sysops" rel="prev" title="structs sysops">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="mmck-chicken-docs.css">
+
+
+</head>
+
+<body lang="en">
+<span id="structs-sample"></span><div class="header">
+<p>
+Previous: <a href="structs-sysops.html#structs-sysops" accesskey="p" rel="prev">structs sysops</a>, Up: <a href="structs.html#structs" accesskey="u" rel="up">structs</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<span id="Example-of-structure-handling-API"></span><h3 class="section">5.2 Example of structure handling <acronym>API</acronym></h3>
+
+
+<p>The code below shows how we could define a public <acronym>API</acronym> to handle structures:
+</p>
+<div class="lisp">
+<pre class="lisp">(define-syntax-rule (make-&lt;colour&gt; ?red ?green ?blue)
+  (##sys#make-structure '&lt;colour&gt; ?red ?green ?blue))
+
+(define-syntax-rule (colour? ?obj)
+  (##sys#structure? ?obj '&lt;colour&gt;))
+
+(define-syntax-rule (check-colour ?obj ?loc)
+  (##core#check
+   (##sys#check-structure ?obj '&lt;colour&gt; (quote ?loc))))
+
+(define-syntax-rule (colour-red ?stru)
+  (check-colour ?stru 'colour-red)
+  (##sys#slot ?stru 1))
+
+(define-syntax-rule (colour-green ?stru)
+  (check-colour ?stru 'colour-green)
+  (##sys#slot ?stru 2))
+
+(define-syntax-rule (colour-blue ?stru)
+  (check-colour ?stru 'colour-blue)
+  (##sys#slot ?stru 3))
+
+(define-syntax-rule (colour-red-set! ?stru ?new-red-value)
+  (check-colour ?stru 'colour-red)
+  (##sys#setslot ?stru 1 ?new-red-value))
+
+(define-syntax-rule (colour-green-set! ?stru ?new-green-value)
+  (check-colour ?stru 'colour-green)
+  (##sys#setslot ?stru 2 ?new-green-value))
+
+(define-syntax-rule (colour-blue-set! ?stru ?new-blue-value)
+  (check-colour ?stru 'colour-blue)
+  (##sys#setslot ?stru 3 ?new-blue-value))
+</pre></div>
+
+<p>here are some usage examples:
+</p>
+<div class="lisp">
+<pre class="lisp">(let ((col (make-&lt;colour&gt; 0.2 0.3 0.4)))
+  (check-colour col 'here)
+  (##sys#slot col 0))
+&rArr; &lt;colour&gt;
+
+(colour? (make-&lt;colour&gt; 0.2 0.3 0.4)))  &rArr; #t
+(colour? &quot;ciao&quot;))                       &rArr; #f
+
+(let ((col (make-&lt;colour&gt; 0.2 0.3 0.4)))
+  (values (colour-red   col)
+          (colour-green col)
+          (colour-blue  col)))
+&rArr; 0.2 0.3 0.4
+
+(let ((col (make-&lt;colour&gt; 0.2 0.3 0.4)))
+  (colour-red-set!   col 0.5)
+  (colour-green-set! col 0.6)
+  (colour-blue-set!  col 0.7)
+  (values (colour-red   col)
+          (colour-green col)
+          (colour-blue  col)))
+&rArr; 0.5 0.6 0.7
+</pre></div>
+
+<hr>
+<div class="header">
+<p>
+Previous: <a href="structs-sysops.html#structs-sysops" accesskey="p" rel="prev">structs sysops</a>, Up: <a href="structs.html#structs" accesskey="u" rel="up">structs</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

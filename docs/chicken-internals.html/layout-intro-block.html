@@ -1,0 +1,156 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes the internals of CHICKEN version 5.0.0, it was last
+updated 15 May 2019; this document is part of MMCK CHICKEN Docs, a collection of unofficial
+documentation about the CHICKEN compiler and its development environment.  CHICKEN is a
+Scheme-to-C compiler supporting the language features as defined in the "Revised^5 Report on
+Scheme".
+
+This package is distributed under the terms of the http://creativecommons.org/licenses/by/3.0/ (Creative Commons Attribution 3.0 License).  All code fragments in this document are hereby put in
+the public domain.
+
+The latest release can be downloaded from:
+
+https://bitbucket.org/marcomaggi/chicken-internals/downloads
+
+development takes place at:
+
+https://github.com/marcomaggi/chicken-internals
+
+and as backup at:
+
+https://bitbucket.org/marcomaggi/chicken-internals -->
+<!-- Created by GNU Texinfo 6.6, http://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>layout intro block (MMCK CHICKEN Internals)</title>
+
+<meta name="description" content="layout intro block (MMCK CHICKEN Internals)">
+<meta name="keywords" content="layout intro block (MMCK CHICKEN Internals)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="type-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="layout-intro.html#layout-intro" rel="up" title="layout intro">
+<link href="layout-bitfid.html#layout-bitfid" rel="next" title="layout bitfid">
+<link href="layout-intro-immediate.html#layout-intro-immediate" rel="prev" title="layout intro immediate">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="mmck-chicken-docs.css">
+
+
+</head>
+
+<body lang="en">
+<span id="layout-intro-block"></span><div class="header">
+<p>
+Previous: <a href="layout-intro-immediate.html#layout-intro-immediate" accesskey="p" rel="prev">layout intro immediate</a>, Up: <a href="layout-intro.html#layout-intro" accesskey="u" rel="up">layout intro</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<span id="Block-values"></span><h4 class="subsection">2.1.2 Block values</h4>
+
+
+<p>They are values represented pointers to a structure that contains a header and a variable&ndash;length
+data block.
+</p>
+<p>The data block is a pointer which can conceptually be one of two types.  In case of a string or
+<acronym>SRFI</acronym>-4 object, the data block is simply an opaque &ldquo;blob&rdquo; or bytevector.  In most other cases,
+the block is a compound value consisting of other Scheme objects.  Typical examples are pairs,
+vectors and records.
+</p>
+<p>Because these values are heap&ndash;allocated, two distinct objects are not stored at the same memory
+address, even if they store the same value.  That&rsquo;s why comparing their values is a complex
+operation.  This operation is either <code>equal?</code> for deep structural comparison, or <code>eqv?</code>
+for value comparisons of numbers and symbols.
+</p>
+<p>The <acronym>R5RS</acronym> specification explains that the difference between <code>eq?</code> and <code>eqv?</code> is not
+necessarily the same across Scheme implementations.  For example, in <small>CHICKEN</small>, <code>eq?</code> can be
+used to compare characters and fixnums, because they are stored as immediate values.  Portable
+programs should not rely on that.  If we use <code>eq?</code> on block objects, their pointers will be
+compared: <code>eq?</code> checks whether they are one and the same object.  This can be a useful
+operation in its own right.
+</p>
+<p>Objects represented by data blocks also have to be tracked by the garbage collector: if there are
+still references to the block, its data must be copied (recursively) to keep it alive across garbage
+collection events.
+</p>
+<p>Here are some &ldquo;high level&rdquo; examples of block objects:
+</p>
+<div class="example">
+<pre class="example"> --------------------------
+| pair 2 slots | #\a | #\b |
+ --------------------------
+
+ -------------------------------------------
+| vector 5 slots | #f | 123 | 456 | #f | 42 |
+ -------------------------------------------
+
+ --------------------------    -----------------------
+| string 5 bytes | &quot;hello&quot; |  | flonum 8 bytes | 12.5 |
+ --------------------------    -----------------------
+        ^                           ^
+        |                           |
+         ---------                   ---------
+                  |                           |
+ -----------------+-----     -----------------+------
+| pair 2 slots |  O | O-|--&gt;| pair 2 slots |  O | () |
+ -----------------------     ------------------------
+</pre></div>
+
+<p>every block object starts with a header which indicates the type of object and the object&rsquo;s size.
+It also determines whether the object&rsquo;s data block is a byte block or a block containing Scheme
+objects: if it contains Scheme objects, the header tells us how many slots (locations for storing
+Scheme objects) the object has.  Byte blocks, on the other hand, are opaque and can contain any
+data.  Their size is stored as a byte count.
+</p>
+<p>From top to bottom, left to right, these represent the following values:
+</p>
+<ul>
+<li> <code>(#\a . #\b)</code> is a pair containing the character <code>a</code> in its car and <code>b</code> in its cdr.
+
+</li><li> <code>#(#f 123 456 #f 42)</code> is a regular Scheme vector containing fixnums and false values.
+
+</li><li> <code>&quot;hello&quot;</code> is a string consisting of 5 characters (strings are treated as byte vectors in
+<small>CHICKEN</small>).
+
+</li><li> <code>12.5</code> is an inexact representation of the number twelve and a half (a &ldquo;flonum&rdquo;).  This is a
+byte block storing the raw byte value of a C <code>double</code>.
+
+</li><li> <code>(&quot;hello&quot; . (12.5 . ()))</code> is the first pair of a proper list which contains a string and a
+flonum.
+
+</li><li> <code>(12.5 . ())</code> is the cdr of that list; a pair containing a number and the end&ndash;of&ndash;list marker.
+</li></ul>
+
+<p>The final two pair objects show that slots (like any <code>C_word</code>) can hold not only immediate
+values, but also pointers to block objects.  This leads us to the question: how to differentiate
+between a pointer to an object and an immediate object?
+</p>
+<hr>
+<div class="header">
+<p>
+Previous: <a href="layout-intro-immediate.html#layout-intro-immediate" accesskey="p" rel="prev">layout intro immediate</a>, Up: <a href="layout-intro.html#layout-intro" accesskey="u" rel="up">layout intro</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>
