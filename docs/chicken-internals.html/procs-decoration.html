@@ -1,0 +1,189 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes the internals of CHICKEN version 5.0.0, it was last
+updated 22 May 2019; this document is part of MMCK CHICKEN Docs, a collection of unofficial
+documentation about the CHICKEN compiler and its development ecosystem.  CHICKEN is a
+Scheme-to-C compiler supporting the language features as defined in the "Revised^5 Report on
+Scheme".
+
+This package is distributed under the terms of the http://creativecommons.org/licenses/by/3.0/ (Creative Commons Attribution 3.0 License).  All code fragments in this document are hereby put in
+the public domain.
+
+The latest release can be downloaded from:
+
+https://bitbucket.org/marcomaggi/chicken-internals/downloads
+
+development takes place at:
+
+https://github.com/marcomaggi/chicken-internals
+
+and as backup at:
+
+https://bitbucket.org/marcomaggi/chicken-internals -->
+<!-- Created by GNU Texinfo 6.6, http://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>procs decoration (MMCK CHICKEN Internals)</title>
+
+<meta name="description" content="procs decoration (MMCK CHICKEN Internals)">
+<meta name="keywords" content="procs decoration (MMCK CHICKEN Internals)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="type-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="procs.html#procs" rel="up" title="procs">
+<link href="credits.html#credits" rel="next" title="credits">
+<link href="procs.html#procs" rel="prev" title="procs">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="mmck-chicken-docs.css">
+
+
+</head>
+
+<body lang="en">
+<span id="procs-decoration"></span><div class="header">
+<p>
+Up: <a href="procs.html#procs" accesskey="u" rel="up">procs</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<span id="Decorating-a-procedure-object"></span><h3 class="section">6.1 Decorating a procedure object</h3>
+
+
+<span id="index-decorations-block_002c-procedure-objects"></span>
+<span id="index-Procedure-objects_002c-decorations-block"></span>
+
+
+<p><small>CHICKEN</small> allows us to associate a number of values to a procedure object, storing them in the
+procedure object itself, which is a block object similar to a Scheme vector; the maximum number of
+decorations approaches the maximum length of a Scheme vector.  When adding a decoration value: we
+must make sure that we can identify it by applying a predicate to it.
+</p>
+
+<dl>
+<dt id="index-_0023_0023sys_0023lambda_002ddecoration">System Operation: <strong>##sys#lambda-decoration</strong> <em><var>proc</var> <var>pred</var></em></dt>
+<dd><p>Iterate over the decoration slots of the procedure object <var>proc</var> searching for a decoration
+value that matches the predicate <var>pred</var>.  If a match is found: return that value; otherwise
+return <code>#f</code>.
+</p></dd></dl>
+
+
+<dl>
+<dt id="index-_0023_0023sys_0023decorate_002dlambda">System Operation: <strong>##sys#decorate-lambda</strong> <em><var>proc</var> <var>pred</var> <var>decorator</var></em></dt>
+<dd><p>Iterate over the decoration slots of the procedure object <var>proc</var> searching for a decoration
+value that matches the predicate <var>pred</var>:
+</p>
+<ul>
+<li> If a matching decoration value is found: apply the function <var>decorator</var> to two values, the
+procedure object itself and the index of the slot in which the matching decoration value is stored.
+
+</li><li> If no matching decoration value is found: <strong>reallocate the procedure object</strong> adding a new
+slot, available for this call and left uninitialised.  Then apply the function <var>decorator</var> to
+two values: the new procedure object; the index of the new slot.
+</li></ul>
+
+<p>Return the values returned by the <var>decorator</var> application.  <var>decorator</var> should return the
+procedure object it received as argument, because, in case of reallocation, that value is the
+replacement of <var>proc</var>; we have to assume <var>proc</var> itself is no more a valid Scheme object
+after a call to this system operation.
+</p></dd></dl>
+
+
+<span id="Keyed-pair-as-decoration-value"></span><h4 class="subsubheading">Keyed pair as decoration value</h4>
+
+
+<p>Let&rsquo;s define an <acronym>API</acronym> to decorate procedure objects, the decoration value is a pair object with a
+&ldquo;type symbol&rdquo; as car:
+</p>
+<div class="lisp">
+<pre class="lisp">(define MY_PROCEDURE_DECORATION_KEY
+  'Sau0oosh8coodahthoa4Ohquic6oshoh)
+
+(define (make-my-procedure-decoration-value proc)
+  ;;Build a new decoration value.
+  ;;
+  (cons MY_PROCEDURE_DECORATION_KEY proc))
+
+(define (my-procedure-decoration-value? obj)
+  ;;Return #t if OBJ is a decoration value; otherwise return #f.
+  ;;
+  (and (pair? obj)
+       (eq? MY_PROCEDURE_DECORATION_KEY (car obj))))
+
+(define (decorate-my-procedure proc decoration-value-payload)
+  ;;Decorate the procedure PROC with a new payload value.  Return
+  ;;the, possibly reallocated, procedure object.
+  ;;
+  (##sys#decorate-lambda proc my-procedure-decoration-value?
+    (lambda (new-proc slotidx)
+      (##sys#setslot new-proc slotidx
+                     (make-my-procedure-decoration-value
+                        decoration-value-payload))
+      new-proc)))
+
+(define (my-procedure-decoration-payload proc)
+  ;;Retrieve the payload from the decoration value associated to
+  ;;the procedure object PROC.  Raise an error if no such decoration
+  ;;is present.
+  ;;
+  (cond ((##sys#lambda-decoration proc my-procedure-decoration-value?)
+         =&gt; cdr)
+        (else
+         (error 'my-procedure-decoration-payload
+           &quot;expected procedure object decorated with my payload&quot;
+           proc))))
+</pre></div>
+
+<p>now we can decorate procedures as follows:
+</p>
+<div class="lisp">
+<pre class="lisp">(define (the-proc)
+  123)
+
+(set! the-proc (decorate-my-procedure the-proc &quot;ciao&quot;))
+
+(my-procedure-decoration-payload the-proc))
+&rArr; &quot;ciao&quot;
+</pre></div>
+
+<p>or as follows:
+</p>
+<div class="lisp">
+<pre class="lisp">(define the-proc
+  (decorate-my-procedure
+      (lambda ()
+        123)
+    &quot;ciao&quot;))
+
+(my-procedure-decoration-payload the-proc))
+&rArr; &quot;ciao&quot;
+</pre></div>
+
+<hr>
+<div class="header">
+<p>
+Up: <a href="procs.html#procs" accesskey="u" rel="up">procs</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>
