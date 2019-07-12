@@ -1,0 +1,184 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.5.0-devel.1 of MMCK PFDS, a set of CHICKEN language
+libraries implementing purely functional data structures.  CHICKEN is a Scheme-to-C compiler
+supporting the language features as defined in the "Revised^5 Report on Scheme".
+
+The library supports POSIX platforms.  This package should work with CHICKEN version 5+; it
+has been tested with CHICKEN version 5.1.0.
+
+This package is distributed under the terms of a liberal license.
+
+The latest release can be downloaded from:
+
+https://bitbucket.org/marcomaggi/mmck-pfds/downloads
+
+development takes place at:
+
+https://github.com/marcomaggi/mmck-pfds
+
+and as backup at:
+
+https://bitbucket.org/marcomaggi/mmck-pfds
+
+Copyright (C) 2019 by Marco Maggi mrc.mgg@gmail.com
+
+Copyright (C) 2011, 2012 Ian Price ianprice90@googlemail.com
+
+Permission is granted to copy, distribute and/or modify this document under the terms of the GNU
+Free Documentation License, Version 1.3 or any later version published by the Free Software
+Foundation; with Invariant Sections being "GNU Free Documentation License" and "GNU Lesser
+General Public License", no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license is
+included in the section entitled "GNU Free Documentation License". -->
+<!-- Created by GNU Texinfo 6.6, http://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>queues (Purely Functional Data Structures in Scheme)</title>
+
+<meta name="description" content="queues (Purely Functional Data Structures in Scheme)">
+<meta name="keywords" content="queues (Purely Functional Data Structures in Scheme)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="type-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="index.html#Top" rel="up" title="Top">
+<link href="deques.html#deques" rel="next" title="deques">
+<link href="dlists.html#dlists" rel="prev" title="dlists">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="mmck-chicken-docs.css">
+
+
+</head>
+
+<body lang="en">
+<span id="queues"></span><div class="header">
+<p>
+Next: <a href="deques.html#deques" accesskey="n" rel="next">deques</a>, Previous: <a href="dlists.html#dlists" accesskey="p" rel="prev">dlists</a>, Up: <a href="index.html#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<span id="Purely-functional-queues"></span><h2 class="chapter">4 Purely functional queues</h2>
+
+
+<p>This module implements a First&ndash;In First&ndash;Out functional queue:
+</p>
+<div class="lisp">
+<pre class="lisp">(let* ((Q (make-queue))
+       (Q (enqueue Q 1))
+       (Q (enqueue Q 2))
+       (Q (enqueue Q 3)))
+  (receive (A Q)
+      (dequeue Q)
+    (receive (B Q)
+        (dequeue Q)
+      (receive (C Q)
+          (dequeue Q)
+        (values A B C)))))
+&rArr; 1 2 3
+</pre></div>
+
+<p>by applying repeatedly <code>dequeue</code> to the same <code>&lt;queue&gt;</code> object, we extract the same item
+from the queue:
+</p>
+<div class="lisp">
+<pre class="lisp">(let* ((Q (make-queue))
+       (Q (enqueue Q 1))
+       (Q (enqueue Q 2))
+       (Q (enqueue Q 3)))
+  (receive (A Q1)
+      (dequeue Q)
+    (receive (B Q1)
+        (dequeue Q)
+      (receive (C Q1)
+          (dequeue Q)
+        (values A B C)))))
+&rArr; 1 1 1
+</pre></div>
+
+
+<dl>
+<dt id="index-make_002dqueue">Function: <strong>make-queue</strong></dt>
+<dd><p>Return a queue containing no items.
+</p></dd></dl>
+
+
+<dl>
+<dt id="index-queue_003f">Function: <strong>queue?</strong> <em><var>OBJ</var></em></dt>
+<dd><p>Return <code>#t</code> if <var>OBJ</var> is a queue, <code>#f</code> otherwise.
+</p></dd></dl>
+
+
+<dl>
+<dt id="index-queue_002dlength">Function: <strong>queue-length</strong> <em><var>queue</var></em></dt>
+<dd><p>Return a non&ndash;negative integer representing the number of items in <var>queue</var>.
+</p></dd></dl>
+
+
+<dl>
+<dt id="index-queue_002dempty_003f">Function: <strong>queue-empty?</strong> <em><var>queue</var></em></dt>
+<dd><p>Return <code>#t</code> if there are no items in <var>queue</var>, <code>#f</code> otherwise.
+</p></dd></dl>
+
+
+<dl>
+<dt id="index-enqueue">Function: <strong>enqueue</strong> <em><var>queue</var> <var>item</var></em></dt>
+<dd><p>Return a new queue with the enqueued <var>item</var> at the end.
+</p></dd></dl>
+
+
+<dl>
+<dt id="index-dequeue">Function: <strong>dequeue</strong> <em><var>queue</var></em></dt>
+<dd><p>Return 2 values: the item at the front of <var>queue</var>, and a new queue containing the all the other
+items.  Raise a condition with kind <code>pfds-queue-empty-condition</code> condition if <var>queue</var> is
+empty.
+</p></dd></dl>
+
+
+<dl>
+<dt id="index-queue_002dempty_002dcondition_003f">Function: <strong>queue-empty-condition?</strong> <em><var>OBJ</var></em></dt>
+<dd><p>Return <code>#t</code> if <var>OBJ</var> is a condition object with kind <code>pfds-queue-empty-condition</code>;
+otherwise return <code>#f</code>.
+</p></dd></dl>
+
+
+<dl>
+<dt id="index-queue_002d_003elist">Function: <strong>queue-&gt;list</strong> <em><var>queue</var></em></dt>
+<dd><p>Return a list containing all the items in <var>queue</var>.  The order of the item in the list is the
+same as the order of the elements in the queue.
+</p></dd></dl>
+
+
+<dl>
+<dt id="index-list_002d_003equeue">Function: <strong>list-&gt;queue</strong> <em><var>list-of-items</var></em></dt>
+<dd><p>Return a queue containing all the items in the given list.  The order of the items in the queue is
+the same as the order in the list.
+</p></dd></dl>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="deques.html#deques" accesskey="n" rel="next">deques</a>, Previous: <a href="dlists.html#dlists" accesskey="p" rel="prev">dlists</a>, Up: <a href="index.html#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+<p>This document describes version <tt>0.5.0-devel.1</tt> of <em>MMCK PFDS</em>.</p>
+</body>
+</html>
