@@ -1,0 +1,224 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.1.0-devel.0 of MMCK Infix, a CHICKEN language library
+implementing an infix-to-prefix macro.  CHICKEN is a Scheme-to-C compiler supporting the
+language features as defined in the "Revised^5 Report on Scheme".
+
+The library supports POSIX platforms.  This package should work with CHICKEN version 5+; it
+has been tested with CHICKEN version 5.1.0.
+
+This package is distributed under the terms of the GNU Lesser General Public License (LGPL).
+
+The latest release can be downloaded from:
+
+https://bitbucket.org/marcomaggi/mmck-infix/downloads
+
+development takes place at:
+
+https://github.com/marcomaggi/mmck-infix
+
+and as backup at:
+
+https://bitbucket.org/marcomaggi/mmck-infix
+
+Copyright (C) 2019 by Marco Maggi mrc.mgg@gmail.com
+
+Permission is granted to copy, distribute and/or modify this document under the terms of the GNU
+Free Documentation License, Version 1.3 or any later version published by the Free Software
+Foundation; with Invariant Sections being "GNU Free Documentation License" and "GNU Lesser
+General Public License", no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license is
+included in the section entitled "GNU Free Documentation License". -->
+<!-- Created by GNU Texinfo 6.6, http://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>infix prec (MMCK Infix)</title>
+
+<meta name="description" content="infix prec (MMCK Infix)">
+<meta name="keywords" content="infix prec (MMCK Infix)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="function-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="infix.html#infix" rel="up" title="infix">
+<link href="infix-notes.html#infix-notes" rel="next" title="infix notes">
+<link href="infix-syntax.html#infix-syntax" rel="prev" title="infix syntax">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="mmck-chicken-docs.css">
+
+
+</head>
+
+<body lang="en">
+<span id="infix-prec"></span><div class="header">
+<p>
+Next: <a href="infix-notes.html#infix-notes" accesskey="n" rel="next">infix notes</a>, Previous: <a href="infix-syntax.html#infix-syntax" accesskey="p" rel="prev">infix syntax</a>, Up: <a href="infix.html#infix" accesskey="u" rel="up">infix</a> &nbsp; [<a href="function-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<span id="Operators-precedence"></span><h3 class="section">3.2 Operators precedence</h3>
+
+
+<p>To determine sensible precedences for operators, we make the following observations:
+</p>
+<ul>
+<li> Logical operators (<code>and</code>, <code>or</code>, <code>not</code>, &hellip;) are meant to be applied to predicate
+operand expressions and they return a boolean value.
+
+</li><li> Numeric comparison operators (<code>=</code>, <code>&lt;</code>, <code>&gt;</code>, &hellip;) are meant to be applied to
+numeric operand expressions and they return a boolean value.
+
+</li><li> Arithmetic operators (<code>+</code>, <code>-</code>, <code>*</code>, <code>/</code>, &hellip;) are meant to be applied to
+numeric operand expressions and they return a numeric value.
+
+</li><li> The C language has established a tradition of writing expressions containing bitwise operators
+<code>1 &amp; 2 + ~ 3</code> meaning <code>(1 &amp; 2) + (~ 3)</code>, in which bitwise operators take precedence over
+every other operator.
+
+</li><li> It makes sense to write expressions like <code>1 &lt; i and i &lt; 4</code> meaning <code>(1 &lt; i) and (i &lt; 4)</code>,
+because it makes no sense to interpret it as <code>1 &lt; (i and i) &lt; 4</code>.
+
+</li><li> It makes sense to write expressions like <code>1 + 2 &lt; 3 + 4</code> meaning <code>(1 + 2) &lt; (3 + 4)</code>,
+because it makes no sense to interpret it as <code>1 + (2 &lt; 3) + 4</code>.
+</li></ul>
+
+<p>So <small>MMCK</small> Infix defines operators precedence as follows, from high precedence to low precedence:
+</p>
+<ol>
+<li> Procedure application: the left parenthesis preceeded by an identifier starts a procedure
+application.
+
+</li><li> Binary infix bitwise shift operators:
+
+<div class="example">
+<pre class="example">bitwise-arithmetic-shift-left
+bitwise-arithmetic-shift-right
+fxshl
+fxshr
+</pre></div>
+
+</li><li> Unary prefix bitwise operators:
+
+<div class="example">
+<pre class="example">bitwise-not fxnot
+</pre></div>
+
+</li><li> Binary infix bitwise operators:
+
+<div class="example">
+<pre class="example">bitwise-and bitwise-ior bitwise-xor
+fxand fxior fxxor
+</pre></div>
+
+</li><li> Unary prefix arithmetic operators:
+
+<div class="example">
+<pre class="example">+ - ++ -- fx+ fx- fp+ fp-
+</pre></div>
+
+</li><li> Unary postfix arithmetic operators:
+
+<div class="example">
+<pre class="example">++ -- !
+</pre></div>
+
+</li><li> Binary infix arithmetic exponentiation operators:
+
+<div class="example">
+<pre class="example">expt fpexpt
+</pre></div>
+
+</li><li> Binary infix arithmetic modulo operators:
+
+<div class="example">
+<pre class="example">quotient modulo remainder
+</pre></div>
+
+</li><li> Binary infix multiplication and division arithmetic operators:
+
+<div class="example">
+<pre class="example">* / fp* fp/ fx* fx/
+</pre></div>
+
+</li><li> Binary infix addition and subtraction arithmetic operators:
+
+<div class="example">
+<pre class="example">+ - fp+ fp- fx+ fx-
+</pre></div>
+
+</li><li> Comparison operators:
+
+<div class="example">
+<pre class="example">&lt; &gt; &lt;= &gt;= = !=
+fx&lt; fx&gt; fx&lt;= fx&gt;= fx=
+fp&lt; fp&gt; fp&lt;= fp&gt;= fp=
+eq? eqv? equal?
+</pre></div>
+
+</li><li> Unary prefix logical operators:
+
+<div class="example">
+<pre class="example">not
+</pre></div>
+
+</li><li> Binary infix logical operators:
+
+<div class="example">
+<pre class="example">and or xor
+</pre></div>
+
+</li><li> Ternary conditional operator <code>&hellip; ? &hellip; : &hellip;</code>.
+
+</li><li> Procedure application arguments separator, which is the comma.
+</li></ol>
+
+<p>Here some expansion examples:
+</p>
+<div class="example">
+<pre class="example">(infix ! 2 + 3)         &rarr; (not (2 + 3))
+(infix (! 2) + 3)       error&rarr; expected numeric argument
+
+(infix fxnot 3)         &rArr; -4
+(infix fxnot 3 + 10)    &rArr; 6
+
+(infix ! cos(3))        &rarr; (not (cos 3))
+</pre></div>
+
+
+<span id="Precedence-exceptions"></span><h4 class="subsubheading">Precedence exceptions</h4>
+
+
+<p>The Pratt parser allows the same operator to have different precedence when it is present in prefix
+position or in postfix position.  So under <code>(mmck infix)</code> the following expansion takes place:
+</p>
+<div class="example">
+<pre class="example">(infix ! 1 + 2)         &rarr; (not (+ 1 2))
+</pre></div>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="infix-notes.html#infix-notes" accesskey="n" rel="next">infix notes</a>, Previous: <a href="infix-syntax.html#infix-syntax" accesskey="p" rel="prev">infix syntax</a>, Up: <a href="infix.html#infix" accesskey="u" rel="up">infix</a> &nbsp; [<a href="function-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+<p>This document describes version <tt>0.1.0-devel.0</tt> of <em>MMCK Infix</em>.</p>
+</body>
+</html>

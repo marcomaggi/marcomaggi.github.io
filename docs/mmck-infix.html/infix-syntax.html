@@ -1,0 +1,346 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.1.0-devel.0 of MMCK Infix, a CHICKEN language library
+implementing an infix-to-prefix macro.  CHICKEN is a Scheme-to-C compiler supporting the
+language features as defined in the "Revised^5 Report on Scheme".
+
+The library supports POSIX platforms.  This package should work with CHICKEN version 5+; it
+has been tested with CHICKEN version 5.1.0.
+
+This package is distributed under the terms of the GNU Lesser General Public License (LGPL).
+
+The latest release can be downloaded from:
+
+https://bitbucket.org/marcomaggi/mmck-infix/downloads
+
+development takes place at:
+
+https://github.com/marcomaggi/mmck-infix
+
+and as backup at:
+
+https://bitbucket.org/marcomaggi/mmck-infix
+
+Copyright (C) 2019 by Marco Maggi mrc.mgg@gmail.com
+
+Permission is granted to copy, distribute and/or modify this document under the terms of the GNU
+Free Documentation License, Version 1.3 or any later version published by the Free Software
+Foundation; with Invariant Sections being "GNU Free Documentation License" and "GNU Lesser
+General Public License", no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license is
+included in the section entitled "GNU Free Documentation License". -->
+<!-- Created by GNU Texinfo 6.6, http://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>infix syntax (MMCK Infix)</title>
+
+<meta name="description" content="infix syntax (MMCK Infix)">
+<meta name="keywords" content="infix syntax (MMCK Infix)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="function-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="infix.html#infix" rel="up" title="infix">
+<link href="infix-prec.html#infix-prec" rel="next" title="infix prec">
+<link href="infix.html#infix" rel="prev" title="infix">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="mmck-chicken-docs.css">
+
+
+</head>
+
+<body lang="en">
+<span id="infix-syntax"></span><div class="header">
+<p>
+Next: <a href="infix-prec.html#infix-prec" accesskey="n" rel="next">infix prec</a>, Up: <a href="infix.html#infix" accesskey="u" rel="up">infix</a> &nbsp; [<a href="function-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<span id="Notes-on-the-supported-syntax"></span><h3 class="section">3.1 Notes on the supported syntax</h3>
+
+
+<p>Let&rsquo;s consider that the library <code>(mmck infix)</code> exports the following extension functions and
+syntaxes:
+</p>
+<div class="lisp">
+<pre class="lisp">xor
+factorial
+!=
+bitwise-arithmetic-shift-left
+bitwise-arithmetic-shift-right
+</pre></div>
+
+<p>Some expression syntax interpretation rules:
+</p>
+<ul>
+<li> Any Scheme value can be element of the input form; numbers and all the other values are just put
+there as operands.
+
+<div class="example">
+<pre class="example">(infix list(&quot;ciao&quot; , 'hello , '#u8(1 2 3 4)))
+&rArr; (&quot;ciao&quot; hello #u8(1 2 3 4))
+</pre></div>
+
+</li><li> The following bound identifiers exported by <code>(scheme)</code>, <code>(chicken fixnum)</code>,
+<code>(chicken flonum)</code> and <code>(chicken bitwise)</code> are interpreted as binary infix operators:
+
+<div class="example">
+<pre class="example">+ - * / expt quotient modulo remainder
+fx+ fx- fx* fx/ fxmod fxrem
+fp+ fp- fp* fp/ fpexpt
+&lt; &gt; &lt;= &gt;= =
+fx&lt; fx&gt; fx&lt;= fx&gt;= fx=
+fp&lt; fp&gt; fp&lt;= fp&gt;= fp=
+eq? eqv? equal?
+and or
+bitwise-and bitwise-ior bitwise-xor
+fxand fxior fxxor fxshl fxshr
+</pre></div>
+
+<p>the following bound identifiers exported by <code>(mmck infix)</code> are interpreted as binary infix
+operators:
+</p>
+<div class="example">
+<pre class="example">!= xor
+bitwise-arithmetic-shift-left
+bitwise-arithmetic-shift-right
+</pre></div>
+
+<p>in addition the following identifiers are recognised by their symbol name and interpreted as aliases
+of binary infix operators:
+</p>
+<div class="example">
+<pre class="example">&amp;&amp;              &rarr; and
+\x23D0;\x23D0;  &rarr; or
+\x00AC;         &rarr; not
+\x2227;         &rarr; and
+\x2228;         &rarr; or
+\x22BB;         &rarr; xor
+==              &rarr; =
+&lt;&gt;              &rarr; !=
+\x00D7;         &rarr; *
+\x22C5;         &rarr; *
+**              &rarr; expt
+%               &rarr; mod
+&amp;               &rarr; bitwise-and
+\x23D0;         &rarr; bitwise-ior
+^               &rarr; bitwise-xor
+&lt;&lt;              &rarr; bitwise-arithmetic-shift-left
+&gt;&gt;              &rarr; bitwise-arithmetic-shift-right
+</pre></div>
+
+<p>where the symbols with escape sequences are:
+</p>
+<dl compact="compact">
+<dt>&lsquo;<samp>\x00AC;</samp>&rsquo;</dt>
+<dt>&lsquo;<samp>&#x00AC;</samp>&rsquo;</dt>
+<dd><p>Unicode character not sign.
+</p>
+</dd>
+<dt>&lsquo;<samp>\x00D7;</samp>&rsquo;</dt>
+<dt>&lsquo;<samp>&#x00D7;</samp>&rsquo;</dt>
+<dd><p>Unicode character times.
+</p>
+</dd>
+<dt>&lsquo;<samp>\x2227;</samp>&rsquo;</dt>
+<dt>&lsquo;<samp>&#x2227;</samp>&rsquo;</dt>
+<dd><p>Unicode character logical and.
+</p>
+</dd>
+<dt>&lsquo;<samp>\x2228;</samp>&rsquo;</dt>
+<dt>&lsquo;<samp>&#x2228;</samp>&rsquo;</dt>
+<dd><p>Unicode character logical or.
+</p>
+</dd>
+<dt>&lsquo;<samp>\x22BB;</samp>&rsquo;</dt>
+<dt>&lsquo;<samp>&#x22BB;</samp>&rsquo;</dt>
+<dd><p>Unicode character xor.
+</p>
+</dd>
+<dt>&lsquo;<samp>\x22C5;</samp>&rsquo;</dt>
+<dt>&lsquo;<samp>&#x22C5;</samp>&rsquo;</dt>
+<dd><p>Unicode character dot operator.
+</p>
+</dd>
+<dt>&lsquo;<samp>\x23D0;</samp>&rsquo;</dt>
+<dt>&lsquo;<samp>&#x23D0;</samp>&rsquo;</dt>
+<dd><p>Unicode character vertical bar extension.
+</p></dd>
+</dl>
+
+</li><li> The following bound identifiers exported by <code>(scheme)</code>, <code>(chicken fixnum)</code> and
+<code>(chicken flonum)</code> are interpreted as unary prefix operators:
+
+<div class="example">
+<pre class="example">+ -
+fx+ fx- fxneg
+fp+ fp- fpneg
+not bitwise-not fxnot
+</pre></div>
+
+<p>the following identifiers are recognised by their symbol name and are interpreted as unary prefix
+operators:
+</p>
+<div class="example">
+<pre class="example">++ --
+</pre></div>
+
+<p>in addition the following identifiers are recognised by their symbol name and interpreted as aliases
+of unary prefix operators:
+</p>
+<div class="example">
+<pre class="example">!       &rarr; not
+~       &rarr; bitwise-not
+</pre></div>
+
+</li><li> The following identifiers are recognised by their symbol namd and are are interpreted as unary
+postfix operators:
+
+<div class="example">
+<pre class="example">++ --
+</pre></div>
+
+<p>in addition the following identifiers are recognised by their symbol name and interpreted as aliases
+of unary postfix operators:
+</p>
+<div class="example">
+<pre class="example">!       &rarr; factorial
+</pre></div>
+
+</li><li> Almost all the binary infix operators are left&ndash;associative with the exception of <code>expt</code> and
+<code>fpexpt</code> which are right&ndash;associative:
+
+<div class="example">
+<pre class="example">;; left-associative
+(infix 10 - 5 - 3)              &rarr; (- (- 10 5) 3)
+(infix 10 - 5 - 3)              &rarr; (- 10 5 3)
+(infix 10 / 5 / 3)              &rarr; (/ (/ 10 5) 3)
+(infix 10 / 5 / 3)              &rarr; (/ 10 5 3)
+
+;; right-associative
+(infix 10 expt 5 expt 3)        &rarr; (expt 10 (expt 5 3))
+(infix 10. fpexpt 5. fpexpt 3.) &rarr; (fpexpt 10. (fpexpt 5. 3.))
+</pre></div>
+
+</li><li> The identifiers <code>++</code> and <code>--</code> are unary operators that can be applied to expressions
+both in prefix and postfix positions.  When applied in prefix position to an identifier,
+<code>++</code> expands to:
+
+<div class="example">
+<pre class="example">(infix ++ ?id) &rarr; (begin (set! ?id (+ ?id 1)) ?id)
+</pre></div>
+
+<p>and <code>--</code> expands to:
+</p>
+<div class="example">
+<pre class="example">(infix -- ?id) &rarr; (begin (set! ?id (- ?id 1)) ?id)
+</pre></div>
+
+<p>When applied in postfix position to an identifier, <code>++</code> expands to:
+</p>
+<div class="example">
+<pre class="example">(infix ?id ++) &rarr; (let ((v ?id)) (set! ?id (+ ?id 1)) v)
+</pre></div>
+
+<p>and <code>--</code> expands to:
+</p>
+<div class="example">
+<pre class="example">(infix ?id --) &rarr; (let ((v ?id)) (set! ?id (- ?id 1)) v)
+</pre></div>
+
+<p>When applied to a non&ndash;identifier expression, both in prefix and postfix position, <code>++</code>
+expands to:
+</p>
+<div class="example">
+<pre class="example">(infix ++ ?expr)     &rarr; (+ ?expr 1)
+(infix ?expr ++)     &rarr; (+ ?expr 1)
+</pre></div>
+
+<p>and <code>--</code> expands to:
+</p>
+<div class="example">
+<pre class="example">(infix -- ?expr)     &rarr; (- ?expr 1)
+(infix ?expr --)     &rarr; (- ?expr 1)
+</pre></div>
+
+</li><li> The ternary conditional operator involves the identifiers <code>?</code>  and <code>:</code>, which are
+recognised by their symbol name.
+
+<div class="example">
+<pre class="example">(infix 1 &gt; 2 ? 3 + 4 : 5 * 6)
+&rarr; (if (&gt; 1 2) (+ 3 4) (* 5 6))
+</pre></div>
+
+</li><li> Identifiers which are not operators are interpreted as variable references.
+
+</li><li> If an identifier is followed by a left parenthesis: it is interpreted as the binding of a procedure
+in a procedure application.  Procedure application requires the arguments to be grouped in a list,
+using the comma as separator.
+
+<div class="example">
+<pre class="example">(define (fun a b c)
+  (+ a b c))
+
+(infix fun (1 , 2 , 3)) &rarr; (fun 1 2 3)
+(infix fun(1, 2, 3))    &rarr; (fun 1 2 3)
+</pre></div>
+
+<blockquote>
+<p><strong>NOTE</strong> The Scheme reader transforms the sequence:
+</p>
+<div class="example">
+<pre class="example">, &lt;form&gt;
+</pre></div>
+
+<p>into:
+</p>
+<div class="example">
+<pre class="example">(unsyntax &lt;form&gt;)
+</pre></div>
+
+<p>so the list of arguments is:
+</p>
+<div class="example">
+<pre class="example">( &lt;arg1&gt; (unsyntax &lt;arg&gt;) ... )
+</pre></div>
+</blockquote>
+
+</li><li> The identifiers <code>quote</code> and <code>quasiquote</code> are not subject to infix to prefix conversion;
+the use of such syntaxes just expands to the prefix object:
+
+<div class="example">
+<pre class="example">(infix (quote       ciao))  &rarr; (quote ciao)
+(infix (quasiquote  ciao))  &rarr; (quasiquote ciao)
+</pre></div>
+
+</li><li> Matched left and right round parentheses are used to group subexpressions, overriding operators
+precedence rules.
+</li></ul>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="infix-prec.html#infix-prec" accesskey="n" rel="next">infix prec</a>, Up: <a href="infix.html#infix" accesskey="u" rel="up">infix</a> &nbsp; [<a href="function-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+<p>This document describes version <tt>0.1.0-devel.0</tt> of <em>MMCK Infix</em>.</p>
+</body>
+</html>
