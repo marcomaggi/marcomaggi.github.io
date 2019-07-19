@@ -1,0 +1,213 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.1.0-devel.0 of MMCK Exceptional Conditions, a CHICKEN language library
+implementing facilities to handle exceptional-conditions.  CHICKEN is a Scheme-to-C compiler
+supporting the language features as defined in the "Revised^5 Report on Scheme".
+
+The library supports POSIX platforms.  This package has been tested with CHICKEN version
+5.1.0.
+
+This package is distributed under the terms of the GNU Lesser General Public License (LGPL).
+
+The latest release can be downloaded from:
+
+https://bitbucket.org/marcomaggi/mmck-exceptional-conditions/downloads
+
+development takes place at:
+
+https://github.com/marcomaggi/mmck-exceptional-conditions
+
+and as backup at:
+
+https://bitbucket.org/marcomaggi/mmck-exceptional-conditions
+
+Copyright (C) 2019 by Marco Maggi mrc.mgg@gmail.com
+
+Permission is granted to copy, distribute and/or modify this document under the terms of the GNU
+Free Documentation License, Version 1.3 or any later version published by the Free Software
+Foundation; with Invariant Sections being "GNU Free Documentation License" and "GNU Lesser
+General Public License", no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license is
+included in the section entitled "GNU Free Documentation License". -->
+<!-- Created by GNU Texinfo 6.6, http://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>unwind problems (MMCK Exceptional Conditions)</title>
+
+<meta name="description" content="unwind problems (MMCK Exceptional Conditions)">
+<meta name="keywords" content="unwind problems (MMCK Exceptional Conditions)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="type-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="unwind.html#unwind" rel="up" title="unwind">
+<link href="unwind-call_002fcc.html#unwind-call_002fcc" rel="next" title="unwind call/cc">
+<link href="unwind-dyn_002denv.html#unwind-dyn_002denv" rel="prev" title="unwind dyn-env">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="mmck-chicken-docs.css">
+
+
+</head>
+
+<body lang="en">
+<span id="unwind-problems"></span><div class="header">
+<p>
+Next: <a href="unwind-call_002fcc.html#unwind-call_002fcc" accesskey="n" rel="next">unwind call/cc</a>, Previous: <a href="unwind-dyn_002denv.html#unwind-dyn_002denv" accesskey="p" rel="prev">unwind dyn-env</a>, Up: <a href="unwind.html#unwind" accesskey="u" rel="up">unwind</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<span id="Known-problems"></span><h3 class="section">6.10 Known problems</h3>
+
+
+<p>The unwind protection mechanism may misbehave in some cases.  Specifically the unwind handler may
+not be called in the following cases:
+</p>
+<ul>
+<li> An exception is raised by a thunk and, while handling it, a second exception is raised.
+
+</li><li> An exception is raised by the in&ndash;guard or out&ndash;guard thunks of a call to <code>dynamic-wind</code>.
+</li></ul>
+
+
+<span id="Raising-exceptions-from-an-exception-handler"></span><h4 class="subsubheading">Raising exceptions from an exception handler</h4>
+
+<p>In the following example an exception is raised by an exception handler: the unwind handler is
+called, but the original exception is lost.
+</p>
+<div class="example">
+<pre class="example">(import (only (mmck checks)
+              with-result
+              add-result))
+
+(with-result
+  (guard (E (else
+             (add-result 'guard-else)
+             E))
+    (with-exception-handler
+        (lambda (E)
+          (add-result 'exception-handler)
+          (raise 2))
+      (lambda ()
+        (with-unwind-handler
+            (lambda (why)
+              (add-result 'unwind-handler))
+          (lambda ()
+            (dynamic-wind
+                (lambda ()
+                  (add-result 'in-guard))
+                (lambda ()
+                  (add-result 'thunk-in)
+                  (raise 1)
+                  (add-result 'thunk-out))
+                (lambda ()
+                  (add-result 'out-guard)))))))))
+&rArr; (2 (in-guard
+       thunk-in
+       exception-handler
+       out-guard
+       in-guard out-guard unwind-handler
+       guard-else))
+</pre></div>
+
+
+<span id="Raising-exceptions-from-a-guard_0027s-test"></span><h4 class="subsubheading">Raising exceptions from a <code>guard</code>&rsquo;s test</h4>
+
+<p>In the following example an exception is raised from a <code>guard</code>&rsquo;s test expression: the unwind
+handler is <strong>not</strong> called and the original exception is lost.
+</p>
+<div class="example">
+<pre class="example">(import (only (mmck checks)
+              with-result
+              add-result))
+
+(with-result
+  (guard (E (else
+             (add-result 'outer-guard-else)
+             E))
+    (guard (E ((begin
+                 (add-result 'inner-guard-test)
+                 (raise 2))
+               E))
+      (with-unwind-handler
+          (lambda (why)
+            (add-result 'unwind-handler))
+        (lambda ()
+          (dynamic-wind
+              (lambda ()
+                (add-result 'in-guard))
+              (lambda ()
+                (add-result 'thunk-in)
+                (raise 1)
+                (add-result 'thunk-out))
+              (lambda ()
+                (add-result 'out-guard))))))))
+&rArr; (2 (in-guard
+       thunk-in
+       out-guard
+       inner-guard-test
+       outer-guard-else))
+</pre></div>
+
+
+<span id="Raising-exceptions-from-dynamic_002dwind-guards"></span><h4 class="subsubheading">Raising exceptions from <code>dynamic-wind</code> guards</h4>
+
+<p>In the following example an exception is raised from a <code>dynamic-wind</code>&rsquo;s in&ndash;guard thunk: the
+unwind handler is <strong>not</strong> called and the original exception is lost.
+</p>
+<div class="example">
+<pre class="example">(with-result
+  (guard (E (else
+             (add-result 'guard-else)
+             E))
+    (dynamic-wind
+        (let ((flag #f))
+          (lambda ()
+            (cond (flag
+                   (add-result 'in-guard/raise)
+                   (raise 2))
+                  (else
+                   (set! flag #t)
+                   (add-result 'in-guard)))))
+        (lambda ()
+          (with-unwind-handler
+              (lambda (E)
+                (add-result 'unwind-handler))
+            (lambda ()
+              (add-result 'thunk-in)
+              (raise 1))))
+        (lambda ()
+          (add-result 'out-guard)))))
+&rArr; (2 (in-guard
+       thunk-in
+       out-guard
+       in-guard/raise
+       guard-else))
+</pre></div>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="unwind-call_002fcc.html#unwind-call_002fcc" accesskey="n" rel="next">unwind call/cc</a>, Previous: <a href="unwind-dyn_002denv.html#unwind-dyn_002denv" accesskey="p" rel="prev">unwind dyn-env</a>, Up: <a href="unwind.html#unwind" accesskey="u" rel="up">unwind</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+<p>This document describes version <tt>0.1.0-devel.0</tt> of <em>MMCK Exceptional Conditions</em>.</p>
+</body>
+</html>

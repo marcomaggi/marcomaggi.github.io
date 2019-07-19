@@ -1,0 +1,235 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.1.0-devel.0 of MMCK Exceptional Conditions, a CHICKEN language library
+implementing facilities to handle exceptional-conditions.  CHICKEN is a Scheme-to-C compiler
+supporting the language features as defined in the "Revised^5 Report on Scheme".
+
+The library supports POSIX platforms.  This package has been tested with CHICKEN version
+5.1.0.
+
+This package is distributed under the terms of the GNU Lesser General Public License (LGPL).
+
+The latest release can be downloaded from:
+
+https://bitbucket.org/marcomaggi/mmck-exceptional-conditions/downloads
+
+development takes place at:
+
+https://github.com/marcomaggi/mmck-exceptional-conditions
+
+and as backup at:
+
+https://bitbucket.org/marcomaggi/mmck-exceptional-conditions
+
+Copyright (C) 2019 by Marco Maggi mrc.mgg@gmail.com
+
+Permission is granted to copy, distribute and/or modify this document under the terms of the GNU
+Free Documentation License, Version 1.3 or any later version published by the Free Software
+Foundation; with Invariant Sections being "GNU Free Documentation License" and "GNU Lesser
+General Public License", no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license is
+included in the section entitled "GNU Free Documentation License". -->
+<!-- Created by GNU Texinfo 6.6, http://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>compensations usage (MMCK Exceptional Conditions)</title>
+
+<meta name="description" content="compensations usage (MMCK Exceptional Conditions)">
+<meta name="keywords" content="compensations usage (MMCK Exceptional Conditions)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="type-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="compensations.html#compensations" rel="up" title="compensations">
+<link href="compensations-api.html#compensations-api" rel="next" title="compensations api">
+<link href="compensations.html#compensations" rel="prev" title="compensations">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="mmck-chicken-docs.css">
+
+
+</head>
+
+<body lang="en">
+<span id="compensations-usage"></span><div class="header">
+<p>
+Next: <a href="compensations-api.html#compensations-api" accesskey="n" rel="next">compensations api</a>, Up: <a href="compensations.html#compensations" accesskey="u" rel="up">compensations</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<span id="Basic-compensations-usage"></span><h3 class="section">7.1 Basic compensations usage</h3>
+
+
+<p>A <em>compensation</em> is a chunk of code that undoes a resource allocation performed in another
+chunk, example:
+</p>
+<div class="lisp">
+<pre class="lisp">(define port
+  (open-input-port &quot;/tmp/proof.1&quot;))
+</pre></div>
+
+<p>must be &ldquo;compensated&rdquo; by:
+</p>
+<div class="lisp">
+<pre class="lisp">(close-input-port port)
+</pre></div>
+
+<p>with the compensations stack such code can be written:
+</p>
+<div class="lisp">
+<pre class="lisp">(with-compensations
+  (letrec
+      ((port (compensate
+                 (open-input-port &quot;/tmp/proof.1&quot;)
+               (with
+                 (close-input-port port)))))
+    (make-use-of port)))
+</pre></div>
+
+<p>or:
+</p>
+<div class="lisp">
+<pre class="lisp">(with-compensations
+  (define port
+    (compensate
+        (open-input-port &quot;/tmp/proof.1&quot;)
+      (with
+        (close-input-port port))))
+  (make-use-of port))
+</pre></div>
+
+<p>Compensation forms are embedded in a closure and pushed on a stack, so that, in case of error, it is
+possible to evaluate them in allocation&ndash;reversed order.
+</p>
+<p>A form that makes use of a compensation stack looks like this:
+</p>
+<div class="lisp">
+<pre class="lisp">(with-compensations
+  (compensate
+      ALLOC-FORMS-1
+    (with RELEASE-FORMS-1))
+  (compensate
+      ALLOC-FORMS-2
+    (with RELEASE-FORMS-2))
+  BODY-FORMS)
+</pre></div>
+
+<p>both <code>with-compensations</code> and <code>compensate</code> are syntaxes.  If no error occurs the order of
+evaluation is:
+</p>
+<div class="lisp">
+<pre class="lisp">ALLOC-FORMS-1
+ALLOC-FORMS-2
+BODY-FORMS
+RELEASE-FORMS-2
+RELEASE-FORMS-1
+</pre></div>
+
+<p>if an error occurs in <code>BODY-FORMS</code>, the order of evaluation is:
+</p>
+<div class="lisp">
+<pre class="lisp">ALLOC-FORMS-1
+ALLOC-FORMS-2
+BODY-FORMS
+RELEASE-FORMS-2
+RELEASE-FORMS-1
+</pre></div>
+
+<p>if an error occurs in <code>ALLOC-FORMS-2</code>, the order of evaluation is:
+</p>
+<div class="lisp">
+<pre class="lisp">ALLOC-FORMS-1
+ALLOC-FORMS-2
+RELEASE-FORMS-1
+</pre></div>
+
+<p>if an error occurs in <code>ALLOC-FORMS-1</code>, the order of evaluation is:
+</p>
+<div class="lisp">
+<pre class="lisp">ALLOC-FORMS-1
+</pre></div>
+
+<p>if an error occurs in <code>RELEASE-FORMS-1</code>, the order of evaluation is:
+</p>
+<div class="lisp">
+<pre class="lisp">ALLOC-FORMS-1
+ALLOC-FORMS-2
+BODY-FORMS
+RELEASE-FORMS-2
+RELEASE-FORMS-1
+</pre></div>
+
+<p>if an error occurs in <code>RELEASE-FORMS-2</code>, the order of evaluation is:
+</p>
+<div class="lisp">
+<pre class="lisp">ALLOC-FORMS-1
+ALLOC-FORMS-2
+BODY-FORMS
+RELEASE-FORMS-2
+RELEASE-FORMS-1
+</pre></div>
+
+<p>So <code>with-compensations</code> tries to evaluate all the release forms, despite errors.  Of course
+if an error occurs in the middle of a set of forms:
+</p>
+<div class="lisp">
+<pre class="lisp">(first-form)   ;evaluated
+(raise 'here)
+(third-form)   ;not evaluated
+</pre></div>
+
+<p>the forms before the error are evaluated, while the forms after the error are not.
+</p>
+<p>A variant of <code>with-compensations</code> exists to evaluate the compensation forms only in case of
+error:
+</p>
+<div class="lisp">
+<pre class="lisp">(with-compensations/on-error
+  (compensate
+      ALLOC-FORMS-1
+    (with RELEASE-FORMS-1))
+  (compensate
+      ALLOC-FORMS-2
+    (with RELEASE-FORMS-2))
+  BODY-FORMS)
+</pre></div>
+
+<p>if no error occurs the order of evaluation is:
+</p>
+<div class="lisp">
+<pre class="lisp">ALLOC-FORMS-1
+ALLOC-FORMS-2
+BODY-FORMS
+</pre></div>
+
+<p>while if an error occurs the evaluation is equal to the cases of <code>with-compensations</code>.  The
+&ldquo;on error&rdquo; variant is useful in constructors and initialisation functions, where we want to run
+the compensations only if an error occurs; if no error is raised, we just want the constructor to
+return.
+</p>
+<hr>
+<div class="header">
+<p>
+Next: <a href="compensations-api.html#compensations-api" accesskey="n" rel="next">compensations api</a>, Up: <a href="compensations.html#compensations" accesskey="u" rel="up">compensations</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+<p>This document describes version <tt>0.1.0-devel.0</tt> of <em>MMCK Exceptional Conditions</em>.</p>
+</body>
+</html>

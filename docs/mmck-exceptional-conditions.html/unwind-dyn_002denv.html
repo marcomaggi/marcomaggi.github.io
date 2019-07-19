@@ -1,0 +1,227 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.1.0-devel.0 of MMCK Exceptional Conditions, a CHICKEN language library
+implementing facilities to handle exceptional-conditions.  CHICKEN is a Scheme-to-C compiler
+supporting the language features as defined in the "Revised^5 Report on Scheme".
+
+The library supports POSIX platforms.  This package has been tested with CHICKEN version
+5.1.0.
+
+This package is distributed under the terms of the GNU Lesser General Public License (LGPL).
+
+The latest release can be downloaded from:
+
+https://bitbucket.org/marcomaggi/mmck-exceptional-conditions/downloads
+
+development takes place at:
+
+https://github.com/marcomaggi/mmck-exceptional-conditions
+
+and as backup at:
+
+https://bitbucket.org/marcomaggi/mmck-exceptional-conditions
+
+Copyright (C) 2019 by Marco Maggi mrc.mgg@gmail.com
+
+Permission is granted to copy, distribute and/or modify this document under the terms of the GNU
+Free Documentation License, Version 1.3 or any later version published by the Free Software
+Foundation; with Invariant Sections being "GNU Free Documentation License" and "GNU Lesser
+General Public License", no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license is
+included in the section entitled "GNU Free Documentation License". -->
+<!-- Created by GNU Texinfo 6.6, http://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>unwind dyn-env (MMCK Exceptional Conditions)</title>
+
+<meta name="description" content="unwind dyn-env (MMCK Exceptional Conditions)">
+<meta name="keywords" content="unwind dyn-env (MMCK Exceptional Conditions)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="type-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="unwind.html#unwind" rel="up" title="unwind">
+<link href="unwind-problems.html#unwind-problems" rel="next" title="unwind problems">
+<link href="unwind-reenter.html#unwind-reenter" rel="prev" title="unwind reenter">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="mmck-chicken-docs.css">
+
+
+</head>
+
+<body lang="en">
+<span id="unwind-dyn_002denv"></span><div class="header">
+<p>
+Next: <a href="unwind-problems.html#unwind-problems" accesskey="n" rel="next">unwind problems</a>, Previous: <a href="unwind-reenter.html#unwind-reenter" accesskey="p" rel="prev">unwind reenter</a>, Up: <a href="unwind.html#unwind" accesskey="u" rel="up">unwind</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<span id="Clean_002d_002dup-thunks-and-the-dynamic-environment"></span><h3 class="section">6.9 Clean&ndash;up thunks and the dynamic environment</h3>
+
+
+<p>As <acronym>R6RS</acronym> states:
+</p>
+<blockquote>
+<p>Some operations described in the report acquire information in addition to their explicit arguments
+from the <em>dynamic environment</em>.  For example, <code>call/cc</code> accesses an implicit context
+established by <code>dynamic-wind</code>, and the <code>raise</code> procedure accesses the current exception
+handler.
+</p></blockquote>
+
+<p>the typical example of values from the dynamic environment is parameters, which indeed are
+implemented on top of <code>dynamic-wind</code>.  When using the unwind&ndash;protection mechanism:
+</p>
+<div class="lisp">
+<pre class="lisp">(with-unwind-handler <var>?unwind-handler</var> <var>?thunk</var>)
+</pre></div>
+
+<p>the procedure <var>?unwind-handler</var> is called in the dynamic environment of the use of
+<code>with-unwind-handler</code>.
+</p>
+<p>For example, when escaping from <var>?thunk</var> with <code>return</code>:
+</p>
+<div class="lisp">
+<pre class="lisp">(import (only (mmck checks)
+              with-result
+              add-result))
+
+(define parm
+  (make-parameter #f))
+
+(with-result
+  (parameterize ((parm 'outer-parm))
+    (returnable
+      (parameterize ((parm 'inner-parm))
+        (with-unwind-handler
+            (lambda (why)
+              (add-result 'cleanup-in)
+              (add-result (parm))
+              (add-result 'cleanup-out))
+          (lambda ()
+            (add-result 'thunk-in)
+            (add-result (parm))
+            (return 2)
+            (add-result 'thunk-out)
+            1))))))
+&rArr; (2 (thunk-in inner-parm
+       cleanup-in inner-parm cleanup-out))
+</pre></div>
+
+<p>we see that, even though <code>return</code> reinstates the continuation of <code>returnable</code>:
+<var>?unwind-handler</var> gathers the parameter value from inside the use of <code>returnable</code>.
+</p>
+<p>Even more descriptive is the case of raising an exception from <var>?thunk</var> and catching it with
+<code>guard</code>:
+</p>
+<div class="lisp">
+<pre class="lisp">(import (only (mmck checks)
+              with-result
+              add-result))
+
+(define parm
+  (make-parameter #f))
+
+(with-result
+  (parameterize ((parm 'outer-parm))
+    (guard (E ((begin
+                 (add-result 'guard-test-in)
+                 (add-result (parm))
+                 (add-result 'guard-test-out)
+                 #t)
+               (add-result 'guard-expr-in)
+               (add-result (parm))
+               (add-result 'guard-expr-out)
+               E))
+      (parameterize ((parm 'inner-parm))
+        (with-unwind-handler
+            (lambda (why)
+              (add-result 'cleanup-in)
+              (add-result (parm))
+              (add-result 'cleanup-out))
+          (lambda ()
+            (add-result 'thunk-in)
+            (add-result (parm))
+            (raise 2)
+            (add-result 'thunk-out)
+            1))))))
+&rArr; (2 (thunk-in inner-parm
+       guard-test-in outer-parm guard-test-out
+       cleanup-in inner-parm cleanup-out
+       guard-expr-in outer-parm guard-expr-out))
+</pre></div>
+
+<p>both <var>?thunk</var> and <var>?unwind-handler</var> gather the inner value, while the test and expression of
+the <code>guard</code> clause gather the outer value, even though the execution order is intermixed.
+</p>
+<p>Changing the environment inside <var>?thunk</var> does not affect <var>?unwind-handler</var>:
+</p>
+<div class="lisp">
+<pre class="lisp">(import (only (mmck checks)
+              with-result
+              add-result))
+
+(define parm
+  (make-parameter #f))
+
+(with-result
+  (parameterize ((parm 'outer-parm))
+    (with-unwind-handler
+        (lambda (why)
+          (add-result 'cleanup-in)
+          (add-result (parm))
+          (add-result 'cleanup-out))
+      (lambda ()
+        (parameterize ((parm 'inner-parm))
+          (add-result 'thunk-in)
+          (add-result (parm))
+          (add-result 'thunk-out)
+          1)))))
+&rArr; (1 (thunk-in inner-parm thunk-out
+       cleanup-in outer-parm cleanup-out))
+
+(with-result
+  (returnable
+    (parameterize ((parm 'outer-parm))
+      (with-unwind-handler
+          (lambda (why)
+            (add-result 'cleanup-in)
+            (add-result (parm))
+            (add-result 'cleanup-out))
+        (lambda ()
+          (parameterize ((parm 'inner-parm))
+            (add-result 'thunk-in)
+            (add-result (parm))
+            (return 2)
+            (add-result 'thunk-out)
+            1))))))
+&rArr; (2 (thunk-in inner-parm
+       cleanup-in outer-parm cleanup-out))
+</pre></div>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="unwind-problems.html#unwind-problems" accesskey="n" rel="next">unwind problems</a>, Previous: <a href="unwind-reenter.html#unwind-reenter" accesskey="p" rel="prev">unwind reenter</a>, Up: <a href="unwind.html#unwind" accesskey="u" rel="up">unwind</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+<p>This document describes version <tt>0.1.0-devel.0</tt> of <em>MMCK Exceptional Conditions</em>.</p>
+</body>
+</html>

@@ -1,0 +1,329 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.1.0-devel.0 of MMCK Exceptional Conditions, a CHICKEN language library
+implementing facilities to handle exceptional-conditions.  CHICKEN is a Scheme-to-C compiler
+supporting the language features as defined in the "Revised^5 Report on Scheme".
+
+The library supports POSIX platforms.  This package has been tested with CHICKEN version
+5.1.0.
+
+This package is distributed under the terms of the GNU Lesser General Public License (LGPL).
+
+The latest release can be downloaded from:
+
+https://bitbucket.org/marcomaggi/mmck-exceptional-conditions/downloads
+
+development takes place at:
+
+https://github.com/marcomaggi/mmck-exceptional-conditions
+
+and as backup at:
+
+https://bitbucket.org/marcomaggi/mmck-exceptional-conditions
+
+Copyright (C) 2019 by Marco Maggi mrc.mgg@gmail.com
+
+Permission is granted to copy, distribute and/or modify this document under the terms of the GNU
+Free Documentation License, Version 1.3 or any later version published by the Free Software
+Foundation; with Invariant Sections being "GNU Free Documentation License" and "GNU Lesser
+General Public License", no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license is
+included in the section entitled "GNU Free Documentation License". -->
+<!-- Created by GNU Texinfo 6.6, http://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>unwind except 1 (MMCK Exceptional Conditions)</title>
+
+<meta name="description" content="unwind except 1 (MMCK Exceptional Conditions)">
+<meta name="keywords" content="unwind except 1 (MMCK Exceptional Conditions)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="type-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="unwind.html#unwind" rel="up" title="unwind">
+<link href="unwind-except-2.html#unwind-except-2" rel="next" title="unwind except 2">
+<link href="unwind-dynamic.html#unwind-dynamic" rel="prev" title="unwind dynamic">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="mmck-chicken-docs.css">
+
+
+</head>
+
+<body lang="en">
+<span id="unwind-except-1"></span><div class="header">
+<p>
+Next: <a href="unwind-except-2.html#unwind-except-2" accesskey="n" rel="next">unwind except 2</a>, Previous: <a href="unwind-dynamic.html#unwind-dynamic" accesskey="p" rel="prev">unwind dynamic</a>, Up: <a href="unwind.html#unwind" accesskey="u" rel="up">unwind</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<span id="Raising-non_002d_002dcontinuable-exceptions-from-the-thunk"></span><h3 class="section">6.4 Raising non&ndash;continuable exceptions from the thunk</h3>
+
+
+<p>A non&ndash;continuable exception is raised with <code>raise</code>, which can be applied to any object; the
+argument to <code>raise</code> becomes the &ldquo;raised object&rdquo;.  The purpose of raising a non&ndash;continuable
+exception is to cause the application of a function, the current exception handler, to the raised
+object; the exception handler is called in the dynamic environment of the call to <code>raise</code>, with
+the exception that the &ldquo;current exception handler&rdquo; is the one that was previously installed
+(see <a href="exceptions-handling.html#raise">raise</a> for a precise description of the operation).
+</p>
+<p>The execution flow is <strong>not</strong> meant return to the caller of <code>raise</code>, so the exception
+handler has only two options:
+</p>
+<ol>
+<li> Reinstate a previously saved continuation to jump out of the dynamic environment in which the
+exception was raised.  The following example shows the basic mechanism:
+
+<div class="lisp">
+<pre class="lisp">(call/cc
+    (lambda (escape)
+      (with-exception-handler
+          escape
+        (lambda ()
+          (raise 1)))))
+&rArr; 1
+</pre></div>
+
+<p>Reinstating a continuation to jump out of the exception handler is what the standard <code>guard</code>
+syntax does when it handles an exception; <code>guard</code> does more than this.
+</p>
+</li><li> Raise the exception again, causing the invocation of the upper level exception handler.  The
+following example shows the basic mechanism:
+
+<div class="lisp">
+<pre class="lisp">(call/cc
+    (lambda (escape)
+      (with-exception-handler
+          escape
+        (lambda ()
+          (with-exception-handler
+              (lambda (E)
+                (raise E))
+            (lambda ()
+              (raise 1)))))))
+&rArr; 1
+</pre></div>
+</li></ol>
+
+
+<span id="Handling-exceptions-by-escaping"></span><h4 class="subsubheading">Handling exceptions by escaping</h4>
+
+<p>This is <strong>not</strong> the correct way of interfacing with the unwind&ndash;protection mechanism.  In the
+following example we see that escaping from the exception handler skips the call to the
+<var>?unwind-handler</var>.
+</p>
+<div class="lisp">
+<pre class="lisp">(import (only (mmck checks)
+              with-result
+              add-result))
+
+(with-result
+  (call/cc
+      (lambda (escape)
+        (with-exception-handler
+            (lambda (E)
+              (add-result 'exception-handler)
+              (escape E))
+          (lambda ()
+            (with-unwind-handler
+                (lambda (why)
+                  (add-result 'cleanup))
+              (lambda ()
+                (add-result 'thunk-in)
+                (raise 123)
+                (add-result 'thunk-out))))))))
+&rArr; (123 (thunk-in exception-handler))
+</pre></div>
+
+
+<span id="Handling-exceptions-with-guard"></span><h4 class="subsubheading">Handling exceptions with <code>guard</code></h4>
+
+<p>This is the correct way of interfacing with the unwind&ndash;protection mechanism.
+</p>
+<p>In the following example: the <var>?thunk</var> raises a non&ndash;continuable exception, which is caught by
+the <code>else</code> clause of a <code>guard</code> use; this is equivalent to escaping from an exception
+handler, but it does evaluate the <var>?unwind-handler</var>.  We can see the forms evaluation order.
+</p>
+<div class="lisp">
+<pre class="lisp">(import (only (mmck checks)
+              with-result
+              add-result))
+
+(with-result
+  (guard (E (else
+             (add-result 'guard-else)
+             E))
+    (with-unwind-handler
+        (lambda (why)
+          (add-result 'cleanup))
+      (lambda ()
+        (add-result 'thunk-in)
+        (raise 2)
+        (add-result 'thunk-out)
+        1))))
+&rArr; (2 (thunk-in cleanup guard-else))
+</pre></div>
+
+<p>In the following example: the <var>?thunk</var> raises a non&ndash;continuable exception, which is caught by
+the clause of a <code>guard</code> use; the clause has test and expression.  We can see the forms
+evaluation order.
+</p>
+<div class="lisp">
+<pre class="lisp">(import (only (mmck checks)
+              with-result
+              add-result))
+
+(with-result
+  (guard (E ((begin
+               (add-result 'guard-test)
+               #t)
+             (add-result 'guard-expr)
+             E))
+    (with-unwind-handler
+        (lambda (why)
+          (add-result 'cleanup))
+      (lambda ()
+        (add-result 'thunk-in)
+        (raise 2)
+        (add-result 'thunk-out)
+        1))))
+&rArr; (2 (thunk-in guard-test cleanup guard-expr))
+</pre></div>
+
+<p>The following example with two nested <code>guard</code> uses and two nested <code>dynamic-wind</code> calls,
+makes it even more clear the sequence of forms evaluation.  The clause of the inner <code>guard</code>
+has test expression returning <code>#f</code>, so the exception is re&ndash;raised with
+<code>raise-continuable</code>.
+</p>
+<div class="lisp">
+<pre class="lisp">(import (only (mmck checks)
+        with-result
+        add-result))
+
+(with-result
+  (guard (E ((begin
+               (add-result 'outer-guard-test)
+               #t)
+             (add-result 'outer-guard-expr)
+             E))
+    (guard (E ((begin
+                 (add-result 'inner-guard-test)
+                 #f)
+               (add-result 'inner-guard-expr)
+               E))
+      (dynamic-wind
+          (lambda ()
+            (add-result 'outer-before))
+          (lambda ()
+            (with-unwind-handler
+                (lambda (why)
+                  (add-result 'cleanup))
+              (lambda ()
+                (dynamic-wind
+                    (lambda ()
+                      (add-result 'inner-before))
+                    (lambda ()
+                      (add-result 'thunk-in)
+                      (raise 2)
+                      (add-result 'thunk-out)
+                      1)
+                    (lambda ()
+                      (add-result 'inner-after))))))
+          (lambda ()
+            (add-result 'outer-after))))))
+&rArr; (2 (outer-before inner-before thunk-in inner-after outer-after
+       inner-guard-test
+       outer-before inner-before inner-after outer-after
+       outer-guard-test
+       outer-before inner-before inner-after cleanup outer-after
+       outer-guard-expr))
+</pre></div>
+
+<p>Let&rsquo;s describe the sequence of operations:
+</p>
+<dl compact="compact">
+<dt><code>outer-before inner-before thunk-in</code></dt>
+<dd><p>Everything goes fine until the <var>?thunk</var> reaches <code>thunk-in</code>.
+</p>
+</dd>
+<dt><code>*</code></dt>
+<dd><p>The <var>?thunk</var> raises an exception.  The exception handler of the inner <code>guard</code> is applied
+to the raised object.
+</p>
+</dd>
+<dt><code>inner-after outer-after</code></dt>
+<dd><p>The continuation of the inner <code>guard</code> use is reinstated, the dynamic extent of the call to
+<var>?thunk</var> is exited: the dynamic environment unwinds.
+</p>
+</dd>
+<dt><code>inner-guard-test</code></dt>
+<dd><p>The clause test expression of the inner <code>guard</code> is evaluated in the dynamic environment of
+the <code>guard</code> use: it returns <code>#f</code>.
+</p>
+</dd>
+<dt><code>outer-before inner-before</code></dt>
+<dd><p>The continuation of the inner <code>guard</code> exception handler is reinstated, the dynamic extent of
+the call to <var>?thunk</var> is reentered: the dynamic environment is restored.
+</p>
+</dd>
+<dt><code>*</code></dt>
+<dd><p>The exception is raised again by applying <code>raise-continuable</code> to the same raised object.  The
+exception handler of the outer <code>guard</code> is applied to the raised object.
+</p>
+</dd>
+<dt><code>inner-after outer-after</code></dt>
+<dd><p>The continuation of the outer <code>guard</code> use is reinstated, the dynamic extent of the call to
+<var>?thunk</var> is exited: the dynamic environment unwinds.
+</p>
+</dd>
+<dt><code>outer-guard-test</code></dt>
+<dd><p>The clause test expression of the outer <code>guard</code> is evaluated in the dynamic environment of
+the outer <code>guard</code>: it returns <code>#t</code>.
+</p>
+</dd>
+<dt><code>outer-before inner-before</code></dt>
+<dd><p>The continuation of the of the outer <code>guard</code> exception handler is reinstated, the dynamic
+extent of the call to <var>?thunk</var> is entered: the dynamic environment is restored.
+</p>
+</dd>
+<dt><code>inner-after cleanup outer-after</code></dt>
+<dd><p>The continuation of the outer <code>guard</code> clause is reinstated, the the dynamic extent of the
+call to <var>?thunk</var> is exited: the dynamic environment unwinds.  While unwinding: the <var>?thunk</var>
+is found terminated and the <var>?unwind-handler</var> is called in the dynamic environment of the
+<code>with-unwind-handler</code> use.
+</p>
+</dd>
+<dt><code>outer-guard-expr</code></dt>
+<dd><p>The clause expression of the outer <code>guard</code> is evaluated in the dynamic environment of the
+outer <code>guard</code>.
+</p></dd>
+</dl>
+
+<p>That&rsquo;s Scheme!
+</p>
+<hr>
+<div class="header">
+<p>
+Next: <a href="unwind-except-2.html#unwind-except-2" accesskey="n" rel="next">unwind except 2</a>, Previous: <a href="unwind-dynamic.html#unwind-dynamic" accesskey="p" rel="prev">unwind dynamic</a>, Up: <a href="unwind.html#unwind" accesskey="u" rel="up">unwind</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+<p>This document describes version <tt>0.1.0-devel.0</tt> of <em>MMCK Exceptional Conditions</em>.</p>
+</body>
+</html>

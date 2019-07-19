@@ -1,0 +1,133 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.1.0-devel.0 of MMCK Exceptional Conditions, a CHICKEN language library
+implementing facilities to handle exceptional-conditions.  CHICKEN is a Scheme-to-C compiler
+supporting the language features as defined in the "Revised^5 Report on Scheme".
+
+The library supports POSIX platforms.  This package has been tested with CHICKEN version
+5.1.0.
+
+This package is distributed under the terms of the GNU Lesser General Public License (LGPL).
+
+The latest release can be downloaded from:
+
+https://bitbucket.org/marcomaggi/mmck-exceptional-conditions/downloads
+
+development takes place at:
+
+https://github.com/marcomaggi/mmck-exceptional-conditions
+
+and as backup at:
+
+https://bitbucket.org/marcomaggi/mmck-exceptional-conditions
+
+Copyright (C) 2019 by Marco Maggi mrc.mgg@gmail.com
+
+Permission is granted to copy, distribute and/or modify this document under the terms of the GNU
+Free Documentation License, Version 1.3 or any later version published by the Free Software
+Foundation; with Invariant Sections being "GNU Free Documentation License" and "GNU Lesser
+General Public License", no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license is
+included in the section entitled "GNU Free Documentation License". -->
+<!-- Created by GNU Texinfo 6.6, http://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>unwind (MMCK Exceptional Conditions)</title>
+
+<meta name="description" content="unwind (MMCK Exceptional Conditions)">
+<meta name="keywords" content="unwind (MMCK Exceptional Conditions)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="type-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="index.html#Top" rel="up" title="Top">
+<link href="unwind-intro.html#unwind-intro" rel="next" title="unwind intro">
+<link href="syntaxes-dynenv.html#syntaxes-dynenv" rel="prev" title="syntaxes dynenv">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="mmck-chicken-docs.css">
+
+
+</head>
+
+<body lang="en">
+<span id="unwind"></span><div class="header">
+<p>
+Next: <a href="compensations.html#compensations" accesskey="n" rel="next">compensations</a>, Previous: <a href="syntaxes.html#syntaxes" accesskey="p" rel="prev">syntaxes</a>, Up: <a href="index.html#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<span id="The-unwind_002d_002dprotection-mechanism"></span><h2 class="chapter">6 The unwind&ndash;protection mechanism</h2>
+
+
+<p>Unwind&ndash;protection allows operations to be performed synchronously with respect to the dynamic
+extent of a call to thunk; the mechanism is sophisticated because there are multiple, sophisticated
+ways to exit the dynamic extent of a function call.  The typical application is to release
+asynchronous resources, like input/output ports and database connections.
+</p>
+<p>To understand the unwind&ndash;protection mechanism we must understand the concepts &ldquo;dynamic extent of a
+function call&rdquo; and &ldquo;dynamic environment&rdquo; as defined by the Scheme standard.
+</p>
+<p>The unwind&ndash;protection mechanism described here is used by <small>MMCK</small> Exceptional Conditions in: the implementation of
+compensations (see <a href="compensations.html#compensations">compensations</a>); the implementation of the syntax <code>try</code>
+(see <a href="syntaxes-try.html#syntaxes-try">syntaxes try</a>).
+</p>
+<blockquote>
+<p><strong>NOTE</strong> The unwind protection mechanism may misbehave in some cases, so do not trust it
+blindly (see <a href="unwind-problems.html#unwind-problems">unwind problems</a>).
+</p></blockquote>
+
+<table class="menu" border="0" cellspacing="0">
+<tr><td align="left" valign="top">&bull; <a href="unwind-intro.html#unwind-intro" accesskey="1">unwind intro</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Introduction to the unwind protection
+                                mechanism.
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="unwind-syntaxes.html#unwind-syntaxes" accesskey="2">unwind syntaxes</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Unwind-protection syntaxes.
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="unwind-dynamic.html#unwind-dynamic" accesskey="3">unwind dynamic</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">On the meaning of dynamic extent termination.
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="unwind-except-1.html#unwind-except-1" accesskey="4">unwind except 1</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Raising non-continuable exceptions from
+                                the thunk.
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="unwind-except-2.html#unwind-except-2" accesskey="5">unwind except 2</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Raising continuable exceptions from the
+                                thunk.
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="unwind-except-3.html#unwind-except-3" accesskey="6">unwind except 3</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Raising exceptions from the unwind handler.
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="unwind-returnable.html#unwind-returnable" accesskey="7">unwind returnable</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Use with returnable bodies.
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="unwind-reenter.html#unwind-reenter" accesskey="8">unwind reenter</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Handling reentering continuations.
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="unwind-dyn_002denv.html#unwind-dyn_002denv" accesskey="9">unwind dyn-env</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Clean-up thunks and the dynamic environment.
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="unwind-problems.html#unwind-problems">unwind problems</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Known problems.
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="unwind-call_002fcc.html#unwind-call_002fcc">unwind call/cc</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Unwinding <code>call/cc</code>.
+</td></tr>
+</table>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="compensations.html#compensations" accesskey="n" rel="next">compensations</a>, Previous: <a href="syntaxes.html#syntaxes" accesskey="p" rel="prev">syntaxes</a>, Up: <a href="index.html#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+<p>This document describes version <tt>0.1.0-devel.0</tt> of <em>MMCK Exceptional Conditions</em>.</p>
+</body>
+</html>

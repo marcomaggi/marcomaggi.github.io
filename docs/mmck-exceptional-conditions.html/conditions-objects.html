@@ -1,0 +1,255 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.1.0-devel.0 of MMCK Exceptional Conditions, a CHICKEN language library
+implementing facilities to handle exceptional-conditions.  CHICKEN is a Scheme-to-C compiler
+supporting the language features as defined in the "Revised^5 Report on Scheme".
+
+The library supports POSIX platforms.  This package has been tested with CHICKEN version
+5.1.0.
+
+This package is distributed under the terms of the GNU Lesser General Public License (LGPL).
+
+The latest release can be downloaded from:
+
+https://bitbucket.org/marcomaggi/mmck-exceptional-conditions/downloads
+
+development takes place at:
+
+https://github.com/marcomaggi/mmck-exceptional-conditions
+
+and as backup at:
+
+https://bitbucket.org/marcomaggi/mmck-exceptional-conditions
+
+Copyright (C) 2019 by Marco Maggi mrc.mgg@gmail.com
+
+Permission is granted to copy, distribute and/or modify this document under the terms of the GNU
+Free Documentation License, Version 1.3 or any later version published by the Free Software
+Foundation; with Invariant Sections being "GNU Free Documentation License" and "GNU Lesser
+General Public License", no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license is
+included in the section entitled "GNU Free Documentation License". -->
+<!-- Created by GNU Texinfo 6.6, http://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>conditions objects (MMCK Exceptional Conditions)</title>
+
+<meta name="description" content="conditions objects (MMCK Exceptional Conditions)">
+<meta name="keywords" content="conditions objects (MMCK Exceptional Conditions)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="type-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="conditions.html#conditions" rel="up" title="conditions">
+<link href="conditions-types-r6rs.html#conditions-types-r6rs" rel="next" title="conditions types r6rs">
+<link href="conditions.html#conditions" rel="prev" title="conditions">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="mmck-chicken-docs.css">
+
+
+</head>
+
+<body lang="en">
+<span id="conditions-objects"></span><div class="header">
+<p>
+Next: <a href="conditions-types-r6rs.html#conditions-types-r6rs" accesskey="n" rel="next">conditions types r6rs</a>, Up: <a href="conditions.html#conditions" accesskey="u" rel="up">conditions</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<span id="Condition-objects"></span><h3 class="section">3.1 Condition objects</h3>
+
+
+<p>Conceptually, there are two different kinds of condition objects: <em>simple conditions</em> and
+<em>compound conditions</em>.  An object that is either a simple condition or a compound condition is
+simply a <em>condition</em>.  Compound conditions form a type disjoint from the base types.  A simple
+condition describes a single aspect of an exceptional situation.  A compound condition represents
+multiple aspects of an exceptional situation as a list of simple conditions, its <em>components</em>.
+Most of the operations described in this section treat a simple condition identically to a compound
+condition with itself as its own sole component.
+</p>
+
+<dl>
+<dt id="index-_0026condition">Condition Kind: <strong>&amp;condition</strong></dt>
+<dd><p>Simple conditions are formal subtypes of the <code>&amp;condition</code> kind.  The <code>&amp;condition</code>
+kind has no fields.
+</p></dd></dl>
+
+
+<dl>
+<dt id="index-condition">Function: <strong>condition</strong> <em><var>condition1</var> &hellip;</em></dt>
+<dd><p>Return a condition object with the components of the <var>condition</var>s as its components, in the same
+order, i.e., with the components of <var>condition1</var> appearing first in the same order as in
+<var>condition1</var>, then with the components of <var>condition2</var>, and so on.  The returned condition
+is compound if the total number of components is zero or greater than one.  Otherwise, it may be
+compound or simple.
+</p></dd></dl>
+
+
+<dl>
+<dt id="index-simple_002dconditions">Function: <strong>simple-conditions</strong> <em><var>condition</var></em></dt>
+<dd><p>The <code>simple-conditions</code> procedure returns a list of the components of <var>condition</var>, in the
+same order as they appeared in the construction of <var>condition</var>.  The returned list is immutable.
+If the returned list is modified, the effect on <var>condition</var> is unspecified.
+</p>
+<blockquote>
+<p><strong>NOTE</strong> Because <code>condition</code> decomposes its arguments into simple conditions,
+<code>simple-conditions</code> always returns a &ldquo;flattened&rdquo; list of simple conditions.
+</p></blockquote>
+</dd></dl>
+
+
+<dl>
+<dt id="index-condition_003f">Function: <strong>condition?</strong> <em><var>obj</var></em></dt>
+<dd><p>Return <code>#t</code> if <var>obj</var> is a (simple or compound) condition, otherwise return <code>#f</code>.
+</p></dd></dl>
+
+
+<dl>
+<dt id="index-condition_002dkinds">Function: <strong>condition-kinds</strong> <em><var>obj</var></em></dt>
+<dd><p>The argument <var>obj</var> must be a condition object, either simple or compound.  Return a list of
+symbols representing the condition kinds in <var>obj</var>; the list may contain duplicates.
+</p>
+<div class="lisp">
+<pre class="lisp">(condition-kinds
+  (condition (make-error)
+             (make-who-condition 'me)
+             (make-message-condition &quot;the message&quot;)
+             (make-irritants-condition '(1 2 3))))
+&rArr; (&amp;error &amp;serious &amp;condition
+    &amp;who &amp;condition
+    &amp;message &amp;condition
+    &amp;irritants &amp;condition)
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt id="index-define_002dcondition_002dtype">Syntax: <strong>define-condition-type</strong> <em><var>?condition-kind</var> <var>?supertype</var> <var>?constructor</var> <var>?predicate</var> <var>?field-spec1</var> &hellip;</em></dt>
+<dd><p><var>?condition-kind</var>, <var>?supertype</var>, <var>?constructor</var>, and <var>?predicate</var> must all be
+identifiers.  Each <var>?field-spec</var> must be of the form
+</p>
+<div class="example">
+<pre class="example">(<var>?field</var> <var>?accessor</var>)
+</pre></div>
+
+<p>where both <var>?field</var> and <var>?accessor</var> must be identifiers.
+</p>
+<p>The <code>define-condition-type</code> form expands into a group of definitions for the constructor,
+predicate and field accessors for a new condition kind <var>?condition-kind</var>.  The identifiers will
+be bound as follows:
+</p>
+<ul>
+<li> <var>?constructor</var> is bound to a default constructor for the kind: it accepts one argument for each
+of the record kind&rsquo;s complete set of fields (including parent kinds, with the fields of the parent
+coming before those of the extension in the arguments) and returns a condition object initialised to
+those arguments.  The returned object is a compound that contains the kind <var>?condition-kind</var>,
+the kind <var>?supertype</var> and all the parent kinds of <var>?supertype</var>.
+
+</li><li> <var>?predicate</var> is bound to a predicate that identifies conditions of type <var>?condition-kind</var> or
+any of its subtypes.
+
+</li><li> Each <var>?accessor</var> is bound to a procedure that extracts the corresponding field from a condition
+of type <var>?condition-kind</var>.  The fields of a condition kind are its properties as defined by the
+module <code>(chicken condition)</code>.
+</li></ul>
+</dd></dl>
+
+
+<p>Some usage examples:
+</p>
+<div class="lisp">
+<pre class="lisp">(define-condition-type &amp;c &amp;condition
+  make-c c?
+  (x c-x))
+
+(define-condition-type &amp;c1 &amp;c
+  make-c1 c1?
+  (a c1-a))
+
+(define-condition-type &amp;c2 &amp;c
+  make-c2 c2?
+  (b c2-b))
+</pre></div>
+
+<div class="lisp">
+<pre class="lisp">(define v1 (make-c1 &quot;V1&quot; &quot;a1&quot;))
+
+(c? v1)        &rArr; #t
+(c1? v1)       &rArr; #t
+(c2? v1)       &rArr; #f
+(c-x v1)       &rArr; &quot;V1&quot;
+(c1-a v1)      &rArr; &quot;a1&quot;
+</pre></div>
+
+<div class="lisp">
+<pre class="lisp">(define v2 (make-c2 &quot;V2&quot; &quot;b2&quot;))
+
+(c? v2)        &rArr; #t
+(c1? v2)       &rArr; #f
+(c2? v2)       &rArr; #t
+(c-x v2)       &rArr; &quot;V2&quot;
+(c2-b v2)      &rArr; &quot;b2&quot;
+</pre></div>
+
+<div class="lisp">
+<pre class="lisp">(define v3 (condition
+             (make-c1 &quot;V3/1&quot; &quot;a3&quot;)
+             (make-c2 &quot;V3/2&quot; &quot;b3&quot;)))
+
+(c? v3)        &rArr; #t
+(c1? v3)       &rArr; #t
+(c2? v3)       &rArr; #t
+(c-x v3)       &rArr; &quot;V3/1&quot;
+(c1-a v3)      &rArr; &quot;a3&quot;
+(c2-b v3)      &rArr; &quot;b3&quot;
+</pre></div>
+
+<div class="lisp">
+<pre class="lisp">(define v4 (condition v1 v2))
+
+(c? v4)        &rArr; #t
+(c1? v4)       &rArr; #t
+(c2? v4)       &rArr; #t
+(c-x v4)       &rArr; &quot;V1&quot;
+(c1-a v4)      &rArr; &quot;a1&quot;
+(c2-b v4)      &rArr; &quot;b2&quot;
+</pre></div>
+
+<div class="lisp">
+<pre class="lisp">(define v5 (condition v2 v3))
+
+(c? v5)        &rArr; #t
+(c1? v5)       &rArr; #t
+(c2? v5)       &rArr; #t
+(c-x v5)       &rArr; &quot;V2&quot;
+(c1-a v5)      &rArr; &quot;a3&quot;
+(c2-b v5)      &rArr; &quot;b2&quot;
+</pre></div>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="conditions-types-r6rs.html#conditions-types-r6rs" accesskey="n" rel="next">conditions types r6rs</a>, Up: <a href="conditions.html#conditions" accesskey="u" rel="up">conditions</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+<p>This document describes version <tt>0.1.0-devel.0</tt> of <em>MMCK Exceptional Conditions</em>.</p>
+</body>
+</html>

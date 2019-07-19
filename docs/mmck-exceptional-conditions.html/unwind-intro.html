@@ -1,0 +1,242 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.1.0-devel.0 of MMCK Exceptional Conditions, a CHICKEN language library
+implementing facilities to handle exceptional-conditions.  CHICKEN is a Scheme-to-C compiler
+supporting the language features as defined in the "Revised^5 Report on Scheme".
+
+The library supports POSIX platforms.  This package has been tested with CHICKEN version
+5.1.0.
+
+This package is distributed under the terms of the GNU Lesser General Public License (LGPL).
+
+The latest release can be downloaded from:
+
+https://bitbucket.org/marcomaggi/mmck-exceptional-conditions/downloads
+
+development takes place at:
+
+https://github.com/marcomaggi/mmck-exceptional-conditions
+
+and as backup at:
+
+https://bitbucket.org/marcomaggi/mmck-exceptional-conditions
+
+Copyright (C) 2019 by Marco Maggi mrc.mgg@gmail.com
+
+Permission is granted to copy, distribute and/or modify this document under the terms of the GNU
+Free Documentation License, Version 1.3 or any later version published by the Free Software
+Foundation; with Invariant Sections being "GNU Free Documentation License" and "GNU Lesser
+General Public License", no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license is
+included in the section entitled "GNU Free Documentation License". -->
+<!-- Created by GNU Texinfo 6.6, http://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>unwind intro (MMCK Exceptional Conditions)</title>
+
+<meta name="description" content="unwind intro (MMCK Exceptional Conditions)">
+<meta name="keywords" content="unwind intro (MMCK Exceptional Conditions)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="type-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="unwind.html#unwind" rel="up" title="unwind">
+<link href="unwind-syntaxes.html#unwind-syntaxes" rel="next" title="unwind syntaxes">
+<link href="unwind.html#unwind" rel="prev" title="unwind">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="mmck-chicken-docs.css">
+
+
+</head>
+
+<body lang="en">
+<span id="unwind-intro"></span><div class="header">
+<p>
+Next: <a href="unwind-syntaxes.html#unwind-syntaxes" accesskey="n" rel="next">unwind syntaxes</a>, Up: <a href="unwind.html#unwind" accesskey="u" rel="up">unwind</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<span id="Introduction-to-the-unwind_002d_002dprotection-mechanism"></span><h3 class="section">6.1 Introduction to the unwind&ndash;protection mechanism</h3>
+
+
+<p>The syntax <code>with-unwind-handler</code> implements the core mechanism.  <code>unwind-protect</code>
+offers a syntax similar to the one of the Common Lisp macro with the same name.  The former is meant
+to be used as follows:
+</p>
+<div class="lisp">
+<pre class="lisp">(let ((port (open-output-file &quot;file.ext&quot;)))
+  (with-unwind-handler
+      (lambda (why)
+        (close-output-port port))
+    (lambda ()
+      (put-bytevector port '#ve(ascii &quot;ciao&quot;)))))
+</pre></div>
+
+<p>and the latter as follows:
+</p>
+<div class="lisp">
+<pre class="lisp">(let ((port (open-output-file &quot;file.ext&quot;)))
+  (unwind-protect
+      (put-bytevector port '#ve(ascii &quot;ciao&quot;))
+    (close-output-port port)))
+</pre></div>
+
+<p>first we allocate a resource (in this case the <var>port</var>); then we use it in the body forms;
+finally we release it in the clean&ndash;up forms.
+</p>
+<p>When using the mechanism:
+</p>
+<ul>
+<li> We have to decide if we trust our code not to raise exceptions while evaluating the in&ndash;guard and
+out&ndash;guard thunks of <code>dynamic-wind</code> calls.  These would be nasty errors, because the dynamic
+environment would get corrupted and recovering correctly might be impossible; so we must
+<strong>really</strong> write and debug such in&ndash;guard and out&ndash;guard thunks with care.
+
+</li><li> We have to decide if we trust our code not to raise a second exception while serving a first
+exception in an error handler.  Raising a continuable exception is fine only if we actually
+continue.  Exceptions while handling exceptions are a hard problem to solve in every language; the
+rough solution is to block exceptions raised by exception handlers:
+
+<div class="lisp">
+<pre class="lisp">(with-exception-handler
+    (lambda (E)
+      (with-blocked-exceptions
+        (lambda ()
+          (handle E))))
+  (lambda ()
+    (do-something-useful)))
+</pre></div>
+
+<p>but it is not very satisfying.  Another possibility is:
+</p>
+<div class="lisp">
+<pre class="lisp">(define-condition-type &amp;originally-raised
+    &amp;condition
+  make-originally-raised-condition
+  originally-raised-condition?
+  (object originally-raised-object))
+
+(with-exception-handler
+    (lambda (E)
+      (with-exception-handler
+          (lambda (X)
+            (raise-continuable
+              (condition X
+                (make-originally-raised-condition E))))
+        (lambda ()
+          (handle E))))
+  (lambda ()
+    (do-something-useful)))
+</pre></div>
+</li></ul>
+
+<p>If the bodacious answer to both the decisions is &ldquo;We trust&rdquo;: we can nest at will uses of
+<code>with-unwind-handler</code>:
+</p>
+<div class="lisp">
+<pre class="lisp">(define (outer)
+  (with-unwind-handler
+      (lambda (why)
+        (outer-unwind-handler))
+    (lambda ()
+      (do-something-useful)
+      (inner))))
+
+(define (inner)
+  (with-unwind-handler
+      (lambda (why)
+        (inner-unwind-handler))
+    (lambda ()
+      (do-some-other-useful-thing))))
+
+(outer)
+</pre></div>
+
+<p><strong>beware</strong>: unwind handlers are evaluated in the dynamic environment of the use of
+<code>with-unwind-handler</code>.
+</p>
+<p>Otherwise, we must avoid error handlers to cause the execution flow to cross an unwind protection
+boundary; we can do it by using compensations and the standard <code>guard</code> syntax:
+</p>
+<div class="lisp">
+<pre class="lisp">(define (outer)
+  (push-compensation-thunk
+    (lambda ()
+      (outer-unwind-handler)))
+  (do-something-useful)
+  (inner))
+
+(define (inner)
+  (push-compensation-thunk
+    (lambda ()
+      (inner-unwind-handler)))
+  (do-some-other-useful-thing))
+
+(with-compensations
+  (with-blocked-exceptions
+    (lambda ()
+      (guard (E ((type-one-error? E)
+                 (handle E))
+                (else
+                 (do-something-dammit!!!)))
+        (outer)))))
+</pre></div>
+
+<p>or by using the compensations and the <code>try</code> syntax defined by <small>MMCK</small> Exceptional Conditions:
+</p>
+<div class="lisp">
+<pre class="lisp">(define (outer)
+  (push-compensation-thunk
+    (lambda ()
+      (outer-unwind-handler)))
+  (do-something-useful)
+  (inner))
+
+(define (inner)
+  (push-compensation-thunk
+    (lambda ()
+      (inner-unwind-handler)))
+  (do-some-other-useful-thing))
+
+(with-compensations
+  (with-blocked-exceptions
+    (lambda ()
+      (try
+          (outer)
+        (catch E
+          ((&amp;type-one)
+           (handle E))
+          (else
+           (do-something-dammit!!!)))))))
+</pre></div>
+
+<p><strong>beware</strong>: compensation handlers are evaluated in the dynamic environment of the use of
+<code>with-compensations</code>.
+</p>
+<hr>
+<div class="header">
+<p>
+Next: <a href="unwind-syntaxes.html#unwind-syntaxes" accesskey="n" rel="next">unwind syntaxes</a>, Up: <a href="unwind.html#unwind" accesskey="u" rel="up">unwind</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+<p>This document describes version <tt>0.1.0-devel.0</tt> of <em>MMCK Exceptional Conditions</em>.</p>
+</body>
+</html>

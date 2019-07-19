@@ -1,0 +1,164 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.1.0-devel.0 of MMCK Exceptional Conditions, a CHICKEN language library
+implementing facilities to handle exceptional-conditions.  CHICKEN is a Scheme-to-C compiler
+supporting the language features as defined in the "Revised^5 Report on Scheme".
+
+The library supports POSIX platforms.  This package has been tested with CHICKEN version
+5.1.0.
+
+This package is distributed under the terms of the GNU Lesser General Public License (LGPL).
+
+The latest release can be downloaded from:
+
+https://bitbucket.org/marcomaggi/mmck-exceptional-conditions/downloads
+
+development takes place at:
+
+https://github.com/marcomaggi/mmck-exceptional-conditions
+
+and as backup at:
+
+https://bitbucket.org/marcomaggi/mmck-exceptional-conditions
+
+Copyright (C) 2019 by Marco Maggi mrc.mgg@gmail.com
+
+Permission is granted to copy, distribute and/or modify this document under the terms of the GNU
+Free Documentation License, Version 1.3 or any later version published by the Free Software
+Foundation; with Invariant Sections being "GNU Free Documentation License" and "GNU Lesser
+General Public License", no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license is
+included in the section entitled "GNU Free Documentation License". -->
+<!-- Created by GNU Texinfo 6.6, http://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>compensations api (MMCK Exceptional Conditions)</title>
+
+<meta name="description" content="compensations api (MMCK Exceptional Conditions)">
+<meta name="keywords" content="compensations api (MMCK Exceptional Conditions)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="type-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="compensations.html#compensations" rel="up" title="compensations">
+<link href="coroutines.html#coroutines" rel="next" title="coroutines">
+<link href="compensations-usage.html#compensations-usage" rel="prev" title="compensations usage">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="mmck-chicken-docs.css">
+
+
+</head>
+
+<body lang="en">
+<span id="compensations-api"></span><div class="header">
+<p>
+Previous: <a href="compensations-usage.html#compensations-usage" accesskey="p" rel="prev">compensations usage</a>, Up: <a href="compensations.html#compensations" accesskey="u" rel="up">compensations</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<span id="Compensations-API"></span><h3 class="section">7.2 Compensations <acronym>API</acronym></h3>
+
+
+<p>The compensations mechanism is built on top of the unwind protection mechanism:
+</p>
+<ul>
+<li> All the <var>?alloc</var> and <var>?body</var> forms end in the body of a thunk; the compensations are
+evaluated when the dynamic extent of the call to such thunk is terminated, as defined by the unwind
+protection mechanism.
+
+</li><li> All the <var>?release</var> forms end in the body of a clean&ndash;up procedure; such forms are evaluated in
+the <strong>dynamic environment of the syntax use that allocates the compensations stack</strong>.
+</li></ul>
+
+
+<dl>
+<dt id="index-with_002dcompensations">Syntax: <strong>with-compensations</strong> <em><var>?body0</var> <var>?body</var> &hellip;</em></dt>
+<dd><p>Allocate a new compensations stack, then evaluate all the <var>?body</var> forms in the given order.  If
+no error occurs: call <code>run-compensations</code>, reset the compensations stack to empty, finally
+return the result values of the last <var>?body</var> form.
+</p>
+<p>If the dynamic extent of the evaluation of the <var>?body</var> forms is terminated: the accumulated
+compensations are evaluated in reverse order.
+</p></dd></dl>
+
+
+<dl>
+<dt id="index-with_002dcompensations_002fon_002derror">Syntax: <strong>with-compensations/on-error</strong> <em><var>?body0</var> <var>?body</var> &hellip;</em></dt>
+<dd><p>Allocate a new compensations stack, then evaluate all the <var>?body</var> forms in the given order.  If
+no error occurs: reset the compensations stack to empty, return the result values of the last
+<var>?body</var> form.
+</p>
+<p>If the dynamic extent of the evaluation of the <var>?body</var> forms is terminated by escaping from the
+body directly or by escaping from the body while handling a raised a exception: the accumulated
+compensations are evaluated in reverse order.
+</p></dd></dl>
+
+
+<dl>
+<dt id="index-run_002dcompensations">Function: <strong>run-compensations</strong></dt>
+<dd><p>Evaluate all the compensation thunks in the current stack, in last in/first out order; compensation
+thunks are called in the current dynamic environment.  If a compensation thunk raises an exception:
+the exception is blocked and silently discarded.
+</p>
+<p>This function should be called only inside the dynamic environment prepared by
+<code>with-compensations</code> and similar syntaxes.  It can be called multiple times: every time the
+compensation thunks are consumed and removed from the stack.
+</p></dd></dl>
+
+
+<dl>
+<dt id="index-with_002dcompensation_002dhandler">Syntax: <strong>with-compensation-handler</strong> <em><var>?release-thunk</var> <var>?alloc-thunk</var></em></dt>
+<dd><p>First push <var>?release-thunk</var> on the current compensations stack, <strong>then</strong> evaluate
+<var>?alloc-thunk</var>.  Return the results of evaluating <var>?alloc-thunk</var>.
+</p></dd></dl>
+
+
+<dl>
+<dt id="index-compensate">Syntax: <strong>compensate</strong> <em><var>?alloc0</var> <var>?alloc</var> &hellip; (with <var>?release0</var> <var>?release</var> &hellip;)</em></dt>
+<dt id="index-with">Auxiliary Syntax: <strong>with</strong></dt>
+<dd><p>First evaluate all the <var>?alloc</var> expressions then, <strong>only</strong> if they perform a normal return:
+push one thunk holding all the <var>?release</var> forms on the current compensations stack.  Return the
+result of the last <var>?alloc</var> expression.
+</p>
+<p>The auxiliary syntax <code>with</code> is matches with its symbol name.
+</p></dd></dl>
+
+
+<dl>
+<dt id="index-push_002dcompensation">Syntax: <strong>push-compensation</strong> <em><var>?release0</var> <var>?release</var> &hellip;</em></dt>
+<dd><p>Push a thunk holding the <var>?release</var> forms on the current compensations stack.
+</p></dd></dl>
+
+
+<dl>
+<dt id="index-push_002dcompensation_002dthunk">Function: <strong>push-compensation-thunk</strong> <em><var>thunk</var></em></dt>
+<dd><p>Push the given thunk on the current compensations stack.
+</p></dd></dl>
+
+<hr>
+<div class="header">
+<p>
+Previous: <a href="compensations-usage.html#compensations-usage" accesskey="p" rel="prev">compensations usage</a>, Up: <a href="compensations.html#compensations" accesskey="u" rel="up">compensations</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+<p>This document describes version <tt>0.1.0-devel.0</tt> of <em>MMCK Exceptional Conditions</em>.</p>
+</body>
+</html>

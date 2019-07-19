@@ -1,0 +1,320 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.1.0-devel.0 of MMCK Exceptional Conditions, a CHICKEN language library
+implementing facilities to handle exceptional-conditions.  CHICKEN is a Scheme-to-C compiler
+supporting the language features as defined in the "Revised^5 Report on Scheme".
+
+The library supports POSIX platforms.  This package has been tested with CHICKEN version
+5.1.0.
+
+This package is distributed under the terms of the GNU Lesser General Public License (LGPL).
+
+The latest release can be downloaded from:
+
+https://bitbucket.org/marcomaggi/mmck-exceptional-conditions/downloads
+
+development takes place at:
+
+https://github.com/marcomaggi/mmck-exceptional-conditions
+
+and as backup at:
+
+https://bitbucket.org/marcomaggi/mmck-exceptional-conditions
+
+Copyright (C) 2019 by Marco Maggi mrc.mgg@gmail.com
+
+Permission is granted to copy, distribute and/or modify this document under the terms of the GNU
+Free Documentation License, Version 1.3 or any later version published by the Free Software
+Foundation; with Invariant Sections being "GNU Free Documentation License" and "GNU Lesser
+General Public License", no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license is
+included in the section entitled "GNU Free Documentation License". -->
+<!-- Created by GNU Texinfo 6.6, http://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>syntaxes try (MMCK Exceptional Conditions)</title>
+
+<meta name="description" content="syntaxes try (MMCK Exceptional Conditions)">
+<meta name="keywords" content="syntaxes try (MMCK Exceptional Conditions)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<link href="index.html#Top" rel="start" title="Top">
+<link href="concept-index.html#concept-index" rel="index" title="concept index">
+<link href="type-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="syntaxes.html#syntaxes" rel="up" title="syntaxes">
+<link href="syntaxes-blocking.html#syntaxes-blocking" rel="next" title="syntaxes blocking">
+<link href="syntaxes-returnable.html#syntaxes-returnable" rel="prev" title="syntaxes returnable">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="mmck-chicken-docs.css">
+
+
+</head>
+
+<body lang="en">
+<span id="syntaxes-try"></span><div class="header">
+<p>
+Next: <a href="syntaxes-blocking.html#syntaxes-blocking" accesskey="n" rel="next">syntaxes blocking</a>, Previous: <a href="syntaxes-returnable.html#syntaxes-returnable" accesskey="p" rel="prev">syntaxes returnable</a>, Up: <a href="syntaxes.html#syntaxes" accesskey="u" rel="up">syntaxes</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<span id="The-try-syntax"></span><h3 class="section">5.2 The <code>try</code> syntax</h3>
+
+
+<p>We can use syntax <code>try</code> to handle raised exceptions in addition to the syntaxes
+<code>with-exception-handler</code> and <code>guard</code>; the syntax is basically a wrapper for <code>guard</code>,
+but with the limitation that the raised object <strong>must</strong> be a condition object defined with
+<code>define-condition-object</code>.
+</p>
+
+<dl>
+<dt id="index-try">Syntax: <strong>try</strong> <em><var>?body</var> <var>?catch-clauses</var></em></dt>
+<dt id="index-try-1">Syntax: <strong>try</strong> <em><var>?body</var> <var>?catch-clauses</var> <var>?finally-clause</var></em></dt>
+<dt id="index-try-2">Syntax: <strong>try</strong> <em><var>?body</var> <var>?finally-clause</var></em></dt>
+<dt id="index-catch">Auxiliary Syntax: <strong>catch</strong></dt>
+<dt id="index-finally">Auxiliary Syntax: <strong>finally</strong></dt>
+<dt id="index-else-1">Auxiliary Syntax: <strong>else</strong></dt>
+<dd><p>Evaluate the form <var>?body</var> and return its results.  If no exceptions are raised by <var>?body</var>:
+before returning evaluate the <var>?finally-clause</var>.  If an exception is raised by <var>?body</var>:
+handle it with the <var>?catch-clauses</var> and, before returning, evaluate the <var>?finally-clause</var>.
+</p>
+<p>The auxiliary syntaxes <code>catch</code>, <code>finally</code> and <code>else</code> are matched with their
+symbol name.
+</p>
+<p>The <var>?catch-clauses</var> argument must have the format:
+</p>
+<div class="example">
+<pre class="example">(catch <var>?var</var> <var>?catch-clause0</var> <var>?catch-clause</var> ...)
+</pre></div>
+
+<p>where <var>?var</var> must be an identifier and every <var>?catch-clause</var> has one of the forms:
+</p>
+<div class="example">
+<pre class="example">(<var>?pred</var> <var>?tag-body0</var> <var>?tag-body</var> ...)
+(else <var>?else-body0</var> <var>?else-body</var> ...)
+</pre></div>
+
+<p>where the optional <code>else</code> clause must appear only once as last one.  The <var>?pred</var> argument
+must have one of the following recursive formats:
+</p>
+<div class="example">
+<pre class="example"><var>?pred</var> = (<var>?tag</var>)
+      | (and <var>?inner-pred0</var> <var>?inner-pred</var> ...)
+      | (or  <var>?inner-pred0</var> <var>?inner-pred</var> ...)
+      | (xor <var>?inner-pred0</var> <var>?inner-pred</var> ...)
+      | (not <var>?inner-pred</var>)
+
+<var>?inner-pred</var> = <var>?tag</var>
+            | (and <var>?inner-pred0</var> <var>?inner-pred</var> ...)
+            | (or  <var>?inner-pred0</var> <var>?inner-pred</var> ...)
+            | (xor <var>?inner-pred0</var> <var>?inner-pred</var> ...)
+            | (not <var>?inner-pred</var>)
+</pre></div>
+
+<p>where: <var>?tag</var> is a condition object type identifier; the auxiliary syntaxes <code>and</code>,
+<code>or</code>, <code>xor</code>, <code>not</code> are matches by their symbol name.
+</p>
+<p>The <var>?finally-clause</var> must have the format:
+</p>
+<div class="example">
+<pre class="example">(finally <var>?finally-body0</var> <var>?finally-body</var> ...)
+</pre></div>
+
+<p>when the <code>finally</code> clause is present: the <var>?body</var> is wrapped into an unwind&ndash;protection
+syntax, See <a href="unwind.html#unwind">The unwind-protection mechanism</a>.
+</p>
+<p>The following expansions take place:
+</p>
+<ul>
+<li> No else, no finally.
+
+<div class="example">
+<pre class="example">(try
+   <var>?body</var>
+  (catch <var>?var</var>
+    ((<var>?tag</var>)
+     <var>?tag-body0</var>
+     <var>?tag-body</var>
+     ...)
+    ...))
+&rarr; (guard (<var>?var</var>
+              ((is-a? <var>?var</var>)
+               <var>?tag-body0</var>
+               <var>?tag-body</var>
+               ...)
+              ...)
+      <var>?body</var>)
+</pre></div>
+
+</li><li> Else, no finally.
+
+<div class="example">
+<pre class="example">(try
+   <var>?body</var>
+  (catch <var>?var</var>
+    ((<var>?tag</var>)
+     <var>?tag-body0</var>
+     <var>?tag-body</var>
+     ...)
+    ...)
+    (else
+     <var>?else-body0</var>
+     <var>?else-body</var>
+     ...))
+&rarr; (guard (<var>?var</var>
+              ((is-a? <var>?var</var> <var>?tag0</var>)
+               <var>?tag-body0</var>
+               <var>?tag-body</var>
+               ...)
+               ...
+              (else
+               <var>?else-body0</var>
+               <var>?else-body</var>
+               ...))
+      <var>?body</var>)
+</pre></div>
+
+</li><li> Finally, no else.
+
+<div class="example">
+<pre class="example">(try
+   <var>?body</var>
+  (catch <var>?var</var>
+    ((<var>?tag</var>)
+     <var>?tag-body0</var>
+     <var>?tag-body</var>
+     ...)
+    ...)
+  (finally
+    <var>?finally-body0</var>
+    <var>?finally-body</var>
+    ...))
+&rarr; (with-unwind-protection
+        (lambda (dummy)
+          <var>?finally-body0</var>
+          <var>?finally-body</var>
+          ...)
+      (lambda ()
+        (guard (<var>?var</var>
+                ((is-a? <var>?var</var> <var>?tag0</var>)
+                 <var>?tag-body0</var>
+                 <var>?tag-body</var>
+                 ...)
+                ...)
+            <var>?body</var>)))
+</pre></div>
+
+</li><li> Finally, no catch.
+
+<div class="example">
+<pre class="example">(try
+    <var>?body</var>
+  (finally
+    <var>?finally-body0</var>
+    <var>?finally-body</var>
+    ...))
+&rarr; (with-unwind-protection
+        (lambda (dummy)
+          <var>?finally-body0</var>
+          <var>?finally-body</var>
+          ...)
+      (lambda ()
+        <var>?body</var>))
+</pre></div>
+</li></ul>
+</dd></dl>
+
+
+<p>Some usage examples without the <code>finally</code> clause:
+</p>
+<div class="example">
+<pre class="example">(define-condition-type &amp;this
+    &amp;error
+  make-this-condition
+  condition-this?
+  (a condition-this.a)
+  (b condition-this.b)
+  (c condition-this.c))
+
+(define (doit thunk)
+  (try
+      (thunk)
+    (catch E
+      ((&amp;this)
+       (list (condition-this.a E)
+             (condition-this.b E)
+             (condition-this.c E)))
+      ((&amp;message)
+       (condition-message E))
+      (else E))))
+
+(doit (lambda ()
+        (raise (make-this-condition 1 2 3))))
+&rArr; (1 2 3)
+
+(doit (lambda ()
+        (raise (make-message-condition &quot;ciao&quot;))))
+&rArr; &quot;ciao&quot;
+
+(doit (lambda ()
+        (raise 123)))
+&rArr; 123
+</pre></div>
+
+<p>Evaluation order tracking for <code>finally</code> clauses:
+</p>
+<div class="lisp">
+<pre class="lisp">(import (only (mmck checks)
+              with-result
+              add-result))
+
+(with-result
+  (try
+      (add-result 'body)
+    (catch E
+      ((&amp;error)   (add-result 'catch-error))
+      ((&amp;warning) (add-result 'catch-warning))
+      (else       (add-result 'catch-else)))
+    (finally
+     (add-result 'finally))))
+&rArr; (body (body finally))
+
+(with-result
+  (try
+      (begin
+        (add-result 'body)
+        (raise (make-warning)))
+    (catch E
+      ((&amp;error)   (add-result 'catch-error))
+      ((&amp;warning) (add-result 'catch-warning))
+      (else       (add-result 'catch-else)))
+    (finally
+     (add-result 'finally))))
+&rArr; (catch-warning (body catch-warning finally))
+</pre></div>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="syntaxes-blocking.html#syntaxes-blocking" accesskey="n" rel="next">syntaxes blocking</a>, Previous: <a href="syntaxes-returnable.html#syntaxes-returnable" accesskey="p" rel="prev">syntaxes returnable</a>, Up: <a href="syntaxes.html#syntaxes" accesskey="u" rel="up">syntaxes</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html#concept-index" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+<p>This document describes version <tt>0.1.0-devel.0</tt> of <em>MMCK Exceptional Conditions</em>.</p>
+</body>
+</html>
