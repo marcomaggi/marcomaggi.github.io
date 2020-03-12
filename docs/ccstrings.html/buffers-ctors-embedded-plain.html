@@ -1,0 +1,218 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.1.0-devel.1 of CCStrings, a C11 language library
+implementing custom strings.
+
+The library supports POSIX platforms.  The library depends on the packages: CCExceptions, at
+least version 0.9.0; CCMemory, at least version 0.2.2;
+CCStructs, at least version 0.3.0.  To run the test suite: the package depends
+upon the package CCTests, at least version 0.4.1.
+
+The package is distributed under the terms of the GNU Lesser General Public License (LGPL).
+
+The latest release can be downloaded from:
+
+https://bitbucket.org/marcomaggi/ccstrings/downloads
+
+development takes place at:
+
+https://github.com/marcomaggi/ccstrings
+
+and as backup at:
+
+https://bitbucket.org/marcomaggi/ccstrings
+
+Copyright (C) 2017-2019 by Marco Maggi mrc.mgg@gmail.com
+
+Permission is granted to copy, distribute and/or modify this document under the terms of the GNU
+Free Documentation License, Version 1.3 or any later version published by the Free Software
+Foundation; with Invariant Sections being "GNU Free Documentation License" and "GNU General
+Public License", no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license is
+included in the section entitled "GNU Free Documentation License". -->
+<!-- Created by GNU Texinfo 6.7, http://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>buffers ctors embedded plain (CCStrings)</title>
+
+<meta name="description" content="buffers ctors embedded plain (CCStrings)">
+<meta name="keywords" content="buffers ctors embedded plain (CCStrings)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<link href="index.html" rel="start" title="Top">
+<link href="concept-index.html" rel="index" title="concept index">
+<link href="type-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="buffers-ctors-embedded.html" rel="up" title="buffers ctors embedded">
+<link href="buffers-ctors-embedded-guarded.html" rel="next" title="buffers ctors embedded guarded">
+<link href="buffers-ctors-embedded.html" rel="prev" title="buffers ctors embedded">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="cclibraries.css">
+
+
+</head>
+
+<body lang="en">
+<span id="buffers-ctors-embedded-plain"></span><div class="header">
+<p>
+Next: <a href="buffers-ctors-embedded-guarded.html" accesskey="n" rel="next">buffers ctors embedded guarded</a>, Up: <a href="buffers-ctors-embedded.html" accesskey="u" rel="up">buffers ctors embedded</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<span id="Plain-initialisation-and-finalisation"></span><h4 class="subsubsection">5.1.1.1 Plain initialisation and finalisation</h4>
+
+
+<p>An <em>embedded instance</em> is a <code>struct</code> instance allocated on the stack or embedded into another,
+enclosing, <code>struct</code> instance.  This section documents the <em>plain</em> initialisation and
+finalisation functions, which are the ones to use when embedding a buffer instance into an enclosing
+<code>struct</code> type; example:
+</p>
+<div class="example">
+<pre class="example">typedef struct envelope_t       envelope_t;
+
+struct envelope_t {
+  ccstr_buffer_t        B[1];
+};
+
+void
+ccname_init(envelope_t) (cce_destination_t upper_L, envelope_t * E)
+{
+  cce_location_t        L[1];
+  cce_error_handler_t   B_H[1];
+
+  if (cce_location(L)) {
+    cce_run_catch_handlers_raise(L, upper_L);
+  } else {
+    ccname_init(ccstr_buffer_t)(L, E-&gt;B, 64);
+    ccstr_init_and_register_buffer_handler(L, B_H, E-&gt;B);
+
+    /* Initialise the other fields of E, if any. */
+    cce_run_body_handlers(L);
+  }
+}
+
+void
+ccname_final(envelope_t) (envelope_t * E)
+{
+  ccname_final(ccstr_buffer_t)(E-&gt;B);
+}
+
+void
+ccname_init(envelope_t, clean) (cce_destination_t L,
+   cce_clean_handler_t * E_H, envelope_t * E)
+{
+  ccname_init(envelope_t)(L, E);
+  cce_init_and_register_handler
+    (L, E_H, cce_default_clean_handler_function,
+     cce_resource_pointer(E),
+     cce_resource_destructor(ccname_final(envelope_t)));
+}
+
+void
+ccname_init(envelope_t, error) (cce_destination_t L,
+   cce_error_handler_t * E_H, envelope_t * E)
+{
+  ccname_init(envelope_t)(L, E);
+  cce_init_and_register_handler
+    (L, E_H, cce_default_error_handler_function,
+     cce_resource_pointer(E),
+     cce_resource_destructor(ccname_final(envelope_t)));
+}
+</pre></div>
+
+<p>The following definitions are accessible in the header file <samp>ccstrings.h</samp>.
+</p>
+
+<dl>
+<dt id="index-ccname_005finit_0028ccstr_005fbuffer_005ft_0029">Function: <em>void</em> <strong>ccname_init(ccstr_buffer_t)</strong> <em>(cce_destination_t <var>L</var>, ccstr_buffer_t * <var>B</var>, size_t <var>initial_buflen</var>)</em></dt>
+<dd><p>Initialise an already allocated buffer instance referenced by <var>B</var>.  Allocate memory for the
+buffer with the initial size of <var>initial_buflen</var>.  If an error occurs allocating: perform a
+non&ndash;local exit by jumping to <var>L</var>.
+</p>
+<p>We can initialise an embedded instance, associating it to a clean handler, as follows; notice how
+the buffer instance allocated on the stack must be outside the <code>if</code> location statement:
+</p>
+<div class="example">
+<pre class="example">cce_location_t        L[1];
+cce_clean_handler_t   B_H[1];
+ccstr_buffer_t        B[1];
+
+if (cce_location(L)) {
+  cce_run_catch_handlers_raise(L, upper_L);
+} else {
+  ccname_init(ccstr_buffer_t)(L, B, 64);
+  ccstr_init_and_register_buffer_handler(L, B_H, B);
+  ccstr_buffer_format(L, B, &quot;These are the buffer's contents.\n&quot;);
+  ccstructs_dumpable_dump
+    (L, ccname_trait_new(ccstructs_dumpable_T, ccstr_buffer_t)(B));
+  cce_run_body_handlers(L);
+}
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt id="index-ccname_005finit_0028ccstr_005fbuffer_005ft_002c-copy_0029">Function: <em>void</em> <strong>ccname_init(ccstr_buffer_t, copy)</strong> <em>(cce_destination_t <var>L</var>, ccstr_buffer_t * <var>dst</var>, ccstr_buffer_t const * <var>src</var>)</em></dt>
+<dd><p>Initialise an already allocated buffer instance referenced by <var>dst</var>.  Make a perfect copy of the
+buffer referenced by <var>src</var>.  If an error occurs: perform a non&ndash;local exit by jumping to
+<var>L</var>.
+</p>
+<p>We can initialise a copy embedded instance, associating it to a clean handler, as follows; notice
+how the buffer instance allocated on the stack must be outside the <code>if</code> location statement:
+</p>
+<div class="example">
+<pre class="example">cce_location_t        L[1];
+ccstr_buffer_t        src[1], dst[1];
+cce_clean_handler_t   src_H[1], dst_H[1];
+
+if (cce_location(L)) {
+  cce_run_catch_handlers_raise(L, upper_L);
+} else {
+  ccname_init(ccstr_buffer_t)(L, src, 64);
+  ccstr_init_and_register_buffer_handler(L, src_H, src);
+  ccstr_buffer_format(L, src, &quot;These are the buffer's contents.\n&quot;);
+
+  ccname_init(ccstr_buffer_t, copy)(L, dst, src);
+  ccstr_init_and_register_buffer_handler(L, dst_H, dst);
+
+  ccstructs_dumpable_dump
+    (L, ccname_trait_new(ccstructs_dumpable_T, ccstr_buffer_t)(src));
+  ccstructs_dumpable_dump
+    (L, ccname_trait_new(ccstructs_dumpable_T, ccstr_buffer_t)(dst));
+  cce_run_body_handlers(L);
+}
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt id="index-ccname_005ffinal_0028ccstr_005fbuffer_005ft_0029">Function: <em>void</em> <strong>ccname_final(ccstr_buffer_t)</strong> <em>(ccstr_buffer_t * <var>B</var>)</em></dt>
+<dd><p>Finalise the buffer instance referenced by <var>B</var>.  Release data memory allocated for the buffer.
+Reset the structure fields.  The block of memory holding the structure itself is left untouched.
+</p></dd></dl>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="buffers-ctors-embedded-guarded.html" accesskey="n" rel="next">buffers ctors embedded guarded</a>, Up: <a href="buffers-ctors-embedded.html" accesskey="u" rel="up">buffers ctors embedded</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+<p>This document describes version <tt>0.1.0-devel.1</tt> of <em>CCStrings</em>.</p>
+</body>
+</html>
