@@ -1,0 +1,171 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.1.0-devel.0 of MMUX Cyclone Pregexp, a Cyclone language library
+implementing regular expressions.  Cyclone is a Scheme-to-C compiler supporting the language
+features as defined in the "Revised^7 Report on Scheme".
+
+The package supports POSIX platforms.  This package should work with Cyclone version
+0.17.
+
+The latest release can be downloaded from:
+
+https://bitbucket.org/marcomaggi/mmux-cyclone-pregexp/downloads
+
+development takes place at:
+
+https://github.com/marcomaggi/mmux-cyclone-pregexp
+
+and as backup at:
+
+https://bitbucket.org/marcomaggi/mmux-cyclone-pregexp
+
+Copyright (C) 1999-2015 Dorai Sitaram.
+
+Modified in 2009, 2010, 2013, 2020 by Marco Maggi mrc.mgg@gmail.com
+
+Permission to copy, modify, distribute, and use this work or a modified copy of this work, for any
+purpose, is hereby granted, provided that the copy includes this copyright notice, and in the case
+of a modified copy, also includes a notice of modification.  This work is provided as is, with no
+warranty of any kind. -->
+<!-- Created by GNU Texinfo 6.7, http://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>syntax look (MMUX Cyclone Pregexp)</title>
+
+<meta name="description" content="syntax look (MMUX Cyclone Pregexp)">
+<meta name="keywords" content="syntax look (MMUX Cyclone Pregexp)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<link href="index.html" rel="start" title="Top">
+<link href="concept-index.html" rel="index" title="concept index">
+<link href="type-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="syntax.html" rel="up" title="syntax">
+<link href="example.html" rel="next" title="example">
+<link href="syntax-backtrack.html" rel="prev" title="syntax backtrack">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="mmux-cyclone-docs.css">
+
+
+</head>
+
+<body lang="en">
+<span id="syntax-look"></span><div class="header">
+<p>
+Previous: <a href="syntax-backtrack.html" accesskey="p" rel="prev">syntax backtrack</a>, Up: <a href="syntax.html" accesskey="u" rel="up">syntax</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<span id="Looking-ahead-and-behind"></span><h3 class="section">5.7 Looking ahead and behind</h3>
+
+
+<p>We can have assertions in our pattern that look ahead or behind to
+ensure that a subpattern does or does not occur.  These &ldquo;look around&rdquo;
+assertions are specified by putting the subpattern checked for in a
+cluster whose leading characters are:
+</p>
+<dl compact="compact">
+<dt><code>?=</code></dt>
+<dd><p>Positive lookahead.
+</p>
+</dd>
+<dt><code>?!</code></dt>
+<dd><p>Negative lookahead.
+</p>
+</dd>
+<dt><code>?&lt;=</code></dt>
+<dd><p>Positive lookbehind.
+</p>
+</dd>
+<dt><code>?&lt;!</code></dt>
+<dd><p>Negative lookbehind.
+</p></dd>
+</dl>
+
+<p>Note that the subpattern in the assertion does not generate a match in
+the final result.  It merely allows or disallows the rest of the match.
+</p>
+
+<span id="Lookahead"></span><h4 class="subsubheading">Lookahead</h4>
+
+<p>Positive lookahead (<code>?=</code>) peeks ahead to ensure that its subpattern
+could match.
+</p>
+<div class="example">
+<pre class="example">(pregexp-match-positions &quot;grey(?=hound)&quot;
+  &quot;i left my grey socks at the greyhound&quot;)
+&rArr; ((28 . 32))
+</pre></div>
+
+<p>The regexp <code>grey(?=hound)</code> matches grey, but only if it is followed
+by hound.  Thus, the first grey in the text string is not matched.
+</p>
+<p>Negative lookahead (<code>?!</code>) peeks ahead to ensure that its subpattern
+could not possibly match.
+</p>
+<div class="example">
+<pre class="example">(pregexp-match-positions &quot;grey(?!hound)&quot;
+  &quot;the gray greyhound ate the grey socks&quot;)
+&rArr; ((27 . 31))
+</pre></div>
+
+<p>The regexp <code>grey(?!hound)</code> matches <code>grey</code>, but only if it is
+not followed by <code>hound</code>.  Thus the <code>grey</code> just before
+<code>socks</code> is matched.
+</p>
+
+<span id="Lookbehind"></span><h4 class="subsubheading">Lookbehind</h4>
+
+<p>Positive lookbehind (<code>?&lt;=</code>) checks that its subpattern could match
+immediately to the left of the current position in the text string.
+</p>
+<div class="example">
+<pre class="example">(pregexp-match-positions &quot;(?&lt;=grey)hound&quot;
+  &quot;the hound in the picture is not a greyhound&quot;)
+&rArr; ((38 . 43))
+</pre></div>
+
+<p>The regexp <code>(?&lt;=grey)hound</code> matches hound, but only if it is
+preceded by grey.
+</p>
+<p>Negative lookbehind (<code>?&lt;!</code>) checks that its subpattern could not
+possibly match immediately to the left.
+</p>
+<div class="example">
+<pre class="example">(pregexp-match-positions &quot;(?&lt;!grey)hound&quot;
+  &quot;the greyhound in the picture is not a hound&quot;)
+&rArr; ((38 . 43))
+</pre></div>
+
+<p>The regexp <code>(?&lt;!grey)hound</code> matches <code>hound</code>, but only if it is
+not preceded by <code>grey</code>.
+</p>
+<p>Lookaheads and lookbehinds can be convenient when they are not
+confusing.
+</p>
+<hr>
+<div class="header">
+<p>
+Previous: <a href="syntax-backtrack.html" accesskey="p" rel="prev">syntax backtrack</a>, Up: <a href="syntax.html" accesskey="u" rel="up">syntax</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

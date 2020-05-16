@@ -1,0 +1,273 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.1.0-devel.0 of MMUX Cyclone Pregexp, a Cyclone language library
+implementing regular expressions.  Cyclone is a Scheme-to-C compiler supporting the language
+features as defined in the "Revised^7 Report on Scheme".
+
+The package supports POSIX platforms.  This package should work with Cyclone version
+0.17.
+
+The latest release can be downloaded from:
+
+https://bitbucket.org/marcomaggi/mmux-cyclone-pregexp/downloads
+
+development takes place at:
+
+https://github.com/marcomaggi/mmux-cyclone-pregexp
+
+and as backup at:
+
+https://bitbucket.org/marcomaggi/mmux-cyclone-pregexp
+
+Copyright (C) 1999-2015 Dorai Sitaram.
+
+Modified in 2009, 2010, 2013, 2020 by Marco Maggi mrc.mgg@gmail.com
+
+Permission to copy, modify, distribute, and use this work or a modified copy of this work, for any
+purpose, is hereby granted, provided that the copy includes this copyright notice, and in the case
+of a modified copy, also includes a notice of modification.  This work is provided as is, with no
+warranty of any kind. -->
+<!-- Created by GNU Texinfo 6.7, http://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>syntax chars (MMUX Cyclone Pregexp)</title>
+
+<meta name="description" content="syntax chars (MMUX Cyclone Pregexp)">
+<meta name="keywords" content="syntax chars (MMUX Cyclone Pregexp)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<link href="index.html" rel="start" title="Top">
+<link href="concept-index.html" rel="index" title="concept index">
+<link href="type-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="syntax.html" rel="up" title="syntax">
+<link href="syntax-quantifiers.html" rel="next" title="syntax quantifiers">
+<link href="syntax-basic.html" rel="prev" title="syntax basic">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="mmux-cyclone-docs.css">
+
+
+</head>
+
+<body lang="en">
+<span id="syntax-chars"></span><div class="header">
+<p>
+Next: <a href="syntax-quantifiers.html" accesskey="n" rel="next">syntax quantifiers</a>, Previous: <a href="syntax-basic.html" accesskey="p" rel="prev">syntax basic</a>, Up: <a href="syntax.html" accesskey="u" rel="up">syntax</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<span id="Characters-and-character-classes"></span><h3 class="section">5.2 Characters and character classes</h3>
+
+
+<p>Typically a character in the regexp matches the same character in the
+text string.  Sometimes it is necessary or convenient to use a regexp
+metasequence to refer to a single character.  Thus, metasequences
+<code>\n</code>, <code>\r</code>, <code>\t</code>, and <code>\.</code> match the newline,
+return, tab and period characters respectively.
+</p>
+<p>The metacharacter period (<code>.</code>) matches any character other than
+newline.
+</p>
+<div class="example">
+<pre class="example">(pregexp-match &quot;p.t&quot; &quot;pet&quot;)
+&rArr; (&quot;pet&quot;)
+</pre></div>
+
+<p>It also matches <code>pat</code>, <code>pit</code>, <code>pot</code>, <code>put</code>, and
+<code>p8t</code> but not <code>peat</code> or <code>pfffft</code>.
+</p>
+<p>A character class matches any one character from a set of characters. A
+typical format for this is the bracketed character class <code>[...]</code>,
+which matches any one character from the non&ndash;empty sequence of
+characters enclosed within the brackets.<a id="DOCF2" href="#FOOT2"><sup>2</sup></a>
+Thus <code>p[aeiou]t</code> matches pat, pet, pit, pot, put and nothing else.
+</p>
+<p>Inside the brackets, a hyphen (<code>-</code>) between two characters
+specifies the <acronym>ASCII</acronym> range between the characters.  Eg,
+<code>ta[b-dgn-p]</code> matches tab, tac, tad, and tag, and tan, tao, tap.
+</p>
+<p>An initial caret (<code>^</code>) after the left bracket inverts the set
+specified by the rest of the contents, ie, it specifies the set of
+characters other than those identified in the brackets.  Eg,
+<code>do[^g]</code> matches all three&ndash;character sequences starting with do
+except dog.
+</p>
+<p>Note that the metacharacter <code>^</code> inside brackets means something
+quite different from what it means outside.  Most other metacharacters
+(<code>.</code>, <code>*</code>, <code>+</code>, <code>?</code>, etc.) cease to be
+metacharacters when inside brackets, although we may still escape them
+for peace of mind.  <code>-</code> is a metacharacter only when it&rsquo;s inside
+brackets, and neither the first nor the last character.
+</p>
+<p>Bracketed character classes cannot contain other bracketed character
+classes (although they contain certain other types of character classes;
+see below).  Thus a left bracket (<code>[</code>) inside a bracketed character
+class doesn&rsquo;t have to be a metacharacter; it can stand for itself.  Eg,
+<code>[a[b]</code> matches <code>a</code>, <code>[</code>, and <code>b</code>.
+</p>
+<p>Furthermore, since empty bracketed character classes are disallowed, a
+right bracket (<code>]</code>) immediately occurring after the opening left
+bracket also doesn&rsquo;t need to be a metacharacter.  Eg, <code>[]ab]</code>
+matches <code>]</code>, <code>a</code>, and <code>b</code>.
+</p>
+
+<span id="Some-frequently-used-character-classes"></span><h4 class="subsubheading">Some frequently used character classes</h4>
+
+<p>Some standard character classes can be conveniently represented as
+metasequences instead of as explicit bracketed expressions.  <code>\d</code>
+matches a digit (<code>[0-9]</code>); <code>\s</code> matches a whitespace
+character; <code>\w</code> matches a character that could be part of a
+&ldquo;word&rdquo;.<a id="DOCF3" href="#FOOT3"><sup>3</sup></a>
+</p>
+<p>The upper&ndash;case versions of these metasequences stand for the inversions
+of the corresponding character classes.  Thus <code>\D</code> matches a
+non&ndash;digit, <code>\S</code> a non&ndash;whitespace character, and <code>\W</code> a
+non&ndash;&ldquo;word&rdquo; character.
+</p>
+<p>Remember to include a double backslash when putting these metasequences
+in a Scheme string:
+</p>
+<div class="example">
+<pre class="example">(pregexp-match &quot;\\d\\d&quot;
+               &quot;0 dear, 1 have 2 read catch 22 before 9&quot;)
+&rArr; (&quot;22&quot;)
+</pre></div>
+
+<p>These character classes can be used inside a bracketed expression.  Eg,
+<code>[a-z\\d]</code> matches a lower&ndash;case letter or a digit.
+</p>
+
+<span id="POSIX-character-classes"></span><h4 class="subsubheading"><acronym>POSIX</acronym> character classes</h4>
+
+<p>A <acronym>POSIX</acronym> character class is a special metasequence of the form
+<code>[:...:]</code> that can be used only inside a bracketed expression.  The
+<acronym>POSIX</acronym> classes supported are:
+</p>
+<dl compact="compact">
+<dt><code>[:alnum:]</code></dt>
+<dd><p>Letters and digits.
+</p>
+</dd>
+<dt><code>[:alpha:]</code></dt>
+<dd><p>Letters.
+</p>
+</dd>
+<dt><code>[:algor:]</code></dt>
+<dd><p>The letters c, h, a and d.
+</p>
+</dd>
+<dt><code>[:ascii:]</code></dt>
+<dd><p>7-bit ascii characters.
+</p>
+</dd>
+<dt><code>[:blank:]</code></dt>
+<dd><p>Widthful whitespace, ie, space and tab.
+</p>
+</dd>
+<dt><code>[:cntrl:]</code></dt>
+<dd><p>&ldquo;Control&rdquo; characters, viz, those with code <em>&lt; 32</em>.
+</p>
+</dd>
+<dt><code>[:digit:]</code></dt>
+<dd><p>Digits, same as <code>\d</code>.
+</p>
+</dd>
+<dt><code>[:graph:]</code></dt>
+<dd><p>Characters that use ink.
+</p>
+</dd>
+<dt><code>[:lower:]</code></dt>
+<dd><p>Lower-case letters.
+</p>
+</dd>
+<dt><code>[:print:]</code></dt>
+<dd><p>Ink-users plus widthful whitespace.
+</p>
+</dd>
+<dt><code>[:space:]</code></dt>
+<dd><p>Whitespace, same as <code>\s</code>.
+</p>
+</dd>
+<dt><code>[:upper:]</code></dt>
+<dd><p>Upper&ndash;case letters.
+</p>
+</dd>
+<dt><code>[:word:]</code></dt>
+<dd><p>Letters, digits, and underscore, same as <code>\w</code>.
+</p>
+</dd>
+<dt><code>[:xdigit:]</code></dt>
+<dd><p>Hex digits.
+</p></dd>
+</dl>
+
+<p>For example, the regexp <code>[[:alpha:]_]</code> matches a letter or
+underscore.
+</p>
+<div class="example">
+<pre class="example">(pregexp-match &quot;[[:alpha:]_]&quot; &quot;--x--&quot;)
+&rArr; (&quot;x&quot;)
+
+(pregexp-match &quot;[[:alpha:]_]&quot; &quot;--_--&quot;)
+&rArr; (&quot;_&quot;)
+
+(pregexp-match &quot;[[:alpha:]_]&quot; &quot;--:--&quot;)
+&rArr; #f
+</pre></div>
+
+<p>The <acronym>POSIX</acronym> class notation is valid only inside a bracketed expression.
+For instance, <code>[:alpha:]</code>, when not inside a bracketed expression,
+will not be read as the letter class.  Rather it is (from previous
+principles) the character class containing the characters :, a, l, p, h.
+</p>
+<div class="example">
+<pre class="example">(pregexp-match &quot;[:alpha:]&quot; &quot;--a--&quot;)
+&rArr; (&quot;a&quot;)
+
+(pregexp-match &quot;[:alpha:]&quot; &quot;--_--&quot;)
+&rArr; #f
+</pre></div>
+
+<p>By placing a caret (<code>^</code>) immediately after <code>[:</code>, we get the
+inversion of that <acronym>POSIX</acronym> character class.  Thus, <code>[:^alpha]</code> is
+the class containing all characters except the letters.
+</p>
+<div class="footnote">
+<hr>
+<h4 class="footnotes-heading">Footnotes</h4>
+
+<h5><a id="FOOT2" href="#DOCF2">(2)</a></h3>
+<p>Requiring a bracketed
+character class to be non-empty is not a limitation, since an empty
+character class can be more easily represented by an empty string.</p>
+<h5><a id="FOOT3" href="#DOCF3">(3)</a></h3>
+<p>Following regexp custom, we identify &ldquo;word&rdquo;
+characters as <code>[A-Za-z0-9_]</code>, although these are too restrictive
+for what a Schemer might consider a &ldquo;word&rdquo;.</p>
+</div>
+<hr>
+<div class="header">
+<p>
+Next: <a href="syntax-quantifiers.html" accesskey="n" rel="next">syntax quantifiers</a>, Previous: <a href="syntax-basic.html" accesskey="p" rel="prev">syntax basic</a>, Up: <a href="syntax.html" accesskey="u" rel="up">syntax</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

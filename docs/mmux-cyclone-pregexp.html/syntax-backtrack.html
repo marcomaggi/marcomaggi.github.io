@@ -1,0 +1,139 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.1.0-devel.0 of MMUX Cyclone Pregexp, a Cyclone language library
+implementing regular expressions.  Cyclone is a Scheme-to-C compiler supporting the language
+features as defined in the "Revised^7 Report on Scheme".
+
+The package supports POSIX platforms.  This package should work with Cyclone version
+0.17.
+
+The latest release can be downloaded from:
+
+https://bitbucket.org/marcomaggi/mmux-cyclone-pregexp/downloads
+
+development takes place at:
+
+https://github.com/marcomaggi/mmux-cyclone-pregexp
+
+and as backup at:
+
+https://bitbucket.org/marcomaggi/mmux-cyclone-pregexp
+
+Copyright (C) 1999-2015 Dorai Sitaram.
+
+Modified in 2009, 2010, 2013, 2020 by Marco Maggi mrc.mgg@gmail.com
+
+Permission to copy, modify, distribute, and use this work or a modified copy of this work, for any
+purpose, is hereby granted, provided that the copy includes this copyright notice, and in the case
+of a modified copy, also includes a notice of modification.  This work is provided as is, with no
+warranty of any kind. -->
+<!-- Created by GNU Texinfo 6.7, http://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>syntax backtrack (MMUX Cyclone Pregexp)</title>
+
+<meta name="description" content="syntax backtrack (MMUX Cyclone Pregexp)">
+<meta name="keywords" content="syntax backtrack (MMUX Cyclone Pregexp)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<link href="index.html" rel="start" title="Top">
+<link href="concept-index.html" rel="index" title="concept index">
+<link href="type-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="syntax.html" rel="up" title="syntax">
+<link href="syntax-look.html" rel="next" title="syntax look">
+<link href="syntax-alternation.html" rel="prev" title="syntax alternation">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="mmux-cyclone-docs.css">
+
+
+</head>
+
+<body lang="en">
+<span id="syntax-backtrack"></span><div class="header">
+<p>
+Next: <a href="syntax-look.html" accesskey="n" rel="next">syntax look</a>, Previous: <a href="syntax-alternation.html" accesskey="p" rel="prev">syntax alternation</a>, Up: <a href="syntax.html" accesskey="u" rel="up">syntax</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<span id="Backtracking"></span><h3 class="section">5.6 Backtracking</h3>
+
+
+<p>We&rsquo;ve already seen that greedy quantifiers match the maximal number of
+times, but the overriding priority is that the overall match
+succeed.  Consider:
+</p>
+<div class="example">
+<pre class="example">(pregexp-match &quot;a*a&quot; &quot;aaaa&quot;)
+</pre></div>
+
+<p>The regexp consists of two subregexps, <code>a*</code> followed by <code>a</code>.
+The subregexp <code>a*</code> cannot be allowed to match all four <code>a</code>&rsquo;s
+in the text string <code>aaaa</code>, even though <code>*</code> is a greedy
+quantifier.  It may match only the first three, leaving the last one for
+the second subregexp.  This ensures that the full regexp matches
+successfully.
+</p>
+<p>The regexp matcher accomplishes this via a process called backtracking.
+The matcher tentatively allows the greedy quantifier to match all four
+<code>a</code>&rsquo;s, but then when it becomes clear that the overall match is in
+jeopardy, it backtracks to a less greedy match of three <code>a</code>&rsquo;s.  If
+even this fails, as in the call:
+</p>
+<div class="example">
+<pre class="example">(pregexp-match &quot;a*aa&quot; &quot;aaaa&quot;)
+</pre></div>
+
+<p>the matcher backtracks even further.  Overall failure is conceded only
+when all possible backtracking has been tried with no success.
+</p>
+<p>Backtracking is not restricted to greedy quantifiers.  Nongreedy
+quantifiers match as few instances as possible, and progressively
+backtrack to more and more instances in order to attain an overall
+match.  There is backtracking in alternation too, as the more rightward
+alternates are tried when locally successful leftward ones fail to yield
+an overall match.
+</p>
+
+<span id="Disabling-backtracking"></span><h4 class="subsubheading">Disabling backtracking</h4>
+
+<p>Sometimes it is efficient to disable backtracking.  For example, we may
+wish to commit to a choice, or we know that trying alternatives is
+fruitless.  A nonbacktracking regexp is enclosed in <code>(?&gt;...)</code>.
+</p>
+<div class="example">
+<pre class="example">(pregexp-match &quot;(?&gt;a+).&quot; &quot;aaaa&quot;)
+&rArr; #f
+</pre></div>
+
+<p>In this call, the subregexp <code>?&gt;a+</code> greedily matches all four
+<code>a</code>&rsquo;s, and is denied the opportunity to backpedal.  So the overall
+match is denied.  The effect of the regexp is therefore to match one or
+more <code>a</code>&rsquo;s followed by something that is definitely non&ndash;<code>a</code>.
+</p>
+<hr>
+<div class="header">
+<p>
+Next: <a href="syntax-look.html" accesskey="n" rel="next">syntax look</a>, Previous: <a href="syntax-alternation.html" accesskey="p" rel="prev">syntax alternation</a>, Up: <a href="syntax.html" accesskey="u" rel="up">syntax</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

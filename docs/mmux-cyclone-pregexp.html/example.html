@@ -1,0 +1,199 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.1.0-devel.0 of MMUX Cyclone Pregexp, a Cyclone language library
+implementing regular expressions.  Cyclone is a Scheme-to-C compiler supporting the language
+features as defined in the "Revised^7 Report on Scheme".
+
+The package supports POSIX platforms.  This package should work with Cyclone version
+0.17.
+
+The latest release can be downloaded from:
+
+https://bitbucket.org/marcomaggi/mmux-cyclone-pregexp/downloads
+
+development takes place at:
+
+https://github.com/marcomaggi/mmux-cyclone-pregexp
+
+and as backup at:
+
+https://bitbucket.org/marcomaggi/mmux-cyclone-pregexp
+
+Copyright (C) 1999-2015 Dorai Sitaram.
+
+Modified in 2009, 2010, 2013, 2020 by Marco Maggi mrc.mgg@gmail.com
+
+Permission to copy, modify, distribute, and use this work or a modified copy of this work, for any
+purpose, is hereby granted, provided that the copy includes this copyright notice, and in the case
+of a modified copy, also includes a notice of modification.  This work is provided as is, with no
+warranty of any kind. -->
+<!-- Created by GNU Texinfo 6.7, http://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>example (MMUX Cyclone Pregexp)</title>
+
+<meta name="description" content="example (MMUX Cyclone Pregexp)">
+<meta name="keywords" content="example (MMUX Cyclone Pregexp)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<link href="index.html" rel="start" title="Top">
+<link href="concept-index.html" rel="index" title="concept index">
+<link href="type-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="index.html" rel="up" title="Top">
+<link href="references.html" rel="next" title="references">
+<link href="syntax-look.html" rel="prev" title="syntax look">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="mmux-cyclone-docs.css">
+
+
+</head>
+
+<body lang="en">
+<span id="example"></span><div class="header">
+<p>
+Next: <a href="references.html" accesskey="n" rel="next">references</a>, Previous: <a href="syntax.html" accesskey="p" rel="prev">syntax</a>, Up: <a href="index.html" accesskey="u" rel="up">Top</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<span id="An-extended-example"></span><h2 class="chapter">6 An extended example</h2>
+
+
+<p>Here&rsquo;s an extended example<a id="DOCF6" href="#FOOT6"><sup>6</sup></a>  that covers many
+of the features in <code>(vicare pregexp)</code>.  The problem is to
+fashion a regexp that will match any and only <acronym>IP</acronym> addresses or dotted
+quads, i.e., four numbers separated by three dots, with each number
+between <em>0</em> and <em>255</em>.  We will use the commenting mechanism
+to build the final regexp with clarity.  First, a subregexp
+<code>n0-255</code> that matches <code>0</code> through <code>255</code>.
+</p>
+<div class="example">
+<pre class="example">(define n0-255
+  &quot;(?x:
+  \\d          ;  0 through   9
+  | \\d\\d     ; 00 through  99
+  | [01]\\d\\d ;000 through 199
+  | 2[0-4]\\d  ;200 through 249
+  | 25[0-5]    ;250 through 255
+  )&quot;)
+</pre></div>
+
+<p>The first two alternates simply get all single- and double&ndash;digit
+numbers.  Since zero&ndash;padding is allowed, we need to match both <code>1</code>
+and <code>01</code>.  We need to be careful when getting <em>3</em>&ndash;digit
+numbers, since numbers above <em>255</em> must be excluded.  So we fashion
+alternates to get <code>000</code> through <code>199</code>, then <code>200</code> through
+<code>249</code>, and finally <code>250</code> through <code>255</code>.<a id="DOCF7" href="#FOOT7"><sup>7</sup></a>
+</p>
+<p>An <acronym>IP</acronym>&ndash;address is a string that consists of four <code>n0-255</code>s with
+three dots separating them.
+</p>
+<div class="example">
+<pre class="example">(define ip-re1
+  (string-append
+    &quot;^&quot;        ;nothing before
+    n0-255     ;the first n0-255,
+    &quot;(?x:&quot;     ;then the subpattern of
+    &quot;\\.&quot;      ;a dot followed by
+    n0-255     ;an n0-255,
+    &quot;)&quot;        ;which is
+    &quot;{3}&quot;      ;repeated exactly 3 times
+    &quot;$&quot;        ;with nothing following
+    ))
+</pre></div>
+
+<p>Let&rsquo;s try it out.
+</p>
+<div class="example">
+<pre class="example">(pregexp-match ip-re1
+  &quot;1.2.3.4&quot;)
+&rArr; (&quot;1.2.3.4&quot;)
+
+(pregexp-match ip-re1
+  &quot;55.155.255.265&quot;)
+&rArr; #f
+</pre></div>
+
+<p>which is fine, except that we also have:
+</p>
+<div class="example">
+<pre class="example">(pregexp-match ip-re1
+  &quot;0.00.000.00&quot;)
+&rArr; (&quot;0.00.000.00&quot;)
+</pre></div>
+
+<p>All&ndash;zero sequences are not valid <acronym>IP</acronym> addresses!  Lookahead to the
+rescue.  Before starting to match <code>ip-re1</code>, we look ahead to ensure
+we don&rsquo;t have all zeros.  We could use positive lookahead to ensure
+there is a digit other than zero.
+</p>
+<div class="example">
+<pre class="example">(define ip-re
+  (string-append
+    &quot;(?=.*[1-9])&quot; ;ensure there's a non-0 digit
+    ip-re1))
+</pre></div>
+
+<p>Or we could use negative lookahead to ensure that what&rsquo;s ahead isn&rsquo;t
+composed of only zeros and dots.
+</p>
+<div class="example">
+<pre class="example">(define ip-re
+  (string-append
+    &quot;(?![0.]*$)&quot; ;not just zeros and dots
+                 ;(note: dot is not metachar inside [])
+    ip-re1))
+</pre></div>
+
+<p>The regexp <code>ip-re</code> will match all and only valid <acronym>IP</acronym> addresses.
+</p>
+<div class="example">
+<pre class="example">(pregexp-match ip-re
+  &quot;1.2.3.4&quot;)
+&rArr; (&quot;1.2.3.4&quot;)
+
+(pregexp-match ip-re
+  &quot;0.0.0.0&quot;)
+&rArr; #f
+</pre></div>
+
+<div class="footnote">
+<hr>
+<h4 class="footnotes-heading">Footnotes</h4>
+
+<h5><a id="FOOT6" href="#DOCF6">(6)</a></h3>
+<p>From: Jeffrey E. F. Friedl,
+Mastering Regular Expressions, 2/e, O&rsquo;Reilly, 2002.</p>
+<h5><a id="FOOT7" href="#DOCF7">(7)</a></h3>
+<p>Note
+that <code>n0-255</code> lists prefixes as preferred alternates, something we
+cautioned against.  However, since we intend to anchor this subregexp
+explicitly to force an overall match, the order of the alternates does
+not matter.</p>
+</div>
+<hr>
+<div class="header">
+<p>
+Next: <a href="references.html" accesskey="n" rel="next">references</a>, Previous: <a href="syntax.html" accesskey="p" rel="prev">syntax</a>, Up: <a href="index.html" accesskey="u" rel="up">Top</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>

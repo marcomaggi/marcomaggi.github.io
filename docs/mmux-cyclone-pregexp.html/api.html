@@ -1,0 +1,254 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.1.0-devel.0 of MMUX Cyclone Pregexp, a Cyclone language library
+implementing regular expressions.  Cyclone is a Scheme-to-C compiler supporting the language
+features as defined in the "Revised^7 Report on Scheme".
+
+The package supports POSIX platforms.  This package should work with Cyclone version
+0.17.
+
+The latest release can be downloaded from:
+
+https://bitbucket.org/marcomaggi/mmux-cyclone-pregexp/downloads
+
+development takes place at:
+
+https://github.com/marcomaggi/mmux-cyclone-pregexp
+
+and as backup at:
+
+https://bitbucket.org/marcomaggi/mmux-cyclone-pregexp
+
+Copyright (C) 1999-2015 Dorai Sitaram.
+
+Modified in 2009, 2010, 2013, 2020 by Marco Maggi mrc.mgg@gmail.com
+
+Permission to copy, modify, distribute, and use this work or a modified copy of this work, for any
+purpose, is hereby granted, provided that the copy includes this copyright notice, and in the case
+of a modified copy, also includes a notice of modification.  This work is provided as is, with no
+warranty of any kind. -->
+<!-- Created by GNU Texinfo 6.7, http://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>api (MMUX Cyclone Pregexp)</title>
+
+<meta name="description" content="api (MMUX Cyclone Pregexp)">
+<meta name="keywords" content="api (MMUX Cyclone Pregexp)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<link href="index.html" rel="start" title="Top">
+<link href="concept-index.html" rel="index" title="concept index">
+<link href="type-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="index.html" rel="up" title="Top">
+<link href="syntax.html" rel="next" title="syntax">
+<link href="intro.html" rel="prev" title="intro">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="mmux-cyclone-docs.css">
+
+
+</head>
+
+<body lang="en">
+<span id="api"></span><div class="header">
+<p>
+Next: <a href="syntax.html" accesskey="n" rel="next">syntax</a>, Previous: <a href="intro.html" accesskey="p" rel="prev">intro</a>, Up: <a href="index.html" accesskey="u" rel="up">Top</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<span id="Interface-procedures"></span><h2 class="chapter">4 Interface procedures</h2>
+
+
+<dl>
+<dt id="index-pregexp">Function: <strong>pregexp</strong> <em><var>urex</var></em></dt>
+<dd><p>Takes a U-regexp, which is a string, and returns an S-regexp, which is a
+tree.
+</p>
+<div class="example">
+<pre class="example">(pregexp &quot;c.r&quot;)
+&rArr; (:sub (:or (:seq #\c :any #\r)))
+</pre></div>
+
+<p>There is rarely any need to look at the S-regexps returned by pregexp.
+</p></dd></dl>
+
+
+<dl>
+<dt id="index-pregexp_002dmatch_002dpositions">Function: <strong>pregexp-match-positions</strong> <em><var>rex</var> <var>str</var></em></dt>
+<dt id="index-pregexp_002dmatch_002dpositions-1">Function: <strong>pregexp-match-positions</strong> <em><var>rex</var> <var>str</var> <var>start</var></em></dt>
+<dt id="index-pregexp_002dmatch_002dpositions-2">Function: <strong>pregexp-match-positions</strong> <em><var>rex</var> <var>str</var> <var>start</var> <var>past</var></em></dt>
+<dd><p>Take a regexp pattern, either a U- or an S-regexp, and a text string,
+and return a match if the regexp matches (some part of) the text string.
+</p>
+<p>Return <code>#f</code> if the regexp did not match the string; and a list of
+index pairs if it did match.
+</p>
+<div class="example">
+<pre class="example">(pregexp-match-positions &quot;brain&quot; &quot;bird&quot;)
+&rArr; #f
+
+(pregexp-match-positions &quot;needle&quot; &quot;hay needle stack&quot;)
+&rArr; ((4 . 10))
+</pre></div>
+
+<p>In the second example, the integers <em>4</em> and <em>10</em> identify the
+substring that was matched.  <em>4</em> is the starting (inclusive) index
+and <em>10</em> the ending (exclusive) index of the matching substring.
+</p>
+<div class="example">
+<pre class="example">(substring &quot;hay needle stack&quot; 4 10)
+&rArr; &quot;needle&quot;
+</pre></div>
+
+<p>Here, <code>pregexp-match-positions</code>&rsquo;s return list contains only one
+index pair, and that pair represents the entire substring matched by the
+regexp.  When we discuss subpatterns later, we will see how a single
+match operation can yield a list of submatches.
+</p>
+<p><code>pregexp-match-positions</code> takes optional third and fourth arguments
+that specify the indices of the text string within which the matching
+should take place.
+</p>
+<div class="example">
+<pre class="example">(pregexp-match-positions &quot;needle&quot;
+  &quot;his hay needle stack -- my hay needle stack -- her hay needle stack&quot;
+  24 43)
+&rArr; ((31 . 37))
+</pre></div>
+
+<p>Note that the returned indices are still reckoned relative to the full
+text string.
+</p></dd></dl>
+
+
+<dl>
+<dt id="index-pregexp_002dmatch">Function: <strong>pregexp-match</strong> <em><var>rex</var> <var>str</var></em></dt>
+<dt id="index-pregexp_002dmatch-1">Function: <strong>pregexp-match</strong> <em><var>rex</var> <var>str</var> <var>start</var></em></dt>
+<dt id="index-pregexp_002dmatch-2">Function: <strong>pregexp-match</strong> <em><var>rex</var> <var>str</var> <var>start</var> <var>past</var></em></dt>
+<dd><p>Like <code>pregexp-match-positions</code> but instead of returning index pairs
+it returns the matching substrings:
+</p>
+<div class="example">
+<pre class="example">(pregexp-match &quot;brain&quot; &quot;bird&quot;)
+&rArr; #f
+
+(pregexp-match &quot;needle&quot; &quot;hay needle stack&quot;)
+&rArr; (&quot;needle&quot;)
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt id="index-pregexp_002dsplit">Function: <strong>pregexp-split</strong> <em><var>rex</var> <var>str</var></em></dt>
+<dd><p>Takes a regexp pattern and a text string, and return a list of
+substrings of the text string, where the pattern identifies the
+delimiter separating the substrings.
+</p>
+<div class="example">
+<pre class="example">(pregexp-split &quot;:&quot;
+   &quot;/bin:/usr/bin:/usr/bin/X11:/usr/local/bin&quot;)
+&rArr; (&quot;/bin&quot; &quot;/usr/bin&quot; &quot;/usr/bin/X11&quot; &quot;/usr/local/bin&quot;)
+
+(pregexp-split &quot; &quot; &quot;pea soup&quot;)
+&rArr; (&quot;pea&quot; &quot;soup&quot;)
+</pre></div>
+
+<p>If the first argument can match an empty string, then the list of all
+the single&ndash;character substrings is returned.
+</p>
+<div class="example">
+<pre class="example">(pregexp-split &quot;&quot; &quot;smithereens&quot;)
+&rArr; (&quot;s&quot; &quot;m&quot; &quot;i&quot; &quot;t&quot; &quot;h&quot; &quot;e&quot; &quot;r&quot; &quot;e&quot; &quot;e&quot; &quot;n&quot; &quot;s&quot;)
+</pre></div>
+
+<p>To identify one&ndash;or&ndash;more spaces as the delimiter, take care to use the
+regexp <code>&quot; +&quot;</code>, not <code>&quot; *&quot;</code>.
+</p>
+<div class="example">
+<pre class="example">(pregexp-split &quot; +&quot; &quot;split pea     soup&quot;)
+&rArr; (&quot;split&quot; &quot;pea&quot; &quot;soup&quot;)
+
+(pregexp-split &quot; *&quot; &quot;split pea     soup&quot;)
+&rArr; (&quot;s&quot; &quot;p&quot; &quot;l&quot; &quot;i&quot; &quot;t&quot; &quot;p&quot; &quot;e&quot; &quot;a&quot; &quot;s&quot; &quot;o&quot; &quot;u&quot; &quot;p&quot;)
+</pre></div>
+</dd></dl>
+
+
+<dl>
+<dt id="index-pregexp_002dreplace">Function: <strong>pregexp-replace</strong> <em><var>rex</var> <var>str</var> <var>replacement</var></em></dt>
+<dd><p>Replace the matched portion of the text string by another string.  The
+first argument is the pattern, the second the text string, and the third
+is the insert string (string to be inserted).
+</p>
+<div class="example">
+<pre class="example">(pregexp-replace &quot;te&quot; &quot;liberte&quot; &quot;ty&quot;)
+&rArr; &quot;liberty&quot;
+</pre></div>
+
+<p>If the pattern doesn&rsquo;t occur in the text string, the returned string is
+identical (<code>eq?</code>) to the text string.
+</p></dd></dl>
+
+
+<dl>
+<dt id="index-pregexp_002dreplace_002a">Function: <strong>pregexp-replace*</strong> <em><var>rex</var> <var>str</var> <var>replacement</var></em></dt>
+<dd><p>Replace all matches in the text string by the insert string:
+</p>
+<div class="example">
+<pre class="example">(pregexp-replace* &quot;te&quot; &quot;liberte egalite fraternite&quot; &quot;ty&quot;)
+&rArr; &quot;liberty egality fratyrnity&quot;
+</pre></div>
+
+<p>If the pattern doesn&rsquo;t occur in the text string, the returned string is
+identical (<code>eq?</code>) to the text string.
+</p></dd></dl>
+
+
+<dl>
+<dt id="index-pregexp_002dquote">Function: <strong>pregexp-quote</strong></dt>
+<dd><p>Take an arbitrary string and returns a U-regexp (string) that precisely
+represents it.  In particular, characters in the input string that could
+serve as regexp metacharacters are escaped with a backslash, so that
+they safely match only themselves.
+</p>
+<div class="example">
+<pre class="example">(pregexp-quote &quot;cons&quot;)
+&rArr; &quot;cons&quot;
+
+(pregexp-quote &quot;list?&quot;)
+&rArr; &quot;list\\?&quot;
+
+(pregexp-quote &quot;([a-z]+) +([0-9]+,)? *([0-9]+)&quot;)
+&rArr; &quot;\\(\\[a-z\\]\\+\\) \\+\\(\\[0-9\\]\\+,\\)\\? \\*\\(\\[0-9\\]\\+\\)&quot;
+</pre></div>
+
+<p><code>pregexp-quote</code> is useful when building a composite regexp from a
+mix of regexp strings and verbatim strings.
+</p></dd></dl>
+
+<hr>
+<div class="header">
+<p>
+Next: <a href="syntax.html" accesskey="n" rel="next">syntax</a>, Previous: <a href="intro.html" accesskey="p" rel="prev">intro</a>, Up: <a href="index.html" accesskey="u" rel="up">Top</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+
+</body>
+</html>
