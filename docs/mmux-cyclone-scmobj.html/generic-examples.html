@@ -1,0 +1,493 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This document describes version 0.1.0-devel.1 of MMUX Cyclone Scmobj, a Cyclone language library
+implementing an object-oriented programming framework.  Cyclone is a Scheme-to-C compiler
+supporting the language features as defined in the "Revised^7 Report on Scheme".
+
+The package supports POSIX platforms.  This package should work with Cyclone version
+0.17.  To run the test suite this package depends upon the external package:
+MMUX Cyclone Checks, at least version 0.1.0.
+
+This package is distributed under the terms of the GNU Lesser General Public License (LGPL).
+
+The latest release can be downloaded from:
+
+https://bitbucket.org/marcomaggi/mmux-cyclone-scmobj/downloads
+
+development takes place at:
+
+https://github.com/marcomaggi/mmux-cyclone-scmobj
+
+and as backup at:
+
+https://bitbucket.org/marcomaggi/mmux-cyclone-scmobj
+
+Copyright (C) 2020 by Marco Maggi mrc.mgg@gmail.com
+
+Copyright (C) 1996 Dorai Sitaram
+
+Permission is granted to copy, distribute and/or modify this document under the terms of the GNU
+Free Documentation License, Version 1.3 or any later version published by the Free Software
+Foundation; with Invariant Sections being "GNU Free Documentation License" and "GNU Lesser
+General Public License", no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license is
+included in the section entitled "GNU Free Documentation License". -->
+<!-- Created by GNU Texinfo 6.7, http://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>generic examples (MMUX Cyclone ScmObj)</title>
+
+<meta name="description" content="generic examples (MMUX Cyclone ScmObj)">
+<meta name="keywords" content="generic examples (MMUX Cyclone ScmObj)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<link href="index.html" rel="start" title="Top">
+<link href="concept-index.html" rel="index" title="concept index">
+<link href="type-index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="generic.html" rel="up" title="generic">
+<link href="Package-License.html" rel="next" title="Package License">
+<link href="generic-next.html" rel="prev" title="generic next">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="mmux-cyclone-docs.css">
+
+
+</head>
+
+<body lang="en">
+<span id="generic-examples"></span><div class="header">
+<p>
+Previous: <a href="generic-next.html" accesskey="p" rel="prev">generic next</a>, Up: <a href="generic.html" accesskey="u" rel="up">generic</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<span id="Examples-of-method-dispatching_002e"></span><h3 class="section">9.5 Examples of method dispatching.</h3>
+
+
+<p>Here we show with some examples what we have to expect from the
+multimethod dispatching of <code>(scmobj)</code>.  In the following examples
+the string <code>%apple</code> is written in place of the value bound to the
+symbol <code>&lt;apple&gt;</code>.
+</p>
+
+<span id="Simple-inheritance"></span><h4 class="subsubheading">Simple inheritance</h4>
+
+<p>Let&rsquo;s examine this example:
+</p>
+<div class="example">
+<pre class="example">(define-class &lt;top&gt; ())
+(define-class &lt;one&gt; (&lt;top&gt;))
+(define-class &lt;two&gt; (&lt;one&gt;))
+(define-class &lt;c&gt;   (&lt;two&gt;))
+</pre></div>
+
+<p>the class hierarchy is:
+</p>
+<div class="example">
+<pre class="example">&lt;top&gt; -&gt; &lt;one&gt; -&gt; &lt;two&gt; -&gt; &lt;c&gt;
+</pre></div>
+
+<p>and the full class precedence list for <code>&lt;c&gt;</code> is:
+</p>
+<div class="example">
+<pre class="example">(cons &lt;c&gt; (class-precedence-list &lt;c&gt;))
+&rArr; (%c %two %one %top)
+</pre></div>
+
+<p>so for the generic function:
+</p>
+<div class="example">
+<pre class="example">(define-generic doit)
+(declare-method doit ((o &lt;one&gt;)) 'one)
+(declare-method doit ((o &lt;two&gt;)) 'two)
+</pre></div>
+
+<p>applied to a value of class <code>&lt;c&gt;</code>: the method with <code>&lt;two&gt;</code> in
+the signature is <em>more specific</em> than the method with <code>&lt;one&gt;</code>
+in the signature:
+</p>
+<div class="example">
+<pre class="example">(doit (make &lt;c&gt;)) &rArr; two
+</pre></div>
+
+
+<span id="Multiple-inheritance"></span><h4 class="subsubheading">Multiple inheritance</h4>
+
+
+<p>Let&rsquo;s examine this example:
+</p>
+<div class="example">
+<pre class="example">(define-class &lt;top&gt; ())
+(define-class &lt;one&gt; (&lt;top&gt;))
+(define-class &lt;two&gt; (&lt;top&gt;))
+(define-class &lt;c&gt; (&lt;two&gt; &lt;one&gt;))
+</pre></div>
+
+<p>the class hierarchy is:
+</p>
+<div class="example">
+<pre class="example">&lt;top&gt; -+-&gt; &lt;one&gt; -+-&gt; &lt;c&gt;
+       |          |
+        -&gt; &lt;two&gt; -
+</pre></div>
+
+<p>and given the order in which the classes where handed to
+<code>define-class</code>, the class precedence list for <code>&lt;c&gt;</code> is:
+</p>
+<div class="example">
+<pre class="example">(cons &lt;c&gt; (class-precedence-list &lt;c&gt;))
+&rArr; (%c %two %one %top)
+</pre></div>
+
+<p>so for the generic function:
+</p>
+<div class="example">
+<pre class="example">(define-generic doit)
+(declare-method doit ((o &lt;one&gt;)) 'one)
+(declare-method doit ((o &lt;two&gt;)) 'two)
+</pre></div>
+
+<p>applied to a value of class <code>&lt;c&gt;</code>: The method with <code>&lt;two&gt;</code> in
+the signature is <em>more specific</em> than the method with <code>&lt;one&gt;</code>
+in the signature:
+</p>
+<div class="example">
+<pre class="example">(doit (make &lt;c&gt;)) &rArr; two
+</pre></div>
+
+<p>Another multiple inheritance example:
+</p>
+<div class="example">
+<pre class="example">(define-class &lt;top&gt; ())
+(define-class &lt;one&gt; (&lt;top&gt;))
+(define-class &lt;two&gt; (&lt;top&gt;))
+(define-class &lt;three&gt; (&lt;two&gt;))
+(define-class &lt;c&gt; (&lt;three&gt; &lt;one&gt;))
+</pre></div>
+
+<p>the class hierarchy is:
+</p>
+<div class="example">
+<pre class="example">&lt;top&gt; -+-------&gt; &lt;one&gt; ------+-&gt; &lt;c&gt;
+       |                     |
+        -&gt; &lt;two&gt; -&gt; &lt;three&gt; -
+</pre></div>
+
+<p>and given the order in which the classes where handed to
+<code>define-class</code>, the class precedence list for <code>&lt;c&gt;</code> is:
+</p>
+<div class="example">
+<pre class="example">(cons &lt;c&gt; (class-precedence-list &lt;c&gt;))
+&rArr; (%c %three %two %one %top)
+</pre></div>
+
+<p>so for the generic function:
+</p>
+<div class="example">
+<pre class="example">(define-generic doit)
+(declare-method doit ((o &lt;one&gt;)) 'one)
+(declare-method doit ((o &lt;two&gt;)) 'two)
+</pre></div>
+
+<p>applied to a value of class <code>&lt;c&gt;</code>: The method with <code>&lt;two&gt;</code> in
+the signature is <em>more specific</em> than the method with <code>&lt;one&gt;</code>
+in the signature:
+</p>
+<div class="example">
+<pre class="example">(doit (make &lt;c&gt;)) &rArr; two
+</pre></div>
+
+
+<span id="Other-examples"></span><h4 class="subsubheading">Other examples</h4>
+
+<p>Let&rsquo;s look at this:
+</p>
+<div class="example">
+<pre class="example">(define-class &lt;top&gt; ())
+(define-class &lt;c&gt;   (&lt;top&gt;))
+(define-class &lt;one&gt; (&lt;c&gt;))
+
+(define-generic doit)
+(declare-method doit ((o &lt;one&gt;)) 'one)
+
+(doit (make &lt;c&gt;))
+</pre></div>
+
+<p>this will result in a &ldquo;no method defined for these argument classes&rsquo;
+error because a value of class <code>&lt;c&gt;</code> is <strong>not</strong> a value of
+class <code>&lt;one&gt;</code>.  For a method to be applicable: the class from the
+signature of the method has to be in in the class list of the argument,
+not vice versa.  That is:
+</p>
+<div class="example">
+<pre class="example">(subclass? &lt;c&gt; &lt;one&gt;)
+</pre></div>
+
+<p>must evaluate to true.
+</p>
+
+<span id="Kinds-of-methods"></span><h4 class="subsubheading">Kinds of methods</h4>
+
+<p>In the examples for the application of different kinds of methods, we
+will make use of the following hierarchy of classes:
+</p>
+<div class="example">
+<pre class="example">(define-class &lt;a&gt; () :a)
+(define-class &lt;b&gt; () :b)
+(define-class &lt;c&gt; () :c)
+(define-class &lt;d&gt; () :d)
+(define-class &lt;e&gt; () :e)
+
+(define-class &lt;pp&gt; (&lt;a&gt; &lt;b&gt;))
+(define-class &lt;qq&gt; (&lt;c&gt; &lt;d&gt;))
+(define-class &lt;rr&gt; (&lt;pp&gt; &lt;e&gt; &lt;qq&gt;))
+
+(define pp (make &lt;pp&gt; :a 1 :b 2))
+(define qq (make &lt;qq&gt; :c 3 :d 4))
+(define rr (make &lt;rr&gt; :a 10 :b 20 :c 30 :d 40))
+</pre></div>
+
+<p>First some error case.  The following will raise an error because
+<code>:before</code> methods are forbidden to <code>call-next-method</code>:
+</p>
+<div class="example">
+<pre class="example">(define-generic alpha)
+
+(declare-method alpha ((o &lt;a&gt;))
+  1)
+
+(declare-method alpha :before ((o &lt;a&gt;))
+  (call-next-method))
+
+(alpha pp)
+</pre></div>
+
+<p>The following will raise an error because we <code>call-next-method</code>
+when no next method is available:
+</p>
+<div class="example">
+<pre class="example">(define-generic alpha)
+
+(declare-method alpha ((o &lt;a&gt;))
+  (call-next-method))
+
+(alpha pp)
+</pre></div>
+
+<p>The following will raise an error because we apply a generic function
+when no <code>:primary</code> method has been defined:
+</p>
+<div class="example">
+<pre class="example">(define-generic alpha)
+
+(declare-method alpha :around ((o &lt;a&gt;))
+  (call-next-method))
+
+(alpha pp)
+</pre></div>
+
+<p>Here is a full example showing the order of applications for all the
+kinds of methods; it makes use of the <code>with-result</code> and
+<code>add-result</code> forms from the <code>(checks)</code> library:
+</p>
+<div class="example">
+<pre class="example">(define-generic alpha)
+
+(declare-method alpha :before ((o &lt;rr&gt;)) (add-result 1))
+(declare-method alpha :before ((o &lt;pp&gt;)) (add-result 2))
+(declare-method alpha :before ((o &lt;a&gt;))  (add-result 3))
+(declare-method alpha :before ((o &lt;b&gt;))  (add-result 4))
+(declare-method alpha :before ((o &lt;e&gt;))  (add-result 5))
+
+(declare-method alpha :after  ((o &lt;rr&gt;)) (add-result 10))
+(declare-method alpha :after  ((o &lt;pp&gt;)) (add-result 9))
+(declare-method alpha :after  ((o &lt;a&gt;))  (add-result 8))
+(declare-method alpha :after  ((o &lt;b&gt;))  (add-result 7))
+(declare-method alpha :after  ((o &lt;e&gt;))  (add-result 6))
+
+(declare-method alpha :around  ((o &lt;rr&gt;)) (cons 1 (call-next-method)))
+(declare-method alpha :around  ((o &lt;pp&gt;)) (cons 2 (call-next-method)))
+(declare-method alpha :around  ((o &lt;a&gt;))  (cons 3 (call-next-method)))
+(declare-method alpha :around  ((o &lt;b&gt;))  (cons 4 (call-next-method)))
+(declare-method alpha :around  ((o &lt;e&gt;))  (cons 5 (call-next-method)))
+
+(declare-method alpha :primary ((o &lt;rr&gt;)) (cons 6 (call-next-method)))
+(declare-method alpha :primary ((o &lt;pp&gt;)) (cons 7 (call-next-method)))
+(declare-method alpha :primary ((o &lt;a&gt;))  (cons 8 (call-next-method)))
+(declare-method alpha :primary ((o &lt;b&gt;))  (cons 9 (call-next-method)))
+(declare-method alpha :primary ((o &lt;e&gt;))  10)
+
+(with-result (alpha rr))
+&rArr; ((1 2 3 4 5 6 7 8 9 . 10)
+    (1 2 3 4 5 6 7 8 9 10))
+</pre></div>
+
+<p>notice, in particular, how multiple inheritance is handled: Methods for
+the <code>&lt;b&gt;</code> and <code>&lt;e&gt;</code> classes, coming as seconds in the class
+inheritance lists, are applied after the methods of the <code>&lt;a&gt;</code> and
+<code>&lt;pp&gt;</code> classes.
+</p>
+<p>Now let&rsquo;s consider a the following class hierarchy with diamond
+inheritance:
+</p>
+<div class="example">
+<pre class="example">(define-class &lt;t&gt; ()    :t)   ;  &lt;t&gt;---+
+(define-class &lt;x&gt; (&lt;t&gt;) :x)   ;        v
+(define-class &lt;y&gt; (&lt;x&gt;) :y)   ;   --- &lt;x&gt; ---
+(define-class &lt;w&gt; (&lt;x&gt;) :w)   ;  |           |
+(define-class &lt;z&gt; (&lt;y&gt; &lt;w&gt;))  ;  v           v
+                              ; &lt;y&gt;         &lt;w&gt;
+                              ;  |           |
+                              ;   --&gt; &lt;z&gt; &lt;--
+
+(define z (make &lt;z&gt; :t 0 :x 1 :y 2 :w 3))
+</pre></div>
+
+<p>and let&rsquo;s define and apply all the kinds of methods:
+</p>
+<div class="example">
+<pre class="example">(define-generic alpha)
+
+(declare-method alpha :around ((o &lt;z&gt;))  (cons 1 (call-next-method)))
+(declare-method alpha :around ((o &lt;y&gt;))  (cons 2 (call-next-method)))
+(declare-method alpha :around ((o &lt;w&gt;))  (cons 3 (call-next-method)))
+(declare-method alpha :around ((o &lt;x&gt;))  (cons 4 (call-next-method)))
+(declare-method alpha :around ((o &lt;t&gt;))  (cons 5 (call-next-method)))
+
+(declare-method alpha :primary ((o &lt;z&gt;)) (cons 6 (call-next-method)))
+(declare-method alpha :primary ((o &lt;y&gt;)) (cons 7 (call-next-method)))
+(declare-method alpha :primary ((o &lt;w&gt;)) (cons 8 (call-next-method)))
+(declare-method alpha :primary ((o &lt;x&gt;)) (cons 9 (call-next-method)))
+(declare-method alpha :primary ((o &lt;t&gt;)) 10)
+
+(declare-method alpha :before ((o &lt;z&gt;))  (add-result 1))
+(declare-method alpha :before ((o &lt;y&gt;))  (add-result 2))
+(declare-method alpha :before ((o &lt;w&gt;))  (add-result 3))
+(declare-method alpha :before ((o &lt;x&gt;))  (add-result 4))
+(declare-method alpha :before ((o &lt;t&gt;))  (add-result 5))
+
+(declare-method alpha :after ((o &lt;z&gt;))   (add-result 10))
+(declare-method alpha :after ((o &lt;y&gt;))   (add-result 9))
+(declare-method alpha :after ((o &lt;w&gt;))   (add-result 8))
+(declare-method alpha :after ((o &lt;x&gt;))   (add-result 7))
+(declare-method alpha :after ((o &lt;t&gt;))   (add-result 6))
+
+(with-result (alpha z))
+&rArr; ((1 2 3 4 5 6 7 8 9 . 10)
+    (1 2 3 4 5 6 7 8 9 10))
+</pre></div>
+
+<p>Here is yet another example with diamond inheritance:
+</p>
+<div class="example">
+<pre class="example">(define-class &lt;0&gt; () :0)        ;    &lt;0&gt;--+
+(define-class &lt;1&gt; (&lt;0&gt;) :1)     ;         v
+(define-class &lt;2&gt; (&lt;1&gt;) :2)     ;   ---- &lt;1&gt; ----
+(define-class &lt;3&gt; (&lt;1&gt;) :3)     ;  |             |
+(define-class &lt;4&gt; (&lt;3&gt;) :4)     ;  v             |
+(define-class &lt;5&gt; (&lt;4&gt; &lt;2&gt;))    ; &lt;3&gt;            |
+                                ;  |             |
+                                ;  v             v
+                                ; &lt;4&gt;           &lt;2&gt;
+                                ;  |             |
+                                ;   ---&gt; &lt;5&gt; &lt;---
+
+(define n (make &lt;5&gt; :0 0 :1 1 :2 2 :3 3 :4 4))
+</pre></div>
+
+<p>and let&rsquo;s define and apply all the kinds of methods:
+</p>
+<div class="example">
+<pre class="example">(define-generic alpha)
+
+(declare-method alpha :around ((o &lt;5&gt;))  (cons 1 (call-next-method)))
+(declare-method alpha :around ((o &lt;4&gt;))  (cons 2 (call-next-method)))
+(declare-method alpha :around ((o &lt;3&gt;))  (cons 3 (call-next-method)))
+(declare-method alpha :around ((o &lt;2&gt;))  (cons 4 (call-next-method)))
+(declare-method alpha :around ((o &lt;1&gt;))  (cons 5 (call-next-method)))
+(declare-method alpha :around ((o &lt;0&gt;))  (cons 6 (call-next-method)))
+
+(declare-method alpha :primary ((o &lt;5&gt;)) (cons 7 (call-next-method)))
+(declare-method alpha :primary ((o &lt;4&gt;)) (cons 8 (call-next-method)))
+(declare-method alpha :primary ((o &lt;3&gt;)) (cons 9 (call-next-method)))
+(declare-method alpha :primary ((o &lt;2&gt;)) (cons 10 (call-next-method)))
+(declare-method alpha :primary ((o &lt;1&gt;)) (cons 11 (call-next-method)))
+(declare-method alpha :primary ((o &lt;0&gt;)) 12)
+
+(declare-method alpha :before ((o &lt;5&gt;))  (add-result 1))
+(declare-method alpha :before ((o &lt;4&gt;))  (add-result 2))
+(declare-method alpha :before ((o &lt;3&gt;))  (add-result 3))
+(declare-method alpha :before ((o &lt;2&gt;))  (add-result 4))
+(declare-method alpha :before ((o &lt;1&gt;))  (add-result 5))
+(declare-method alpha :before ((o &lt;0&gt;))  (add-result 6))
+
+(declare-method alpha :after ((o &lt;5&gt;))   (add-result 12))
+(declare-method alpha :after ((o &lt;4&gt;))   (add-result 11))
+(declare-method alpha :after ((o &lt;3&gt;))   (add-result 10))
+(declare-method alpha :after ((o &lt;2&gt;))   (add-result 9))
+(declare-method alpha :after ((o &lt;1&gt;))   (add-result 8))
+(declare-method alpha :after ((o &lt;0&gt;))   (add-result 7))
+
+(with-result (alpha n))
+&rArr; ((1 2 3 4 5 6 7 8 9 10 11 . 12)
+    (1 2 3 4 5 6 7 8 9 10 11 12)))
+</pre></div>
+
+<p>We can conclude that, when it comes to method application:
+</p>
+<ul>
+<li> If diamond inheritance is not present: The graph of inheritance is a
+tree, which is flattened to a list representing the visit of a preorder
+iterator.
+
+</li><li> When diamond inheritance is present: Diamond groups are flattened to a
+list with classes in the middle at the center:
+
+<div class="example">
+<pre class="example">  -- &lt;x&gt; --
+ |         |
+ v         v
+&lt;y&gt;       &lt;w&gt;       &rArr;   (&lt;z&gt; &lt;y&gt; &lt;w&gt; &lt;x&gt;)
+ |         |
+  -&gt; &lt;z&gt; &lt;-
+
+  ---- &lt;1&gt; ----
+ |             |
+ v             |
+&lt;3&gt;            |
+ |             |    &rArr;  (&lt;5&gt; &lt;4&gt; &lt;3&gt; &lt;2&gt; &lt;1&gt;)
+ v             v
+&lt;4&gt;           &lt;2&gt;
+ |             |
+  ---&gt; &lt;5&gt; &lt;---
+</pre></div>
+
+<p>then the graph is flattened and visited in preorder.
+</p></li></ul>
+
+
+<hr>
+<div class="header">
+<p>
+Previous: <a href="generic-next.html" accesskey="p" rel="prev">generic next</a>, Up: <a href="generic.html" accesskey="u" rel="up">generic</a> &nbsp; [<a href="type-index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+<p>This document describes version <tt>0.1.0-devel.1</tt> of <em>MMUX Cyclone Scmobj</em>.</p>
+</body>
+</html>
