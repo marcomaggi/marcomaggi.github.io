@@ -1,0 +1,216 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- Created by GNU Texinfo 6.7, http://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<title>Sep 29 (Marco&rsquo;s 2020 Weblog)</title>
+
+<meta name="description" content="Sep 29 (Marco&rsquo;s 2020 Weblog)">
+<meta name="keywords" content="Sep 29 (Marco&rsquo;s 2020 Weblog)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<link href="index.html" rel="start" title="Top">
+<link href="index.html" rel="up" title="Top">
+<link href="Aug-21.html" rel="next" title="Aug 21">
+<link href="index.html" rel="prev" title="Top">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="weblog.css">
+
+
+</head>
+
+<body lang="en">
+<span id="Sep-29"></span><div class="header">
+<p>
+Next: <a href="Aug-21.html" accesskey="n" rel="next">Aug 21</a>, Previous: <a href="index.html" accesskey="p" rel="prev">Top</a>, Up: <a href="index.html" accesskey="u" rel="up">Top</a> &nbsp; </p>
+</div>
+<hr>
+<span id="A-bit-of-mbfl-development-and-the-Video-of-the-Day"></span><h2 class="unnumbered">A bit of <acronym>mbfl</acronym> development and the <em>Video of the Day</em></h2>
+
+
+<p><em>Posted on Sep 29, 2020</em>
+</p>
+
+<p>It&rsquo;s been a while since I last touched <a href="https://github.com/marcomaggi/mbfl"><acronym>mbfl</acronym></a>&rsquo;s code
+base; today I tagged development revision &lsquo;<samp><a href="https://github.com/marcomaggi/mbfl/tags">v3.0.0-devel.1</a></samp>&rsquo;.  The latest added feature is the ability to automatically generate a <acronym>gnu</acronym> Bash
+command&ndash;line completion script, using the <acronym>gnu</acronym> Readline facilities, for a shell script using the
+&lsquo;<samp>actions</samp>&rsquo; module.
+</p>
+<p>We can inspect the generated code from the build directory of the <acronym>mbfl</acronym> package by running the
+included template script as follows:
+</p>
+<div class="example">
+<pre class="example">$ bash examples/template-actions.sh help print-completions-script
+</pre></div>
+
+<p>the process prints to &lsquo;<samp>stdout</samp>&rsquo; a sequence of Bash commands and functions implementing automatic
+command&ndash;line completion for the actions of the script <code>template-actions.sh</code> itself; there
+is a function for each action, both node actions and leaf actions.
+</p>
+<p>We can store the generated script in a file to be sourced upon launching the terminal, or we can
+evaluate it with the command:
+</p>
+<div class="example">
+<pre class="example">eval &quot;$(my-script help print-completions-script)&quot;
+</pre></div>
+
+<p>For a script named <code>my-script</code>, it is a good idea to install a file with pathname:
+</p>
+<div class="example">
+<pre class="example">/etc/bash_completions.d/my-script.bash
+</pre></div>
+
+<p>with contents:
+</p>
+<div class="example">
+<pre class="example"># my-script.bash --
+#
+# Completions for the &quot;my-script&quot; script.
+
+eval &quot;$(my-script help print-completions-script)&quot;
+
+### end of file
+</pre></div>
+
+<p>The documentation of the &lsquo;<samp>actions</samp>&rsquo; module describes the implemented <acronym>api</acronym>.  At present, only
+command&ndash;line actions&ndash;completion is automatically generated; if we want automatic completion for
+the arguments of a leaf action: we must redefine the automatically&ndash;generated completion&ndash;function
+of that leaf action.
+</p>
+<p>I would like to do something for command line options too (the arguments starting with a dash or
+double&ndash;dash) but it is more complicated because, until now, scripts are allowed to add options at
+the last moment with the <code>script_before_parsing_options_*</code> functions; so the available options
+are not statically declared like the tree of actions.  I do not know if it is a good idea to change
+that; probably not.
+</p>
+<p>What I could do is to implement a new predefined <acronym>mbfl</acronym> option, something like
+<samp>--print-options-completions-script</samp>, that generates completion functions for the options
+<strong>after</strong> the <code>script_before_parsing_options_*</code> function of a leaf action has been called.
+To use such a feature we should call the command script itself once for every leaf action, handing
+to it the new option; such sequence of script invocations can be automatically generated.  I will
+think of it.
+</p>
+
+<span id="Pluggable-completion-scripts"></span><h3 class="unnumberedsec">Pluggable completion scripts</h3>
+
+<p>The automatically&ndash;generated completion&ndash;scripts use a very simple handling of indices in the
+<code>COMP_WORDS</code> array that makes the completion facilities &ldquo;pluggable&rdquo;.  For example: I have a
+private package on my Slackware system called <code>mmux-system-administration</code>; this package
+installs a script named <code>admin</code>.  Its completion script starts as follows:
+</p>
+<div class="example">
+<pre class="example">complete -F p-mmux-system-administration-completion-admin -o default admin
+
+function p-mmux-system-administration-completion-admin () {
+  local -r word_to_be_completed=${COMP_WORDS[${COMP_CWORD}]}
+  p-mmux-system-administration-dispatch-completion-admin 0
+}
+
+function p-mmux-system-administration-dispatch-completion-admin () {
+  local -ir index_of_command=${1:?'missing argument: index of command'}
+  local -ir index_of_subcommand=$((1 + index_of_command))
+
+  ...
+}
+</pre></div>
+
+<p>The function <code>p-mmux-system-administration-completion-admin()</code> is just a trampoline, the
+function <code>p-mmux-system-administration-dispatch-completion-admin()</code> is the one that actually
+starts the command&ndash;line completions generation.
+</p>
+<p>I can plug these facilities into an independent function, let&rsquo;s call it <code>menu()</code>; it can be
+implemented as follows:
+</p>
+<div class="example">
+<pre class="example">complete -F p-menu-completion-menu -o default menu
+
+function menu () {
+    &quot;$@&quot;
+}
+
+function p-menu-compgen-menu () {
+    local -r candidate_completions=${1:?&quot;missing candidate completions argument to '${FUNCNAME}'&quot;}
+    COMPREPLY=(`compgen -W &quot;$candidate_completions&quot; -- &quot;$word_to_be_completed&quot;`)
+}
+
+function p-menu-completion-menu () {
+    local -r word_to_be_completed=${COMP_WORDS[${COMP_CWORD}]}
+    p-menu-dispatch-completion-menu 0
+}
+
+function p-menu-dispatch-completion-menu () {
+    local -ir index_of_command=${1:?&quot;missing argument: index of command to '${FUNCNAME}'&quot;}
+    local -ir index_of_next_arg=$((1 + index_of_command))
+
+    if ((index_of_next_arg == COMP_CWORD))
+    then p-menu-compgen-menu 'admin
+    elif ((index_of_next_arg &lt; COMP_CWORD))
+    then
+        case &quot;${COMP_WORDS[$index_of_next_arg]}&quot; in
+            'admin')
+                p-mmux-system-administration-dispatch-completion-admin $index_of_next_arg
+                ;;
+        esac
+    else
+        printf 'error: command-line completion function invoked incorrectly: %s\n' &quot;$FUNCNAME&quot; &gt;&amp;2
+        return 1
+    fi
+}
+</pre></div>
+
+<p>if we evaluate this code we can call the script <code>admin</code> as a subcommand of <code>menu()</code> as
+follows:
+</p>
+<div class="example">
+<pre class="example">menu admin this that
+</pre></div>
+
+<p>with automatically&ndash;generated command&ndash;line completion of the actions of <code>admin</code>.  I am
+testing this in my terminals; by plugging the completions into the one of <code>menu()</code> I do not
+need to remember which names have the scripts I installed (I have a rarely used
+<code>acer-aspire-v5</code> that I do not always remember).
+</p>
+
+<span id="Video-of-the-day"></span><h3 class="unnumberedsec">Video of the day</h3>
+
+
+<p>I enjoyed this live.  Fortunately there are still new songs that I like, even though they are maybe
+1% of the ones I try to listen to&hellip;
+</p>
+<div class="float">
+<center>
+<iframe width="560" height="315"
+  src="https://www.youtube.com/embed/KptlrKLIUE0" frameborder="0"
+  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+  allowfullscreen>
+</iframe>
+</center>
+</div>
+<hr>
+<div class="header">
+<p>
+Next: <a href="Aug-21.html" accesskey="n" rel="next">Aug 21</a>, Previous: <a href="index.html" accesskey="p" rel="prev">Top</a>, Up: <a href="index.html" accesskey="u" rel="up">Top</a> &nbsp; </p>
+</div>
+
+
+
+</body>
+</html>
