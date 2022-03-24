@@ -1,6 +1,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
-<!-- Created by GNU Texinfo 6.7, http://www.gnu.org/software/texinfo/ -->
+<!-- Created by GNU Texinfo 6.8, https://www.gnu.org/software/texinfo/ -->
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
 <title>April 26 (Marco&rsquo;s 2016 Weblog)</title>
@@ -10,17 +10,19 @@
 <meta name="resource-type" content="document">
 <meta name="distribution" content="global">
 <meta name="Generator" content="makeinfo">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
 <link href="index.html" rel="start" title="Top">
 <link href="index.html" rel="up" title="Top">
 <link href="April-21.html" rel="next" title="April 21">
 <link href="May-02.html" rel="prev" title="May 02">
 <style type="text/css">
 <!--
+a.copiable-anchor {visibility: hidden; text-decoration: none; line-height: 0em}
 a.summary-letter {text-decoration: none}
 blockquote.indentedblock {margin-right: 0em}
 div.display {margin-left: 3.2em}
 div.example {margin-left: 3.2em}
-div.lisp {margin-left: 3.2em}
 kbd {font-style: oblique}
 pre.display {font-family: inherit}
 pre.format {font-family: inherit}
@@ -29,6 +31,7 @@ pre.menu-preformatted {font-family: serif}
 span.nolinebreak {white-space: nowrap}
 span.roman {font-family: initial; font-weight: normal}
 span.sansserif {font-family: sans-serif; font-weight: normal}
+span:hover a.copiable-anchor {visibility: visible}
 ul.no-bullet {list-style: none}
 -->
 </style>
@@ -38,9 +41,10 @@ ul.no-bullet {list-style: none}
 </head>
 
 <body lang="en">
-<span id="April-26"></span><div class="header">
+<div class="unnumbered" id="April-26">
+<div class="header">
 <p>
-Next: <a href="April-21.html" accesskey="n" rel="next">April 21</a>, Previous: <a href="May-02.html" accesskey="p" rel="prev">May 02</a>, Up: <a href="index.html" accesskey="u" rel="up">Top</a> &nbsp; </p>
+Next: <a href="April-21.html" accesskey="n" rel="next">More for the typed language (mostly)</a>, Previous: <a href="May-02.html" accesskey="p" rel="prev">On type propagation and other stuff</a>, Up: <a href="index.html" accesskey="u" rel="up">Marco&rsquo;s 2016 Weblog</a> &nbsp; </p>
 </div>
 <hr>
 <span id="Enumerations_002c-labels"></span><h2 class="unnumbered">Enumerations, labels</h2>
@@ -59,18 +63,25 @@ copying and pasting chunks of text from the documentation&rsquo;s Texinfo source
 (life is hard, but sometimes less so).
 </p>
 
-<span id="Enumerations"></span><h3 class="unnumberedsec">Enumerations</h3>
+<ul class="section-toc">
+<li><a href="#Enumerations" accesskey="1">Enumerations</a></li>
+<li><a href="#Label-types" accesskey="2">Label types</a></li>
+<li><a href="#On-the-sorry-state-of-error-messages" accesskey="3">On the sorry state of error messages</a></li>
+<li><a href="#The-Vicare-Manifesto" accesskey="4">The Vicare Manifesto</a></li>
+</ul>
+<div class="unnumberedsec" id="Enumerations">
+<h3 class="unnumberedsec">Enumerations</h3>
 
 <p>Vicare already had the <code>&lt;symbol&gt;</code> type for symbol objects.  It now also
 supports the type annotation:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(enumeration <var>?symbol0</var> <var>?symbol</var> ...)
 </pre></div>
 
 <p>enumerations are used to match a symbol in a specified enumeration set:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(is-a? 'ciao (enumeration hello ciao salut ohayo))
 &rArr; #t
 
@@ -81,7 +92,7 @@ supports the type annotation:
 <p>Enumeration type annotations are considered sub&ndash;types of <code>&lt;symbol&gt;</code>.  We can
 combine enumerations in type annotations to filter out some symbols:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(define-type &lt;my-symbols&gt;
   (and (enumeration red blue green yellow purple)
        (enumeration blue yellow magenta)))
@@ -93,7 +104,7 @@ combine enumerations in type annotations to filter out some symbols:
 <p>As special case, if we define an alias for an <code>enumeration</code> type
 annotation: we can use such identifier to validate symbols.  Example:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(define-type greetings
   (enumeration hello ciao salut ohayo))
 
@@ -105,7 +116,7 @@ annotation: we can use such identifier to validate symbols.  Example:
 <p>The enumeration identifier is indeed used in the implementation of the
 <code>define-enumeration</code> built&ndash;in syntax:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(define-enumeration greetings
   (hello ciao salut ohayo)
   make-greetings)
@@ -116,7 +127,9 @@ annotation: we can use such identifier to validate symbols.  Example:
 </pre></div>
 
 
-<span id="Label-types"></span><h3 class="unnumberedsec">Label types</h3>
+</div>
+<div class="unnumberedsec" id="Label-types">
+<h3 class="unnumberedsec">Label types</h3>
 
 <p>I needed to code something fun, so I implemented label types; these entities where
 already (in a similar form) in the Nausicaa libraries.  Labels are types built on top
@@ -139,7 +152,7 @@ the expander itself and half in this external library.  A <code>define-label</co
 can contain any of the following clauses, much similar to
 <code>define-record-type</code>:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">parent
 type-predicate
 equality-predicate
@@ -155,7 +168,7 @@ annotation.
 <p>The following example defines a label <code>&lt;String&gt;</code> that is just a synonym for
 <code>&lt;string&gt;</code>:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(define-label &lt;String&gt;
   (parent &lt;string&gt;))
 
@@ -169,7 +182,7 @@ annotation.
 <p>now let&rsquo;s define a custom hash function (we ignore the parent hash function that gets
 passed as <var>parent-func</var> argument):
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(define-label &lt;String&gt;
   (parent &lt;string&gt;)
   (hash-function
@@ -187,7 +200,7 @@ passed as <var>parent-func</var> argument):
 
 <p>now let&rsquo;s define a method for appending prefixes and suffixes:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(define-label &lt;String&gt;
   (parent &lt;string&gt;)
   (case-method append
@@ -209,7 +222,7 @@ passed as <var>parent-func</var> argument):
 <p>Now let&rsquo;s define a label type to represent fixnums returned by
 comparison procedures (&lsquo;<samp>-1</samp>&rsquo;, &lsquo;<samp>0</samp>&rsquo;, &lsquo;<samp>+1</samp>&rsquo;):
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(define-label &lt;comparison-fixnum&gt;
   (parent (or &lt;non-negative-fixnum&gt; &lt;negative-fixnum&gt;))
   (type-predicate
@@ -228,13 +241,15 @@ comparison procedures (&lsquo;<samp>-1</samp>&rsquo;, &lsquo;<samp>0</samp>&rsqu
 </pre></div>
 
 
-<span id="On-the-sorry-state-of-error-messages"></span><h3 class="unnumberedsec">On the sorry state of error messages</h3>
+</div>
+<div class="unnumberedsec" id="On-the-sorry-state-of-error-messages">
+<h3 class="unnumberedsec">On the sorry state of error messages</h3>
 
 <p>I am well aware that, whenever a type error is found by the expander, the displayed
 error message is hard to read by humans.  The message is just a dump of the contents
 of a compound condition object:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">vicare&gt; (display 1 2)
 Unhandled exception
  Condition components:
@@ -260,7 +275,9 @@ is printed.  It will not be easy because there is a lot of information to be
 shown&hellip;
 </p>
 
-<span id="The-Vicare-Manifesto"></span><h3 class="unnumberedsec">The Vicare Manifesto</h3>
+</div>
+<div class="unnumberedsec" id="The-Vicare-Manifesto">
+<h3 class="unnumberedsec">The Vicare Manifesto</h3>
 
 <p>No there is no such thing, yet.  I have read Racket&rsquo;s
 <a href="http://www.ccs.neu.edu/home/matthias/manifesto/">one</a> and I have seen Professor
@@ -270,10 +287,12 @@ Felleisen explain it in a tech <a href="https://www.youtube.com/watch?v=JnczIyPX
 Scheme language and procedural macros, give it a try (it will have static typing,
 too!).  Not much&hellip; huh?
 </p>
+</div>
+</div>
 <hr>
 <div class="header">
 <p>
-Next: <a href="April-21.html" accesskey="n" rel="next">April 21</a>, Previous: <a href="May-02.html" accesskey="p" rel="prev">May 02</a>, Up: <a href="index.html" accesskey="u" rel="up">Top</a> &nbsp; </p>
+Next: <a href="April-21.html">More for the typed language (mostly)</a>, Previous: <a href="May-02.html">On type propagation and other stuff</a>, Up: <a href="index.html">Marco&rsquo;s 2016 Weblog</a> &nbsp; </p>
 </div>
 
 

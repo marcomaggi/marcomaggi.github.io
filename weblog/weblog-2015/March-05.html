@@ -1,6 +1,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
-<!-- Created by GNU Texinfo 6.7, http://www.gnu.org/software/texinfo/ -->
+<!-- Created by GNU Texinfo 6.8, https://www.gnu.org/software/texinfo/ -->
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
 <title>March 05 (Marco&rsquo;s 2015 Weblog)</title>
@@ -10,17 +10,19 @@
 <meta name="resource-type" content="document">
 <meta name="distribution" content="global">
 <meta name="Generator" content="makeinfo">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
 <link href="index.html" rel="start" title="Top">
 <link href="index.html" rel="up" title="Top">
 <link href="February-19-bis.html" rel="next" title="February 19 bis">
 <link href="March-05-bis.html" rel="prev" title="March 05 bis">
 <style type="text/css">
 <!--
+a.copiable-anchor {visibility: hidden; text-decoration: none; line-height: 0em}
 a.summary-letter {text-decoration: none}
 blockquote.indentedblock {margin-right: 0em}
 div.display {margin-left: 3.2em}
 div.example {margin-left: 3.2em}
-div.lisp {margin-left: 3.2em}
 kbd {font-style: oblique}
 pre.display {font-family: inherit}
 pre.format {font-family: inherit}
@@ -29,6 +31,7 @@ pre.menu-preformatted {font-family: serif}
 span.nolinebreak {white-space: nowrap}
 span.roman {font-family: initial; font-weight: normal}
 span.sansserif {font-family: sans-serif; font-weight: normal}
+span:hover a.copiable-anchor {visibility: visible}
 ul.no-bullet {list-style: none}
 -->
 </style>
@@ -38,9 +41,10 @@ ul.no-bullet {list-style: none}
 </head>
 
 <body lang="en">
-<span id="March-05"></span><div class="header">
+<div class="unnumbered" id="March-05">
+<div class="header">
 <p>
-Next: <a href="February-19-bis.html" accesskey="n" rel="next">February 19 bis</a>, Previous: <a href="March-05-bis.html" accesskey="p" rel="prev">March 05 bis</a>, Up: <a href="index.html" accesskey="u" rel="up">Top</a> &nbsp; </p>
+Next: <a href="February-19-bis.html" accesskey="n" rel="next">On the implementation of <code>unwind-protect</code> (part 2) (2015 February 19 bis)</a>, Previous: <a href="March-05-bis.html" accesskey="p" rel="prev">Repositories woes (2015 March 05 bis)</a>, Up: <a href="index.html" accesskey="u" rel="up">Marco&rsquo;s 2015 Weblog</a> &nbsp; </p>
 </div>
 <hr>
 <span id="Overhauling-the-library-infrastructure-_00282015-March-05_0029"></span><h2 class="unnumbered">Overhauling the library infrastructure (2015 March 05)</h2>
@@ -117,7 +121,16 @@ operations.
 <p>Now some topic discussion.
 </p>
 
-<span id="No-more-caching-of-compiled-libraries"></span><h3 class="unnumberedsec">No more caching of compiled libraries</h3>
+<ul class="section-toc">
+<li><a href="#No-more-caching-of-compiled-libraries" accesskey="1">No more caching of compiled libraries</a></li>
+<li><a href="#How-library-loading-works-now" accesskey="2">How library loading works now</a></li>
+<li><a href="#Run_002d_002dtime-library-file-locator" accesskey="3">Run&ndash;time library file locator</a></li>
+<li><a href="#Compile_002d_002dtime-library-file-locator" accesskey="4">Compile&ndash;time library file locator</a></li>
+<li><a href="#Source-library-file-locator" accesskey="5">Source library file locator</a></li>
+<li><a href="#Native-shared-libraries_003f-Not-easy" accesskey="6">Native shared libraries?  Not easy</a></li>
+</ul>
+<div class="unnumberedsec" id="No-more-caching-of-compiled-libraries">
+<h3 class="unnumberedsec">No more caching of compiled libraries</h3>
 
 <p>Since the days of the Ikarus code base, there has been support for caching compiled
 libraries; other Scheme implementations have this feature (Guile, Mosh, Sagittarius,
@@ -128,7 +141,7 @@ for example:
 </div>
 <p>and import them as usual:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(import (prefix (vicare posix) px.))
 </pre></div>
 
@@ -163,7 +176,9 @@ reintroduce it using the <acronym>api</acronym> exported by the library <code>(v
 but Vicare does not offer it anymore.
 </p>
 
-<span id="How-library-loading-works-now"></span><h3 class="unnumberedsec">How library loading works now</h3>
+</div>
+<div class="unnumberedsec" id="How-library-loading-works-now">
+<h3 class="unnumberedsec">How library loading works now</h3>
 
 <p>The library <code>(vicare libraries)</code> is defined by Vicare&rsquo;s boot image and
 exports an <acronym>api</acronym> to allow the customisation of the library loading process.  Here is
@@ -220,7 +235,9 @@ reference; interns it along with all its dependency libraries.
 library locators need some discussion.
 </p>
 
-<span id="Run_002d_002dtime-library-file-locator"></span><h3 class="unnumberedsec">Run&ndash;time library file locator</h3>
+</div>
+<div class="unnumberedsec" id="Run_002d_002dtime-library-file-locator">
+<h3 class="unnumberedsec">Run&ndash;time library file locator</h3>
 
 <p>The run&ndash;time library locator is the default; it can be selected explicitly with the
 command line option <code>--library-locator run-time</code> or by setting the parameter
@@ -250,14 +267,14 @@ some system directory; the libraries might be installed with pathnames like:
 </li><li> We configure the library binary search path to make sure that it includes the system
 directory:
 
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(library-binary-search-path)
 &rArr; (... &quot;/usr/local/lib/vicare-scheme&quot; ...)
 </pre></div>
 
 </li><li> We configure the library binary file scanner parameter:
 
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(current-library-binary-search-path-scanner
    default-library-binary-search-path-scanner)
 </pre></div>
@@ -266,7 +283,7 @@ directory:
 </p>
 </li><li> We compose a Scheme program <samp>demo.sps</samp> which imports the libraries:
 
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(import (vicare)
   (prefix (vicare posix) px.)
   (vicare something))
@@ -288,7 +305,9 @@ run&ndash;time locator is the default, so we can just do:
 </li></ol>
 
 
-<span id="Compile_002d_002dtime-library-file-locator"></span><h3 class="unnumberedsec">Compile&ndash;time library file locator</h3>
+</div>
+<div class="unnumberedsec" id="Compile_002d_002dtime-library-file-locator">
+<h3 class="unnumberedsec">Compile&ndash;time library file locator</h3>
 
 <p>The compile&ndash;time library locator must be selected explicitly with the command line
 option <code>--library-locator compile-time</code> or by setting the parameter
@@ -373,7 +392,7 @@ libraries and compiled libraries.
 </li><li> It may be that the libraries in the source tree need to load installed libraries and
 also have local dependencies:
 
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(library (vicare this)
   (export)
   (import (vicare)
@@ -414,28 +433,28 @@ libraries under <samp>/usr/local/lib/vicare-scheme</samp>.
 <ul>
 <li> Configure the library source search path to include only the local source directory:
 
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(library-source-search-path)
 &rArr; (&quot;$(srcdir)/lib&quot;)
 </pre></div>
 
 </li><li> Configure the library binary search path to include the system directory:
 
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(library-binary-search-path)
 &rArr; (... &quot;/usr/local/lib/vicare-scheme&quot; ...)
 </pre></div>
 
 </li><li> Configure the build directory parameter to reference the local build directory:
 
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(compiled-libraries-build-directory)
 &rArr; &quot;$(builddir)/lib
 </pre></div>
 
 </li><li> Configure the library binary file scanner parameter:
 
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(current-library-binary-search-path-scanner
    default-library-binary-search-path-scanner)
 </pre></div>
@@ -444,7 +463,7 @@ libraries under <samp>/usr/local/lib/vicare-scheme</samp>.
 </p>
 </li><li> Configure the library source file scanner parameter:
 
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(current-library-source-search-path-scanner
    default-library-source-search-path-scanner)
 </pre></div>
@@ -454,7 +473,7 @@ libraries under <samp>/usr/local/lib/vicare-scheme</samp>.
 </p>
 </li><li> Configure the library locator parameter:
 
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(current-library-locator compile-time-library-locator)
 </pre></div>
 
@@ -491,7 +510,7 @@ lib/vicare/this.fasl: lib/vicare/this.sls lib/vicare/that.fasl
 </li><li> We write a script <samp>compile-all.sps</samp> that imports at least the local libraries
 that are leaves in the local package dependency tree:
 
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(import (only (vicare that))
         (only (vicare this)))
 </pre></div>
@@ -513,7 +532,9 @@ vfasl:
 </li></ol>
 
 
-<span id="Source-library-file-locator"></span><h3 class="unnumberedsec">Source library file locator</h3>
+</div>
+<div class="unnumberedsec" id="Source-library-file-locator">
+<h3 class="unnumberedsec">Source library file locator</h3>
 
 <p>The source library locator must be selected explicitly with the command line option
 <code>--library-locator source</code> or by setting the parameter
@@ -572,7 +593,7 @@ tree.
 </li><li> It may be that the libraries in the source tree need to load installed libraries and
 also have local dependencies:
 
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(library (vicare this)
   (export)
   (import (vicare)
@@ -612,21 +633,21 @@ libraries under <samp>/usr/local/lib/vicare-scheme</samp>.
 <ul>
 <li> Configure the library source search path to include only the local source directory:
 
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(library-source-search-path)
 &rArr; (&quot;$(srcdir)/lib&quot;)
 </pre></div>
 
 </li><li> Configure the library binary search path to include the system directory:
 
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(library-binary-search-path)
 &rArr; (... &quot;/usr/local/lib/vicare-scheme&quot; ...)
 </pre></div>
 
 </li><li> Configure the library binary file scanner parameter:
 
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(current-library-binary-search-path-scanner
     default-library-binary-search-path-scanner)
 </pre></div>
@@ -635,7 +656,7 @@ libraries under <samp>/usr/local/lib/vicare-scheme</samp>.
 </p>
 </li><li> Configure the library source file scanner parameter:
 
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(current-library-source-search-path-scanner
     default-library-source-search-path-scanner)
 </pre></div>
@@ -673,7 +694,9 @@ exactly that to generate the dependencies among libraries; the extension package
 will use the same script with the same Makefile rule.
 </p>
 
-<span id="Native-shared-libraries_003f-Not-easy"></span><h3 class="unnumberedsec">Native shared libraries?  Not easy</h3>
+</div>
+<div class="unnumberedsec" id="Native-shared-libraries_003f-Not-easy">
+<h3 class="unnumberedsec">Native shared libraries?  Not easy</h3>
 
 <p>The binary output from a compiler that I like most is the one produced by C
 compilers: standalone binary programs, with libraries statically linked in; native
@@ -693,7 +716,7 @@ constant Scheme objects hard&ndash;coded in the source); such references between
 are built: at boot image load&ndash;time; at binary library load&ndash;time; at source library
 compilation&ndash;time.  We can inspect the situation with the following code:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">#!vicare
 (import (vicare)
   (vicare system $codes))
@@ -736,10 +759,12 @@ machine code with these mutable references in a native shared object and having 
 interact transparently with other Scheme objects requires a significant change of
 Vicare&rsquo;s run&ndash;time machinery.
 </p>
+</div>
+</div>
 <hr>
 <div class="header">
 <p>
-Next: <a href="February-19-bis.html" accesskey="n" rel="next">February 19 bis</a>, Previous: <a href="March-05-bis.html" accesskey="p" rel="prev">March 05 bis</a>, Up: <a href="index.html" accesskey="u" rel="up">Top</a> &nbsp; </p>
+Next: <a href="February-19-bis.html">On the implementation of <code>unwind-protect</code> (part 2) (2015 February 19 bis)</a>, Previous: <a href="March-05-bis.html">Repositories woes (2015 March 05 bis)</a>, Up: <a href="index.html">Marco&rsquo;s 2015 Weblog</a> &nbsp; </p>
 </div>
 
 

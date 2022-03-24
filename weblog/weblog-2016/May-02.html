@@ -1,6 +1,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
-<!-- Created by GNU Texinfo 6.7, http://www.gnu.org/software/texinfo/ -->
+<!-- Created by GNU Texinfo 6.8, https://www.gnu.org/software/texinfo/ -->
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
 <title>May 02 (Marco&rsquo;s 2016 Weblog)</title>
@@ -10,17 +10,19 @@
 <meta name="resource-type" content="document">
 <meta name="distribution" content="global">
 <meta name="Generator" content="makeinfo">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
 <link href="index.html" rel="start" title="Top">
 <link href="index.html" rel="up" title="Top">
 <link href="April-26.html" rel="next" title="April 26">
 <link href="May-25.html" rel="prev" title="May 25">
 <style type="text/css">
 <!--
+a.copiable-anchor {visibility: hidden; text-decoration: none; line-height: 0em}
 a.summary-letter {text-decoration: none}
 blockquote.indentedblock {margin-right: 0em}
 div.display {margin-left: 3.2em}
 div.example {margin-left: 3.2em}
-div.lisp {margin-left: 3.2em}
 kbd {font-style: oblique}
 pre.display {font-family: inherit}
 pre.format {font-family: inherit}
@@ -29,6 +31,7 @@ pre.menu-preformatted {font-family: serif}
 span.nolinebreak {white-space: nowrap}
 span.roman {font-family: initial; font-weight: normal}
 span.sansserif {font-family: sans-serif; font-weight: normal}
+span:hover a.copiable-anchor {visibility: visible}
 ul.no-bullet {list-style: none}
 -->
 </style>
@@ -38,9 +41,10 @@ ul.no-bullet {list-style: none}
 </head>
 
 <body lang="en">
-<span id="May-02"></span><div class="header">
+<div class="unnumbered" id="May-02">
+<div class="header">
 <p>
-Next: <a href="April-26.html" accesskey="n" rel="next">April 26</a>, Previous: <a href="May-25.html" accesskey="p" rel="prev">May 25</a>, Up: <a href="index.html" accesskey="u" rel="up">Top</a> &nbsp; </p>
+Next: <a href="April-26.html" accesskey="n" rel="next">Enumerations, labels</a>, Previous: <a href="May-25.html" accesskey="p" rel="prev">Multimethods out of Nausicaa</a>, Up: <a href="index.html" accesskey="u" rel="up">Marco&rsquo;s 2016 Weblog</a> &nbsp; </p>
 </div>
 <hr>
 <span id="On-type-propagation-and-other-stuff"></span><h2 class="unnumbered">On type propagation and other stuff</h2>
@@ -58,12 +62,20 @@ is what it is.)
 &lsquo;<samp>typed-language</samp>&rsquo; branch.
 </p>
 
-<span id="Type-propagation-across-built_002d_002din-syntaxes"></span><h3 class="unnumberedsec">Type propagation across built&ndash;in syntaxes</h3>
+<ul class="section-toc">
+<li><a href="#Type-propagation-across-built_002d_002din-syntaxes" accesskey="1">Type propagation across built&ndash;in syntaxes</a></li>
+<li><a href="#type_002dof-as-type-annotation" accesskey="2"><code>type-of</code> as type annotation</a></li>
+<li><a href="#Handling-of-void" accesskey="3">Handling of void</a></li>
+<li><a href="#Chez-Scheme-has-been-open-sourced" accesskey="4">Chez Scheme has been open sourced</a></li>
+<li><a href="#Compiling-Vicare_0027s-boot-image-takes-a-lot_2026-you-know_003f" accesskey="5">Compiling Vicare&rsquo;s boot image takes a lot&hellip; you know?</a></li>
+</ul>
+<div class="unnumberedsec" id="Type-propagation-across-built_002d_002din-syntaxes">
+<h3 class="unnumberedsec">Type propagation across built&ndash;in syntaxes</h3>
 
 <p>I anticipated in a previous post that I would reconsider <acronym>rhs</acronym> type propagation, and
 I did.  I have implemented type propagation for some syntaxes.  It works like this:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(type-of 1)
 &rArr; #[signature (&lt;positive-fixnum&gt;)]
 
@@ -88,7 +100,7 @@ thunk application.
 <p>When a lexical variable is mutated: its type must be compatible with the hard&ndash;coded
 type annotation or the inferred type annotation.  This is fine:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(let ((A &quot;ciao&quot;))
   (set! A &quot;hello&quot;)
   A)
@@ -96,7 +108,7 @@ type annotation or the inferred type annotation.  This is fine:
 
 <p>but this will fail:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(let ((A 1))
   (set! A -1)
   A)
@@ -107,7 +119,7 @@ type annotation or the inferred type annotation.  This is fine:
 <code>&lt;negative-fixnum&gt;</code>.  In these cases we have to explicitly include the type
 annotation in the source:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(let (({A &lt;fixnum&gt;} 1))
   (set! A -1)
   A)
@@ -117,7 +129,9 @@ annotation in the source:
 <code>&lt;negative-fixnum&gt;</code>.
 </p>
 
-<span id="type_002dof-as-type-annotation"></span><h3 class="unnumberedsec"><code>type-of</code> as type annotation</h3>
+</div>
+<div class="unnumberedsec" id="type_002dof-as-type-annotation">
+<h3 class="unnumberedsec"><code>type-of</code> as type annotation</h3>
 
 <p>There is a new type annotation syntax: <code>type-of</code>.  When used in expression
 context: <code>type-of</code> expands to a type signature object representing the type of
@@ -128,7 +142,7 @@ given expression.
 expression is expanded and not evaluated, this means the side effects of the
 expansion are performed (use with care!).
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(type-annotation-syntax (type-of 123))
 &rArr; &lt;positive-fixnum&gt;
 
@@ -148,7 +162,7 @@ expansion are performed (use with care!).
 <p>This is actually used by Vicare to implement type propagation for a common idiom
 when using <code>case</code>.  Without special handling:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(type-of
   (case (read)
     ((1 &quot;2&quot; 'ciao) =&gt; (lambda (x) x))
@@ -160,7 +174,7 @@ when using <code>case</code>.  Without special handling:
 returns <code>1</code> or <code>&quot;2&quot;</code> or <code>ciao</code> the closure object returns that value
 itself.  But with special handling, the closure object is transformed to:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(lambda ({x (or (type-of 1)
                 (type-of &quot;2&quot;)
                 (type-of 'ciao))})
@@ -169,7 +183,7 @@ itself.  But with special handling, the closure object is transformed to:
 
 <p>and so:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(type-of
   (case (read)
     ((1 &quot;2&quot; 'ciao) =&gt; (lambda (x) x))
@@ -178,13 +192,15 @@ itself.  But with special handling, the closure object is transformed to:
 </pre></div>
 
 
-<span id="Handling-of-void"></span><h3 class="unnumberedsec">Handling of void</h3>
+</div>
+<div class="unnumberedsec" id="Handling-of-void">
+<h3 class="unnumberedsec">Handling of void</h3>
 
 <p>There is an experimental change that may cause troubles: expressions of type
 <code>&lt;void&gt;</code> are forbidden as operands in function applications and logic predicates.
 For example:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(display (vector-set! (vector 1) 0 2))
 </pre></div>
 
@@ -196,7 +212,7 @@ will cause problems.  Here are some consequences:
 <ul>
 <li> Composing <code>&lt;void&gt;</code> with other types results in void:
 
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(type-annotation-syntax (or &lt;fixnum&gt; &lt;void&gt;))
 &rArr; &lt;void&gt;
 
@@ -224,7 +240,9 @@ evaluated: <code>when</code> and <code>unless</code> cannot be used as operands.
 </li></ul>
 
 
-<span id="Chez-Scheme-has-been-open-sourced"></span><h3 class="unnumberedsec">Chez Scheme has been open sourced</h3>
+</div>
+<div class="unnumberedsec" id="Chez-Scheme-has-been-open-sourced">
+<h3 class="unnumberedsec">Chez Scheme has been open sourced</h3>
 
 <p>These are my <strong>opinions</strong>.  Every Scheme implementation maintainer feels the
 pressure of Racket&rsquo;s growth&hellip; so you have to do something otherwise Racket will
@@ -236,17 +254,21 @@ by selling them a costly product and then open&ndash;sourcing it after five minu
 <acronym>r6rs</acronym>.  Ah&hellip; forget it!
 </p>
 
-<span id="Compiling-Vicare_0027s-boot-image-takes-a-lot_2026-you-know_003f"></span><h3 class="unnumberedsec">Compiling Vicare&rsquo;s boot image takes a lot&hellip; you know?</h3>
+</div>
+<div class="unnumberedsec" id="Compiling-Vicare_0027s-boot-image-takes-a-lot_2026-you-know_003f">
+<h3 class="unnumberedsec">Compiling Vicare&rsquo;s boot image takes a lot&hellip; you know?</h3>
 
 <p>I started keeping a deck of cards near the laptop; I like <em>le piacentine</em>.  So,
 while compiling, I play a solitaire with true cards.  I like one called <em>the
 cross</em>: I cannot explain it here, but it is simple, things happen, and takes small
 room on the desk.  Even randomising the deck is relaxing in itself.
 </p>
+</div>
+</div>
 <hr>
 <div class="header">
 <p>
-Next: <a href="April-26.html" accesskey="n" rel="next">April 26</a>, Previous: <a href="May-25.html" accesskey="p" rel="prev">May 25</a>, Up: <a href="index.html" accesskey="u" rel="up">Top</a> &nbsp; </p>
+Next: <a href="April-26.html">Enumerations, labels</a>, Previous: <a href="May-25.html">Multimethods out of Nausicaa</a>, Up: <a href="index.html">Marco&rsquo;s 2016 Weblog</a> &nbsp; </p>
 </div>
 
 

@@ -1,6 +1,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
-<!-- Created by GNU Texinfo 6.7, http://www.gnu.org/software/texinfo/ -->
+<!-- Created by GNU Texinfo 6.8, https://www.gnu.org/software/texinfo/ -->
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
 <title>Sep 18 (Marco&rsquo;s 2016 Weblog)</title>
@@ -10,17 +10,19 @@
 <meta name="resource-type" content="document">
 <meta name="distribution" content="global">
 <meta name="Generator" content="makeinfo">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
 <link href="index.html" rel="start" title="Top">
 <link href="index.html" rel="up" title="Top">
 <link href="Sep-4.html" rel="next" title="Sep  4">
 <link href="Oct-20.html" rel="prev" title="Oct 20">
 <style type="text/css">
 <!--
+a.copiable-anchor {visibility: hidden; text-decoration: none; line-height: 0em}
 a.summary-letter {text-decoration: none}
 blockquote.indentedblock {margin-right: 0em}
 div.display {margin-left: 3.2em}
 div.example {margin-left: 3.2em}
-div.lisp {margin-left: 3.2em}
 kbd {font-style: oblique}
 pre.display {font-family: inherit}
 pre.format {font-family: inherit}
@@ -29,6 +31,7 @@ pre.menu-preformatted {font-family: serif}
 span.nolinebreak {white-space: nowrap}
 span.roman {font-family: initial; font-weight: normal}
 span.sansserif {font-family: sans-serif; font-weight: normal}
+span:hover a.copiable-anchor {visibility: visible}
 ul.no-bullet {list-style: none}
 -->
 </style>
@@ -38,9 +41,10 @@ ul.no-bullet {list-style: none}
 </head>
 
 <body lang="en">
-<span id="Sep-18"></span><div class="header">
+<div class="unnumbered" id="Sep-18">
+<div class="header">
 <p>
-Next: <a href="Sep-4.html" accesskey="n" rel="next">Sep  4</a>, Previous: <a href="Oct-20.html" accesskey="p" rel="prev">Oct 20</a>, Up: <a href="index.html" accesskey="u" rel="up">Top</a> &nbsp; </p>
+Next: <a href="Sep-4.html" accesskey="n" rel="next">Recursive types again, structs library</a>, Previous: <a href="Oct-20.html" accesskey="p" rel="prev">Miscellaneous stuff</a>, Up: <a href="index.html" accesskey="u" rel="up">Marco&rsquo;s 2016 Weblog</a> &nbsp; </p>
 </div>
 <hr>
 <span id="Musings-on-record-constructors-and-overall-architecture"></span><h2 class="unnumbered">Musings on record constructors and overall architecture</h2>
@@ -55,7 +59,7 @@ Next: <a href="Sep-4.html" accesskey="n" rel="next">Sep  4</a>, Previous: <a hre
 it causes a warning to be raised whenever a typed variable is set to a value that is
 only compatible rather than matching.  For example:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(define {O &lt;fixnum&gt;}
   (cast-signature (&lt;integer&gt;) 123))
 </pre></div>
@@ -65,12 +69,17 @@ only compatible rather than matching.  For example:
 validation at run&ndash;time.
 </p>
 
-<span id="On-record-constructors"></span><h3 class="unnumberedsec">On record constructors</h3>
+<ul class="section-toc">
+<li><a href="#On-record-constructors" accesskey="1">On record constructors</a></li>
+<li><a href="#Overall-architecture" accesskey="2">Overall architecture</a></li>
+</ul>
+<div class="unnumberedsec" id="On-record-constructors">
+<h3 class="unnumberedsec">On record constructors</h3>
 
 <p>I am unhappy with the state of the record constructors.  The <acronym>r6rs</acronym> constructors
 infrastructure works like this:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(define-record-type &lt;duo&gt;
   (fields one two)
   (protocol
@@ -96,7 +105,7 @@ using the typed language&rsquo;s extensions: it has no way to provide a type sig
 the constructor and overloaded constructors are possible but only with run&ndash;time
 dispatching.  With the code as it is now, we can do this:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(define-record-type &lt;duo&gt;
   (fields one two)
   (protocol
@@ -121,7 +130,7 @@ specialised constructor at expand&ndash;time, but the selection happens at run&n
 <p>A possible solution: introduce &ldquo;named protocols&rdquo;; have <code>new</code> call a
 constructor other than the one defined by <code>protocol</code>.  Something like this:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(define-record-type &lt;duo&gt;
   (fields one two)
   (protocol
@@ -160,7 +169,7 @@ specialisation can use any of the constructors defined by <code>protocol</code> 
 
 <p>The <code>constructor</code> clauses expand into the overloaded function:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(define/overload ({new-&lt;duo&gt; &lt;duo&gt;} {x &lt;real&gt;} {y &lt;real&gt;})
   (make-&lt;duo&gt; x y))
 
@@ -171,7 +180,7 @@ specialisation can use any of the constructors defined by <code>protocol</code> 
 <p>Obviously we can define the <code>constructor</code> clauses to use the default
 constructor:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(define-record-type &lt;duo&gt;
   (fields one two)
   (protocol
@@ -187,7 +196,9 @@ constructor:
 </p>
 
 
-<span id="Overall-architecture"></span><h3 class="unnumberedsec">Overall architecture</h3>
+</div>
+<div class="unnumberedsec" id="Overall-architecture">
+<h3 class="unnumberedsec">Overall architecture</h3>
 
 <p>At some point, in one of the possible futures, I would like to split the expander and
 compiler from the boot image; this means <code>(rnrs eval (6))</code>, <code>(vicare
@@ -198,16 +209,16 @@ do.
 this change there would be more of them:
 </p>
 <dl compact="compact">
-<dt><code>vicare-repl</code></dt>
+<dt><span><code>vicare-repl</code></span></dt>
 <dd><p>A precompiled Scheme program that runs the <acronym>repl</acronym>.  It would load an external
 library <code>(vicare cafe)</code>, which is now an internal set of features.
 </p>
 </dd>
-<dt><code>vicare-compiler</code></dt>
+<dt><span><code>vicare-compiler</code></span></dt>
 <dd><p>A Scheme program that implements the compiler.
 </p>
 </dd>
-<dt><code>vicare</code></dt>
+<dt><span><code>vicare</code></span></dt>
 <dd><p>The run&ndash;time we have now.  It would become a program that runs precompiled Scheme
 programs.
 </p></dd>
@@ -232,10 +243,12 @@ in the build script <samp>makefile.sps</samp> should be restructured.
 program; it will also be a test for compiled programs that is now absent from the
 package.
 </p>
+</div>
+</div>
 <hr>
 <div class="header">
 <p>
-Next: <a href="Sep-4.html" accesskey="n" rel="next">Sep  4</a>, Previous: <a href="Oct-20.html" accesskey="p" rel="prev">Oct 20</a>, Up: <a href="index.html" accesskey="u" rel="up">Top</a> &nbsp; </p>
+Next: <a href="Sep-4.html">Recursive types again, structs library</a>, Previous: <a href="Oct-20.html">Miscellaneous stuff</a>, Up: <a href="index.html">Marco&rsquo;s 2016 Weblog</a> &nbsp; </p>
 </div>
 
 

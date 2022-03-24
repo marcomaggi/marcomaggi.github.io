@@ -1,6 +1,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
-<!-- Created by GNU Texinfo 6.7, http://www.gnu.org/software/texinfo/ -->
+<!-- Created by GNU Texinfo 6.8, https://www.gnu.org/software/texinfo/ -->
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
 <title>February 18 (Marco&rsquo;s 2015 Weblog)</title>
@@ -10,17 +10,19 @@
 <meta name="resource-type" content="document">
 <meta name="distribution" content="global">
 <meta name="Generator" content="makeinfo">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
 <link href="index.html" rel="start" title="Top">
 <link href="index.html" rel="up" title="Top">
 <link href="February-16.html" rel="next" title="February 16">
 <link href="February-19.html" rel="prev" title="February 19">
 <style type="text/css">
 <!--
+a.copiable-anchor {visibility: hidden; text-decoration: none; line-height: 0em}
 a.summary-letter {text-decoration: none}
 blockquote.indentedblock {margin-right: 0em}
 div.display {margin-left: 3.2em}
 div.example {margin-left: 3.2em}
-div.lisp {margin-left: 3.2em}
 kbd {font-style: oblique}
 pre.display {font-family: inherit}
 pre.format {font-family: inherit}
@@ -29,6 +31,7 @@ pre.menu-preformatted {font-family: serif}
 span.nolinebreak {white-space: nowrap}
 span.roman {font-family: initial; font-weight: normal}
 span.sansserif {font-family: sans-serif; font-weight: normal}
+span:hover a.copiable-anchor {visibility: visible}
 ul.no-bullet {list-style: none}
 -->
 </style>
@@ -38,28 +41,29 @@ ul.no-bullet {list-style: none}
 </head>
 
 <body lang="en">
-<span id="February-18"></span><div class="header">
+<div class="unnumbered" id="February-18">
+<div class="header">
 <p>
-Next: <a href="February-16.html" accesskey="n" rel="next">February 16</a>, Previous: <a href="February-19.html" accesskey="p" rel="prev">February 19</a>, Up: <a href="index.html" accesskey="u" rel="up">Top</a> &nbsp; </p>
+Next: <a href="February-16.html" accesskey="n" rel="next">Does the Scheme standard still matter? (2015 February 16)</a>, Previous: <a href="February-19.html" accesskey="p" rel="prev">On running parallel processes (2015 February 19)</a>, Up: <a href="index.html" accesskey="u" rel="up">Marco&rsquo;s 2015 Weblog</a> &nbsp; </p>
 </div>
 <hr>
 <span id="Musings-on-the-tagged-language-_0028part-4_0029-_00282015-February-18_0029"></span><h2 class="unnumbered">Musings on the tagged language (part 4) (2015 February 18)</h2>
 
 
-<p>In a previous entry (see <a href="February-15.html">February 15</a>) I discussed the idea of allowing
+<p>In a previous entry (see <a href="February-15.html">Musings on the tagged language (part 3) (2015 February 15)</a>) I discussed the idea of allowing
 function overloading in the tagged language as <strong>the</strong> way of defining type tag
 methods and field accessors; function overloading is <acronym>clos</acronym>&ndash;like multimethods with
 dispatch at expand&ndash;time.  It consists of having a global table of multimethod names
 that is queried every time we need to expand a form like:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(<var>?identifier</var> <var>?arg</var> ...)
 </pre></div>
 
 <p>the expander searches for the <strong>name</strong> of <var>?identifier</var> in the table; so the
 following expansions can take place:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(length '(1 2))         &rarr; (list-length       '(1 2))
 (length '#(1 2))        &rarr; (vector-length     '#(1 2))
 (length '#vu8(1 2))     &rarr; (bytevector-length '#vu8(1 2))
@@ -72,20 +76,29 @@ because symbols are interned by using their string name as key; so what matters 
 conceptually, is the string name).
 </p>
 
-<span id="Function-overloading-and-their-namespace"></span><h3 class="unnumberedsec">Function overloading and their namespace</h3>
+<ul class="section-toc">
+<li><a href="#Function-overloading-and-their-namespace" accesskey="1">Function overloading and their namespace</a></li>
+<li><a href="#Function-overloading-vs_002e-clos-multimethods" accesskey="2">Function overloading vs. <acronym>clos</acronym> multimethods</a></li>
+<li><a href="#Function-overloading-vs_002e-macro-expansion" accesskey="3">Function overloading vs. macro expansion</a></li>
+<li><a href="#Local-overloading" accesskey="4">Local overloading</a></li>
+<li><a href="#Missing-methods" accesskey="5">Missing methods</a></li>
+<li><a href="#Conclusions-1" accesskey="6">Conclusions</a></li>
+</ul>
+<div class="unnumberedsec" id="Function-overloading-and-their-namespace">
+<h3 class="unnumberedsec">Function overloading and their namespace</h3>
 
-<p>In the previous entry (see <a href="February-15.html">February 15</a>) I concluded that the cleanest way to
+<p>In the previous entry (see <a href="February-15.html">Musings on the tagged language (part 3) (2015 February 15)</a>) I concluded that the cleanest way to
 select a multimethod from the namespace of multimethods would be to introduce a
 specific built&ndash;in syntax:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(method-call length <var>?obj</var>)
 </pre></div>
 
 <p>and then think of some reader syntax to save typing a lot of characters; for example,
 &ldquo;quoting&rdquo; with a colon:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">:(length <var>?obj</var>)
 </pre></div>
 
@@ -93,7 +106,9 @@ specific built&ndash;in syntax:
 is preferable; even if it breaks normal identifier binding resolution.
 </p>
 
-<span id="Function-overloading-vs_002e-clos-multimethods"></span><h3 class="unnumberedsec">Function overloading vs. <acronym>clos</acronym> multimethods</h3>
+</div>
+<div class="unnumberedsec" id="Function-overloading-vs_002e-clos-multimethods">
+<h3 class="unnumberedsec">Function overloading vs. <acronym>clos</acronym> multimethods</h3>
 
 <p><acronym>clos</acronym>&rsquo;s multimethods have a number of features; some of them can be used with
 function overloading, too; other features cannot.
@@ -115,7 +130,7 @@ predicate?  There are at least three possibilities:
 <code>#f</code>; the result of such expansion <strong>cannot</strong> be used at expand&ndash;time.  We
 could write:
 
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(if (next-method?)
     (do-something)
   (do-something-else))
@@ -123,7 +138,7 @@ could write:
 
 <p>which would expand to one among:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(if #t
     (do-something)
   (do-something-else))
@@ -135,7 +150,7 @@ could write:
 
 <p>and the compiler can optimise it to:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(do-something)
 
 (do-something-else)
@@ -146,7 +161,7 @@ could write:
 </li><li> The implementation of <code>next-method?</code> is a <code>cond-expand</code> clause, which is
 meant to be used at expand&ndash;time.  We could write:
 
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(cond-expand
   (next-method?
    (do-something))
@@ -156,7 +171,7 @@ meant to be used at expand&ndash;time.  We could write:
 
 <p>which would expand to one among:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(do-something)
 
 (do-something-else)
@@ -167,7 +182,7 @@ meant to be used at expand&ndash;time.  We could write:
 </li><li> The implementation of <code>next-method?</code> is a function that can be used by macro
 transformers.  We could write:
 
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(define-syntax (doit stx)
   (if (next-method?)
       #'(call-next-method)
@@ -191,12 +206,14 @@ dispatching.  Complexity warning!!!  Let&rsquo;s try to keep function overloadin
 </li></ul>
 
 
-<span id="Function-overloading-vs_002e-macro-expansion"></span><h3 class="unnumberedsec">Function overloading vs. macro expansion</h3>
+</div>
+<div class="unnumberedsec" id="Function-overloading-vs_002e-macro-expansion">
+<h3 class="unnumberedsec">Function overloading vs. macro expansion</h3>
 
 <p>Function overloading should, really really, <strong>not</strong> interfere with macro
 expansion.  If we do:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(import (vicare))
 
 (add-method length (&lt;string&gt;) string-length)
@@ -213,7 +230,7 @@ expansion.  If we do:
 
 <p>or:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(import (vicare))
 
 (add-method length (&lt;string&gt;) string-length)
@@ -232,13 +249,13 @@ expansion.  If we do:
 
 <p>the following expansion must take place:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(length &quot;ciao&quot;) &rarr; (frob &quot;ciao&quot;)
 </pre></div>
 
 <p>When processing the form:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(<var>?identifier</var> <var>?arg</var> ...)
 </pre></div>
 
@@ -258,13 +275,15 @@ if so: process the binding.
 </li></ol>
 
 
-<span id="Local-overloading"></span><h3 class="unnumberedsec">Local overloading</h3>
+</div>
+<div class="unnumberedsec" id="Local-overloading">
+<h3 class="unnumberedsec">Local overloading</h3>
 
 <p><a href="http://marcomaggi.github.io/vicare.html">Vicare</a> has standard local syntax definitions and fluid syntaxes (special
 identifiers that can be rebound without breaking the result of
 <code>free-identifier=?</code>).  It goes like this:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">#!r6rs
 (import (vicare))
 
@@ -303,7 +322,9 @@ this:
 
 
 
-<span id="Missing-methods"></span><h3 class="unnumberedsec">Missing methods</h3>
+</div>
+<div class="unnumberedsec" id="Missing-methods">
+<h3 class="unnumberedsec">Missing methods</h3>
 
 <p>What should happen if a name is present in the global table of multimethods, but
 no specialised method matches a given arguments signature?  Example:
@@ -339,14 +360,18 @@ to move on with standard binding resolution, or do something else.
 </li></ul>
 
 
-<span id="Conclusions-1"></span><h3 class="unnumberedsec">Conclusions</h3>
+</div>
+<div class="unnumberedsec" id="Conclusions-1">
+<h3 class="unnumberedsec">Conclusions</h3>
 
 <p>Maybe, maybe, maybe things are getting into shape.  At least in my mind.
 </p>
+</div>
+</div>
 <hr>
 <div class="header">
 <p>
-Next: <a href="February-16.html" accesskey="n" rel="next">February 16</a>, Previous: <a href="February-19.html" accesskey="p" rel="prev">February 19</a>, Up: <a href="index.html" accesskey="u" rel="up">Top</a> &nbsp; </p>
+Next: <a href="February-16.html">Does the Scheme standard still matter? (2015 February 16)</a>, Previous: <a href="February-19.html">On running parallel processes (2015 February 19)</a>, Up: <a href="index.html">Marco&rsquo;s 2015 Weblog</a> &nbsp; </p>
 </div>
 
 

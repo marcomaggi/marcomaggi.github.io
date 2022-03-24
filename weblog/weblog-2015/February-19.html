@@ -1,6 +1,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
-<!-- Created by GNU Texinfo 6.7, http://www.gnu.org/software/texinfo/ -->
+<!-- Created by GNU Texinfo 6.8, https://www.gnu.org/software/texinfo/ -->
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
 <title>February 19 (Marco&rsquo;s 2015 Weblog)</title>
@@ -10,17 +10,19 @@
 <meta name="resource-type" content="document">
 <meta name="distribution" content="global">
 <meta name="Generator" content="makeinfo">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
 <link href="index.html" rel="start" title="Top">
 <link href="index.html" rel="up" title="Top">
 <link href="February-18.html" rel="next" title="February 18">
 <link href="February-19-bis.html" rel="prev" title="February 19 bis">
 <style type="text/css">
 <!--
+a.copiable-anchor {visibility: hidden; text-decoration: none; line-height: 0em}
 a.summary-letter {text-decoration: none}
 blockquote.indentedblock {margin-right: 0em}
 div.display {margin-left: 3.2em}
 div.example {margin-left: 3.2em}
-div.lisp {margin-left: 3.2em}
 kbd {font-style: oblique}
 pre.display {font-family: inherit}
 pre.format {font-family: inherit}
@@ -29,6 +31,7 @@ pre.menu-preformatted {font-family: serif}
 span.nolinebreak {white-space: nowrap}
 span.roman {font-family: initial; font-weight: normal}
 span.sansserif {font-family: sans-serif; font-weight: normal}
+span:hover a.copiable-anchor {visibility: visible}
 ul.no-bullet {list-style: none}
 -->
 </style>
@@ -38,9 +41,10 @@ ul.no-bullet {list-style: none}
 </head>
 
 <body lang="en">
-<span id="February-19"></span><div class="header">
+<div class="unnumbered" id="February-19">
+<div class="header">
 <p>
-Next: <a href="February-18.html" accesskey="n" rel="next">February 18</a>, Previous: <a href="February-19-bis.html" accesskey="p" rel="prev">February 19 bis</a>, Up: <a href="index.html" accesskey="u" rel="up">Top</a> &nbsp; </p>
+Next: <a href="February-18.html" accesskey="n" rel="next">Musings on the tagged language (part 4) (2015 February 18)</a>, Previous: <a href="February-19-bis.html" accesskey="p" rel="prev">On the implementation of <code>unwind-protect</code> (part 2) (2015 February 19 bis)</a>, Up: <a href="index.html" accesskey="u" rel="up">Marco&rsquo;s 2015 Weblog</a> &nbsp; </p>
 </div>
 <hr>
 <span id="On-running-parallel-processes-_00282015-February-19_0029"></span><h2 class="unnumbered">On running parallel processes (2015 February 19)</h2>
@@ -64,7 +68,16 @@ Vicare.  Multithreading support would mean supporting parallelism.
 for everything, because forking a <code>vicare</code> process costs resources.
 </p>
 
-<span id="Some-example-libraries"></span><h3 class="unnumberedsec">Some example libraries</h3>
+<ul class="section-toc">
+<li><a href="#Some-example-libraries" accesskey="1">Some example libraries</a></li>
+<li><a href="#Forking-the-current-process" accesskey="2">Forking the current process</a></li>
+<li><a href="#Managing-fork-and-port-sharing" accesskey="3">Managing <code>fork</code> and port sharing</a></li>
+<li><a href="#Asynchronously-waiting-for-child-process-termination" accesskey="4">Asynchronously waiting for child process termination</a></li>
+<li><a href="#Running-a-parallel-process" accesskey="5">Running a parallel process</a></li>
+<li><a href="#Conclusions" accesskey="6">Conclusions</a></li>
+</ul>
+<div class="unnumberedsec" id="Some-example-libraries">
+<h3 class="unnumberedsec">Some example libraries</h3>
 
 <p>Vicare now comes with some libraries that run &ldquo;well known&rdquo; external programs:
 </p>
@@ -82,7 +95,7 @@ source code can be taken as starting point for more flexible interfaces.  The
 following demo program sends an email message with <code>sendmail</code> and prints its
 output:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">#!r6rs
 (import (vicare)
   (only (vicare posix sendmail)
@@ -112,7 +125,9 @@ termination with <code>waitpid</code> from <code>(vicare posix)</code>.  These l
 run a <em>parallel</em> process: they run a <em>synchronous</em> process.
 </p>
 
-<span id="Forking-the-current-process"></span><h3 class="unnumberedsec">Forking the current process</h3>
+</div>
+<div class="unnumberedsec" id="Forking-the-current-process">
+<h3 class="unnumberedsec">Forking the current process</h3>
 
 <p>To run a parallel process we first have to fork the current process into
 <em>parent</em> and <em>child</em> processes; if we actually want another
@@ -127,7 +142,7 @@ the parent and the child can communicate through them.
 </p>
 <p>With the raw <code>fork</code> function from <code>(vicare posix)</code> we can do this with:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(import (vicare)
   (prefix (vicare posix) px.))
 
@@ -216,12 +231,12 @@ to remember that:
 <p>Let&rsquo;s see some usage examples for the <code>fork</code> variants:
 </p>
 <dl compact="compact">
-<dt><code>fork-with-fds</code></dt>
+<dt><span><code>fork-with-fds</code></span></dt>
 <dd><p>The following example shows how to fork a process, setup the file descriptors and
 wait for child to terminate.  The function <code>fork-with-fds</code> takes care of setting
 up the file descriptors in both the parent and child.
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">#!vicare
 (import (vicare)
   (prefix (vicare posix) px.))
@@ -261,13 +276,13 @@ up the file descriptors in both the parent and child.
 </pre></div>
 
 </dd>
-<dt><code>fork-with-binary-ports</code></dt>
+<dt><span><code>fork-with-binary-ports</code></span></dt>
 <dd><p>The following example shows how to fork a process, setup the file descriptors and
 wrap them into binary ports, wait for child to terminate.  The function
 <code>fork-with-binary-ports</code> takes care of setting up the file descriptors in both
 the parent and child and wrapping them into binary ports.
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">#!vicare
 (import (vicare)
   (prefix (vicare posix) px.))
@@ -316,13 +331,13 @@ the parent and child and wrapping them into binary ports.
 </pre></div>
 
 </dd>
-<dt><code>fork-with-textual-ports</code></dt>
+<dt><span><code>fork-with-textual-ports</code></span></dt>
 <dd><p>The following example shows how to fork a process, setup the file descriptors and
 wrap them into textual ports, wait for child to terminate.  The function
 <code>fork-with-textual-ports</code> takes care of setting up the file descriptors in both
 the parent and child and wrapping them into textual ports.
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">#!vicare
 (import (vicare)
   (prefix (vicare posix) px.))
@@ -367,7 +382,9 @@ the parent and child and wrapping them into textual ports.
 </dl>
 
 
-<span id="Managing-fork-and-port-sharing"></span><h3 class="unnumberedsec">Managing <code>fork</code> and port sharing</h3>
+</div>
+<div class="unnumberedsec" id="Managing-fork-and-port-sharing">
+<h3 class="unnumberedsec">Managing <code>fork</code> and port sharing</h3>
 
 <p>On <acronym>posix</acronym> platforms, right after a <code>fork</code> call: the parent and child will
 share all the input/output file descriptors that are open at the time of the
@@ -376,7 +393,7 @@ share all the input/output file descriptors that are open at the time of the
 <p>Let&rsquo;s see what happens with the following program in which we open a file, fork the
 process then close the file in both the parent and child:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">#!vicare
 (import (vicare)
   (prefix (vicare posix) px.))
@@ -432,7 +449,7 @@ descriptors.
 
 <p>Here is the example above modified to do so:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">#!vicare
 (import (vicare)
   (prefix (vicare posix) px.))
@@ -462,10 +479,12 @@ descriptors.
 </pre></div>
 
 <p>Vicare also attempts to address the problem of &ldquo;error while flushing a port&rdquo;
-(see <a href="February-14.html">February 14</a>).
+(see <a href="February-14.html">On errors and close&ndash;on&ndash;exec ports (2015 February 14)</a>).
 </p>
 
-<span id="Asynchronously-waiting-for-child-process-termination"></span><h3 class="unnumberedsec">Asynchronously waiting for child process termination</h3>
+</div>
+<div class="unnumberedsec" id="Asynchronously-waiting-for-child-process-termination">
+<h3 class="unnumberedsec">Asynchronously waiting for child process termination</h3>
 
 <p>We are almost there: all is left to do is to understand how <strong>not</strong> to block
 while waiting for the child process termination.  <code>(vicare posix)</code> provides the
@@ -475,7 +494,7 @@ function when the option <code>WNOHANG</code> is used.
 </p>
 <p>What we need to do is call <code>waitpid</code> as follows:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(waitpid child-pid WNOHANG)
 </pre></div>
 
@@ -485,7 +504,7 @@ non&ndash;<code>#f</code>, then it is a fixnum representing the child process te
 </p>
 <p>Here is an example of waiting asynchronously:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">#!vicare
 (import (vicare)
   (prefix (vicare posix) px.)
@@ -518,14 +537,16 @@ non&ndash;<code>#f</code>, then it is a fixnum representing the child process te
 </pre></div>
 
 
-<span id="Running-a-parallel-process"></span><h3 class="unnumberedsec">Running a parallel process</h3>
+</div>
+<div class="unnumberedsec" id="Running-a-parallel-process">
+<h3 class="unnumberedsec">Running a parallel process</h3>
 
 <p>At last!  Let&rsquo;s put it all together.  While we are at it: we fork the process inside
 a coroutine, so that we can <code>(yield)</code> control while waiting for the child
 process to terminate.  The following demo program starts a <code>vicare</code> child
 process and reads from it some Scheme objects through a textual port.
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">#!vicare
 (import (vicare)
   (prefix (vicare posix) px.)
@@ -580,7 +601,9 @@ process and reads from it some Scheme objects through a textual port.
 </pre></div>
 
 
-<span id="Conclusions"></span><h3 class="unnumberedsec">Conclusions</h3>
+</div>
+<div class="unnumberedsec" id="Conclusions">
+<h3 class="unnumberedsec">Conclusions</h3>
 
 <p>There are multiple things to do; there are decisions to be taken.
 </p>
@@ -601,10 +624,12 @@ ports, shared memory.
 encapsulating <acronym>api</acronym> that implements starting a parallel process with a one&ndash;liner.
 Maybe, in some future, a pattern will emerge.
 </p>
+</div>
+</div>
 <hr>
 <div class="header">
 <p>
-Next: <a href="February-18.html" accesskey="n" rel="next">February 18</a>, Previous: <a href="February-19-bis.html" accesskey="p" rel="prev">February 19 bis</a>, Up: <a href="index.html" accesskey="u" rel="up">Top</a> &nbsp; </p>
+Next: <a href="February-18.html">Musings on the tagged language (part 4) (2015 February 18)</a>, Previous: <a href="February-19-bis.html">On the implementation of <code>unwind-protect</code> (part 2) (2015 February 19 bis)</a>, Up: <a href="index.html">Marco&rsquo;s 2015 Weblog</a> &nbsp; </p>
 </div>
 
 

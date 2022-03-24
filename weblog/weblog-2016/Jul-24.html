@@ -1,6 +1,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
-<!-- Created by GNU Texinfo 6.7, http://www.gnu.org/software/texinfo/ -->
+<!-- Created by GNU Texinfo 6.8, https://www.gnu.org/software/texinfo/ -->
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
 <title>Jul 24 (Marco&rsquo;s 2016 Weblog)</title>
@@ -10,17 +10,19 @@
 <meta name="resource-type" content="document">
 <meta name="distribution" content="global">
 <meta name="Generator" content="makeinfo">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
 <link href="index.html" rel="start" title="Top">
 <link href="index.html" rel="up" title="Top">
 <link href="Jul-13.html" rel="next" title="Jul 13">
 <link href="Jul-29.html" rel="prev" title="Jul 29">
 <style type="text/css">
 <!--
+a.copiable-anchor {visibility: hidden; text-decoration: none; line-height: 0em}
 a.summary-letter {text-decoration: none}
 blockquote.indentedblock {margin-right: 0em}
 div.display {margin-left: 3.2em}
 div.example {margin-left: 3.2em}
-div.lisp {margin-left: 3.2em}
 kbd {font-style: oblique}
 pre.display {font-family: inherit}
 pre.format {font-family: inherit}
@@ -29,6 +31,7 @@ pre.menu-preformatted {font-family: serif}
 span.nolinebreak {white-space: nowrap}
 span.roman {font-family: initial; font-weight: normal}
 span.sansserif {font-family: sans-serif; font-weight: normal}
+span:hover a.copiable-anchor {visibility: visible}
 ul.no-bullet {list-style: none}
 -->
 </style>
@@ -38,9 +41,10 @@ ul.no-bullet {list-style: none}
 </head>
 
 <body lang="en">
-<span id="Jul-24"></span><div class="header">
+<div class="unnumbered" id="Jul-24">
+<div class="header">
 <p>
-Next: <a href="Jul-13.html" accesskey="n" rel="next">Jul 13</a>, Previous: <a href="Jul-29.html" accesskey="p" rel="prev">Jul 29</a>, Up: <a href="index.html" accesskey="u" rel="up">Top</a> &nbsp; </p>
+Next: <a href="Jul-13.html" accesskey="n" rel="next"><code>hash</code>, methods overhaul, interfaces again</a>, Previous: <a href="Jul-29.html" accesskey="p" rel="prev">Protection levels for record types</a>, Up: <a href="index.html" accesskey="u" rel="up">Marco&rsquo;s 2016 Weblog</a> &nbsp; </p>
 </div>
 <hr>
 <span id="master-branch_002c-virtual-methods"></span><h2 class="unnumbered"><code>master</code> branch, virtual methods</h2>
@@ -61,7 +65,11 @@ recursive types (indispensable) and maybe public/private members for record&ndas
 <p>Everything I discuss here is relative to code in the head of the <code>master</code> branch.
 </p>
 
-<span id="Method-functions"></span><h3 class="unnumberedsec">Method functions</h3>
+<ul class="section-toc">
+<li><a href="#Method-functions" accesskey="1">Method functions</a></li>
+</ul>
+<div class="unnumberedsec" id="Method-functions">
+<h3 class="unnumberedsec">Method functions</h3>
 
 <p>An implementation of virtual methods for record&ndash;types is in the code; sealing
 methods are also there.  Let&rsquo;s just do a recapitulation of methods by a good copy and
@@ -83,14 +91,20 @@ use.
 <p>The clauses <code>virtual-method</code> and <code>seal-method</code> are also accepted by
 <code>define-mixin-type</code>.
 </p>
-<span id="Concrete-methods"></span><h4 class="subsection">Concrete methods</h4>
+<ul class="section-toc">
+<li><a href="#Concrete-methods" accesskey="1">Concrete methods</a></li>
+<li><a href="#Virtual-methods" accesskey="2">Virtual methods</a></li>
+<li><a href="#Sealing-methods" accesskey="3">Sealing methods</a></li>
+</ul>
+<div class="subsection" id="Concrete-methods">
+<h4 class="subsection">Concrete methods</h4>
 
 <p>We can think of <code>method</code> as acting like <code>define/typed</code> with regard to
 the syntax of arguments to function; the first argument to a method is the record
 itself, but it is implicit: we can access it using the fluid syntax <code>this</code>.
 For example, using the procedural coding style:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(define-record-type &lt;duo&gt;
   (strip-angular-parentheses)
   (fields one two)
@@ -109,7 +123,7 @@ For example, using the procedural coding style:
 
 <p>and using the object&ndash;oriented syntax style:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(define-record-type &lt;duo&gt;
   (fields one two)
   (method (sum-them)
@@ -130,13 +144,19 @@ For example, using the procedural coding style:
 table of methods (it does <strong>not</strong> use the syntactic identifiers with
 <code>free-identifier=?</code>).
 </p>
-<span id="Overloaded-methods"></span><h4 class="subsubsection">Overloaded methods</h4>
+<ul class="section-toc">
+<li><a href="#Overloaded-methods" accesskey="1">Overloaded methods</a></li>
+<li><a href="#Field-methods" accesskey="2">Field methods</a></li>
+<li><a href="#Overriding-methods" accesskey="3">Overriding methods</a></li>
+</ul>
+<div class="subsubsection" id="Overloaded-methods">
+<h4 class="subsubsection">Overloaded methods</h4>
 
 <p>The clause <code>method</code> allows the definition of overloaded
 functions, with multiple function specialisations associated to the same
 method name.  Example:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(define-record-type &lt;alpha&gt;
   (fields a b)
 
@@ -160,7 +180,7 @@ method name.  Example:
 <p>we can think of the methods defined above as expanding to the following
 definitions:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(define/overload ({doit &lt;list&gt;} {subject &lt;alpha&gt;}
                       {A &lt;fixnum&gt;})
   (fluid-let-syntax ((this (identifier-syntax subject)))
@@ -179,7 +199,9 @@ definitions:
 
 <p>where <var>subject</var> is a non&ndash;accessible identifier.
 </p>
-<span id="Field-methods"></span><h4 class="subsubsection">Field methods</h4>
+</div>
+<div class="subsubsection" id="Field-methods">
+<h4 class="subsubsection">Field methods</h4>
 
 <p>When methods are defined for record-types: method names cannot be equal
 to field names; field accessors and mutators are accessible as methods
@@ -196,7 +218,7 @@ syntax is compatible with a field mutator call.
 </p>
 <p>So we can access and mutate fields as follows:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(define-record-type &lt;alpha&gt;
   (fields (mutable a)))
 
@@ -208,13 +230,15 @@ syntax is compatible with a field mutator call.
 (.a O)          &rArr; 2
 </pre></div>
 
-<span id="Overriding-methods"></span><h4 class="subsubsection">Overriding methods</h4>
+</div>
+<div class="subsubsection" id="Overriding-methods">
+<h4 class="subsubsection">Overriding methods</h4>
 
 <p>When a hierarchy of record&ndash;types is defined: the sub&ndash;types can
 override the super&ndash;type&rsquo;s concrete methods by defining methods with the
 same name.  Example:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(define-record-type &lt;super&gt;
   (method (doit)
     1))
@@ -243,7 +267,10 @@ object instance through the super&ndash;type&rsquo;s type specification.
 <p>The sub&ndash;type&rsquo;s method is in no way limited by the super&ndash;type&rsquo;s method:
 the two methods are allowed to have completely different type signature.
 </p>
-<span id="Virtual-methods"></span><h4 class="subsection">Virtual methods</h4>
+</div>
+</div>
+<div class="subsection" id="Virtual-methods">
+<h4 class="subsection">Virtual methods</h4>
 
 <p>The clause <code>virtual-method</code> allows the definition of virtual
 methods associated to a record&ndash;type.  Virtual methods work almost like
@@ -259,7 +286,7 @@ abstract methods.
 
 <p>Example:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(define-record-type &lt;super&gt;
   (virtual-method (doit)
     1))
@@ -290,7 +317,7 @@ actually called method is the one defined by <code>&lt;sub&gt;</code>.
 overridden type signature.  For example, the following definitions are
 fine:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(define-record-type &lt;super&gt;
   (fields value)
   (virtual-method ({doit &lt;number&gt;} {S &lt;nestring&gt;})
@@ -304,7 +331,7 @@ fine:
 
 <p>because:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(type-annotation-super-and-sub?
    (lambda (&lt;nestring&gt;) =&gt; (&lt;number&gt;))
    (lambda (&lt;string&gt;)   =&gt; (&lt;fixnum&gt;)))
@@ -314,7 +341,7 @@ fine:
 <p>while the following definitions will cause a syntax violation exception
 at expand&ndash;time:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(define-record-type &lt;super&gt;
   (fields value)
   (virtual-method ({doit &lt;number&gt;} {S &lt;nestring&gt;})
@@ -328,7 +355,7 @@ at expand&ndash;time:
 
 <p>because:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(type-annotation-super-and-sub?
    (lambda (&lt;nestring&gt;) =&gt; (&lt;number&gt;))
    (lambda (&lt;string&gt;)   =&gt; (&lt;vector&gt;)))
@@ -340,7 +367,7 @@ matter if the sub&ndash;type makes use of <code>method</code>,
 <code>virtual-method</code> or <code>seal-method</code>: all these clauses will
 override the super&ndash;type&rsquo;s method if they use the same name.  Example:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(define-record-type &lt;super&gt;
   (virtual-method (darkness)
     1)
@@ -368,7 +395,7 @@ override the super&ndash;type&rsquo;s method if they use the same name.  Example
 the same name of a super&ndash;type&rsquo;s virtual method; the following
 definitions will cause an expand&ndash;time exception:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(define-record-type &lt;super&gt;
   (method (doit)
     1))
@@ -384,7 +411,9 @@ sub&ndash;types can no more use it; it does not matter if the super&ndash;types
 actually use it or not.
 </p>
 
-<span id="Sealing-methods"></span><h4 class="subsection">Sealing methods</h4>
+</div>
+<div class="subsection" id="Sealing-methods">
+<h4 class="subsection">Sealing methods</h4>
 
 <p>It happens that we want to define virtual methods in a super&ndash;type,
 override them in a sub&ndash;type and then forbid further overriding in the
@@ -398,7 +427,7 @@ everything else: sealing methods work like concrete methods.
 <p>In the following example everything works as usual, with <code>&lt;sub&gt;</code>
 overriding the implementation of <code>doit</code> in <code>&lt;super&gt;</code>:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(define-record-type &lt;super&gt;
   (virtual-method (doit)
     1))
@@ -425,7 +454,7 @@ overriding the implementation of <code>doit</code> in <code>&lt;super&gt;</code>
 exception, because sub&ndash;types of <code>&lt;sub&gt;</code> are forbidden from having a
 method named <code>doit</code>:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(define-record-type &lt;sub-sub&gt;
   (parent &lt;sub&gt;)
   (method (doit)
@@ -437,17 +466,20 @@ error&rarr; &amp;syntax
 because sub&ndash;types of <code>&lt;sub&gt;</code> are forbidden from having a field
 named <code>doit</code>:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(define-record-type &lt;sub-sub&gt;
   (parent &lt;sub&gt;)
   (fields doit))
 error&rarr; &amp;syntax
 </pre></div>
 
+</div>
+</div>
+</div>
 <hr>
 <div class="header">
 <p>
-Next: <a href="Jul-13.html" accesskey="n" rel="next">Jul 13</a>, Previous: <a href="Jul-29.html" accesskey="p" rel="prev">Jul 29</a>, Up: <a href="index.html" accesskey="u" rel="up">Top</a> &nbsp; </p>
+Next: <a href="Jul-13.html"><code>hash</code>, methods overhaul, interfaces again</a>, Previous: <a href="Jul-29.html">Protection levels for record types</a>, Up: <a href="index.html">Marco&rsquo;s 2016 Weblog</a> &nbsp; </p>
 </div>
 
 

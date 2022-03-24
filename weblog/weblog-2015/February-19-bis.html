@@ -1,6 +1,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
-<!-- Created by GNU Texinfo 6.7, http://www.gnu.org/software/texinfo/ -->
+<!-- Created by GNU Texinfo 6.8, https://www.gnu.org/software/texinfo/ -->
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
 <title>February 19 bis (Marco&rsquo;s 2015 Weblog)</title>
@@ -10,17 +10,19 @@
 <meta name="resource-type" content="document">
 <meta name="distribution" content="global">
 <meta name="Generator" content="makeinfo">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
 <link href="index.html" rel="start" title="Top">
 <link href="index.html" rel="up" title="Top">
 <link href="February-19.html" rel="next" title="February 19">
 <link href="March-05.html" rel="prev" title="March 05">
 <style type="text/css">
 <!--
+a.copiable-anchor {visibility: hidden; text-decoration: none; line-height: 0em}
 a.summary-letter {text-decoration: none}
 blockquote.indentedblock {margin-right: 0em}
 div.display {margin-left: 3.2em}
 div.example {margin-left: 3.2em}
-div.lisp {margin-left: 3.2em}
 kbd {font-style: oblique}
 pre.display {font-family: inherit}
 pre.format {font-family: inherit}
@@ -29,6 +31,7 @@ pre.menu-preformatted {font-family: serif}
 span.nolinebreak {white-space: nowrap}
 span.roman {font-family: initial; font-weight: normal}
 span.sansserif {font-family: sans-serif; font-weight: normal}
+span:hover a.copiable-anchor {visibility: visible}
 ul.no-bullet {list-style: none}
 -->
 </style>
@@ -38,15 +41,16 @@ ul.no-bullet {list-style: none}
 </head>
 
 <body lang="en">
-<span id="February-19-bis"></span><div class="header">
+<div class="unnumbered" id="February-19-bis">
+<div class="header">
 <p>
-Next: <a href="February-19.html" accesskey="n" rel="next">February 19</a>, Previous: <a href="March-05.html" accesskey="p" rel="prev">March 05</a>, Up: <a href="index.html" accesskey="u" rel="up">Top</a> &nbsp; </p>
+Next: <a href="February-19.html" accesskey="n" rel="next">On running parallel processes (2015 February 19)</a>, Previous: <a href="March-05.html" accesskey="p" rel="prev">Overhauling the library infrastructure (2015 March 05)</a>, Up: <a href="index.html" accesskey="u" rel="up">Marco&rsquo;s 2015 Weblog</a> &nbsp; </p>
 </div>
 <hr>
 <span id="On-the-implementation-of-unwind_002dprotect-_0028part-2_0029-_00282015-February-19-bis_0029"></span><h2 class="unnumbered">On the implementation of <code>unwind-protect</code> (part 2) (2015 February 19 bis)</h2>
 
 
-<p>In a previous entry (see <a href="February-13.html">February 13</a>) I discussed the mechanism of unwind
+<p>In a previous entry (see <a href="February-13.html">On the implementation of <code>unwind-protect</code> (2015 February 13)</a>) I discussed the mechanism of unwind
 protection as implemented by <a href="http://marcomaggi.github.io/vicare.html">Vicare</a>, without showing many examples.  This is to
 be remedied here.  This section is about what&rsquo;s currently in the <a href="https://github.com/marcomaggi/vicare/tree/master">master</a> branch,
 <strong>not</strong> the latest Vicare release.
@@ -72,7 +76,7 @@ if we actually continue.  Exceptions while handling exceptions are a hard proble
 solve in every language; the rough solution is to block exceptions raised by
 exception handlers:
 
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(with-exception-handler
     (lambda (E)
       (with-blocked-exceptions
@@ -88,7 +92,7 @@ exception handlers:
 <p>If the bodacious answer to both the decisions is &ldquo;We trust&rdquo;: we can nest at will
 uses of the <code>with-unwind-protection</code> syntax:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(define (outer)
   (with-unwind-protection
       (lambda (why)
@@ -113,7 +117,7 @@ of <code>with-unwind-protection</code>.
 <p>Otherwise we must avoid error handlers to cause the execution flow to cross an unwind
 protection boundary; we can do it by using the standard <code>guard</code> syntax:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(define (outer)
   (push-compensation-thunk
     (lambda ()
@@ -139,7 +143,7 @@ protection boundary; we can do it by using the standard <code>guard</code> synta
 
 <p>or by using the <code>try</code> syntax defined by Vicare:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(define (outer)
   (push-compensation-thunk
     (lambda ()
@@ -169,13 +173,24 @@ protection boundary; we can do it by using the standard <code>guard</code> synta
 the use of <code>with-compensations</code><a id="DOCF4" href="#FOOT4"><sup>4</sup></a>.
 </p>
 
-<span id="Tracking-the-evaluation-flow"></span><h3 class="unnumberedsec">Tracking the evaluation flow</h3>
+<ul class="section-toc">
+<li><a href="#Tracking-the-evaluation-flow" accesskey="1">Tracking the evaluation flow</a></li>
+<li><a href="#Prelude" accesskey="2">Prelude</a></li>
+<li><a href="#Normal-evaluation" accesskey="3">Normal evaluation</a></li>
+<li><a href="#Reacting-to-non_002d_002dcontinuable-exceptions" accesskey="4">Reacting to non&ndash;continuable exceptions</a></li>
+<li><a href="#Reacting-to-continuable-exceptions" accesskey="5">Reacting to continuable exceptions</a></li>
+<li><a href="#Use-with-loop-syntaxes" accesskey="6">Use with loop syntaxes</a></li>
+<li><a href="#Use-with-returnable-bodies" accesskey="7">Use with returnable bodies</a></li>
+<li><a href="#Use-with-coroutines" accesskey="8">Use with coroutines</a></li>
+</ul>
+<div class="unnumberedsec" id="Tracking-the-evaluation-flow">
+<h3 class="unnumberedsec">Tracking the evaluation flow</h3>
 
 <p>To follow how the unwind protection mechanism intertwines itself with the protected
 code, we need a tracking mechanism.  In this section we use the <code>with-result</code>
 <acronym>api</acronym> exported by the library <code>(vicare checks)</code>; it works like this:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(import (vicare)
   (only (vicare checks)
         with-result
@@ -201,11 +216,13 @@ the <acronym>FIFO</acronym> queue of values to which <code>add-result</code> was
 rough, but simple.
 </p>
 
-<span id="Prelude"></span><h3 class="unnumberedsec">Prelude</h3>
+</div>
+<div class="unnumberedsec" id="Prelude">
+<h3 class="unnumberedsec">Prelude</h3>
 
 <p>In all the sample code we have to assume the following prelude:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(import (vicare)
   (only (vicare checks)
         with-result
@@ -222,12 +239,14 @@ rough, but simple.
 <p>Let&rsquo;s get on with the examples.
 </p>
 
-<span id="Normal-evaluation"></span><h3 class="unnumberedsec">Normal evaluation</h3>
+</div>
+<div class="unnumberedsec" id="Normal-evaluation">
+<h3 class="unnumberedsec">Normal evaluation</h3>
 
 <p>When no exceptions are raised and no escape procedures are called, the evaluation
 just goes; the <var>?unwind-handler</var> is evaluated after <var>?thunk</var>.
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(with-result
   (with-unwind-protection
       (lambda (why)
@@ -240,7 +259,7 @@ just goes; the <var>?unwind-handler</var> is evaluated after <var>?thunk</var>.
 
 <p>If we call an escape procedure from <var>?thunk</var>, this is what happens:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(with-result
   (call/cc
       (lambda (escape)
@@ -261,14 +280,16 @@ that a raw escape might skip releasing resources; there is nothing we can do abo
 it.
 </p>
 
-<span id="Reacting-to-non_002d_002dcontinuable-exceptions"></span><h3 class="unnumberedsec">Reacting to non&ndash;continuable exceptions</h3>
+</div>
+<div class="unnumberedsec" id="Reacting-to-non_002d_002dcontinuable-exceptions">
+<h3 class="unnumberedsec">Reacting to non&ndash;continuable exceptions</h3>
 
 <p>Continuable exceptions are raised with the standard <code>raise</code> function.  The only
 way to react to a raised non&ndash;continuable exception is to intercept it with an
 exception handler and, from its body, to call an escape procedure to exit the dynamic
 environment that caused the exception:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(call/cc
     (lambda (escape)
       (with-exception-handler
@@ -291,7 +312,7 @@ environment that caused the exception:
 an exception, by itself, does <strong>not</strong> cause an exit from the dynamic extent of
 the call to <var>?thunk</var>, it is calling the escape procedure that causes the exit:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(with-result
   (call/cc
       (lambda (escape)
@@ -316,7 +337,7 @@ what the standard <code>guard</code> syntax does; but <code>guard</code> does mo
 </p>
 <p>So let&rsquo;s add an unwind protection handler:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(with-result
   (call/cc
       (lambda (escape)
@@ -345,7 +366,7 @@ previous example of escaping from <var>?thunk</var>.  How do we cause a call to 
 handler?  By using the standard <code>guard</code> syntax, which is specially interfaced
 with the unwind protection mechanism:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(with-result
   (guard (E (else
              (add-result 'guard-else)
@@ -392,7 +413,7 @@ with the unwind protection mechanism:
 <p>The following example has <code>guard</code> evaluate a non&ndash;<code>else</code> clause, which
 makes the mechanism even more clear:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(with-result
   (guard (E ((begin
                (add-result 'guard-test-1)
@@ -429,14 +450,16 @@ makes the mechanism even more clear:
 causes the termination of the dynamic extent of the call to <var>?thunk</var>.
 </p>
 
-<span id="Reacting-to-continuable-exceptions"></span><h3 class="unnumberedsec">Reacting to continuable exceptions</h3>
+</div>
+<div class="unnumberedsec" id="Reacting-to-continuable-exceptions">
+<h3 class="unnumberedsec">Reacting to continuable exceptions</h3>
 
 <p>Everything we discussed for non&ndash;continuable exceptions applies unchanged to
 continuable exceptions when we do not actually continue.  A continuable exception is
 raised with <code>raise-continuable</code> and it is a way to resume the execution of a
 chunk of code after raising an exception.  This example shows the basic mechanism:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(with-exception-handler
     (lambda (E)
       (+ E 2))
@@ -451,7 +474,7 @@ procedure: <code>raise-continuable</code> returns, too.
 <p>If we continue after raising a continuable exception, the evaluation flow is not
 different from a normal evaluation:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(with-result
   (with-exception-handler
       (lambda (E)
@@ -474,7 +497,7 @@ different from a normal evaluation:
 continuable exception; execute an exception handler; return to <var>?thunk</var>; perform
 normal a return:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(with-result
   (with-exception-handler
       (lambda (E)
@@ -512,7 +535,9 @@ with <code>raise-continue</code>.  <var>?unwind-handler</var> is called only aft
 evaluation flow has re&ndash;entered <var>?thunk</var> and performed a normal return.
 </p>
 
-<span id="Use-with-loop-syntaxes"></span><h3 class="unnumberedsec">Use with loop syntaxes</h3>
+</div>
+<div class="unnumberedsec" id="Use-with-loop-syntaxes">
+<h3 class="unnumberedsec">Use with loop syntaxes</h3>
 
 <p>The unwind protection mechanism has special integration with the loop syntaxes
 defined by <code>(vicare)</code>; if an unwind protection syntax is used in the body of a
@@ -527,7 +552,7 @@ protection, otherwise the <var>?unwind-handler</var> is not called.
 <p>This example shows breaking out of a <code>while</code> syntax; the body and the unwind
 handler are evaluated only once; <code>exit</code> is never called.
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(define x 3)
 (define y #f)
 (while (positive? x)
@@ -543,9 +568,9 @@ y &rArr; #t
 </pre></div>
 
 <p>This example shows using <code>continue</code> in a <code>while</code> syntax; the body and
-the unwind handler are evaluated <em>3</em> times; <code>exit</code> is never called.
+the unwind handler are evaluated <em class='math'>3</em> times; <code>exit</code> is never called.
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(define x 3)
 (define y 0)
 (while (positive? x)
@@ -561,7 +586,9 @@ y &rArr; 3
 </pre></div>
 
 
-<span id="Use-with-returnable-bodies"></span><h3 class="unnumberedsec">Use with returnable bodies</h3>
+</div>
+<div class="unnumberedsec" id="Use-with-returnable-bodies">
+<h3 class="unnumberedsec">Use with returnable bodies</h3>
 
 <p>The unwind protection mechanism has special integration with the <code>returnable</code>
 syntax defined by <code>(vicare)</code>; if an unwind protection syntax is used in the
@@ -569,7 +596,7 @@ body of <code>returnable</code> and <code>return</code> is used in the <var>?thu
 <var>?unwind-handler</var> is evaluated correctly.  We have to remember that
 <code>return</code> is implemented by an escaping continuation.
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(define y #f)
 (returnable
   (with-unwind-protection
@@ -582,7 +609,9 @@ y &rArr; #t
 </pre></div>
 
 
-<span id="Use-with-coroutines"></span><h3 class="unnumberedsec">Use with coroutines</h3>
+</div>
+<div class="unnumberedsec" id="Use-with-coroutines">
+<h3 class="unnumberedsec">Use with coroutines</h3>
 
 <p>Using the unwind protection mechanism with coroutines is fine; coroutines use
 <code>yield</code> to save the current continuation, give control to the next coroutine and
@@ -590,7 +619,7 @@ come back later; this mechanism does not cause the <var>?unwind-handler</var> ev
 </p>
 <p>The following sample code finishes with the given return values and lines printed:
 </p>
-<div class="lisp">
+<div class="example lisp">
 <pre class="lisp">(define (print template . args)
   (apply fprintf (current-error-port) template args)
   (yield))
@@ -644,11 +673,13 @@ come back later; this mechanism does not cause the <var>?unwind-handler</var> ev
 -| unwind-protect sub 3.3: 3.3
 </pre></div>
 
+</div>
+</div>
 <div class="footnote">
 <hr>
 <h4 class="footnotes-heading">Footnotes</h4>
 
-<h5><a id="FOOT4" href="#DOCF4">(4)</a></h3>
+<h5><a id="FOOT4" href="#DOCF4">(4)</a></h5>
 <p>Compensation handlers could be
 evaluated in the dynamic environment of the call to <code>push-compensation-thunk</code>,
 by using <code>with-current-dynamic-environment</code>.  The current implementation of
@@ -658,7 +689,7 @@ resource consuming.</p>
 <hr>
 <div class="header">
 <p>
-Next: <a href="February-19.html" accesskey="n" rel="next">February 19</a>, Previous: <a href="March-05.html" accesskey="p" rel="prev">March 05</a>, Up: <a href="index.html" accesskey="u" rel="up">Top</a> &nbsp; </p>
+Next: <a href="February-19.html">On running parallel processes (2015 February 19)</a>, Previous: <a href="March-05.html">Overhauling the library infrastructure (2015 March 05)</a>, Up: <a href="index.html">Marco&rsquo;s 2015 Weblog</a> &nbsp; </p>
 </div>
 
 
