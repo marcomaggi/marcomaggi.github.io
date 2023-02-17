@@ -1,6 +1,6 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!DOCTYPE html>
 <html>
-<!-- Created by GNU Texinfo 6.8, https://www.gnu.org/software/texinfo/ -->
+<!-- Created by GNU Texinfo 7.0, https://www.gnu.org/software/texinfo/ -->
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
 <title>Feb 19 (Marco&rsquo;s 2017 Weblog)</title>
@@ -18,21 +18,7 @@
 <link href="Feb-19-bis.html" rel="prev" title="Feb 19 bis">
 <style type="text/css">
 <!--
-a.copiable-anchor {visibility: hidden; text-decoration: none; line-height: 0em}
-a.summary-letter {text-decoration: none}
-blockquote.indentedblock {margin-right: 0em}
-div.display {margin-left: 3.2em}
 div.example {margin-left: 3.2em}
-kbd {font-style: oblique}
-pre.display {font-family: inherit}
-pre.format {font-family: inherit}
-pre.menu-comment {font-family: serif}
-pre.menu-preformatted {font-family: serif}
-span.nolinebreak {white-space: nowrap}
-span.roman {font-family: initial; font-weight: normal}
-span.sansserif {font-family: sans-serif; font-weight: normal}
-span:hover a.copiable-anchor {visibility: visible}
-ul.no-bullet {list-style: none}
 -->
 </style>
 <link rel="stylesheet" type="text/css" href="weblog.css">
@@ -41,16 +27,16 @@ ul.no-bullet {list-style: none}
 </head>
 
 <body lang="en">
-<div class="unnumbered" id="Feb-19">
-<div class="header">
+<div class="unnumbered-level-extent" id="Feb-19">
+<div class="nav-panel">
 <p>
 Next: <a href="Feb-18.html" accesskey="n" rel="next">C language: passing small structures by value</a>, Previous: <a href="Feb-19-bis.html" accesskey="p" rel="prev">C language: cast functions, again</a>, Up: <a href="index.html" accesskey="u" rel="up">Marco&rsquo;s 2017 Weblog</a> &nbsp; </p>
 </div>
 <hr>
-<span id="C-language_003a-cast-functions"></span><h2 class="unnumbered">C language: cast functions</h2>
+<h2 class="unnumbered" id="C-language_003a-cast-functions">C language: cast functions</h2>
 
 
-<p><em>Posted on Sun Feb 19, 2017</em>
+<p><em class="emph">Posted on Sun Feb 19, 2017</em>
 </p>
 
 <p>It&rsquo;s 6AM, milk+coffee makes it one of the best moments of the day.
@@ -58,7 +44,7 @@ Next: <a href="Feb-18.html" accesskey="n" rel="next">C language: passing small s
 <p>It happens to define structures as follows, using C11 anonymous fields:
 </p>
 <div class="example">
-<pre class="example">struct alpha_t {
+<pre class="example-preformatted">struct alpha_t {
   ...
 }
 
@@ -68,24 +54,24 @@ struct beta_t {
 }
 </pre></div>
 
-<p>when using <acronym>gcc</acronym>&rsquo;s <samp>-fplan9-extensions</samp> facilities: a pointer to
-<code>beta_t</code> is automatically a pointer to <code>alpha_t</code>.
+<p>when using <abbr class="acronym">gcc</abbr>&rsquo;s <samp class="option">-fplan9-extensions</samp> facilities: a pointer to
+<code class="code">beta_t</code> is automatically a pointer to <code class="code">alpha_t</code>.
 </p>
 <p>Sometimes we need to cast a pointer as follows:
 </p>
 <div class="example">
-<pre class="example">alpha_t * A = ...;
+<pre class="example-preformatted">alpha_t * A = ...;
 beta_t  * B = (beta_t *) A;
 </pre></div>
 
 <p>the cast operation is obviously dangerous; and it&rsquo;s also ugly to look at.
 </p>
 <p>So, I will start to experiment with &ldquo;cast functions&rdquo;.  A cast function from
-<code>alpha_t</code> to <code>beta_t</code> looks like this, using <acronym>gcc</acronym>&rsquo;s function
+<code class="code">alpha_t</code> to <code class="code">beta_t</code> looks like this, using <abbr class="acronym">gcc</abbr>&rsquo;s function
 attributes:
 </p>
 <div class="example">
-<pre class="example">__attribute__((const,always_inline))
+<pre class="example-preformatted">__attribute__((const,always_inline))
 static inline beta_t *
 cast_to_beta_from_alpha (alpha_t * src)
 {
@@ -96,15 +82,15 @@ cast_to_beta_from_alpha (alpha_t * src)
 <p>this begs for a C11 generic macro:
 </p>
 <div class="example">
-<pre class="example">#define cast_to_beta(SRC)               \
+<pre class="example-preformatted">#define cast_to_beta(SRC)               \
   _Generic((SRC), alpha_t *: cast_to_beta_from_alpha)(SRC)
 </pre></div>
 
-<p>which will cause a compiler error if applied to a <var>SRC</var> argument which is not an
-<code>alpha_t</code> pointer.  So the cast operation becomes:
+<p>which will cause a compiler error if applied to a <var class="var">SRC</var> argument which is not an
+<code class="code">alpha_t</code> pointer.  So the cast operation becomes:
 </p>
 <div class="example">
-<pre class="example">alpha_t * A = ...;
+<pre class="example-preformatted">alpha_t * A = ...;
 beta_t  * B = cast_to_beta(A);
 </pre></div>
 
@@ -116,16 +102,16 @@ expected to do and it provides some type checking.
 preprocessor macro (which cannot generate the generic macro):
 </p>
 <div class="example">
-<pre class="example">#define DEFINE_CAST_FUNCTION(FROM_NAME,TO_NAME,FROM_TYPE,TO_TYPE) \
+<pre class="example-preformatted">#define DEFINE_CAST_FUNCTION(FROM_NAME,TO_NAME,FROM_TYPE,TO_TYPE) \
   __attribute__((const,always_inline)) static inline TO_TYPE *    \
   cast_to_ ## TO_NAME ## _from_ ## FROM_NAME (FROM_TYPE * src)    \
   { return (TO_TYPE *)src; }
 </pre></div>
 
-<p>but for now I will try this <acronym>gnu</acronym> Emacs template constructor:
+<p>but for now I will try this <abbr class="acronym">gnu</abbr> Emacs template constructor:
 </p>
 <div class="example lisp">
-<pre class="lisp">(defun my-c-insert-cast-function (PREFIX FROM_NAME TO_NAME)
+<pre class="lisp-preformatted">(defun my-c-insert-cast-function (PREFIX FROM_NAME TO_NAME)
   &quot;Insert a C language cast function.
 
 The call:
@@ -163,7 +149,7 @@ static inline &quot; PREFIX &quot;_&quot; TO_NAME &quot;_t *
 <p>which, explicitly called from Emacs&rsquo; minibuffer , produces the following text:
 </p>
 <div class="example">
-<pre class="example">/* Output of: (my-c-insert-cast-function &quot;ccevents&quot; &quot;source&quot; &quot;fd_source&quot;) */
+<pre class="example-preformatted">/* Output of: (my-c-insert-cast-function &quot;ccevents&quot; &quot;source&quot; &quot;fd_source&quot;) */
 __attribute__((const,always_inline))
 static inline ccevents_fd_source_t *
 ccevents_cast_to_fd_source_from_source (ccevents_source_t * src)
@@ -179,7 +165,7 @@ ccevents_cast_to_fd_source_from_source (ccevents_source_t * src)
 </p>
 </div>
 <hr>
-<div class="header">
+<div class="nav-panel">
 <p>
 Next: <a href="Feb-18.html">C language: passing small structures by value</a>, Previous: <a href="Feb-19-bis.html">C language: cast functions, again</a>, Up: <a href="index.html">Marco&rsquo;s 2017 Weblog</a> &nbsp; </p>
 </div>
