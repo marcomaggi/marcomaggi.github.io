@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+<!-- Created by GNU Texinfo 7.0, https://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Mar 24 (Marco&rsquo;s 2023 Weblog)</title>
+
+<meta name="description" content="Mar 24 (Marco&rsquo;s 2023 Weblog)">
+<meta name="keywords" content="Mar 24 (Marco&rsquo;s 2023 Weblog)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<link href="index.html" rel="start" title="Top">
+<link href="index.html" rel="up" title="Top">
+<link href="Mar-11.html" rel="next" title="Mar 11">
+<link href="index.html" rel="prev" title="Top">
+<style type="text/css">
+<!--
+div.example {margin-left: 3.2em}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="weblog.css">
+
+
+</head>
+
+<body lang="en">
+<div class="unnumbered-level-extent" id="Mar-24">
+<div class="nav-panel">
+<p>
+Next: <a href="Mar-11.html" accesskey="n" rel="next">New tagged version for <abbr class="acronym">mbfl</abbr></a>, Previous: <a href="index.html" accesskey="p" rel="prev">Marco&rsquo;s 2023 Weblog</a>, Up: <a href="index.html" accesskey="u" rel="up">Marco&rsquo;s 2023 Weblog</a> &nbsp; </p>
+</div>
+<hr>
+<h2 class="unnumbered" id="mbfl_003a-data-structures_002c-gnu-Emacs-font-locking_002c-and-stuff"><abbr class="acronym">mbfl</abbr>: data structures, <abbr class="acronym">gnu</abbr> Emacs font locking, and stuff</h2>
+
+
+<p><em class="emph">Posted on Mar 24, 2023</em>
+</p>
+
+<ul class="mini-toc">
+<li><a href="#Data-structures" accesskey="1">Data structures</a></li>
+<li><a href="#gnu-Emacs-font-locking" accesskey="2"><abbr class="acronym">gnu</abbr> Emacs font locking</a></li>
+<li><a href="#And-stuff" accesskey="3">And stuff</a></li>
+</ul>
+<div class="unnumberedsec-level-extent" id="Data-structures">
+<h3 class="unnumberedsec">Data structures</h3>
+
+<p>I pushed to the <a class="url" href="https://github.com/marcomaggi/mbfl">public</a>
+<a class="url" href="https://bitbucket.org/marcomaggi/mbfl/src/master/">repositories</a> the <abbr class="acronym">mbfl</abbr> changes that
+implement data structures; it is nothing flashy; I have enough features that I can start to use it
+and see how it goes.
+</p>
+<p>I already know that I will probably change the identifiers in the <abbr class="acronym">api</abbr>, but for now that is the
+way it is: I started with the idea of implementing a bit of metaobject protocol, with data
+structures representing slots (their type, how to access values) but then I did nothing of it; but
+it looked fun to call the core object class <code class="code">mbfl_standard_object</code> and its metaclass
+<code class="code">mbfl_standard_class</code>.  Ha!  Ha!
+</p>
+<p>I will probably change them to <code class="code">mbfl_default_object</code> and <code class="code">mbfl_default_class</code> and leave
+<abbr class="acronym">mop</abbr> ambitions to an external library.
+</p>
+<p>The way it is now, it feels similar to the
+<a class="url" href="http://www.r6rs.org/final/html/r6rs-lib/r6rs-lib-Z-H-7.html"><abbr class="acronym">r6rs</abbr> records syntactic layer</a>,
+but simpler; we can define a class and we get: a constructor function, a predicate function,
+accessor and mutator functions for each field.  There is no composition of object constructors: if
+we want a constructor that calls its superclass constructor and so on, we have to implement it
+ourselves.
+</p>
+<p>Here is how it looks:
+</p>
+<div class="example">
+<pre class="example-preformatted">mbfl_standard_class_declare(color)
+mbfl_standard_object_declare(dark_slate_blue)
+
+mbfl_standard_class_define _(color) _(mbfl_standard_object) 'color' red green blue
+color_define _(dark_slate_blue) 72 61 139
+
+declare RED
+color_red_var RED _(dark_slate_blue)
+&quot;$RED&quot; &rArr; 72
+</pre></div>
+
+<p>Notice the fancy underscore syntax:
+</p>
+<div class="example">
+<pre class="example-preformatted">_(dark_slate_blue) &rarr; mbfl_datavar(dark_slate_blue)
+</pre></div>
+
+<p>it makes the code so much more readable!  I love it!  Use with care!
+</p>
+<p>All the accessors store the field value in a given Bash variable; there is <strong class="strong">no</strong> dot&ndash;syntax
+or similar.
+</p>
+<p>Both the class constructor <code class="code">mbfl_standard_class_define</code> and the instance constructors like
+<code class="code">color_define</code> accept positional parameters; the &ldquo;rest&rdquo; parameters are, respectively, field
+names and field values.  I&rsquo;m not happy with it: in my experience with Scheme languages, rest
+parameters make it harder to maintain an <abbr class="acronym">api</abbr><a class="footnote" id="DOCF1" href="#FOOT1"><sup>1</sup></a>.  I could use an index
+array:
+</p>
+<div class="example">
+<pre class="example-preformatted">mbfl_declare_index_array_varref(color_field_names, (red green blue))
+mbfl_standard_class_define _(color) _(mbfl_standard_object) 'color' _(color_field_names)
+</pre></div>
+
+<p>but there would be more to type; I could define an m4 macro to make it a bit more descriptive and
+take away some characters:
+</p>
+<div class="example">
+<pre class="example-preformatted">mbfl_standard_field_specs_declare(color_field_names, red, green, blue)
+mbfl_standard_class_define _(color) _(mbfl_standard_object) 'color' _(color_field_names)
+</pre></div>
+
+<p>this looks similar to what one would code in the C language: if we want to pass a list to a
+function, we have to define an array.  I do not like having more to type, but I also want better
+maintainability.  I will think of it.
+</p>
+<p>Single inheritance is supported:
+</p>
+<div class="example">
+<pre class="example-preformatted">mbfl_standard_class_declare(transparent_color)
+mbfl_standard_object_declare(trans_dark_slate_blue)
+
+mbfl_standard_class_define _(transparent_color) _(color) 'transparent_color' transparency
+transparent_color_define   _(trans_dark_slate_blue) 72 61 139 50
+
+declare RED TRANSPARENCY
+transparent_color_red_var          RED          _(trans_dark_slate_blue)
+transparent_color_transparency_var TRANSPARENCY _(trans_dark_slate_blue)
+
+&quot;$RED&quot;          &rArr; 72
+&quot;$TRANSPARENCY&quot; &rArr; 50
+</pre></div>
+
+<p>Right now there are no class attributes, but I want them.  For example: some classes are not meant
+to be instantiated; some classes are not meant to be subclassed.
+</p>
+
+</div>
+<div class="unnumberedsec-level-extent" id="gnu-Emacs-font-locking">
+<h3 class="unnumberedsec"><abbr class="acronym">gnu</abbr> Emacs font locking</h3>
+
+<p>For quite some time now I&rsquo;ve had an Emacs file which adds to <code class="code">shell-script</code> mode some font
+locking of <abbr class="acronym">mbfl</abbr> functions and macros; I cannot live without it anymore; I have not distributed
+it.  It all amounts to prepare a call to <code class="code">font-lock-add-keywords</code> at the top&ndash;level.
+</p>
+<p>I have been using <abbr class="acronym">gnu</abbr> Emacs for 25+ years, but I am still a beginner when it comes to Emacs Lisp
+coding; I am sure the code is not of great quality.
+</p>
+<p>I am at a point in which including this code in <abbr class="acronym">mbfl</abbr>&rsquo;s package makes sense.  I will do it.
+</p>
+
+</div>
+<div class="unnumberedsec-level-extent" id="And-stuff">
+<h3 class="unnumberedsec">And stuff</h3>
+
+<p>The code grows complex and I feel the need to have some sort of error descriptor; it is impossible
+to have exceptions in Bash; in some situations we can just print an error message to <code class="code">stderr</code> and
+hope to catch it when running a test suite.
+</p>
+<p>I don&rsquo;t know what to do.
+</p>
+</div>
+</div>
+<div class="footnotes-segment">
+<hr>
+<h4 class="footnotes-heading">Footnotes</h4>
+
+<h5 class="footnote-body-heading"><a id="FOOT1" href="#DOCF1">(1)</a></h5>
+<p>While developing, the <abbr class="acronym">api</abbr> is still
+unstable and we may change frequently the parameters to function calls.</p>
+</div>
+<hr>
+<div class="nav-panel">
+<p>
+Next: <a href="Mar-11.html">New tagged version for <abbr class="acronym">mbfl</abbr></a>, Previous: <a href="index.html">Marco&rsquo;s 2023 Weblog</a>, Up: <a href="index.html">Marco&rsquo;s 2023 Weblog</a> &nbsp; </p>
+</div>
+
+
+
+</body>
+</html>
