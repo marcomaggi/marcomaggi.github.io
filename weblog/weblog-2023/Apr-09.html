@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<!-- Created by GNU Texinfo 7.0, https://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Apr 09 (Marco&rsquo;s 2023 Weblog)</title>
+
+<meta name="description" content="Apr 09 (Marco&rsquo;s 2023 Weblog)">
+<meta name="keywords" content="Apr 09 (Marco&rsquo;s 2023 Weblog)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<link href="index.html" rel="start" title="Top">
+<link href="index.html" rel="up" title="Top">
+<link href="Apr-01.html" rel="next" title="Apr 01">
+<link href="index.html" rel="prev" title="Top">
+<style type="text/css">
+<!--
+div.example {margin-left: 3.2em}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="weblog.css">
+
+
+</head>
+
+<body lang="en">
+<div class="unnumbered-level-extent" id="Apr-09">
+<div class="nav-panel">
+<p>
+Next: <a href="Apr-01.html" accesskey="n" rel="next">Libro</a>, Previous: <a href="index.html" accesskey="p" rel="prev">Marco&rsquo;s 2023 Weblog</a>, Up: <a href="index.html" accesskey="u" rel="up">Marco&rsquo;s 2023 Weblog</a> &nbsp; </p>
+</div>
+<hr>
+<h2 class="unnumbered" id="mbfl_003a-semver-module-overhaul"><abbr class="acronym">mbfl</abbr>: semver module overhaul</h2>
+
+
+<p><em class="emph">Posted on Apr  9, 2023</em>
+</p>
+
+<p>I pushed to the <a class="url" href="https://github.com/marcomaggi/mbfl">public</a>
+<a class="url" href="https://bitbucket.org/marcomaggi/mbfl/src/master/">repositories</a> the <abbr class="acronym">mbfl</abbr> changes that
+overhaul the &lsquo;<samp class="samp">semver</samp>&rsquo; module using <abbr class="acronym">oop</abbr>; it is backwards incompatible.  The basic usage
+template now looks like this:
+</p>
+<div class="example">
+<pre class="example-preformatted">mbfl_default_object_declare(SEMVER_SPEC)
+mbfl_default_object_declare(SEMVER_PARSER)
+mbfl_default_object_declare(PARSER_INPUT)
+declare -i START_INDEX=0
+
+mbfl_semver_parser_input_make    _(PARSER_INPUT) '1.2.3-alpha.1+x86-64' $START_INDEX
+mbfl_semver_parser_make_default  _(SEMVER_PARSER)
+mbfl_semver_parse _(SEMVER_SPEC) _(SEMVER_PARSER) _(PARSER_INPUT)
+
+mbfl_declare_varref(MAJOR_NUMBER)
+mbfl_declare_varref(BUILD_METADATA)
+
+mbfl_semver_spec_major_number_var   _(MAJOR_NUMBER)   _(SEMVER_PARSER)
+mbfl_semver_spec_build_metadata_var _(BUILD_METADATA) _(SEMVER_PARSER)
+
+&quot;$MAJOR_NUMBER&quot;         &rArr; 1
+&quot;$BUILD_METADATA&quot;       &rArr; x86-64
+</pre></div>
+
+<p>There is a lot to type, but I am sort of satisfied.
+</p>
+<p>It is clear to me that the <abbr class="acronym">oop</abbr> facilities need a way to specify the fact that a field is
+immutable and that its value must satisfy a predicate.  Right now I make a field immutable by just
+deleting the field&rsquo;s mutator function and for &ldquo;typed&rdquo; fields I redefine the mutator function to
+one that validates the new field value.  Not good.
+</p>
+<p>I do not know how to do it without introducing a full slot&ndash;descriptor object.  I can imagine a
+metaclass instantiation function that parses its command line, mimicking <abbr class="acronym">r6rs</abbr> syntactic records
+layer, something like:
+</p>
+<div class="example">
+<pre class="example-preformatted">mbfl_default_class_declare(color)
+
+mbfl_default_class_define _(color) \
+    inherits:   _(mbfl_default_object) \
+    name:       'color' \
+    fields:     mutable:   red     color_red_var   color_red_set \
+                immutable: green   color_green_var \
+                mutable:   blue    color_blue_var  color_blue_set
+</pre></div>
+
+<p>does it make sense?  I dunno!
+</p>
+</div>
+<hr>
+<div class="nav-panel">
+<p>
+Next: <a href="Apr-01.html">Libro</a>, Previous: <a href="index.html">Marco&rsquo;s 2023 Weblog</a>, Up: <a href="index.html">Marco&rsquo;s 2023 Weblog</a> &nbsp; </p>
+</div>
+
+
+
+</body>
+</html>
