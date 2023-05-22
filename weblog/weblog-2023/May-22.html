@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<!-- Created by GNU Texinfo 7.0.3, https://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>May 22 (Marco&rsquo;s 2023 Weblog)</title>
+
+<meta name="description" content="May 22 (Marco&rsquo;s 2023 Weblog)">
+<meta name="keywords" content="May 22 (Marco&rsquo;s 2023 Weblog)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<link href="index.html" rel="start" title="Top">
+<link href="index.html" rel="up" title="Top">
+<link href="Apr-09.html" rel="next" title="Apr 09">
+<link href="index.html" rel="prev" title="Top">
+<style type="text/css">
+<!--
+div.example {margin-left: 3.2em}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="weblog.css">
+
+
+</head>
+
+<body lang="en">
+<div class="unnumbered-level-extent" id="May-22">
+<div class="nav-panel">
+<p>
+Next: <a href="Apr-09.html" accesskey="n" rel="next"><abbr class="acronym">mbfl</abbr>: semver module overhaul</a>, Previous: <a href="index.html" accesskey="p" rel="prev">Marco&rsquo;s 2023 Weblog</a>, Up: <a href="index.html" accesskey="u" rel="up">Marco&rsquo;s 2023 Weblog</a> &nbsp; </p>
+</div>
+<hr>
+<h2 class="unnumbered" id="mbfl_003a-exceptions-and-exceptional_002d_002dconditions"><abbr class="acronym">mbfl</abbr>: exceptions and exceptional&ndash;conditions</h2>
+
+
+<p><em class="emph">Posted on May 22, 2023</em>
+</p>
+
+<p>My love for Lisp languages is undying; among the Lisp dialects I prefer Scheme; once upon a time the
+<a class="url" href="https://www.r6rs.org/"><em class="emph">Revised^6 Report on the Algorithmic Language Scheme</em></a> was the
+proposed standard for new Scheme languages; it was not perfect; I liked a lot of its ideas about how
+to organise a language; I still like it.
+</p>
+<p>I cannot help but trying to recycle <abbr class="acronym">r6rs</abbr>&rsquo;s ideas everywhere; I cannot design language features
+better than <abbr class="acronym">r6rs</abbr>&rsquo;s authors did.  Among <abbr class="acronym">r6rs</abbr>&rsquo;s facilities that I like the most are exception
+handlers and exceptional&ndash;condition objects.  So I implemented these features in
+<a class="url" href="https://github.com/marcomaggi/mbfl"><abbr class="acronym">mbfl</abbr></a> taking heavy inspiration from <abbr class="acronym">r6rs</abbr>.
+</p>
+<p>Bash and Scheme are very different languages.
+</p>
+<p>A core difference is that there is no way to rewind the call stack in Bash; when we raise an
+exception the execution flow will return from the raising command and we have to return to uplevel
+function calls by hard&ndash;coding the return statements.  Life is hard!
+</p>
+<p>Effective use of <abbr class="acronym">mbfl</abbr>&rsquo;s exception&ndash;handling is intertwined with the location mechanism: if an
+exception&ndash;handler exits the script, it can trigger the evaluation of all the current location
+handlers, in an attempt to perform the cleanest possible termination.
+</p>
+<p>Exceptional&ndash;condition objects are described by classes; we can build a hierarchy of classes adding
+attributes as we see fit; every exceptional&ndash;condition object&rsquo;s class is a subclass of
+<code class="code">mbfl_exceptional_condition_t</code>.
+</p>
+<p>To instantiate an exceptional&ndash;condition object and then raise it, we do something like:
+</p>
+<div class="example">
+<pre class="example-preformatted">mbfl_default_object_declare(CND)
+
+mbfl_runtime_error_condition_make _(CND) $FUNCNAME 'synchronisation error'
+mbfl_exception_raise _(CND)
+</pre></div>
+
+<p>we can install any number of exception&ndash;handlers by pushing them on a stack, linked to the current
+hierarchy of locations; to install a new handler we do:
+</p>
+<div class="example">
+<pre class="example-preformatted">function myfunc () {
+    mbfl_location_enter
+    {
+        mbfl_exception_handler 'myhandler'
+        ...
+    }
+    mbfl_location_leave
+}
+function myhandler () {
+    mbfl_mandatory_nameref_parameter(CND, 1, exceptional-condition object)
+    ...
+}
+</pre></div>
+
+<p>An exception&ndash;handler can:
+</p><ol class="enumerate">
+<li> terminate the script;
+</li><li> return successfully, in which case the script should continue as nothing happened;
+</li><li> return unsuccessfully, in which case the script should return up the call stack until the beginning
+of the failed task is found;
+</li><li> refuse to handle the raised exceptional&ndash;condition object, in which case the next exception&ndash;handler
+is invoked.
+</li></ol>
+
+<p>A default exception&ndash;handler is installed at <abbr class="acronym">mbfl</abbr> startup to &ldquo;gracefully&rdquo; terminate the script
+in case of an uncaught exception.
+</p>
+<p>When inside a location, to return&ndash;to&ndash;the&ndash;caller we should do something like:
+</p>
+<div class="example">
+<pre class="example-preformatted">mbfl_location_enter
+{
+    ...
+    if ! do_something_which_might_raise
+    then
+        mbfl_location_leave
+        return_because_failure
+    fi
+    ...
+}
+mbfl_location_leave
+</pre></div>
+
+<p>I am still developing all of these facilities, but I pushed them on the <code class="code">master</code> branch because
+there are enough features to try the thing and see how it goes.
+</p>
+</div>
+<hr>
+<div class="nav-panel">
+<p>
+Next: <a href="Apr-09.html"><abbr class="acronym">mbfl</abbr>: semver module overhaul</a>, Previous: <a href="index.html">Marco&rsquo;s 2023 Weblog</a>, Up: <a href="index.html">Marco&rsquo;s 2023 Weblog</a> &nbsp; </p>
+</div>
+
+
+
+</body>
+</html>
