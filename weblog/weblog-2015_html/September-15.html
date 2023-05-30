@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<!-- Created by GNU Texinfo 7.0.3, https://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<title>September 15 (Marco&rsquo;s 2015 Weblog)</title>
+
+<meta name="description" content="September 15 (Marco&rsquo;s 2015 Weblog)">
+<meta name="keywords" content="September 15 (Marco&rsquo;s 2015 Weblog)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<link href="index.html" rel="start" title="Top">
+<link href="index.html" rel="up" title="Top">
+<link href="September-13.html" rel="next" title="September 13">
+<link href="October-23.html" rel="prev" title="October 23">
+<style type="text/css">
+<!--
+div.center {text-align:center}
+div.example {margin-left: 3.2em}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="weblog.css">
+
+
+</head>
+
+<body lang="en">
+<div class="unnumbered-level-extent" id="September-15">
+<div class="nav-panel">
+<p>
+Next: <a href="September-13.html" accesskey="n" rel="next">Super-type constructor protocols for records</a>, Previous: <a href="October-23.html" accesskey="p" rel="prev">Delimited continuations with <code class="code">shift</code> and <code class="code">reset</code></a>, Up: <a href="index.html" accesskey="u" rel="up">Marco&rsquo;s 2015 Weblog</a> &nbsp; </p>
+</div>
+<hr>
+<h2 class="unnumbered" id="Late-binding-for-record_002d_002dtype-methods">Late binding for record&ndash;type methods</h2>
+
+
+<div class="center">Posted on September 15, 2015
+</div>
+<p>&ldquo;Late binding&rdquo;... how elegant, how mysterious.  When you call it &ldquo;run&ndash;time
+dispatching&rdquo;, which is the same at some level of abstract reasoning, it does not
+sound as elegant; it sounds vulgar, it tastes of look&ndash;up tables.  I have implemented
+late binding for record&ndash;type methods in <a class="url" href="http://marcomaggi.github.io/vicare.html">Vicare</a>; the code is in the current
+head of the <a class="url" href="https://github.com/marcomaggi/vicare/tree/master">master</a> branch.
+</p>
+<p>Here is how it works.  First, let&rsquo;s create a file containing this library:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">#!vicare
+(library (subdemo)
+  (options tagged-language)
+  (export greetings)
+  (import (vicare))
+  (define (greetings lang)
+    (display (.greetings lang))
+    (newline)))
+</pre></div>
+
+<p>and compile it:
+</p>
+<div class="example">
+<pre class="example-preformatted">$ vicare --compile ./subdemo.sls --output ./subdemo.fasl
+</pre></div>
+
+<p>the form:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">(.greetings lang)
+</pre></div>
+
+<p>is transformed by the Scheme reader into:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">(method-call greetings lang)
+</pre></div>
+
+<p>the expander does not know the type of the <var class="var">lang</var> argument to function; so the
+syntax <code class="code">method-call</code> will expand to an application of the function
+<code class="code">method-call-late-binding</code>:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">(method-call-late-binding 'greetings lang)
+</pre></div>
+
+<p>Now let&rsquo;s create a file containing this program, which imports the <code class="code">(subdemo)</code>
+library and calls the <code class="code">greetings</code> function:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">#!vicare
+(program (demo)
+  (options tagged-language)
+  (import (vicare)
+    (subdemo))
+
+  (define-record-type &lt;lang&gt;
+    (fields greetings))
+
+  (define {it &lt;lang&gt;}
+    (new &lt;lang&gt; &quot;ciao&quot;))
+
+  (define {en &lt;lang&gt;}
+    (new &lt;lang&gt; &quot;hello&quot;))
+
+  (define {jp &lt;lang&gt;}
+    (new &lt;lang&gt; &quot;ohayo&quot;))
+
+  (greetings it)
+  (greetings en)
+  (greetings jp)
+
+  (flush-output-port (current-output-port))
+
+  #| end of program |# )
+</pre></div>
+
+<p>and compile it:
+</p>
+<div class="example">
+<pre class="example-preformatted">$ vicare -L . --compile ./demo.sps --output ./demo
+</pre></div>
+
+<p>this program defines the record&ndash;type <code class="code">&lt;lang&gt;</code> that was non&ndash;existent when the
+library was compiled.  The expansion of the <code class="code">define-record-type</code> syntax use
+automatically creates methods to access and mutate record&ndash;type fields; in this case:
+an accessor method for the field &lsquo;<samp class="samp">greetings</samp>&rsquo; is defined.  Let&rsquo;s run the program:
+</p>
+<div class="example">
+<pre class="example-preformatted">$ vicare -L . --binary-program ./demo
+ciao
+hello
+ohayo
+</pre></div>
+
+</div>
+<hr>
+<div class="nav-panel">
+<p>
+Next: <a href="September-13.html">Super-type constructor protocols for records</a>, Previous: <a href="October-23.html">Delimited continuations with <code class="code">shift</code> and <code class="code">reset</code></a>, Up: <a href="index.html">Marco&rsquo;s 2015 Weblog</a> &nbsp; </p>
+</div>
+
+
+
+</body>
+</html>

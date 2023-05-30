@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<!-- Created by GNU Texinfo 7.0.3, https://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<title>Apr 02 (Marco&rsquo;s 2017 Weblog)</title>
+
+<meta name="description" content="Apr 02 (Marco&rsquo;s 2017 Weblog)">
+<meta name="keywords" content="Apr 02 (Marco&rsquo;s 2017 Weblog)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<link href="index.html" rel="start" title="Top">
+<link href="index.html" rel="up" title="Top">
+<link href="Mar-27.html" rel="next" title="Mar 27">
+<link href="Apr-08.html" rel="prev" title="Apr 08">
+<style type="text/css">
+<!--
+div.example {margin-left: 3.2em}
+ul.mark-bullet {list-style-type: disc}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="weblog.css">
+
+
+</head>
+
+<body lang="en">
+<div class="unnumbered-level-extent" id="Apr-02">
+<div class="nav-panel">
+<p>
+Next: <a href="Mar-27.html" accesskey="n" rel="next">Stuff on life</a>, Previous: <a href="Apr-08.html" accesskey="p" rel="prev">Stuff on life</a>, Up: <a href="index.html" accesskey="u" rel="up">Marco&rsquo;s 2017 Weblog</a> &nbsp; </p>
+</div>
+<hr>
+<h2 class="unnumbered" id="Reconsidering-pros-and-cons-of-C-language-extensions">Reconsidering pros and cons of C language extensions</h2>
+
+
+<p><em class="emph">Posted on Sun Apr  2, 2017</em>
+</p>
+
+<p>I&rsquo;ve registered my <a class="url" href="https://github.com/marcomaggi/ccexceptions">CCExceptions</a>
+project with <a class="url" href="https://travis-ci.org/marcomaggi/ccexceptions">Travis CI</a>; it is
+the first project I integrated with Travis.  It worked but I had to fight with the
+build script&hellip; the platform uses Ubuntu, and I know nothing of this
+distribution&rsquo;s packages.  For some reasons their default <abbr class="acronym">gnu</abbr>+Linux build
+infrastructure does not come with the latest <abbr class="acronym">gnu</abbr> Autoconf and <abbr class="acronym">gcc</abbr>; the build
+script has to install them.  The latest Autoconf (2.69) was released in 2012, we are
+now in 2017&hellip;
+</p>
+<p>I want to attempt a build under Mac OS X: it will be more painful because I literally
+never used this platform.
+</p>
+<p>I&rsquo;ve also tried to integrate the project with <a class="url" href="https://scan.coverity.com/">Coverity</a>.  This failed very early.  The reason is that the project makes use of
+<abbr class="acronym">gcc</abbr> extensions that, as far as I can tell, are not recognised by Coverity&rsquo;s tools.
+This was to be expected!  It hurts me.
+</p>
+<p>In this project: I want to use the features of the C11 standard; I want to mimic
+single&ndash;inheritance with nested structs; I do <strong class="strong">not</strong> want to use <code class="code">void*</code>
+pointers to structs and cast them to the appropriate data type.
+</p>
+<p>The latest requirement is the one that bites: to avoid cluttering the code with cast
+operators and still obtain static&ndash;types validation, we have to do something clever.
+Given the struct hierarchy:
+</p>
+<div class="example">
+<pre class="example-preformatted">typedef struct alpha_t  alpha_t;
+typedef struct beta_t   beta_t;
+
+struct alpha_t {
+  int           A;
+};
+
+struct beta_t {
+  alpha_t       parent;
+  int           B;
+};
+</pre></div>
+
+<p>there need to be two mechanisms:
+</p>
+<ol class="enumerate">
+<li> A way to obtain a pointer to <code class="code">alpha_t</code> from a pointer to <code class="code">beta_t</code>.
+
+</li><li> A way to obtain a pointer to <code class="code">beta_t</code> from a pointer to <code class="code">alpha_t</code>.
+</li></ol>
+
+<p>Using <abbr class="acronym">gcc</abbr>&rsquo;s <samp class="option">-fplan9-extensions</samp> is an easy and friendly solution; but it
+is not standard.  So what do I do?
+</p>
+<p>I&rsquo;ve opened a new (at present private) branch in the project to attempt a port to the
+standard language and see what happens.  This has led to reconsiderations, type name
+changes and so on.
+</p>
+<p>The basic idea I&rsquo;m experimenting with is to define preprocessor macros which expand
+to <code class="code">_Generic</code> uses:
+</p>
+<div class="example">
+<pre class="example-preformatted">#define cast_to_alpha(S)        _Generic((S), ...)
+#define cast_to_beta(S)         _Generic((S), ...)
+</pre></div>
+
+<p>so that:
+</p>
+<ul class="itemize mark-bullet">
+<li>When the macro <code class="code">cast_to_alpha()</code> is applied to a pointer to <code class="code">alpha_t</code> or
+<code class="code">beta_t</code> or another struct that contains an <code class="code">alpha_t</code> field: it
+evaluates to the appropriate pointer to <code class="code">alpha_t</code>.
+
+</li><li>When the macro <code class="code">cast_to_beta()</code> is applied to a pointer to <code class="code">alpha_t</code> or
+<code class="code">beta_t</code> or another struct that contains a <code class="code">beta_t</code> field: it
+evaluates to the appropriate pointer to <code class="code">beta_t</code>.
+</li></ul>
+
+<p>this is done with cast functions, <a class="ref" href="Feb-19.html">C language: cast functions</a>.
+</p>
+<p>About this solution: it is a bit verbose; it is not totally safe; it requires some
+hand&ndash;written code, whose generation can be automated; it is unfriendly to extend a
+hierarchy defined in a library with data types defined in another library.
+</p>
+<p>Life is hard.
+</p>
+</div>
+<hr>
+<div class="nav-panel">
+<p>
+Next: <a href="Mar-27.html">Stuff on life</a>, Previous: <a href="Apr-08.html">Stuff on life</a>, Up: <a href="index.html">Marco&rsquo;s 2017 Weblog</a> &nbsp; </p>
+</div>
+
+
+
+</body>
+</html>

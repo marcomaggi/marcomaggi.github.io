@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+<!-- Created by GNU Texinfo 7.0.3, https://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<title>September 08 (Marco&rsquo;s 2015 Weblog)</title>
+
+<meta name="description" content="September 08 (Marco&rsquo;s 2015 Weblog)">
+<meta name="keywords" content="September 08 (Marco&rsquo;s 2015 Weblog)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<link href="index.html" rel="start" title="Top">
+<link href="index.html" rel="up" title="Top">
+<link href="September-06.html" rel="next" title="September 06">
+<link href="September-10.html" rel="prev" title="September 10">
+<style type="text/css">
+<!--
+div.center {text-align:center}
+div.example {margin-left: 3.2em}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="weblog.css">
+
+
+</head>
+
+<body lang="en">
+<div class="unnumbered-level-extent" id="September-08">
+<div class="nav-panel">
+<p>
+Next: <a href="September-06.html" accesskey="n" rel="next">Harbinger of Failure</a>, Previous: <a href="September-10.html" accesskey="p" rel="prev">On records</a>, Up: <a href="index.html" accesskey="u" rel="up">Marco&rsquo;s 2015 Weblog</a> &nbsp; </p>
+</div>
+<hr>
+<h2 class="unnumbered" id="Common-interface-to-some-containers">Common interface to some containers</h2>
+
+
+<div class="center">Posted on September 6, 2015
+</div>
+
+<p>After having started <a class="url" href="http://marcomaggi.github.io/vicare.html">Vicare</a>&rsquo;s container libraries (stack, queue, deque,
+&hellip;), the problem of &ldquo;generic programming&rdquo; obviously arose; a very simple and
+partial solution is implemented by some new libraries.  All the changes discussed
+here are in the <a class="url" href="https://github.com/marcomaggi/vicare/tree/master">master</a> branch.
+</p>
+<p>There are at least two instances of the problem:
+</p>
+<ol class="enumerate">
+<li> Defining data structures collecting a specific type of objects, so that the insertion
+and retrieval operations on the container know what type to expect and what type to
+return.  This is for the future.
+
+</li><li> Defining a common interface to containers providing similar operations.  This is what
+is discussed here.
+</li></ol>
+
+<p>The solution adopted by many languages is: support for interfaces with early and late
+binding; if we can specify that a function accepts as argument an object implementing
+the &ldquo;stack interface&rdquo;, that function can call the usual methods &lsquo;<samp class="samp">top</samp>&rsquo;,
+&lsquo;<samp class="samp">push</samp>&rsquo;, &lsquo;<samp class="samp">pop</samp>&rsquo; on the stack&ndash;like object.  One of the following techniques
+is used:
+</p>
+<dl class="table">
+<dt>Early binding, static dispatch</dt>
+<dd><p>If the true operand type <strong class="strong">can</strong> be determined at compile&ndash;time: the call to an
+actual method function can be inserted at compile&ndash;time.
+</p>
+</dd>
+<dt>Late binding, dynamic dispatch</dt>
+<dd><p>If the true operand type <strong class="strong">cannot</strong> be determined at compile&ndash;time: at
+run&ndash;time, the type descriptor of the operand must be inspected and a table of
+methods queried for the implemented interfaces.
+</p></dd>
+</dl>
+
+<p>Support for interfaces, early and late bindings is for the future.  What is
+implemented by the new libraries is a set of record types that unify the basic
+operations on common containers.  So the library <code class="code">(vicare containers istacks)</code>
+defines the &ldquo;abstract&rdquo; record type <code class="code">&lt;istack&gt;</code> and the library
+<code class="code">(vicare containers istacks lists)</code> provides a &ldquo;concrete&rdquo; implementation of
+the <code class="code">&lt;istack&gt;</code> type using built&ndash;in lists as storage; usage example:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">(import (vicare)
+  (vicare containers istacks)
+  (vicare containers istacks lists))
+
+(define S
+  (make-istack-list))
+
+(istack-push! S 0)
+(istack-push! S 1)
+(istack-push! S 2)
+
+(istack-top  S)         &rArr; 2
+(istack-pop! S)         &rArr; 2
+(istack-pop! S)         &rArr; 1
+</pre></div>
+
+<p>The library <code class="code">(vicare containers istacks chains)</code> provides a &ldquo;concrete&rdquo;
+implementation of the <code class="code">&lt;istack&gt;</code> type using a chain as storage; chains are
+doubly&ndash;linked lists defined by the library <code class="code">(vicare containers chains)</code>.
+Usage example:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">(import (vicare)
+  (vicare containers chains)
+  (vicare containers istacks)
+  (vicare containers istacks chains))
+
+(define S
+  (make-istack-chain (chain)))
+
+(istack-push! S 0)
+(istack-push! S 1)
+(istack-push! S 2)
+
+(istack-top  S)         &rArr; 2
+(istack-pop! S)         &rArr; 2
+(istack-pop! S)         &rArr; 1
+</pre></div>
+
+<p>Every container that can implement last&ndash;in/first&ndash;out insertion and extraction
+operations can become a concrete implementation of <code class="code">&lt;istack&gt;</code>; at present the
+following libraries deal with the common stack <abbr class="acronym">api</abbr>:
+</p>
+<div class="example">
+<pre class="example-preformatted">(vicare containers istacks)
+(vicare containers istacks lists)
+(vicare containers istacks ilists)
+(vicare containers istacks ralists)
+(vicare containers istacks chains)
+(vicare containers istacks dynamic-arrays)
+(vicare containers istacks stacks)
+(vicare containers istacks deques)
+</pre></div>
+
+<p>Similarly, a common <abbr class="acronym">api</abbr> is defined for queues through the record type
+<code class="code">&lt;iqueue&gt;</code>; every container that can implement first&ndash;in/first&ndash;out insertion
+and extraction operations can become a concrete implementation of <code class="code">&lt;iqueue&gt;</code>;
+at present the following libraries deal with the common queue <abbr class="acronym">api</abbr>:
+</p>
+<div class="example">
+<pre class="example-preformatted">(vicare containers iqueues)
+(vicare containers iqueues dynamic-arrays)
+(vicare containers iqueues queues)
+(vicare containers iqueues deques)
+(vicare containers iqueues chains)
+</pre></div>
+
+<p>Similarly, a common <abbr class="acronym">api</abbr> is defined for deques through the record type
+<code class="code">&lt;ideque&gt;</code>; every container that can implement a sequence of object with
+front and rear insertion and extraction operations can become a concrete
+implementation of <code class="code">&lt;ideque&gt;</code>; at present the following libraries deal with
+the common deque <abbr class="acronym">api</abbr>:
+</p>
+<div class="example">
+<pre class="example-preformatted">(vicare containers ideques)
+(vicare containers ideques dynamic-arrays)
+(vicare containers ideques deques)
+(vicare containers ideques chains)
+</pre></div>
+
+<p>Proper interface support with early and late binding is better, but these common
+<abbr class="acronym">api</abbr>s are ready today.
+</p>
+</div>
+<hr>
+<div class="nav-panel">
+<p>
+Next: <a href="September-06.html">Harbinger of Failure</a>, Previous: <a href="September-10.html">On records</a>, Up: <a href="index.html">Marco&rsquo;s 2015 Weblog</a> &nbsp; </p>
+</div>
+
+
+
+</body>
+</html>

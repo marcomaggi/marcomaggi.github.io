@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html>
+<!-- Created by GNU Texinfo 7.0.3, https://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<title>Aug 25 (Marco&rsquo;s 2016 Weblog)</title>
+
+<meta name="description" content="Aug 25 (Marco&rsquo;s 2016 Weblog)">
+<meta name="keywords" content="Aug 25 (Marco&rsquo;s 2016 Weblog)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<link href="index.html" rel="start" title="Top">
+<link href="index.html" rel="up" title="Top">
+<link href="Jul-29.html" rel="next" title="Jul 29">
+<link href="Sep-4.html" rel="prev" title="Sep  4">
+<style type="text/css">
+<!--
+div.center {text-align:center}
+div.example {margin-left: 3.2em}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="weblog.css">
+
+
+</head>
+
+<body lang="en">
+<div class="unnumbered-level-extent" id="Aug-25">
+<div class="nav-panel">
+<p>
+Next: <a href="Jul-29.html" accesskey="n" rel="next">Protection levels for record types</a>, Previous: <a href="Sep-4.html" accesskey="p" rel="prev">Recursive types again, structs library</a>, Up: <a href="index.html" accesskey="u" rel="up">Marco&rsquo;s 2016 Weblog</a> &nbsp; </p>
+</div>
+<hr>
+<h2 class="unnumbered" id="Recursive-types_002c-reader-extensions_002c-tuples">Recursive types, reader extensions, tuples</h2>
+
+
+<div class="center">Posted on Thu Aug 25, 2016
+</div>
+
+<p>More work in the <code class="code">master</code> branch of <a class="url" href="http://marcomaggi.github.io/vicare.html">Vicare</a>.  I have bumped the version number
+of the library <code class="code">(vicare)</code> to <code class="code">(0 4 2016 8 25)</code>.
+</p>
+<p>The typed language now implements recursive types and forward type definitions; with
+this the toolbox for object&ndash;oriented programming should be complete.  Mixins exist,
+but I have a lingering desire to attempt a traits implementation; I do not know if I
+will do them.
+</p>
+<p>Everything I discuss here is relative to code in the head of the <code class="code">master</code> branch.
+</p>
+
+<ul class="mini-toc">
+<li><a href="#Recursive-types-and-forward-type-definitions" accesskey="1">Recursive types and forward type definitions</a></li>
+<li><a href="#Reader-extensions" accesskey="2">Reader extensions</a></li>
+<li><a href="#Tuples-on-top-of-lists-and-vectors" accesskey="3">Tuples on top of lists and vectors</a></li>
+</ul>
+<div class="unnumberedsec-level-extent" id="Recursive-types-and-forward-type-definitions">
+<h3 class="unnumberedsec">Recursive types and forward type definitions</h3>
+
+<p>The syntax <code class="code">define-type</code> has seen development and it is now the only way to
+define new type annotations.  We can define new type annotations as follows:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">(define-type &lt;nnfx&gt;
+  &lt;non-negative-fixnum&gt;)
+
+(define-type &lt;compound&gt;
+  (or &lt;vector&gt; &lt;list&gt;))
+</pre></div>
+
+<p>This syntax allows recursive type definitions:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">(define-type &lt;it&gt;
+  (or (list-of &lt;fixnum&gt;)
+      (vector-of &lt;it&gt;)))
+</pre></div>
+
+<p>This syntax allows <em class="dfn">forward definitions</em>: type annotations that are half&ndash;defined
+to allow for mutually recursive type definitions.  Here is an example of forward
+definition that does nothing useful:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">(define-type &lt;it&gt;)      ;forward definition
+(define-type &lt;it&gt;)      ;does nothing
+
+;;Complete the definition of &quot;&lt;it&gt;&quot;.
+(define-type &lt;it&gt; &lt;number&gt;)
+</pre></div>
+
+<p>Here is a possible definition for a <code class="code">&lt;syntax-object&gt;</code> type using mutually
+recursive definitions:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">(import (rename (only (vicare expander)
+                      &lt;stx&gt; &lt;syntactic-identifier&gt;)
+                (&lt;stx&gt; &lt;wrapped-syntax-object&gt;)))
+
+(define-type &lt;datum&gt;
+  (or &lt;null&gt; &lt;boolean&gt; &lt;char&gt; &lt;number&gt; &lt;string&gt; &lt;bytevector&gt;))
+
+(define-type &lt;syntax-object&gt;)
+
+(define-type &lt;pair-of-syntax-objects&gt;
+  (pair-of &lt;syntax-object&gt;))
+
+(define-type &lt;vector-of-syntax-objects&gt;
+  (vector-of &lt;syntax-object&gt;))
+
+(define-type &lt;syntax-object&gt;
+  (or &lt;datum&gt;
+      &lt;wrapped-syntax-object&gt;
+      &lt;syntactic-identifier&gt;
+      &lt;pair-of-syntax-objects&gt;
+      &lt;vector-of-syntax-objects&gt;))
+</pre></div>
+
+<blockquote class="quotation">
+<p><strong class="strong">EDIT (Fri Aug 26, 2016)</strong> This is broken for record&ndash;types.  Whenever a method
+in a record&ndash;type definition has the record&ndash;type itself in its type signature: an
+error is raised.  This is a design problem that slipped under my radar.  It is not
+easy to fix it.  Damn!
+</p></blockquote>
+
+
+</div>
+<div class="unnumberedsec-level-extent" id="Reader-extensions">
+<h3 class="unnumberedsec">Reader extensions</h3>
+
+<p>When the source&ndash;code reader is in <code class="code">#!vicare</code> mode, it is possible to include
+&ldquo;here documents&rdquo; processed (at read&ndash;time) by custom functions.  This feature works
+only when reading source code for libraries or programs, at present it does
+<strong class="strong">not</strong> work at the <abbr class="acronym">repl</abbr>.
+</p>
+<p>Let&rsquo;s see how it works.  Assuming the following library is in the search path:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">(library (libdemo)
+  (export doit)
+  (import (rnrs))
+  (define (doit input-string)
+    (read (open-string-input-port input-string))))
+</pre></div>
+
+<p>let&rsquo;s consider this program file:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">#!vicare
+(reader-import (libdemo))
+(program (demo)
+  (import (rnrs))
+  (display #&lt;doit 456&gt;#)
+  (newline)
+  (flush-output-port (current-output-port)))
+</pre></div>
+
+<p>we see that <strong class="strong">at the beginning</strong> of a program file (before the <code class="code">program</code>
+form) we have:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">(reader-import (libdemo))
+</pre></div>
+
+<p>and in the body of the program we have the block:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">#&lt;doit 456&gt;#
+</pre></div>
+
+<p>such block is converted by the reader to the form:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">(doit &quot;456&quot;)
+</pre></div>
+
+<p>notice that whitespace characters after the symbol &quot;doit&quot; are discarded.  Such form
+is handed to <code class="code">eval</code> and evaluated in the context of the lexical environment
+resulting from importing <code class="code">(libdemo)</code>; the result of the evaluation is returned
+to the reader for inclusion in its output.  So the reader gets the symbolic
+expression &lsquo;<samp class="samp">456</samp>&rsquo;.
+</p>
+<p>So if we have a <abbr class="acronym">json</abbr> parser library we can put a block <code class="code">#&lt;json-to-sexp
+...&gt;#</code> in the code and have the <abbr class="acronym">json</abbr> data converted to Scheme symbolic
+expressions at read&ndash;time.
+</p>
+
+</div>
+<div class="unnumberedsec-level-extent" id="Tuples-on-top-of-lists-and-vectors">
+<h3 class="unnumberedsec">Tuples on top of lists and vectors</h3>
+
+<p>The new library <code class="code">(vicare language-extensions tuples)</code> implements tuples on top
+of lists and vectors (using the typed language).  Tuple&ndash;types are just label&ndash;types
+used to provide convenient read&ndash;only access to lists and vectors.  Tuples cannot be
+sub&ndash;typed and have no methods; we have to use the full labels for that.
+</p>
+<p>Usage examples with lists and untyped fields:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">(define-list-tuple-type &lt;stuff&gt;
+  (fields a b c))
+
+(define T
+  (new &lt;stuff&gt; 1 2 3))
+
+(.a T)  &rArr; 1
+(.b T)  &rArr; 2
+(.c T)  &rArr; 3
+</pre></div>
+
+<p>usage examples with vectors and typed fields:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">(define-vector-tuple-type &lt;stuff&gt;
+  (fields {a &lt;fixnum&gt;}
+          {b &lt;flonum&gt;}
+          {c &lt;string&gt;}))
+
+(define T
+  (new &lt;stuff&gt; 1 2.3 &quot;ciao&quot;))
+
+T                       &rArr; #(1 2.3 &quot;ciao&quot;)
+(.a T)                  &rArr; 1
+(.b T)                  &rArr; 2.3
+(.c T)                  &rArr; &quot;ciao&quot;
+(.length (.c T))        &rArr; 4
+</pre></div>
+
+</div>
+</div>
+<hr>
+<div class="nav-panel">
+<p>
+Next: <a href="Jul-29.html">Protection levels for record types</a>, Previous: <a href="Sep-4.html">Recursive types again, structs library</a>, Up: <a href="index.html">Marco&rsquo;s 2016 Weblog</a> &nbsp; </p>
+</div>
+
+
+
+</body>
+</html>

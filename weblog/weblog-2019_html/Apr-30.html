@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+<!-- Created by GNU Texinfo 7.0.3, https://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<title>Apr 30 (Marco&rsquo;s 2019 Weblog)</title>
+
+<meta name="description" content="Apr 30 (Marco&rsquo;s 2019 Weblog)">
+<meta name="keywords" content="Apr 30 (Marco&rsquo;s 2019 Weblog)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<link href="index.html" rel="start" title="Top">
+<link href="index.html" rel="up" title="Top">
+<link href="Apr-08.html" rel="next" title="Apr 08">
+<link href="May-08.html" rel="prev" title="May 08">
+<style type="text/css">
+<!--
+div.example {margin-left: 3.2em}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="weblog.css">
+
+
+</head>
+
+<body lang="en">
+<div class="unnumbered-level-extent" id="Apr-30">
+<div class="nav-panel">
+<p>
+Next: <a href="Apr-08.html" accesskey="n" rel="next">Video of the day</a>, Previous: <a href="May-08.html" accesskey="p" rel="prev">On the size of <small class="sc">CHICKEN</small> binaries</a>, Up: <a href="index.html" accesskey="u" rel="up">Marco&rsquo;s 2019 Weblog</a> &nbsp; </p>
+</div>
+<hr>
+<h2 class="unnumbered" id="Musings-on-Scheme_002c-CHICKEN_002c-and-a-hypothetical-language">Musings on Scheme, <small class="sc">CHICKEN</small>, and a hypothetical language</h2>
+
+
+<p><em class="emph">Posted on Tue Apr 30, 2019</em>
+</p>
+
+<p>I have ported some old Scheme code under <a class="url" href="http://www.call-cc.org/"><small class="sc">CHICKEN</small></a>.  The result is
+a small set of packages: <a class="url" href="https://github.com/marcomaggi/mmck-checks"><small class="sc">MMCK</small> Checks</a>;
+<a class="url" href="https://github.com/marcomaggi/mmck-fectors"><small class="sc">MMCK</small> Fectors</a>;
+<a class="url" href="https://github.com/marcomaggi/mmck-pfds"><small class="sc">MMCK</small> PFDS</a>, which is still under development.  It
+was somewhat fun; I still enjoy reorganising code.
+</p>
+<p>I&rsquo;m making little progress understanding <small class="sc">CHICKEN</small>&rsquo;s programming features and ecosystem.  Native
+executables and shared libraries are good, but I notice that they are somewhat bigger in file size
+that I thought; not really a problem (being that I am used to the huge files of
+<a class="url" href="https://github.com/marcomaggi/vicare/">Vicare</a>), but still I wonder what&rsquo;s in there to make
+binary code so big.
+</p>
+<p>I&rsquo;m starting to get the hang of exceptional&ndash;condition handling and exceptional&ndash;condition objects;
+I can confirm my first impression: I do not like it.  The handlers and condition objects defined by
+<a class="url" href="http://www.r6rs.org/"><abbr class="acronym">r6rs</abbr></a> are better in my humble opinion; and maybe I&rsquo;m not the only
+one.  In the small amount of <small class="sc">CHICKEN</small> code I have seen so far, written by people with much more
+experience than myself, there is very little design of exceptional&ndash;condition object&ndash;types; mostly,
+there is just a raw <code class="code">error</code> call in which the exception description is the message string: not
+an object we can use programmatically to react differently to different error kinds.
+</p>
+<p>So far, the one <small class="sc">CHICKEN</small> <a class="url" href="http://wiki.call-cc.org/chicken-projects/egg-index-5.html">egg</a> I
+cannot live without is <small class="sc">COOPS</small>: a library implementing <small class="sc">CLOS</small>&ndash;like language extensions.  It
+is incomplete, more metaobject protocol must be implemented.  Its documentation is ugly and
+incomplete.  It is based upon <a class="url" href="http://www.ccs.neu.edu/home/dorai/scmobj/scmobj.html">ScmObj</a> by
+Dorai Sitaram, a code base I know because I, too, have used it as base to implement extensions for
+Vicare.
+</p>
+<p>In the past, when approaching new Scheme implementations, I built a library of language extensions
+to adapt the programming environment to my needs; I will try the same with <small class="sc">CHICKEN</small> and see what
+will happen.
+</p>
+
+<h4 class="subsubheading" id="How-a-statically-typed-Scheme-language-could-look">How a statically typed Scheme language could look</h4>
+
+
+<p>Lately I&rsquo;ve been thinking about how a statically typed Scheme language could be implemented to suit
+my taste.  Would it still be a &ldquo;Scheme&rdquo; language, or would it be a non&ndash;Scheme dialect of Lisp?
+Maybe the latter.
+</p>
+<p>Let&rsquo;s consider the function <code class="code">string-&gt;number</code> as defined by <abbr class="acronym">r6rs</abbr>:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">(string-&gt;number &quot;123&quot;)  &rArr; 123
+(string-&gt;number &quot;ciao&quot;) &rArr; #f
+</pre></div>
+
+<p>this behaviour allows us to write a typical Scheme idiom:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">(or (string-&gt;number arg)
+    (raise-an-error))
+</pre></div>
+
+<p>A type signature for this function would be something like:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">(&lt;string&gt;) -&gt; (or &lt;number&gt; &lt;false&gt;)
+</pre></div>
+
+<p>no exception is raised if the argument is not a number.  I do not like this complex type signature:
+I want a single, known, type for each argument and each return value.  But then the typical Scheme
+idiom above would not be possible.
+</p>
+<p>How would one implement <code class="code">string-&gt;number</code> then?  The simpler way would be to raise an exception:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">(try
+   (let* ((arg (do-this-thing))
+          (num (string-&gt;number arg)))
+     (do-that-thing))
+  (catch E
+    ((&amp;string-does-not-represent-a-number)
+     (react-this-way))
+    (else
+     (react-that-way))))
+</pre></div>
+
+<p>nowadays every programmer can understand this code, even if he/she is not a Scheme adept.  A problem
+with raising exceptions is that it is hard to distinguish the form that raised the exception: which
+chunk of code inside the body raised <code class="code">&amp;string-does-not-represent-a-number</code>?
+</p>
+<p>A more general design is to hand an escape function as second argument: if the input string cannot
+be converted to a string, <code class="code">string-&gt;number</code> calls the escape function, let&rsquo;s say with no
+arguments:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">(with-escape-handlers
+   (let* ((arg (do-this-thing))
+          (num (string-&gt;number arg escape-string-conversion)))
+     (do-that-thing))
+  ((escape-string-conversion)
+   (react-this-way)))
+</pre></div>
+
+<p>we can imagine the syntax <code class="code">with-escape-handlers</code> to expand into something like (untested):
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">(call/cc
+    (lambda (return)
+      (call/cc
+          (lambda (escape-string-conversion)
+            (let* ((arg (do-this-thing))
+                   (num (string-&gt;number arg escape-string-conversion)))
+              (return (do-that-thing)))))
+      (react-this-way)))
+</pre></div>
+
+<p>not easy to understand if you are not into Scheme; somewhat messy, when multiple functions can call
+multiple escape functions; very general because each form inside the body of
+<code class="code">with-escape-handlers</code> can cause the execution flow to branch into a different execution
+path, but still multiple forms can call the same escape function.
+</p>
+<p>An even more general design is to hand a continuation function as second argument:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">(let* ((arg (do-this-thing))
+       (num (string-&gt;number arg (lambda (exception-object)
+                                  (react-this-way)))))
+  (do-that-thing))
+</pre></div>
+
+<p>and <code class="code">string-&gt;number</code> should tail&ndash;call its continuation if a conversion error occurs.
+Weird&hellip;
+</p>
+<p>Enough for today.
+</p>
+</div>
+<hr>
+<div class="nav-panel">
+<p>
+Next: <a href="Apr-08.html">Video of the day</a>, Previous: <a href="May-08.html">On the size of <small class="sc">CHICKEN</small> binaries</a>, Up: <a href="index.html">Marco&rsquo;s 2019 Weblog</a> &nbsp; </p>
+</div>
+
+
+
+</body>
+</html>

@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html>
+<!-- Created by GNU Texinfo 7.0.3, https://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<title>February 15 (Marco&rsquo;s 2015 Weblog)</title>
+
+<meta name="description" content="February 15 (Marco&rsquo;s 2015 Weblog)">
+<meta name="keywords" content="February 15 (Marco&rsquo;s 2015 Weblog)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<link href="index.html" rel="start" title="Top">
+<link href="index.html" rel="up" title="Top">
+<link href="February-14-bis.html" rel="next" title="February 14 bis">
+<link href="February-16.html" rel="prev" title="February 16">
+<style type="text/css">
+<!--
+div.example {margin-left: 3.2em}
+ul.mark-bullet {list-style-type: disc}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="weblog.css">
+
+
+</head>
+
+<body lang="en">
+<div class="unnumbered-level-extent" id="February-15">
+<div class="nav-panel">
+<p>
+Next: <a href="February-14-bis.html" accesskey="n" rel="next">Musings on the tagged language (part 2) (2015 February 14 bis)</a>, Previous: <a href="February-16.html" accesskey="p" rel="prev">Does the Scheme standard still matter? (2015 February 16)</a>, Up: <a href="index.html" accesskey="u" rel="up">Marco&rsquo;s 2015 Weblog</a> &nbsp; </p>
+</div>
+<hr>
+<h2 class="unnumbered" id="Musings-on-the-tagged-language-_0028part-3_0029-_00282015-February-15_0029">Musings on the tagged language (part 3) (2015 February 15)</h2>
+
+
+<p>In a previous entry (see <a class="pxref" href="February-14-bis.html">Musings on the tagged language (part 2) (2015 February 14 bis)</a>) I discussed an idea to solve the
+problem of having Lispy syntax in the tagged language, without the burden of
+exporting and importing from libraries a big number of identifiers bound to class
+methods and field accessors.
+</p>
+
+<ul class="mini-toc">
+<li><a href="#The-possible-solution" accesskey="1">The possible solution</a></li>
+<li><a href="#But-_2026" accesskey="2">But &hellip;</a></li>
+<li><a href="#If-it-is-a-global-namespace-_2026" accesskey="3">If it is a global namespace &hellip;</a></li>
+<li><a href="#About-the-improper-list-syntax" accesskey="4">About the improper list syntax</a></li>
+<li><a href="#Conclusions-2" accesskey="5">Conclusions</a></li>
+</ul>
+<div class="unnumberedsec-level-extent" id="The-possible-solution">
+<h3 class="unnumberedsec">The possible solution</h3>
+
+<p>In the expression:
+</p>
+<div class="example">
+<pre class="example-preformatted">(length &quot;ciao&quot;)
+</pre></div>
+
+<p>the literal expression <code class="code">&quot;ciao&quot;</code> is considered of type <code class="code">&lt;string&gt;</code> and the
+symbol <code class="code">length</code>, that comes before it, is searched in the list of multimethods
+whose first argument is of type <code class="code">&lt;string&gt;</code>.  The class <code class="code">&lt;string&gt;</code> contains a
+table of multimethods whose first argument is of type <code class="code">&lt;string&gt;</code>.  There is no
+need to import a binding named <code class="code">length</code> to access the table of multimethods: if
+it is determined at expand&ndash;time that an expression returns a value of type
+<code class="code">&lt;string&gt;</code>, the expander has access to the table.
+</p>
+
+</div>
+<div class="unnumberedsec-level-extent" id="But-_2026">
+<h3 class="unnumberedsec">But &hellip;</h3>
+
+<p>What is the difference between having a table of multimethods in a class and just
+having a global namespace of multimethod names that is queried before the bindings in
+the local lexical context?  In the program:
+</p>
+<div class="example">
+<pre class="example-preformatted">(import (vicare))
+
+(length &quot;ciao&quot;)
+</pre></div>
+
+<p>the expander just visits the global namespace first, in search of a method named
+<code class="code">length</code> having one argument with type <code class="code">&lt;string&gt;</code>:
+</p>
+<ul class="itemize mark-bullet">
+<li>If the method exists: it is used.
+
+</li><li>If the method does not exist: normal binding resolution takes place.
+</li></ul>
+
+<p>A global namespace of multimethods is equivalent to multimethods in the class
+definition.
+</p>
+
+</div>
+<div class="unnumberedsec-level-extent" id="If-it-is-a-global-namespace-_2026">
+<h3 class="unnumberedsec">If it is a global namespace &hellip;</h3>
+
+<p>Is it fine to access it transparently?  Or would this transparent access make the
+code too difficult to interpret for humans?  Should a (possibly optional) namespace
+qualifier be introduced?  Possible alternatives:
+</p>
+<ul class="itemize mark-bullet">
+<li>Multimethods have names starting with a dot:
+
+<div class="example">
+<pre class="example-preformatted">(.length &quot;ciao&quot;)
+(.append &quot;ciao&quot; &quot; mamma&quot;)
+</pre></div>
+
+<p>the dot is a small and one&ndash;keyboard&ndash;tap character.
+</p>
+</li><li>Prefix qualifier:
+
+<div class="example">
+<pre class="example-preformatted">(:: length &quot;ciao&quot;)
+(:: append &quot;ciao&quot; &quot; mamma&quot;)
+</pre></div>
+
+<p>Foreign example: Guile uses the <code class="code">@</code> character to access bindings from modules
+without importing such modules in the lexical context.
+</p>
+</li><li>Infix qualifier:
+
+<div class="example">
+<pre class="example-preformatted">(length :: &quot;ciao&quot;)
+(append :: &quot;ciao&quot; &quot; mamma&quot;)
+</pre></div>
+
+</li><li>Improper list syntax:
+
+<div class="example">
+<pre class="example-preformatted">(length . &quot;ciao&quot;)
+(append . &quot;ciao&quot; &quot; mamma&quot;)
+</pre></div>
+
+</li><li><em class="emph">Quoting</em> syntax:
+
+<div class="example">
+<pre class="example-preformatted">:(length &quot;ciao&quot;)
+:(append &quot;ciao&quot; &quot; mamma&quot;)
+</pre></div>
+
+<p>the reader converts the input:
+</p>
+<div class="example">
+<pre class="example-preformatted">:(<var class="var">?form0</var> <var class="var">?form</var> ...)
+</pre></div>
+
+<p>into:
+</p>
+<div class="example">
+<pre class="example-preformatted">(colon <var class="var">?form0</var> <var class="var">?form</var> ...)
+</pre></div>
+
+<p>where <code class="code">colon</code> must be an identifier bound in the lexical context of the
+expression.
+</p></li></ul>
+
+
+</div>
+<div class="unnumberedsec-level-extent" id="About-the-improper-list-syntax">
+<h3 class="unnumberedsec">About the improper list syntax</h3>
+
+<p>It is currently unused by <a class="url" href="http://marcomaggi.github.io/vicare.html">Vicare</a>.  The Scheme reader could be instructed (in
+<code class="code">#!vicare</code> mode) to convert the input:
+</p>
+<div class="example">
+<pre class="example-preformatted">(append . &quot;ciao&quot; &quot; mamma&quot;)
+</pre></div>
+
+<p>to some special form, like it already does for the apostrophe and similar operators:
+the input <code class="code">'(1 2 3)</code> is read as <code class="code">(quote (1 2 3))</code>.  So, in general:
+</p>
+<div class="example">
+<pre class="example-preformatted">(<var class="var">?form0</var> <var class="var">?form1</var> &hellip; . <var class="var">?form2</var> <var class="var">?form3</var> &hellip;)
+</pre></div>
+
+<p>could be read as:
+</p>
+<div class="example">
+<pre class="example-preformatted">(improper (<var class="var">?form0</var> <var class="var">?form1</var> &hellip;) (<var class="var">?form2</var> <var class="var">?form3</var> &hellip;))
+</pre></div>
+
+<p>where <code class="code">improper</code> must be an identifier bound in the lexical context of the
+expression.
+</p>
+<p>But what about:
+</p>
+<div class="example">
+<pre class="example-preformatted">'(1 2 . 3)
+</pre></div>
+
+<p>which is a perfectly valid literal expression?  The reader should distinguish between
+quoted and unquoted input: this should <strong class="strong">not</strong> be a reader&rsquo;s responsibility.
+</p>
+
+</div>
+<div class="unnumberedsec-level-extent" id="Conclusions-2">
+<h3 class="unnumberedsec">Conclusions</h3>
+
+<p>Having a global namespace for multimethod names seems the most sensible solution.
+</p>
+<p>The cleanest way to query this namespace seems to be a proper syntax use like:
+</p>
+<div class="example">
+<pre class="example-preformatted">(method-call <var class="var">?name</var> <var class="var">?operand</var> ...)
+</pre></div>
+
+<p>where <code class="code">method-call</code> is defined in the boot image and exported by
+<code class="code">(vicare)</code>.  Some reader syntax should be used to obtain a <code class="code">method-call</code>
+syntax use from some easy&ndash;to&ndash;type sequence of characters.
+</p>
+</div>
+</div>
+<hr>
+<div class="nav-panel">
+<p>
+Next: <a href="February-14-bis.html">Musings on the tagged language (part 2) (2015 February 14 bis)</a>, Previous: <a href="February-16.html">Does the Scheme standard still matter? (2015 February 16)</a>, Up: <a href="index.html">Marco&rsquo;s 2015 Weblog</a> &nbsp; </p>
+</div>
+
+
+
+</body>
+</html>

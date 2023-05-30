@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html>
+<!-- Created by GNU Texinfo 7.0.3, https://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<title>July 02 (Marco&rsquo;s 2015 Weblog)</title>
+
+<meta name="description" content="July 02 (Marco&rsquo;s 2015 Weblog)">
+<meta name="keywords" content="July 02 (Marco&rsquo;s 2015 Weblog)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<link href="index.html" rel="start" title="Top">
+<link href="index.html" rel="up" title="Top">
+<link href="June-10.html" rel="next" title="June 10">
+<link href="September-06.html" rel="prev" title="September 06">
+<style type="text/css">
+<!--
+div.center {text-align:center}
+div.example {margin-left: 3.2em}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="weblog.css">
+
+
+</head>
+
+<body lang="en">
+<div class="unnumbered-level-extent" id="July-02">
+<div class="nav-panel">
+<p>
+Next: <a href="June-10.html" accesskey="n" rel="next">Review of extensions for Vicare (part 5)</a>, Previous: <a href="September-06.html" accesskey="p" rel="prev">Harbinger of Failure</a>, Up: <a href="index.html" accesskey="u" rel="up">Marco&rsquo;s 2015 Weblog</a> &nbsp; </p>
+</div>
+<hr>
+<h2 class="unnumbered" id="C-code-review">C code review</h2>
+
+
+<div class="center">Posted on 2015 July 02
+</div>
+
+<p><a class="url" href="http://marcomaggi.github.io/vicare.html">Vicare</a>&rsquo;s expander review is still on hold.  Ha!  Ha!  Sue me.  Instead I did a
+C language code review fixing some errors related to memory management, normalising
+the name of some data types, performing some clean&ndash;up and documentation.  There is
+still some documentation review I have to do.  All the changes discussed here are in
+the <a class="url" href="https://github.com/marcomaggi/vicare/tree/master">master</a> branch.
+</p>
+<p>The uses of C language types <code class="code">long</code> and <code class="code">unsigned long</code> have been removed
+when the intended data type was &ldquo;signed machine word&rdquo; and &ldquo;unsigned machine
+word&rdquo;.  New data types are now in the code: <code class="code">iksword_t</code> for signed machine
+words and <code class="code">ikuword_t</code> for unsigned machine words.  This should make it feasible
+(at least: more feasible) to compile and run the code base on platforms adopting the
+data model LP64 and platforms adopting the data model LLP64<a class="footnote" id="DOCF2" href="#FOOT2"><sup>2</sup></a>.
+</p>
+<p>I found that many places where the dirty vector is to be used were doing it wrong:
+shame on me.  This is really my fault for not understanding correctly how the dirty
+vector is to be used.  I think I fixed the errors.
+</p>
+
+<ul class="mini-toc">
+<li><a href="#Customisation-of-memory-handling-and-garbage-collection" accesskey="1">Customisation of memory handling and garbage collection</a></li>
+<li><a href="#Disabling-garbage-collection" accesskey="2">Disabling garbage collection</a></li>
+<li><a href="#Tracking-run_002d_002dtime-events" accesskey="3">Tracking run&ndash;time events</a></li>
+</ul>
+<div class="unnumberedsec-level-extent" id="Customisation-of-memory-handling-and-garbage-collection">
+<h3 class="unnumberedsec">Customisation of memory handling and garbage collection</h3>
+
+<p>I was inspired by a
+<a class="url" href="http://tech.grammarly.com/blog/posts/Running-Lisp-in-Production.html">tale</a> of
+Common Lisp optimisation (found through <a class="url" href="http://www.reddit.com/r/lisp">Reddit</a>
+and commented on <a class="url" href="https://news.ycombinator.com/item?id=9785944">Hacker News</a>) to
+check what I can do to make Vicare&rsquo;s memory handling and garbage collection
+configurable.
+</p>
+<p>First, I realised one of my previous changes was degrading performance a bit, by
+limiting the size of the Scheme heap&rsquo;s nursery in some cases; fixed.  I reported
+previously (see <a class="pxref" href="May-19.html">Random stuff (2015 May 19)</a>), that start&ndash;up time for a simple &ldquo;Hello world!&rdquo;
+compiled program typically gave this execution times:
+</p>
+<div class="example">
+<pre class="example-preformatted">$ /usr/bin/time -p ./demo
+Hello World!
+real 0.13
+user 0.08
+sys 0.05
+</pre></div>
+
+<p>after the heap size fix, I get:
+</p>
+<div class="example">
+<pre class="example-preformatted">$ /usr/bin/time -p ./demo
+Hello World!
+real 0.09
+user 0.06
+sys 0.03
+</pre></div>
+
+<p>I am not opening <a class="url" href="https://en.wikipedia.org/wiki/Sparkling_wine#Spumante">Spumante</a> bottles&hellip;
+</p>
+<p>Second, I have made configurable the size of the Scheme heap&rsquo;s nursery and of the
+Scheme stack.  There are now command line options:
+</p>
+<div class="example">
+<pre class="example-preformatted">--option scheme-heap-nursery-size=<var class="var">num-of-bytes</var>
+--option scheme-stack-size=<var class="var">num-of-bytes</var>
+</pre></div>
+
+<p>to select the size of memory segments.  In addition: the functions
+<code class="code">scheme-heap-nursery-size</code> and <code class="code">scheme-stack-size</code> allow querying and
+setting the values at run&ndash;time.
+</p>
+
+</div>
+<div class="unnumberedsec-level-extent" id="Disabling-garbage-collection">
+<h3 class="unnumberedsec">Disabling garbage collection</h3>
+
+<p>Some time ago, a Github user <a class="url" href="https://github.com/marcomaggi/vicare/issues/72">asked</a> for the ability to (temporarily) disable garbage collection.  I quickly
+dismissed it as too time&ndash;consuming to implement, but I changed my mind: it is
+feasible and I have implemented it.
+</p>
+<p>There is a new command line option; when running with:
+</p>
+<div class="example">
+<pre class="example-preformatted">$ vicare --option disable-automatic-gc ...
+</pre></div>
+
+<p>automatic garbage collection is disabled: memory allocation for Scheme objects is
+performed by enlarging, when needed, the Scheme heap&rsquo;s nursery.
+</p>
+<p>When automatic garbage collection is disabled: the function <code class="code">collect</code> will still
+perform a garbage collection, because it is considered an explicit request.  The new
+function <code class="code">automatic-collect</code> mimics the behaviour of automatic collection and
+can be used to test what happens.  The new function
+<code class="code">automatic-garbage-collection</code> enables or disables automatic garbage collection
+at run&ndash;time.
+</p>
+<p>With this <abbr class="acronym">api</abbr> we should be able to disable automatic garbage collection, then
+(periodically) run a collection by explicitly calling <code class="code">collect</code>, when it is
+appropriate to do so.  We must do this with care.
+</p>
+
+</div>
+<div class="unnumberedsec-level-extent" id="Tracking-run_002d_002dtime-events">
+<h3 class="unnumberedsec">Tracking run&ndash;time events</h3>
+
+<p>There is a new command line option; when running with:
+</p>
+<div class="example">
+<pre class="example-preformatted">$ vicare --option enable-runtime-messages ...
+</pre></div>
+
+<p>the C language code in the <code class="command">vicare</code> program prints messages on <code class="code">stderr</code>
+describing events in the run&ndash;time system.  At present memory handling events are
+tracked.
+</p>
+<p>As example:
+</p>
+<div class="example">
+<pre class="example-preformatted">$ vicare --option enable-runtime-messages
+vicare: runtime: initialising Scheme heap's nursery hot block, size: 8388608 bytes, 2048 pages
+vicare: runtime: initialising Scheme stack, size: 4194304 bytes, 1024 pages
+vicare: runtime: ik_make_room_in_heap_nursery: stored full heap nursery hot block, size: 8388608 bytes, 2048 pages
+vicare: runtime: ik_make_room_in_heap_nursery: allocated new heap nursery hot block, size: 8388608 bytes, 2048 pages
+Vicare Scheme version 0.4d0, 64-bit
+Build 2015-06-30
+
+Copyright (c) 2006-2010 Abdulaziz Ghuloum and contributors
+Copyright (c) 2011-2015 Marco Maggi and contributors
+
+vicare&gt; (collect)
+vicare: runtime: ik_explicit_collect_from_scheme_with_hooks: explicit GC, requested size 32768 bytes
+vicare: runtime: perform_garbage_collection: enter collection for generation 0, requested size 32768 bytes, crossed redline=no
+vicare: runtime: perform_garbage_collection: releasing old full heap's nursery segments
+vicare: runtime: perform_garbage_collection: reusing current heap's nursery hot block, size: 8388608 bytes, 2048 pages
+vicare: runtime: perform_garbage_collection: leave collection for generation 0
+vicare: runtime: ikrt_explicit_collect_from_scheme_check_after_gc_hooks: requested 32768 bytes, available before redline 8378656 bytes
+vicare: runtime: ikrt_explicit_collect_from_scheme_check_after_gc_hooks: enough room on the nursery, skipping further GC
+vicare&gt;
+</pre></div>
+
+<p>In future more events will be logged, making it a real mess to understand what is
+going on.
+</p>
+</div>
+</div>
+<div class="footnotes-segment">
+<hr>
+<h4 class="footnotes-heading">Footnotes</h4>
+
+<h5 class="footnote-body-heading"><a id="FOOT2" href="#DOCF2">(2)</a></h5>
+<p>For details see:
+</p>
+<div class="center"><a class="url" href="https://en.wikipedia.org/wiki/64-bit_computing#64-bit_data_models">https://en.wikipedia.org/wiki/64-bit_computing#64-bit_data_models</a>
+</div>
+</div>
+<hr>
+<div class="nav-panel">
+<p>
+Next: <a href="June-10.html">Review of extensions for Vicare (part 5)</a>, Previous: <a href="September-06.html">Harbinger of Failure</a>, Up: <a href="index.html">Marco&rsquo;s 2015 Weblog</a> &nbsp; </p>
+</div>
+
+
+
+</body>
+</html>

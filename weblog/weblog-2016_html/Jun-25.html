@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>
+<!-- Created by GNU Texinfo 7.0.3, https://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<title>Jun 25 (Marco&rsquo;s 2016 Weblog)</title>
+
+<meta name="description" content="Jun 25 (Marco&rsquo;s 2016 Weblog)">
+<meta name="keywords" content="Jun 25 (Marco&rsquo;s 2016 Weblog)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<link href="index.html" rel="start" title="Top">
+<link href="index.html" rel="up" title="Top">
+<link href="Jun-18.html" rel="next" title="Jun 18">
+<link href="Jun-28.html" rel="prev" title="Jun 28">
+<style type="text/css">
+<!--
+div.center {text-align:center}
+div.example {margin-left: 3.2em}
+ul.mark-bullet {list-style-type: disc}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="weblog.css">
+
+
+</head>
+
+<body lang="en">
+<div class="unnumbered-level-extent" id="Jun-25">
+<div class="nav-panel">
+<p>
+Next: <a href="Jun-18.html" accesskey="n" rel="next">Mixins, late binding for overloaded functions, leftover problems</a>, Previous: <a href="Jun-28.html" accesskey="p" rel="prev">Syntax <code class="code">this</code> and interfaces</a>, Up: <a href="index.html" accesskey="u" rel="up">Marco&rsquo;s 2016 Weblog</a> &nbsp; </p>
+</div>
+<hr>
+<h2 class="unnumbered" id="Super_002dtypes-and-sub_002dtypes">Super-types and sub-types</h2>
+
+
+<div class="center">Posted on Sat Jun 25, 2016
+</div>
+
+<p>More work in the &lsquo;<samp class="samp">typed-language</samp>&rsquo;
+<a class="url" href="https://github.com/marcomaggi/vicare/tree/typed-language.marcomaggi-2015-11-18">branch</a> of <a class="url" href="http://marcomaggi.github.io/vicare.html">Vicare</a>, for both the expander and the built&ndash;in types
+infrastructure.
+</p>
+<p>Everything I discuss here is relative to code in the head of the
+&lsquo;<samp class="samp">typed-language</samp>&rsquo; branch.
+</p>
+
+<ul class="mini-toc">
+<li><a href="#Super_002d_002dtypes-and-sub_002d_002dtypes" accesskey="1">Super&ndash;types and sub&ndash;types</a></li>
+<li><a href="#Farewell-slot_002dset-and-slot_002dref_0021" accesskey="2">Farewell <code class="code">slot-set</code> and <code class="code">slot-ref!</code></a></li>
+<li><a href="#New-constructor_002dsignature-clause-for-define_002drecord_002dtype" accesskey="3">New <code class="code">constructor-signature</code> clause for <code class="code">define-record-type</code></a></li>
+</ul>
+<div class="unnumberedsec-level-extent" id="Super_002d_002dtypes-and-sub_002d_002dtypes">
+<h3 class="unnumberedsec">Super&ndash;types and sub&ndash;types</h3>
+
+<p>Done a crackdown on the machinery that determines when two expand&ndash;time type
+specifications, or two run&ndash;time type descriptors, are super&ndash;type and sub&ndash;type.
+There are plenty of built&ndash;in syntaxes to check this relation.
+</p>
+<p>Given the core types <code class="code">&lt;number&gt;</code>, <code class="code">&lt;fixnum&gt;</code> and <code class="code">&lt;string&gt;</code>, we have:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">(type-annotation-matching &lt;number&gt; &lt;fixnum&gt;)    &rArr; exact-match
+(type-annotation-matching &lt;fixnum&gt; &lt;number&gt;)    &rArr; possible-match
+(type-annotation-matching &lt;number&gt; &lt;string&gt;)    &rArr; no-match
+</pre></div>
+
+<p>it means that the following code will type&ndash;check at expand&ndash;time, and no type
+checking is performed at run&ndash;time on the operand &lsquo;<samp class="samp">123</samp>&rsquo;:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">(define (fun {O &lt;number&gt;})
+  O)
+
+(fun 123)       &rArr; 123
+</pre></div>
+
+<p>the following code will type&ndash;check at expand&ndash;time, and the operand in the
+application of <code class="code">fun</code> is checked at run&ndash;time:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">(define (fun {O &lt;fixnum&gt;})
+  O)
+
+(define ({rand &lt;number&gt;})
+  123)
+
+(fun (rand))
+</pre></div>
+
+<p>the following code will raise an expand&ndash;time violation:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">(define (fun {O &lt;fixnum&gt;})
+  O)
+
+(fun &quot;ciao&quot;)    error&rarr; expand-time type mismatch
+</pre></div>
+
+<p>There are many type annotation variants, so there are many rules to compare type
+specifications and type descriptors.  Special care is needed when defining type
+annotations for closure objects that must be used as operands in function calls.  The
+general rule is this:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">(type-annotation-super-and-sub? &lt;number&gt; &lt;fixnum&gt;)      &rArr; #t
+(type-annotation-super-and-sub? &lt;struct&gt; &lt;record&gt;)      &rArr; #t
+
+(type-annotation-super-and-sub?
+   (lambda (&lt;fixnum&gt;) =&gt; (&lt;struct&gt;))
+   (lambda (&lt;number&gt;) =&gt; (&lt;record&gt;)))   &rArr; #t
+</pre></div>
+
+<p>we see that:
+</p>
+<ul class="itemize mark-bullet">
+<li>The argument of the super&ndash;type&rsquo;s closure (<code class="code">&lt;fixnum&gt;</code>) is a sub&ndash;type of the
+argument of the sub&ndash;type&rsquo;s closure (<code class="code">&lt;number&gt;</code>).
+
+</li><li>The return value of the super&ndash;type&rsquo;s closure (<code class="code">&lt;struct&gt;</code>) is a super&ndash;type of
+the return value of the sub&ndash;type&rsquo;s closure (<code class="code">&lt;record&gt;</code>).
+</li></ul>
+
+<p>in other words: the super&ndash;type&rsquo;s argument must be equal or stricter; the sub&ndash;type&rsquo;s
+return value must be equal or stricter.
+</p>
+<p>Scheme is, originally, a dynamically typed language; so, sometimes, we may need a
+type specification describing a closure object that accepts arguments of any type.
+Given the comparison rules for super&ndash;types and sub&ndash;types, this appears problematic
+because the super&ndash;type&rsquo;s arguments must have types that are sub&ndash;types of any other
+type.
+</p>
+<p>For this we can use the special type annotation <code class="code">&lt;bottom&gt;</code>, which is a
+conventional sub&ndash;type of all the other types; for example the type annotation:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">(define-type &lt;my-func&gt;
+  (lambda (&lt;bottom&gt;) =&gt; (&lt;string&gt;)))
+</pre></div>
+
+<p>is a super&ndash;type of both <code class="code">number-&gt;string</code> and <code class="code">symbol-&gt;string</code>, because
+<code class="code">&lt;number&gt;</code> and <code class="code">&lt;symbol&gt;</code> are super&ndash;types of <code class="code">&lt;bottom&gt;</code>.
+</p>
+<p>In addition, the improper list <code class="code">&lt;bottom&gt;</code> is now used to represent the type of
+return values for expressions that do not return (for example: they raise an
+exception).  So now:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">(type-of error)
+&rArr; #[signature ((lambda ((or &lt;false&gt; &lt;symbol&gt; &lt;string&gt;) &lt;string&gt; . &lt;list&gt;)
+                       =&gt; &lt;bottom&gt;))]
+
+(type-of (error #f &quot;wrong&quot;))
+&rArr; #[signature &lt;bottom&gt;]
+</pre></div>
+
+<p>in previous revisions Vicare used <code class="code">&lt;no-return&gt;</code> for this purpose, but now
+<code class="code">&lt;no-return&gt;</code> has been removed.
+</p>
+
+</div>
+<div class="unnumberedsec-level-extent" id="Farewell-slot_002dset-and-slot_002dref_0021">
+<h3 class="unnumberedsec">Farewell <code class="code">slot-set</code> and <code class="code">slot-ref!</code></h3>
+
+<p>I have removed <code class="code">slot-set</code> and <code class="code">slot-ref!</code>; with the typed language&rsquo;s
+dot notation to access record&rsquo;s and struct&rsquo;s fields, there is no need to keep such
+syntaxes.  Also, <em class="emph">they</em> say that having a uniform syntax to access an object&rsquo;s
+interface makes code more maintainable
+(<a class="url" href="https://en.wikipedia.org/wiki/Uniform_access_principle">Uniform access
+principle</a>).
+</p>
+
+</div>
+<div class="unnumberedsec-level-extent" id="New-constructor_002dsignature-clause-for-define_002drecord_002dtype">
+<h3 class="unnumberedsec">New <code class="code">constructor-signature</code> clause for <code class="code">define-record-type</code></h3>
+
+<p>I have implemented the <code class="code">constructor-signature</code> clause to specify the type
+signature of record&ndash;type constructor procedures:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">(define-record-type &lt;alpha&gt;
+  (fields {A &lt;fixnum&gt;}
+          {B &lt;string&gt;})
+  (protocol
+    (lambda (make-record)
+      (lambda (A)
+        (make-record A (number-&gt;string A)))))
+  (constructor-signature
+    (lambda (&lt;fixnum&gt;) =&gt; (&lt;alpha&gt;))))
+</pre></div>
+
+</div>
+</div>
+<hr>
+<div class="nav-panel">
+<p>
+Next: <a href="Jun-18.html">Mixins, late binding for overloaded functions, leftover problems</a>, Previous: <a href="Jun-28.html">Syntax <code class="code">this</code> and interfaces</a>, Up: <a href="index.html">Marco&rsquo;s 2016 Weblog</a> &nbsp; </p>
+</div>
+
+
+
+</body>
+</html>
