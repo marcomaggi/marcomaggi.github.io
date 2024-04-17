@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html>
+<!-- Created by GNU Texinfo 7.1, https://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<title>September 10 (Marco&rsquo;s 2015 Weblog)</title>
+
+<meta name="description" content="September 10 (Marco&rsquo;s 2015 Weblog)">
+<meta name="keywords" content="September 10 (Marco&rsquo;s 2015 Weblog)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<link href="index.html" rel="start" title="Top">
+<link href="index.html" rel="up" title="Top">
+<link href="September-08.html" rel="next" title="September 08">
+<link href="September-12.html" rel="prev" title="September 12">
+<style type="text/css">
+<!--
+a.copiable-link {visibility: hidden; text-decoration: none; line-height: 0em}
+div.center {text-align:center}
+div.example {margin-left: 3.2em}
+span:hover a.copiable-link {visibility: visible}
+ul.mark-bullet {list-style-type: disc}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="weblog.css">
+
+
+</head>
+
+<body lang="en">
+<div class="unnumbered-level-extent" id="September-10">
+<div class="nav-panel">
+<p>
+Next: <a href="September-08.html" accesskey="n" rel="next">Common interface to some containers</a>, Previous: <a href="September-12.html" accesskey="p" rel="prev">Record methods and dot notation</a>, Up: <a href="index.html" accesskey="u" rel="up">Marco&rsquo;s 2015 Weblog</a> &nbsp; </p>
+</div>
+<hr>
+<h2 class="unnumbered" id="On-records"><span>On records<a class="copiable-link" href="#On-records"> &para;</a></span></h2>
+
+
+<div class="center">Posted on September 10, 2015
+</div>
+
+<p>I am reviewing some code in <a class="url" href="http://marcomaggi.github.io/vicare.html">Vicare</a>&rsquo;s expander to clean up the internal
+representation of <abbr class="acronym">r6rs</abbr> record types and related syntaxes (<code class="code">is-a?</code>,
+<code class="code">slot-ref</code>, <code class="code">slot-set!</code>, &hellip;).  All the changes discussed here are
+in the <a class="url" href="https://github.com/marcomaggi/vicare/tree/master">master</a> branch.
+</p>
+
+<ul class="mini-toc">
+<li><a href="#Record_002d_002dtype-name_0027s-syntactic-binding_0027s-descriptor" accesskey="1">Record&ndash;type name&rsquo;s syntactic binding&rsquo;s descriptor</a></li>
+<li><a href="#Syntactic-interface-to-setting-record-destructors" accesskey="2">Syntactic interface to setting record destructors</a></li>
+<li><a href="#Structs_002c-record_002c-Nausicaa_0027s-classes_002c-built_002d_002din-object-types_002c-_2026" accesskey="3">Structs, record, Nausicaa&rsquo;s classes, built&ndash;in object types, &hellip;</a></li>
+</ul>
+<div class="unnumberedsec-level-extent" id="Record_002d_002dtype-name_0027s-syntactic-binding_0027s-descriptor">
+<h3 class="unnumberedsec"><span>Record&ndash;type name&rsquo;s syntactic binding&rsquo;s descriptor<a class="copiable-link" href="#Record_002d_002dtype-name_0027s-syntactic-binding_0027s-descriptor"> &para;</a></span></h3>
+
+<p>Whenever we use the syntax <code class="code">define-record-type</code>, a new syntactic binding is
+created using the record&ndash;type name as name of the syntactic identifier; its
+descriptor is a pair with format:
+</p>
+<div class="example">
+<pre class="example-preformatted">($record-type-name . <var class="var">?value</var>)
+</pre></div>
+
+<p>where the symbol <code class="code">$record-type-name</code> is the &ldquo;type&rdquo; of the descriptor and
+<var class="var">?value</var> is its &ldquo;value&rdquo;.
+</p>
+<p>Up until now, the <var class="var">?value</var> in the descriptor has been a list with the first two
+items being: the syntactic identifier bound to the record&ndash;type descriptor (<abbr class="acronym">rtd</abbr>),
+the syntactic identifier bound to the default record&ndash;constructor descriptor
+(<abbr class="acronym">rcd</abbr>); optionally another item can be present in the list, a record carrying
+further informations about the record&ndash;type.
+</p>
+<p>I changed this and now the <var class="var">?value</var> is itself a record of type
+<code class="code">&lt;r6rs-record-type-spec&gt;</code>; this way the syntactic binding descriptor can carry
+informations in a more ordered fashion.  This should open the door to a better
+handling of types in the expander.
+</p>
+
+</div>
+<div class="unnumberedsec-level-extent" id="Syntactic-interface-to-setting-record-destructors">
+<h3 class="unnumberedsec"><span>Syntactic interface to setting record destructors<a class="copiable-link" href="#Syntactic-interface-to-setting-record-destructors"> &para;</a></span></h3>
+
+<p>I have added the clause <code class="code">destructor-protocol</code> to the body of
+<code class="code">define-record-type</code>; <code class="code">destructor-protocol</code> is a new syntactic binding
+exported by the library <code class="code">(vicare)</code>.  The syntax <code class="code">define-record-type</code>
+accepts this clause only when the selected language is non&ndash;strict <abbr class="acronym">r6rs</abbr>.
+</p>
+<p>The definition clause:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">(destructor-protocol <var class="var">?expr</var>)
+</pre></div>
+
+<p>allows the specification of an expression <var class="var">?expr</var> which must evaluate to the
+destructor protocol function; this function is used as explained below to construct a
+destructor function to be called:
+</p>
+<ul class="itemize mark-bullet">
+<li>Implicitly by the garbage collector when a record of this type is collected.
+
+</li><li>Explicitly with the <code class="code">delete</code> syntax.
+</li></ul>
+
+<p>It is possible for a destructor function to be applied multiple times to the same
+record: once a destructor is set in the descriptor, it can be explicitly applied to
+records and later applied again by the garbage collector.  Destructor functions must
+be written in such a way that multiple applications are not a problem.  For example,
+it is usually possible, upon destruction, to reset some record fields to the void
+object: when the destructor detects a field set to void, it knows that the record has
+already been finalised.
+</p>
+<p>Here is how the destructor function is built:
+</p>
+<ul class="itemize mark-bullet">
+<li>If this type has a <code class="code">destructor-protocol</code> clause and no parent: <var class="var">?expr</var>
+must evaluate to a closure object accepting no arguments and returning a closure
+object acting as destructor function for records of this type.  For example:
+
+<div class="example lisp">
+<pre class="lisp-preformatted">(define-record-type &lt;port&gt;
+  (fields port)
+  (destructor-protocol
+    (lambda ()
+      (lambda (record)
+        (close-port (&lt;port&gt;-port record))))))
+</pre></div>
+
+</li><li>If this type has a <code class="code">destructor-protocol</code> clause and a parent specified with
+the <code class="code">parent</code> or <code class="code">parent-rtd</code> clauses: <var class="var">?expr</var> must evaluate to a
+closure object accepting as single argument the parent&rsquo;s destructor function and
+returning as single value a closure object acting as destructor function for records
+of this type.  For example:
+
+<div class="example lisp">
+<pre class="lisp-preformatted">(define-record-type &lt;port&gt;
+  (fields port)
+  (destructor-protocol
+    (lambda ()
+      (lambda (record)
+        (close-port (&lt;port&gt;-port record))))))
+
+(define-record-type &lt;file&gt;
+  (parent &lt;port&gt;)
+  (fields filename)
+  (destructor-protocol
+    (lambda (destroy-&lt;port&gt;)
+      (lambda (record)
+        (destroy-&lt;port&gt; record)))))
+</pre></div>
+
+<p>notice that the destructor of &lsquo;<samp class="samp">&lt;file&gt;</samp>&rsquo; is meant to call the destructor of its
+supertype &lsquo;<samp class="samp">&lt;port&gt;</samp>&rsquo; at some point; however calling the supertype&rsquo;s destructor is
+optional.
+</p>
+</li><li>If this type has no <code class="code">destructor-protocol</code> clause, it has a parent and the
+parent has a destructor function: the parent&rsquo;s destructor function becomes this
+type&rsquo;s destructor function.
+</li></ul>
+
+
+</div>
+<div class="unnumberedsec-level-extent" id="Structs_002c-record_002c-Nausicaa_0027s-classes_002c-built_002d_002din-object-types_002c-_2026">
+<h3 class="unnumberedsec"><span>Structs, record, Nausicaa&rsquo;s classes, built&ndash;in object types, &hellip;<a class="copiable-link" href="#Structs_002c-record_002c-Nausicaa_0027s-classes_002c-built_002d_002din-object-types_002c-_2026"> &para;</a></span></h3>
+
+<p>How many &ldquo;record&rdquo; objects are there in Vicare?
+</p>
+<dl class="table">
+<dt><strong class="strong">Vicare&rsquo;s structs</strong></dt>
+<dd><p>Lightweight records providing: basic type disjunction (all the other records are in
+truth structs), simple &ldquo;fields initialising&rdquo; constructors, access to named slots,
+no inheritance, custom object printers, instance destructors.
+</p>
+</dd>
+<dt><strong class="strong"><abbr class="acronym">r6rs</abbr> records</strong></dt>
+<dd><p>Heavyweight records providing: type disjunction, access to named slots, simple
+inheritance, multiple construction protocols, custom object printers (as extension to
+<abbr class="acronym">r6rs</abbr>), instance destructors (as extension to <abbr class="acronym">r6rs</abbr>).
+</p>
+</dd>
+<dt><strong class="strong">Nausicaa&rsquo;s classes</strong></dt>
+<dd><p>Heavyweight records implemented by the library <code class="code">(nausicaa)</code> providing: type
+disjunction, access to named slots, simple inheritance, multiple construction
+protocols, custom object printers, instance destructors, class methods, support for
+mixins, abstract types (class types whose public constructor raises an exception).
+</p></dd>
+</dl>
+
+<p>In addition to these both the tagged language half&ndash;written in the library
+<code class="code">(vicare)</code> and the Nausicaa language implemented by the library
+<code class="code">(nausicaa)</code> implement object types representing the &ldquo;object&ndash;oriented&rdquo;
+specification of built&ndash;in Scheme objects like fixnums, vectors, and others.
+</p>
+<p>Are there too many of these?  I am tempted to reorganise everything and:
+</p>
+<ul class="itemize mark-bullet">
+<li>Keep structs hidden in the internals of Vicare; maybe exposed by a separate
+library like <code class="code">(vicare structs)</code>, rather than by <code class="code">(vicare)</code>.
+
+</li><li>Use records defined by <code class="code">define-record-type</code> as the only public record
+facility.
+
+</li><li>Remove Nausicaa&rsquo;s <code class="code">define-class</code> and integrate all its features in
+<code class="code">define-record-type</code>.
+
+</li><li>Unify the interface of records with the type of built&ndash;in Scheme objects.
+</li></ul>
+
+<p>That would be a major backwards&ndash;incompatible change.  I will have to think more
+about this&hellip; in the meantime I will continue developing
+<code class="code">define-record-type</code> trying to understand how much it can be extended without
+making the expander a huge mess.
+</p>
+</div>
+</div>
+<hr>
+<div class="nav-panel">
+<p>
+Next: <a href="September-08.html">Common interface to some containers</a>, Previous: <a href="September-12.html">Record methods and dot notation</a>, Up: <a href="index.html">Marco&rsquo;s 2015 Weblog</a> &nbsp; </p>
+</div>
+
+
+
+</body>
+</html>

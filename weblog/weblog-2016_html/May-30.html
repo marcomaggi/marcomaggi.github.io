@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html>
+<!-- Created by GNU Texinfo 7.1, https://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<title>May 30 (Marco&rsquo;s 2016 Weblog)</title>
+
+<meta name="description" content="May 30 (Marco&rsquo;s 2016 Weblog)">
+<meta name="keywords" content="May 30 (Marco&rsquo;s 2016 Weblog)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<link href="index.html" rel="start" title="Top">
+<link href="index.html" rel="up" title="Top">
+<link href="May-25.html" rel="next" title="May 25">
+<link href="Jun-18.html" rel="prev" title="Jun 18">
+<style type="text/css">
+<!--
+a.copiable-link {visibility: hidden; text-decoration: none; line-height: 0em}
+div.center {text-align:center}
+div.example {margin-left: 3.2em}
+span:hover a.copiable-link {visibility: visible}
+ul.mark-bullet {list-style-type: disc}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="weblog.css">
+
+
+</head>
+
+<body lang="en">
+<div class="unnumbered-level-extent" id="May-30">
+<div class="nav-panel">
+<p>
+Next: <a href="May-25.html" accesskey="n" rel="next">Multimethods out of Nausicaa</a>, Previous: <a href="Jun-18.html" accesskey="p" rel="prev">Mixins, late binding for overloaded functions, leftover problems</a>, Up: <a href="index.html" accesskey="u" rel="up">Marco&rsquo;s 2016 Weblog</a> &nbsp; </p>
+</div>
+<hr>
+<h2 class="unnumbered" id="Expander-warnings-and-overloaded-functions"><span>Expander warnings and overloaded functions<a class="copiable-link" href="#Expander-warnings-and-overloaded-functions"> &para;</a></span></h2>
+
+
+<div class="center">Posted on May 30, 2016
+</div>
+
+<p>More work in the &lsquo;<samp class="samp">typed-language</samp>&rsquo;
+<a class="url" href="https://github.com/marcomaggi/vicare/tree/typed-language.marcomaggi-2015-11-18">branch</a> of <a class="url" href="http://marcomaggi.github.io/vicare.html">Vicare</a>, for both the expander and the built&ndash;in types
+infrastructure.  Some more type propagation stuff is implemented for built&ndash;in
+primitives.
+</p>
+<p>Everything I discuss here is relative to code in the head of the
+&lsquo;<samp class="samp">typed-language</samp>&rsquo; branch.
+</p>
+
+<ul class="mini-toc">
+<li><a href="#Expander-warnings" accesskey="1">Expander warnings</a></li>
+<li><a href="#Experimental-overloaded-functions" accesskey="2">Experimental overloaded functions</a></li>
+</ul>
+<div class="unnumberedsec-level-extent" id="Expander-warnings">
+<h3 class="unnumberedsec"><span>Expander warnings<a class="copiable-link" href="#Expander-warnings"> &para;</a></span></h3>
+
+<p>Since some commits ago I started adding new command line options to enable/disable
+warnings at expand&ndash;time.  I want Vicare&rsquo;s command line interface to feel like the
+<abbr class="acronym">GCC</abbr>&rsquo;s one, so there is a command line option <samp class="option">-Wall</samp> that will
+enable all the warnings.  Here some other options:
+</p>
+<dl class="table">
+<dt><samp class="option">-Wlogic-constants</samp></dt>
+<dt><samp class="option">-Wno-logic-constants</samp></dt>
+<dd><p>Enable or disable raising a <code class="code">&amp;warning</code> exception when an operand in a logic
+expression (<code class="code">if</code> test, <code class="code">and</code>, <code class="code">or</code>, et cetera) always returns
+false or non&ndash;false.  By default this warning is disabled.  As example, the following
+code:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">(and #t (read))
+</pre></div>
+
+<p>will cause the following warning at expand&ndash;time:
+</p>
+<div class="example">
+<pre class="example-preformatted">*** Vicare: warning:
+ Condition components:
+   1. &amp;expand-time-type-signature-warning
+   2. &amp;who: and
+   3. &amp;message: &quot;expression used as operand in logic predicate is \
+                 typed as always returning non-false&quot;
+   4. &amp;syntax:
+       form: #[syntax expr=(and #t (read))
+                  line=8 column=3 source=&quot;demo.sps&quot;]
+       subform: #[syntax expr=#t line=8 column=9 source=&quot;demo.sps&quot;]
+   5. &amp;type-signature: #[signature (&lt;true&gt;)]
+</pre></div>
+
+</dd>
+<dt><samp class="option">-Wnot-returning</samp></dt>
+<dt><samp class="option">-Wno-not-returning</samp></dt>
+<dd><p>Enable or disable raising a <code class="code">&amp;warning</code> exception when an operand evaluated
+for its return values is typed as not returning.  By default this warning is
+disabled.  As example, the following code:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">(define (operand)
+  (error #f &quot;bad behaviour&quot;))
+
+(define (operator rand)
+  (display rand))
+
+(operator (operand))
+</pre></div>
+
+<p>will cause the following warning at expand&ndash;time:
+</p>
+<div class="example">
+<pre class="example-preformatted">*** Vicare: warning:
+ Condition components:
+   1. &amp;expand-time-type-signature-warning
+   2. &amp;who: chi-closure-object-application
+   3. &amp;message: &quot;expression used as operand in procedure application \
+                is typed as not returning&quot;
+   4. &amp;syntax:
+       form: #[syntax expr=(operator (operand))
+                  line=15 column=3 source=&quot;demo.sps&quot;]
+       subform: #[syntax expr=(operand)
+                     line=15 column=13 source=&quot;demo.sps&quot;]
+   5. &amp;application-operand-signature: #[signature &lt;no-return&gt;]
+</pre></div>
+
+</dd>
+<dt><samp class="option">-Wunused-variables</samp></dt>
+<dt><samp class="option">-Wno-unused-variables</samp></dt>
+<dd><p>Enable or disable raising a <code class="code">&amp;warning</code> exception when a local lexical
+variable is defined but never used.  By default this warning is disabled.  As
+example, the following code:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">(let ((a 1)
+      (b 2)
+      (c 3))
+  (list a c))
+</pre></div>
+
+<p>will cause the following warning at expand&ndash;time:
+</p>
+<div class="example">
+<pre class="example-preformatted">*** Vicare: warning:
+ Condition components:
+   1. &amp;warning-unused-lexical-variable
+   2. &amp;who: let/checked
+   3. &amp;message: &quot;unused lexical syntactic binding&quot;
+   4. &amp;syntactic-identifier: #[id b line=9 column=10 source=&quot;demo.sps&quot;]
+</pre></div>
+</dd>
+</dl>
+
+<p>We need to know that a <code class="code">&amp;warning</code> exception will not stop expansion and
+compilation, but we must handle it correctly when, for example, we expand code using
+<code class="code">eval</code>; this is a way of doing it:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">(with-exception-handler
+    (lambda (E)
+      (unless (warning? E)
+        (raise-continuable E)))
+  (lambda ()
+    (eval <var class="var">?sexp</var> <var class="var">?env</var>)))
+</pre></div>
+
+<p>Should <code class="code">eval</code> block <code class="code">&amp;warning</code> exceptions automatically?  With a
+configurable run&ndash;time option?  Maybe.  And maybe, in future, it will.
+</p>
+
+</div>
+<div class="unnumberedsec-level-extent" id="Experimental-overloaded-functions">
+<h3 class="unnumberedsec"><span>Experimental overloaded functions<a class="copiable-link" href="#Experimental-overloaded-functions"> &para;</a></span></h3>
+
+<p>Overloaded functions are an expand&ndash;time aggregation of functions linked to the same
+name and having different number and type of arguments.  For example, in the code:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">(define/overload (fun {O &lt;fixnum&gt;})
+  (list 'fixnum O))
+
+(define/overload (fun {O &lt;string&gt;})
+  (list 'string O))
+
+(define/overload (fun {A &lt;vector&gt;} {B &lt;vector&gt;})
+  (list 'vectors (vector-append A B)))
+
+(fun 123)               &rArr; (fixnum 123)
+(fun &quot;ciao&quot;)            &rArr; (string &quot;ciao&quot;)
+(fun '#(1) '#(2))       &rArr; (vectors #(1 2))
+</pre></div>
+
+<p>an overloaded function named <code class="code">fun</code> is defined by the first use of
+<code class="code">define/overload</code>; subsequent uses add new specialisations to the same
+function.  We can use overloaded functions only with the &ldquo;canonical&rdquo; function
+application syntax:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">(<var class="var">?fun</var> <var class="var">?operand</var> ...)
+</pre></div>
+
+<p>using <code class="code">apply</code> will cause an expand&ndash;time syntax violation.
+</p>
+<p>Overloaded functions are also partially supported by records, using the
+<code class="code">method/overload</code> clause:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">(define-record-type &lt;duo&gt;
+  (fields one two)
+  (method/overload (doit {O &lt;duo&gt;})
+    (+ (.one O) (.two O)))
+  (method/overload (doit {O &lt;duo&gt;} {C &lt;number&gt;})
+    (* C (+ (.one O) (.two O)))))
+
+(define O
+  (new &lt;duo&gt; 1 2))
+
+(.doit O)       &rArr; 1
+(.doit O 3)     &rArr; 9
+</pre></div>
+
+<p>Being an expand&ndash;time thing: overloaded methods are <strong class="strong">not</strong> available for late
+binding; that is why support is only partial.  This is an important limitation: it
+makes it harder to implement interfaces (which will require late binding).
+</p>
+<p>At present, only a basic implementation of overloaded functions is available.  There
+are two main reasons:
+</p>
+<ul class="itemize mark-bullet">
+<li>There is <strong class="strong">no</strong> ranking of applicable specialisations; when the overloaded
+function is applied: the list of specialisations is traversed starting from the last,
+and the first that matches is inserted in the code.
+
+</li><li>Once overloaded functions are available: we obviously want full support for them in
+record&ndash;types; this means having them available for late binding.
+</li></ul>
+
+<p>Now, Vicare already has some sort of solution for these problems: it is
+implemented by multimethods from the library <code class="code">(vicare language-extensions
+multimethods)</code>.  There are problems though:
+</p>
+<ul class="itemize mark-bullet">
+<li>Multimethods perform ranking of methods, but such ranking requires the argument types
+to be object type identifiers; it means the type annotation operators <code class="code">or</code>,
+<code class="code">and</code>, <code class="code">not</code>, et cetera cannot be used.
+
+</li><li>Multimethods perform run&ndash;time dispatching, so they would be available for late
+binding.  But the machinery is complex: is it fine to include it in the already huge
+boot image?
+</li></ul>
+
+<p>Solving these problems is one of the things I think of these days&hellip;
+</p>
+</div>
+</div>
+<hr>
+<div class="nav-panel">
+<p>
+Next: <a href="May-25.html">Multimethods out of Nausicaa</a>, Previous: <a href="Jun-18.html">Mixins, late binding for overloaded functions, leftover problems</a>, Up: <a href="index.html">Marco&rsquo;s 2016 Weblog</a> &nbsp; </p>
+</div>
+
+
+
+</body>
+</html>

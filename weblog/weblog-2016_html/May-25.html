@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+<!-- Created by GNU Texinfo 7.1, https://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<title>May 25 (Marco&rsquo;s 2016 Weblog)</title>
+
+<meta name="description" content="May 25 (Marco&rsquo;s 2016 Weblog)">
+<meta name="keywords" content="May 25 (Marco&rsquo;s 2016 Weblog)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<link href="index.html" rel="start" title="Top">
+<link href="index.html" rel="up" title="Top">
+<link href="May-02.html" rel="next" title="May 02">
+<link href="May-30.html" rel="prev" title="May 30">
+<style type="text/css">
+<!--
+a.copiable-link {visibility: hidden; text-decoration: none; line-height: 0em}
+div.center {text-align:center}
+div.example {margin-left: 3.2em}
+span:hover a.copiable-link {visibility: visible}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="weblog.css">
+
+
+</head>
+
+<body lang="en">
+<div class="unnumbered-level-extent" id="May-25">
+<div class="nav-panel">
+<p>
+Next: <a href="May-02.html" accesskey="n" rel="next">On type propagation and other stuff</a>, Previous: <a href="May-30.html" accesskey="p" rel="prev">Expander warnings and overloaded functions</a>, Up: <a href="index.html" accesskey="u" rel="up">Marco&rsquo;s 2016 Weblog</a> &nbsp; </p>
+</div>
+<hr>
+<h2 class="unnumbered" id="Multimethods-out-of-Nausicaa"><span>Multimethods out of Nausicaa<a class="copiable-link" href="#Multimethods-out-of-Nausicaa"> &para;</a></span></h2>
+
+
+<div class="center">Posted on May 25, 2016
+</div>
+
+<p>More work in the &lsquo;<samp class="samp">typed-language</samp>&rsquo;
+<a class="url" href="https://github.com/marcomaggi/vicare/tree/typed-language.marcomaggi-2015-11-18">branch</a> of <a class="url" href="http://marcomaggi.github.io/vicare.html">Vicare</a>, for both the expander and the built&ndash;in types
+infrastructure.  Some more type propagation stuff is implemented for built&ndash;in
+syntaxes.
+</p>
+<p>Everything I discuss here is relative to code in the head of the
+&lsquo;<samp class="samp">typed-language</samp>&rsquo; branch.
+</p>
+
+<ul class="mini-toc">
+<li><a href="#Multimethods" accesskey="1">Multimethods</a></li>
+</ul>
+<div class="unnumberedsec-level-extent" id="Multimethods">
+<h3 class="unnumberedsec"><span>Multimethods<a class="copiable-link" href="#Multimethods"> &para;</a></span></h3>
+
+<p>I have ported the multimethods library from the Nausicaa language to the typed
+language implemented by <code class="code">(vicare)</code>.  The main library is <code class="code">(vicare
+language-extensions multimethods)</code>, the documentation is in the node
+<code class="code">multimethods</code> of the documentation file <samp class="file">vicare-libs</samp>.  I got pissed with
+myself while reviewing the documentation: there were still errors in there, even
+after the multiple reviews I did in the past.  Life is hard without proofreaders.
+</p>
+<p>So, what about multimethods?  Every Lisper should know about them, and (s)he should
+know that they are dog slow.  Here I will show only a simple program that makes use
+of multimethods and labels:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">#!vicare
+(program (demo)
+  (options typed-language)
+  (import (vicare)
+    (vicare language-extensions multimethods)
+    (vicare language-extensions labels))
+
+  (define-label &lt;list-coords&gt;
+    (nongenerative user:&lt;list-coords&gt;)
+    (parent (list &lt;flonum&gt; &lt;flonum&gt; &lt;flonum&gt;))
+    (method (x {O &lt;list-coords&gt;})
+      (list-ref O 0))
+    (method (y {O &lt;list-coords&gt;})
+      (list-ref O 1))
+    (method (z {O &lt;list-coords&gt;})
+      (list-ref O 2)))
+
+  (define-label &lt;vector-coords&gt;
+    (nongenerative user:&lt;vector-coords&gt;)
+    (parent (vector &lt;flonum&gt; &lt;flonum&gt; &lt;flonum&gt;))
+    (method (x {O &lt;vector-coords&gt;})
+      (vector-ref O 0))
+    (method (y {O &lt;vector-coords&gt;})
+      (vector-ref O 1))
+    (method (z {O &lt;vector-coords&gt;})
+      (vector-ref O 2)))
+
+  (define-record-type &lt;coords&gt;
+    (fields {x &lt;flonum&gt;}
+            {y &lt;flonum&gt;}
+            {z &lt;flonum&gt;}))
+
+  (module (add)
+    (define-generic-definer definer
+      (operand-type-inspector
+       (lambda (obj)
+         (cond ((is-a? obj &lt;list-coords&gt;)
+                (type-unique-identifiers &lt;list-coords&gt;))
+               ((is-a? obj &lt;vector-coords&gt;)
+                (type-unique-identifiers &lt;vector-coords&gt;))
+               (else
+                (type-unique-identifiers-of obj))))))
+
+    (definer add (A B)))
+
+  (define-method (add {A &lt;list-coords&gt;} {B &lt;list-coords&gt;})
+    (list (fl+ (.x A) (.x B))
+          (fl+ (.y A) (.y B))
+          (fl+ (.z A) (.z B))))
+
+  (define-method (add {A &lt;vector-coords&gt;} {B &lt;vector-coords&gt;})
+    (vector (fl+ (.x A) (.x B))
+            (fl+ (.y A) (.y B))
+            (fl+ (.z A) (.z B))))
+
+  (define-method (add {A &lt;coords&gt;} {B &lt;coords&gt;})
+    (new &lt;coords&gt;
+         (fl+ (.x A) (.x B))
+         (fl+ (.y A) (.y B))
+         (fl+ (.z A) (.z B))))
+
+  (display (add '(1. 2. 3.) '(10. 20. 30.)))
+  (newline)
+  (display (add '#(1. 2. 3.) '#(10. 20. 30.)))
+  (newline)
+  (display (add (new &lt;coords&gt; 1. 2. 3.)
+                (new &lt;coords&gt; 10. 20. 30.)))
+  (newline)
+  (flush-output-port (current-output-port))
+
+  #| end of program |# )
+</pre></div>
+
+<p>after compiling it we run it:
+</p>
+<div class="example">
+<pre class="example-preformatted">$ vicare --verbose --compile-program demo.sps --output demo
+vicare: expander warning: enabling typed language support for program
+vicare: serialising program demo ...
+vicare: done
+
+$ ./demo
+(11.0 22.0 33.0)
+#(11.0 22.0 33.0)
+#[record &lt;coords&gt; x=11.0 y=22.0 z=33.0]
+</pre></div>
+
+</div>
+</div>
+<hr>
+<div class="nav-panel">
+<p>
+Next: <a href="May-02.html">On type propagation and other stuff</a>, Previous: <a href="May-30.html">Expander warnings and overloaded functions</a>, Up: <a href="index.html">Marco&rsquo;s 2016 Weblog</a> &nbsp; </p>
+</div>
+
+
+
+</body>
+</html>

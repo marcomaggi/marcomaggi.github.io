@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html>
+<!-- Created by GNU Texinfo 7.1, https://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<title>February 18 (Marco&rsquo;s 2015 Weblog)</title>
+
+<meta name="description" content="February 18 (Marco&rsquo;s 2015 Weblog)">
+<meta name="keywords" content="February 18 (Marco&rsquo;s 2015 Weblog)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<link href="index.html" rel="start" title="Top">
+<link href="index.html" rel="up" title="Top">
+<link href="February-16.html" rel="next" title="February 16">
+<link href="February-19.html" rel="prev" title="February 19">
+<style type="text/css">
+<!--
+a.copiable-link {visibility: hidden; text-decoration: none; line-height: 0em}
+div.example {margin-left: 3.2em}
+span:hover a.copiable-link {visibility: visible}
+ul.mark-bullet {list-style-type: disc}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="weblog.css">
+
+
+</head>
+
+<body lang="en">
+<div class="unnumbered-level-extent" id="February-18">
+<div class="nav-panel">
+<p>
+Next: <a href="February-16.html" accesskey="n" rel="next">Does the Scheme standard still matter? (2015 February 16)</a>, Previous: <a href="February-19.html" accesskey="p" rel="prev">On running parallel processes (2015 February 19)</a>, Up: <a href="index.html" accesskey="u" rel="up">Marco&rsquo;s 2015 Weblog</a> &nbsp; </p>
+</div>
+<hr>
+<h2 class="unnumbered" id="Musings-on-the-tagged-language-_0028part-4_0029-_00282015-February-18_0029"><span>Musings on the tagged language (part 4) (2015 February 18)<a class="copiable-link" href="#Musings-on-the-tagged-language-_0028part-4_0029-_00282015-February-18_0029"> &para;</a></span></h2>
+
+
+<p>In a previous entry (see <a class="pxref" href="February-15.html">Musings on the tagged language (part 3) (2015 February 15)</a>) I discussed the idea of allowing
+function overloading in the tagged language as <strong class="strong">the</strong> way of defining type tag
+methods and field accessors; function overloading is <abbr class="acronym">clos</abbr>&ndash;like multimethods with
+dispatch at expand&ndash;time.  It consists of having a global table of multimethod names
+that is queried every time we need to expand a form like:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">(<var class="var">?identifier</var> <var class="var">?arg</var> ...)
+</pre></div>
+
+<p>the expander searches for the <strong class="strong">name</strong> of <var class="var">?identifier</var> in the table; so the
+following expansions can take place:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">(length '(1 2))         &rarr; (list-length       '(1 2))
+(length '#(1 2))        &rarr; (vector-length     '#(1 2))
+(length '#vu8(1 2))     &rarr; (bytevector-length '#vu8(1 2))
+(length &quot;1 2&quot;)          &rarr; (list-length       &quot;1 2&quot;)
+</pre></div>
+
+<p>because the expander searches for the <em class="emph">string</em> <code class="code">&quot;length&quot;</code> in the table
+(searching for the <em class="emph">symbol</em> <code class="code">length</code> is more efficient but equivalent,
+because symbols are interned by using their string name as key; so what matters here,
+conceptually, is the string name).
+</p>
+
+<ul class="mini-toc">
+<li><a href="#Function-overloading-and-their-namespace" accesskey="1">Function overloading and their namespace</a></li>
+<li><a href="#Function-overloading-vs_002e-clos-multimethods" accesskey="2">Function overloading vs. <abbr class="acronym">clos</abbr> multimethods</a></li>
+<li><a href="#Function-overloading-vs_002e-macro-expansion" accesskey="3">Function overloading vs. macro expansion</a></li>
+<li><a href="#Local-overloading" accesskey="4">Local overloading</a></li>
+<li><a href="#Missing-methods" accesskey="5">Missing methods</a></li>
+<li><a href="#Conclusions-1" accesskey="6">Conclusions</a></li>
+</ul>
+<div class="unnumberedsec-level-extent" id="Function-overloading-and-their-namespace">
+<h3 class="unnumberedsec"><span>Function overloading and their namespace<a class="copiable-link" href="#Function-overloading-and-their-namespace"> &para;</a></span></h3>
+
+<p>In the previous entry (see <a class="pxref" href="February-15.html">Musings on the tagged language (part 3) (2015 February 15)</a>) I concluded that the cleanest way to
+select a multimethod from the namespace of multimethods would be to introduce a
+specific built&ndash;in syntax:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">(method-call length <var class="var">?obj</var>)
+</pre></div>
+
+<p>and then think of some reader syntax to save typing a lot of characters; for example,
+&ldquo;quoting&rdquo; with a colon:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">:(length <var class="var">?obj</var>)
+</pre></div>
+
+<p>Is this actually good?  The more I think of it, the more transparent multimethod call
+is preferable; even if it breaks normal identifier binding resolution.
+</p>
+
+</div>
+<div class="unnumberedsec-level-extent" id="Function-overloading-vs_002e-clos-multimethods">
+<h3 class="unnumberedsec"><span>Function overloading vs. <abbr class="acronym">clos</abbr> multimethods<a class="copiable-link" href="#Function-overloading-vs_002e-clos-multimethods"> &para;</a></span></h3>
+
+<p><abbr class="acronym">clos</abbr>&rsquo;s multimethods have a number of features; some of them can be used with
+function overloading, too; other features cannot.
+</p>
+<ul class="itemize mark-bullet">
+<li>The implementation of multimethods in the <code class="code">(nausicaa)</code> library provides not
+only <code class="code">:primary</code> methods, but also <code class="code">:around</code>, <code class="code">:before</code> and
+<code class="code">:after</code> methods.  I still have to wrap my head around this concept to
+understand its actual usefulness, but I do not see a reason overloaded functions
+could not have them, too.
+
+</li><li>The implementation of multimethods in the <code class="code">(nausicaa)</code> library provides
+<code class="code">call-next-method</code> and <code class="code">next-method?</code>.  <code class="code">call-next-method</code> can be
+implemented for overloaded functions: no problem.  What about the <code class="code">next-method?</code>
+predicate?  There are at least three possibilities:
+
+<ol class="enumerate">
+<li> The implementation of <code class="code">next-method?</code> is a syntax expanding to <code class="code">#t</code> or
+<code class="code">#f</code>; the result of such expansion <strong class="strong">cannot</strong> be used at expand&ndash;time.  We
+could write:
+
+<div class="example lisp">
+<pre class="lisp-preformatted">(if (next-method?)
+    (do-something)
+  (do-something-else))
+</pre></div>
+
+<p>which would expand to one among:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">(if #t
+    (do-something)
+  (do-something-else))
+
+(if #f
+    (do-something)
+  (do-something-else))
+</pre></div>
+
+<p>and the compiler can optimise it to:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">(do-something)
+
+(do-something-else)
+</pre></div>
+
+<p>maybe useful, maybe not.
+</p>
+</li><li> The implementation of <code class="code">next-method?</code> is a <code class="code">cond-expand</code> clause, which is
+meant to be used at expand&ndash;time.  We could write:
+
+<div class="example lisp">
+<pre class="lisp-preformatted">(cond-expand
+  (next-method?
+   (do-something))
+  (else
+   (do-something-else)))
+</pre></div>
+
+<p>which would expand to one among:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">(do-something)
+
+(do-something-else)
+</pre></div>
+
+<p>maybe useful, maybe not.
+</p>
+</li><li> The implementation of <code class="code">next-method?</code> is a function that can be used by macro
+transformers.  We could write:
+
+<div class="example lisp">
+<pre class="lisp-preformatted">(define-syntax (doit stx)
+  (if (next-method?)
+      #'(call-next-method)
+    (syntax-case stx ()
+      ((_)
+       #'(do-something-else)))))
+</pre></div>
+
+<p>if the macro <code class="code">doit</code> is used in the body of an overloaded function having a
+next&ndash;method: <code class="code">(next-method?)</code> returns <code class="code">#t</code>, otherwise it returns <code class="code">#f</code>;
+maybe useful, maybe not.  This would be the most flexible: this implementation allows
+us to do everything that can be done with the others.
+</p></li></ol>
+
+</li><li><abbr class="acronym">clos</abbr> multimethods have <code class="code">eql</code>
+<a class="url" href="http://www.cs.cmu.edu/Groups/AI/html/hyperspec/HyperSpec/Body/sec_7-6-2.html">parameter specialisers</a>; they are a run&ndash;time thing.  This feature cannot be
+implemented in overloaded functions.
+
+</li><li>The meta&ndash;object protocol of <abbr class="acronym">clos</abbr> allows deep customisation of multimethod
+dispatching.  Complexity warning!!!  Let&rsquo;s try to keep function overloading simple.
+</li></ul>
+
+
+</div>
+<div class="unnumberedsec-level-extent" id="Function-overloading-vs_002e-macro-expansion">
+<h3 class="unnumberedsec"><span>Function overloading vs. macro expansion<a class="copiable-link" href="#Function-overloading-vs_002e-macro-expansion"> &para;</a></span></h3>
+
+<p>Function overloading should, really really, <strong class="strong">not</strong> interfere with macro
+expansion.  If we do:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">(import (vicare))
+
+(add-method length (&lt;string&gt;) string-length)
+
+(define (frob obj)
+  ---)
+
+(let-syntax ((length (syntax-rules ()
+                       ((_ ?expr)
+                        (frob ?expr))
+                       )))
+  (length &quot;ciao&quot;))
+</pre></div>
+
+<p>or:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">(import (vicare))
+
+(add-method length (&lt;string&gt;) string-length)
+
+(define (frob obj)
+  ---)
+
+(define-syntax length
+  (syntax-rules ()
+    ((_ ?expr)
+     (frob ?expr))
+    ))
+
+(length &quot;ciao&quot;))
+</pre></div>
+
+<p>the following expansion must take place:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">(length &quot;ciao&quot;) &rarr; (frob &quot;ciao&quot;)
+</pre></div>
+
+<p>When processing the form:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">(<var class="var">?identifier</var> <var class="var">?arg</var> ...)
+</pre></div>
+
+<p>the expander must (in this order):
+</p>
+<ol class="enumerate">
+<li> Verify if <var class="var">?identifier</var> is bound to a macro in the local lexical context and if
+so: apply its macro transformer.
+
+</li><li> Verify if the name of <var class="var">?identifier</var> is present in the global table of
+multimethods and if so: process the multimethod application.
+
+</li><li> Verify if <var class="var">?identifier</var> is bound to a variable in the local lexical context and
+if so: process the binding.
+
+</li><li> Raise an expand&ndash;time &ldquo;unbound identifier&rdquo; exception.
+</li></ol>
+
+
+</div>
+<div class="unnumberedsec-level-extent" id="Local-overloading">
+<h3 class="unnumberedsec"><span>Local overloading<a class="copiable-link" href="#Local-overloading"> &para;</a></span></h3>
+
+<p><a class="url" href="http://marcomaggi.github.io/vicare.html">Vicare</a> has standard local syntax definitions and fluid syntaxes (special
+identifiers that can be rebound without breaking the result of
+<code class="code">free-identifier=?</code>).  It goes like this:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">#!r6rs
+(import (vicare))
+
+(define-fluid-syntax ciao  (identifier-syntax &quot;ciao&quot;))
+(define-syntax       hello (identifier-syntax &quot;hello&quot;))
+
+(define-syntax do-ciao  (identifier-syntax ciao))
+(define-syntax do-hello (identifier-syntax hello))
+
+(fluid-let-syntax ((ciao  (identifier-syntax &quot;ohayo&quot;)))
+  (display do-ciao)
+  (newline))
+
+(let-syntax       ((hello (identifier-syntax &quot;ohayo&quot;)))
+  (display do-hello)
+  (newline))
+
+(flush-output-port (current-output-port))
+-| ohayo
+-| hello
+</pre></div>
+
+<p>Similarly, it makes sense to allow local function overloading.  It should go like
+this:
+</p>
+<div class="example">
+<pre class="example-preformatted">(import (vicare))
+
+(add-method length (&lt;string&gt;) string-length)
+
+(length &quot;ciao&quot;) &rarr; (string-length &quot;ciao&quot;)
+
+(let-method ((length (&lt;string&gt;) frob))
+  (length &quot;ciao&quot;)) &rarr; (frob &quot;ciao&quot;)
+</pre></div>
+
+
+
+</div>
+<div class="unnumberedsec-level-extent" id="Missing-methods">
+<h3 class="unnumberedsec"><span>Missing methods<a class="copiable-link" href="#Missing-methods"> &para;</a></span></h3>
+
+<p>What should happen if a name is present in the global table of multimethods, but
+no specialised method matches a given arguments signature?  Example:
+</p>
+<div class="example">
+<pre class="example-preformatted">(import (vicare))
+
+(define (frob obj)
+  (display str)
+  (newline))
+
+(define (frob-string str)
+  (display str)
+  (newline))
+
+(add-method frob (&lt;string&gt;) frob-string)
+
+(frob '(1 2))
+</pre></div>
+
+<p>there is no <code class="code">frob</code> method for <code class="code">&lt;list&gt;</code>, so:
+</p>
+<ul class="itemize mark-bullet">
+<li>Raise an expand&ndash;time exception &ldquo;missing method&rdquo;?
+
+</li><li>Just move on with standard identifier binding resolution?  In the example it would
+result into applying the <em class="emph">function</em> <code class="code">frob</code> rather than the
+<em class="emph">multimethod</em> <code class="code">frob</code>.
+
+</li><li>Apply, at expand&ndash;time, a customisable macro transformer <code class="code">missing-method</code> to the
+syntax object <code class="code">(syntax (frob '(1 2)))</code>?  Such function could cause the expander
+to move on with standard binding resolution, or do something else.
+</li></ul>
+
+
+</div>
+<div class="unnumberedsec-level-extent" id="Conclusions-1">
+<h3 class="unnumberedsec"><span>Conclusions<a class="copiable-link" href="#Conclusions-1"> &para;</a></span></h3>
+
+<p>Maybe, maybe, maybe things are getting into shape.  At least in my mind.
+</p>
+</div>
+</div>
+<hr>
+<div class="nav-panel">
+<p>
+Next: <a href="February-16.html">Does the Scheme standard still matter? (2015 February 16)</a>, Previous: <a href="February-19.html">On running parallel processes (2015 February 19)</a>, Up: <a href="index.html">Marco&rsquo;s 2015 Weblog</a> &nbsp; </p>
+</div>
+
+
+
+</body>
+</html>

@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+<!-- Created by GNU Texinfo 7.1, https://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<title>Jun 28 (Marco&rsquo;s 2016 Weblog)</title>
+
+<meta name="description" content="Jun 28 (Marco&rsquo;s 2016 Weblog)">
+<meta name="keywords" content="Jun 28 (Marco&rsquo;s 2016 Weblog)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<link href="index.html" rel="start" title="Top">
+<link href="index.html" rel="up" title="Top">
+<link href="Jun-25.html" rel="next" title="Jun 25">
+<link href="Jul-13.html" rel="prev" title="Jul 13">
+<style type="text/css">
+<!--
+a.copiable-link {visibility: hidden; text-decoration: none; line-height: 0em}
+div.center {text-align:center}
+div.example {margin-left: 3.2em}
+span:hover a.copiable-link {visibility: visible}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="weblog.css">
+
+
+</head>
+
+<body lang="en">
+<div class="unnumbered-level-extent" id="Jun-28">
+<div class="nav-panel">
+<p>
+Next: <a href="Jun-25.html" accesskey="n" rel="next">Super-types and sub-types</a>, Previous: <a href="Jul-13.html" accesskey="p" rel="prev"><code class="code">hash</code>, methods overhaul, interfaces again</a>, Up: <a href="index.html" accesskey="u" rel="up">Marco&rsquo;s 2016 Weblog</a> &nbsp; </p>
+</div>
+<hr>
+<h2 class="unnumbered" id="Syntax-this-and-interfaces"><span>Syntax <code class="code">this</code> and interfaces<a class="copiable-link" href="#Syntax-this-and-interfaces"> &para;</a></span></h2>
+
+
+<div class="center">Posted on Tue Jun 28, 2016
+</div>
+
+<p>More work in the &lsquo;<samp class="samp">typed-language</samp>&rsquo;
+<a class="url" href="https://github.com/marcomaggi/vicare/tree/typed-language.marcomaggi-2015-11-18">branch</a> of <a class="url" href="http://marcomaggi.github.io/vicare.html">Vicare</a>, for both the expander and the built&ndash;in types
+infrastructure.
+</p>
+<p>Everything I discuss here is relative to code in the head of the
+&lsquo;<samp class="samp">typed-language</samp>&rsquo; branch.
+</p>
+
+<ul class="mini-toc">
+<li><a href="#Syntax-this" accesskey="1">Syntax <code class="code">this</code></a></li>
+<li><a href="#Interfaces" accesskey="2">Interfaces</a></li>
+</ul>
+<div class="unnumberedsec-level-extent" id="Syntax-this">
+<h3 class="unnumberedsec"><span>Syntax <code class="code">this</code><a class="copiable-link" href="#Syntax-this"> &para;</a></span></h3>
+
+<p>Under many programming languages that support some form of object&ndash;oriented
+programming, object&ndash;types have methods; in the definition of methods the first
+argument is the type instance itself.  Usually such argument is implicit (like under
+C++) and it can be accessed through the reserved keyword <code class="code">this</code>.
+</p>
+<p>Until recently, this was not the case under Vicare, where <code class="code">method</code> clauses
+in record&ndash;type definitions required us to explicitly write the first argument:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">(define-record-type &lt;duo&gt;
+  (fields one two)
+  (method (add {O &lt;duo&gt;})
+    (+ (.one O) (.two O))))
+
+(define O (new &lt;duo&gt; 1 2))
+(.add O)        &rArr; 3
+</pre></div>
+
+<p>This is no more.  <code class="code">(vicare)</code> now exports the fluid syntax <code class="code">this</code>, which
+is meant to be used to access the implicit first argument of methods.  So the code
+above is now invalid and it must be written:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">(define-record-type &lt;duo&gt;
+  (fields one two)
+  (method (add)
+    (+ (.one this) (.two this))))
+
+(define O (new &lt;duo&gt; 1 2))
+(.add O)        &rArr; 3
+</pre></div>
+
+<p>where <code class="code">this</code> references a read&ndash;only variable of type <code class="code">&lt;duo&gt;</code>.
+</p>
+<p>Everywhere the clauses <code class="code">method</code>, <code class="code">case-method</code> and
+<code class="code">method/overload</code> are used to define methods: the first argument is implicit
+and the fluid syntax <code class="code">this</code> is used in the body of methods to access it.
+</p>
+
+</div>
+<div class="unnumberedsec-level-extent" id="Interfaces">
+<h3 class="unnumberedsec"><span>Interfaces<a class="copiable-link" href="#Interfaces"> &para;</a></span></h3>
+
+<p>Interfaces are a mechanism to verify, at expand&ndash;time, that: instances of an
+object&ndash;type can be used in a generic expression, because they implement all the
+needed methods and such methods can be called at run&ndash;time through dynamic
+dispatching.  The current implementation is to be considered experimental; some of
+the internals are in the boot image and the rest is in the library <code class="code">(vicare
+language-extensions interfaces)</code>.
+</p>
+<p>Let&rsquo;s consider this code:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">(define-record-type &lt;a-vector&gt;
+  (fields {vec &lt;nevector&gt;})
+  (method ({first &lt;top&gt;})
+    (vector-ref (.vec this) 0)))
+
+(define-record-type &lt;a-string&gt;
+  (fields {vec &lt;nestring&gt;})
+  (method ({first &lt;top&gt;})
+    (string-ref (.vec this) 0)))
+
+(define-record-type &lt;a-list&gt;
+  (fields {vec &lt;nelist&gt;})
+  (method ({first &lt;top&gt;})
+    (car (.vec this))))
+
+(define (fun O)
+  (.first O))
+
+(fun (new &lt;a-vector&gt; '#(1 2 3)))        &rArr; 1
+(fun (new &lt;a-string&gt; &quot;ABC&quot;))            &rArr; #\A
+(fun (new &lt;a-list&gt; '(a b c)))           &rArr; a
+</pre></div>
+
+<p>everything works fine in the function <code class="code">fun</code> because all of <code class="code">&lt;a-vector&gt;</code>,
+<code class="code">&lt;a-string&gt;</code> and <code class="code">&lt;a-list&gt;</code> implement the method &lsquo;<samp class="samp">first</samp>&rsquo;.  The code
+<code class="code">(.first O)</code> expands into a call to <code class="code">method-call-late-binding</code>, which, at
+run&ndash;time, finds the method implementation functions in the type descriptors of
+<code class="code">&lt;a-vector&gt;</code>, <code class="code">&lt;a-string&gt;</code> and <code class="code">&lt;a-list&gt;</code>.
+</p>
+<p>Fine, but the code is not type&ndash;checked at expand&ndash;time.  Enter interfaces.  Let&rsquo;s
+modify the code as follows:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">(define-interface &lt;Sequence&gt;
+  (method-prototype first
+    (lambda () =&gt; (&lt;top&gt;))))
+
+(define-record-type &lt;a-vector&gt;
+  (implements &lt;Sequence&gt;)
+  (fields {vec &lt;nevector&gt;})
+  (method ({first &lt;top&gt;})
+    (vector-ref (.vec this) 0)))
+
+(define-record-type &lt;a-string&gt;
+  (implements &lt;Sequence&gt;)
+  (fields {vec &lt;nestring&gt;})
+  (method ({first &lt;top&gt;})
+    (string-ref (.vec this) 0)))
+
+(define-record-type &lt;a-list&gt;
+  (implements &lt;Sequence&gt;)
+  (fields {vec &lt;nelist&gt;})
+  (method ({first &lt;top&gt;})
+    (car (.vec this))))
+
+(define (fun {O &lt;Sequence&gt;})
+  (.first O))
+
+(fun (new &lt;a-vector&gt; '#(1 2 3)))        &rArr; 1
+(fun (new &lt;a-string&gt; &quot;ABC&quot;))            &rArr; #\A
+(fun (new &lt;a-list&gt; '(a b c)))           &rArr; a
+</pre></div>
+
+<p>everything works almost as before, but the record&ndash;type definition clause
+<code class="code">(implements &lt;Sequence&gt;)</code> causes the expander to validate, at expand-time, that
+the record&ndash;types actually implement a method <code class="code">first</code> with the correct type
+signature.
+</p>
+<p>Also, the function application <code class="code">(fun <var class="var">?operand</var>)</code> is validated at
+expand&ndash;time to verify that the type of <var class="var">?operand</var> is an object&ndash;type that
+implements <code class="code">&lt;Sequence&gt;</code>.  Such validation can happen <strong class="strong">only</strong> if the
+expander is able to determine the type of <var class="var">?operand</var>; this validation cannot
+happen at run&ndash;time, so, for example, it is impossible for label types to implement
+interfaces.
+</p>
+<p>Interfaces can implement methods, case&ndash;methods and overloaded methods of their own,
+with the same syntax used for record&ndash;types.  Right now an interface type cannot
+declare another interface as super&ndash;type; I will decide what to do in future.
+</p>
+</div>
+</div>
+<hr>
+<div class="nav-panel">
+<p>
+Next: <a href="Jun-25.html">Super-types and sub-types</a>, Previous: <a href="Jul-13.html"><code class="code">hash</code>, methods overhaul, interfaces again</a>, Up: <a href="index.html">Marco&rsquo;s 2016 Weblog</a> &nbsp; </p>
+</div>
+
+
+
+</body>
+</html>

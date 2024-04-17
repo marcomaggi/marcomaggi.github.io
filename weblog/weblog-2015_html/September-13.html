@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<!-- Created by GNU Texinfo 7.1, https://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<title>September 13 (Marco&rsquo;s 2015 Weblog)</title>
+
+<meta name="description" content="September 13 (Marco&rsquo;s 2015 Weblog)">
+<meta name="keywords" content="September 13 (Marco&rsquo;s 2015 Weblog)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<link href="index.html" rel="start" title="Top">
+<link href="index.html" rel="up" title="Top">
+<link href="September-12.html" rel="next" title="September 12">
+<link href="September-15.html" rel="prev" title="September 15">
+<style type="text/css">
+<!--
+a.copiable-link {visibility: hidden; text-decoration: none; line-height: 0em}
+div.center {text-align:center}
+div.example {margin-left: 3.2em}
+span:hover a.copiable-link {visibility: visible}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="weblog.css">
+
+
+</head>
+
+<body lang="en">
+<div class="unnumbered-level-extent" id="September-13">
+<div class="nav-panel">
+<p>
+Next: <a href="September-12.html" accesskey="n" rel="next">Record methods and dot notation</a>, Previous: <a href="September-15.html" accesskey="p" rel="prev">Late binding for record&ndash;type methods</a>, Up: <a href="index.html" accesskey="u" rel="up">Marco&rsquo;s 2015 Weblog</a> &nbsp; </p>
+</div>
+<hr>
+<h2 class="unnumbered" id="Super_002dtype-constructor-protocols-for-records"><span>Super-type constructor protocols for records<a class="copiable-link" href="#Super_002dtype-constructor-protocols-for-records"> &para;</a></span></h2>
+
+
+<div class="center">Posted on September 12, 2015
+</div>
+<p><a class="url" href="http://marcomaggi.github.io/vicare.html">Vicare</a>&rsquo;s library <code class="code">(vicare)</code> now exports a new keyword syntactic binding
+<code class="code">super-protocol</code>, as clause for <code class="code">define-record-type</code>.  All the changes
+discussed here are in the <a class="url" href="https://github.com/marcomaggi/vicare/tree/master">master</a> branch.
+</p>
+<p>In a use of the syntax <code class="code">define-record-type</code>, the definition clause:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">(super-protocol <var class="var">?expr</var>)
+</pre></div>
+
+<p>allows the specification of a constructor protocol to be used by sub&ndash;types of a
+record&ndash;type.  Usually a sub&ndash;type make use of the protocol function built from the
+constructor protocol specified by the clause <code class="code">protocol</code>, but the clause
+<code class="code">super-protocol</code> overrides it.
+</p>
+<p>The <code class="code">super-protocol</code> works like <code class="code">protocol</code>, its <var class="var">?expr</var> argument
+must be an expression evaluating to a protocol function; the protocol function
+accepts as single argument the constructor function of its super&ndash;type and it must
+return the record instance.
+</p>
+<p>Here is an example in which the record&ndash;type <code class="code">alpha</code> is the super&ndash;type of
+the record&ndash;type <code class="code">beta</code>:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">(define-record-type alpha
+  (fields a b)
+  (super-protocol
+    (lambda (make-record)
+      (lambda (a b)
+        (make-record (+ 10 a) (+ 20 b))))))
+
+(define-record-type beta
+  (parent alpha)
+  (fields c d))
+
+(let ((R (make-alpha 1 2)))
+  (values (alpha-a R)
+          (alpha-b R)))
+&rArr; 1 2
+
+(let ((R (make-beta 1 2 3 4)))
+  (values (alpha-a R)
+          (alpha-b R)
+          (beta-c  R)
+          (beta-d  R)))
+&rArr; 11 22 3 4
+</pre></div>
+
+<p>the default constructor function <code class="code">make-alpha</code> builds instances of
+<code class="code">alpha</code> with the default constructor; the constructor of <code class="code">beta</code>
+receives as constructor function the result of calling the <code class="code">super-protocol</code> of
+<code class="code">alpha</code>.
+</p>
+</div>
+<hr>
+<div class="nav-panel">
+<p>
+Next: <a href="September-12.html">Record methods and dot notation</a>, Previous: <a href="September-15.html">Late binding for record&ndash;type methods</a>, Up: <a href="index.html">Marco&rsquo;s 2015 Weblog</a> &nbsp; </p>
+</div>
+
+
+
+</body>
+</html>

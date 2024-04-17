@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html>
+<!-- Created by GNU Texinfo 7.1, https://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<title>Jul 29 (Marco&rsquo;s 2016 Weblog)</title>
+
+<meta name="description" content="Jul 29 (Marco&rsquo;s 2016 Weblog)">
+<meta name="keywords" content="Jul 29 (Marco&rsquo;s 2016 Weblog)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<link href="index.html" rel="start" title="Top">
+<link href="index.html" rel="up" title="Top">
+<link href="Jul-24.html" rel="next" title="Jul 24">
+<link href="Aug-25.html" rel="prev" title="Aug 25">
+<style type="text/css">
+<!--
+a.copiable-link {visibility: hidden; text-decoration: none; line-height: 0em}
+div.center {text-align:center}
+div.example {margin-left: 3.2em}
+span:hover a.copiable-link {visibility: visible}
+strong.def-name {font-family: monospace; font-weight: bold; font-size: larger}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="weblog.css">
+
+
+</head>
+
+<body lang="en">
+<div class="unnumbered-level-extent" id="Jul-29">
+<div class="nav-panel">
+<p>
+Next: <a href="Jul-24.html" accesskey="n" rel="next"><code class="code">master</code> branch, virtual methods</a>, Previous: <a href="Aug-25.html" accesskey="p" rel="prev">Recursive types, reader extensions, tuples</a>, Up: <a href="index.html" accesskey="u" rel="up">Marco&rsquo;s 2016 Weblog</a> &nbsp; </p>
+</div>
+<hr>
+<h2 class="unnumbered" id="Protection-levels-for-record-types"><span>Protection levels for record types<a class="copiable-link" href="#Protection-levels-for-record-types"> &para;</a></span></h2>
+
+
+<div class="center">Posted on Fri Jul 29, 2016
+</div>
+
+<p>More work in the <code class="code">master</code> branch of <a class="url" href="http://marcomaggi.github.io/vicare.html">Vicare</a>.  Record&ndash;types now support
+protection levels <code class="code">public</code>, <code class="code">protected</code>, <code class="code">private</code> for fields and
+methods.  I have <strong class="strong">not</strong> implemented protection levels for the <code class="code">parent</code>
+clause: it makes the rules for virtual methods too complex for me.
+</p>
+<p>Everything I discuss here is relative to code in the head of the <code class="code">master</code> branch.
+</p>
+
+<ul class="mini-toc">
+<li><a href="#Protection-levels" accesskey="1">Protection levels</a></li>
+</ul>
+<div class="unnumberedsec-level-extent" id="Protection-levels">
+<h3 class="unnumberedsec"><span>Protection levels<a class="copiable-link" href="#Protection-levels"> &para;</a></span></h3>
+
+<p>Here a copy and paste from the documentation&hellip;
+</p>
+<p>When the typed language is enabled, record&ndash;type definitions support
+protection levels for fields and methods.  Protection levels limit the
+way fields and methods can be used both from other types in the
+record&ndash;type hierarchy and from outside a record&ndash;type&rsquo;s definition.
+</p>
+<p>Three protection levels are supported: <code class="code">public</code>,
+<code class="code">protected</code> and <code class="code">private</code>; they are loosely modeled after
+the ones defined in the C++ language.
+</p>
+<p>The following syntactic bindings are exported by the library
+<code class="code">(vicare)</code>.
+</p>
+
+<dl class="first-deffn">
+<dt class="deffn" id="index-public"><span class="category-def">Auxiliary Syntax: </span><span><strong class="def-name">public</strong><a class="copiable-link" href="#index-public"> &para;</a></span></dt>
+<dd><p>Select the <code class="code">public</code> protection level for the associated fields
+and methods.  When a member of record&ndash;type <code class="code">&lt;T&gt;</code> is given the
+<code class="code">public</code> protection level: sub&ndash;types of <code class="code">&lt;T&gt;</code> can access it;
+instances of <code class="code">&lt;T&gt;</code> can access it from outside methods.
+</p>
+<p>When no protection level is specified for a member in a record&ndash;type
+definition: the protection level defaults to <code class="code">public</code>.
+</p></dd></dl>
+
+
+<dl class="first-deffn">
+<dt class="deffn" id="index-protected"><span class="category-def">Auxiliary Syntax: </span><span><strong class="def-name">protected</strong><a class="copiable-link" href="#index-protected"> &para;</a></span></dt>
+<dd><p>Select the <code class="code">protected</code> protection level for the associated fields
+and methods.  When a member of record&ndash;type <code class="code">&lt;T&gt;</code> is given the
+<code class="code">protected</code> protection level: sub&ndash;types of <code class="code">&lt;T&gt;</code> can access
+it; instances of <code class="code">&lt;T&gt;</code> cannot access it from outside methods.
+</p></dd></dl>
+
+
+<dl class="first-deffn">
+<dt class="deffn" id="index-private"><span class="category-def">Auxiliary Syntax: </span><span><strong class="def-name">private</strong><a class="copiable-link" href="#index-private"> &para;</a></span></dt>
+<dd><p>Select the <code class="code">private</code> protection level for the associated fields
+and methods.  When a member of record&ndash;type <code class="code">&lt;T&gt;</code> is given the
+<code class="code">private</code> protection level: sub&ndash;types of <code class="code">&lt;T&gt;</code> cannot access
+it; instances of <code class="code">&lt;T&gt;</code> cannot access it from outside methods.
+</p></dd></dl>
+
+
+<p>The protection level keywords can be used both as &ldquo;wrapping syntaxes&rdquo;
+as in:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">(define-record-type &lt;duo&gt;
+  (public
+    (fields one two)
+    (method (add)
+      (+ (.one this) (.two this)))))
+</pre></div>
+
+<p>or as &ldquo;attribute syntaxes&rdquo; as in:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">(define-record-type &lt;duo&gt;
+  (fields public one two)
+  (method public (add)
+    (+ (.one this) (.two this))))
+</pre></div>
+
+<p>The only clauses that can be put in a wrapping syntax and that accept an
+attribute syntax are: <code class="code">fields</code>, <code class="code">method</code>,
+<code class="code">virtual-method</code>, <code class="code">seal-method</code>.
+</p>
+
+<h4 class="subsubheading" id="Usage-and-limitations-by-examples"><span>Usage and limitations by examples<a class="copiable-link" href="#Usage-and-limitations-by-examples"> &para;</a></span></h4>
+
+<p>The protection levels limit the access to members from outside a
+method&rsquo;s body:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">(define-record-type &lt;blue&gt;
+  (method public    (pub)  1)
+  (method protected (pro)  2)
+  (method private   (pri)  3))
+
+(define O
+  (new &lt;blue&gt;))
+
+(.pub O)        &rArr; 1
+(.pro O)        error&rarr; not a public method
+(.pri O)        error&rarr; not a public method
+</pre></div>
+
+<p>When super&ndash;type&rsquo;s members are <code class="code">public</code>, everything works as
+usual:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">(define-record-type &lt;blue&gt;
+  (fields public light))
+
+(define-record-type &lt;dark-blue&gt;
+  (parent &lt;blue&gt;)
+  (method public (doit)
+    (.light this)))
+
+(define O
+  (new &lt;dark-blue&gt; 1))
+
+(define {X &lt;blue&gt;}
+  O)
+
+(.doit  O)      &rArr; 1
+(.light X)      &rArr; 1
+</pre></div>
+
+<p>When super&ndash;type&rsquo;s members are <code class="code">protected</code>, we can access them
+from the super&ndash;type&rsquo;s methods and from the sub&ndash;type&rsquo;s methods:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">(define-record-type &lt;blue&gt;
+  (fields protected light)
+  (method public (doit)
+    (.light this)))
+
+(define-record-type &lt;dark-blue&gt;
+  (parent &lt;blue&gt;)
+  (method public (doit)
+    (.light this)))
+
+(define O
+  (new &lt;dark-blue&gt; 1))
+
+(.doit O)       &rArr; 1
+
+(define {X &lt;blue&gt;}
+  O)
+
+(.light X)      error&rarr; not a public method
+(.doit  X)      &rArr; 1
+</pre></div>
+
+<p>When super&ndash;type&rsquo;s members are <code class="code">private</code>, we can access them from
+the super&ndash;type&rsquo;s methods only:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">(define-record-type &lt;blue&gt;
+  (fields private light)
+  (method public (doit)
+    (.light this)))
+
+(define X
+  (new &lt;blue&gt; 1))
+
+(.light X)      error&rarr; not a public method
+(.doit  X)      &rArr; 1
+
+(define-record-type &lt;dark-blue&gt;
+  (parent &lt;blue&gt;)
+  (method public (doit)
+    (.light this)))     error&rarr; not a public or protected method
+</pre></div>
+
+<p>It is not an error to define a private virtual method, but such method
+cannot be overridden by the sub&ndash;types:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">(define-record-type &lt;blue&gt;
+  (virtual-method private (doit) 1))
+
+(define-record-type &lt;dark-blue&gt;
+  (parent &lt;blue&gt;)
+  (method (doit) 2))    error&rarr; cannot override private method
+</pre></div>
+
+<p>Virtual methods overriding and sealing is possible only among methods of
+the same protection level:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">(define-record-type &lt;blue&gt;
+  (protected
+    (virtual-method (over)
+      'over-blue))
+  (method (doit)
+    (.over this)))
+
+(define-record-type &lt;dark-blue&gt;
+  (parent &lt;blue&gt;)
+  (protected
+    (method (over)
+      'over-dark-blue)))
+
+(define O
+  (new &lt;dark-blue&gt;))
+
+(define (fun {X &lt;blue&gt;})
+  (.doit X))
+
+(fun O)         &rArr; over-dark-blue
+</pre></div>
+
+
+</div>
+</div>
+<hr>
+<div class="nav-panel">
+<p>
+Next: <a href="Jul-24.html"><code class="code">master</code> branch, virtual methods</a>, Previous: <a href="Aug-25.html">Recursive types, reader extensions, tuples</a>, Up: <a href="index.html">Marco&rsquo;s 2016 Weblog</a> &nbsp; </p>
+</div>
+
+
+
+</body>
+</html>
