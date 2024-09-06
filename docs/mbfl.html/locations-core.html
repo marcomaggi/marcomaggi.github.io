@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+<!-- Created by GNU Texinfo 7.1, https://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<!-- This document describes version 3.0.0-devel.8 of MBFL, a collection of libraries of
+functions for the GNU Bash shell.  It requires GNU Bash at least version
+4.3; it require GNU m4 (other m4 implementations will not do).  The
+package is distributed under the terms of the GNU Lesser General Public License (LGPL).
+
+The latest release can be downloaded from:
+
+https://bitbucket.org/marcomaggi/mbfl/downloads
+
+development takes place at:
+
+https://github.com/marcomaggi/mbfl
+
+and as backup at:
+
+https://bitbucket.org/marcomaggi/mbfl
+
+Copyright © 2003-2005, 2009-2010, 2012-2015, 2017-2018, 2020, 2022, 2023, 2024 by Marco Maggi mrc.mgg@gmail.com
+
+Permission is granted to copy, distribute and/or modify this document under the terms of the GNU
+Free Documentation License, Version 1.3 or any later version published by the Free Software
+Foundation; with Invariant Sections being "GNU Free Documentation License" and "GNU Lesser
+General Public License", no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license is
+included in the section entitled "GNU Free Documentation License". -->
+<title>locations core (Marco&rsquo;s Bash Functions Libraries)</title>
+
+<meta name="description" content="locations core (Marco&rsquo;s Bash Functions Libraries)">
+<meta name="keywords" content="locations core (Marco&rsquo;s Bash Functions Libraries)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<link href="index.html" rel="start" title="Top">
+<link href="concept-index.html" rel="index" title="concept index">
+<link href="index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="locations.html" rel="up" title="locations">
+<link href="locations-handlers.html" rel="next" title="locations handlers">
+<style type="text/css">
+<!--
+a.copiable-link {visibility: hidden; text-decoration: none; line-height: 0em}
+div.example {margin-left: 3.2em}
+span:hover a.copiable-link {visibility: visible}
+strong.def-name {font-family: monospace; font-weight: bold; font-size: larger}
+ul.mark-bullet {list-style-type: disc}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="mbfl.css">
+
+
+</head>
+
+<body lang="en">
+<div class="section-level-extent" id="locations-core">
+<div class="nav-panel">
+<p>
+Next: <a href="locations-handlers.html" accesskey="n" rel="next">Special location handlers</a>, Up: <a href="locations.html" accesskey="u" rel="up">Running location handlers</a> &nbsp; [<a href="index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<h3 class="section" id="Locations-programming-interface"><span>6.1 Locations programming interface<a class="copiable-link" href="#Locations-programming-interface"> &para;</a></span></h3>
+
+
+<p>In this chapter we use the underscore syntax as defined in <a class="ref" href="objects-conventions-underscore.html">The
+underscore syntax</a>.
+</p>
+
+<dl class="first-deffn first-defun-alias-first-deffn">
+<dt class="deffn defun-alias-deffn" id="index-mbfl_005flocation_005fenter"><span class="category-def">Function: </span><span><strong class="def-name">mbfl_location_enter</strong><a class="copiable-link" href="#index-mbfl_005flocation_005fenter"> &para;</a></span></dt>
+<dd><p>Enter into a new location.  Initialise the internal state.
+</p></dd></dl>
+
+
+<dl class="first-deffn first-defun-alias-first-deffn">
+<dt class="deffn defun-alias-deffn" id="index-mbfl_005flocation_005fleave"><span class="category-def">Function: </span><span><strong class="def-name">mbfl_location_leave</strong><a class="copiable-link" href="#index-mbfl_005flocation_005fleave"> &para;</a></span></dt>
+<dd><p>Leave the current location.  Run all the registered handlers in reverse order.  Return the return
+status of the last command executed before the call to this function (<code class="code">$?</code>).  If this function
+is called when no location exists: nothing happens.
+</p>
+<p>Before running the handlers the state of the current location is removed from the script&rsquo;s state.
+</p></dd></dl>
+
+
+<dl class="first-deffn">
+<dt class="deffn" id="index-mbfl_005flocation_005fleave_005fthen_005freturn_005ffailure"><span class="category-def">Preprocessor Macro: </span><span><strong class="def-name">mbfl_location_leave_then_return_failure</strong><a class="copiable-link" href="#index-mbfl_005flocation_005fleave_005fthen_005freturn_005ffailure"> &para;</a></span></dt>
+<dd><p>Expand as follows:
+</p>
+<div class="example">
+<pre class="example-preformatted">mbfl_location_leave_then_return_failure
+&rarr; { mbfl_location_leave ; return_because_failure ; }
+</pre></div>
+</dd></dl>
+
+
+<a class="anchor" id="mbfl_005flocation_005fhandler"></a><dl class="first-deffn first-defun-alias-first-deffn">
+<dt class="deffn defun-alias-deffn" id="index-mbfl_005flocation_005fhandler"><span class="category-def">Function: </span><span><strong class="def-name">mbfl_location_handler</strong> <var class="def-var-arguments"><var class="var">HANDLER_SCRIPT</var></var><a class="copiable-link" href="#index-mbfl_005flocation_005fhandler"> &para;</a></span></dt>
+<dd><p>Register a new handler in the current location.
+</p>
+<p>It is an error if this function is called outside a location: an exceptional&ndash;condition of class
+<code class="code">mbfl_outside_location_condition</code> is raised; <a class="ref" href="conditions-location-outside.html">Invalid
+operation outside location exceptional&ndash;condition objects</a>.
+</p></dd></dl>
+
+
+<a class="index-entry-id" id="index-Maker-handlers-for-locations"></a>
+<a class="index-entry-id" id="index-Locations_002c-maker-handlers"></a>
+<dl class="first-deffn first-defun-alias-first-deffn">
+<dt class="deffn defun-alias-deffn" id="index-mbfl_005flocation_005fmaker_005fhandler"><span class="category-def">Function: </span><span><strong class="def-name">mbfl_location_maker_handler</strong> <var class="def-var-arguments"><var class="var">HANDLER_SCRIPT</var></var><a class="copiable-link" href="#index-mbfl_005flocation_005fmaker_005fhandler"> &para;</a></span></dt>
+<dd><p>Register a new handler in the current location.
+</p>
+<p>It is an error if this function is called outside a location: an exceptional&ndash;condition of class
+<code class="code">mbfl_outside_location_condition</code> is raised; <a class="ref" href="conditions-location-outside.html">Invalid
+operation outside location exceptional&ndash;condition objects</a>.
+</p>
+<p><em class="dfn">Maker handlers</em> are executed only if <code class="code">mbfl_location_leave()</code> is called after a command that
+exited with non&ndash;zero status; otherwise they are skipped.  This is a scenario that happens in object
+constructors:
+</p>
+<ul class="itemize mark-bullet">
+<li>some asynchronous resources &ldquo;belong&rdquo; to the constructor and must be released when
+the constructor returns, either successfully or because of an error;
+
+</li><li>other asynchronous resources &ldquo;belong&rdquo; to the constructed object and must be released only when the
+constructor fails.
+</li></ul>
+</dd></dl>
+
+
+<dl class="first-deffn first-defun-alias-first-deffn">
+<dt class="deffn defun-alias-deffn" id="index-mbfl_005flocation_005frun_005fall"><span class="category-def">Function: </span><span><strong class="def-name">mbfl_location_run_all</strong><a class="copiable-link" href="#index-mbfl_005flocation_005frun_005fall"> &para;</a></span></dt>
+<dd><p>Run all the handlers unwinding all the locations.  This is useful as atexit handler, <a class="ref" href="exit-atexit.html">Running scripts at exit&ndash;time</a>.
+</p></dd></dl>
+
+
+<dl class="first-deffn first-defun-alias-first-deffn">
+<dt class="deffn defun-alias-deffn" id="index-mbfl_005flocation_005fhook_005fvar"><span class="category-def">Function: </span><span><strong class="def-name">mbfl_location_hook_var</strong> <var class="def-var-arguments"><var class="var">HOOK_RV</var></var><a class="copiable-link" href="#index-mbfl_005flocation_005fhook_005fvar"> &para;</a></span></dt>
+<dd><p>When called inside a location: store in the result variable <var class="var">HOOK_RV</var> the hook associated to the
+current location, then return true; otherwise return false.
+</p>
+<div class="example">
+<pre class="example-preformatted">mbfl_location_enter
+{
+    mbfl_declare_varref(HOOK_RV)
+
+    if ! mbfl_location_hook_var _(HOOK_RV)
+    then return_failure
+    fi
+
+    mbfl_hook_add $HOOK_RV my_handler_one
+
+    mbfl_declare_nameref(HOOK, $HOOK_RV)
+    mbfl_hook_add _(HOOK) my_handler_two
+}
+mbfl_location_leave
+</pre></div>
+
+<p>We can use this function to add handlers to some outer location:
+</p>
+<div class="example">
+<pre class="example-preformatted">function outer () {
+    mbfl_location_enter
+    {
+        mbfl_declare_varref(OUTER_LOCATION_HOOK)
+        mbfl_location_hook_var _(OUTER_LOCATION_HOOK)
+
+        mbfl_location_handler my_handler_one
+        inner $OUTER_LOCATION_HOOK
+        do_some_thing
+    }
+    mbfl_location_leave
+}
+
+function inner () {
+    mbfl_mandatory_parameter(OUTER_LOCATION_HOOK, 1, outer hook)
+
+    mbfl_location_enter
+    {
+        mbfl_location_handler my_handler_two
+        mbfl_hook_add $OUTER_LOCATION_HOOK my_handler_three
+        do_some_other_thing
+    }
+    mbfl_location_leave
+}
+</pre></div>
+</dd></dl>
+
+</div>
+<hr>
+<div class="nav-panel">
+<p>
+Next: <a href="locations-handlers.html">Special location handlers</a>, Up: <a href="locations.html">Running location handlers</a> &nbsp; [<a href="index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+<p>This document describes version <tt>3.0.0-devel.8</tt> of <em>Marcos Bash Functions Library</em>.</p>
+</body>
+</html>

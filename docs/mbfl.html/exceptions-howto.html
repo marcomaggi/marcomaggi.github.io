@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+<!-- Created by GNU Texinfo 7.1, https://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<!-- This document describes version 3.0.0-devel.8 of MBFL, a collection of libraries of
+functions for the GNU Bash shell.  It requires GNU Bash at least version
+4.3; it require GNU m4 (other m4 implementations will not do).  The
+package is distributed under the terms of the GNU Lesser General Public License (LGPL).
+
+The latest release can be downloaded from:
+
+https://bitbucket.org/marcomaggi/mbfl/downloads
+
+development takes place at:
+
+https://github.com/marcomaggi/mbfl
+
+and as backup at:
+
+https://bitbucket.org/marcomaggi/mbfl
+
+Copyright © 2003-2005, 2009-2010, 2012-2015, 2017-2018, 2020, 2022, 2023, 2024 by Marco Maggi mrc.mgg@gmail.com
+
+Permission is granted to copy, distribute and/or modify this document under the terms of the GNU
+Free Documentation License, Version 1.3 or any later version published by the Free Software
+Foundation; with Invariant Sections being "GNU Free Documentation License" and "GNU Lesser
+General Public License", no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license is
+included in the section entitled "GNU Free Documentation License". -->
+<title>exceptions howto (Marco&rsquo;s Bash Functions Libraries)</title>
+
+<meta name="description" content="exceptions howto (Marco&rsquo;s Bash Functions Libraries)">
+<meta name="keywords" content="exceptions howto (Marco&rsquo;s Bash Functions Libraries)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<link href="index.html" rel="start" title="Top">
+<link href="concept-index.html" rel="index" title="concept index">
+<link href="index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="exceptions.html" rel="up" title="exceptions">
+<link href="exceptions-raise.html" rel="next" title="exceptions raise">
+<link href="exceptions-conventions.html" rel="prev" title="exceptions conventions">
+<style type="text/css">
+<!--
+a.copiable-link {visibility: hidden; text-decoration: none; line-height: 0em}
+div.example {margin-left: 3.2em}
+span:hover a.copiable-link {visibility: visible}
+ul.mark-bullet {list-style-type: disc}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="mbfl.css">
+
+
+</head>
+
+<body lang="en">
+<div class="section-level-extent" id="exceptions-howto">
+<div class="nav-panel">
+<p>
+Next: <a href="exceptions-raise.html" accesskey="n" rel="next">How to raise exceptional&ndash;condition objects</a>, Previous: <a href="exceptions-conventions.html" accesskey="p" rel="prev">Conventions</a>, Up: <a href="exceptions.html" accesskey="u" rel="up">Raising and handling exceptions</a> &nbsp; [<a href="index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<h3 class="section" id="How-to-organise-code-to-use-MBFL-exceptions"><span>13.2 How to organise code to use <abbr class="acronym">MBFL</abbr> exceptions<a class="copiable-link" href="#How-to-organise-code-to-use-MBFL-exceptions"> &para;</a></span></h3>
+
+
+<p>Effective use of <abbr class="acronym">MBFL</abbr>&rsquo;s exception&ndash;handling is intertwined with the location mechanism,
+<a class="ref" href="locations.html">Running location handlers</a>.
+</p>
+<p>Exceptional conditions are described by instances of appropriate exceptional&ndash;condition classes,
+<a class="ref" href="conditions.html">Exceptional&ndash;condition objects</a>.  It is mandatory to use only
+exceptional&ndash;condition objects whose class is a subclass of <code class="code">mbfl_exceptional_condition</code>; no
+other Bash value is allowed.
+</p>
+<p>Whenever an exceptional&ndash;condition object is &ldquo;raised&rdquo; an exception&ndash;handling function is called to
+react to it; such function is called <em class="dfn">exception&ndash;handler</em>.  To raise an exceptional&ndash;condition
+we apply the function <code class="code">mbfl_exception_raise()</code> to the object&rsquo;s data variable:
+</p>
+<div class="example">
+<pre class="example-preformatted">if ! try_an_action 1 2 3
+then
+    mbfl_default_object_declare(CND)
+
+    mbfl_runtime_error_condition_make _(CND) $FUNCNAME 'failed action'
+    mbfl_exception_raise _(CND)
+fi
+</pre></div>
+
+<p><abbr class="acronym">MBFL</abbr> allows us to push exception&ndash;handlers onto a global stack, in such a way that handlers are
+made &ldquo;local&rdquo; by removing them upon leaving the current location.  Here is how to write a function:
+</p>
+<div class="example">
+<pre class="example-preformatted">function do_some_thing () {
+    mbfl_location_enter
+    {
+        mbfl_exception_handler 'handle_some_exceptions'
+        # do some thing
+    }
+    mbfl_location_leave
+}
+</pre></div>
+
+<p>while &ldquo;do some thing&rdquo; code is running: if an exception is raised, the exception&ndash;handler
+<code class="code">handle_some_exceptions()</code> is applied to the exceptional&ndash;condition object; upon leaving the
+location <code class="code">handle_some_exceptions()</code> is popped from the stack.
+</p>
+<p>Compared to other languages: <abbr class="acronym">MBFL</abbr>&rsquo;s exception&ndash;handling is peculiar because, under Bash, there is
+no automatic call stack unwinding; when needed we must <code class="code">return</code> from all the functions until we
+reach a &ldquo;beginning of task&rdquo; function.  We must partition the code into an appropriate number of
+nested functions.  We can organise code as follows:
+</p>
+<div class="example">
+<pre class="example-preformatted">function main () {
+    declare -i RETURN_STATUS
+
+    perform_an_operation
+    RETURN_STATUS=$?
+    if (( 0 != RETURN_STATUS ))
+    then exit_failure
+    fi
+    exit_success
+}
+function perform_an_operation () {
+    mbfl_location_enter
+    {
+        mbfl_exception_handler 'an_exception_handler'
+
+        if ! operation_step_one
+        then
+            mbfl_location_leave
+            return_because_reason
+        fi
+
+        if ! operation_step_two
+        then
+            mbfl_location_leave
+            return_because_another_reason
+        fi
+    }
+    mbfl_location_leave
+    return_success
+}
+function operation_step_one () {
+    mbfl_location_enter
+    {
+        mbfl_exception_handler 'another_exception_handler'
+
+        if ! do_some_thing
+        then
+            if ! raise_an_exception
+            then
+                mbfl_location_leave
+                return_because_bad_reason
+            fi
+        fi
+
+        if ! do_some_other_thing
+        then
+            if ! raise_another_exception
+            then
+                mbfl_location_leave
+                return_because_another_bad_reason
+            fi
+        fi
+    }
+    mbfl_location_leave
+    return_success
+}
+</pre></div>
+
+<p>We can push any number of handlers in each location:
+</p>
+<div class="example">
+<pre class="example-preformatted">function perform_an_operation () {
+    mbfl_location_enter
+    {
+        mbfl_exception_handler 'an_exception_handler'
+        mbfl_exception_handler 'another_exception_handler'
+        # do some thing
+    }
+    mbfl_location_leave
+    return_success
+}
+</pre></div>
+
+<p>whenever an exceptional&ndash;condition is raised: the topmost handler is applied to the object; it
+might:
+</p>
+<ul class="itemize mark-bullet">
+<li>handle the exception then exit the script;
+
+</li><li>handle the exception then return signalling that script&rsquo;s execution can go on;
+
+</li><li>handle the exception then return signalling that script&rsquo;s execution cannot go on;
+
+</li><li>return signalling that the exception was not handled;
+</li></ul>
+
+<p>in the last case: the next handler from the stack is applied to the object and so on until some
+handler handles the exception.  A default handler is pushed to the stack upon <abbr class="acronym">MBFL</abbr> loading&ndash;time:
+if it is called, it might terminate the script with a &ldquo;uncaught exception&rdquo; exit status.
+</p>
+</div>
+<hr>
+<div class="nav-panel">
+<p>
+Next: <a href="exceptions-raise.html">How to raise exceptional&ndash;condition objects</a>, Previous: <a href="exceptions-conventions.html">Conventions</a>, Up: <a href="exceptions.html">Raising and handling exceptions</a> &nbsp; [<a href="index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+<p>This document describes version <tt>3.0.0-devel.8</tt> of <em>Marcos Bash Functions Library</em>.</p>
+</body>
+</html>

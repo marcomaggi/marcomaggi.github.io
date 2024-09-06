@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<!-- Created by GNU Texinfo 7.1, https://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<!-- This document describes version 3.0.0-devel.8 of MBFL, a collection of libraries of
+functions for the GNU Bash shell.  It requires GNU Bash at least version
+4.3; it require GNU m4 (other m4 implementations will not do).  The
+package is distributed under the terms of the GNU Lesser General Public License (LGPL).
+
+The latest release can be downloaded from:
+
+https://bitbucket.org/marcomaggi/mbfl/downloads
+
+development takes place at:
+
+https://github.com/marcomaggi/mbfl
+
+and as backup at:
+
+https://bitbucket.org/marcomaggi/mbfl
+
+Copyright © 2003-2005, 2009-2010, 2012-2015, 2017-2018, 2020, 2022, 2023, 2024 by Marco Maggi mrc.mgg@gmail.com
+
+Permission is granted to copy, distribute and/or modify this document under the terms of the GNU
+Free Documentation License, Version 1.3 or any later version published by the Free Software
+Foundation; with Invariant Sections being "GNU Free Documentation License" and "GNU Lesser
+General Public License", no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license is
+included in the section entitled "GNU Free Documentation License". -->
+<title>program executing bash (Marco&rsquo;s Bash Functions Libraries)</title>
+
+<meta name="description" content="program executing bash (Marco&rsquo;s Bash Functions Libraries)">
+<meta name="keywords" content="program executing bash (Marco&rsquo;s Bash Functions Libraries)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<link href="index.html" rel="start" title="Top">
+<link href="concept-index.html" rel="index" title="concept index">
+<link href="index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="program-executing.html" rel="up" title="program executing">
+<link href="program-executing-channels.html" rel="next" title="program executing channels">
+<link href="program-executing-sudo.html" rel="prev" title="program executing sudo">
+<style type="text/css">
+<!--
+a.copiable-link {visibility: hidden; text-decoration: none; line-height: 0em}
+div.example {margin-left: 3.2em}
+span:hover a.copiable-link {visibility: visible}
+strong.def-name {font-family: monospace; font-weight: bold; font-size: larger}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="mbfl.css">
+
+
+</head>
+
+<body lang="en">
+<div class="subsection-level-extent" id="program-executing-bash">
+<div class="nav-panel">
+<p>
+Next: <a href="program-executing-channels.html" accesskey="n" rel="next">Redirecting channels when executing a program</a>, Previous: <a href="program-executing-sudo.html" accesskey="p" rel="prev">Executing programs with another&rsquo;s profile privileges</a>, Up: <a href="program-executing.html" accesskey="u" rel="up">Executing a program</a> &nbsp; [<a href="index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<h4 class="subsection" id="Executing-a-bash-process"><span>22.3.6 Executing a <code class="command">bash</code> process<a class="copiable-link" href="#Executing-a-bash-process"> &para;</a></span></h4>
+
+
+<p>In the following functions: the file system pathname of <code class="command">bash</code> is preselected and
+hard&ndash;coded in the library at package&ndash;configuration time; <a class="ref" href="program-preselected.html#mbfl_005fPROGRAM_005fBASH">mbfl_PROGRAM_BASH</a> for details.
+</p>
+
+<dl class="first-deffn first-defun-alias-first-deffn">
+<dt class="deffn defun-alias-deffn" id="index-mbfl_005fprogram_005fbash"><span class="category-def">Function: </span><span><strong class="def-name">mbfl_program_bash</strong> <var class="def-var-arguments"><var class="var">ARG</var> &hellip;</var><a class="copiable-link" href="#index-mbfl_005fprogram_005fbash"> &para;</a></span></dt>
+<dd><p>Execute the program <code class="command">bash</code> with the <var class="var">ARG</var> arguments on the command line.
+</p></dd></dl>
+
+
+<dl class="first-deffn first-defun-alias-first-deffn">
+<dt class="deffn defun-alias-deffn" id="index-mbfl_005fprogram_005fbash_005fcommand"><span class="category-def">Function: </span><span><strong class="def-name">mbfl_program_bash_command</strong> <var class="def-var-arguments"><var class="var">COMMAND</var> <var class="var">ARG</var> &hellip;</var><a class="copiable-link" href="#index-mbfl_005fprogram_005fbash_005fcommand"> &para;</a></span></dt>
+<dd><p>Execute <var class="var">COMMAND</var> in a <code class="command">bash</code> subprocess, using the <code class="code">-c</code> switch.  If given, the
+optional <var class="var">ARG</var> arguments are placed on the command line of <code class="command">bash</code> in options position
+(before the <code class="code">-c</code> option).
+</p>
+<div class="example">
+<pre class="example-preformatted">mbfl_program_bash_command 'read ; echo &quot;$REPLY&quot;'
+</pre></div>
+</dd></dl>
+
+
+<h4 class="subsubheading" id="Background-execution"><span>Background execution<a class="copiable-link" href="#Background-execution"> &para;</a></span></h4>
+
+
+<p>Notice that if we want to execute <code class="command">bash</code> in background and access its PID with
+<code class="code">mbfl_program_BGPID</code> we have to use a command like the following (we need the option
+<samp class="option">-i</samp> to activate job control):
+</p>
+<div class="example">
+<pre class="example-preformatted">local THE_PID
+
+mbfl_program_execbg 0 1 &quot;$mbfl_PROGRAM_BASH&quot; '--norc' '--noprofile' '-i' '-c' 'suspend'
+THE_PID=$mbfl_program_BGPID
+
+mbfl_process_kill -SIGCONT $THE_PID
+mbfl_process_wait $THE_PID
+</pre></div>
+
+<p>Attempting to use <code class="code">mbfl_program_bash()</code> or <code class="code">mbfl_program_bash_command()</code>, by putting them in
+the background with <code class="code">&amp;</code>, will not work: it is impossible to determine the executed
+<code class="command">bash</code> process&rsquo; PID from the parent shell process.
+</p>
+</div>
+<hr>
+<div class="nav-panel">
+<p>
+Next: <a href="program-executing-channels.html">Redirecting channels when executing a program</a>, Previous: <a href="program-executing-sudo.html">Executing programs with another&rsquo;s profile privileges</a>, Up: <a href="program-executing.html">Executing a program</a> &nbsp; [<a href="index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+<p>This document describes version <tt>3.0.0-devel.8</tt> of <em>Marcos Bash Functions Library</em>.</p>
+</body>
+</html>

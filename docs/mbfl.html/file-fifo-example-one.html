@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+<!-- Created by GNU Texinfo 7.1, https://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<!-- This document describes version 3.0.0-devel.8 of MBFL, a collection of libraries of
+functions for the GNU Bash shell.  It requires GNU Bash at least version
+4.3; it require GNU m4 (other m4 implementations will not do).  The
+package is distributed under the terms of the GNU Lesser General Public License (LGPL).
+
+The latest release can be downloaded from:
+
+https://bitbucket.org/marcomaggi/mbfl/downloads
+
+development takes place at:
+
+https://github.com/marcomaggi/mbfl
+
+and as backup at:
+
+https://bitbucket.org/marcomaggi/mbfl
+
+Copyright © 2003-2005, 2009-2010, 2012-2015, 2017-2018, 2020, 2022, 2023, 2024 by Marco Maggi mrc.mgg@gmail.com
+
+Permission is granted to copy, distribute and/or modify this document under the terms of the GNU
+Free Documentation License, Version 1.3 or any later version published by the Free Software
+Foundation; with Invariant Sections being "GNU Free Documentation License" and "GNU Lesser
+General Public License", no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license is
+included in the section entitled "GNU Free Documentation License". -->
+<title>file fifo example one (Marco&rsquo;s Bash Functions Libraries)</title>
+
+<meta name="description" content="file fifo example one (Marco&rsquo;s Bash Functions Libraries)">
+<meta name="keywords" content="file fifo example one (Marco&rsquo;s Bash Functions Libraries)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<link href="index.html" rel="start" title="Top">
+<link href="concept-index.html" rel="index" title="concept index">
+<link href="index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="file-fifo.html" rel="up" title="file fifo">
+<link href="file-fifo-example-two.html" rel="next" title="file fifo example two">
+<style type="text/css">
+<!--
+a.copiable-link {visibility: hidden; text-decoration: none; line-height: 0em}
+div.example {margin-left: 3.2em}
+span:hover a.copiable-link {visibility: visible}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="mbfl.css">
+
+
+</head>
+
+<body lang="en">
+<div class="subsection-level-extent" id="file-fifo-example-one">
+<div class="nav-panel">
+<p>
+Next: <a href="file-fifo-example-two.html" accesskey="n" rel="next">Redirection of standard channels to FIFO pathnames</a>, Up: <a href="file-fifo.html" accesskey="u" rel="up">Named pipes</a> &nbsp; [<a href="index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<h4 class="subsection" id="Each-process-opens-the-FIFO-pathnames"><span>20.16.1 Each process opens the FIFO pathnames<a class="copiable-link" href="#Each-process-opens-the-FIFO-pathnames"> &para;</a></span></h4>
+
+
+<p>One way is to generate unique file pathnames for 2 named pipes and, somehow, make them known to 2
+processes; then have them open the named pipes to exchange characters.  Let&rsquo;s say a parent process
+executes a child process and we use environment variables to make the pathnames known to the child.
+</p>
+<p>The parent can look like this:
+</p>
+<div class="example">
+<pre class="example-preformatted">mbfl_file_enable_remove
+mbfl_process_enable
+
+declare -r CHILD=/path/to/child.bash
+
+# Export these variables so the child sees them.
+declare -rx FIFO_PARENT_TO_CHILD=/path/to/fifo-parent-to-child.$RANDOM
+declare -rx FIFO_CHILD_TO_PARENT=/path/to/fifo-child-to-parent.$RANDOM
+
+declare -ri FD_PARENT_TO_CHILD=4
+declare -ri FD_CHILD_TO_PARENT=5
+
+mbfl_location_enter
+{
+    if mbfl_exec_mkfifo --mode=0600 -- &quot;$FIFO_PARENT_TO_CHILD&quot;
+    then mbfl_location_handler &quot;mbfl_file_remove '$FIFO_PARENT_TO_CHILD'&quot;
+    else
+        mbfl_location_leave
+        exit_failure
+    fi
+
+    if mbfl_exec_mkfifo --mode=0600 -- &quot;$FIFO_CHILD_TO_PARENT&quot;
+    then mbfl_location_handler &quot;mbfl_file_remove '$FIFO_CHILD_TO_PARENT'&quot;
+    else
+        mbfl_location_leave
+        exit_failure
+    fi
+
+    if mbfl_fd_open_input_output $FD_PARENT_TO_CHILD &quot;$FIFO_PARENT_TO_CHILD&quot;
+    then mbfl_location_handler &quot;mbfl_fd_close $FD_PARENT_TO_CHILD&quot;
+    else
+        mbfl_location_leave
+        exit_failure
+    fi
+
+    if mbfl_fd_open_input_output $FD_CHILD_TO_PARENT &quot;$FIFO_CHILD_TO_PARENT&quot;
+    then mbfl_location_handler &quot;mbfl_fd_close $FD_CHILD_TO_PARENT&quot;
+    else
+        mbfl_location_leave
+        exit_failure
+    fi
+
+    if mbfl_program_execbg 0 1 &quot;$mbfl_PROGRAM_BASH&quot; &quot;$FIFO_SCRIPT&quot;
+    then mbfl_location_handler &quot;mbfl_process_wait $mbfl_program_BGPID&quot;
+    else
+        mbfl_location_leave
+        exit_failure
+    fi
+
+    printf 'ciao child\n' &gt;&amp;$FD_PARENT_TO_CHILD
+    read -u $FD_CHILD_TO_PARENT
+}
+mbfl_location_leave
+</pre></div>
+
+<p>The child can look like this:
+</p>
+<div class="example">
+<pre class="example-preformatted">declare -r FIFO_PARENT_TO_CHILD=$FIFO_PARENT_TO_CHILD
+declare -r FIFO_CHILD_TO_PARENT=$FIFO_CHILD_TO_PARENT
+
+declare -ri FD_PARENT_TO_CHILD=4
+declare -ri FD_CHILD_TO_PARENT=5
+
+mbfl_location_enter
+{
+    if mbfl_fd_open_input_output $FD_PARENT_TO_CHILD &quot;$FIFO_PARENT_TO_CHILD&quot;
+    then mbfl_location_handler &quot;mbfl_fd_close $FD_PARENT_TO_CHILD&quot;
+    else
+        mbfl_location_leave
+        exit_failure
+    fi
+
+    if mbfl_fd_open_input_output $FD_CHILD_TO_PARENT &quot;$FIFO_CHILD_TO_PARENT&quot;
+    then mbfl_location_handler &quot;mbfl_fd_close $FD_CHILD_TO_PARENT&quot;
+    else
+        mbfl_location_leave
+        exit_failure
+    fi
+
+    read -u $FD_PARENT_TO_CHILD
+    printf 'ciao parent\n' &gt;&amp;$FD_CHILD_TO_PARENT
+}
+mbfl_location_leave
+</pre></div>
+
+</div>
+<hr>
+<div class="nav-panel">
+<p>
+Next: <a href="file-fifo-example-two.html">Redirection of standard channels to FIFO pathnames</a>, Up: <a href="file-fifo.html">Named pipes</a> &nbsp; [<a href="index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+<p>This document describes version <tt>3.0.0-devel.8</tt> of <em>Marcos Bash Functions Library</em>.</p>
+</body>
+</html>

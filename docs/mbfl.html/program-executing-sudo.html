@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<!-- Created by GNU Texinfo 7.1, https://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<!-- This document describes version 3.0.0-devel.8 of MBFL, a collection of libraries of
+functions for the GNU Bash shell.  It requires GNU Bash at least version
+4.3; it require GNU m4 (other m4 implementations will not do).  The
+package is distributed under the terms of the GNU Lesser General Public License (LGPL).
+
+The latest release can be downloaded from:
+
+https://bitbucket.org/marcomaggi/mbfl/downloads
+
+development takes place at:
+
+https://github.com/marcomaggi/mbfl
+
+and as backup at:
+
+https://bitbucket.org/marcomaggi/mbfl
+
+Copyright © 2003-2005, 2009-2010, 2012-2015, 2017-2018, 2020, 2022, 2023, 2024 by Marco Maggi mrc.mgg@gmail.com
+
+Permission is granted to copy, distribute and/or modify this document under the terms of the GNU
+Free Documentation License, Version 1.3 or any later version published by the Free Software
+Foundation; with Invariant Sections being "GNU Free Documentation License" and "GNU Lesser
+General Public License", no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license is
+included in the section entitled "GNU Free Documentation License". -->
+<title>program executing sudo (Marco&rsquo;s Bash Functions Libraries)</title>
+
+<meta name="description" content="program executing sudo (Marco&rsquo;s Bash Functions Libraries)">
+<meta name="keywords" content="program executing sudo (Marco&rsquo;s Bash Functions Libraries)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<link href="index.html" rel="start" title="Top">
+<link href="concept-index.html" rel="index" title="concept index">
+<link href="index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="program-executing.html" rel="up" title="program executing">
+<link href="program-executing-bash.html" rel="next" title="program executing bash">
+<link href="program-executing-bg.html" rel="prev" title="program executing bg">
+<style type="text/css">
+<!--
+a.copiable-link {visibility: hidden; text-decoration: none; line-height: 0em}
+span:hover a.copiable-link {visibility: visible}
+strong.def-name {font-family: monospace; font-weight: bold; font-size: larger}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="mbfl.css">
+
+
+</head>
+
+<body lang="en">
+<div class="subsection-level-extent" id="program-executing-sudo">
+<div class="nav-panel">
+<p>
+Next: <a href="program-executing-bash.html" accesskey="n" rel="next">Executing a <code class="command">bash</code> process</a>, Previous: <a href="program-executing-bg.html" accesskey="p" rel="prev">Executing programs in background</a>, Up: <a href="program-executing.html" accesskey="u" rel="up">Executing a program</a> &nbsp; [<a href="index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<h4 class="subsection" id="Executing-programs-with-another_0027s-profile-privileges"><span>22.3.5 Executing programs with another&rsquo;s profile privileges<a class="copiable-link" href="#Executing-programs-with-another_0027s-profile-privileges"> &para;</a></span></h4>
+
+
+<dl class="first-deffn first-defun-alias-first-deffn">
+<dt class="deffn defun-alias-deffn" id="index-mbfl_005fprogram_005fenable_005fsudo"><span class="category-def">Function: </span><span><strong class="def-name">mbfl_program_enable_sudo</strong><a class="copiable-link" href="#index-mbfl_005fprogram_005fenable_005fsudo"> &para;</a></span></dt>
+<dd><p>Declare the intention to use <code class="command">sudo</code> and other commands required to use it.  The declared
+programs are: <code class="command">sudo</code>, <code class="command">whoami</code>.
+</p>
+<p>This function does <strong class="strong">not</strong> use <code class="code">mbfl_declare_program()</code>.
+</p></dd></dl>
+
+
+<dl class="first-deffn first-defun-alias-first-deffn">
+<dt class="deffn defun-alias-deffn" id="index-mbfl_005fprogram_005fdeclare_005fsudo_005fuser"><span class="category-def">Function: </span><span><strong class="def-name">mbfl_program_declare_sudo_user</strong> <var class="def-var-arguments"><var class="var">PERSONA</var></var><a class="copiable-link" href="#index-mbfl_005fprogram_005fdeclare_005fsudo_005fuser"> &para;</a></span></dt>
+<dd><p>Register <var class="var">PERSONA</var> as the user under which to execute the next program through <code class="command">sudo</code>;
+the user will be selected using the <code class="code">-u</code> option of <code class="command">sudo</code>.  This function will:
+</p>
+<ol class="enumerate">
+<li> Check that the string <var class="var">PERSONA</var> satisfies the function <code class="code">mbfl_string_is_username()</code>, else the
+function will print an error message to <code class="code">stderr</code> and exit with
+<code class="code">exit_because_invalid_sudo_username()</code>.
+
+</li><li> Check that the built&ndash;in file system pathname for <code class="command">sudo</code> references an existent and
+executable file; otherwise call <code class="code">exit_because_program_not_found()</code>.  <a class="ref" href="program-preselected.html#mbfl_005fPROGRAM_005fSUDO">Preselected program pathnames</a>.
+
+</li><li> Check that the built&ndash;in file system pathname for <code class="command">whoami</code> references an existent and
+executable file; otherwise call <code class="code">exit_because_program_not_found()</code>.  <a class="ref" href="program-preselected.html#mbfl_005fPROGRAM_005fWHOAMI">Preselected program pathnames</a>.
+
+</li><li> Execute <code class="command">whoami</code> to determine the current effective user name.  If an error occurs call
+<code class="code">exit_because_failure()</code>.
+
+</li><li> If the string <var class="var">PERSONA</var> is different from the current effective user name: select <var class="var">PERSONA</var>
+as the user for the next <code class="command">sudo</code> execution and call <code class="code">return_success()</code>; otherwise set the
+internal state so that the next program execution will <strong class="strong">not</strong> use <code class="command">sudo</code>, then call
+<code class="code">return_because_failure()</code>.
+</li></ol>
+</dd></dl>
+
+
+<dl class="first-deffn first-defun-alias-first-deffn">
+<dt class="deffn defun-alias-deffn" id="index-mbfl_005fprogram_005freset_005fsudo_005fuser"><span class="category-def">Function: </span><span><strong class="def-name">mbfl_program_reset_sudo_user</strong><a class="copiable-link" href="#index-mbfl_005fprogram_005freset_005fsudo_005fuser"> &para;</a></span></dt>
+<dd><p>Reset the previously requested <code class="command">sudo</code> user to a value that will cause <code class="command">sudo</code> not to
+be used in the next program invocation.  This is useful to abort a user request.
+</p></dd></dl>
+
+
+<dl class="first-deffn first-defun-alias-first-deffn">
+<dt class="deffn defun-alias-deffn" id="index-mbfl_005fprogram_005fsudo_005fuser"><span class="category-def">Function: </span><span><strong class="def-name">mbfl_program_sudo_user</strong><a class="copiable-link" href="#index-mbfl_005fprogram_005fsudo_005fuser"> &para;</a></span></dt>
+<dd><p>Print the current <code class="command">sudo</code> user.  This function is for debugging purposes.
+</p></dd></dl>
+
+
+<dl class="first-deffn first-defun-alias-first-deffn">
+<dt class="deffn defun-alias-deffn" id="index-mbfl_005fprogram_005frequested_005fsudo"><span class="category-def">Function: </span><span><strong class="def-name">mbfl_program_requested_sudo</strong><a class="copiable-link" href="#index-mbfl_005fprogram_005frequested_005fsudo"> &para;</a></span></dt>
+<dd><p>Return true if the usage of <code class="command">sudo</code> has been requested for the next command execution.
+</p></dd></dl>
+
+
+<dl class="first-deffn first-defun-alias-first-deffn">
+<dt class="deffn defun-alias-deffn" id="index-mbfl_005fprogram_005fset_005fsudo_005foptions"><span class="category-def">Function: </span><span><strong class="def-name">mbfl_program_set_sudo_options</strong> <var class="def-var-arguments"><var class="var">OPT</var> &hellip;</var><a class="copiable-link" href="#index-mbfl_005fprogram_005fset_005fsudo_005foptions"> &para;</a></span></dt>
+<dt class="deffnx defunx-alias-deffnx def-cmd-deffn" id="index-mbfl_005fprogram_005fdeclare_005fsudo_005foptions"><span class="category-def">Function: </span><span><strong class="def-name">mbfl_program_declare_sudo_options</strong> <var class="def-var-arguments"><var class="var">OPT</var> &hellip;</var><a class="copiable-link" href="#index-mbfl_005fprogram_005fdeclare_005fsudo_005foptions"> &para;</a></span></dt>
+<dd><p>Select additional command line options to use on the next invocation of <code class="command">sudo</code>.  These
+values are consumed by the first use of <code class="code">mbfl_program_exec()</code>.
+</p></dd></dl>
+
+
+<dl class="first-deffn first-defun-alias-first-deffn">
+<dt class="deffn defun-alias-deffn" id="index-mbfl_005fprogram_005freset_005fsudo_005foptions"><span class="category-def">Function: </span><span><strong class="def-name">mbfl_program_reset_sudo_options</strong><a class="copiable-link" href="#index-mbfl_005fprogram_005freset_005fsudo_005foptions"> &para;</a></span></dt>
+<dd><p>Clean the options previously set by <code class="code">mbfl_program_declare_sudo_options()</code>.
+</p></dd></dl>
+
+
+<dl class="first-deffn">
+<dt class="deffn" id="index-exit_005fbecause_005finvalid_005fsudo_005fusername"><span class="category-def">Function: </span><span><strong class="def-name">exit_because_invalid_sudo_username</strong><a class="copiable-link" href="#index-exit_005fbecause_005finvalid_005fsudo_005fusername"> &para;</a></span></dt>
+<dt class="deffnx def-cmd-deffn" id="index-return_005fbecause_005finvalid_005fsudo_005fusername"><span class="category-def">Alias: </span><span><strong class="def-name">return_because_invalid_sudo_username</strong><a class="copiable-link" href="#index-return_005fbecause_005finvalid_005fsudo_005fusername"> &para;</a></span></dt>
+<dd><p>Exit or return with code <code class="code">90</code>.
+</p></dd></dl>
+
+</div>
+<hr>
+<div class="nav-panel">
+<p>
+Next: <a href="program-executing-bash.html">Executing a <code class="command">bash</code> process</a>, Previous: <a href="program-executing-bg.html">Executing programs in background</a>, Up: <a href="program-executing.html">Executing a program</a> &nbsp; [<a href="index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+<p>This document describes version <tt>3.0.0-devel.8</tt> of <em>Marcos Bash Functions Library</em>.</p>
+</body>
+</html>

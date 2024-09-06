@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+<!-- Created by GNU Texinfo 7.1, https://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<!-- This document describes version 3.0.0-devel.8 of MBFL, a collection of libraries of
+functions for the GNU Bash shell.  It requires GNU Bash at least version
+4.3; it require GNU m4 (other m4 implementations will not do).  The
+package is distributed under the terms of the GNU Lesser General Public License (LGPL).
+
+The latest release can be downloaded from:
+
+https://bitbucket.org/marcomaggi/mbfl/downloads
+
+development takes place at:
+
+https://github.com/marcomaggi/mbfl
+
+and as backup at:
+
+https://bitbucket.org/marcomaggi/mbfl
+
+Copyright © 2003-2005, 2009-2010, 2012-2015, 2017-2018, 2020, 2022, 2023, 2024 by Marco Maggi mrc.mgg@gmail.com
+
+Permission is granted to copy, distribute and/or modify this document under the terms of the GNU
+Free Documentation License, Version 1.3 or any later version published by the Free Software
+Foundation; with Invariant Sections being "GNU Free Documentation License" and "GNU Lesser
+General Public License", no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license is
+included in the section entitled "GNU Free Documentation License". -->
+<title>strings inspection extract (Marco&rsquo;s Bash Functions Libraries)</title>
+
+<meta name="description" content="strings inspection extract (Marco&rsquo;s Bash Functions Libraries)">
+<meta name="keywords" content="strings inspection extract (Marco&rsquo;s Bash Functions Libraries)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<link href="index.html" rel="start" title="Top">
+<link href="concept-index.html" rel="index" title="concept index">
+<link href="index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="strings-inspection.html" rel="up" title="strings inspection">
+<link href="strings-inspection-search.html" rel="next" title="strings inspection search">
+<link href="strings-inspection-empty.html" rel="prev" title="strings inspection empty">
+<style type="text/css">
+<!--
+a.copiable-link {visibility: hidden; text-decoration: none; line-height: 0em}
+div.example {margin-left: 3.2em}
+span:hover a.copiable-link {visibility: visible}
+strong.def-name {font-family: monospace; font-weight: bold; font-size: larger}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="mbfl.css">
+
+
+</head>
+
+<body lang="en">
+<div class="subsection-level-extent" id="strings-inspection-extract">
+<div class="nav-panel">
+<p>
+Next: <a href="strings-inspection-search.html" accesskey="n" rel="next">Searching characters in strings</a>, Previous: <a href="strings-inspection-empty.html" accesskey="p" rel="prev">Determining if a string is empty</a>, Up: <a href="strings-inspection.html" accesskey="u" rel="up">Inspecting a string</a> &nbsp; [<a href="index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<h4 class="subsection" id="Extracting-characters-and-ranges-from-strings"><span>14.2.3 Extracting characters and ranges from strings<a class="copiable-link" href="#Extracting-characters-and-ranges-from-strings"> &para;</a></span></h4>
+
+
+<dl class="first-deffn">
+<dt class="deffn" id="index-mbfl_005fstring_005fidx"><span class="category-def">Preprocessor Macros: </span><span><strong class="def-name">mbfl_string_idx</strong> <var class="def-var-arguments">(<var class="var">VAR</var>, <var class="var">EXPR</var>)</var><a class="copiable-link" href="#index-mbfl_005fstring_005fidx"> &para;</a></span></dt>
+<dt class="deffnx def-cmd-deffn" id="index-mbfl_005fstring_005fqidx"><span class="category-def">Preprocessor Macros: </span><span><strong class="def-name">mbfl_string_qidx</strong> <var class="def-var-arguments">(<var class="var">VAR</var>, <var class="var">EXPR</var>)</var><a class="copiable-link" href="#index-mbfl_005fstring_005fqidx"> &para;</a></span></dt>
+<dd><p>Rexpectively expand into the expressions:
+</p>
+<div class="example">
+<pre class="example-preformatted">mbfl_string_idx(<var class="var">VAR</var>, <var class="var">EXPR</var>)  &rarr; ${<var class="var">VAR</var>:<var class="var">EXPR</var>:1}
+mbfl_string_qidx(<var class="var">VAR</var>, <var class="var">EXPR</var>) &rarr; &quot;${<var class="var">VAR</var>:<var class="var">EXPR</var>:1}&quot;
+</pre></div>
+
+<p>which evaluates to the character at index <var class="var">EXPR</var> in the string in the variable <var class="var">VAR</var>.
+</p></dd></dl>
+
+
+<dl class="first-deffn">
+<dt class="deffn" id="index-mbfl_005fstring_005flast_005fchar"><span class="category-def">Preprocessor Macro: </span><span><strong class="def-name">mbfl_string_last_char</strong> <var class="def-var-arguments">(<var class="var">VAR</var>)</var><a class="copiable-link" href="#index-mbfl_005fstring_005flast_005fchar"> &para;</a></span></dt>
+<dd><p>Expand into the expression:
+</p>
+<div class="example">
+<pre class="example-preformatted">${$1:$((${#$1} - 1)):1}
+</pre></div>
+
+<p>which, if it is not empty, evaluates to the last character of the string in the variable <var class="var">VAR</var>;
+if the string empty: the result of the evaluation is the empty string.
+</p>
+<p>Usage examples:
+</p>
+<div class="example">
+<pre class="example-preformatted">{
+  local STR='ciao'
+  test 'o' = mbfl_string_last_char(STR)
+}
+&rArr; 0
+
+{
+  local STR=$'ciao\n'
+  test $'\n' = &quot;mbfl_string_last_char(STR)&quot;
+}
+&rArr; 0
+
+{
+  local -r STR=
+  test '' = &quot;mbfl_string_last_char(STR)&quot;
+}
+&rArr; 0
+</pre></div>
+</dd></dl>
+
+
+<dl class="first-deffn first-defun-alias-first-deffn">
+<dt class="deffn defun-alias-deffn" id="index-mbfl_005fstring_005findex"><span class="category-def">Function: </span><span><strong class="def-name">mbfl_string_index</strong> <var class="def-var-arguments"><var class="var">STRING</var> <var class="var">INDEX</var></var><a class="copiable-link" href="#index-mbfl_005fstring_005findex"> &para;</a></span></dt>
+<dt class="deffnx defunx-alias-deffnx def-cmd-deffn" id="index-mbfl_005fstring_005findex_005fvar"><span class="category-def">Function: </span><span><strong class="def-name">mbfl_string_index_var</strong> <var class="def-var-arguments"><var class="var">_RV</var> <var class="var">STRING</var> <var class="var">INDEX</var></var><a class="copiable-link" href="#index-mbfl_005fstring_005findex_005fvar"> &para;</a></span></dt>
+<dd><p>Select a character from a string.  Echo to stdout the selected character.  If the index is out of
+range: the empty string is echoed to stdout, that is: a newline is echoed to stdout.
+</p>
+<p>The function variant <code class="code">_var</code> stores the result in the variable <var class="var">_RV</var>, rather than print it;
+<a class="ref" href="overview-rv.html">Result variables</a>.
+</p>
+<div class="example">
+<pre class="example-preformatted">mbfl_string_index abcdefghilm  0        -| a
+mbfl_string_index abcdefghilm  4        -| e
+mbfl_string_index abcdefghilm 10        -| m
+mbfl_string_index abcdefghilm 11        -| &lt;empty string&gt;
+
+local _RV
+mbfl_string_index_var _RV abcdefghilm 0
+&quot;$_RV&quot; &rArr; a
+</pre></div>
+</dd></dl>
+
+
+<dl class="first-deffn first-defun-alias-first-deffn">
+<dt class="deffn defun-alias-deffn" id="index-mbfl_005fstring_005frange"><span class="category-def">Function: </span><span><strong class="def-name">mbfl_string_range</strong> <var class="def-var-arguments"><var class="var">STRING</var> <var class="var">BEGIN</var></var><a class="copiable-link" href="#index-mbfl_005fstring_005frange"> &para;</a></span></dt>
+<dt class="deffnx defunx-alias-deffnx def-cmd-deffn" id="index-mbfl_005fstring_005frange-1"><span class="category-def">Function: </span><span><strong class="def-name">mbfl_string_range</strong> <var class="def-var-arguments"><var class="var">STRING</var> <var class="var">BEGIN</var> <var class="var">END</var></var><a class="copiable-link" href="#index-mbfl_005fstring_005frange-1"> &para;</a></span></dt>
+<dt class="deffnx defunx-alias-deffnx def-cmd-deffn" id="index-mbfl_005fstring_005frange_005fvar"><span class="category-def">Function: </span><span><strong class="def-name">mbfl_string_range_var</strong> <var class="def-var-arguments"><var class="var">_RV</var> <var class="var">STRING</var> <var class="var">BEGIN</var></var><a class="copiable-link" href="#index-mbfl_005fstring_005frange_005fvar"> &para;</a></span></dt>
+<dt class="deffnx defunx-alias-deffnx def-cmd-deffn" id="index-mbfl_005fstring_005frange_005fvar-1"><span class="category-def">Function: </span><span><strong class="def-name">mbfl_string_range_var</strong> <var class="def-var-arguments"><var class="var">_RV</var> <var class="var">STRING</var> <var class="var">BEGIN</var> <var class="var">END</var></var><a class="copiable-link" href="#index-mbfl_005fstring_005frange_005fvar-1"> &para;</a></span></dt>
+<dd><p>Extract a range of characters from a string.  Arguments: <var class="var">STRING</var>, the source string;
+<var class="var">BEGIN</var>, the index of the first character in the range; <var class="var">END</var>, optional, the index of the
+character past the last in the range, this character is not extracted.
+</p>
+<p><var class="var">END</var> defaults to the string length; if the parameter <var class="var">END</var> is set to the lowercase string
+<code class="code">end</code> or the uppercase string <code class="code">END</code>: the end index is set to the string length.
+</p>
+<p>Echo to stdout the selected range of characters, which may be the empty string.
+</p>
+<p>The function variant <code class="code">_var</code> stores the result in the variable <var class="var">_RV</var>, rather than print it;
+<a class="ref" href="overview-rv.html">Result variables</a>.
+</p>
+<div class="example">
+<pre class="example-preformatted">mbfl_string_range abcdefghilm 0 end     -| abcdefghilm
+mbfl_string_range abcdefghilm 0         -| abcdefghilm
+mbfl_string_range abcdefghilm 0 4       -| abcd
+mbfl_string_range abcdefghilm 4 end     -| efghilm
+
+local _RV
+mbfl_string_range_var _RV abcdefghilm 4 end
+&quot;$_RV&quot; &rArr; efghilm
+</pre></div>
+</dd></dl>
+
+</div>
+<hr>
+<div class="nav-panel">
+<p>
+Next: <a href="strings-inspection-search.html">Searching characters in strings</a>, Previous: <a href="strings-inspection-empty.html">Determining if a string is empty</a>, Up: <a href="strings-inspection.html">Inspecting a string</a> &nbsp; [<a href="index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+<p>This document describes version <tt>3.0.0-devel.8</tt> of <em>Marcos Bash Functions Library</em>.</p>
+</body>
+</html>

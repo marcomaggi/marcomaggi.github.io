@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<!-- Created by GNU Texinfo 7.1, https://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<!-- This document describes version 3.0.0-devel.8 of MBFL, a collection of libraries of
+functions for the GNU Bash shell.  It requires GNU Bash at least version
+4.3; it require GNU m4 (other m4 implementations will not do).  The
+package is distributed under the terms of the GNU Lesser General Public License (LGPL).
+
+The latest release can be downloaded from:
+
+https://bitbucket.org/marcomaggi/mbfl/downloads
+
+development takes place at:
+
+https://github.com/marcomaggi/mbfl
+
+and as backup at:
+
+https://bitbucket.org/marcomaggi/mbfl
+
+Copyright © 2003-2005, 2009-2010, 2012-2015, 2017-2018, 2020, 2022, 2023, 2024 by Marco Maggi mrc.mgg@gmail.com
+
+Permission is granted to copy, distribute and/or modify this document under the terms of the GNU
+Free Documentation License, Version 1.3 or any later version published by the Free Software
+Foundation; with Invariant Sections being "GNU Free Documentation License" and "GNU Lesser
+General Public License", no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license is
+included in the section entitled "GNU Free Documentation License". -->
+<title>semver parser (Marco&rsquo;s Bash Functions Libraries)</title>
+
+<meta name="description" content="semver parser (Marco&rsquo;s Bash Functions Libraries)">
+<meta name="keywords" content="semver parser (Marco&rsquo;s Bash Functions Libraries)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<link href="index.html" rel="start" title="Top">
+<link href="concept-index.html" rel="index" title="concept index">
+<link href="index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="semver.html" rel="up" title="semver">
+<link href="semver-compar.html" rel="next" title="semver compar">
+<link href="semver-classes.html" rel="prev" title="semver classes">
+<style type="text/css">
+<!--
+a.copiable-link {visibility: hidden; text-decoration: none; line-height: 0em}
+div.example {margin-left: 3.2em}
+span:hover a.copiable-link {visibility: visible}
+strong.def-name {font-family: monospace; font-weight: bold; font-size: larger}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="mbfl.css">
+
+
+</head>
+
+<body lang="en">
+<div class="section-level-extent" id="semver-parser">
+<div class="nav-panel">
+<p>
+Next: <a href="semver-compar.html" accesskey="n" rel="next">Comparing semantic version specifications</a>, Previous: <a href="semver-classes.html" accesskey="p" rel="prev">Object classes representing semantic&ndash;version handling</a>, Up: <a href="semver.html" accesskey="u" rel="up">Semantic&ndash;version specifications</a> &nbsp; [<a href="index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<h3 class="section" id="Parsing-semantic-version-specifications"><span>28.4 Parsing semantic version specifications<a class="copiable-link" href="#Parsing-semantic-version-specifications"> &para;</a></span></h3>
+
+
+<dl class="first-deffn first-defun-alias-first-deffn">
+<dt class="deffn defun-alias-deffn" id="index-mbfl_005fsemver_005fparse"><span class="category-def">Function: </span><span><strong class="def-name">mbfl_semver_parse</strong> <var class="def-var-arguments"><var class="var">SEMVER_SPEC</var> <var class="var">SEMVER_PARSER</var> <var class="var">PARSER_INPUT</var></var><a class="copiable-link" href="#index-mbfl_005fsemver_005fparse"> &para;</a></span></dt>
+<dd><p>Parse the semantic version specification in <var class="var">PARSER_INPUT</var> using the configuration in
+<var class="var">SEMVER_PARSER</var> and store the result in <var class="var">SEMVER_SPEC</var>.  When successful return true;
+otherwise return false.
+</p>
+<p>If an error occurs while parsing: an error message string is stored in <var class="var">SEMVER_PARSER</var>.
+</p>
+<p>In the following example we parse a correct semantic version specification; with prerelease version;
+with build metadata.
+</p>
+<div class="example">
+<pre class="example-preformatted">mbfl_default_object_declare(SEMVER_SPEC)
+mbfl_default_object_declare(SEMVER_PARSER)
+mbfl_default_object_declare(PARSER_INPUT)
+declare -i START_INDEX=0
+
+mbfl_semver_parser_input_make    _(PARSER_INPUT) '1.2.3-alpha.1+x86-64' $START_INDEX
+mbfl_semver_parser_make_default  _(SEMVER_PARSER)
+mbfl_semver_parse _(SEMVER_SPEC) _(SEMVER_PARSER) _(PARSER_INPUT)
+
+mbfl_declare_varref(MAJOR_NUMBER)
+mbfl_declare_varref(BUILD_METADATA)
+
+mbfl_semver_spec_major_number_var   _(MAJOR_NUMBER)   _(SEMVER_PARSER)
+mbfl_semver_spec_build_metadata_var _(BUILD_METADATA) _(SEMVER_PARSER)
+
+&quot;$MAJOR_NUMBER&quot;         &rArr; 1
+&quot;$BUILD_METADATA&quot;       &rArr; x86-64
+</pre></div>
+</dd></dl>
+
+
+<dl class="first-deffn first-defun-alias-first-deffn">
+<dt class="deffn defun-alias-deffn" id="index-mbfl_005fsemver_005fsplit_005fprerelease_005fversion"><span class="category-def">Function: </span><span><strong class="def-name">mbfl_semver_split_prerelease_version</strong> <var class="def-var-arguments"><var class="var">_RV</var> <var class="var">PRERELEASE_VERSION_SPEC</var></var><a class="copiable-link" href="#index-mbfl_005fsemver_005fsplit_005fprerelease_005fversion"> &para;</a></span></dt>
+<dd><p>Split a <var class="var">PRERELEASE_VERSION_SPEC</var> into its component identifiers and store them in the indexed
+array whose name is <var class="var">_RV</var>.  If successful return 0; otherwise return 1.
+</p>
+<p>The string <var class="var">PRERELEASE_VERSION_SPEC</var> must be a correct prerelease version specification, without
+the leading hyphen character, like the one produced by calling <code class="code">mbfl_semver_parse()</code>.  If the
+string has an incorrect format: the behaviour of this function is undefined.
+</p>
+<p>In the following exmample we split a prerelease version specification:
+</p>
+<div class="example">
+<pre class="example-preformatted">mbfl_declare_index_array_varref(RV)
+
+mbfl_semver_split_prerelease_version mbfl_datavar(RV) 'alpha.12.beta.34.gamma.56'
+
+$?                      &rArr; 0
+mbfl_slots_number(RV)   &rArr; 6
+mbfl_slot_qref(RV, 0)   &rArr; alpha
+mbfl_slot_qref(RV, 1)   &rArr; 12
+mbfl_slot_qref(RV, 2)   &rArr; beta
+mbfl_slot_qref(RV, 3)   &rArr; 34
+mbfl_slot_qref(RV, 4)   &rArr; gamma
+mbfl_slot_qref(RV, 5)   &rArr; 56
+</pre></div>
+</dd></dl>
+
+</div>
+<hr>
+<div class="nav-panel">
+<p>
+Next: <a href="semver-compar.html">Comparing semantic version specifications</a>, Previous: <a href="semver-classes.html">Object classes representing semantic&ndash;version handling</a>, Up: <a href="semver.html">Semantic&ndash;version specifications</a> &nbsp; [<a href="index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+<p>This document describes version <tt>3.0.0-devel.8</tt> of <em>Marcos Bash Functions Library</em>.</p>
+</body>
+</html>

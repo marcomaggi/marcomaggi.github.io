@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+<!-- Created by GNU Texinfo 7.1, https://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<!-- This document describes version 3.0.0-devel.8 of MBFL, a collection of libraries of
+functions for the GNU Bash shell.  It requires GNU Bash at least version
+4.3; it require GNU m4 (other m4 implementations will not do).  The
+package is distributed under the terms of the GNU Lesser General Public License (LGPL).
+
+The latest release can be downloaded from:
+
+https://bitbucket.org/marcomaggi/mbfl/downloads
+
+development takes place at:
+
+https://github.com/marcomaggi/mbfl
+
+and as backup at:
+
+https://bitbucket.org/marcomaggi/mbfl
+
+Copyright © 2003-2005, 2009-2010, 2012-2015, 2017-2018, 2020, 2022, 2023, 2024 by Marco Maggi mrc.mgg@gmail.com
+
+Permission is granted to copy, distribute and/or modify this document under the terms of the GNU
+Free Documentation License, Version 1.3 or any later version published by the Free Software
+Foundation; with Invariant Sections being "GNU Free Documentation License" and "GNU Lesser
+General Public License", no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license is
+included in the section entitled "GNU Free Documentation License". -->
+<title>program executing defining (Marco&rsquo;s Bash Functions Libraries)</title>
+
+<meta name="description" content="program executing defining (Marco&rsquo;s Bash Functions Libraries)">
+<meta name="keywords" content="program executing defining (Marco&rsquo;s Bash Functions Libraries)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<link href="index.html" rel="start" title="Top">
+<link href="concept-index.html" rel="index" title="concept index">
+<link href="index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="program-executing.html" rel="up" title="program executing">
+<link href="program-executing-testing.html" rel="prev" title="program executing testing">
+<style type="text/css">
+<!--
+a.copiable-link {visibility: hidden; text-decoration: none; line-height: 0em}
+div.example {margin-left: 3.2em}
+span:hover a.copiable-link {visibility: visible}
+strong.def-name {font-family: monospace; font-weight: bold; font-size: larger}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="mbfl.css">
+
+
+</head>
+
+<body lang="en">
+<div class="subsection-level-extent" id="program-executing-defining">
+<div class="nav-panel">
+<p>
+Previous: <a href="program-executing-testing.html" accesskey="p" rel="prev">Testing a script and running programs</a>, Up: <a href="program-executing.html" accesskey="u" rel="up">Executing a program</a> &nbsp; [<a href="index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<h4 class="subsection" id="Defining-program_002d_002dexecution-functions"><span>22.3.9 Defining program&ndash;execution functions<a class="copiable-link" href="#Defining-program_002d_002dexecution-functions"> &para;</a></span></h4>
+
+
+<a class="index-entry-id" id="index-Defining-program_002dexecution-functions"></a>
+<a class="index-entry-id" id="index-Program_002dexecution-functions_002c-definition"></a>
+<a class="index-entry-id" id="index-Executing-external-programs_002c-defining-executor-function"></a>
+
+
+<p>It happens often that we want to execute an external program; it is useful to wrap into a function
+the machinery needed to use program declaration and execution with <abbr class="acronym">MBFL</abbr>&rsquo;s facilities.  Some
+preprocessor macros automate this function definition.
+</p>
+<p>Let&rsquo;s say we want to define a function to execute <code class="command">pamixer</code>, PulseAudio&rsquo;s mixer program; we
+can use the macro <code class="code">MBFL_DEFINE_PROGRAM_EXECUTOR()</code>:
+</p>
+<div class="example">
+<pre class="example-preformatted">mbfl_declare_program pamixer
+
+MBFL_DEFINE_PROGRAM_EXECUTOR([[[pamixer]]], [[[pamixer]]])
+</pre></div>
+
+<p>the macro use will expand into:
+</p>
+<div class="example">
+<pre class="example-preformatted">function program_pamixer () {
+    mbfl_declare_varref(PROGRAM)
+    mbfl_program_found_var mbfl_datavar(PROGRAM) pamixer || exit $?
+    mbfl_program_exec &quot;$PROGRAM&quot;  &quot;$@&quot;
+}
+</pre></div>
+
+<p>we can use the function as:
+</p>
+<div class="example">
+<pre class="example-preformatted">if ! program_pamixer --increase 2
+then
+    # handle the error
+fi
+</pre></div>
+
+<p>the function will return with status equal to the exit status of the program.
+</p>
+
+<dl class="first-deffn">
+<dt class="deffn" id="index-MBFL_005fDEFINE_005fPROGRAM_005fEXECUTOR"><span class="category-def">Preprocessor Macro: </span><span><strong class="def-name">MBFL_DEFINE_PROGRAM_EXECUTOR</strong> <var class="def-var-arguments">(<var class="var">STEM</var>, <var class="var">EXECUTABLE_PATHNAME</var>, <var class="var">OPTIONAL_DEFAULT_FLAGS</var>, <var class="var">OPTIONAL_FUNCTION_PREFIX</var>)</var><a class="copiable-link" href="#index-MBFL_005fDEFINE_005fPROGRAM_005fEXECUTOR"> &para;</a></span></dt>
+<dd><p>Define a function we can call to execute an external program previously declared with
+<code class="code">mbfl_declare_program()</code> and similar functions; <a class="ref" href="program-declaring.html">Declaring the intention
+to use a program</a>.  The program is executed with <code class="code">mbfl_program_exec()</code>; <a class="ref" href="program-executing-core.html#mbfl_005fprogram_005fexec">Core <abbr class="acronym">API</abbr> for Program execution</a>.
+</p>
+<dl class="table">
+<dt><var class="var">STEM</var></dt>
+<dd><p>A string used to compose the function name, which will be: <code class="code">program_<var class="var">STEM</var></code>.
+</p>
+</dd>
+<dt><var class="var">EXECUTABLE_PATHNAME</var></dt>
+<dd><p>The executable specification of the program; it must be the same string used as argument to
+<code class="code">mbfl_declare_program()</code>.
+</p>
+</dd>
+<dt><var class="var">OPTIONAL_DEFAULT_FLAGS</var></dt>
+<dd><p>Optional sequence of strings that will be inserted on the command line of the program.
+</p>
+</dd>
+<dt><var class="var">OPTIONAL_FUNCTION_PREFIX</var></dt>
+<dd><p>Optional function&ndash;name prefix.
+</p></dd>
+</dl>
+
+<p>With this preprocessor version the expansion of a macro use looks like this:
+</p>
+<div class="example">
+<pre class="example-preformatted">function <var class="var">OPTIONAL_FUNCTION_PREFIX</var>program_<var class="var">STEM</var> () {
+    mbfl_declare_varref(PROGRAM)
+    mbfl_program_found_var mbfl_datavar(PROGRAM) <var class="var">EXECUTABLE_PATHNAME</var> || exit $?
+    mbfl_program_exec &quot;$PROGRAM&quot; <var class="var">OPTIONAL_DEFAULT_FLAGS</var> &quot;$@&quot;
+}
+</pre></div>
+</dd></dl>
+
+
+<dl class="first-deffn">
+<dt class="deffn" id="index-MBFL_005fDEFINE_005fPROGRAM_005fREPLACER"><span class="category-def">Preprocessor Macro: </span><span><strong class="def-name">MBFL_DEFINE_PROGRAM_REPLACER</strong> <var class="def-var-arguments">(<var class="var">STEM</var>, <var class="var">EXECUTABLE_PATHNAME</var>, <var class="var">OPTIONAL_DEFAULT_FLAGS</var>, <var class="var">OPTIONAL_FUNCTION_PREFIX</var>)</var><a class="copiable-link" href="#index-MBFL_005fDEFINE_005fPROGRAM_005fREPLACER"> &para;</a></span></dt>
+<dd><p>Like <code class="code">MBFL_DEFINE_PROGRAM_REPLACER()</code>, but uses <code class="code">mbfl_program_replace()</code> rather than
+<code class="code">mbfl_program_exec()</code>; <a class="ref" href="program-executing-exec.html#mbfl_005fprogram_005freplace">Core <abbr class="acronym">API</abbr> for program execution with
+replacement</a>.
+</p>
+<p>If the optional parameter <var class="var">OPTIONAL_FUNCTION_PREFIX</var> is not used: the generated function name is:
+</p>
+<div class="example">
+<pre class="example-preformatted">program_replace_<var class="var">STEM</var>
+</pre></div>
+
+<p>otherwise it is:
+</p>
+<div class="example">
+<pre class="example-preformatted"><var class="var">OPTIONAL_FUNCTION_PREFIX</var>program_replace_<var class="var">STEM</var>
+</pre></div>
+</dd></dl>
+
+</div>
+<hr>
+<div class="nav-panel">
+<p>
+Previous: <a href="program-executing-testing.html">Testing a script and running programs</a>, Up: <a href="program-executing.html">Executing a program</a> &nbsp; [<a href="index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+<p>This document describes version <tt>3.0.0-devel.8</tt> of <em>Marcos Bash Functions Library</em>.</p>
+</body>
+</html>

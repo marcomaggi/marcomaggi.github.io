@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<!-- Created by GNU Texinfo 7.1, https://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<!-- This document describes version 3.0.0-devel.8 of MBFL, a collection of libraries of
+functions for the GNU Bash shell.  It requires GNU Bash at least version
+4.3; it require GNU m4 (other m4 implementations will not do).  The
+package is distributed under the terms of the GNU Lesser General Public License (LGPL).
+
+The latest release can be downloaded from:
+
+https://bitbucket.org/marcomaggi/mbfl/downloads
+
+development takes place at:
+
+https://github.com/marcomaggi/mbfl
+
+and as backup at:
+
+https://bitbucket.org/marcomaggi/mbfl
+
+Copyright © 2003-2005, 2009-2010, 2012-2015, 2017-2018, 2020, 2022, 2023, 2024 by Marco Maggi mrc.mgg@gmail.com
+
+Permission is granted to copy, distribute and/or modify this document under the terms of the GNU
+Free Documentation License, Version 1.3 or any later version published by the Free Software
+Foundation; with Invariant Sections being "GNU Free Documentation License" and "GNU Lesser
+General Public License", no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license is
+included in the section entitled "GNU Free Documentation License". -->
+<title>program executing exec (Marco&rsquo;s Bash Functions Libraries)</title>
+
+<meta name="description" content="program executing exec (Marco&rsquo;s Bash Functions Libraries)">
+<meta name="keywords" content="program executing exec (Marco&rsquo;s Bash Functions Libraries)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<link href="index.html" rel="start" title="Top">
+<link href="concept-index.html" rel="index" title="concept index">
+<link href="index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="program-executing.html" rel="up" title="program executing">
+<link href="program-executing-bg.html" rel="next" title="program executing bg">
+<link href="program-executing-core.html" rel="prev" title="program executing core">
+<style type="text/css">
+<!--
+a.copiable-link {visibility: hidden; text-decoration: none; line-height: 0em}
+div.example {margin-left: 3.2em}
+span:hover a.copiable-link {visibility: visible}
+strong.def-name {font-family: monospace; font-weight: bold; font-size: larger}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="mbfl.css">
+
+
+</head>
+
+<body lang="en">
+<div class="subsection-level-extent" id="program-executing-exec">
+<div class="nav-panel">
+<p>
+Next: <a href="program-executing-bg.html" accesskey="n" rel="next">Executing programs in background</a>, Previous: <a href="program-executing-core.html" accesskey="p" rel="prev">Core <abbr class="acronym">API</abbr> for program execution</a>, Up: <a href="program-executing.html" accesskey="u" rel="up">Executing a program</a> &nbsp; [<a href="index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<h4 class="subsection" id="Core-API-for-program-execution-with-replacement"><span>22.3.3 Core <abbr class="acronym">API</abbr> for program execution with replacement<a class="copiable-link" href="#Core-API-for-program-execution-with-replacement"> &para;</a></span></h4>
+
+
+<a class="anchor" id="mbfl_005fprogram_005freplace"></a><dl class="first-deffn first-defun-alias-first-deffn">
+<dt class="deffn defun-alias-deffn" id="index-mbfl_005fprogram_005freplace"><span class="category-def">Function: </span><span><strong class="def-name">mbfl_program_replace</strong> <var class="def-var-arguments"><var class="var">PROGRAM</var> <var class="var">ARG</var> &hellip;</var><a class="copiable-link" href="#index-mbfl_005fprogram_005freplace"> &para;</a></span></dt>
+<dd><p>Like <code class="code">mbfl_program_exec()</code>, but execute the program through the Bash command <code class="code">exec</code>, so
+replacing the current process without creating a new one.
+</p>
+<p>If the function <code class="code">mbfl_program_set_exec_flags()</code> was used to select arguments for the Bash
+built&ndash;in <code class="code">exec</code>: that request is honoured by putting the selected arguments on the command
+line of <code class="code">exec</code>.  The request is considered &ldquo;consumed&rdquo; and reset.
+</p>
+<p>If a trap is set for the &lsquo;<samp class="samp">EXIT</samp>&rsquo; event: such trap is executed by Bash, See <a data-manual="bash" href="https://www.gnu.org/software/bash/manual/html_node/Bourne-Shell-Builtins.html#Bourne-Shell-Builtins">trap</a>.  This means the <abbr class="acronym">MBFL</abbr>&rsquo;s atexit handlers are executed, <a class="ref" href="exit-atexit.html">Running
+scripts at exit&ndash;time</a>.
+</p>
+<p>Inside a script, we can easily test program execution with replacement as follows:
+</p>
+<div class="example">
+<pre class="example-preformatted">{
+  (mbfl_program_replace &quot;$mbfl_PROGRAM_BASH&quot; '-c' 'exit 123';)
+  $?      &rArr; 123
+}
+
+{
+  local RESULT
+
+  RESULT=$(mbfl_program_replace &quot;$mbfl_PROGRAM_BASH&quot; '-c' 'echo password';)
+  &quot;$RESULT&quot;       &rArr; password
+}
+</pre></div>
+
+<p>and we can select flags for <code class="code">exec</code> as follows:
+</p>
+<div class="example">
+<pre class="example-preformatted">local RESULT
+
+RESULT=$(mbfl_program_set_exec_flags '-a' 'secret'
+         mbfl_program_replace &quot;$mbfl_PROGRAM_BASH&quot; '-c' 'echo $0';)
+&quot;$RESULT&quot;       &rArr; secret
+</pre></div>
+
+<p>If the redirection of <code class="code">stderr</code> to <code class="code">stdout</code> is requested with
+<code class="code">mbfl_program_redirect_stderr_to_stdout()</code>: such request is honoured and consumed.  For a
+discussion of channels redirection when calling this function, see <a class="ref" href="program-executing-channels.html">Redirecting channels when executing a program</a>.
+</p></dd></dl>
+
+
+<a class="anchor" id="mbfl_005fprogram_005freplace2"></a><dl class="first-deffn first-defun-alias-first-deffn">
+<dt class="deffn defun-alias-deffn" id="index-mbfl_005fprogram_005freplace2"><span class="category-def">Function: </span><span><strong class="def-name">mbfl_program_replace2</strong> <var class="def-var-arguments"><var class="var">INFD</var> <var class="var">OUFD</var> <var class="var">ERFD</var> <var class="var">PROGRAM</var> <var class="var">ARG</var> &hellip;</var><a class="copiable-link" href="#index-mbfl_005fprogram_005freplace2"> &para;</a></span></dt>
+<dd><p>Like <code class="code">mbfl_program_replace()</code>, but redirect the standard input, output and error channels using
+the given channels.
+</p>
+<p>If the redirection of <code class="code">stderr</code> to <code class="code">stdout</code> is requested with
+<code class="code">mbfl_program_redirect_stderr_to_stdout()</code>: such request is ignored and consumed.  For a
+discussion of channels redirection when calling this function, see <a class="ref" href="program-executing-channels.html">Redirecting channels when executing a program</a>.
+</p></dd></dl>
+
+
+<a class="anchor" id="mbfl_005fprogram_005fset_005fexec_005fflags"></a><dl class="first-deffn first-defun-alias-first-deffn">
+<dt class="deffn defun-alias-deffn" id="index-mbfl_005fprogram_005fset_005fexec_005fflags"><span class="category-def">Function: </span><span><strong class="def-name">mbfl_program_set_exec_flags</strong> <var class="def-var-arguments"><var class="var">FLAG</var> &hellip;</var><a class="copiable-link" href="#index-mbfl_005fprogram_005fset_005fexec_005fflags"> &para;</a></span></dt>
+<dd><p>Store the strings <var class="var">FLAG</var> as internal state.  At the next program execution with one of the
+functions <code class="code">mbfl_program_replace*()</code>: the string is consumed as flags for the Bash built&ndash;in
+<code class="code">exec</code>.
+</p></dd></dl>
+
+
+<a class="anchor" id="mbfl_005fprogram_005freset_005fexec_005fflags"></a><dl class="first-deffn first-defun-alias-first-deffn">
+<dt class="deffn defun-alias-deffn" id="index-mbfl_005fprogram_005freset_005fexec_005fflags"><span class="category-def">Function: </span><span><strong class="def-name">mbfl_program_reset_exec_flags</strong><a class="copiable-link" href="#index-mbfl_005fprogram_005freset_005fexec_005fflags"> &para;</a></span></dt>
+<dd><p>Reset to empty the internal state representing flags for the Bash built&ndash;in <code class="code">exec</code>.
+</p></dd></dl>
+
+</div>
+<hr>
+<div class="nav-panel">
+<p>
+Next: <a href="program-executing-bg.html">Executing programs in background</a>, Previous: <a href="program-executing-core.html">Core <abbr class="acronym">API</abbr> for program execution</a>, Up: <a href="program-executing.html">Executing a program</a> &nbsp; [<a href="index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+<p>This document describes version <tt>3.0.0-devel.8</tt> of <em>Marcos Bash Functions Library</em>.</p>
+</body>
+</html>

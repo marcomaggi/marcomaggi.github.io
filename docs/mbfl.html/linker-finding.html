@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<!-- Created by GNU Texinfo 7.1, https://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<!-- This document describes version 3.0.0-devel.8 of MBFL, a collection of libraries of
+functions for the GNU Bash shell.  It requires GNU Bash at least version
+4.3; it require GNU m4 (other m4 implementations will not do).  The
+package is distributed under the terms of the GNU Lesser General Public License (LGPL).
+
+The latest release can be downloaded from:
+
+https://bitbucket.org/marcomaggi/mbfl/downloads
+
+development takes place at:
+
+https://github.com/marcomaggi/mbfl
+
+and as backup at:
+
+https://bitbucket.org/marcomaggi/mbfl
+
+Copyright © 2003-2005, 2009-2010, 2012-2015, 2017-2018, 2020, 2022, 2023, 2024 by Marco Maggi mrc.mgg@gmail.com
+
+Permission is granted to copy, distribute and/or modify this document under the terms of the GNU
+Free Documentation License, Version 1.3 or any later version published by the Free Software
+Foundation; with Invariant Sections being "GNU Free Documentation License" and "GNU Lesser
+General Public License", no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license is
+included in the section entitled "GNU Free Documentation License". -->
+<title>linker finding (Marco&rsquo;s Bash Functions Libraries)</title>
+
+<meta name="description" content="linker finding (Marco&rsquo;s Bash Functions Libraries)">
+<meta name="keywords" content="linker finding (Marco&rsquo;s Bash Functions Libraries)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<link href="index.html" rel="start" title="Top">
+<link href="concept-index.html" rel="index" title="concept index">
+<link href="index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="linker.html" rel="up" title="linker">
+<link href="linker-sourcing.html" rel="prev" title="linker sourcing">
+<style type="text/css">
+<!--
+a.copiable-link {visibility: hidden; text-decoration: none; line-height: 0em}
+div.example {margin-left: 3.2em}
+span:hover a.copiable-link {visibility: visible}
+strong.def-name {font-family: monospace; font-weight: bold; font-size: larger}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="mbfl.css">
+
+
+</head>
+
+<body lang="en">
+<div class="appendixsec-level-extent" id="linker-finding">
+<div class="nav-panel">
+<p>
+Previous: <a href="linker-sourcing.html" accesskey="p" rel="prev">Sourcing libraries at run&ndash;time</a>, Up: <a href="linker.html" accesskey="u" rel="up">Searching and sourcing libraries at run&ndash;time</a> &nbsp; [<a href="index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<h3 class="appendixsec" id="Finding-libraries"><span>A.3 Finding libraries<a class="copiable-link" href="#Finding-libraries"> &para;</a></span></h3>
+
+
+<dl class="first-defvr">
+<dt class="defvr" id="index-MBFL_005fLIBRARY_005fPATH"><span class="category-def">Environment Variable: </span><span><strong class="def-name">MBFL_LIBRARY_PATH</strong><a class="copiable-link" href="#index-MBFL_005fLIBRARY_005fPATH"> &para;</a></span></dt>
+<dd><p>A Unix&ndash;style colon separated list of directories to be searched, left&ndash;to&ndash;right, for <abbr class="acronym">MBFL</abbr>
+libraries.  This variable&rsquo;s value is parsed at linker library loading&ndash;time, it cannot be reset by
+the script itself.
+</p></dd></dl>
+
+
+<dl class="first-deffn">
+<dt class="deffn" id="index-mbfl_005flinker_005fsource_005flibrary_005fby_005fstem"><span class="category-def">Preprocessor Macro: </span><span><strong class="def-name">mbfl_linker_source_library_by_stem</strong> <var class="def-var-arguments">(<var class="var">STEM</var>)</var><a class="copiable-link" href="#index-mbfl_005flinker_005fsource_005flibrary_005fby_005fstem"> &para;</a></span></dt>
+<dd><p>Expand into code that searches a library in the current search path and sources the corresponding
+file.  If the library is not found: the script exits with <code class="code">exit_because_error_loading_library()</code>.
+</p>
+<p>If the library has already been searched and found: the search path is <strong class="strong">not</strong> visited again;
+the already found pathname is used.
+</p>
+<p>If the library has already been sourced: the source file is <strong class="strong">not</strong> sourced again; nothing
+happens.
+</p></dd></dl>
+
+
+<dl class="first-deffn first-defun-alias-first-deffn">
+<dt class="deffn defun-alias-deffn" id="index-mbfl_005flinker_005fsearch_005fby_005fstem_005fvar"><span class="category-def">Function: </span><span><strong class="def-name">mbfl_linker_search_by_stem_var</strong> <var class="def-var-arguments"><var class="var">PATHNAME_RV</var> <var class="var">STEM</var></var><a class="copiable-link" href="#index-mbfl_005flinker_005fsearch_005fby_005fstem_005fvar"> &para;</a></span></dt>
+<dd><p>Search a library in the current search path and store the resulting absolute file pathname in the
+result variable <var class="var">PATHNAME_RV</var>.  When successful return true, otherwise return false and leave
+<var class="var">PATHNAME_RV</var> untouched.
+</p>
+<p>Searching is performed by <code class="code">mbfl_linker_search_by_stem_in_search_path_var()</code>.
+</p>
+<p>First the library is searched in the custom search path defined by the environment variable
+<code class="env">MBFL_LIBRARY_PATH</code>.  Then the library is searched in <abbr class="acronym">MBFL</abbr>&rsquo;s default search path:
+</p>
+<div class="example">
+<pre class="example-preformatted">/usr/local/share/mbfl
+/usr/share/mbfl
+/share/mbfl
+</pre></div>
+</dd></dl>
+
+
+<dl class="first-deffn first-defun-alias-first-deffn">
+<dt class="deffn defun-alias-deffn" id="index-mbfl_005flinker_005fsearch_005fby_005fstem_005fin_005fsearch_005fpath_005fvar"><span class="category-def">Function: </span><span><strong class="def-name">mbfl_linker_search_by_stem_in_search_path_var</strong> <var class="def-var-arguments"><var class="var">PATHNAME_RV</var> <var class="var">STEM</var> <var class="var">SEARCH_PATH_ARRY</var></var><a class="copiable-link" href="#index-mbfl_005flinker_005fsearch_005fby_005fstem_005fin_005fsearch_005fpath_005fvar"> &para;</a></span></dt>
+<dd><p>Search a library in the search path defined by <var class="var">SEARCH_PATH_ARRY</var> and store the resulting
+absolute file pathname in the result variable <var class="var">PATHNAME_RV</var>.  When successful return true,
+otherwise return false and leave <var class="var">PATHNAME_RV</var> untouched.
+</p>
+<p>The parameter <var class="var">STEM</var> must be an identifier which is used to build the library filename as
+follows:
+</p>
+<div class="example">
+<pre class="example-preformatted">printf -v FILENAME 'libmbfl-%s.bash' <var class="var">STEM</var>
+</pre></div>
+
+<p>The parameter <var class="var">SEARCH_PATH_ARRY</var> must be the name of an index array whose values are directories
+in which to search for the library file.  The array is visited in increasing index order, starting
+from index &lsquo;<samp class="samp">0</samp>&rsquo;.
+</p>
+<div class="example">
+<pre class="example-preformatted">mbfl_declare_varref(PATHNAME)
+mbfl_declare_index_array_varref(SEARCH_PATH)
+
+mbfl_slot_set(SEARCH_PATH, 0, '/home/marco/share/mbfl')
+mbfl_slot_set(SEARCH_PATH, 1, '/opt/mbfl/4.0.0')
+
+mbfl_linker_search_by_stem_in_search_path_var mbfl_datavar(PATHNAME) 'core' mbfl_datavar(SEARCH_PATH)
+</pre></div>
+</dd></dl>
+
+</div>
+<hr>
+<div class="nav-panel">
+<p>
+Previous: <a href="linker-sourcing.html">Sourcing libraries at run&ndash;time</a>, Up: <a href="linker.html">Searching and sourcing libraries at run&ndash;time</a> &nbsp; [<a href="index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+<p>This document describes version <tt>3.0.0-devel.8</tt> of <em>Marcos Bash Functions Library</em>.</p>
+</body>
+</html>

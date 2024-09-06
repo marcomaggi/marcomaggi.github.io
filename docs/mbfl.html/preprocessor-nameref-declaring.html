@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+<!-- Created by GNU Texinfo 7.1, https://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<!-- This document describes version 3.0.0-devel.8 of MBFL, a collection of libraries of
+functions for the GNU Bash shell.  It requires GNU Bash at least version
+4.3; it require GNU m4 (other m4 implementations will not do).  The
+package is distributed under the terms of the GNU Lesser General Public License (LGPL).
+
+The latest release can be downloaded from:
+
+https://bitbucket.org/marcomaggi/mbfl/downloads
+
+development takes place at:
+
+https://github.com/marcomaggi/mbfl
+
+and as backup at:
+
+https://bitbucket.org/marcomaggi/mbfl
+
+Copyright © 2003-2005, 2009-2010, 2012-2015, 2017-2018, 2020, 2022, 2023, 2024 by Marco Maggi mrc.mgg@gmail.com
+
+Permission is granted to copy, distribute and/or modify this document under the terms of the GNU
+Free Documentation License, Version 1.3 or any later version published by the Free Software
+Foundation; with Invariant Sections being "GNU Free Documentation License" and "GNU Lesser
+General Public License", no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license is
+included in the section entitled "GNU Free Documentation License". -->
+<title>preprocessor nameref declaring (Marco&rsquo;s Bash Functions Libraries)</title>
+
+<meta name="description" content="preprocessor nameref declaring (Marco&rsquo;s Bash Functions Libraries)">
+<meta name="keywords" content="preprocessor nameref declaring (Marco&rsquo;s Bash Functions Libraries)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<link href="index.html" rel="start" title="Top">
+<link href="concept-index.html" rel="index" title="concept index">
+<link href="index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="preprocessor-nameref.html" rel="up" title="preprocessor nameref">
+<link href="preprocessor-nameref-unset.html" rel="next" title="preprocessor nameref unset">
+<link href="preprocessor-nameref-access.html" rel="prev" title="preprocessor nameref access">
+<style type="text/css">
+<!--
+a.copiable-link {visibility: hidden; text-decoration: none; line-height: 0em}
+div.example {margin-left: 3.2em}
+span:hover a.copiable-link {visibility: visible}
+strong.def-name {font-family: monospace; font-weight: bold; font-size: larger}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="mbfl.css">
+
+
+</head>
+
+<body lang="en">
+<div class="subsection-level-extent" id="preprocessor-nameref-declaring">
+<div class="nav-panel">
+<p>
+Next: <a href="preprocessor-nameref-unset.html" accesskey="n" rel="next">Unsetting NAMEREF declarations</a>, Previous: <a href="preprocessor-nameref-access.html" accesskey="p" rel="prev">Variables accessors</a>, Up: <a href="preprocessor-nameref.html" accesskey="u" rel="up">Variable name references</a> &nbsp; [<a href="index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<h4 class="subsection" id="Full-NAMEREF-declarations"><span>2.7.3 Full NAMEREF declarations<a class="copiable-link" href="#Full-NAMEREF-declarations"> &para;</a></span></h4>
+
+
+<p>The following macros declare local and global variables we can use with the NAMEREF mechanism.  All
+the variables declared with the macros below can be unset using <code class="code">mbfl_unset_varref()</code>; for
+details <a class="ref" href="preprocessor-nameref-unset.html#mbfl_005funset_005fvarref">Unsetting NAMEREF declarations</a>.  When defining array variables we
+can use specific macros, rather than the ones below; <a class="ref" href="arrays-nameref.html">Declaring arrays as
+variable references</a>.
+</p>
+
+<a class="anchor" id="mbfl_005fdeclare_005fvarref"></a><dl class="first-deffn">
+<dt class="deffn" id="index-mbfl_005fdeclare_005fvarref"><span class="category-def">Preprocessor Macro: </span><span><strong class="def-name">mbfl_declare_varref</strong> <var class="def-var-arguments">(<var class="var">NAME</var>, <var class="var">INIT_VALUE</var>, <var class="var">DECLARE_OPTIONS</var>)</var><a class="copiable-link" href="#index-mbfl_005fdeclare_005fvarref"> &para;</a></span></dt>
+<dd><p>A use of this macro expands into:
+</p>
+<div class="example">
+<pre class="example-preformatted">declare mbfl_a_variable_<var class="var">NAME</var>
+mbfl_variable_alloc mbfl_a_variable_<var class="var">NAME</var>
+declare <var class="var">DECLARE_OPTIONS</var> $mbfl_a_variable_<var class="var">NAME</var>
+declare -n <var class="var">NAME</var>=$mbfl_a_variable_<var class="var">NAME</var>
+</pre></div>
+
+<p>When <var class="var">INIT_VALUE</var> is empty, it finishes with:
+</p>
+<div class="example">
+<pre class="example-preformatted"><var class="var">NAME</var>=
+</pre></div>
+
+<p>which defines the variable and causes <code class="code">test -v <var class="var">VARNAME</var></code> to return true; defining the
+variable this way works with scalar variables, but defines an array variables as containing an
+element with key &lsquo;<samp class="samp">0</samp>&rsquo;, which is probably not what we want.
+</p>
+<p>When <var class="var">INIT_VALUE</var> is <strong class="strong">not</strong> empty, it finishes with:
+</p>
+<div class="example">
+<pre class="example-preformatted"><var class="var">NAME</var>=<var class="var">INIT_VALUE</var>
+</pre></div>
+
+<p>A <em class="dfn">name variable</em> <code class="code">mbfl_a_variable_<var class="var">NAME</var></code> is declared and filled with a unique
+<em class="dfn">data variable</em> name by <code class="code">mbfl_variable_alloc()</code>; then the <em class="dfn">data variable</em> is declared;
+finally a <em class="dfn">proxy variable</em> <var class="var">NAME</var> is defined as alias for the <em class="dfn">data variable</em>.  If the
+macro is used at top&ndash;level: the variables are global.
+</p>
+<p>We can use the argument <var class="var">DECLARE_OPTIONS</var> to declare a global data variable:
+</p>
+<div class="example">
+<pre class="example-preformatted">mbfl_declare_varref(<var class="var">VARNAME</var>, <var class="var">INIT_VALUE</var>, -g)
+</pre></div>
+</dd></dl>
+
+
+<dl class="first-deffn">
+<dt class="deffn" id="index-mbfl_005fdeclare_005fglobal_005fvarref"><span class="category-def">Preprocessor Macro: </span><span><strong class="def-name">mbfl_declare_global_varref</strong> <var class="def-var-arguments">(<var class="var">NAME</var>, <var class="var">INIT_VALUE</var>, <var class="var">OPTIONS</var>)</var><a class="copiable-link" href="#index-mbfl_005fdeclare_005fglobal_005fvarref"> &para;</a></span></dt>
+<dd><p>Like <code class="code">mbfl_declare_varref()</code> but always include the option <samp class="option">-g</samp>.  Its expansion is:
+</p>
+<div class="example">
+<pre class="example-preformatted">mbfl_declare_global_varref(<var class="var">NAME</var>, <var class="var">INIT_VALUE</var>, <var class="var">OPTIONS</var>)
+&rarr; mbfl_declare_varref(<var class="var">NAME</var>, <var class="var">INIT_VALUE</var>, -g <var class="var">OPTIONS</var>)
+</pre></div>
+</dd></dl>
+
+<a class="index-entry-id" id="index-Declaring-read_002d_002donly-arrays"></a>
+
+<p>With these macros it is not possible to declare a read&ndash;only array; the macro use:
+</p>
+<div class="example">
+<pre class="example-preformatted">mbfl_declare_varref(ARRY, ([a]=1), -rA)
+</pre></div>
+
+<p>expands into:
+</p>
+<div class="example">
+<pre class="example-preformatted">declare mbfl_a_variable_ARRY
+mbfl_variable_alloc mbfl_a_variable_ARRY
+declare -rA $mbfl_a_variable_ARRY
+declare -n ARRY=$mbfl_a_variable_ARRY
+ARRY=([a]=1)
+</pre></div>
+
+<p>so when the array is initialised it has already been declared as read&ndash;only: an error results.  It
+is not possible to modify this macro to allow such declaration, because, while this syntax works:
+</p>
+<div class="example">
+<pre class="example-preformatted">declare -rA ARRY=([a]=1)
+</pre></div>
+
+<p>the following is invalid according to Bash:
+</p>
+<div class="example">
+<pre class="example-preformatted">declare -rA $mbfl_a_variable_ARRY=([a]=1)
+</pre></div>
+
+
+<dl class="first-deffn">
+<dt class="deffn" id="index-mbfl_005fdeclare_005fnameref"><span class="category-def">Preprocessor Macro: </span><span><strong class="def-name">mbfl_declare_nameref</strong> <var class="def-var-arguments">(<var class="var">NAME</var>, <var class="var">DATA_VARNAME_EXPR</var>)</var><a class="copiable-link" href="#index-mbfl_005fdeclare_005fnameref"> &para;</a></span></dt>
+<dd><p>A use of this macro expands into:
+</p>
+<div class="example">
+<pre class="example-preformatted">declare    mbfl_a_variable_<var class="var">NAME</var>=<var class="var">DATA_VARNAME_EXPR</var>
+declare -n <var class="var">NAME</var>=$mbfl_a_variable_<var class="var">NAME</var>
+</pre></div>
+
+<p>Declare a proxy variable <var class="var">NAME</var> aliasing the data variable whose value is the result of
+evaluating <var class="var">DATA_VARNAME_EXPR</var>.
+</p>
+<blockquote class="quotation">
+<p><strong class="strong">NOTE</strong> We cannot declare <code class="code">mbfl_a_variable_<var class="var">NAME</var></code> as read&ndash;only because the we
+cannot unset it.
+</p></blockquote>
+
+<p>We can use this macro as follows:
+</p>
+<div class="example">
+<pre class="example-preformatted">function main () {
+    declare VARNAME
+    worker VARNAME
+    mbfl_declare_nameref(VAR, $VARNAME)
+    ...
+}
+
+function worker () {
+    mbfl_mandatory_nameref_parameter(RV, 1)
+    mbfl_declare_varref(VAR, 123, -g)
+    RV=mbfl_datavar(VAR)
+}
+
+main
+</pre></div>
+</dd></dl>
+
+</div>
+<hr>
+<div class="nav-panel">
+<p>
+Next: <a href="preprocessor-nameref-unset.html">Unsetting NAMEREF declarations</a>, Previous: <a href="preprocessor-nameref-access.html">Variables accessors</a>, Up: <a href="preprocessor-nameref.html">Variable name references</a> &nbsp; [<a href="index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+<p>This document describes version <tt>3.0.0-devel.8</tt> of <em>Marcos Bash Functions Library</em>.</p>
+</body>
+</html>

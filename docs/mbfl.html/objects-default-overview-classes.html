@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<!-- Created by GNU Texinfo 7.1, https://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<!-- This document describes version 3.0.0-devel.8 of MBFL, a collection of libraries of
+functions for the GNU Bash shell.  It requires GNU Bash at least version
+4.3; it require GNU m4 (other m4 implementations will not do).  The
+package is distributed under the terms of the GNU Lesser General Public License (LGPL).
+
+The latest release can be downloaded from:
+
+https://bitbucket.org/marcomaggi/mbfl/downloads
+
+development takes place at:
+
+https://github.com/marcomaggi/mbfl
+
+and as backup at:
+
+https://bitbucket.org/marcomaggi/mbfl
+
+Copyright © 2003-2005, 2009-2010, 2012-2015, 2017-2018, 2020, 2022, 2023, 2024 by Marco Maggi mrc.mgg@gmail.com
+
+Permission is granted to copy, distribute and/or modify this document under the terms of the GNU
+Free Documentation License, Version 1.3 or any later version published by the Free Software
+Foundation; with Invariant Sections being "GNU Free Documentation License" and "GNU Lesser
+General Public License", no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license is
+included in the section entitled "GNU Free Documentation License". -->
+<title>objects default overview classes (Marco&rsquo;s Bash Functions Libraries)</title>
+
+<meta name="description" content="objects default overview classes (Marco&rsquo;s Bash Functions Libraries)">
+<meta name="keywords" content="objects default overview classes (Marco&rsquo;s Bash Functions Libraries)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<link href="index.html" rel="start" title="Top">
+<link href="concept-index.html" rel="index" title="concept index">
+<link href="index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="objects-default-overview.html" rel="up" title="objects default overview">
+<link href="objects-default-overview-objects.html" rel="prev" title="objects default overview objects">
+<style type="text/css">
+<!--
+a.copiable-link {visibility: hidden; text-decoration: none; line-height: 0em}
+div.example {margin-left: 3.2em}
+span:hover a.copiable-link {visibility: visible}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="mbfl.css">
+
+
+</head>
+
+<body lang="en">
+<div class="subsubsection-level-extent" id="objects-default-overview-classes">
+<div class="nav-panel">
+<p>
+Previous: <a href="objects-default-overview-objects.html" accesskey="p" rel="prev">Overview of default objects</a>, Up: <a href="objects-default-overview.html" accesskey="u" rel="up">Overview of default objects and classes</a> &nbsp; [<a href="index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<h4 class="subsubsection" id="Overview-of-default-classes"><span>11.2.1.2 Overview of default classes<a class="copiable-link" href="#Overview-of-default-classes"> &para;</a></span></h4>
+
+
+<p>The diagram of the core classes is:
+</p>
+<div class="example">
+<pre class="example-preformatted">     -class---------------
+    | mbfl_default_object |-------------------------------
+     ---------------------                                |
+              ^                                           |
+              | superclass                                |
+              |                                           |
+     -metaclass----------                                 |
+    | mbfl_default_class |&lt;--+--------------              |
+     --------------------    |              |             |
+       ^              |      | metaclass    | metaclass   | metaclass
+       | superclass   |      |              |             |
+       |               ------               |             |
+       |                                    |             |
+ -metaclass-------------------              |             |
+| mbfl_default_abstract_class | ------------              |
+ -----------------------------                            |
+               ^                                          |
+               |                                          |
+                ------------------------------------------
+</pre></div>
+
+<p>The object <code class="code">mbfl_default_class</code> is the default metaclass of classes in <abbr class="acronym">MBFL</abbr>; we define new
+classes by instantiating <code class="code">mbfl_default_class</code> or one of its subclasses; an instance of
+<code class="code">mbfl_default_class</code> can only be a subclass of <code class="code">mbfl_default_object</code>.
+</p>
+<p>The class <code class="code">mbfl_default_class</code> also has a metaclass: it is <code class="code">mbfl_default_class</code>
+itself.  The superclass of <code class="code">mbfl_default_class</code> is <code class="code">mbfl_default_object</code>.
+</p>
+<p>An instance of <code class="code">mbfl_default_class</code> is a Bash index array with the following layout:
+</p>
+<div class="example">
+<pre class="example-preformatted">datavar[0]      &rArr; _(METACLASS)
+datavar[1]      &rArr; _(PARENT_CLASS)
+datavar[2]      &rArr; class name as string
+datavar[3]      &rArr; N = fields number
+datavar[4]      &rArr; field 0 name as string
+datavar[5]      &rArr; field 1 name as string
+...
+datavar[4+N-1]  &rArr; field N-1 name as string
+</pre></div>
+
+<p>being a <code class="code">mbfl_default_object</code> an array element with key &lsquo;<samp class="samp">0</samp>&rsquo; is always present and its
+value is the instance&rsquo;s class.  We instantiate <code class="code">mbfl_default_class</code> by using its instance
+constructor, which is the function <code class="code">mbfl_default_class_define()</code>.
+</p>
+<p>If we define the class <code class="code">colour</code> as follows:
+</p>
+<div class="example">
+<pre class="example-preformatted">mbfl_default_class_declare(COLOUR)
+
+mbfl_default_class_define _(COLOUR) _(mbfl_default_object) 'colour' red green blue
+</pre></div>
+
+<p>the layout of the <code class="code">colour</code> array is:
+</p>
+<div class="example">
+<pre class="example-preformatted">datavar[0]      &rArr; _(mbfl_default_class)
+datavar[1]      &rArr; _(mbfl_default_object)
+datavar[2]      &rArr; 'colour'
+datavar[3]      &rArr; 3
+datavar[4]      &rArr; 'red'
+datavar[5]      &rArr; 'green'
+datavar[6]      &rArr; 'blue'
+</pre></div>
+
+</div>
+<hr>
+<div class="nav-panel">
+<p>
+Previous: <a href="objects-default-overview-objects.html">Overview of default objects</a>, Up: <a href="objects-default-overview.html">Overview of default objects and classes</a> &nbsp; [<a href="index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+<p>This document describes version <tt>3.0.0-devel.8</tt> of <em>Marcos Bash Functions Library</em>.</p>
+</body>
+</html>

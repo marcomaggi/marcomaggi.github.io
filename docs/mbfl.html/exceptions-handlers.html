@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html>
+<!-- Created by GNU Texinfo 7.1, https://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<!-- This document describes version 3.0.0-devel.8 of MBFL, a collection of libraries of
+functions for the GNU Bash shell.  It requires GNU Bash at least version
+4.3; it require GNU m4 (other m4 implementations will not do).  The
+package is distributed under the terms of the GNU Lesser General Public License (LGPL).
+
+The latest release can be downloaded from:
+
+https://bitbucket.org/marcomaggi/mbfl/downloads
+
+development takes place at:
+
+https://github.com/marcomaggi/mbfl
+
+and as backup at:
+
+https://bitbucket.org/marcomaggi/mbfl
+
+Copyright © 2003-2005, 2009-2010, 2012-2015, 2017-2018, 2020, 2022, 2023, 2024 by Marco Maggi mrc.mgg@gmail.com
+
+Permission is granted to copy, distribute and/or modify this document under the terms of the GNU
+Free Documentation License, Version 1.3 or any later version published by the Free Software
+Foundation; with Invariant Sections being "GNU Free Documentation License" and "GNU Lesser
+General Public License", no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license is
+included in the section entitled "GNU Free Documentation License". -->
+<title>exceptions handlers (Marco&rsquo;s Bash Functions Libraries)</title>
+
+<meta name="description" content="exceptions handlers (Marco&rsquo;s Bash Functions Libraries)">
+<meta name="keywords" content="exceptions handlers (Marco&rsquo;s Bash Functions Libraries)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<link href="index.html" rel="start" title="Top">
+<link href="concept-index.html" rel="index" title="concept index">
+<link href="index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="exceptions.html" rel="up" title="exceptions">
+<link href="exceptions-raise.html" rel="prev" title="exceptions raise">
+<style type="text/css">
+<!--
+a.copiable-link {visibility: hidden; text-decoration: none; line-height: 0em}
+div.example {margin-left: 3.2em}
+span:hover a.copiable-link {visibility: visible}
+strong.def-name {font-family: monospace; font-weight: bold; font-size: larger}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="mbfl.css">
+
+
+</head>
+
+<body lang="en">
+<div class="section-level-extent" id="exceptions-handlers">
+<div class="nav-panel">
+<p>
+Previous: <a href="exceptions-raise.html" accesskey="p" rel="prev">How to raise exceptional&ndash;condition objects</a>, Up: <a href="exceptions.html" accesskey="u" rel="up">Raising and handling exceptions</a> &nbsp; [<a href="index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<h3 class="section" id="How-to-write-and-set-exception_002d_002dhandlers"><span>13.4 How to write and set exception&ndash;handlers<a class="copiable-link" href="#How-to-write-and-set-exception_002d_002dhandlers"> &para;</a></span></h3>
+
+
+<p>An exception&ndash;handler function typically handles just a few exceptional&ndash;condition classes; every
+exception&ndash;handler must return using one among:
+</p>
+<div class="example">
+<pre class="example-preformatted">return_success_after_handling_exception
+return_failure_after_handling_exception
+return_after_not_handling_exception
+</pre></div>
+
+<p>The basic template of an exception&ndash;handler is as follows:
+</p>
+<div class="example">
+<pre class="example-preformatted">function my_exception_handler () {
+    mbfl_mandatory_nameref_parameter(CND, 1, exceptional-condition object)
+
+    if spiffy_condition_p _(CND)
+    then
+        do_some_thing _(CND)
+        if handled_successfully
+        then return_success_after_handling_exception
+        else return_failure_after_handling_exception
+        fi
+    else return_after_not_handling_exception
+    fi
+}
+</pre></div>
+
+<p>most exceptional&ndash;condition objects are non&ndash;continuable: it is not possible to resume script&rsquo;s
+execution after handling them; so we should just use <code class="code">return_failure_after_handling_exception</code>.
+</p>
+
+<dl class="first-deffn first-defun-alias-first-deffn">
+<dt class="deffn defun-alias-deffn" id="index-mbfl_005fexception_005fhandler"><span class="category-def">Function: </span><span><strong class="def-name">mbfl_exception_handler</strong> <var class="def-var-arguments"><var class="var">HANDLER</var></var><a class="copiable-link" href="#index-mbfl_005fexception_005fhandler"> &para;</a></span></dt>
+<dd><p>Push <var class="var">HANDLER</var> on the stack of exceptional&ndash;condition handlers.  Register a location handler
+that pops <var class="var">HANDLER</var> from the stack upon leaving the current location,
+<a class="ref" href="locations-core.html#mbfl_005flocation_005fhandler">Locations programming interface</a>.
+</p>
+<p>The parameter <var class="var">HANDLER</var> should be an applicable identifier bound to a function, alias or
+command; it must accept a single mandatory parameter:
+</p>
+<div class="example">
+<pre class="example-preformatted"><var class="var">HANDLER</var> <var class="var">CONDITION_OBJECT</var>
+</pre></div>
+</dd></dl>
+
+
+<dl class="first-deffn first-defun-alias-first-deffn">
+<dt class="deffn defun-alias-deffn" id="index-mbfl_005fdefault_005fexception_005fhandler"><span class="category-def">Function: </span><span><strong class="def-name">mbfl_default_exception_handler</strong> <var class="def-var-arguments"><var class="var">CND</var></var><a class="copiable-link" href="#index-mbfl_005fdefault_005fexception_005fhandler"> &para;</a></span></dt>
+<dd><p>The default exception&ndash;handler; it is pushed on the global exception&ndash;handlers stack upon loading
+<abbr class="acronym">MBFL</abbr>&rsquo;s core library.  We can think of it as having the following implementation:
+</p>
+<div class="example">
+<pre class="example-preformatted">mbfl_mandatory_nameref_parameter(mbfl_CND, 1, exceptional-condition object)
+
+if mbfl_warning_condition_p _(mbfl_CND) &amp;&amp;
+   mbfl_exceptional_condition_is_continuable _(mbfl_CND)
+then
+    mbfl_exceptional_condition_print _(mbfl_CND) &gt;&amp;2
+    return_success_after_handling_exception
+elif mbfl_uncaught_exceptional_condition_p _(mbfl_CND)
+then
+    mbfl_exceptional_condition_print _(mbfl_CND) &gt;&amp;2
+    exit_because_uncaught_exception
+else
+    mbfl_default_object_declare(mbfl_ENVELOPE_CND)
+
+    mbfl_uncaught_exceptional_condition_make _(mbfl_ENVELOPE_CND) $FUNCNAME _(mbfl_CND)
+    mbfl_exception_raise _(mbfl_ENVELOPE_CND)
+fi
+</pre></div>
+
+<p>Notice that if the default handler raises an &ldquo;uncaught exceptional&ndash;condition&rdquo;: the topmost
+exception&ndash;handler from the stack is applied to it; the exception&ndash;handlers we install have a chance
+to handle the uncaught exceptional&ndash;condition.  <a class="ref" href="conditions-uncaught.html">Uncaught
+exceptional-condition objects</a>.
+</p></dd></dl>
+
+
+<a class="anchor" id="return_005fsuccess_005fafter_005fhandling_005fexception"></a><dl class="first-deffn">
+<dt class="deffn" id="index-return_005fsuccess_005fafter_005fhandling_005fexception"><span class="category-def">Alias: </span><span><strong class="def-name">return_success_after_handling_exception</strong><a class="copiable-link" href="#index-return_005fsuccess_005fafter_005fhandling_005fexception"> &para;</a></span></dt>
+<dd><p>Return from an exception handler with a return status signalling to <code class="code">mbfl_exception_raise()</code> that
+the exceptional&ndash;condition has been handled and that the script can resume execution.
+</p></dd></dl>
+
+
+<a class="anchor" id="return_005ffailure_005fafter_005fhandling_005fexception"></a><dl class="first-deffn">
+<dt class="deffn" id="index-return_005ffailure_005fafter_005fhandling_005fexception"><span class="category-def">Alias: </span><span><strong class="def-name">return_failure_after_handling_exception</strong><a class="copiable-link" href="#index-return_005ffailure_005fafter_005fhandling_005fexception"> &para;</a></span></dt>
+<dd><p>Return from an exception handler with a return status signalling to <code class="code">mbfl_exception_raise()</code> that
+the exceptional&ndash;condition has been handled but the script cannot resume execution.
+</p></dd></dl>
+
+
+<a class="anchor" id="return_005fafter_005fnot_005fhandling_005fexception"></a><dl class="first-deffn">
+<dt class="deffn" id="index-return_005fafter_005fnot_005fhandling_005fexception"><span class="category-def">Alias: </span><span><strong class="def-name">return_after_not_handling_exception</strong><a class="copiable-link" href="#index-return_005fafter_005fnot_005fhandling_005fexception"> &para;</a></span></dt>
+<dd><p>Return from an exception handler with a return status signalling to <code class="code">mbfl_exception_raise()</code> that
+the exceptional&ndash;condition has not been handled.
+</p></dd></dl>
+
+
+<a class="anchor" id="exit_005fbecause_005funcaught_005fexception"></a><dl class="first-deffn first-defun-alias-first-deffn">
+<dt class="deffn defun-alias-deffn" id="index-exit_005fbecause_005funcaught_005fexception"><span class="category-def">Function: </span><span><strong class="def-name">exit_because_uncaught_exception</strong><a class="copiable-link" href="#index-exit_005fbecause_005funcaught_005fexception"> &para;</a></span></dt>
+<dd><p>Exit with code <code class="code">87</code> by calling <code class="code">mbfl_exit()</code>.
+</p></dd></dl>
+
+
+<a class="anchor" id="exit_005fbecause_005fnon_005fcontinuable_005fexception"></a><dl class="first-deffn first-defun-alias-first-deffn">
+<dt class="deffn defun-alias-deffn" id="index-exit_005fbecause_005fnon_005fcontinuable_005fexception"><span class="category-def">Function: </span><span><strong class="def-name">exit_because_non_continuable_exception</strong><a class="copiable-link" href="#index-exit_005fbecause_005fnon_005fcontinuable_005fexception"> &para;</a></span></dt>
+<dd><p>Exit with code <code class="code">86</code> by calling <code class="code">mbfl_exit()</code>.
+</p></dd></dl>
+
+</div>
+<hr>
+<div class="nav-panel">
+<p>
+Previous: <a href="exceptions-raise.html">How to raise exceptional&ndash;condition objects</a>, Up: <a href="exceptions.html">Raising and handling exceptions</a> &nbsp; [<a href="index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+<p>This document describes version <tt>3.0.0-devel.8</tt> of <em>Marcos Bash Functions Library</em>.</p>
+</body>
+</html>
