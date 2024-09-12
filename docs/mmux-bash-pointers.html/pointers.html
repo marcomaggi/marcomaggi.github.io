@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html>
+<!-- Created by GNU Texinfo 7.1, https://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<!-- 
+This  document  describes  version  0.1.0-devel.0   of  MMUX Bash Pointers,  a  package  implementing
+additional builtin commands for the GNU Bash shell; to do so it installs a C language library and
+a shell script  which is meant to  be sourced in a Bash  session or script.
+
+This package makes raw memory pointers available in shell scripts:
+
+declare PTR VALUE
+
+libc_malloc PTR 1024
+{
+  pointer-set-sint $PTR 0 123
+  pointer-ref-sint VALUE $PTR 0
+}
+libc_free $PTR
+$VALUE  ⇒ 123
+
+The package targets POSIX platforms.  Only for testing: this package depends on the external
+package MBFL (at least version v3.0.0-devel.8).
+
+This package is distributed under the terms of the GNU Lesser General Public License (LGPL).
+
+Development of this package takes place at:
+
+https://github.com/marcomaggi/mmux-bash-pointers
+
+Copyright © 2024 by Marco Maggi mrc.mgg@gmail.com
+
+Permission is granted to copy, distribute and/or modify this document under the terms of the GNU
+Free Documentation License, Version 1.3 or any later version published by the Free Software
+Foundation; with Invariant Sections being "GNU Free Documentation License" and "GNU Lesser
+General Public License", no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license is
+included in the section entitled "GNU Free Documentation License". -->
+<title>pointers (MMUX Bash Pointers)</title>
+
+<meta name="description" content="pointers (MMUX Bash Pointers)">
+<meta name="keywords" content="pointers (MMUX Bash Pointers)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<link href="index.html" rel="start" title="Top">
+<link href="concept-index.html" rel="index" title="concept index">
+<link href="index.html#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="index.html" rel="up" title="Top">
+<link href="conversions.html" rel="next" title="conversions">
+<link href="operations.html" rel="prev" title="operations">
+<style type="text/css">
+<!--
+a.copiable-link {visibility: hidden; text-decoration: none; line-height: 0em}
+div.example {margin-left: 3.2em}
+span:hover a.copiable-link {visibility: visible}
+strong.def-name {font-family: monospace; font-weight: bold; font-size: larger}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="mmux-bash-pointers.css">
+
+
+</head>
+
+<body lang="en">
+<div class="chapter-level-extent" id="pointers">
+<div class="nav-panel">
+<p>
+Next: <a href="conversions.html" accesskey="n" rel="next">Converting data to and from memory blocks</a>, Previous: <a href="operations.html" accesskey="p" rel="prev">Standard memory operations</a>, Up: <a href="index.html" accesskey="u" rel="up">MMUX Bash Pointers</a> &nbsp; [<a href="index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html" title="Index" rel="index">Index</a>]</p>
+</div>
+<hr>
+<h2 class="chapter" id="Memory-block-accessors-and-mutators"><span>6 Memory block accessors and mutators<a class="copiable-link" href="#Memory-block-accessors-and-mutators"> &para;</a></span></h2>
+
+
+<p>If we allocate memory using the standard C library functions, we can poke and peek values in the
+memory blocks:
+</p>
+<div class="example">
+<pre class="example-preformatted">declare PTR VALUE
+
+libc_malloc PTR 1024
+{
+  pointer-set-double $PTR 0 1.23
+  pointer-ref-double VALUE $PTR 0
+}
+libc_free $PTR
+</pre></div>
+
+<p>For all the following builtins, the argument:
+</p>
+<dl class="table">
+<dt><var class="var">POINTER</var></dt>
+<dd><p>must be the string representation of a memory pointer referencing a previously allocated block;
+</p>
+</dd>
+<dt><var class="var">OFFSET</var></dt>
+<dd><p>must be the string representation of an exact, positive integer, compatible with the C language type
+<code class="code">size_t</code>, representing an offset from <var class="var">POINTER</var> <strong class="strong">measured in bytes</strong>;
+</p>
+</dd>
+<dt><var class="var">VALUE</var></dt>
+<dd><p>must be the string representation of a number, compatible with a C language type of the specific
+mutator: it is stored by the mutators at <var class="var">OFFSET</var> from <var class="var">POINTER</var>;
+</p>
+</dd>
+<dt><var class="var">VALUEVAR</var></dt>
+<dd><p>must be a string representing the name of a shell variable: it is used by the accessors to store the
+value extracted at <var class="var">OFFSET</var> from <var class="var">POINTER</var>.
+</p></dd>
+</dl>
+
+
+
+<dl class="first-deffn">
+<dt class="deffn" id="index-pointer_002dset_002dpointer"><span class="category-def">Builtin Mutator: </span><span><strong class="def-name">pointer-set-pointer</strong> <var class="def-var-arguments"><var class="var">POINTER</var> <var class="var">OFFSET</var> <var class="var">VALUE</var></var><a class="copiable-link" href="#index-pointer_002dset_002dpointer"> &para;</a></span></dt>
+<dt class="deffnx def-cmd-deffn" id="index-pointer_002dref_002dpointer"><span class="category-def">Builtin Accessor: </span><span><strong class="def-name">pointer-ref-pointer</strong> <var class="def-var-arguments"><var class="var">VALUEVAR</var> <var class="var">POINTER</var> <var class="var">OFFSET</var></var><a class="copiable-link" href="#index-pointer_002dref_002dpointer"> &para;</a></span></dt>
+<dd><p>Accessor and mutator for memory blocks operating on the C language type <code class="code">void *</code>.
+</p></dd></dl>
+
+
+<dl class="first-deffn">
+<dt class="deffn" id="index-pointer_002dset_002dschar"><span class="category-def">Builtin Mutator: </span><span><strong class="def-name">pointer-set-schar</strong> <var class="def-var-arguments"><var class="var">POINTER</var> <var class="var">OFFSET</var> <var class="var">VALUE</var></var><a class="copiable-link" href="#index-pointer_002dset_002dschar"> &para;</a></span></dt>
+<dt class="deffnx def-cmd-deffn" id="index-pointer_002dref_002dschar"><span class="category-def">Builtin Accessor: </span><span><strong class="def-name">pointer-ref-schar</strong> <var class="def-var-arguments"><var class="var">VALUEVAR</var> <var class="var">POINTER</var> <var class="var">OFFSET</var></var><a class="copiable-link" href="#index-pointer_002dref_002dschar"> &para;</a></span></dt>
+<dd><p>Accessor and mutator for memory blocks operating on the C language type <code class="code">signed char</code>.
+</p></dd></dl>
+
+<dl class="first-deffn">
+<dt class="deffn" id="index-pointer_002dset_002duchar"><span class="category-def">Builtin Mutator: </span><span><strong class="def-name">pointer-set-uchar</strong> <var class="def-var-arguments"><var class="var">POINTER</var> <var class="var">OFFSET</var> <var class="var">VALUE</var></var><a class="copiable-link" href="#index-pointer_002dset_002duchar"> &para;</a></span></dt>
+<dt class="deffnx def-cmd-deffn" id="index-pointer_002dref_002duchar"><span class="category-def">Builtin Accessor: </span><span><strong class="def-name">pointer-ref-uchar</strong> <var class="def-var-arguments"><var class="var">VALUEVAR</var> <var class="var">POINTER</var> <var class="var">OFFSET</var></var><a class="copiable-link" href="#index-pointer_002dref_002duchar"> &para;</a></span></dt>
+<dd><p>Accessor and mutator for memory blocks operating on the C language type <code class="code">unsigned char</code>.
+</p></dd></dl>
+
+<dl class="first-deffn">
+<dt class="deffn" id="index-pointer_002dset_002dsint"><span class="category-def">Builtin Mutator: </span><span><strong class="def-name">pointer-set-sint</strong> <var class="def-var-arguments"><var class="var">POINTER</var> <var class="var">OFFSET</var> <var class="var">VALUE</var></var><a class="copiable-link" href="#index-pointer_002dset_002dsint"> &para;</a></span></dt>
+<dt class="deffnx def-cmd-deffn" id="index-pointer_002dref_002dsint"><span class="category-def">Builtin Accessor: </span><span><strong class="def-name">pointer-ref-sint</strong> <var class="def-var-arguments"><var class="var">VALUEVAR</var> <var class="var">POINTER</var> <var class="var">OFFSET</var></var><a class="copiable-link" href="#index-pointer_002dref_002dsint"> &para;</a></span></dt>
+<dd><p>Accessor and mutator for memory blocks operating on the C language type <code class="code">signed int</code>.
+</p></dd></dl>
+
+<dl class="first-deffn">
+<dt class="deffn" id="index-pointer_002dset_002duint"><span class="category-def">Builtin Mutator: </span><span><strong class="def-name">pointer-set-uint</strong> <var class="def-var-arguments"><var class="var">POINTER</var> <var class="var">OFFSET</var> <var class="var">VALUE</var></var><a class="copiable-link" href="#index-pointer_002dset_002duint"> &para;</a></span></dt>
+<dt class="deffnx def-cmd-deffn" id="index-pointer_002dref_002duint"><span class="category-def">Builtin Accessor: </span><span><strong class="def-name">pointer-ref-uint</strong> <var class="def-var-arguments"><var class="var">VALUEVAR</var> <var class="var">POINTER</var> <var class="var">OFFSET</var></var><a class="copiable-link" href="#index-pointer_002dref_002duint"> &para;</a></span></dt>
+<dd><p>Accessor and mutator for memory blocks operating on the C language type <code class="code">unsigned int</code>.
+</p></dd></dl>
+
+<dl class="first-deffn">
+<dt class="deffn" id="index-pointer_002dset_002dslong"><span class="category-def">Builtin Mutator: </span><span><strong class="def-name">pointer-set-slong</strong> <var class="def-var-arguments"><var class="var">POINTER</var> <var class="var">OFFSET</var> <var class="var">VALUE</var></var><a class="copiable-link" href="#index-pointer_002dset_002dslong"> &para;</a></span></dt>
+<dt class="deffnx def-cmd-deffn" id="index-pointer_002dref_002dslong"><span class="category-def">Builtin Accessor: </span><span><strong class="def-name">pointer-ref-slong</strong> <var class="def-var-arguments"><var class="var">VALUEVAR</var> <var class="var">POINTER</var> <var class="var">OFFSET</var></var><a class="copiable-link" href="#index-pointer_002dref_002dslong"> &para;</a></span></dt>
+<dd><p>Accessor and mutator for memory blocks operating on the C language type <code class="code">signed long</code>.
+</p></dd></dl>
+
+<dl class="first-deffn">
+<dt class="deffn" id="index-pointer_002dset_002dulong"><span class="category-def">Builtin Mutator: </span><span><strong class="def-name">pointer-set-ulong</strong> <var class="def-var-arguments"><var class="var">POINTER</var> <var class="var">OFFSET</var> <var class="var">VALUE</var></var><a class="copiable-link" href="#index-pointer_002dset_002dulong"> &para;</a></span></dt>
+<dt class="deffnx def-cmd-deffn" id="index-pointer_002dref_002dulong"><span class="category-def">Builtin Accessor: </span><span><strong class="def-name">pointer-ref-ulong</strong> <var class="def-var-arguments"><var class="var">VALUEVAR</var> <var class="var">POINTER</var> <var class="var">OFFSET</var></var><a class="copiable-link" href="#index-pointer_002dref_002dulong"> &para;</a></span></dt>
+<dd><p>Accessor and mutator for memory blocks operating on the C language type <code class="code">unsigned long</code>.
+</p></dd></dl>
+
+<dl class="first-deffn">
+<dt class="deffn" id="index-pointer_002dset_002dsllong"><span class="category-def">Builtin Mutator: </span><span><strong class="def-name">pointer-set-sllong</strong> <var class="def-var-arguments"><var class="var">POINTER</var> <var class="var">OFFSET</var> <var class="var">VALUE</var></var><a class="copiable-link" href="#index-pointer_002dset_002dsllong"> &para;</a></span></dt>
+<dt class="deffnx def-cmd-deffn" id="index-pointer_002dref_002dsllong"><span class="category-def">Builtin Accessor: </span><span><strong class="def-name">pointer-ref-sllong</strong> <var class="def-var-arguments"><var class="var">VALUEVAR</var> <var class="var">POINTER</var> <var class="var">OFFSET</var></var><a class="copiable-link" href="#index-pointer_002dref_002dsllong"> &para;</a></span></dt>
+<dd><p>Accessor and mutator for memory blocks operating on the C language type <code class="code">signed long long</code>.
+</p></dd></dl>
+
+<dl class="first-deffn">
+<dt class="deffn" id="index-pointer_002dset_002dullong"><span class="category-def">Builtin Mutator: </span><span><strong class="def-name">pointer-set-ullong</strong> <var class="def-var-arguments"><var class="var">POINTER</var> <var class="var">OFFSET</var> <var class="var">VALUE</var></var><a class="copiable-link" href="#index-pointer_002dset_002dullong"> &para;</a></span></dt>
+<dt class="deffnx def-cmd-deffn" id="index-pointer_002dref_002dullong"><span class="category-def">Builtin Accessor: </span><span><strong class="def-name">pointer-ref-ullong</strong> <var class="def-var-arguments"><var class="var">VALUEVAR</var> <var class="var">POINTER</var> <var class="var">OFFSET</var></var><a class="copiable-link" href="#index-pointer_002dref_002dullong"> &para;</a></span></dt>
+<dd><p>Accessor and mutator for memory blocks operating on the C language type <code class="code">unsigned long long</code>.
+</p></dd></dl>
+
+<dl class="first-deffn">
+<dt class="deffn" id="index-pointer_002dset_002dfloat"><span class="category-def">Builtin Mutator: </span><span><strong class="def-name">pointer-set-float</strong> <var class="def-var-arguments"><var class="var">POINTER</var> <var class="var">OFFSET</var> <var class="var">VALUE</var></var><a class="copiable-link" href="#index-pointer_002dset_002dfloat"> &para;</a></span></dt>
+<dt class="deffnx def-cmd-deffn" id="index-pointer_002dref_002dfloat"><span class="category-def">Builtin Accessor: </span><span><strong class="def-name">pointer-ref-float</strong> <var class="def-var-arguments"><var class="var">VALUEVAR</var> <var class="var">POINTER</var> <var class="var">OFFSET</var></var><a class="copiable-link" href="#index-pointer_002dref_002dfloat"> &para;</a></span></dt>
+<dd><p>Accessor and mutator for memory blocks operating on the C language type <code class="code">float</code>.
+</p></dd></dl>
+
+<dl class="first-deffn">
+<dt class="deffn" id="index-pointer_002dset_002ddouble"><span class="category-def">Builtin Mutator: </span><span><strong class="def-name">pointer-set-double</strong> <var class="def-var-arguments"><var class="var">POINTER</var> <var class="var">OFFSET</var> <var class="var">VALUE</var></var><a class="copiable-link" href="#index-pointer_002dset_002ddouble"> &para;</a></span></dt>
+<dt class="deffnx def-cmd-deffn" id="index-pointer_002dref_002ddouble"><span class="category-def">Builtin Accessor: </span><span><strong class="def-name">pointer-ref-double</strong> <var class="def-var-arguments"><var class="var">VALUEVAR</var> <var class="var">POINTER</var> <var class="var">OFFSET</var></var><a class="copiable-link" href="#index-pointer_002dref_002ddouble"> &para;</a></span></dt>
+<dd><p>Accessor and mutator for memory blocks operating on the C language type <code class="code">double</code>.
+</p></dd></dl>
+
+<dl class="first-deffn">
+<dt class="deffn" id="index-pointer_002dset_002dldouble"><span class="category-def">Builtin Mutator: </span><span><strong class="def-name">pointer-set-ldouble</strong> <var class="def-var-arguments"><var class="var">POINTER</var> <var class="var">OFFSET</var> <var class="var">VALUE</var></var><a class="copiable-link" href="#index-pointer_002dset_002dldouble"> &para;</a></span></dt>
+<dt class="deffnx def-cmd-deffn" id="index-pointer_002dref_002dldouble"><span class="category-def">Builtin Accessor: </span><span><strong class="def-name">pointer-ref-ldouble</strong> <var class="def-var-arguments"><var class="var">VALUEVAR</var> <var class="var">POINTER</var> <var class="var">OFFSET</var></var><a class="copiable-link" href="#index-pointer_002dref_002dldouble"> &para;</a></span></dt>
+<dd><p>Accessor and mutator for memory blocks operating on the C language type <code class="code">long double</code>.
+</p></dd></dl>
+
+<dl class="first-deffn">
+<dt class="deffn" id="index-pointer_002dset_002dcomplex"><span class="category-def">Builtin Mutator: </span><span><strong class="def-name">pointer-set-complex</strong> <var class="def-var-arguments"><var class="var">POINTER</var> <var class="var">OFFSET</var> <var class="var">VALUE</var></var><a class="copiable-link" href="#index-pointer_002dset_002dcomplex"> &para;</a></span></dt>
+<dt class="deffnx def-cmd-deffn" id="index-pointer_002dref_002dcomplex"><span class="category-def">Builtin Accessor: </span><span><strong class="def-name">pointer-ref-complex</strong> <var class="def-var-arguments"><var class="var">VALUEVAR</var> <var class="var">POINTER</var> <var class="var">OFFSET</var></var><a class="copiable-link" href="#index-pointer_002dref_002dcomplex"> &para;</a></span></dt>
+<dd><p>Accessor and mutator for memory blocks operating on the C language type <code class="code">double complex</code>.
+</p></dd></dl>
+
+
+<dl class="first-deffn">
+<dt class="deffn" id="index-pointer_002dset_002dsint8"><span class="category-def">Builtin Mutator: </span><span><strong class="def-name">pointer-set-sint8</strong> <var class="def-var-arguments"><var class="var">POINTER</var> <var class="var">OFFSET</var> <var class="var">VALUE</var></var><a class="copiable-link" href="#index-pointer_002dset_002dsint8"> &para;</a></span></dt>
+<dt class="deffnx def-cmd-deffn" id="index-pointer_002dref_002dsint8"><span class="category-def">Builtin Accessor: </span><span><strong class="def-name">pointer-ref-sint8</strong> <var class="def-var-arguments"><var class="var">VALUEVAR</var> <var class="var">POINTER</var> <var class="var">OFFSET</var></var><a class="copiable-link" href="#index-pointer_002dref_002dsint8"> &para;</a></span></dt>
+<dd><p>Accessor and mutator for memory blocks operating on the C language type <code class="code">int8_t</code>.
+</p></dd></dl>
+
+<dl class="first-deffn">
+<dt class="deffn" id="index-pointer_002dset_002duint8"><span class="category-def">Builtin Mutator: </span><span><strong class="def-name">pointer-set-uint8</strong> <var class="def-var-arguments"><var class="var">POINTER</var> <var class="var">OFFSET</var> <var class="var">VALUE</var></var><a class="copiable-link" href="#index-pointer_002dset_002duint8"> &para;</a></span></dt>
+<dt class="deffnx def-cmd-deffn" id="index-pointer_002dref_002duint8"><span class="category-def">Builtin Accessor: </span><span><strong class="def-name">pointer-ref-uint8</strong> <var class="def-var-arguments"><var class="var">VALUEVAR</var> <var class="var">POINTER</var> <var class="var">OFFSET</var></var><a class="copiable-link" href="#index-pointer_002dref_002duint8"> &para;</a></span></dt>
+<dd><p>Accessor and mutator for memory blocks operating on the C language type <code class="code">uint8_t</code>.
+</p></dd></dl>
+
+<dl class="first-deffn">
+<dt class="deffn" id="index-pointer_002dset_002dsint16"><span class="category-def">Builtin Mutator: </span><span><strong class="def-name">pointer-set-sint16</strong> <var class="def-var-arguments"><var class="var">POINTER</var> <var class="var">OFFSET</var> <var class="var">VALUE</var></var><a class="copiable-link" href="#index-pointer_002dset_002dsint16"> &para;</a></span></dt>
+<dt class="deffnx def-cmd-deffn" id="index-pointer_002dref_002dsint16"><span class="category-def">Builtin Accessor: </span><span><strong class="def-name">pointer-ref-sint16</strong> <var class="def-var-arguments"><var class="var">VALUEVAR</var> <var class="var">POINTER</var> <var class="var">OFFSET</var></var><a class="copiable-link" href="#index-pointer_002dref_002dsint16"> &para;</a></span></dt>
+<dd><p>Accessor and mutator for memory blocks operating on the C language type <code class="code">int16_t</code>.
+</p></dd></dl>
+
+<dl class="first-deffn">
+<dt class="deffn" id="index-pointer_002dset_002duint16"><span class="category-def">Builtin Mutator: </span><span><strong class="def-name">pointer-set-uint16</strong> <var class="def-var-arguments"><var class="var">POINTER</var> <var class="var">OFFSET</var> <var class="var">VALUE</var></var><a class="copiable-link" href="#index-pointer_002dset_002duint16"> &para;</a></span></dt>
+<dt class="deffnx def-cmd-deffn" id="index-pointer_002dref_002duint16"><span class="category-def">Builtin Accessor: </span><span><strong class="def-name">pointer-ref-uint16</strong> <var class="def-var-arguments"><var class="var">VALUEVAR</var> <var class="var">POINTER</var> <var class="var">OFFSET</var></var><a class="copiable-link" href="#index-pointer_002dref_002duint16"> &para;</a></span></dt>
+<dd><p>Accessor and mutator for memory blocks operating on the C language type <code class="code">uint16_t</code>.
+</p></dd></dl>
+
+<dl class="first-deffn">
+<dt class="deffn" id="index-pointer_002dset_002dsint32"><span class="category-def">Builtin Mutator: </span><span><strong class="def-name">pointer-set-sint32</strong> <var class="def-var-arguments"><var class="var">POINTER</var> <var class="var">OFFSET</var> <var class="var">VALUE</var></var><a class="copiable-link" href="#index-pointer_002dset_002dsint32"> &para;</a></span></dt>
+<dt class="deffnx def-cmd-deffn" id="index-pointer_002dref_002dsint32"><span class="category-def">Builtin Accessor: </span><span><strong class="def-name">pointer-ref-sint32</strong> <var class="def-var-arguments"><var class="var">VALUEVAR</var> <var class="var">POINTER</var> <var class="var">OFFSET</var></var><a class="copiable-link" href="#index-pointer_002dref_002dsint32"> &para;</a></span></dt>
+<dd><p>Accessor and mutator for memory blocks operating on the C language type <code class="code">int32_t</code>.
+</p></dd></dl>
+
+<dl class="first-deffn">
+<dt class="deffn" id="index-pointer_002dset_002duint32"><span class="category-def">Builtin Mutator: </span><span><strong class="def-name">pointer-set-uint32</strong> <var class="def-var-arguments"><var class="var">POINTER</var> <var class="var">OFFSET</var> <var class="var">VALUE</var></var><a class="copiable-link" href="#index-pointer_002dset_002duint32"> &para;</a></span></dt>
+<dt class="deffnx def-cmd-deffn" id="index-pointer_002dref_002duint32"><span class="category-def">Builtin Accessor: </span><span><strong class="def-name">pointer-ref-uint32</strong> <var class="def-var-arguments"><var class="var">VALUEVAR</var> <var class="var">POINTER</var> <var class="var">OFFSET</var></var><a class="copiable-link" href="#index-pointer_002dref_002duint32"> &para;</a></span></dt>
+<dd><p>Accessor and mutator for memory blocks operating on the C language type <code class="code">uint32_t</code>.
+</p></dd></dl>
+
+<dl class="first-deffn">
+<dt class="deffn" id="index-pointer_002dset_002dsint64"><span class="category-def">Builtin Mutator: </span><span><strong class="def-name">pointer-set-sint64</strong> <var class="def-var-arguments"><var class="var">POINTER</var> <var class="var">OFFSET</var> <var class="var">VALUE</var></var><a class="copiable-link" href="#index-pointer_002dset_002dsint64"> &para;</a></span></dt>
+<dt class="deffnx def-cmd-deffn" id="index-pointer_002dref_002dsint64"><span class="category-def">Builtin Accessor: </span><span><strong class="def-name">pointer-ref-sint64</strong> <var class="def-var-arguments"><var class="var">VALUEVAR</var> <var class="var">POINTER</var> <var class="var">OFFSET</var></var><a class="copiable-link" href="#index-pointer_002dref_002dsint64"> &para;</a></span></dt>
+<dd><p>Accessor and mutator for memory blocks operating on the C language type <code class="code">int64_t</code>.
+</p></dd></dl>
+
+<dl class="first-deffn">
+<dt class="deffn" id="index-pointer_002dset_002duint64"><span class="category-def">Builtin Mutator: </span><span><strong class="def-name">pointer-set-uint64</strong> <var class="def-var-arguments"><var class="var">POINTER</var> <var class="var">OFFSET</var> <var class="var">VALUE</var></var><a class="copiable-link" href="#index-pointer_002dset_002duint64"> &para;</a></span></dt>
+<dt class="deffnx def-cmd-deffn" id="index-pointer_002dref_002duint64"><span class="category-def">Builtin Accessor: </span><span><strong class="def-name">pointer-ref-uint64</strong> <var class="def-var-arguments"><var class="var">VALUEVAR</var> <var class="var">POINTER</var> <var class="var">OFFSET</var></var><a class="copiable-link" href="#index-pointer_002dref_002duint64"> &para;</a></span></dt>
+<dd><p>Accessor and mutator for memory blocks operating on the C language type <code class="code">uint64_t</code>.
+</p></dd></dl>
+
+
+<dl class="first-deffn">
+<dt class="deffn" id="index-pointer_002dset_002dssize"><span class="category-def">Builtin Mutator: </span><span><strong class="def-name">pointer-set-ssize</strong> <var class="def-var-arguments"><var class="var">POINTER</var> <var class="var">OFFSET</var> <var class="var">VALUE</var></var><a class="copiable-link" href="#index-pointer_002dset_002dssize"> &para;</a></span></dt>
+<dt class="deffnx def-cmd-deffn" id="index-pointer_002dref_002dssize"><span class="category-def">Builtin Accessor: </span><span><strong class="def-name">pointer-ref-ssize</strong> <var class="def-var-arguments"><var class="var">VALUEVAR</var> <var class="var">POINTER</var> <var class="var">OFFSET</var></var><a class="copiable-link" href="#index-pointer_002dref_002dssize"> &para;</a></span></dt>
+<dd><p>Accessor and mutator for memory blocks operating on the C language type <code class="code">ssize_t</code>.
+</p></dd></dl>
+
+<dl class="first-deffn">
+<dt class="deffn" id="index-pointer_002dset_002dusize"><span class="category-def">Builtin Mutator: </span><span><strong class="def-name">pointer-set-usize</strong> <var class="def-var-arguments"><var class="var">POINTER</var> <var class="var">OFFSET</var> <var class="var">VALUE</var></var><a class="copiable-link" href="#index-pointer_002dset_002dusize"> &para;</a></span></dt>
+<dt class="deffnx def-cmd-deffn" id="index-pointer_002dref_002dusize"><span class="category-def">Builtin Accessor: </span><span><strong class="def-name">pointer-ref-usize</strong> <var class="def-var-arguments"><var class="var">VALUEVAR</var> <var class="var">POINTER</var> <var class="var">OFFSET</var></var><a class="copiable-link" href="#index-pointer_002dref_002dusize"> &para;</a></span></dt>
+<dd><p>Accessor and mutator for memory blocks operating on the C language type <code class="code">size_t</code>.
+</p></dd></dl>
+
+<dl class="first-deffn">
+<dt class="deffn" id="index-pointer_002dset_002dintmax"><span class="category-def">Builtin Mutator: </span><span><strong class="def-name">pointer-set-intmax</strong> <var class="def-var-arguments"><var class="var">POINTER</var> <var class="var">OFFSET</var> <var class="var">VALUE</var></var><a class="copiable-link" href="#index-pointer_002dset_002dintmax"> &para;</a></span></dt>
+<dt class="deffnx def-cmd-deffn" id="index-pointer_002dref_002dintmax"><span class="category-def">Builtin Accessor: </span><span><strong class="def-name">pointer-ref-intmax</strong> <var class="def-var-arguments"><var class="var">VALUEVAR</var> <var class="var">POINTER</var> <var class="var">OFFSET</var></var><a class="copiable-link" href="#index-pointer_002dref_002dintmax"> &para;</a></span></dt>
+<dd><p>Accessor and mutator for memory blocks operating on the C language type <code class="code">intmax_t</code>.
+</p></dd></dl>
+
+<dl class="first-deffn">
+<dt class="deffn" id="index-pointer_002dset_002dintptr"><span class="category-def">Builtin Mutator: </span><span><strong class="def-name">pointer-set-intptr</strong> <var class="def-var-arguments"><var class="var">POINTER</var> <var class="var">OFFSET</var> <var class="var">VALUE</var></var><a class="copiable-link" href="#index-pointer_002dset_002dintptr"> &para;</a></span></dt>
+<dt class="deffnx def-cmd-deffn" id="index-pointer_002dref_002dintptr"><span class="category-def">Builtin Accessor: </span><span><strong class="def-name">pointer-ref-intptr</strong> <var class="def-var-arguments"><var class="var">VALUEVAR</var> <var class="var">POINTER</var> <var class="var">OFFSET</var></var><a class="copiable-link" href="#index-pointer_002dref_002dintptr"> &para;</a></span></dt>
+<dd><p>Accessor and mutator for memory blocks operating on the C language type <code class="code">intptr_t</code>.
+</p></dd></dl>
+
+<dl class="first-deffn">
+<dt class="deffn" id="index-pointer_002dset_002dmode"><span class="category-def">Builtin Mutator: </span><span><strong class="def-name">pointer-set-mode</strong> <var class="def-var-arguments"><var class="var">POINTER</var> <var class="var">OFFSET</var> <var class="var">VALUE</var></var><a class="copiable-link" href="#index-pointer_002dset_002dmode"> &para;</a></span></dt>
+<dt class="deffnx def-cmd-deffn" id="index-pointer_002dref_002dmode"><span class="category-def">Builtin Accessor: </span><span><strong class="def-name">pointer-ref-mode</strong> <var class="def-var-arguments"><var class="var">VALUEVAR</var> <var class="var">POINTER</var> <var class="var">OFFSET</var></var><a class="copiable-link" href="#index-pointer_002dref_002dmode"> &para;</a></span></dt>
+<dd><p>Accessor and mutator for memory blocks operating on the C language type <code class="code">mode_t</code>.
+</p></dd></dl>
+
+<dl class="first-deffn">
+<dt class="deffn" id="index-pointer_002dset_002doff"><span class="category-def">Builtin Mutator: </span><span><strong class="def-name">pointer-set-off</strong> <var class="def-var-arguments"><var class="var">POINTER</var> <var class="var">OFFSET</var> <var class="var">VALUE</var></var><a class="copiable-link" href="#index-pointer_002dset_002doff"> &para;</a></span></dt>
+<dt class="deffnx def-cmd-deffn" id="index-pointer_002dref_002doff"><span class="category-def">Builtin Accessor: </span><span><strong class="def-name">pointer-ref-off</strong> <var class="def-var-arguments"><var class="var">VALUEVAR</var> <var class="var">POINTER</var> <var class="var">OFFSET</var></var><a class="copiable-link" href="#index-pointer_002dref_002doff"> &para;</a></span></dt>
+<dd><p>Accessor and mutator for memory blocks operating on the C language type <code class="code">off_t</code>.
+</p></dd></dl>
+
+<dl class="first-deffn">
+<dt class="deffn" id="index-pointer_002dset_002dpid"><span class="category-def">Builtin Mutator: </span><span><strong class="def-name">pointer-set-pid</strong> <var class="def-var-arguments"><var class="var">POINTER</var> <var class="var">OFFSET</var> <var class="var">VALUE</var></var><a class="copiable-link" href="#index-pointer_002dset_002dpid"> &para;</a></span></dt>
+<dt class="deffnx def-cmd-deffn" id="index-pointer_002dref_002dpid"><span class="category-def">Builtin Accessor: </span><span><strong class="def-name">pointer-ref-pid</strong> <var class="def-var-arguments"><var class="var">VALUEVAR</var> <var class="var">POINTER</var> <var class="var">OFFSET</var></var><a class="copiable-link" href="#index-pointer_002dref_002dpid"> &para;</a></span></dt>
+<dd><p>Accessor and mutator for memory blocks operating on the C language type <code class="code">pid_t</code>.
+</p></dd></dl>
+
+<dl class="first-deffn">
+<dt class="deffn" id="index-pointer_002dset_002duid"><span class="category-def">Builtin Mutator: </span><span><strong class="def-name">pointer-set-uid</strong> <var class="def-var-arguments"><var class="var">POINTER</var> <var class="var">OFFSET</var> <var class="var">VALUE</var></var><a class="copiable-link" href="#index-pointer_002dset_002duid"> &para;</a></span></dt>
+<dt class="deffnx def-cmd-deffn" id="index-pointer_002dref_002duid"><span class="category-def">Builtin Accessor: </span><span><strong class="def-name">pointer-ref-uid</strong> <var class="def-var-arguments"><var class="var">VALUEVAR</var> <var class="var">POINTER</var> <var class="var">OFFSET</var></var><a class="copiable-link" href="#index-pointer_002dref_002duid"> &para;</a></span></dt>
+<dd><p>Accessor and mutator for memory blocks operating on the C language type <code class="code">uid_t</code>.
+</p></dd></dl>
+
+<dl class="first-deffn">
+<dt class="deffn" id="index-pointer_002dset_002dgid"><span class="category-def">Builtin Mutator: </span><span><strong class="def-name">pointer-set-gid</strong> <var class="def-var-arguments"><var class="var">POINTER</var> <var class="var">OFFSET</var> <var class="var">VALUE</var></var><a class="copiable-link" href="#index-pointer_002dset_002dgid"> &para;</a></span></dt>
+<dt class="deffnx def-cmd-deffn" id="index-pointer_002dref_002dgid"><span class="category-def">Builtin Accessor: </span><span><strong class="def-name">pointer-ref-gid</strong> <var class="def-var-arguments"><var class="var">VALUEVAR</var> <var class="var">POINTER</var> <var class="var">OFFSET</var></var><a class="copiable-link" href="#index-pointer_002dref_002dgid"> &para;</a></span></dt>
+<dd><p>Accessor and mutator for memory blocks operating on the C language type <code class="code">gid_t</code>.
+</p></dd></dl>
+
+
+</div>
+<hr>
+<div class="nav-panel">
+<p>
+Next: <a href="conversions.html">Converting data to and from memory blocks</a>, Previous: <a href="operations.html">Standard memory operations</a>, Up: <a href="index.html">MMUX Bash Pointers</a> &nbsp; [<a href="index.html#SEC_Contents" title="Table of contents" rel="contents">Contents</a>][<a href="concept-index.html" title="Index" rel="index">Index</a>]</p>
+</div>
+
+
+<p>This document describes version <tt>0.1.0-devel.0</tt> of <em>MMUX Bash Pointers</em>.</p>
+</body>
+</html>
