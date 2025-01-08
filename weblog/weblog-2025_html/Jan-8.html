@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<!-- Created by GNU Texinfo 7.1, https://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Jan  8 (Marco&rsquo;s 2025 Weblog)</title>
+
+<meta name="description" content="Jan  8 (Marco&rsquo;s 2025 Weblog)">
+<meta name="keywords" content="Jan  8 (Marco&rsquo;s 2025 Weblog)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<link href="index.html" rel="start" title="Top">
+<link href="index.html" rel="up" title="Top">
+<link href="Jan-04.html" rel="next" title="Jan 04">
+<link href="index.html" rel="prev" title="Top">
+<style type="text/css">
+<!--
+a.copiable-link {visibility: hidden; text-decoration: none; line-height: 0em}
+div.example {margin-left: 3.2em}
+span:hover a.copiable-link {visibility: visible}
+ul.mark-bullet {list-style-type: disc}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="weblog.css">
+
+
+</head>
+
+<body lang="en">
+<div class="unnumbered-level-extent" id="Jan-8">
+<div class="nav-panel">
+<p>
+Next: <a href="Jan-04.html" accesskey="n" rel="next">Stuff on software</a>, Previous: <a href="index.html" accesskey="p" rel="prev">Marco&rsquo;s 2025 Weblog</a>, Up: <a href="index.html" accesskey="u" rel="up">Marco&rsquo;s 2025 Weblog</a> &nbsp; </p>
+</div>
+<hr>
+<h2 class="unnumbered" id="Stuff-on-software"><span>Stuff on software<a class="copiable-link" href="#Stuff-on-software"> &para;</a></span></h2>
+
+
+<p><em class="emph">Posted on Jan  8, 2025</em>
+</p>
+
+<p>I&rsquo;m reassessing my choices in my C language library to handle exceptions; at my age I still have not
+found the definitive way to do it, with the right mechanism and the right names as identifiers; I
+suck at software engineering.
+</p>
+<p>Many years ago I read cover&ndash;to&ndash;cover the book:
+</p>
+<blockquote class="quotation">
+<p>Alan Burns, Andy Wellings.  &ldquo;Real&ndash;Time Systems and Programming Languages&rdquo;.  Details forgotten,
+but probably second edition.
+</p></blockquote>
+
+<p>it was a mistake to spend so much time on that; but I did it nevertheless.  (I mean&hellip; I read
+cover&ndash;to&ndash;cover the manual of the HP 48 handheld calculator; so what!?)
+</p>
+<p>The one thing that stuck in my head is an abstract model for exceptions that the book helped me
+assemble; I do not know if the authors would approve it; right or wrong does not even matter: it is
+the only model that stuck in my head.  It goes like this:
+</p><ol class="enumerate">
+<li> there are only two kinds of exceptions: <em class="emph">logic</em> and <em class="emph">runtime</em>;
+
+</li><li> logic exceptions do not happen in error&ndash;free software running on error&ndash;free hardware when no
+cosmic rays flip bits at random;
+
+<ul class="itemize mark-bullet">
+<li>liveness is important: it is better if non&ndash;simple software is resilient to logic errors;
+</li></ul>
+
+</li><li> everything else is a runtime exception;
+
+<ul class="itemize mark-bullet">
+<li>it is always possible to build an abstract model in which a runtime exception is a synchronisation
+error:
+
+<ol class="enumerate" type="a" start="1">
+<li> two processes have a <em class="emph">rendez&ndash;vous</em> in time with the purpose of establishing a common value for
+a state; in some situations the new desired state is selected by one of the processes;
+
+</li><li> if the <em class="emph">rendez&ndash;vous</em> is terminated successfully: life is good, every process moves on with the
+same information about the state;
+
+</li><li> otherwise an error happened; let&rsquo;s try something else;
+</li></ol>
+
+</li><li>there is nothing a process can do to make it impossible for runtime exceptions to happen.
+</li></ul>
+</li></ol>
+
+<p>Simple example (it looks simple, it has hell inside): a process calls the standard C language
+function <code class="code">malloc()</code>, there is a <em class="emph">rendez&ndash;vous</em> between the process and the memory allocator
+implemented by the operating system.
+</p>
+<p>I need to keep my ideas in good order; otherwise I can do nothing.  I would really like to write
+code in which this abstract model is recognisable.  It is simple to organise a tree hierarchy of
+exceptional&ndash;condition objects having 2 main branches: the logic errors; the runtime exceptions.  It
+is hard to effectively implement the <em class="emph">rendez&ndash;vous</em> idea without making the code too heavy to
+write; I never really succeeded.
+</p>
+<p>The closest I got, in my opinion, was when I used Scheme syntaxes to attempt an implementation of
+the &ldquo;compensations&rdquo; mechanism described in section 7 of:
+</p>
+<blockquote class="quotation">
+<p>Westley Weimer, George C. Necula.  &ldquo;Finding and Preventing Run&ndash;Time Error Handling Mistakes&rdquo;.  In
+Proceedings of the <abbr class="acronym">ACM</abbr> Conference on Object&ndash;Oriented Programming, Systems, Languages, and
+Applications, 2004.
+</p></blockquote>
+
+<p>under Scheme languages we can do it on top of the <code class="code">with-exception-handler</code>,
+<code class="code">dynamic-wind</code> and <code class="code">lambda</code> syntaxes.  The short version of it is:
+</p>
+<div class="example">
+<pre class="example-preformatted">(with-compensations
+  (do-something)
+  (compensate
+      (open-this-thing)
+    (with
+      (close-this-thing)))
+  (do-something-else))
+</pre></div>
+
+<p>it is hard to do it in non&ndash;Lispy languages.
+</p>
+<p>One thing I want to add is the idea of exception handler function that is called by <code class="code">raise</code>
+without rolling back the stack; only if the exception handler fails to handle, the stack is unwound.
+This also comes from Scheme.
+</p>
+<p>What I&rsquo;m doing now is procrastinating day after day, because I do not know; what does &ldquo;good
+enough&rdquo; actually mean?
+</p>
+</div>
+<hr>
+<div class="nav-panel">
+<p>
+Next: <a href="Jan-04.html">Stuff on software</a>, Previous: <a href="index.html">Marco&rsquo;s 2025 Weblog</a>, Up: <a href="index.html">Marco&rsquo;s 2025 Weblog</a> &nbsp; </p>
+</div>
+
+
+
+</body>
+</html>
