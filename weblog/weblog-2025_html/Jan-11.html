@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html>
+<!-- Created by GNU Texinfo 7.1, https://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Jan 11 (Marco&rsquo;s 2025 Weblog)</title>
+
+<meta name="description" content="Jan 11 (Marco&rsquo;s 2025 Weblog)">
+<meta name="keywords" content="Jan 11 (Marco&rsquo;s 2025 Weblog)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<link href="index.html" rel="start" title="Top">
+<link href="index.html" rel="up" title="Top">
+<link href="Jan-8.html" rel="next" title="Jan  8">
+<link href="index.html" rel="prev" title="Top">
+<style type="text/css">
+<!--
+a.copiable-link {visibility: hidden; text-decoration: none; line-height: 0em}
+div.example {margin-left: 3.2em}
+span:hover a.copiable-link {visibility: visible}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="weblog.css">
+
+
+</head>
+
+<body lang="en">
+<div class="unnumbered-level-extent" id="Jan-11">
+<div class="nav-panel">
+<p>
+Next: <a href="Jan-8.html" accesskey="n" rel="next">Stuff on software</a>, Previous: <a href="index.html" accesskey="p" rel="prev">Marco&rsquo;s 2025 Weblog</a>, Up: <a href="index.html" accesskey="u" rel="up">Marco&rsquo;s 2025 Weblog</a> &nbsp; </p>
+</div>
+<hr>
+<h2 class="unnumbered" id="Stuff-on-software"><span>Stuff on software<a class="copiable-link" href="#Stuff-on-software"> &para;</a></span></h2>
+
+
+<p><em class="emph">Posted on Jan 11, 2025</em>
+</p>
+
+<p>Language C11, features <code class="code">#define _POSIX_C_SOURCE 200809L</code>.  Let&rsquo;s say we have a data structure:
+</p>
+<div class="example">
+<pre class="example-preformatted">typedef struct pill_t   pill_t;
+
+struct pill_t {
+  int   N;
+};
+</pre></div>
+
+<p>we have some methods:
+</p>
+<div class="example">
+<pre class="example-preformatted">void
+pill_print (pill_t P)
+{
+  dprintf(1, &quot;pill.N = %d\n&quot;, P.N);
+}
+</pre></div>
+
+<p>we can use the data structure in two ways:
+</p>
+<div class="example">
+<pre class="example-preformatted">void
+pill_use_for_weight_loss (pill_t P)
+{
+  dprintf(1, &quot;weight loss pill.N = %d\n&quot;, P.N);
+}
+void
+pill_use_for_lower_blood_sugar (pill_t P)
+{
+  dprintf(1, &quot;lower blood sugar pill.N = %d\n&quot;, P.N);
+}
+</pre></div>
+
+<p>so let&rsquo;s use it:
+</p>
+<div class="example">
+<pre class="example-preformatted">int
+main (void)
+{
+  pill_t        P1 = { .N = 123 };
+  pill_t        P2 = { .N = 456 };
+
+  dprintf(1, &quot;just a pill_t\n&quot;);
+
+  pill_print(P1);
+  pill_print(P2);
+
+  pill_use_for_weight_loss(P1);
+  pill_use_for_lower_blood_sugar(P2);
+
+  exit(EXIT_SUCCESS);
+}
+</pre></div>
+
+<p>it is just one type: the <code class="code">pill_t</code>.
+</p>
+<p>Now let&rsquo;s say we start thinking, twisting, craving for light from the <em class="emph">Secret Fire</em>, but there
+is <em class="emph">Darkness</em> everywhere, and it corrupts&hellip; it torments&hellip; it festers; how cool would
+it be if we could specify the use of the pill in its variable declaration?  Like this:
+</p>
+<div class="example">
+<pre class="example-preformatted">int
+main (void)
+{
+  weight_loss_pill_t            P1 = { .P.N = 123 };
+  lower_blood_sugar_pill_t      P2 = { .P.N = 456 };
+
+  dprintf(1, &quot;subtypes of pill_t\n&quot;);
+
+  pill_print(P1);
+  pill_print(P2);
+  pill_use(P1);
+  pill_use(P2);
+  exit(EXIT_SUCCESS);
+}
+</pre></div>
+
+<p>instead of selecting the use in the name of the function, we select it in the name of the data type;
+we are not really changing the internal representation of a pill, we are just changing what we write
+to use pills.  Is this new code better?  More readable?  Can we understand it faster when we read it
+again after 5 years of not seeing it?
+</p>
+<p>Well&hellip; but can we actually do it?  Of course:
+</p>
+<div class="example">
+<pre class="example-preformatted">typedef struct pill_t                   pill_t;
+typedef struct lower_blood_sugar_pill_t lower_blood_sugar_pill_t;
+typedef struct weight_loss_pill_t       weight_loss_pill_t;
+
+struct pill_t {
+  int   N;
+};
+
+struct lower_blood_sugar_pill_t {
+  pill_t        P;
+};
+
+struct weight_loss_pill_t {
+  pill_t        P;
+};
+
+void
+pill_p_print (pill_t P)
+{
+  dprintf(1, &quot;pill.N = %d\n&quot;, P.N);
+}
+
+void
+lower_blood_sugar_pill_print (lower_blood_sugar_pill_t P)
+{
+  pill_p_print(P.P);
+}
+
+void
+weight_loss_pill_print (weight_loss_pill_t P)
+{
+  pill_p_print(P.P);
+}
+
+#define pill_print(PILL) \
+  (_Generic((PILL), \
+            lower_blood_sugar_pill_t:   lower_blood_sugar_pill_print,           \
+            weight_loss_pill_t:         weight_loss_pill_print)(PILL))
+
+void
+pill_use_for_weight_loss (weight_loss_pill_t P)
+{
+  dprintf(1, &quot;weight loss pill.N = %d\n&quot;, P.P.N);
+}
+
+void
+pill_use_for_lower_blood_sugar (lower_blood_sugar_pill_t P)
+{
+  dprintf(1, &quot;lower blood sugar pill.N = %d\n&quot;, P.P.N);
+}
+
+#define pill_use(PILL) \
+  (_Generic((PILL), \
+            lower_blood_sugar_pill_t:   pill_use_for_lower_blood_sugar,         \
+            weight_loss_pill_t:         pill_use_for_weight_loss)(PILL))
+</pre></div>
+
+<p>notice how much more code there is; but all this code is hidden in some <samp class="file">pill.h</samp>/<samp class="file">pill.c</samp>
+module, so we do not see it; we just have to write it and forget it.
+</p>
+<p>I have let code of the second type enter my project&rsquo;s repository; I&rsquo;m torn between light and
+darkness; but&hellip; which one is light&hellip; which one is darkness&hellip;
+</p>
+<p>Am I a <em class="emph">Slave of Morgoth</em>?
+</p>
+<p>No&hellip; No&hellip; That cannot be!!!
+</p>
+</div>
+<hr>
+<div class="nav-panel">
+<p>
+Next: <a href="Jan-8.html">Stuff on software</a>, Previous: <a href="index.html">Marco&rsquo;s 2025 Weblog</a>, Up: <a href="index.html">Marco&rsquo;s 2025 Weblog</a> &nbsp; </p>
+</div>
+
+
+
+</body>
+</html>
