@@ -36,11 +36,17 @@ ul.mark-bullet {list-style-type: disc}
 Next: <a href="Apr-2.html" accesskey="n" rel="next">Stuff on politics</a>, Previous: <a href="index.html" accesskey="p" rel="prev">Marco&rsquo;s 2025 Weblog</a>, Up: <a href="index.html" accesskey="u" rel="up">Marco&rsquo;s 2025 Weblog</a> &nbsp; </p>
 </div>
 <hr>
-<h2 class="unnumbered" id="Finanza-impersonale"><span>Finanza impersonale<a class="copiable-link" href="#Finanza-impersonale"> &para;</a></span></h2>
+<h2 class="unnumbered" id="Finanza-impersonale-_0028revisione-2_0029"><span>Finanza impersonale (revisione 2)<a class="copiable-link" href="#Finanza-impersonale-_0028revisione-2_0029"> &para;</a></span></h2>
 
 
 <p><em class="emph">Posted on Apr  7, 2025</em>
 </p>
+<blockquote class="quotation">
+<p>Revisione 2.  Corretta la percentuale dei dazi applicati da <em class="math">35%</em> a <em class="math">20%</em>.  Aggiunte le
+voci &ldquo;costo proprio per l&rsquo;importatore&rdquo; e &ldquo;costo prorpio per il rivenditore&rdquo;, che rendono il
+calcolo un poco pi&uacute; realistico: anche l&rsquo;attivit&agrave; di questi soggetti costa.
+</p></blockquote>
+
 
 <p>Io sono ignorante su tutto; a malapena so fare calcoli di aritmetica; perci&ograve; nel programma in
 linguaggio C11 che includo qui sotto ci sono sicuramente errori.  Siccome &egrave; il mio giocattolo: ho
@@ -86,29 +92,35 @@ ITA: prezzo di vendita del produttore IT          = 123.57 EUR
 Cambio EUR/USD: numero di USD che si comprano con un EUR = 1.08 USD
 
 USA: prezzo d'acquisto che l'importatore US paga al produttore IT  = 133.46 USD
-USA: dazio percentuale                                             = 35.00%
-USA: dazio che l'importatore US paga allo stato US                 = 46.71 USD
-USA: costo totale per l'importatore US                             = 180.17 USD
+USA: dazio percentuale                                             = 20.00%
+USA: dazio che l'importatore US paga allo stato US                 = 26.69 USD
+USA: costo per l'importatore US                                    = 160.15 USD
+USA: costo proprio percentuale per l'importatore US                = 10.00%
+USA: costo proprio per l'importatore US                            = 13.35 USD
+USA: costo totale per l'importatore US                             = 173.50 USD
 USA: profitto percentuale dell'importatore US                      = 12.34%
 USA: profitto dell'importatore US                                  = 16.47 USD
-USA: prezzo di vendita pre VAT dell'importatore US                 = 196.64 USD
+USA: prezzo di vendita pre VAT dell'importatore US                 = 189.97 USD
 USA: VAT percentuale importatore US                                = 10.00%
-USA: VAT che l'importatore US paga allo stato US                   = 19.66 USD
-USA: prezzo di vendita dell'importatore US                         = 216.30 USD
+USA: VAT che l'importatore US paga allo stato US                   = 19.00 USD
+USA: prezzo di vendita dell'importatore US                         = 208.96 USD
 
-USA: costo d'acquisto per il rivenditore US                         = 216.30 USD
+USA: costo d'acquisto per il rivenditore US                         = 208.96 USD
+USA: costo proprio percentuale per il rivenditore US                = 10.00%
+USA: costo proprio per il rivenditore US                            = 20.90 USD
+USA: costo totale per il rivenditore US                             = 229.86 USD
 USA: profitto percentuale del rivenditore US                        = 12.34%
-USA: profitto del rivenditore US                                    = 26.69 USD
-USA: prezzo di vendita pre VAT pre Sales Tax per il rivenditore US  = 243.00 USD
+USA: profitto del rivenditore US                                    = 25.79 USD
+USA: prezzo di vendita pre VAT pre Sales Tax per il rivenditore US  = 255.65 USD
 USA: VAT percentuale rivenditore US                                 = 10.00%
-USA: VAT che il rivenditore US paga allo stato US                   = 24.30 USD
+USA: VAT che il rivenditore US paga allo stato US                   = 25.56 USD
 USA: Sales Tax percentuale rivenditore US                           = 5.00%
-USA: Sales Tax che il rivenditore US paga allo stato US             = 12.15 USD
-USA: prezzo di vendita per il rivenditore US                        = 279.45 USD
+USA: Sales Tax che il rivenditore US paga allo stato US             = 12.78 USD
+USA: prezzo di vendita per il rivenditore US                        = 293.99 USD
 
-USA: percentuale del dazio sul prezzo di vendita al dettaglio US = 16.72%
-USA: tasse totali in USD (IVA in USD + VAT + ST)                 = 68.25 USD
-USA: percentuale tasse sul prezzo di vendita al dettaglio US     = 24.42%
+USA: percentuale del dazio sul prezzo di vendita al dettaglio US = 9.08%
+USA: tasse totali in USD (IVA in USD + VAT + ST)                 = 69.48 USD
+USA: percentuale tasse sul prezzo di vendita al dettaglio US     = 23.63%
 </pre></div>
 
 <p>Ed ecco il codice:
@@ -172,20 +184,26 @@ main (void)
   mmux_decimal128_t	dollari_per_un_euro			= MMUX_DECIMAL128_LITERAL(1.08);
 
   mmux_decimal128_t	us_prezzo_acquisto_it			= dollari_per_un_euro * it_prezzo_produttore;
-  mmux_decimal128_t	us_dazio_percentuale			= MMUX_DECIMAL128_LITERAL(35.0);
+  mmux_decimal128_t	us_dazio_percentuale			= MMUX_DECIMAL128_LITERAL(20.0);
   mmux_decimal128_t	us_dazio_allo_stato			= us_prezzo_acquisto_it * (us_dazio_percentuale / cento);
   mmux_decimal128_t	us_costo_importatore			= us_dazio_allo_stato + us_prezzo_acquisto_it;
+  mmux_decimal128_t	us_costo_proprio_percentuale_importatore= MMUX_DECIMAL128_LITERAL(10.0);
+  mmux_decimal128_t	us_costo_proprio_importatore		= us_prezzo_acquisto_it * (us_costo_proprio_percentuale_importatore / cento);
+  mmux_decimal128_t	us_costo_totale_importatore		= us_costo_importatore + us_costo_proprio_importatore;
   mmux_decimal128_t	us_profitto_percentuale_importatore	= profitto_percentuale_per_tutti;
   mmux_decimal128_t	us_profitto_importatore			= us_prezzo_acquisto_it * (us_profitto_percentuale_importatore / cento);
-  mmux_decimal128_t	us_prezzo_importatore_pre_vat		= us_costo_importatore + us_profitto_importatore;
+  mmux_decimal128_t	us_prezzo_importatore_pre_vat		= us_costo_totale_importatore + us_profitto_importatore;
   mmux_decimal128_t	us_vat_percentuale_importatore		= dieci;
   mmux_decimal128_t	us_vat_importatore			= us_prezzo_importatore_pre_vat * (us_vat_percentuale_importatore / cento);
   mmux_decimal128_t	us_prezzo_importatore			= us_prezzo_importatore_pre_vat + us_vat_importatore;
 
   mmux_decimal128_t	us_costo_rivenditore			= us_prezzo_importatore;
+  mmux_decimal128_t	us_costo_proprio_percentuale_rivenditore= MMUX_DECIMAL128_LITERAL(10.0);
+  mmux_decimal128_t	us_costo_proprio_rivenditore		= us_costo_rivenditore * (us_costo_proprio_percentuale_rivenditore / cento);
+  mmux_decimal128_t	us_costo_totale_rivenditore		= us_costo_rivenditore + us_costo_proprio_rivenditore;
   mmux_decimal128_t	us_profitto_percentuale_rivenditore	= profitto_percentuale_per_tutti;
   mmux_decimal128_t	us_profitto_rivenditore			= us_prezzo_importatore * (us_profitto_percentuale_rivenditore / cento);
-  mmux_decimal128_t	us_prezzo_vendita_pre_vat_pre_st	= us_costo_rivenditore + us_profitto_rivenditore;
+  mmux_decimal128_t	us_prezzo_vendita_pre_vat_pre_st	= us_costo_totale_rivenditore + us_profitto_rivenditore;
   mmux_decimal128_t	us_vat_percentuale_rivenditore		= dieci;
   mmux_decimal128_t	us_vat_rivenditore			= us_prezzo_vendita_pre_vat_pre_st * (us_vat_percentuale_rivenditore / cento);
   mmux_decimal128_t	us_st_percentuale_rivenditore		= cinque;
@@ -227,7 +245,10 @@ main (void)
     printit_usd(&quot;USA: prezzo d'acquisto che l'importatore US paga al produttore IT  = &quot;, us_prezzo_acquisto_it);
     printit_perc(&quot;USA: dazio percentuale                                             = &quot;, us_dazio_percentuale);
     printit_usd(&quot;USA: dazio che l'importatore US paga allo stato US                 = &quot;, us_dazio_allo_stato);
-    printit_usd(&quot;USA: costo totale per l'importatore US                             = &quot;, us_costo_importatore);
+    printit_usd(&quot;USA: costo per l'importatore US                                    = &quot;, us_costo_importatore);
+    printit_perc(&quot;USA: costo proprio percentuale per l'importatore US                = &quot;, us_costo_proprio_percentuale_importatore);
+    printit_usd(&quot;USA: costo proprio per l'importatore US                            = &quot;, us_costo_proprio_importatore);
+    printit_usd(&quot;USA: costo totale per l'importatore US                             = &quot;, us_costo_totale_importatore);
     printit_perc(&quot;USA: profitto percentuale dell'importatore US                      = &quot;, us_profitto_percentuale_importatore);
     printit_usd(&quot;USA: profitto dell'importatore US                                  = &quot;, us_profitto_importatore);
     printit_usd(&quot;USA: prezzo di vendita pre VAT dell'importatore US                 = &quot;, us_prezzo_importatore_pre_vat);
@@ -239,6 +260,9 @@ main (void)
   newline();
   {
     printit_usd(&quot;USA: costo d'acquisto per il rivenditore US                         = &quot;, us_costo_rivenditore);
+    printit_perc(&quot;USA: costo proprio percentuale per il rivenditore US                = &quot;, us_costo_proprio_percentuale_rivenditore);
+    printit_usd(&quot;USA: costo proprio per il rivenditore US                            = &quot;, us_costo_proprio_rivenditore);
+    printit_usd(&quot;USA: costo totale per il rivenditore US                             = &quot;, us_costo_totale_rivenditore);
     printit_perc(&quot;USA: profitto percentuale del rivenditore US                        = &quot;, us_profitto_percentuale_rivenditore);
     printit_usd(&quot;USA: profitto del rivenditore US                                    = &quot;, us_profitto_rivenditore);
     printit_usd(&quot;USA: prezzo di vendita pre VAT pre Sales Tax per il rivenditore US  = &quot;, us_prezzo_vendita_pre_vat_pre_st);
