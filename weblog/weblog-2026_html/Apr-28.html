@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<!-- Created by GNU Texinfo 7.3, https://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Apr 28 (Marco&rsquo;s 2026 Weblog)</title>
+
+<meta name="description" content="Apr 28 (Marco&rsquo;s 2026 Weblog)">
+<meta name="keywords" content="Apr 28 (Marco&rsquo;s 2026 Weblog)">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<link href="index.html" rel="start" title="Top">
+<link href="index.html" rel="up" title="Top">
+<link href="Apr-25.html" rel="next" title="Apr 25">
+<link href="index.html" rel="prev" title="Top">
+<style type="text/css">
+a.copiable-link {visibility: hidden; text-decoration: none; line-height: 0em}
+div.example {margin-left: 3.2em}
+span:hover a.copiable-link {visibility: visible}
+ul.mark-bullet {list-style-type: disc}
+</style>
+<link rel="stylesheet" type="text/css" href="weblog.css">
+
+
+</head>
+
+<body>
+<div class="unnumbered-level-extent" id="Apr-28">
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Next: </span><span class="nav-link"><a href="Apr-25.html" accesskey="n" rel="next">Venticinque</a></span></span>, <span class="nav-button"><span class="nav-label">Previous: </span><span class="nav-link"><a href="index.html" accesskey="p" rel="prev">Marco&rsquo;s 2026 Weblog</a></span></span>, <span class="nav-button"><span class="nav-label">Up: </span><span class="nav-link"><a href="index.html" accesskey="u" rel="up">Marco&rsquo;s 2026 Weblog</a></span></span><span class="nav-button"> &nbsp; </span></p>
+<hr>
+<h2 class="unnumbered" id="Recensione-bis"><span>Recensione bis<a class="copiable-link" href="#Recensione-bis"> &para;</a></span></h2>
+
+
+<p><em class="emph">Posted on Apr 28, 2026</em>
+</p>
+
+<p>Ho riscritto la descrizione dell&rsquo;interfaccia del <em class="emph">cruise control</em> della mia automobile,
+rendendola pi&uacute; complicata e chissenefrega; perch&eacute; io sono un uomo perso.
+</p>
+<p>L&rsquo;interfaccia &egrave; composta dalla pedaliera e da quattro pulsanti, alcuni dei quali multifunzione;
+all&rsquo;apparenza &egrave; pi&uacute; difficile spiegarla che usarla, ma in realt&agrave; la complessit&agrave; si conserva;
+il funzionamento &egrave; rappresentabile con un piccolo grafo stati/transizioni, le azioni sulla
+pedaliera e sui pulsanti sono eventi che provocano le transizioni:
+</p>
+<div class="example">
+<pre class="example-preformatted"> --------              spegnimento
+| SPENTO |&lt;----------------------------------
+ --------                                    |
+     | accensione                            |
+     |        --------                       |
+      ------&gt;| PRONTO |----------------------+
+              --------                       |
+      attivazione |                          |
+                  |                          |
+                  |                          |
+                  | incremento  decremento   |
+                  |   -------    ---------   |
+                  |  |       |  |         |  |
+                  |   -----  |  |  -------   |
+                  |        | |  | |          |
+                  |        v |  | v          |
+                  v        --------          |
+                  +------&gt;| ATTIVO |---------+
+                  ^        --------          |
+    riattivazione |            | sospensione |
+                  |            v             |
+                  |        ---------         |
+                   -------| SOSPESO |--------
+                           ---------
+</pre></div>
+
+<p>Vi sono tre parametri con nome autoesplicativo: &lsquo;<samp class="samp">velocita_corrente</samp>&rsquo;, &lsquo;<samp class="samp">velocita_attiva</samp>&rsquo;,
+&lsquo;<samp class="samp">velocita_sospesa</samp>&rsquo;.
+</p>
+<p>Tasto &lsquo;<samp class="samp">accensione/spegnimento</samp>&rsquo;:
+</p><ul class="itemize mark-bullet">
+<li>quando il <em class="emph">cruise control</em> &egrave; &lsquo;<samp class="samp">SPENTO</samp>&rsquo;: transizione allo stato &lsquo;<samp class="samp">PRONTO</samp>&rsquo;;
+
+</li><li>quando il <em class="emph">cruise control</em> &egrave; in qualsiasi altro stato: transizione allo stato &lsquo;<samp class="samp">SPENTO</samp>&rsquo;,
+con cancellazione della &lsquo;<samp class="samp">velocita_attiva</samp>&rsquo; o della &lsquo;<samp class="samp">velocita_sospesa</samp>&rsquo;.
+</li></ul>
+
+<p>Tasto &lsquo;<samp class="samp">attivazione/riattivazione/incremento</samp>&rsquo;
+</p><ul class="itemize mark-bullet">
+<li>quando il <em class="emph">cruise control</em> &egrave; &lsquo;<samp class="samp">PRONTO</samp>&rsquo;: transizione allo stato &lsquo;<samp class="samp">ATTIVO</samp>&rsquo; con
+&lsquo;<samp class="samp">velocita_corrente</samp>&rsquo; che diventa &lsquo;<samp class="samp">velocita_attiva</samp>&rsquo;;
+
+</li><li>quando il <em class="emph">cruise control</em> &egrave; &lsquo;<samp class="samp">SOSPESO</samp>&rsquo;: transizione allo stato &lsquo;<samp class="samp">ATTIVO</samp>&rsquo;, con
+&lsquo;<samp class="samp">velocita_sospesa</samp>&rsquo; che diventa &lsquo;<samp class="samp">velocita_attiva</samp>&rsquo;;
+
+</li><li>quando il <em class="emph">cruise control</em> &egrave; &lsquo;<samp class="samp">ATTIVO</samp>&rsquo;: auto&ndash;transizione allo stato &lsquo;<samp class="samp">ATTIVO</samp>&rsquo; con
+incremento della &lsquo;<samp class="samp">velocita_attiva</samp>&rsquo; d&rsquo;un kilometro all&rsquo;ora;
+
+</li><li>quando il <em class="emph">cruise control</em> &egrave; in qualsiasi altro stato: nessuna funzione.
+</li></ul>
+
+<p>Tasto &lsquo;<samp class="samp">sospensione</samp>&rsquo;:
+</p><ul class="itemize mark-bullet">
+<li>quando il <em class="emph">cruise control</em> &egrave; &lsquo;<samp class="samp">ATTIVO</samp>&rsquo;: transizione allo stato &lsquo;<samp class="samp">SOSPESO</samp>&rsquo; con
+memorizzazione della &lsquo;<samp class="samp">velocita_attiva</samp>&rsquo; come &lsquo;<samp class="samp">velocita_sospesa</samp>&rsquo;;
+
+</li><li>quando il <em class="emph">cruise control</em> &egrave; in qualsiasi altro stato: nessuna funzione.
+</li></ul>
+
+<p>Tasto &lsquo;<samp class="samp">decremento</samp>&rsquo;:
+</p><ul class="itemize mark-bullet">
+<li>quando il <em class="emph">cruise control</em> &egrave; &lsquo;<samp class="samp">ATTIVO</samp>&rsquo;: auto&ndash;transizione allo stato &lsquo;<samp class="samp">ATTIVO</samp>&rsquo; con
+decremento della &lsquo;<samp class="samp">velocita_attiva</samp>&rsquo; d&rsquo;un kilometro all&rsquo;ora;
+
+</li><li>quando il <em class="emph">cruise control</em> &egrave; in qualsiasi altro stato: nessuna funzione.
+</li></ul>
+
+<p>Quando il <em class="emph">cruise control</em> &egrave; &lsquo;<samp class="samp">ATTIVO</samp>&rsquo;: agendo sui pedali si provoca una
+&lsquo;<samp class="samp">sospensione</samp>&rsquo;.
+</p>
+<p>La tipica procedura d&rsquo;utilizzo &egrave;:
+</p>
+<ol class="enumerate">
+<li> &lsquo;<samp class="samp">accensione</samp>&rsquo;;
+
+</li><li> portare la &lsquo;<samp class="samp">velocita_corrente</samp>&rsquo; a circa <em class="math">50</em> in quinta marcia;
+
+</li><li> &lsquo;<samp class="samp">attivazione</samp>&rsquo; e rilascio dei pedali;
+
+</li><li> utilizzo di &lsquo;<samp class="samp">incremento</samp>&rsquo; e &lsquo;<samp class="samp">decremento</samp>&rsquo; per impostare la &lsquo;<samp class="samp">velocita_attiva</samp>&rsquo;
+esattamente a <em class="math">50</em>;
+
+</li><li> marcia auto&ndash;pilotata con &lsquo;<samp class="samp">velocita_attiva</samp>&rsquo; pari a <em class="math">50</em>;
+
+</li><li> arrivando a uno stop sulla strada: pedali frizione e freno, provocando una &lsquo;<samp class="samp">sospensione</samp>&rsquo;;
+
+</li><li> partenza con accelerazione fino a circa <em class="math">50</em> in quinta marcia;
+
+</li><li> &lsquo;<samp class="samp">riattivazione</samp>&rsquo; e rilascio dei pedali;
+
+</li><li> marcia auto&ndash;pilotata con &lsquo;<samp class="samp">velocita_attiva</samp>&rsquo; pari a <em class="math">50</em>;
+
+</li><li> arrivando a destinazione: &lsquo;<samp class="samp">spegnimento</samp>&rsquo;.
+</li></ol>
+
+</div>
+<hr>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Next: </span><span class="nav-link"><a href="Apr-25.html">Venticinque</a></span></span>, <span class="nav-button"><span class="nav-label">Previous: </span><span class="nav-link"><a href="index.html">Marco&rsquo;s 2026 Weblog</a></span></span>, <span class="nav-button"><span class="nav-label">Up: </span><span class="nav-link"><a href="index.html">Marco&rsquo;s 2026 Weblog</a></span></span><span class="nav-button"> &nbsp; </span></p>
+
+
+
+</body>
+</html>
