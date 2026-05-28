@@ -38,6 +38,13 @@ ul.mark-bullet {list-style-type: disc}
 <p><em class="emph">Posted on Apr 28, 2026</em>
 </p>
 
+<blockquote class="quotation">
+<p><strong class="strong">May 28, 2026</strong> Sviluppato aggiungendo due transizioni al grafo, per completezza.  Forse
+adesso &egrave; troppo complicato da capire leggendo, senza imparare il funzionamento per incrementi, con
+la pratica; ma cosa ci si pu&ograve; fare?  Funziona come funziona.
+</p></blockquote>
+
+
 <p>Parte due della parte uno, <a class="ref" href="Apr-21.html">Recensione autocensurata</a>.
 </p>
 <p>Ho riscritto la descrizione dell&rsquo;interfaccia del <em class="emph">cruise control</em> della mia automobile,
@@ -50,29 +57,32 @@ pedaliera e sui pulsanti sono eventi che provocano le transizioni:
 </p>
 <div class="example">
 <pre class="example-preformatted"> --------              spegnimento
-| SPENTO |&lt;----------------------------------
- --------                                    |
-     | accensione                            |
-     |        --------                       |
-      ------&gt;| PRONTO |----------------------+
-              --------                       |
-      attivazione |                          |
-                  |                          |
-                  |                          |
-                  | incremento  decremento   |
-                  |   -------    ---------   |
-                  |  |       |  |         |  |
-                  |   -----  |  |  -------   |
-                  |        | |  | |          |
-                  |        v |  | v          |
-                  v        --------          |
-                  +------&gt;| ATTIVO |---------+
-                  ^        --------          |
-    riattivazione |            | sospensione |
-                  |            v             |
-                  |        ---------         |
-                   -------| SOSPESO |--------
-                           ---------
+| SPENTO |&lt;----------------------------------------------
+ --------                                                |
+     | accensione                                        ^
+     |        --------                                   |
+      ------&gt;| PRONTO |----------------------------------+
+              --------                                   |
+      attivazione |                                      |
+                  | incremento  decremento               |
+                  |   -------    ---------               |
+                  |  |       |  |         |              ^
+                  |   -----  |  |  -------               |
+                  |        | |  | |                      |
+                  |        v |  | v                      |
+                  |        --------                      |
+                   ------&gt;|        |------------&gt;--------+
+                   ------&gt;| ATTIVO |-----                |
+                  |    --&gt;|        |     |               |
+                  |   |    --------      |               |
+   riattivazione1 |   |                  |               |
+                  |   | riattivazione2   | sospensione   ^
+                  |    ------            |               |
+                  |          |           |               |
+                  |          |           v               |
+                  |        -----------------             |
+                   -------|     SOSPESO     |-----&gt;------
+                           -----------------
 </pre></div>
 
 <p>Vi sono tre parametri con nome autoesplicativo: &lsquo;<samp class="samp">velocita_corrente</samp>&rsquo;, &lsquo;<samp class="samp">velocita_attiva</samp>&rsquo;,
@@ -86,7 +96,7 @@ pedaliera e sui pulsanti sono eventi che provocano le transizioni:
 con cancellazione della &lsquo;<samp class="samp">velocita_attiva</samp>&rsquo; o della &lsquo;<samp class="samp">velocita_sospesa</samp>&rsquo;.
 </li></ul>
 
-<p>Tasto &lsquo;<samp class="samp">attivazione/riattivazione/incremento</samp>&rsquo;
+<p>Tasto &lsquo;<samp class="samp">attivazione/riattivazione1/incremento</samp>&rsquo;
 </p><ul class="itemize mark-bullet">
 <li>quando il <em class="emph">cruise control</em> &egrave; &lsquo;<samp class="samp">PRONTO</samp>&rsquo;: transizione allo stato &lsquo;<samp class="samp">ATTIVO</samp>&rsquo; con
 &lsquo;<samp class="samp">velocita_corrente</samp>&rsquo; che diventa &lsquo;<samp class="samp">velocita_attiva</samp>&rsquo;;
@@ -108,9 +118,15 @@ memorizzazione della &lsquo;<samp class="samp">velocita_attiva</samp>&rsquo; com
 </li><li>quando il <em class="emph">cruise control</em> &egrave; in qualsiasi altro stato: nessuna funzione.
 </li></ul>
 
-<p>Tasto &lsquo;<samp class="samp">decremento</samp>&rsquo;:
+<p>Tasto &lsquo;<samp class="samp">attivazione/riattivazione2/decremento</samp>&rsquo;:
 </p><ul class="itemize mark-bullet">
-<li>quando il <em class="emph">cruise control</em> &egrave; &lsquo;<samp class="samp">ATTIVO</samp>&rsquo;: auto&ndash;transizione allo stato &lsquo;<samp class="samp">ATTIVO</samp>&rsquo; con
+<li>quando il <em class="emph">cruise control</em> &egrave; &lsquo;<samp class="samp">PRONTO</samp>&rsquo;: transizione allo stato &lsquo;<samp class="samp">ATTIVO</samp>&rsquo; con
+&lsquo;<samp class="samp">velocita_corrente</samp>&rsquo; che diventa &lsquo;<samp class="samp">velocita_attiva</samp>&rsquo;;
+
+</li><li>quando il <em class="emph">cruise control</em> &egrave; &lsquo;<samp class="samp">SOSPESO</samp>&rsquo;: transizione allo stato &lsquo;<samp class="samp">ATTIVO</samp>&rsquo;, con
+&lsquo;<samp class="samp">velocita_corrente</samp>&rsquo; che diventa &lsquo;<samp class="samp">velocita_attiva</samp>&rsquo;;
+
+</li><li>quando il <em class="emph">cruise control</em> &egrave; &lsquo;<samp class="samp">ATTIVO</samp>&rsquo;: auto&ndash;transizione allo stato &lsquo;<samp class="samp">ATTIVO</samp>&rsquo; con
 decremento della &lsquo;<samp class="samp">velocita_attiva</samp>&rsquo; d&rsquo;un kilometro all&rsquo;ora;
 
 </li><li>quando il <em class="emph">cruise control</em> &egrave; in qualsiasi altro stato: nessuna funzione.
@@ -119,7 +135,7 @@ decremento della &lsquo;<samp class="samp">velocita_attiva</samp>&rsquo; d&rsquo
 <p>Quando il <em class="emph">cruise control</em> &egrave; &lsquo;<samp class="samp">ATTIVO</samp>&rsquo;: agendo sui pedali si provoca una
 &lsquo;<samp class="samp">sospensione</samp>&rsquo;.
 </p>
-<p>La tipica procedura d&rsquo;utilizzo &egrave;:
+<p>La tipica procedura d&rsquo;utilizzo per la percorrenza di tratti a velocit&agrave; 50 &egrave;:
 </p>
 <ol class="enumerate">
 <li> &lsquo;<samp class="samp">accensione</samp>&rsquo;;
@@ -137,11 +153,45 @@ esattamente a <em class="math">50</em>;
 
 </li><li> partenza con accelerazione fino a circa <em class="math">50</em> in quinta marcia;
 
-</li><li> &lsquo;<samp class="samp">riattivazione</samp>&rsquo; e rilascio dei pedali;
+</li><li> &lsquo;<samp class="samp">riattivazione1</samp>&rsquo; e rilascio dei pedali;
 
 </li><li> marcia auto&ndash;pilotata con &lsquo;<samp class="samp">velocita_attiva</samp>&rsquo; pari a <em class="math">50</em>;
 
 </li><li> arrivando a destinazione: &lsquo;<samp class="samp">spegnimento</samp>&rsquo;.
+</li></ol>
+
+<p>Una possibile procedura d&rsquo;utilizzo per la percorrenza di tratti a velocit&agrave; <em class="math">50</em> intervallati
+da tratti a velocit&agrave; <em class="math">30</em> &egrave;:
+</p>
+<ol class="enumerate">
+<li> &lsquo;<samp class="samp">accensione</samp>&rsquo;;
+
+</li><li> portare la &lsquo;<samp class="samp">velocita_corrente</samp>&rsquo; a circa <em class="math">50</em> in quinta marcia;
+
+</li><li> &lsquo;<samp class="samp">attivazione</samp>&rsquo; e rilascio dei pedali;
+
+</li><li> utilizzo di &lsquo;<samp class="samp">incremento</samp>&rsquo; e &lsquo;<samp class="samp">decremento</samp>&rsquo; per impostare la &lsquo;<samp class="samp">velocita_attiva</samp>&rsquo;
+esattamente a <em class="math">50</em>;
+
+</li><li> marcia auto&ndash;pilotata con &lsquo;<samp class="samp">velocita_attiva</samp>&rsquo; pari a <em class="math">50</em>;
+
+</li><li> entrando in una zona <em class="math">30</em>: pedali frizione e freno, provocando una &lsquo;<samp class="samp">sospensione</samp>&rsquo;;
+riduzione velocit&agrave; a circa <em class="math">30</em> in terza marcia;
+
+</li><li> &lsquo;<samp class="samp">riattivazione2</samp>&rsquo; impostando una nuova velocit&agrave; attiva a circa <em class="math">30</em>, rilascio dei pedali;
+
+</li><li> utilizzo di &lsquo;<samp class="samp">incremento</samp>&rsquo; e &lsquo;<samp class="samp">decremento</samp>&rsquo; per impostare la &lsquo;<samp class="samp">velocita_attiva</samp>&rsquo;
+esattamente a <em class="math">30</em>;
+
+</li><li> uscendo dalla zona <em class="math">30</em>: pedale acceleratore, provocando una &lsquo;<samp class="samp">sospensione</samp>&rsquo;; aumento
+velocit&agrave; a circa <em class="math">50</em> in quinta marcia;
+
+</li><li> &lsquo;<samp class="samp">riattivazione2</samp>&rsquo; impostando una nuova velocit&agrave; attiva a circa <em class="math">50</em>, rilascio dei pedali;
+
+</li><li> utilizzo di &lsquo;<samp class="samp">incremento</samp>&rsquo; e &lsquo;<samp class="samp">decremento</samp>&rsquo; per impostare la &lsquo;<samp class="samp">velocita_attiva</samp>&rsquo;
+esattamente a <em class="math">50</em>;
+
+</li><li> eccetera.
 </li></ol>
 
 </div>
